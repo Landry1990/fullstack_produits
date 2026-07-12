@@ -184,8 +184,8 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                                 </tr>
                             </thead>
                             <tbody className="text-[10px]">
-                                {data.groups[groupName].map((item, idx) => (
-                                    <tr key={`${groupName}-${idx}`} className={`border-b border-slate-100 ${item.is_lot_line ? 'bg-base-200/30' : ''}`}>
+                                {data.groups[groupName].map((item) => (
+                                    <tr key={item.id} className={`border-b border-slate-100 ${item.is_lot_line ? 'bg-base-200/30' : ''}`}>
                                         <td className="py-1.5 px-2 font-mono text-base-content/50">{item.id}</td>
                                         <td className="py-1.5 px-2 font-mono">{item.cip1 || '-'}</td>
                                         <td className="py-1.5 px-2">

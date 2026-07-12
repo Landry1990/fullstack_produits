@@ -43,6 +43,7 @@
     },
     "loading": "Chargement...",
     "new_sale_short": "Vente",
+    "licence_days_remaining": "{{count}}j restants",
     "echeances_overdue_toast": "{{count}} échéance fournisseur en retard !",
     "echeances_overdue_toast_plural": "{{count}} échéances fournisseurs en retard !",
     "stats": {
@@ -61,7 +62,9 @@
         "stock_alerts": "Alertes Stock",
         "supplier_debts_title": "Dettes fournisseurs",
         "supplier_debts_sub": "{{count}} fournisseur concerné",
-        "supplier_debts_sub_plural": "{{count}} fournisseurs concernés"
+        "supplier_debts_sub_plural": "{{count}} fournisseurs concernés",
+        "margin_today": "Marge brute (jour)",
+        "margin_rate": "taux de marge"
     },
     "reappro": {
         "rayon_title": "Réappro Rayon",
@@ -99,7 +102,19 @@
         "amount": "Montant",
         "payment_mix": "Qualité du CA",
         "today_payments": "Répartition des paiements du jour",
-        "no_data": "Aucun paiement aujourd'hui"
+        "no_data": "Aucun paiement aujourd'hui",
+        "ca_label": "CA",
+        "sales_label": "Ventes",
+        "avg_sales_label": "Moy. 30j",
+        "today_sales_label": "Aujourd'hui",
+        "dormant_stock": "Stock Dormant",
+        "dormant_desc": "Rossignols (+6 mois)",
+        "immobilized": "Bloqués",
+        "no_dormant": "Aucun rossignol",
+        "see_all_dormant": "Voir la liste complète",
+        "top_products": "Top Produits",
+        "today_bestsellers": "Vos meilleures ventes du jour",
+        "no_sales": "Aucune vente enregistrée"
     },
     "tabs": {
         "overview": "Performance",
@@ -179,7 +194,33 @@
         "expiry_subtitle": "Lots proches de l'expiration",
         "no_expiry_alerts": "Aucune alerte de péremption",
         "expired": "PÉRIMÉ",
-        "manage_perimes": "Gérer les périmés"
+        "manage_perimes": "Gérer les périmés",
+        "lot_label": "LOT {{lot}}",
+        "exp_label": "EXP: {{date}}",
+        "na": "N/A",
+        "units_suffix": "{{count}}u"
+    },
+    "vendeur": {
+        "loading": "Chargement…",
+        "my_dashboard": "Mon tableau de bord",
+        "refresh": "Actualiser",
+        "daily_target": "Objectif du jour",
+        "achieved": "✓ Atteint !",
+        "on_estimated": "sur {{value}} estimé",
+        "sales_count": "{{count}} vente(s)",
+        "this_week": "Cette semaine",
+        "this_month": "Ce mois",
+        "avg_basket_month": "Panier moyen (mois)",
+        "per_transaction": "par transaction",
+        "ranking_month": "Classement mois",
+        "on_sellers": "sur {{count}} vendeur(s)",
+        "last_7_days": "Mes 7 derniers jours",
+        "updated_ago": "Mis à jour {{time}}",
+        "top_products_month": "Mes top produits (ce mois)",
+        "units_count": "{{count}} unité(s)",
+        "last_sale": "Dernière vente",
+        "ca_label": "CA",
+        "sales_label": "Ventes"
     },
     "manager_dashboard": {
         "title": "Tableau de Bord",
@@ -205,7 +246,14 @@
                 "expenses_label": "Charges fixes mensuelles à couvrir",
                 "expenses_help": "Servira à déduire l'objectif de Marge Brute quotidien.",
                 "days_per_week": "Jours d'ouverture / sem.",
-                "days_count": "{{count}} jour(s)"
+                "days_count": "{{count}} jour(s)",
+                "monthly_margin_label": "Objectif de marge brute mensuelle",
+                "ca_auto_calculated": "Le CA nécessaire sera calculé automatiquement selon le coefficient ci-dessous",
+                "coefficient_label": "Coefficient multiplicateur",
+                "coefficient_help": "Prix de vente = coût × coefficient (défaut 1.40)",
+                "preview_title": "Aperçu du CA mensuel requis",
+                "preview_ca": "CA = {{value}} F",
+                "preview_breakdown": "(semaine: {{week}} F, jour: {{day}} F)"
             },
             "dynamic": {
                 "growth_label": "Pourcentage de croissance ciblé",

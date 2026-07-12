@@ -1031,8 +1031,8 @@ export default function Maintenance() {
                       <td>
                         {p.children.length > 0 ? (
                           <div className="flex gap-2 flex-wrap">
-                             {p.children.map((c, i) => (
-                               <span key={i} className="badge badge-sm badge-outline">
+                             {p.children.map((c) => (
+                               <span key={c.label} className="badge badge-sm badge-outline">
                                  {t('tables.children.' + c.label.toLowerCase().replace(/ /g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, ""), c.label)}: {formatNumber(c.count)}
                                </span>
                              ))}

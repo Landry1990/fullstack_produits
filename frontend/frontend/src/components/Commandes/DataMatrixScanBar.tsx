@@ -18,6 +18,20 @@ type FeedbackState =
 const SCAN_TIMEOUT_MS = 80; // ms : délai max entre caractères douchette
 const MIN_SCAN_LENGTH = 18; // longueur minimale pour considérer comme un scan Data Matrix
 
+const feedbackColors: Record<FeedbackState['type'], string> = {
+    idle: 'bg-slate-800/90 border-slate-600',
+    success: 'bg-emerald-800/90 border-emerald-500',
+    warning: 'bg-amber-800/90 border-amber-500',
+    error: 'bg-red-800/90 border-red-500',
+};
+
+const feedbackIcons = {
+    idle: <ScanLine className="size-4 text-slate-300 animate-pulse" />,
+    success: <CheckCircle2 className="size-4 text-emerald-300" />,
+    warning: <AlertTriangle className="size-4 text-amber-300" />,
+    error: <XCircle className="size-4 text-red-300" />,
+};
+
 export default function DataMatrixScanBar({
     onScan,
     searchInputRef,
@@ -141,20 +155,6 @@ export default function DataMatrixScanBar({
             </button>
         );
     }
-
-    const feedbackColors: Record<FeedbackState['type'], string> = {
-        idle: 'bg-slate-800/90 border-slate-600',
-        success: 'bg-emerald-800/90 border-emerald-500',
-        warning: 'bg-amber-800/90 border-amber-500',
-        error: 'bg-red-800/90 border-red-500',
-    };
-
-    const feedbackIcons = {
-        idle: <ScanLine className="size-4 text-slate-300 animate-pulse" />,
-        success: <CheckCircle2 className="size-4 text-emerald-300" />,
-        warning: <AlertTriangle className="size-4 text-amber-300" />,
-        error: <XCircle className="size-4 text-red-300" />,
-    };
 
     return (
         <div

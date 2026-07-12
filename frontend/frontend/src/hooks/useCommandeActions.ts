@@ -394,17 +394,17 @@ export function useCommandeActions({
 <body>
     <div class="header">
         <div>
-            <h1 class="pharmacy-name">${pharmacySettings.pharmacy_name || 'PHARMACIE'}</h1>
+            <h1 class="pharmacy-name">${escHtml(pharmacySettings.pharmacy_name || 'PHARMACIE')}</h1>
             <div class="pharmacy-info">
-                ${pharmacySettings.address || ''}<br>
-                Tél: ${pharmacySettings.phone || ''} | ${pharmacySettings.email || ''}<br>
-                <span style="font-weight: bold; opacity: 0.7;">NIU: ${pharmacySettings.niu || ''} | RC: ${pharmacySettings.registre_commerce || ''}</span>
+                ${escHtml(pharmacySettings.address || '')}<br>
+                Tél: ${escHtml(pharmacySettings.phone || '')} | ${escHtml(pharmacySettings.email || '')}<br>
+                <span style="font-weight: bold; opacity: 0.7;">NIU: ${escHtml(pharmacySettings.niu || '')} | RC: ${escHtml(pharmacySettings.registre_commerce || '')}</span>
             </div>
         </div>
         <div>
             <div class="doc-title-box">${t('orders.tabs.delivery', { defaultValue: 'BON DE RÉCEPTION' })}</div>
             <div style="text-align: right; font-size: 10px; font-weight: bold; color: #64748b; margin-top: 5px; text-transform: uppercase;">
-                RÉF: ${commande.numero_facture || '#' + commande.id}
+                RÉF: ${escHtml(commande.numero_facture || '#' + commande.id)}
             </div>
         </div>
     </div>
@@ -412,7 +412,7 @@ export function useCommandeActions({
     <div class="info-grid">
         <div class="info-card">
             <div class="card-label">${t('orders.form.provider_label', { defaultValue: 'Fournisseur' })}</div>
-            <div class="provider-name">${fournisseurName}</div>
+            <div class="provider-name">${escHtml(fournisseurName)}</div>
         </div>
         <div class="info-card">
             <div class="card-label">${t('orders.product_table.info_row.indicators', { defaultValue: 'Détails de Réception' })}</div>
@@ -426,11 +426,11 @@ export function useCommandeActions({
             </div>
             <div class="detail-row" style="border-top: 1px solid #e2e8f0; margin-top: 5px; padding-top: 5px;">
                 <span>${t('orders.details.created_by', { defaultValue: 'Saisie par' })}:</span>
-                <span class="detail-value">${(commande as any).created_by_name || 'N/A'}</span>
+                <span class="detail-value">${escHtml((commande as any).created_by_name || 'N/A')}</span>
             </div>
             <div class="detail-row">
                 <span>${t('orders.details.closed_by', { defaultValue: 'Clôturée par' })}:</span>
-                <span class="detail-value operator-name">${commande.closed_by_name || 'N/A'}</span>
+                <span class="detail-value operator-name">${escHtml(commande.closed_by_name || 'N/A')}</span>
             </div>
         </div>
     </div>

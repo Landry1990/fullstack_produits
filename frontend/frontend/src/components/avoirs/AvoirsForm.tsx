@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Search, Save, X, PlusCircle, Trash2, ArrowLeft, Package } from 'lucide-react';
 import type { UseAvoirsDataReturn } from '../../hooks/useAvoirsData';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
-import { useProductSearch as useProductSearchBase } from '../../hooks/product-search';
+import { useProductSearch as useProductSearchBase } from '../../hooks/product-search/useProductSearch';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
@@ -221,7 +221,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                         {lignes.map((ligne, index) => {
                                             const prod = typeof ligne.produit === 'object' ? ligne.produit : null;
                                             return (
-                                                <tr key={index} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
+                                                <tr key={prod?.id ?? ligne.id ?? index} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
                                                     <td className="py-3 px-4">
                                                         <div className="font-semibold text-slate-800">{prod?.name || t('common:unknown_product', 'Produit Inconnu')}</div>
                                                         <div className="text-xs text-slate-400 font-mono mt-0.5">{prod?.cip1}</div>

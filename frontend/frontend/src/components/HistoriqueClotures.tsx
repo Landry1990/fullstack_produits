@@ -520,14 +520,14 @@ export default function HistoriqueClotures() {
         /* ========== ONGLET SESSIONS DE CAISSE ========== */
         <div className="flex-1 px-3 sm:px-6 py-4 sm:py-6 overflow-hidden flex flex-col gap-4">
           {/* Active Sessions Banner */}
-          {sessions.filter(s => s.est_active).length > 0 && (
+          {(() => { const activeSessions = sessions.filter(s => s.est_active); return activeSessions.length > 0 ? (
             <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
               <h3 className="font-bold text-emerald-600 text-sm uppercase tracking-wider flex items-center gap-2 mb-3">
                 <PlayCircle className="size-4 animate-pulse" />
                 Sessions actives en cours
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {sessions.filter(s => s.est_active).map(session => (
+                {activeSessions.map(session => (
                   <div key={session.id} className="bg-white rounded-lg p-4 border border-emerald-200 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold text-sm">{session.poste_nom}</span>
@@ -553,7 +553,7 @@ export default function HistoriqueClotures() {
                 ))}
               </div>
             </div>
-          )}
+          ) : null; })()}
 
           {/* Sessions Table */}
           <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col min-h-0">
@@ -1109,7 +1109,7 @@ export default function HistoriqueClotures() {
                 <div className="space-y-3">
                   <h4 className="font-bold uppercase tracking-wider text-xs text-slate-500 border-b border-slate-200 pb-2">{t('modal.mode_details')}</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {Object.entries(selectedCloture.details_paiement).filter(([mode]) => mode !== '__meta__').map(([mode, montant]) => (
+                    {Object.entries(selectedCloture.details_paiement).flatMap(([mode, montant]) => mode !== '__meta__' ? [(
                       <div key={mode} className="flex justify-between p-2 bg-slate-50 rounded text-sm">
                         <span className="flex items-center gap-2">
                           {mode === 'especes' && '💵'}
@@ -1122,7 +1122,7 @@ export default function HistoriqueClotures() {
                         </span>
                         <span className="font-semibold">{formatMoney(montant)}</span>
                       </div>
-                    ))}
+                    )] : [])}
                   </div>
                 </div>
               )}

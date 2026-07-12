@@ -188,6 +188,14 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
     : globalTotals.total_produits_global;
   const totalDisplayAmount = globalTotals.total_achat_global;
 
+  const filteredData = activeTab === 'summary' || !searchQuery
+    ? data
+    : data.filter(row => {
+        const d = row as DetailedPurchase;
+        const q = searchQuery.toLowerCase();
+        return d.produit__name?.toLowerCase().includes(q) || String(d.produit__cip1 ?? '').includes(q);
+      });
+
   return (
     <>
       <div className="h-full flex flex-col p-3 sm:p-6 overflow-hidden">
@@ -373,11 +381,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                         <span className="size-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin inline-block"></span>
                       </td>
                     </tr>
-                  ) : data.filter(row => {
-                      if (activeTab === 'summary' || !searchQuery) return true;
-                      const d = row as DetailedPurchase;
-                      return d.produit__name?.toLowerCase().includes(searchQuery.toLowerCase()) || d.produit__cip1?.includes(searchQuery);
-                  }).map((row, i) => (
+                  ) : filteredData.map((row, i) => (
                     <tr key={activeTab === 'summary' ? row.date : row.produit_id} className="group hover:bg-blue-50/40 transition-colors">
                       {activeTab === 'summary' ? (
                         <>

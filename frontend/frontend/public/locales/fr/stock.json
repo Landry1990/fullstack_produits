@@ -116,6 +116,7 @@
             "destination": "Produit Destination",
             "destination_placeholder": "Rechercher le produit destination...",
             "ratio_label": "Ratio de conversion",
+            "ratio_placeholder": "Ex: 20",
             "ratio_help": "Quantité de destination obtenue pour 1 unité de source",
             "cancel": "Annuler",
             "create": "Créer la relation"
@@ -128,6 +129,14 @@
             "notes_label": "Notes / Observations",
             "notes_placeholder": "Ajoutez une note optionnelle...",
             "confirm_btn": "Confirmer la transformation"
+        },
+        "preview": {
+            "stock_remaining": "Stock source restant",
+            "lots_consumed": "Lots qui seront consommés (FEFO)",
+            "selected": "sélectionnés",
+            "available": "disponible",
+            "remaining": "rest.",
+            "lot_qty_mismatch": "La somme des lots sélectionnés ({{selected}}) doit être égale à la quantité à transformer ({{total}})."
         },
         "table_history": {
             "date": "Date",
@@ -579,6 +588,7 @@
             "product_header": "Produit",
             "cip_header": "CIP",
             "user_header": "Utilisateur",
+            "lot_header": "Lot",
             "before_header": "Avant",
             "after_header": "Après",
             "diff_header": "Différence",
@@ -994,7 +1004,7 @@
             "stats": "Historique & Stats"
         },
         "pharmacie": {
-            "info": "Cette liste affiche automatiquement tous vos produits dont le <strong>stock est à 0</strong> mais qui ont une <strong>rotation moyenne de vente &gt; 1</strong>. Idéal pour détecter les vraies ruptures et pertes de ventes !",
+            "info": "Produits en rupture de stock (rotation moyenne de vente ≥ 1).",
             "columns": {
                 "cip": "CIP",
                 "produit": "Produit",
@@ -1124,6 +1134,46 @@
             "cancel": "Annuler"
         }
     },
+    "cadencier": {
+        "title": "Cadencier",
+        "subtitle": "Planification des approvisionnements par rotation et couverture",
+        "search_placeholder": "Rechercher un produit, CIP...",
+        "type": "Type de commande",
+        "type_grossiste": "Commande Grossiste",
+        "type_divers": "Commande Divers",
+        "coverage": "Couverture cible",
+        "rayon": "Rayon",
+        "fournisseur": "Fournisseur",
+        "only_below_target": "Uniquement les produits sous le seuil",
+        "total_products": "Produits à commander",
+        "units": "unités suggérées",
+        "total_ht": "Montant total HT",
+        "selection": "Sélection",
+        "products": "produits",
+        "generate_grossiste": "Commande Grossiste",
+        "generate_divers": "Commande Divers",
+        "list": "Lignes du cadencier",
+        "showing": "{{count}} / {{total}} lignes",
+        "product": "Produit",
+        "stock": "Stock",
+        "rotation": "Rotation",
+        "target": "Cible",
+        "suggested": "Qté suggérée",
+        "unit_price": "Prix achat",
+        "amount": "Montant HT",
+        "urgency": "Urgence",
+        "supplier": "Fournisseur",
+        "exclusive": "Exclusif",
+        "empty": "Aucun produit à afficher dans le cadencier",
+        "error_loading": "Erreur de chargement du cadencier",
+        "no_selection": "Veuillez sélectionner au moins un produit",
+        "urgence": {
+            "rupture": "Rupture",
+            "alerte": "Alerte",
+            "surveillance": "Surveillance",
+            "ok": "OK"
+        }
+    },
     "sidebar": {
         "stock": {
             "organisation": {
@@ -1134,5 +1184,23 @@
                 }
             }
         }
+    },
+    "expiration": {
+        "widget_title": "Alertes Péremption",
+        "error_loading": "Erreur chargement alertes",
+        "no_alerts": "Aucune alerte péremption",
+        "all_good": "Aucun produit n'expire dans les {{days}} prochains jours",
+        "alerts_count": "{{count}} alerte(s)",
+        "critical_count": "{{count}} critique(s)",
+        "urgent_count": "{{count}} urgent(s)",
+        "notice_count": "{{count}} attention",
+        "days_until": "J-{{days}}",
+        "units": "{{count}} unité(s)",
+        "lot_label": "Lot: {{lot}}",
+        "pa_label": "PA: {{value}}",
+        "days_filter": "{{days}}j",
+        "view_all": "Voir tous les périmés",
+        "manage_perimes": "Gérer les produits périmés",
+        "total_value": "{{count}} alerte(s) • {{value}}"
     }
 }

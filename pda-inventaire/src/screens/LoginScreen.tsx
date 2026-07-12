@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { authService } from '../services';
+import { authService } from '../services/auth';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;

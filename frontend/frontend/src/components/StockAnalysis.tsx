@@ -46,10 +46,10 @@ const StockAnalysis = () => {
     const TabIcon = currentTab.icon;
 
     return (
-        <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
+        <div className="h-screen overflow-hidden bg-slate-50 p-3 sm:p-4 lg:p-5">
             <Toaster position="top-right" />
 
-            <div className="max-w-[1600px] mx-auto space-y-6">
+            <div className="h-full max-w-[1600px] mx-auto space-y-4 overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -96,25 +96,25 @@ const StockAnalysis = () => {
                 {activeTab === 'pilotage' ? (
                     <StockHealthDashboard />
                 ) : (
-                    <div className="space-y-6">
+                    <div className="flex-1 min-h-0 overflow-hidden flex flex-col space-y-4">
                         {/* Filters Card */}
-                        <Card>
-                            <CardHeader className="pb-4">
+                        <Card className="py-3">
+                            <CardHeader className="pb-2">
                                 <div className="flex items-center gap-3">
                                     <div className="size-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                                         <TabIcon className="size-5" />
                                     </div>
                                     <div>
-                                        <CardTitle className="text-lg">
+                                        <CardTitle className="text-base">
                                             {t(`stock:analyse.tabs.${activeTab}`, currentTab.label)}
                                         </CardTitle>
-                                        <CardDescription>
+                                        <CardDescription className="text-xs">
                                             Filtrer et analyser les articles de cette catégorie
                                         </CardDescription>
                                     </div>
                                 </div>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="pb-2">
                                 <StockAnalysisFilters
                                     activeTab={activeTab}
                                     fournisseurs={fournisseurs}
@@ -130,33 +130,33 @@ const StockAnalysis = () => {
 
                         {/* Stats Cards */}
                         {!loading && data && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 <Card>
-                                    <CardContent className="p-5 flex items-center gap-4">
-                                        <div className="size-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                                            <Package className="size-5" />
+                                    <CardContent className="p-3 flex items-center gap-3">
+                                        <div className="size-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                            <Package className="size-4" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
                                                 Articles
                                             </p>
-                                            <p className="text-2xl font-bold text-slate-900">{data.total_items}</p>
+                                            <p className="text-xl font-bold text-slate-900">{data.total_items}</p>
                                         </div>
                                     </CardContent>
                                 </Card>
 
                                 <Card>
-                                    <CardContent className="p-5 flex items-center gap-4">
-                                        <div className="size-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-                                            <TrendingUp className="size-5" />
+                                    <CardContent className="p-3 flex items-center gap-3">
+                                        <div className="size-9 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                                            <TrendingUp className="size-4" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
                                                 {activeTab === 'unsold' ? 'Valeur invendus' :
                                                  activeTab === 'overstock' ? 'Valeur excédents' :
                                                  'Valeur totale'}
                                             </p>
-                                            <p className="text-2xl font-bold text-red-600">
+                                            <p className="text-xl font-bold text-red-600">
                                                 {formatCurrency(Math.round(data.total_value))}
                                             </p>
                                         </div>
@@ -165,15 +165,15 @@ const StockAnalysis = () => {
 
                                 {activeTab === 'shortage' && (
                                     <Card>
-                                        <CardContent className="p-5 flex items-center gap-4">
-                                            <div className="size-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                                                <AlertTriangle className="size-5" />
+                                        <CardContent className="p-3 flex items-center gap-3">
+                                            <div className="size-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                                <AlertTriangle className="size-4" />
                                             </div>
                                             <div>
-                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
                                                     Alerts critiques
                                                 </p>
-                                                <p className="text-2xl font-bold text-amber-600">{data.critical_count ?? 0}</p>
+                                                <p className="text-xl font-bold text-amber-600">{data.critical_count ?? 0}</p>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -182,26 +182,28 @@ const StockAnalysis = () => {
                         )}
 
                         {/* Table Card */}
-                        <Card className="overflow-hidden">
+                        <Card className="overflow-hidden flex flex-col flex-1 min-h-0">
                             {error && (
-                                <div className="m-6 flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                                <div className="m-4 flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700">
                                     <X className="size-5 shrink-0" />
                                     <span className="text-sm font-medium">{error}</span>
                                 </div>
                             )}
 
-                            <StockAnalysisTable
-                                items={data?.items || []}
-                                loading={loading}
-                                activeTab={activeTab}
-                                selectedItems={selectedItems}
-                                onToggleSelect={actions.toggleSelectItem}
-                                onToggleSelectAll={actions.toggleSelectAll}
-                            />
+                            <div className="flex-1 overflow-hidden">
+                                <StockAnalysisTable
+                                    items={data?.items || []}
+                                    loading={loading}
+                                    activeTab={activeTab}
+                                    selectedItems={selectedItems}
+                                    onToggleSelect={actions.toggleSelectItem}
+                                    onToggleSelectAll={actions.toggleSelectAll}
+                                />
+                            </div>
 
                             {/* Pagination */}
                             {!loading && data && data.total_pages && data.total_pages > 1 && (
-                                <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="px-4 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
                                     <p className="text-sm text-slate-500">
                                         Page <span className="font-semibold text-slate-900">{data.current_page}</span> sur <span className="font-semibold text-slate-900">{data.total_pages}</span>
                                     </p>

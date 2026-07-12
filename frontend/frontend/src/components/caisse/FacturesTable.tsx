@@ -363,7 +363,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || (user as any)?.can_modify_invoice
                     
                     return (
-                      <tr key={idx} className="hover:bg-slate-50">
+                      <tr key={p.id ?? p.produit_id ?? p.produit ?? idx} className="hover:bg-slate-50">
                         <td className="font-medium">
                           <div className="flex flex-col">
                             <span>{name}</span>

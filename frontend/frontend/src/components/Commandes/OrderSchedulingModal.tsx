@@ -460,19 +460,22 @@ export default function OrderSchedulingModal({
                                         <div>
                                             <label className="text-[10px] font-bold text-base-content/50 uppercase mb-2 block">Jours du mois (optionnel)</label>
                                             <div className="grid grid-cols-7 gap-1">
-                                                {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                                                {(() => {
+                                                  const monthDaysSet = new Set(schedule.active_month_days);
+                                                  return Array.from({length: 31}, (_, i) => i + 1).map(day => (
                                                     <button
                                                         key={day}
                                                         onClick={() => toggleMonthDay(day)}
                                                         className={`size-7 rounded-lg text-[10px] font-black transition-all flex items-center justify-center border-2
-                                                            ${schedule.active_month_days.includes(day)
+                                                            ${monthDaysSet.has(day)
                                                                 ? 'bg-rose-500 border-rose-600 text-white shadow-sm'
                                                                 : 'bg-base-100 border-base-300 text-base-content/40 hover:border-rose-400/40'}`}
                                                         title={`${day} du mois`}
                                                     >
                                                         {day}
                                                     </button>
-                                                ))}
+                                                  ));
+                                                })()}
                                             </div>
                                             <p className="text-[9px] text-base-content/40 mt-1">Si sélectionné, le planning s'exécute aussi ces jours du mois indépendamment du jour de la semaine.</p>
                                         </div>
@@ -794,7 +797,7 @@ export default function OrderSchedulingModal({
                                             </thead>
                                             <tbody>
                                                 {suggestions.map((item, idx) => (
-                                                    <tr key={idx} className={`hover:bg-base-200 cursor-pointer transition-colors ${selectedSuggestions.has(idx) ? 'bg-primary/10' : ''}`} onClick={() => setSelectedSuggestions(prev => { const next = new Set(prev); if (next.has(idx)) next.delete(idx); else next.add(idx); return next; })}>
+                                                    <tr key={item.produit_id} className={`hover:bg-base-200 cursor-pointer transition-colors ${selectedSuggestions.has(idx) ? 'bg-primary/10' : ''}`} onClick={() => setSelectedSuggestions(prev => { const next = new Set(prev); if (next.has(idx)) next.delete(idx); else next.add(idx); return next; })}>
                                                         <td><input type="checkbox" className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer" checked={selectedSuggestions.has(idx)} onChange={() => {}}/></td>
                                                         <td className="font-black text-xs text-base-content">{item.produit_nom}</td>
                                                         <td className="text-center"><span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-base-200 text-base-content/60 font-mono">{item.stock_actuel}</span></td>

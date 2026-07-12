@@ -11,25 +11,22 @@ import {
   RefreshCw,
   Clock
 } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar
-} from 'recharts';
+import { useRecharts } from '../../hooks/useRecharts';
 import { formatCurrency } from '../../utils/formatters';
 import { useSupplierDashboard } from '../../hooks/useSupplierDashboard';
 import { useTranslation } from 'react-i18next';
 
 const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#a855f7', '#64748b'];
+
+const getStatusKey = (status: string) => {
+  const normalized = status?.toUpperCase().replace(/\s+/g, '_').replace(/'/g, '') ?? '';
+  switch (normalized) {
+    case 'EN_RETARD': return 'schedule.status_late';
+    case 'AUJOURDHUI':
+    case 'AUJOURD_HUI': return 'schedule.status_today';
+    default: return 'schedule.status_upcoming';
+  }
+};
 
 interface SupplierDashboardProps {
   onViewAllDeadlines?: () => void;
@@ -38,6 +35,11 @@ interface SupplierDashboardProps {
 export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashboardProps) {
   const { stats, loading, error, refresh } = useSupplierDashboard();
   const { t } = useTranslation(['providers', 'common']);
+  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+  const Recharts = useRecharts();
+  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } = Recharts;
+
 
   if (loading) {
     return (
@@ -99,8 +101,8 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
       
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {kpis.map((card, i) => (
-          <div key={i} className="bg-base-100 border border-base-300 rounded-2xl shadow-sm overflow-hidden group hover:shadow-md transition-all">
+        {kpis.map((card) => (
+          <div key={card.title} className="bg-base-100 border border-base-300 rounded-2xl shadow-sm overflow-hidden group hover:shadow-md transition-all">
             <div className="relative p-4 flex flex-col gap-2 h-full">
               <div className="absolute top-0 left-0 right-0 h-1" style={{ background: card.accent }} />
               
@@ -218,7 +220,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                     animationDuration={1500}
                   >
                     {stats.repartition_dette.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -231,7 +233,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
             
             <div className="w-full space-y-2 mt-4">
               {stats.repartition_dette.map((item, i) => (
-                <div key={i} className="flex items-center justify-between group">
+                <div key={item.name} className="flex items-center justify-between group">
                   <div className="flex items-center gap-2">
                     <div className="size-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
                     <span className="text-[11px] font-bold text-base-content/70 truncate max-w-[120px]">{item.name}</span>
@@ -283,7 +285,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                     <td colSpan={6} className="text-center py-8 text-base-content/30 font-bold uppercase text-xs tracking-widest">{t('providers:dashboard.deadlines.no_deadlines')}</td>
                  </tr>
               ) : (stats?.prochaines_echeances ?? []).map((ech, i) => (
-                <tr key={i} className="hover:bg-base-200/50 transition-colors group">
+                <tr key={ech.numero_facture} className="hover:bg-base-200/50 transition-colors group">
                   <td className="pl-6 py-4">
                     <span className="font-black text-base-content text-sm">{ech.fournisseur_nom}</span>
                   </td>
@@ -292,7 +294,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                   </td>
                   <td>
                     <div className="flex flex-col">
-                      <span className="font-bold text-xs">{new Date(ech.date_echeance).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                      <span className="font-bold text-xs">{new Date(ech.date_echeance).toLocaleDateString(currentLocale, { day: 'numeric', month: 'short' })}</span>
                       <span className={`text-[10px] font-bold ${ech.jours_restants < 0 ? 'text-red-500' : 'text-base-content/40'}`}>
                         {ech.jours_restants < 0 
                           ? t('providers:dashboard.deadlines.days_late', { count: Math.abs(ech.jours_restants) }) 
@@ -309,7 +311,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                       ech.status === "AUJOURD'HUI" ? 'bg-warning/10 text-warning' : 
                       'bg-success/10 text-success'
                     }`}>
-                      {ech.status}
+                      {t(getStatusKey(ech.status))}
                     </span>
                   </td>
                   <td className="pr-6 text-right">

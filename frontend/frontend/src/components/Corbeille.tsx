@@ -136,10 +136,11 @@ export default function Corbeille() {
     setActionLoading(true);
     let restored = 0;
     try {
-      for (const [model, ids] of Object.entries(grouped)) {
+      const res_all = await Promise.all(Object.entries(grouped).map(async ([model, ids]) => {
         const res = await api.post('corbeille/restore/', { model, ids });
-        restored += res.data.restored;
-      }
+        return res.data.restored;
+      }));
+      restored = res_all.reduce((acc, r) => acc + r, 0);
       toast.success(t('messages.restore_success', { count: restored }));
       fetchData();
     } catch { toast.error(t('messages.restore_error')); }
@@ -159,10 +160,11 @@ export default function Corbeille() {
     setActionLoading(true);
     let deleted = 0;
     try {
-      for (const [model, ids] of Object.entries(grouped)) {
+      const res_all = await Promise.all(Object.entries(grouped).map(async ([model, ids]) => {
         const res = await api.post('corbeille/purge/', { model, ids });
-        deleted += res.data.deleted;
-      }
+        return res.data.deleted;
+      }));
+      deleted = res_all.reduce((acc, r) => acc + r, 0);
       toast.success(t('messages.purge_success', { count: deleted }));
       fetchData();
     } catch (err: any) { toast.error(err.response?.data?.detail || t('messages.purge_error')); }

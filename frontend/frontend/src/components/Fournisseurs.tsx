@@ -109,14 +109,6 @@ export default function Fournisseurs() {
       <EcheancierFournisseursModal 
         isOpen={state.isEcheancierModalOpen}
         onClose={() => state.setIsEcheancierModalOpen(false)}
-        onRegler={(fournisseurId: number) => {
-          state.setIsEcheancierModalOpen(false);
-          const f = state.fournisseurs.find(x => x.id === fournisseurId);
-          if (f) {
-            state.setSelectedFournisseur(f);
-            state.setFinanceModalState({ isOpen: true });
-          }
-        }}
         onPointer={(id: number) => {
           state.setIsEcheancierModalOpen(false);
           state.setIsPointageModalOpen(true);

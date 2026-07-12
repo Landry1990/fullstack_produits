@@ -1,19 +1,14 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Trophy, TrendingUp, TrendingDown, ShoppingCart,
     Target, Clock, Star, Package, BarChart2, Zap,
     Medal, RefreshCw
 } from 'lucide-react';
-import {
-    BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
-} from 'recharts';
+import { useRecharts } from '../../hooks/useRecharts';
 import { useVendeurStats } from '../../hooks/useDashboard';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
-
-function formatF(v: number) {
-    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v) + ' F';
-}
+import { fr, enUS } from 'date-fns/locale';
 
 function RangBadge({ rang, total }: { rang: number | null; total: number }) {
     if (rang === null) return <span className="text-slate-400 text-xs font-bold">—</span>;
@@ -47,18 +42,23 @@ function ProgressBar({ value, color = 'bg-indigo-500' }: { value: number; color?
 const SPARKLINE_COLORS = ['#818cf8', '#818cf8', '#818cf8', '#818cf8', '#818cf8', '#818cf8', '#6366f1'];
 
 export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurrencyLocal: (v: number) => string }) {
+  const { t, i18n } = useTranslation(['dashboard', 'common']);
+  const dateLocale = i18n.language?.startsWith('en') ? enUS : fr;
     const { data, isLoading, refetch, dataUpdatedAt } = useVendeurStats();
-
     const lastRefresh = useMemo(() => {
         if (!dataUpdatedAt) return null;
-        return formatDistanceToNow(new Date(dataUpdatedAt), { addSuffix: true, locale: fr });
-    }, [dataUpdatedAt]);
+        return formatDistanceToNow(new Date(dataUpdatedAt), { addSuffix: true, locale: dateLocale });
+    }, [dataUpdatedAt, dateLocale]);
+
+    const Recharts = useRecharts();
+    if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+    const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } = Recharts;
 
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center py-24">
                 <div className="loading loading-spinner loading-lg text-indigo-500" />
-                <span className="mt-3 text-xs font-black uppercase tracking-widest text-slate-300">Chargement…</span>
+                <span className="mt-3 text-xs font-black uppercase tracking-widest text-slate-300">{t('vendeur.loading')}</span>
             </div>
         );
     }
@@ -83,14 +83,14 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         {data.vendeur[0]?.toUpperCase() ?? '?'}
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mon tableau de bord</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('vendeur.my_dashboard')}</p>
                         <p className="text-lg font-black text-slate-800 leading-tight">{data.vendeur}</p>
                     </div>
                 </div>
                 <button
                     onClick={() => refetch()}
                     className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                    title="Actualiser"
+                    title={t('vendeur.refresh')}
                 >
                     <RefreshCw className="size-4" />
                 </button>
@@ -102,7 +102,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                             <Target className={`size-4 ${data.progression_perso >= 100 ? 'text-emerald-600' : 'text-indigo-500'}`} />
-                            <span className="text-xs font-black uppercase text-slate-500 tracking-widest">Objectif du jour</span>
+                            <span className="text-xs font-black uppercase text-slate-500 tracking-widest">{t('vendeur.daily_target')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className={`text-xs font-black px-2 py-0.5 rounded-full ${
@@ -112,19 +112,19 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                                         ? 'bg-amber-100 text-amber-700'
                                         : 'bg-indigo-50 text-indigo-600'
                             }`}>
-                                {data.progression_perso >= 100 ? '✓ Atteint !' : `${data.progression_perso.toFixed(0)}%`}
+                                {data.progression_perso >= 100 ? t('vendeur.achieved') : `${data.progression_perso.toFixed(0)}%`}
                             </span>
                         </div>
                     </div>
                     <div className="flex items-end justify-between mb-2">
                         <div>
-                            <p className="text-2xl font-black text-slate-800">{formatF(data.ca_jour)}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">sur {formatF(data.objectif_jour_perso)} estimé</p>
+                            <p className="text-2xl font-black text-slate-800">{formatCurrencyLocal(data.ca_jour)}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{t('vendeur.on_estimated', { value: formatCurrencyLocal(data.objectif_jour_perso) })}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs font-bold text-slate-400">{data.nb_jour} vente{data.nb_jour > 1 ? 's' : ''}</p>
+                            <p className="text-xs font-bold text-slate-400">{t('vendeur.sales_count', { count: data.nb_jour })}</p>
                             {data.panier_jour > 0 && (
-                                <p className="text-[10px] text-slate-300">moy. {formatF(data.panier_jour)}</p>
+                                <p className="text-[10px] text-slate-300">moy. {formatCurrencyLocal(data.panier_jour)}</p>
                             )}
                         </div>
                     </div>
@@ -136,40 +136,40 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
             <div className="grid grid-cols-2 gap-3">
                 {[
                     {
-                        label: 'Cette semaine',
-                        value: formatF(data.ca_sem),
-                        sub: `${data.nb_sem} vente${data.nb_sem > 1 ? 's' : ''}`,
+                        label: t('vendeur.this_week'),
+                        value: formatCurrencyLocal(data.ca_sem),
+                        sub: t('vendeur.sales_count', { count: data.nb_sem }),
                         icon: TrendingUp,
                         color: 'text-sky-600',
                         bg: 'bg-sky-50',
                     },
                     {
-                        label: 'Ce mois',
-                        value: formatF(data.ca_mois),
-                        sub: `${data.nb_mois} vente${data.nb_mois > 1 ? 's' : ''}`,
+                        label: t('vendeur.this_month'),
+                        value: formatCurrencyLocal(data.ca_mois),
+                        sub: t('vendeur.sales_count', { count: data.nb_mois }),
                         icon: BarChart2,
                         color: 'text-purple-600',
                         bg: 'bg-purple-50',
                     },
                     {
-                        label: 'Panier moyen (mois)',
-                        value: formatF(data.panier_mois),
-                        sub: 'par transaction',
+                        label: t('vendeur.avg_basket_month'),
+                        value: formatCurrencyLocal(data.panier_mois),
+                        sub: t('vendeur.per_transaction'),
                         icon: ShoppingCart,
                         color: 'text-amber-600',
                         bg: 'bg-amber-50',
                     },
                     {
-                        label: 'Classement mois',
+                        label: t('vendeur.ranking_month'),
                         value: null,
-                        sub: `sur ${data.total_vendeurs} vendeur${data.total_vendeurs > 1 ? 's' : ''}`,
+                        sub: t('vendeur.on_sellers', { count: data.total_vendeurs }),
                         icon: Trophy,
                         color: 'text-amber-500',
                         bg: 'bg-amber-50',
                         custom: <RangBadge rang={data.rang} total={data.total_vendeurs} />,
                     },
                 ].map((kpi, i) => (
-                    <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4">
+                    <div key={kpi.label} className="bg-white border border-slate-200 rounded-2xl p-4">
                         <div className={`inline-flex p-1.5 rounded-lg ${kpi.bg} mb-2`}>
                             <kpi.icon className={`size-3.5 ${kpi.color}`} />
                         </div>
@@ -185,9 +185,9 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <Zap className="size-3.5 text-indigo-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mes 7 derniers jours</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('vendeur.last_7_days')}</span>
                     </div>
-                    {lastRefresh && <span className="text-[9px] text-slate-300 font-medium">Mis à jour {lastRefresh}</span>}
+                    {lastRefresh && <span className="text-[9px] text-slate-300 font-medium">{t('vendeur.updated_ago', { time: lastRefresh })}</span>}
                 </div>
                 <ResponsiveContainer width="100%" height={100}>
                     <BarChart data={data.sparkline} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -201,14 +201,14 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         />
                         <YAxis hide />
                         <Tooltip
-                            formatter={(value: number) => [formatF(value), 'CA']}
+                            formatter={(value: number) => [formatCurrencyLocal(value), t('vendeur.ca_label')]}
                             labelStyle={{ fontSize: 11, fontWeight: 700 }}
                             contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
                         />
                         <Bar dataKey="ca" radius={[4, 4, 0, 0]}>
                             {data.sparkline.map((entry, i) => (
                                 <Cell
-                                    key={i}
+                                    key={entry.label}
                                     fill={entry.is_today ? '#6366f1' : entry.ca === 0 ? '#f1f5f9' : '#c7d2fe'}
                                 />
                             ))}
@@ -218,7 +218,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                 {/* Labels nb ventes sous le graphe */}
                 <div className="flex justify-around mt-1">
                     {data.sparkline.map((d, i) => (
-                        <div key={i} className="flex flex-col items-center">
+                        <div key={d.label} className="flex flex-col items-center">
                             <span className={`text-[9px] font-black ${d.is_today ? 'text-indigo-600' : 'text-slate-300'}`}>
                                 {d.nb > 0 ? d.nb : ''}
                             </span>
@@ -232,7 +232,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                 <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
                         <Star className="size-3.5 text-amber-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mes top produits (ce mois)</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('vendeur.top_products_month')}</span>
                     </div>
                     <div className="divide-y divide-slate-100">
                         {data.top_produits.map((p, i) => {
@@ -250,8 +250,8 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                                         </div>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className="text-xs font-black text-slate-700">{formatF(p.revenue)}</p>
-                                        <p className="text-[9px] text-slate-400">{p.qty} unité{p.qty > 1 ? 's' : ''}</p>
+                                        <p className="text-xs font-black text-slate-700">{formatCurrencyLocal(p.revenue)}</p>
+                                        <p className="text-[9px] text-slate-400">{t('vendeur.units_count', { count: p.qty })}</p>
                                     </div>
                                 </div>
                             );
@@ -266,13 +266,13 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                     <Clock className="size-4 text-slate-400 shrink-0" />
                     <div className="flex-1 min-w-0">
                         <p className="text-xs font-black text-slate-600">
-                            Dernière vente · <span className="text-indigo-600">{data.derniere_vente.numero}</span>
+                            {t('vendeur.last_sale')} · <span className="text-indigo-600">{data.derniere_vente.numero}</span>
                         </p>
                         <p className="text-[10px] text-slate-400 font-medium">
-                            {formatDistanceToNow(parseISO(data.derniere_vente.date), { addSuffix: true, locale: fr })}
+                            {formatDistanceToNow(parseISO(data.derniere_vente.date), { addSuffix: true, locale: dateLocale })}
                         </p>
                     </div>
-                    <p className="text-sm font-black text-slate-700 shrink-0">{formatF(data.derniere_vente.montant)}</p>
+                    <p className="text-sm font-black text-slate-700 shrink-0">{formatCurrencyLocal(data.derniere_vente.montant)}</p>
                 </div>
             )}
         </div>

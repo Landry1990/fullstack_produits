@@ -2,7 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ProduitModel, User } from '../../types'
 import { ProductSearch, type SearchResult, type PackResult, type DciResult } from '../common/ProductSearch'
-import { useFacturationSearch } from '../../hooks/product-search'
+import { useFacturationSearch } from '../../hooks/product-search/useFacturationSearch'
 import DatamatrixScanField from './DatamatrixScanField'
 import type { ScanStatus } from '../../hooks/useDatamatrixScan'
 

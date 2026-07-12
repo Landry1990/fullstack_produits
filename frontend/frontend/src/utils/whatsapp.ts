@@ -26,7 +26,7 @@ export const generateInventorySummaryText = (inventory: any, pharmacyName: strin
   return text;
 };
 
-export const generateDashboardFlashText = (stats: any, pharmacyName: string): string => {
+const generateDashboardFlashText = (stats: any, pharmacyName: string): string => {
   const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   
   let text = `📊 *RAPPORT FLASH ${pharmacyName.toUpperCase()}*\n`;

@@ -157,8 +157,8 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                                 </tr>
                             </thead>
                             <tbody className="text-[11px]">
-                                {data.tva_breakdown.map((item, idx) => (
-                                    <tr key={idx} className="border-b border-slate-50 last:border-0">
+                                {data.tva_breakdown.map((item) => (
+                                    <tr key={`tva-${item.rate}`} className="border-b border-slate-50 last:border-0">
                                         <td className="py-4 px-2 font-black text-primary bg-primary/5">{item.rate}%</td>
                                         <td className="py-4 px-2 font-medium text-base-content/70">{formatNumber(item.ht, 0)}</td>
                                         <td className="py-4 px-2 font-medium text-base-content/70">{formatNumber(item.tva, 0)}</td>
@@ -191,7 +191,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                             </thead>
                             <tbody className="text-[11px]">
                                 {data.group_breakdown.map((item, idx) => (
-                                    <tr key={idx} className={`border-b border-slate-50 last:border-0 hover:bg-base-200/50 transition-colors ${idx % 2 === 1 ? 'bg-base-200/20' : ''}`}>
+                                    <tr key={item.name} className={`border-b border-slate-50 last:border-0 hover:bg-base-200/50 transition-colors ${idx % 2 === 1 ? 'bg-base-200/20' : ''}`}>
                                         <td className="py-4 px-6 text-left font-black text-base-content">
                                             {item.name}
                                         </td>

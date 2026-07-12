@@ -43,8 +43,8 @@ export const PromisQuickStats: React.FC<PromisQuickStatsProps> = ({ stats }) => 
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {statItems.map((item, index) => (
-                <div key={index} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-slate-300">
+            {statItems.map((item) => (
+                <div key={item.title} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-slate-300">
                     <div className={`size-12 rounded-xl flex items-center justify-center ${item.bgClass} ${item.colorClass}`}>
                         {item.icon}
                     </div>

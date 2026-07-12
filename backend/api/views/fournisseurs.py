@@ -11,6 +11,7 @@ from ..models import Fournisseur, Commande, PaiementFournisseur, CommandeProduit
 from ..serializers import FournisseurSerializer
 from ..pagination import StandardResultsSetPagination
 from ..audit_helpers import log_audit
+from ..sudo_utils import validate_sudo_mode
 
 class FournisseurViewSet(viewsets.ModelViewSet):
     """API endpoint for fournisseurs."""
@@ -62,9 +63,23 @@ class FournisseurViewSet(viewsets.ModelViewSet):
             'message': f'Statut changé en {"actif" if fournisseur.is_active else "inactif"}.'
         })
 
-    def perform_destroy(self, instance):
+    def destroy(self, request, *args, **kwargs):
+        validation_user, error_response = validate_sudo_mode(request)
+        if error_response:
+            return error_response
+        instance = self.get_object()
         instance.is_active = False
         instance.save(update_fields=['is_active'])
+        log_audit(
+            user=validation_user,
+            action=AuditLog.Action.DELETE,
+            model_name='Fournisseur',
+            object_id=instance.id,
+            description=f"Suppression fournisseur: {instance.name}",
+            details={'name': instance.name},
+            request=request
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get'])
     def catalogue(self, request, pk=None):
@@ -486,7 +501,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
             fournisseur=fournisseur,
             status=Commande.Status.CLOTUREE,
             is_active=True
-        )
+        ).exclude(paiements_multiples__isnull=False)
 
         if start_date:
             try:
@@ -658,6 +673,10 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request):
         """Supprime plusieurs fournisseurs par lot."""
+        validation_user, error_response = validate_sudo_mode(request)
+        if error_response:
+            return error_response
+
         ids = request.data.get('ids', [])
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=400)
@@ -670,7 +689,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                 fournisseurs.update(is_active=False)
                 
                 log_audit(
-                    user=request.user,
+                    user=validation_user,
                     action=AuditLog.Action.DELETE,
                     model_name='Fournisseur',
                     object_id=0,

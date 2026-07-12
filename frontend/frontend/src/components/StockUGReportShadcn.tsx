@@ -305,8 +305,8 @@ export default function StockUGReportShadcn() {
 
         {/* Global KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {kpiCards.map((kpi, i) => (
-            <Card key={i} variant="default" className="flex items-center gap-4">
+          {kpiCards.map((kpi) => (
+            <Card key={kpi.title} variant="default" className="flex items-center gap-4">
               <div className={`size-12 rounded-xl ${kpi.bg} ${kpi.color} flex items-center justify-center shrink-0`}>
                 <kpi.icon className="size-6" />
               </div>

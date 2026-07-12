@@ -103,6 +103,14 @@ const getUrgencyClass = (valeur: number) => {
   return 'border-emerald-400 bg-emerald-50'
 }
 
+const isExpiredByEndOfMonth = (dateString: string) => {
+  if (!dateString) return false
+  const expiryEom = getExpiryEndOfMonthISO(dateString)
+  if (!expiryEom) return false
+  const todayStr = toLocalISODate(new Date())
+  return expiryEom < todayStr
+}
+
 export default function Perimes() {
   const { t } = useTranslation(['stock', 'common'])
   const [lots, setLots] = useState<StockLot[]>([])
@@ -128,13 +136,6 @@ export default function Perimes() {
   const [processing, setProcessing] = useState(false)
 
 
-  const isExpiredByEndOfMonth = (dateString: string) => {
-    if (!dateString) return false
-    const expiryEom = getExpiryEndOfMonthISO(dateString)
-    if (!expiryEom) return false
-    const todayStr = toLocalISODate(new Date())
-    return expiryEom < todayStr
-  }
 
   useEffect(() => {
     fetchStats()
@@ -358,10 +359,6 @@ export default function Perimes() {
   const handleExportExcel = () => {
     const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
     window.open(`${baseUrl}/api/stock-adjustments/export_excel/?reason_type=PERIME&created_at__date__gte=${dateDebut}&created_at__date__lte=${dateFin}`, '_blank')
-  }
-
-  const isExpired = (dateString: string) => {
-    return isExpiredByEndOfMonth(dateString)
   }
 
   return (
@@ -663,7 +660,7 @@ export default function Perimes() {
                           {lot.lot || '-'}
                         </td>
                         <td className="py-2.5 px-4 text-center">
-                          <Badge variant="outline" className={cn("gap-1.5", lot.date_expiration && isExpired(lot.date_expiration) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-200')}>
+                          <Badge variant="outline" className={cn("gap-1.5", lot.date_expiration && isExpiredByEndOfMonth(lot.date_expiration) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-200')}>
                             <Calendar className="size-3" />
                             {formatDate(lot.date_expiration || '')}
                           </Badge>

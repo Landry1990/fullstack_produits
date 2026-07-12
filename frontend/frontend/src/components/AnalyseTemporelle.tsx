@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, Legend
-} from 'recharts';
+import { useRecharts } from '../hooks/useRecharts';
 import { usePeakHours, useDailyComparison, useSeasonality } from '../hooks/useTemporalAnalysis';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 
 export default function AnalyseTemporelle() {
   const { t } = useTranslation(['stock', 'common']);
   const [activeTab, setActiveTab] = useState<'hours' | 'days' | 'seasons'>('hours');
-  
+
   // State for filters
   const [hoursDays, setHoursDays] = useState(30);
   const [daysWeeks, setDaysWeeks] = useState(12);
@@ -20,6 +17,10 @@ export default function AnalyseTemporelle() {
   const { data: peakHoursData, isLoading: loadingHours } = usePeakHours(hoursDays);
   const { data: dailyData, isLoading: loadingDays } = useDailyComparison(daysWeeks);
   const { data: seasonalityData, isLoading: loadingSeasons } = useSeasonality(seasonsMonths);
+
+  const Recharts = useRecharts();
+  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line, Legend } = Recharts;
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -38,6 +39,7 @@ export default function AnalyseTemporelle() {
         {/* Tabs */}
         <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
           <button
+            type="button"
             className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'hours' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
             }`}
@@ -46,6 +48,7 @@ export default function AnalyseTemporelle() {
             {t('stock:temporal_analysis.peak_hours')}
           </button>
           <button
+            type="button"
             className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'days' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
             }`}
@@ -54,6 +57,7 @@ export default function AnalyseTemporelle() {
             {t('stock:temporal_analysis.daily_comparison')}
           </button>
           <button
+            type="button"
             className={`h-8 px-4 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'seasons' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-200'
             }`}

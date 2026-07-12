@@ -525,6 +525,10 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                             )
                             lots_to_create.append(lot)
                         
+                        # Remplir automatiquement le fournisseur principal du produit s'il est vide
+                        if not produit.fournisseur and commande.fournisseur:
+                            produit.fournisseur = commande.fournisseur
+                        
                         # Calculer le nouveau PMP et stock
                         if produit.id not in produits_dict:
                             old_stock = Decimal(produit.stock)
@@ -621,6 +625,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                         if not produit:
                             continue
                         total_qty = item.quantity + item.unites_gratuites
+                        fournisseur_name = commande.fournisseur.name if commande.fournisseur else (commande.fournisseur_nom or 'N/A')
                         mouvements_to_create.append(MouvementStock(
                             produit=produit,
                             type_mouvement=MouvementStock.TypeMouvement.ENTREE,
@@ -628,7 +633,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                             stock_apres=produit.total_stock,
                             user=request.user,
                             commande=commande,
-                            description=f"Réception commande #{commande.id} - Lot: {item.lot or 'N/A'}"
+                            description=f"Réception Fournisseur: {fournisseur_name} - Lot: {item.lot or 'N/A'}"
                         ))
                     
                     if mouvements_to_create:
@@ -779,7 +784,6 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id'))
         product_map = {p.id: p for p in locked_products}
         
-        produits_to_update = []
         produits_dict = {}
         
         # Phase 1: Calculer les retraits de stock
@@ -799,38 +803,11 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                     'qty_to_remove': Decimal(total_qty),
                     'items': [item]
                 }
-                produits_to_update.append(produit)
             else:
                 produits_dict[produit.id]['qty_to_remove'] += Decimal(total_qty)
                 produits_dict[produit.id]['items'].append(item)
         
-        # Phase 2: Mettre à jour les stocks et créer les mouvements
-        mouvements_to_create = []
-        for pid, data in produits_dict.items():
-            produit = data['produit']
-            qty_to_remove = data['qty_to_remove']
-            
-            old_stock = Decimal(produit.stock)
-            new_stock = old_stock - qty_to_remove
-            
-            # Éviter stock négatif
-            if new_stock < 0:
-                new_stock = Decimal(0)
-            
-            produit.stock = new_stock
-            
-            # Créer un MouvementStock pour traçabilité
-            mouvements_to_create.append(MouvementStock(
-                produit=produit,
-                type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
-                quantite=-int(qty_to_remove),  # Négatif car on retire
-                stock_apres=int(produit.total_stock),
-                user=request.user,
-                commande=commande,
-                description=f"Annulation réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''}"
-            ))
-        
-        # Phase 3: Vérifier l'absence de ventes sur ces lots avant suppression
+        # Phase 2: Vérifier l'absence de ventes sur ces lots avant suppression
         lots_to_delete = StockLot.objects.filter(commande_produit__commande=commande)
         
         # Vérifier si un de ces lots est déjà utilisé dans une vente (via allocation)
@@ -845,15 +822,38 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         deleted_lots_count = lots_to_delete.count()
         lots_to_delete.delete()
         
-        # Phase 4: Bulk update des produits
-        if produits_to_update:
-            Produit.objects.bulk_update(produits_to_update, ['stock'], batch_size=100)
+        # Phase 3: Mettre à jour les stocks (recalcul depuis les lots pour les produits en gestion par lots)
+        mouvements_to_create = []
+        for pid, data in produits_dict.items():
+            produit = data['produit']
+            qty_to_remove = data['qty_to_remove']
+            
+            if produit.use_lot_management:
+                produit.calculate_stock_from_lots()
+            else:
+                old_stock = Decimal(produit.stock)
+                new_stock = old_stock - qty_to_remove
+                if new_stock < 0:
+                    new_stock = Decimal(0)
+                produit.stock = new_stock
+                produit.save(update_fields=['stock'])
+            
+            # Créer un MouvementStock pour traçabilité
+            mouvements_to_create.append(MouvementStock(
+                produit=produit,
+                type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+                quantite=-int(qty_to_remove),  # Négatif car on retire
+                stock_apres=int(produit.total_stock),
+                user=request.user,
+                commande=commande,
+                description=f"Annulation réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''}"
+            ))
         
-        # Phase 5: Créer les mouvements en bulk
+        # Phase 4: Créer les mouvements en bulk
         if mouvements_to_create:
             MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
         
-        # Phase 6: Mettre à jour le statut de la commande
+        # Phase 5: Mettre à jour le statut de la commande
         commande.status = Commande.Status.EN_PREPARATION
         commande.date_cloture = None
         commande.save(update_fields=['status', 'date_cloture'])

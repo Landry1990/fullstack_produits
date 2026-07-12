@@ -11,7 +11,10 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
-import { inventaireService, Inventaire, authService, User } from '../services';
+import { inventaireService } from '../services/inventaire';
+import type { Inventaire } from '../services/inventaire';
+import { authService } from '../services/auth';
+import type { User } from '../services/auth';
 
 interface HomeScreenProps {
   onSelectInventaire: (inventaire: Inventaire) => void;

@@ -10,7 +10,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export default api;
+// api instance (used internally by named exports below)
 
 // ─── Produits ─────────────────────────────────────────────
 export const searchProducts = async (query: string) => {

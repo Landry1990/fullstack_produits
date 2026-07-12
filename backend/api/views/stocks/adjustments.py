@@ -2,7 +2,7 @@ from rest_framework import viewsets, status, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import F, Sum, DecimalField, Count, Value, ExpressionWrapper
+from django.db.models import F, Sum, DecimalField, Count, Value, ExpressionWrapper, Q
 from django.db.models.functions import Coalesce, Abs
 from django_filters.rest_framework import DjangoFilterBackend
 import io
@@ -41,25 +41,20 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
     def stats(self, request):
         """
         Calculates statistics based on current filters.
+        Retourne total_count, positive_sum et negative_sum pour les cartes du frontend.
         """
         queryset = self.filter_queryset(self.get_queryset())
         
-        # On calcule la valorisation via annotation pour pouvoir faire un Sum
-        queryset = queryset.annotate(
-            valorisation_calcul=ExpressionWrapper(
-                Abs(F('quantity_change')) * Coalesce(F('stock_lot__price_cost'), Value(0, output_field=DecimalField())),
-                output_field=DecimalField()
-            )
-        )
-
         stats = queryset.aggregate(
             total_count=Count('id'),
-            total_valorisation=Sum('valorisation_calcul')
+            positive_sum=Sum('quantity_change', filter=Q(quantity_change__gt=0)),
+            negative_sum=Sum('quantity_change', filter=Q(quantity_change__lt=0))
         )
         
         return Response({
-            'count': stats['total_count'] or 0,
-            'total_valorisation': stats['total_valorisation'] or 0
+            'total_count': stats['total_count'] or 0,
+            'positive_sum': stats['positive_sum'] or 0,
+            'negative_sum': stats['negative_sum'] or 0
         })
 
     @action(detail=False, methods=['get'])

@@ -321,7 +321,8 @@ export default function Clients() {
     const confirmed = window.confirm(t('clients:modals.bulk_delete_confirm', { count: selectedIds.length }));
 
     if (confirmed) {
-        setClients(prev => prev.filter(c => !selectedIds.includes(c.id)));
+        const selectedSet = new Set(selectedIds);
+        setClients(prev => prev.filter(c => !selectedSet.has(c.id)));
         setTotalCount(prev => prev - selectedIds.length);
 
         try {
@@ -411,14 +412,16 @@ export default function Clients() {
             </div>
           ) : (
             <ul className="p-2 space-y-0.5">
-               {clients.map(client => (
+               {clients.map(client => {
+                 const selectedSet = new Set(selectedIds);
+                 return (
                  <li key={client.id}>
                     <div className={cn("flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer", selectedClient?.id === client.id ? 'bg-emerald-50' : 'hover:bg-slate-100')} onClick={() => handleSelectClient(client)}>
                        <input
                          type="checkbox"
                          className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                         checked={selectedIds.includes(client.id)}
-                         onChange={() => setSelectedIds(prev => prev.includes(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id])}
+                         checked={selectedSet.has(client.id)}
+                         onChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id]; })}
                          onClick={(e) => e.stopPropagation()}
                        />
                        <div className="flex-1 min-w-0">
@@ -440,7 +443,8 @@ export default function Clients() {
                        </div>
                     </div>
                  </li>
-               ))}
+                 );
+               })}
             </ul>
           )}
         </div>
@@ -642,7 +646,7 @@ export default function Clients() {
                              <tbody className="bg-base-100 divide-y divide-base-200">
                                 {selectedClient.ayants_droit && selectedClient.ayants_droit.length > 0 ? (
                                   selectedClient.ayants_droit.map((ad: AyantDroit, idx: number) => (
-                                    <tr key={idx} className="hover:bg-base-200 transition-colors">
+                                    <tr key={ad.matricule || ad.nom} className="hover:bg-base-200 transition-colors">
                                        <td className="px-6 py-3 text-sm font-medium text-base-content">{ad.nom}</td>
                                        <td className="px-6 py-3 text-sm text-base-content/60">{ad.societe || '—'}</td>
                                        <td className="px-6 py-3 text-sm font-mono text-base-content/60 text-right">{ad.matricule}</td>

@@ -4,7 +4,7 @@ import {
   ActivityIndicator, StyleSheet,
 } from 'react-native';
 import type { Product, StockLot } from '../types';
-import { getLots } from '../services';
+import { getLots } from '../services/api';
 
 interface Props {
   visible: boolean;

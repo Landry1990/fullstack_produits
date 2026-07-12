@@ -7,6 +7,7 @@ from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, Express
 from django.db.models.functions import TruncDay, TruncMonth, Coalesce, TruncDate
 from django.utils import timezone
 from datetime import datetime, timedelta
+from ..rapports.tz_utils import parse_api_datetime
 from decimal import Decimal
 
 from ...models import Facture, Commande, Produit, Client, StockLot, Caisse, ObjectifCommercial, FactureProduit, FactureProduitAllocation
@@ -28,24 +29,14 @@ class StatistiquesViewSet(viewsets.ViewSet):
         factures_q = Q(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
     
         if start_date:
-            try:
-                d_debut = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-                if timezone.is_naive(d_debut): d_debut = timezone.make_aware(d_debut)
+            d_debut = parse_api_datetime(start_date)
+            if d_debut:
                 factures_q &= Q(date__gte=d_debut)
-            except ValueError:
-                factures_q &= Q(date__gte=start_date)
-    
+
         if end_date:
-            try:
-                d_fin = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-                if timezone.is_naive(d_fin): d_fin = timezone.make_aware(d_fin)
-                if d_fin.hour == 0 and d_fin.minute == 0 and d_fin.second == 0:
-                    d_fin = d_fin + timedelta(days=1)
-                    factures_q &= Q(date__lt=d_fin)
-                else:
-                    factures_q &= Q(date__lte=d_fin)
-            except ValueError:
-                factures_q &= Q(date__lte=end_date)
+            d_fin = parse_api_datetime(end_date, end_of_day=True)
+            if d_fin:
+                factures_q &= Q(date__lte=d_fin)
     
         # 1. Identifier les IDs des factures concernées
         facture_ids = Facture.objects.filter(factures_q).values_list('id', flat=True)
@@ -284,17 +275,51 @@ class StatistiquesViewSet(viewsets.ViewSet):
         immo_score = max(0.0, (1 - immo_ratio)) * 100
         score_e = immo_score * 0.10  # max 10 pts
     
+        # ── Top 5 Pénalités ──────────────────────────────────────────────────────
+        # Réutilise rupture_qs et dormant_qs déjà calculés pour éviter un appel API supplémentaire
+        penalties = []
+        for p in rupture_qs.filter(rotation_moyenne__gt=1):
+            penalties.append({
+                'id': p.id,
+                'name': p.name or '',
+                'cip': p.cip1 or '',
+                'quadrant': 'HEMORRAGIE',
+                'days_since_sale': 0,
+                'stock_value': 0.0,
+                'impact_pts': -2.5,
+                'rotation': round(float(p.rotation_moyenne or 0), 1),
+                'days_until_stockout': 0,
+            })
+        for p in dormant_qs.filter(rotation_moyenne__gt=0):
+            last_sale = p.dernier_vente
+            days_since_sale = max(0, (today - last_sale).days) if last_sale else dormant_days
+            stock_value = float(p.stock) * float(p.pmp or 0)
+            impact_pts = round(-1.8 * stock_value / 100000, 1)
+            penalties.append({
+                'id': p.id,
+                'name': p.name or '',
+                'cip': p.cip1 or '',
+                'quadrant': 'SOMNIFERE',
+                'days_since_sale': days_since_sale,
+                'stock_value': stock_value,
+                'impact_pts': impact_pts,
+                'rotation': round(float(p.rotation_moyenne or 0), 1),
+                'days_until_stockout': None,
+            })
+        penalties.sort(key=lambda x: x['impact_pts'])
+        top_penalties = penalties[:5]
+
         # ── Score final ──────────────────────────────────────────────────────────
         health_score_raw = score_a + score_b + score_c + score_d + score_e
         health_score = max(0.0, min(100.0, health_score_raw))
-    
+
         # Pour la compatibilité frontend (rotation_rate = fluidity_rate)
         rotation_rate = fluidity_rate
-    
+
         # Poids (pour l'affichage UI — on garde les settings mais la formule est fixe maintenant)
         avail_weight = Decimal(str(ps.availability_weight)) / Decimal('100.0') if ps else Decimal('0.6')
         rot_weight = Decimal(str(ps.rotation_weight)) / Decimal('100.0') if ps else Decimal('0.4')
-    
+
         return Response({
             'health_score': round(float(health_score), 1),
             'availability_rate': round(float(availability_rate), 1),
@@ -320,11 +345,13 @@ class StatistiquesViewSet(viewsets.ViewSet):
             },
             'critical_alerts': {
                 'soon_out_of_stock_count': critical_soon_count,
-                'soon_out_of_stock_value': float(critical_soon_value)
+                'soon_out_of_stock_value': float(critical_soon_value),
+                'rupture_count': len([p for p in penalties if p['quadrant'] == 'HEMORRAGIE']),
             },
+            'top_penalties': top_penalties,
             'total_stock_value': float(total_stock_value)
         })
-    
+
     @action(detail=False, methods=['get'])
     def vendeur_stats(self, request):
         """

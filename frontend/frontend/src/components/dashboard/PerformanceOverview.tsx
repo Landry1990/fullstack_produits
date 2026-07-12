@@ -12,18 +12,7 @@ import {
   HandCoins
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  LineChart,
-  Line,
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  Legend
-} from 'recharts';
+import { useRecharts } from '../../hooks/useRecharts';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -37,16 +26,19 @@ interface PerformanceOverviewProps {
   formatCurrencyLocal: (val: number) => string;
 }
 
-export default function PerformanceOverview({ 
-  stats, 
-  revenueChart, 
-  hourlyTraffic, 
+export default function PerformanceOverview({
+  stats,
+  revenueChart,
+  hourlyTraffic,
   reapproStats,
   supplierDebts,
-  t, 
-  formatCurrencyLocal 
+  t,
+  formatCurrencyLocal
 }: PerformanceOverviewProps) {
   const navigate = useNavigate();
+  const Recharts = useRecharts();
+  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  const { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = Recharts;
   
   const chartData = revenueChart && revenueChart.labels ? revenueChart.labels.map((label: string, index: number) => ({
     jour: label,
@@ -87,9 +79,9 @@ export default function PerformanceOverview({
       link: '/app/historique-ventes',
     },
     ...(stats.margin_today !== undefined ? [{
-      title: t('dashboard.stats.margin_today', { defaultValue: 'Marge brute (jour)' }),
+      title: t('stats.margin_today'),
       value: formatCurrencyLocal(stats.margin_today),
-      sub: `${((stats.margin_today / (stats.revenue?.value || 1)) * 100).toFixed(1)}% ${t('dashboard.stats.margin_rate', { defaultValue: 'taux de marge' })}`,
+      sub: `${((stats.margin_today / (stats.revenue?.value || 1)) * 100).toFixed(1)}% ${t('stats.margin_rate')}`,
       icon: Target, accent: '#10b981', isPositive: true,
     }] : []),
     {
@@ -157,7 +149,7 @@ export default function PerformanceOverview({
           );
 
           return (
-            <div key={i} className={`bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
+            <div key={card.title} className={`bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all ${card.link ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]' : ''}`}>
               {card.link ? <Link to={card.link} className="block h-full">{inner}</Link> : inner}
             </div>
           );
@@ -216,7 +208,7 @@ export default function PerformanceOverview({
                   <YAxis yAxisId="ca" tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => formatCurrencyLocal(v)} width={80} />
                   <YAxis yAxisId="ventes" orientation="right" tick={{ fontSize: 10, fontWeight: 700, fill: '#f59e0b' }} axisLine={false} tickLine={false} width={30} />
                   <Tooltip
-                    formatter={(v: number, name: string) => name === 'montant' ? [formatCurrencyLocal(v), 'CA'] : [v, 'Ventes']}
+                    formatter={(v: number, name: string) => name === 'montant' ? [formatCurrencyLocal(v), t('charts.ca_label')] : [v, t('charts.sales_label')]}
                     contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,.2)', padding: '10px 14px' }}
                     itemStyle={{ fontSize: 12, fontWeight: 700, color: '#334155' }}
                     labelStyle={{ fontSize: 10, fontWeight: 900, color: '#94a3b8', marginBottom: 4 }}
@@ -226,7 +218,7 @@ export default function PerformanceOverview({
                     yAxisId="ca"
                     type="monotone"
                     dataKey="montant"
-                    name="CA"
+                    name={t('charts.ca_label')}
                     stroke="url(#revenueGradient)"
                     strokeWidth={3}
                     dot={{ r: 5, fill: '#10b981', strokeWidth: 2, stroke: '#ffffff' }}
@@ -237,7 +229,7 @@ export default function PerformanceOverview({
                     yAxisId="ventes"
                     type="monotone"
                     dataKey="nb_ventes"
-                    name="Ventes"
+                    name={t('charts.sales_label')}
                     stroke="#f59e0b"
                     strokeWidth={2}
                     strokeDasharray="5 3"
@@ -284,8 +276,8 @@ export default function PerformanceOverview({
                     itemStyle={{ fontSize: 12, fontWeight: 700, color: '#334155' }}
                     labelStyle={{ fontSize: 10, fontWeight: 900, color: '#94a3b8', marginBottom: 4 }}
                   />
-                  <Area type="monotone" dataKey="sales_count" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} fill="#94a3b8" name={t('dashboard.charts.avg_sales_label', { defaultValue: 'Moy. 30j' })} animationDuration={1200} />
-                  <Area type="monotone" dataKey="today_sales_count" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorTraffic)" name={t('dashboard.charts.today_sales_label', { defaultValue: "Aujourd'hui" })} animationDuration={1200} />
+                  <Area type="monotone" dataKey="sales_count" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} fill="#94a3b8" name={t('charts.avg_sales_label')} animationDuration={1200} />
+                  <Area type="monotone" dataKey="today_sales_count" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorTraffic)" name={t('charts.today_sales_label')} animationDuration={1200} />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (

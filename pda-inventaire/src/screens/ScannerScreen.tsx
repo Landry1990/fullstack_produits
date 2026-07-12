@@ -31,15 +31,10 @@ import {
   Keyboard,
 } from 'react-native';
 import { Audio } from 'expo-av'; // npm install expo-av
-import { 
-  Inventaire, 
-  LigneInventaire, 
-  Produit,
-  inventaireService, 
-  produitService,
-  exportService
-} from '../services';
-import { useOfflineSync } from '../hooks';
+import type { Inventaire, LigneInventaire, Produit } from '../services/inventaire';
+import { inventaireService, produitService } from '../services/inventaire';
+import { exportService } from '../services/export';
+import { useOfflineSync } from '../hooks/useOfflineSync';
 
 interface ScannerScreenProps {
   inventaire: Inventaire;
@@ -287,7 +282,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
         return !isNaN(q) && q > 0;
       });
 
-      for (const [lotId, qtyStr] of existingLotEntries) {
+      await Promise.all(existingLotEntries.map(async ([lotId, qtyStr]) => {
         const qty = parseInt(qtyStr, 10);
         const lot = scannedProduct.stock_lots?.find(l => String(l.id) === lotId);
         
@@ -302,8 +297,8 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
           lot?.lot,
           lot?.date_expiration || undefined
         );
-        savedCount++;
-      }
+      }));
+      savedCount = existingLotEntries.length;
 
       // 2. Enregistrer le nouveau lot si renseigné
       const newQty = parseInt(quantity, 10);

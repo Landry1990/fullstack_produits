@@ -123,7 +123,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
               </h2>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                 <p className="text-sm text-base-content/50 font-mono font-medium">
-                  CIP: <span className="text-base-content">{selectedProduit.cip1 || '-'}</span>
+                  {t('products:detail.cip')}: <span className="text-base-content">{selectedProduit.cip1 || '-'}</span>
                 </p>
                 {selectedProduit.cip2 && (
                   <p className="text-sm text-base-content/50 font-mono font-medium">

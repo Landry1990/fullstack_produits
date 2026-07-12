@@ -145,6 +145,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                     if not produit:
                         continue
 
+                    used_lots = []
                     # Déstockage du lot si applicable
                     if ligne.stock_lot_id:
                         lot = locked_lots.get(ligne.stock_lot_id)
@@ -156,10 +157,33 @@ class AvoirViewSet(viewsets.ModelViewSet):
                                 f'insuffisant pour décharger {ligne.quantity} unité(s).'
                             )
                         lot.quantity_remaining -= ligne.quantity
+                        if lot.quantity_free_remaining > 0:
+                            lot.quantity_free_remaining -= min(ligne.quantity, lot.quantity_free_remaining)
                         lot.save()
+                        used_lots.append(lot)
+                    elif produit.use_lot_management:
+                        # Auto-allocation FEFO si aucun lot spécifié
+                        quantity_to_allocate = ligne.quantity
+                        available_lots = StockLot.objects.filter(
+                            produit=produit, quantity_remaining__gt=0
+                        ).order_by('date_expiration', 'date_reception')
+                        for lot in available_lots:
+                            if quantity_to_allocate <= 0:
+                                break
+                            qty_from_lot = min(lot.quantity_remaining, quantity_to_allocate)
+                            lot.quantity_remaining -= qty_from_lot
+                            if lot.quantity_free_remaining > 0:
+                                lot.quantity_free_remaining -= min(qty_from_lot, lot.quantity_free_remaining)
+                            lot.save()
+                            used_lots.append(lot)
+                            quantity_to_allocate -= qty_from_lot
+                        if quantity_to_allocate > 0:
+                            raise ValueError(
+                                f'{produit.name} : stock insuffisant pour décharger {ligne.quantity} unité(s).'
+                            )
 
                     # Mise à jour du stock produit
-                    if produit.use_lot_management and ligne.stock_lot_id:
+                    if produit.use_lot_management:
                         produit.calculate_stock_from_lots()
                     else:
                         produit.stock = F('stock') - ligne.quantity
@@ -167,7 +191,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
 
                     # Mouvement de stock (AVOIR = sortie négative)
                     motif_info = f" - {ligne.motif}" if ligne.motif else ""
-                    lot_info = f" - Lot: {ligne.stock_lot.lot}" if ligne.stock_lot else ""
+                    lot_info = f" - Lot: {', '.join(l.lot for l in used_lots if l.lot)}" if used_lots else ""
                     MouvementStock.objects.create(
                         produit=produit,
                         type_mouvement=MouvementStock.TypeMouvement.AVOIR,

@@ -466,7 +466,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
                 {[...(localProduits || [])]
 
-                  .map((p, originalIndex) => {
+                  .flatMap((p, originalIndex) => {
 
                     const produitData = (typeof p.produit === 'object') ? p.produit : produitsList.find(prod => prod.id === p.produit);
 
@@ -474,17 +474,13 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
                     const cip = (p as any).produit_cip || produitData?.cip1 || '-';
 
-                    return { ...p, produitName, cip, originalIndex };
+                    const enriched = { ...p, produitName, cip, originalIndex };
 
-                  })
-
-                  .filter(p => {
-
-                    if (!searchDetailQuery) return true;
+                    if (!searchDetailQuery) return [enriched];
 
                     const q = searchDetailQuery.toLowerCase();
 
-                    return p.produitName.toLowerCase().includes(q) || p.cip.toLowerCase().includes(q);
+                    return (enriched.produitName.toLowerCase().includes(q) || enriched.cip.toLowerCase().includes(q)) ? [enriched] : [];
 
                   })
 

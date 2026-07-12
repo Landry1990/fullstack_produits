@@ -3,7 +3,7 @@
  * Handles diverse formats (Django REST Framework, standard HTTP errors, etc.)
  */
 
-export interface StartErrorExtraction {
+interface StartErrorExtraction {
     title?: string;
     message: string;
 }

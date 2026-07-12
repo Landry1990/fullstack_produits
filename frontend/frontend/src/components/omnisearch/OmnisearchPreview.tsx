@@ -237,8 +237,8 @@ function FacturePreview({ data, t }: { data?: Facture; t: any }) {
               Produits ({(data as any).produits_details.length})
             </h4>
             <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
-              {(data as any).produits_details.map((p: any, idx: number) => (
-                <div key={idx} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
+              {(data as any).produits_details.map((p: any) => (
+                <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{Number(p.prix).toLocaleString()} F / unité</span>
@@ -299,8 +299,8 @@ function CommandePreview({ data, t }: { data?: Commande; t: any }) {
               Articles ({(data as any).produits_details.length})
             </h4>
             <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
-              {(data as any).produits_details.map((p: any, idx: number) => (
-                <div key={idx} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
+              {(data as any).produits_details.map((p: any) => (
+                <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{Number(p.prix).toLocaleString()} F / unité</span>

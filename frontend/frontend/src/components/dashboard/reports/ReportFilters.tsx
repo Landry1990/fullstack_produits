@@ -102,6 +102,16 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
     const currentConditions = getSafeConditions();
 
+    const sourceForParams = params.source || 'ventes';
+    const filteredParams = selectedQuery.params.filter(param => {
+                if (param.key === 'source') return true;
+                if (sourceForParams === 'ventes') return !['fournisseur_id'].includes(param.key);
+                if (sourceForParams === 'achats') return !['vendeur_id', 'client_id'].includes(param.key);
+                if (sourceForParams === 'stock') return !['vendeur_id', 'client_id'].includes(param.key);
+                if (sourceForParams === 'produits') return !['date_debut', 'date_fin', 'vendeur_id', 'client_id', 'fournisseur_id'].includes(param.key);
+                return true;
+            });
+
     return (
         <div className="flex flex-col gap-6">
             {/* Presets Toolbar */}
@@ -110,22 +120,22 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                     <History className="size-3" />
                     {t('reports.my_configs', { defaultValue: 'Mes Configurations :' })}
                 </div>
-                {presetList.filter(p => p.queryId === selectedQuery.id).map(preset => (
-                    <div key={preset.id} className="group flex items-center gap-1">
+                {presetList.flatMap(p => p.queryId === selectedQuery.id ? [(
+                    <div key={p.id} className="group flex items-center gap-1">
                         <button
-                            onClick={() => presets.apply(preset)}
+                            onClick={() => presets.apply(p)}
                             className="btn btn-xs rounded-full bg-base-200 hover:bg-primary hover:text-white border-none transition-all px-3"
                         >
-                            {preset.name}
+                            {p.name}
                         </button>
                         <button 
-                            onClick={() => presets.delete(preset.id)}
+                            onClick={() => presets.delete(p.id)}
                             className="btn btn-xs btn-circle btn-ghost opacity-0 group-hover:opacity-100 text-error transition-all"
                         >
                             <Trash2 className="size-3" />
                         </button>
                     </div>
-                ))}
+                )] : [])}
                 <button 
                     onClick={() => {
                         const name = prompt(t('reports.preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' }));
@@ -139,24 +149,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             </div>
 
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6 sm:items-end w-full">
-            {selectedQuery.params.filter(param => {
-                const source = params.source || 'ventes';
-                if (param.key === 'source') return true;
-                
-                if (source === 'ventes') {
-                    return !['fournisseur_id'].includes(param.key);
-                }
-                if (source === 'achats') {
-                    return !['vendeur_id', 'client_id'].includes(param.key);
-                }
-                if (source === 'stock') {
-                    return !['vendeur_id', 'client_id'].includes(param.key);
-                }
-                if (source === 'produits') {
-                    return !['date_debut', 'date_fin', 'vendeur_id', 'client_id', 'fournisseur_id'].includes(param.key);
-                }
-                return true;
-            }).map(param => (
+            {filteredParams.map(param => (
                 <div key={param.key} className="form-control w-full sm:w-auto sm:min-w-[200px] min-w-0">
                     <label className="label py-1">
                         <span className="label-text text-[10px] font-bold uppercase tracking-widest text-base-content/50">
@@ -493,7 +486,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                 const showValueInput = !['isnull', 'notnull'].includes(cond.operator);
                                                 
                                                 return (
-                                                    <div key={idx} className="flex flex-wrap items-center gap-2 p-3 bg-base-200/50 rounded-2xl border border-base-200 animate-in zoom-in-95 duration-200">
+                                                    <div key={`cond-${cond.field}-${cond.operator}`} className="flex flex-wrap items-center gap-2 p-3 bg-base-200/50 rounded-2xl border border-base-200 animate-in zoom-in-95 duration-200">
                                                         <select 
                                                             className="select select-sm select-bordered rounded-xl flex-1 min-w-[140px] font-bold text-[11px] uppercase bg-base-100"
                                                             value={cond.field}
@@ -592,8 +585,9 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                             {t('dynamic_constructor.table_composition')}
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-2">
-                                            {param.options.filter(opt => {
+                                            {(() => {
                                                 const source = params.source || 'ventes';
+                                                const filteredOptions = param.options.filter(opt => {
                                                 if (source === 'ventes') {
                                                     return !['fournisseur', 'lot'].includes(opt.value);
                                                 }
@@ -607,7 +601,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                     return !['date', 'facture', 'client', 'vendeur', 'lot', 'marge'].includes(opt.value);
                                                 }
                                                 return true;
-                                            }).map(opt => {
+                                            });
+                                            return filteredOptions.map(opt => {
                                                 const currentFields = (params[param.key] || '').split(',').filter(Boolean);
                                                 const isChecked = currentFields.includes(opt.value);
                                                 
@@ -632,7 +627,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         </span>
                                                     </label>
                                                 );
-                                            })}
+                                            });
+                                            })()}
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-base-200 flex justify-between items-center">
                                             <div className="text-[9px] font-bold uppercase text-base-content/30 italic">

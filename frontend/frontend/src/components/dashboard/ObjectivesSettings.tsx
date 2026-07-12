@@ -5,6 +5,7 @@ import api from '../../services/api';
 import { normalizeNumberInput } from '../../utils/formatters';
 import { X, Save, TrendingUp, Target, Hand } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../../utils/formatters';
 
 interface ObjectivesConfig {
     id?: number;
@@ -33,6 +34,9 @@ const updateConfig = async (data: ObjectivesConfig): Promise<ObjectivesConfig> =
 
 export function ObjectivesSettings({ isOpen, onClose }: Props) {
     const { t } = useTranslation(['dashboard', 'common']);
+    const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+    const currencySymbol = t('common:currency_symbol', { defaultValue: 'F' });
+    const formatCurrencyLocal = (val: number) => formatCurrency(val, currentLocale, currencySymbol);
     const queryClient = useQueryClient();
     const [config, setConfig] = useState<ObjectivesConfig>({
         mode: 'MANUEL',
@@ -171,7 +175,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                         {/* Objectif de marge mensuelle */}
                                         <div className="form-control">
                                             <label className="label">
-                                                <span className="label-text font-bold">Objectif de marge brute mensuelle</span>
+                                                <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.monthly_margin_label')}</span>
                                             </label>
                                             <div className="join">
                                                 <input 
@@ -183,7 +187,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                 <span className="btn join-item pointer-events-none bg-base-200 border-base-200">{t('common:currency_symbol', 'F')}</span>
                                             </div>
                                             <label className="label">
-                                                <span className="label-text-alt text-base-content/60">Le CA nécessaire sera calculé automatiquement selon le coefficient ci-dessous</span>
+                                                <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.fixed.ca_auto_calculated')}</span>
                                             </label>
                                         </div>
 
@@ -191,7 +195,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                         <div className="grid sm:grid-cols-2 gap-6">
                                             <div className="form-control">
                                                 <label className="label">
-                                                    <span className="label-text font-bold">Coefficient multiplicateur</span>
+                                                    <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.coefficient_label')}</span>
                                                 </label>
                                                 <div className="join">
                                                     <input 
@@ -206,7 +210,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                     <span className="btn join-item pointer-events-none bg-base-200 border-base-200">×</span>
                                                 </div>
                                                 <label className="label">
-                                                    <span className="label-text-alt text-base-content/60">Prix de vente = coût × coefficient (défaut 1.40)</span>
+                                                    <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.fixed.coefficient_help')}</span>
                                                 </label>
                                             </div>
 
@@ -231,11 +235,11 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-sm">
                                                 <div className="flex items-center gap-2 text-emerald-700 font-bold mb-1">
                                                     <TrendingUp className="size-4" />
-                                                    Aperçu du CA mensuel requis
+                                                    {t('manager_dashboard.settings.fixed.preview_title')}
                                                 </div>
                                                 <div className="text-emerald-600">
-                                                    CA = {Math.round(config.marge_objectif_mensuel / ((config.coefficient_marge - 1) / config.coefficient_marge)).toLocaleString('fr-FR')} F
-                                                    <span className="text-emerald-400 ml-2">(semaine: {Math.round(config.marge_objectif_mensuel / 4.33 / ((config.coefficient_marge - 1) / config.coefficient_marge)).toLocaleString('fr-FR')} F, jour: {Math.round(config.marge_objectif_mensuel / (config.jours_ouverts_semaine * 4.33) / ((config.coefficient_marge - 1) / config.coefficient_marge)).toLocaleString('fr-FR')} F)</span>
+                                                    {t('manager_dashboard.settings.fixed.preview_ca', { value: formatCurrencyLocal(Math.round(config.marge_objectif_mensuel / ((config.coefficient_marge - 1) / config.coefficient_marge))) })}
+                                                    <span className="text-emerald-400 ml-2">{t('manager_dashboard.settings.fixed.preview_breakdown', { week: formatCurrencyLocal(Math.round(config.marge_objectif_mensuel / 4.33 / ((config.coefficient_marge - 1) / config.coefficient_marge))), day: formatCurrencyLocal(Math.round(config.marge_objectif_mensuel / (config.jours_ouverts_semaine * 4.33) / ((config.coefficient_marge - 1) / config.coefficient_marge))) })}</span>
                                                 </div>
                                             </div>
                                         )}

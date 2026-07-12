@@ -48,7 +48,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             if source.stock < quantite:
                 return Response({'error': f'Stock insuffisant pour {source.name}'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # --- 1. CONSOMMATION SOURCE (FIFO) ---
+            # --- 1. CONSOMMATION SOURCE ---
             consumed_lots_info = []
             
             if source.use_lot_management:
@@ -60,38 +60,117 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                     # On pourrait bloquer, mais pour la résilience, on prévient juste ou on log
                     pass
 
-                # FIFO Consumption
-                lots = source.stock_lots.filter(quantity_remaining__gt=0).select_for_update().order_by('date_expiration', 'created_at')
-                qty_remaining_to_consume = quantite
+                # Sélection manuelle des lots possible via request.data.lots
+                selected_lots = request.data.get('lots')
                 
-                for lot in lots:
-                    if qty_remaining_to_consume <= 0:
-                        break
+                if selected_lots and isinstance(selected_lots, list):
+                    # Mode sélection manuelle
+                    lot_ids = [item.get('lot_id') for item in selected_lots if item.get('lot_id')]
+                    lots = source.stock_lots.filter(
+                        id__in=lot_ids,
+                        quantity_remaining__gt=0
+                    ).select_for_update().order_by('date_expiration', 'created_at')
+                    
+                    lot_map = {lot.id: lot for lot in lots}
+                    qty_remaining_to_consume = quantite
+                    
+                    for item in selected_lots:
+                        if qty_remaining_to_consume <= 0:
+                            break
+                        lot_id = item.get('lot_id')
+                        lot = lot_map.get(lot_id)
+                        if not lot:
+                            continue
+                        requested_qty = int(item.get('quantity', 0))
+                        if requested_qty <= 0:
+                            continue
+                        taken = min(lot.quantity_remaining, requested_qty, qty_remaining_to_consume)
+                        if taken <= 0:
+                            continue
                         
-                    taken = min(lot.quantity_remaining, qty_remaining_to_consume)
+                        lot.quantity_remaining -= taken
+                        lot.save()
+                        
+                        StockAdjustment.objects.create(
+                            produit=source,
+                            stock_lot=lot,
+                            user=request.user,
+                            quantity_before=lot.quantity_remaining + taken,
+                            quantity_after=lot.quantity_remaining,
+                            quantity_change=-taken,
+                            reason_type=StockAdjustment.ReasonType.USAGE_INTERNE, 
+                            reason_detail=f"Transformation vers {destination.name}"
+                        )
+                        
+                        consumed_lots_info.append({'lot': lot, 'qty': taken})
+                        qty_remaining_to_consume -= taken
                     
-                    # Mise à jour du lot source
-                    lot.quantity_remaining -= taken
-                    lot.save()
+                    # Compléter avec FEFO si la sélection manuelle est insuffisante
+                    if qty_remaining_to_consume > 0:
+                        remaining_lots = source.stock_lots.filter(
+                            quantity_remaining__gt=0
+                        ).exclude(
+                            id__in=[l['lot'].id for l in consumed_lots_info]
+                        ).select_for_update().order_by('date_expiration', 'created_at')
+                        
+                        for lot in remaining_lots:
+                            if qty_remaining_to_consume <= 0:
+                                break
+                            taken = min(lot.quantity_remaining, qty_remaining_to_consume)
+                            lot.quantity_remaining -= taken
+                            lot.save()
+                            
+                            StockAdjustment.objects.create(
+                                produit=source,
+                                stock_lot=lot,
+                                user=request.user,
+                                quantity_before=lot.quantity_remaining + taken,
+                                quantity_after=lot.quantity_remaining,
+                                quantity_change=-taken,
+                                reason_type=StockAdjustment.ReasonType.USAGE_INTERNE, 
+                                reason_detail=f"Transformation vers {destination.name}"
+                            )
+                            
+                            consumed_lots_info.append({'lot': lot, 'qty': taken})
+                            qty_remaining_to_consume -= taken
+                else:
+                    # FEFO Consumption (First Expired, First Out)
+                    lots = source.stock_lots.filter(quantity_remaining__gt=0).select_for_update().order_by('date_expiration', 'created_at')
+                    qty_remaining_to_consume = quantite
                     
-                    # Traceability
-                    StockAdjustment.objects.create(
-                        produit=source,
-                        stock_lot=lot,
-                        user=request.user,
-                        quantity_before=lot.quantity_remaining + taken,
-                        quantity_after=lot.quantity_remaining,
-                        quantity_change=-taken,
-                        reason_type=StockAdjustment.ReasonType.USAGE_INTERNE, 
-                        reason_detail=f"Transformation vers {destination.name}"
-                    )
-                    
-                    consumed_lots_info.append({'lot': lot, 'qty': taken})
-                    qty_remaining_to_consume -= taken
+                    for lot in lots:
+                        if qty_remaining_to_consume <= 0:
+                            break
+                            
+                        taken = min(lot.quantity_remaining, qty_remaining_to_consume)
+                        
+                        # Mise à jour du lot source
+                        lot.quantity_remaining -= taken
+                        lot.save()
+                        
+                        # Traceability
+                        StockAdjustment.objects.create(
+                            produit=source,
+                            stock_lot=lot,
+                            user=request.user,
+                            quantity_before=lot.quantity_remaining + taken,
+                            quantity_after=lot.quantity_remaining,
+                            quantity_change=-taken,
+                            reason_type=StockAdjustment.ReasonType.USAGE_INTERNE, 
+                            reason_detail=f"Transformation vers {destination.name}"
+                        )
+                        
+                        consumed_lots_info.append({'lot': lot, 'qty': taken})
+                        qty_remaining_to_consume -= taken
                 
             # Décrémentation Stock Global
-            source.stock -= quantite
-            source.save()
+            if source.use_lot_management:
+                # Les lots ont déjà été sauvegardés, le signal a synchronisé le stock.
+                # Rafraîchir pour avoir la valeur cohérente en mémoire.
+                source.refresh_from_db()
+            else:
+                source.stock -= quantite
+                source.save()
                 
             # --- 2. CRÉATION DESTINATION ---
             ratio = Decimal(str(relation.ratio))
@@ -175,8 +254,12 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             
             # Recalculate total quantities to ensure consistency
             quantite_dest_total = int(Decimal(str(quantite)) * ratio)
-            destination.stock += quantite_dest_total
-            destination.save()
+            if destination.use_lot_management:
+                # Les lots destination ont été créés/mis à jour, le signal a synchronisé le stock.
+                destination.refresh_from_db()
+            else:
+                destination.stock += quantite_dest_total
+                destination.save()
             
             # --- 3. HISTORIQUE & MOUVEMENTS GLOBAUX ---
             
@@ -233,6 +316,64 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             'stock_source': source.stock,
             'stock_destination': destination.stock,
             'message': f"Transformation réussie : {quantite} {source.name} -> {quantite_dest_total} {destination.name}"
+        })
+
+    @action(detail=True, methods=['post'])
+    def preview(self, request, pk=None):
+        """
+        Prévisualise la transformation sans modifier les stocks.
+        Retourne le stock source restant, les lots qui seront consommés (FIFO),
+        et la quantité destination calculée.
+        """
+        relation = self.get_object()
+        quantite = int(request.data.get('quantite', 1))
+
+        if quantite <= 0:
+            return Response({'error': 'La quantité doit être positive'}, status=status.HTTP_400_BAD_REQUEST)
+
+        source = relation.produit_source
+        destination = relation.produit_destination
+
+        if source.stock < quantite:
+            return Response({
+                'error': f'Stock insuffisant pour {source.name}',
+                'stock_source': source.stock
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        from decimal import Decimal
+        ratio = Decimal(str(relation.ratio))
+        quantite_dest_total = int(Decimal(str(quantite)) * ratio)
+
+        lots_preview = []
+        if source.use_lot_management:
+            all_lots = source.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration', 'created_at')
+            qty_remaining_to_consume = quantite
+            for lot in all_lots:
+                if qty_remaining_to_consume <= 0:
+                    taken = 0
+                else:
+                    taken = min(lot.quantity_remaining, qty_remaining_to_consume)
+                    qty_remaining_to_consume -= taken
+                lots_preview.append({
+                    'lot_id': lot.id,
+                    'lot': lot.lot,
+                    'quantity_remaining': lot.quantity_remaining,
+                    'quantity_consumed': taken,
+                    'quantity_remaining_after': lot.quantity_remaining - taken,
+                    'date_expiration': lot.date_expiration.isoformat() if lot.date_expiration else None,
+                    'fournisseur': lot.fournisseur.name if lot.fournisseur else None,
+                    'selected': taken > 0
+                })
+
+        return Response({
+            'stock_source': source.stock,
+            'stock_source_after': source.stock - quantite,
+            'quantite_source': quantite,
+            'quantite_destination': quantite_dest_total,
+            'ratio': relation.ratio,
+            'use_lot_management': source.use_lot_management,
+            'lots': lots_preview,
+            'manual_lots_enabled': source.use_lot_management
         })
 
 

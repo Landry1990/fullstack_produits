@@ -472,8 +472,10 @@ export default function PharmacySettingsForm() {
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {getConfigurablePaymentModes(formData.custom_payment_modes).map((mode) => {
-                          const isDisabled = (formData.disabled_payment_modes || []).includes(mode.value)
-                          const isCustom = (formData.custom_payment_modes || []).some((c: { value: string }) => c.value === mode.value)
+                          const disabledSet = new Set(formData.disabled_payment_modes || []);
+                          const customModes = new Set((formData.custom_payment_modes || []).map((c: { value: string }) => c.value));
+                          const isDisabled = disabledSet.has(mode.value)
+                          const isCustom = customModes.has(mode.value)
                           return (
                             <label
                               key={mode.value}

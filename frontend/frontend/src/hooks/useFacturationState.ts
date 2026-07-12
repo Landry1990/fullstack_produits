@@ -426,7 +426,7 @@ export function useFacturationState() {
   // --- Sorting ---
   const sortedLignes = useMemo(() => {
     if (sortBy === 'chrono') return cart.lignesFacture
-    return cart.lignesFacture.toSorted((a: LigneFacture, b: LigneFacture) => {
+    return cart.lignesFacture.slice().sort((a: LigneFacture, b: LigneFacture) => {
       if (sortBy === 'name') return (a.produit.name || '').localeCompare(b.produit.name || '')
       if (sortBy === 'stock') return (b.produit.stock || 0) - (a.produit.stock || 0)
       if (sortBy === 'qty') return b.quantite - a.quantite

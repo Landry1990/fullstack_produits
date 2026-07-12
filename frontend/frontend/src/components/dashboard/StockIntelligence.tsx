@@ -58,7 +58,7 @@ export default function StockIntelligence({
       params: { days: DORMANT_DAYS, page: 1, page_size: 50 }
     }).then(res => {
       const items = (res.data?.items ?? []) as any[];
-      const sorted = items.toSorted((a, b) => (b.stock ?? 0) - (a.stock ?? 0)).slice(0, 5);
+      const sorted = items.slice().sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0)).slice(0, 5);
       setDormantItems(sorted);
       setDormantTotal(res.data?.total_value ?? 0);
     }).catch(() => {});
@@ -69,7 +69,7 @@ export default function StockIntelligence({
       params: { page: 1, page_size: 50 }
     }).then(res => {
       const items = (res.data?.items ?? []) as any[];
-      const sorted = items.toSorted((a, b) => (b.excess_value ?? 0) - (a.excess_value ?? 0)).slice(0, 5);
+      const sorted = items.slice().sort((a, b) => (b.excess_value ?? 0) - (a.excess_value ?? 0)).slice(0, 5);
       setOverstockItems(sorted);
       setOverstockTotal(res.data?.total_value ?? 0);
     }).catch(() => {});
@@ -140,9 +140,11 @@ export default function StockIntelligence({
                         <div className="flex-1 min-w-0">
                           <span className="text-xs font-bold block truncate">{lot.produit_nom}</span>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">LOT {lot.lot || 'N/A'}</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('alerts.lot_label', { lot: lot.lot || t('alerts.na') })}</span>
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                              EXP: {lot.date_expiration ? (() => { const d = new Date(lot.date_expiration); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; })() : 'N/A'}
+                              {lot.date_expiration
+                                ? t('alerts.exp_label', { date: (() => { const d = new Date(lot.date_expiration); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; })() })
+                                : t('alerts.exp_label', { date: t('alerts.na') })}
                             </span>
                           </div>
                         </div>
@@ -172,14 +174,14 @@ export default function StockIntelligence({
                   <Archive className="size-5" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-slate-800 tracking-tight uppercase">{t('dashboard.charts.dormant_stock', { defaultValue: 'Stock Dormant' })}</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('dashboard.charts.dormant_desc', { defaultValue: 'Rossignols (+6 mois)' })}</p>
+                  <h2 className="text-sm font-bold text-slate-800 tracking-tight uppercase">{t('charts.dormant_stock')}</h2>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('charts.dormant_desc')}</p>
                 </div>
               </div>
               {dormantTotal > 0 && (
                 <div className="text-right">
                   <span className="text-xs font-black text-slate-800 block">{formatCurrencyLocal(dormantTotal)}</span>
-                  <span className="text-[9px] font-bold text-slate-300 uppercase tracking-wider">{t('dashboard.charts.immobilized', { defaultValue: 'Bloqués' })}</span>
+                  <span className="text-[9px] font-bold text-slate-300 uppercase tracking-wider">{t('charts.immobilized')}</span>
                 </div>
               )}
             </div>
@@ -192,7 +194,7 @@ export default function StockIntelligence({
                       <span className="text-xs font-bold text-slate-700 truncate">{p.name}</span>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
-                      <span className="text-[10px] font-bold text-slate-700">{p.stock}u</span>
+                      <span className="text-[10px] font-bold text-slate-700">{t('alerts.units_suffix', { count: p.stock })}</span>
                       <span className="text-[9px] font-bold text-slate-400">{formatCurrencyLocal(p.value)}</span>
                     </div>
                   </div>
@@ -200,14 +202,14 @@ export default function StockIntelligence({
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-300 text-center h-full">
                   <Archive className="size-12 mb-2" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.charts.no_dormant', { defaultValue: 'Aucun rossignol' })}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">{t('charts.no_dormant')}</span>
                 </div>
               )}
             </div>
             
             <div className="mt-4 pt-4 border-t border-slate-200 shrink-0">
               <Link to="/app/stock-analysis?tab=unsold&days=90" className="inline-flex items-center justify-center w-full px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold gap-2 rounded-lg border border-slate-200 transition-colors">
-                {t('dashboard.charts.see_all_dormant', { defaultValue: 'Voir la liste complète' })}
+                {t('charts.see_all_dormant')}
                 <ArrowRight className="size-3" />
               </Link>
             </div>
@@ -247,7 +249,7 @@ export default function StockIntelligence({
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-slate-700 truncate block">{p.name}</span>
                         <span className="text-[9px] font-bold text-orange-500/70 uppercase tracking-widest">
-                          {p.excess_qty != null ? t('overstock.excess_qty', '+{{count}} unités en excès', { count: p.excess_qty }) : t('overstock.stock_label', 'Stock: {{count}}u', { count: p.stock })}
+                          {p.excess_qty != null ? t('overstock.excess_qty', '+{{count}} unités en excès', { count: p.excess_qty }) : t('overstock.stock_label', 'Stock: {{count}}', { count: p.stock })}
                         </span>
                       </div>
                     </div>
@@ -392,8 +394,8 @@ export default function StockIntelligence({
                   {t('alerts.no_stock_alerts')}
                 </div>
               ) : (
-                lowStockItems.slice(0, 10).map((item, i) => (
-                  <div key={i} className={`flex flex-col gap-1 p-3 rounded-xl border transition-all ${item.stock <= 0 ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-amber-50 border-amber-100'}`}>
+                lowStockItems.slice(0, 10).map((item) => (
+                  <div key={item.id} className={`flex flex-col gap-1 p-3 rounded-xl border transition-all ${item.stock <= 0 ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-amber-50 border-amber-100'}`}>
                     <p className="text-xs font-bold text-slate-700 truncate">{item.name}</p>
                     <div className="flex items-center justify-between">
                       <span className={`text-[10px] font-bold uppercase tracking-widest ${item.stock <= 0 ? 'text-red-500' : 'text-amber-500'}`}>
@@ -449,8 +451,8 @@ export default function StockIntelligence({
                 <Medal className="size-5" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-slate-800 tracking-tight uppercase">{t('dashboard.charts.top_products', { defaultValue: 'Top Produits' })}</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('dashboard.charts.today_bestsellers', { defaultValue: 'Vos meilleures ventes du jour' })}</p>
+                <h2 className="text-sm font-bold text-slate-800 tracking-tight uppercase">{t('charts.top_products')}</h2>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('charts.today_bestsellers')}</p>
               </div>
             </div>
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
@@ -462,7 +464,7 @@ export default function StockIntelligence({
                       <span className="text-xs font-bold text-slate-700 truncate">{p.name}</span>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-[10px] font-bold text-slate-700">{p.qty}u</span>
+                      <span className="text-[10px] font-bold text-slate-700">{t('alerts.units_suffix', { count: p.qty })}</span>
                       <span className="text-[9px] font-bold text-blue-600">{formatCurrencyLocal(p.revenue)}</span>
                     </div>
                   </div>
@@ -470,7 +472,7 @@ export default function StockIntelligence({
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-300 text-center h-full">
                   <ShoppingBag className="size-12 mb-2" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">{t('dashboard.charts.no_sales', { defaultValue: 'Aucune vente enregistrée' })}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{t('charts.no_sales')}</span>
                 </div>
               )}
             </div>

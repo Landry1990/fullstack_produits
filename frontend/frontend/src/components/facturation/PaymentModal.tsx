@@ -212,7 +212,7 @@ export default function PaymentModal({
                             {paiements.length > 0 && (
                                 <div className="bg-slate-50 rounded p-2 space-y-1 mb-2">
                                     {paiements.map((p, idx) => (
-                                        <div key={idx} className="flex justify-between items-center text-xs p-1 px-2 bg-white rounded border border-slate-200">
+                                        <div key={`${p.mode}-${p.montant}`} className="flex justify-between items-center text-xs p-1 px-2 bg-white rounded border border-slate-200">
                                             <span>{getPaymentModeLabel(p.mode, t)}</span>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-mono font-bold">{formatCurrency(p.montant)}</span>
@@ -287,7 +287,7 @@ export default function PaymentModal({
                   {paiements.length > 0 && (
                     <div className="bg-slate-50 rounded-lg p-2 space-y-1">
                         {paiements.map((p, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-slate-200">
+                            <div key={`${p.mode}-${p.montant}`} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-slate-200">
                                 <span>{t('facturation:payment.caisse_centrale')}</span>
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono">{formatCurrency(p.montant)}</span>

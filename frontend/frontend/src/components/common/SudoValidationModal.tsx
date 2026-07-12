@@ -90,16 +90,30 @@ export default function SudoValidationModal({
     };
 
     const handleConfirm = async () => {
-        if (selectedValidator && password) {
-            setPasswordError(null);
-            try {
-                await onValidate(selectedValidator, password);
-            } catch (error: any) {
+        if (!selectedValidator || !password) return;
+        setPasswordError(null);
+        try {
+            const checkRes = await api.post('users/verify_password/', { user_id: selectedValidator, password });
+            if (!checkRes.data?.valid) {
                 setPassword('');
-                const msg = error?.response?.data?.detail || error?.response?.data?.error || error?.message || t('common:sudo.invalid_password');
-                setPasswordError(msg);
+                setPasswordError(t('common:sudo.invalid_password'));
                 setTimeout(() => passwordInputRef.current?.focus(), 50);
+                return;
             }
+        } catch (error: any) {
+            setPassword('');
+            const msg = error?.response?.data?.detail || t('common:sudo.invalid_password');
+            setPasswordError(msg);
+            setTimeout(() => passwordInputRef.current?.focus(), 50);
+            return;
+        }
+        try {
+            await onValidate(selectedValidator, password);
+        } catch (error: any) {
+            setPassword('');
+            const msg = error?.response?.data?.detail || error?.response?.data?.error || error?.message || t('common:sudo.invalid_password');
+            setPasswordError(msg);
+            setTimeout(() => passwordInputRef.current?.focus(), 50);
         }
     };
 

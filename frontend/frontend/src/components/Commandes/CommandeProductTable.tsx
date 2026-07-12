@@ -333,7 +333,7 @@ export default function CommandeProductTable({
 
 
 
-            <div className="flex-1 overflow-x-auto overflow-y-auto">
+            <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[60vh]">
 
             {commandeProduits.length === 0 ? (
 

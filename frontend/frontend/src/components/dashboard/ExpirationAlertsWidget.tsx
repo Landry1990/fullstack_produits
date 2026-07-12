@@ -108,7 +108,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                     : 'bg-success/20 text-success hover:bg-emerald-200'
                 }`}
               >
-                {d}j
+                {t('expiration.days_filter', { days: d })}
               </button>
             ))}
           </div>
@@ -134,7 +134,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                 {t('expiration.widget_title', { defaultValue: 'Alertes Péremption' })}
               </h3>
               <p className="text-xs text-base-content/60">
-                {stats.total_alerts} alerte{stats.total_alerts > 1 ? 's' : ''} • {formatCurrencyLocal(stats.total_valeur)}
+                {t('expiration.total_value', { count: stats.total_alerts, value: formatCurrencyLocal(stats.total_valeur) })}
               </p>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                       : 'text-base-content/60 hover:text-base-content'
                   }`}
                 >
-                  {d}j
+                  {t('expiration.days_filter', { days: d })}
                 </button>
               ))}
             </div>
@@ -171,17 +171,17 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
         <div className="flex gap-2 mt-3">
           {stats.critical_count > 0 && (
             <span className="px-2 py-1 text-xs font-bold bg-error/20 text-error rounded-full">
-              🚨 {stats.critical_count} critique{stats.critical_count > 1 ? 's' : ''}
+              🚨 {t('expiration.critical_count', { count: stats.critical_count })}
             </span>
           )}
           {stats.warning_count > 0 && (
             <span className="px-2 py-1 text-xs font-bold bg-warning/20 text-warning rounded-full">
-              ⚠️ {stats.warning_count} urgent{stats.warning_count > 1 ? 's' : ''}
+              ⚠️ {t('expiration.urgent_count', { count: stats.warning_count })}
             </span>
           )}
           {stats.notice_count > 0 && (
             <span className="px-2 py-1 text-xs font-medium bg-warning/20 text-warning rounded-full">
-              {stats.notice_count} attention
+              {t('expiration.notice_count', { count: stats.notice_count })}
             </span>
           )}
         </div>
@@ -200,7 +200,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
-                      J-{alert.days_until}
+                      {t('expiration.days_until', { days: alert.days_until })}
                     </span>
                     <h4 className="text-sm font-semibold text-base-content truncate">
                       {alert.produit_nom}
@@ -210,11 +210,11 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                   <div className="flex items-center gap-3 mt-1 text-xs text-base-content/60">
                     <span className="flex items-center gap-1">
                       <Package className="size-3" />
-                      {alert.quantity_remaining} unité{alert.quantity_remaining > 1 ? 's' : ''}
+                      {t('expiration.units', { count: alert.quantity_remaining })}
                     </span>
                     {alert.lot_numero && (
                       <span className="font-mono text-base-content/50">
-                        Lot: {alert.lot_numero}
+                        {t('expiration.lot_label', { lot: alert.lot_numero })}
                       </span>
                     )}
                     {alert.fournisseur_nom && (
@@ -230,7 +230,7 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                     {formatCurrencyLocal(alert.valeur_stock)}
                   </p>
                   <p className="text-xs text-base-content/50">
-                    PA: {formatCurrencyLocal(alert.prix_achat)}
+                    {t('expiration.pa_label', { value: formatCurrencyLocal(alert.prix_achat) })}
                   </p>
                 </div>
               </div>

@@ -3,9 +3,53 @@ import i18n from '../i18n';
 /**
  * Fonctions utilitaires pour formater les dates selon la langue courante (fr/en)
  * 
- * ⚠️ IMPORTANT: Toutes les dates sont gérées en heure locale (UTC+1 pour la Côte d'Ivoire)
- * pour éviter les problèmes de décalage horaire entre le frontend et le backend.
+ * ⚠️ RÈGLE ABSOLUE — Envoi de dates vers l'API :
+ *   Toujours utiliser toApiDateTime() ou toApiDate() pour construire les paramètres
+ *   de filtre envoyés au backend. Ces fonctions incluent toujours l'offset timezone
+ *   local (+HH:mm) afin que Django puisse convertir correctement vers UTC.
+ *   Ne jamais envoyer de chaîne de date sans timezone (ex: "2026-07-10T00:00:00"
+ *   sans offset) car Django l'interpréterait en UTC et décalerait d'une heure.
  */
+
+/**
+ * Convertit une Date en chaîne ISO avec timezone locale pour envoi à l'API.
+ * Format : YYYY-MM-DDTHH:mm:ss+HH:mm
+ * À utiliser pour tous les paramètres date_debut / date_fin envoyés au backend.
+ */
+export const toApiDateTime = (date: Date): string => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    const tzOffset = -date.getTimezoneOffset();
+    const tzSign = tzOffset >= 0 ? '+' : '-';
+    const tzH = pad(Math.floor(Math.abs(tzOffset) / 60));
+    const tzM = pad(Math.abs(tzOffset) % 60);
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${tzSign}${tzH}:${tzM}`;
+};
+
+/**
+ * Retourne minuit (00:00:00) du jour donné avec timezone locale.
+ * À utiliser pour le paramètre date_debut d'un filtre journalier.
+ */
+export const toApiDateStart = (date: Date): string => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return toApiDateTime(d);
+};
+
+/**
+ * Retourne 23:59:59 du jour donné avec timezone locale.
+ * À utiliser pour le paramètre date_fin d'un filtre journalier.
+ */
+export const toApiDateEnd = (date: Date): string => {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return toApiDateTime(d);
+};
 
 /**
  * Détermine la locale à utiliser selon la langue courante
@@ -52,7 +96,7 @@ export const getLocalDateTimeString = (date: Date = new Date()): string => {
 /**
  * Parse une chaîne de date en objet Date (gère ISO et format local)
  */
-export const parseDate = (dateString: string | Date | null | undefined): Date | null => {
+const parseDate = (dateString: string | Date | null | undefined): Date | null => {
     if (!dateString) return null;
     if (dateString instanceof Date) return isNaN(dateString.getTime()) ? null : dateString;
     
@@ -106,7 +150,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 /**
  * Formate une date en format long locale
  */
-export function formatDateLong(date: string | Date | null | undefined): string {
+function formatDateLong(date: string | Date | null | undefined): string {
     if (!date) return '-';
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
@@ -139,7 +183,7 @@ export function formatDateShort(date: string | Date | null | undefined): string 
 /**
  * Formate une date d'expiration au format mm/yy
  */
-export function formatExpirationDate(date: string | Date | null | undefined): string {
+function formatExpirationDate(date: string | Date | null | undefined): string {
     if (!date) return '-';
     try {
         const d = typeof date === 'string' ? new Date(date) : date;

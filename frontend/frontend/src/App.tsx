@@ -1,5 +1,6 @@
 import { Suspense, useState, useEffect } from 'react'
 import { RouterProvider } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useLicenceShortcut } from './hooks/useLicenceShortcut'
 import { AuthProvider } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
@@ -15,40 +16,40 @@ import { router } from './routes'
 const MAX_ATTEMPTS = 10; // ~50 secondes d'attente max
 
 function BackendHealthCheck({ children }: { children: React.ReactNode }) {
-  const [ready, setReady] = useState(false);
   const [attempts, setAttempts] = useState(0);
-  const [failed, setFailed] = useState(false);
-  const [licenceError, setLicenceError] = useState(false);
 
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const res = await fetch('/api/health/', { cache: 'no-store' });
-        if (res.ok) {
-          // Vérifier si c'est une erreur de licence (HTTP 200 mais JSON avec erreur)
-          const data = await res.json();
-          if (data.code_erreur === 'LICENCE_INVALIDE') {
-            setLicenceError(true);
-            return;
-          }
-          setReady(true);
-          return;
-        }
-      } catch {
-        // backend not ready yet
+  const { data, errorUpdatedAt } = useQuery({
+    queryKey: ['backendHealthCheck'],
+    queryFn: async ({ signal }) => {
+      const res = await fetch('/api/health/', { cache: 'no-store', signal });
+      if (!res.ok) {
+        throw new Error('Backend not ready');
       }
-      setAttempts(a => {
-        const newAttempts = a + 1;
-        if (newAttempts >= MAX_ATTEMPTS) {
-          setFailed(true);
-        }
-        return newAttempts;
-      });
-    };
-    check();
-    const interval = setInterval(check, 5000);
-    return () => clearInterval(interval);
-  }, []);
+      return res.json();
+    },
+    // Poll every 5s while still waiting and under the attempt limit
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.code_erreur === 'LICENCE_INVALIDE') return false;
+      if (data && !data.code_erreur) return false;
+      if (attempts >= MAX_ATTEMPTS) return false;
+      return 5000;
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // Increment attempt count on each failed health-check fetch
+  useEffect(() => {
+    if (errorUpdatedAt) {
+      setAttempts(a => a + 1);
+    }
+  }, [errorUpdatedAt]);
+
+  const ready = !!data && data.code_erreur !== 'LICENCE_INVALIDE';
+  const licenceError = data?.code_erreur === 'LICENCE_INVALIDE';
+  // failed is always derivable from attempts — no separate useState needed
+  const failed = attempts >= MAX_ATTEMPTS;
 
   // Redirection vers la page de licence si erreur de licence
   if (licenceError) {
@@ -90,6 +91,7 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
             </ul>
           </div>
           <button 
+            type="button"
             onClick={() => window.location.reload()}
             className="btn btn-sm btn-primary mt-4"
           >
