@@ -47,8 +47,8 @@ export const AvoirsQuickStats: React.FC<AvoirsQuickStatsProps> = ({ avoirs }) =>
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {statItems.map((item, index) => (
-                <div key={index} className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-gray-400">
+            {statItems.map((item) => (
+                <div key={item.title} className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-gray-400">
                     <div className={`size-12 rounded-xl flex items-center justify-center ${item.bgClass} ${item.colorClass}`}>
                         {item.icon}
                     </div>

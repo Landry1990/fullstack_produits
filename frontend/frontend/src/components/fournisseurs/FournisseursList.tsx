@@ -124,8 +124,9 @@ export default function FournisseursList({ hook }: Props) {
       <div className="flex-1 overflow-auto p-2 space-y-0.5">
         {fournisseurs.length > 0 ? (
           fournisseurs.map((fournisseur, index) => {
+            const selectedSet = new Set(selectedIds);
             const isSelected = selectedFournisseur?.id === fournisseur.id;
-            const isChecked = selectedIds.includes(fournisseur.id!);
+            const isChecked = selectedSet.has(fournisseur.id!);
             const isHighlighted = searchTerm && highlightedIndex === index;
             const solde = Number(fournisseur.solde_dette || 0);
 

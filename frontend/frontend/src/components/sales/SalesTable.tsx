@@ -70,6 +70,17 @@ const normalizeStatus = (status: string): string => {
     return s || 'UNKNOWN';
 };
 
+const getStatusStyle = (status: string) => {
+    const normalized = normalizeStatus(status);
+    switch (normalized) {
+        case 'PAY': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+        case 'ANN': return 'bg-red-50 text-red-600 border-red-100';
+        case 'BROU': return 'bg-slate-100 text-slate-500 border-slate-200';
+        case 'PROF': return 'bg-blue-50 text-blue-600 border-blue-100';
+        default: return 'bg-amber-50 text-amber-600 border-amber-100';
+    }
+};
+
 interface SalesTableProps {
     factures: Facture[];
     onView: (facture: Facture) => void;
@@ -113,16 +124,6 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         }
     };
 
-    const getStatusStyle = (status: string) => {
-        const normalized = normalizeStatus(status);
-        switch (normalized) {
-            case 'PAY': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-            case 'ANN': return 'bg-red-50 text-red-600 border-red-100';
-            case 'BROU': return 'bg-slate-100 text-slate-500 border-slate-200';
-            case 'PROF': return 'bg-blue-50 text-blue-600 border-blue-100';
-            default: return 'bg-amber-50 text-amber-600 border-amber-100';
-        }
-    };
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
@@ -215,17 +216,19 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                    {factures.map((facture) => (
+                    {factures.map((facture) => {
+                        const selectedSet = new Set(selectedIds);
+                        return (
                         <tr
                             key={facture.id}
-                            className={cn("group transition-colors duration-150", selectedIds.includes(facture.id) ? 'bg-emerald-50 hover:bg-emerald-100/50' : 'hover:bg-slate-50')}
+                            className={cn("group transition-colors duration-150", selectedSet.has(facture.id) ? 'bg-emerald-50 hover:bg-emerald-100/50' : 'hover:bg-slate-50')}
                         >
                              <td className="px-4 py-4">
                                 <input
                                     type="checkbox"
                                     aria-label={t('sales:select_invoice', { defaultValue: 'Sélectionner la facture', number: facture.numero_facture || facture.id })}
                                     className="size-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
-                                    checked={selectedIds.includes(facture.id)}
+                                    checked={selectedSet.has(facture.id)}
                                     onChange={() => handleSelect(facture.id)}
                                 />
                             </td>
@@ -329,7 +332,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                 )}
                             </td>
                         </tr>
-                    ))}
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

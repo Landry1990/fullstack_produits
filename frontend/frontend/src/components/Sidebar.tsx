@@ -105,6 +105,7 @@ export default function Sidebar() {
         { path: '/app/journal-ajustements', label: t('stock.journal'), key: 'inventaire_journal' },
         { path: '/app/stock-analysis', label: t('stock.analyse.title'), key: 'inventaire_analyse' },
         { path: '/app/ruptures', label: t('stock.ruptures.title', 'Suivi des Ruptures'), key: 'inventaire_ruptures' },
+        { path: '/app/cadencier', label: t('stock.cadencier.title', 'Cadencier'), key: 'inventaire_cadencier' },
         { path: '/app/reappro-rayon', label: t('stock.reappro.title', 'Réappro Rayon'), key: 'inventaire_reappro' },
         { path: '/app/avoirs', label: t('stock.avoirs'), key: 'inventaire_avoirs' },
         { path: '/app/promis', label: t('stock.promis'), key: 'inventaire_promis' },
@@ -224,30 +225,31 @@ export default function Sidebar() {
     if (user?.is_superuser) return [item];
     
     const allowed = (user as any)?.allowed_menus || [];
+    const allowedSet = new Set(allowed);
     
     // 1. Explicit parent permission
-    const hasExplicitParent = allowed.includes(item.key);
+    const hasExplicitParent = allowedSet.has(item.key);
 
     // 2. Legacy broad categories (compatibility)
     const hasLegacyCategory = 
-      (item.key === 'commandes_loc' && allowed.includes('commandes')) ||
-      (item.key === 'commandes_dir' && allowed.includes('commandes')) ||
-      (item.key === 'vitrine' && allowed.includes('produits'));
+      (item.key === 'commandes_loc' && allowedSet.has('commandes')) ||
+      (item.key === 'commandes_dir' && allowedSet.has('commandes')) ||
+      (item.key === 'vitrine' && allowedSet.has('produits'));
 
     if (item.submenus) {
       // Filter submenus: only show if explicitly allowed OR if parent is fully allowed
       const filteredSubmenus = item.submenus.filter(sub => {
         // Direct match for submenu
-        if (allowed.includes(sub.key)) return true;
+        if (allowedSet.has(sub.key)) return true;
         
         // Full parent access allows all children
         if (hasExplicitParent || hasLegacyCategory) return true;
 
         // Specific legacy mappings (one-to-one)
-        if (sub.key === 'caisse' && allowed.includes('caisse')) return true;
-        if (sub.key === 'inventaire_perimes' && allowed.includes('perimes')) return true;
-        if (sub.key === 'inventaire_avoirs' && allowed.includes('avoirs')) return true;
-        if (sub.key === 'inventaire_promis' && allowed.includes('promis')) return true;
+        if (sub.key === 'caisse' && allowedSet.has('caisse')) return true;
+        if (sub.key === 'inventaire_perimes' && allowedSet.has('perimes')) return true;
+        if (sub.key === 'inventaire_avoirs' && allowedSet.has('avoirs')) return true;
+        if (sub.key === 'inventaire_promis' && allowedSet.has('promis')) return true;
         
         return false;
       });
@@ -257,7 +259,7 @@ export default function Sidebar() {
     
     const adminOnlyKeys = ['utilisateurs', 'user_sessions', 'audit', 'import_dci', 'maintenance', 'corbeille'];
     if (adminOnlyKeys.includes(item.key)) return [];
-    return (hasExplicitParent || hasLegacyCategory || allowed.includes(item.key)) ? [item] : [];
+    return (hasExplicitParent || hasLegacyCategory || allowedSet.has(item.key)) ? [item] : [];
   });
 
 

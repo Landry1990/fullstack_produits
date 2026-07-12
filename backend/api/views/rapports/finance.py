@@ -19,6 +19,7 @@ from rest_framework.response import Response
 from api.models import Caisse, Facture, FactureProduit, FactureProduitAllocation, Produit, StockLot
 from api.views.rapports.base import RapportBaseMixin
 from api.views.rapports.pdf_builders import build_rapport_pdf
+from api.views.rapports.tz_utils import parse_api_datetime
 
 
 # ── Helpers privés ────────────────────────────────────────────────────────────
@@ -273,12 +274,9 @@ class RapportFinanceMixin:
         df_str = request.query_params.get('date_fin')
         if not db_str or not df_str:
             return Response({'error': 'Dates requises'}, status=400)
-        try:
-            date_debut = timezone.make_aware(datetime.fromisoformat(db_str.replace('Z', '+00:00')))
-            date_fin   = timezone.make_aware(datetime.fromisoformat(df_str.replace('Z', '+00:00')))
-            if date_fin.hour == 0:
-                date_fin += timedelta(days=1)
-        except ValueError:
+        date_debut = parse_api_datetime(db_str)
+        date_fin   = parse_api_datetime(df_str, end_of_day=True)
+        if date_debut is None or date_fin is None:
             return Response({'error': 'Format de date invalide'}, status=400)
 
         # Filtrer les lignes de facture - exclure uniquement les lignes avec is_divers, pas les factures entières
@@ -318,12 +316,9 @@ class RapportFinanceMixin:
     def export_comptable_csv(self, request):
         db_str = request.query_params.get('date_debut')
         df_str = request.query_params.get('date_fin')
-        try:
-            date_debut = timezone.make_aware(datetime.fromisoformat(db_str.replace('Z', '+00:00')))
-            date_fin   = timezone.make_aware(datetime.fromisoformat(df_str.replace('Z', '+00:00')))
-            if date_fin.hour == 0:
-                date_fin += timedelta(days=1)
-        except (ValueError, AttributeError):
+        date_debut = parse_api_datetime(db_str)
+        date_fin   = parse_api_datetime(df_str, end_of_day=True)
+        if date_debut is None or date_fin is None:
             return Response({'error': 'Date invalide'}, status=status.HTTP_400_BAD_REQUEST)
 
         response = HttpResponse(content_type='text/csv')

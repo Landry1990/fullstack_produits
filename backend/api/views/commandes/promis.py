@@ -80,24 +80,36 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if promis.status == Promis.Status.DELIVRE:
             return Response({'detail': 'Impossible d\'annuler un promis déjà délivré.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1. Réintégrer le stock
+        # 1. Réintégrer le stock (uniquement si le produit n'est pas géré par lots)
         produit = Produit.objects.select_for_update().get(pk=promis.produit_id) if promis.produit_id else None
 
-        # Pour les produits avec gestion par lots, le stock est géré automatiquement par les signaux
+        stock_reintegre = 0
         if produit and not produit.use_lot_management:
             produit.stock += promis.quantite
             produit.save(update_fields=['stock'])
+            stock_reintegre = promis.quantite
 
-        # 2. Créer le mouvement de stock (type RETOUR = affiché en vert)
+        # 2. Mouvement de traçabilité
         final_stock = produit.total_stock if produit else 0
-        MouvementStock.objects.create(
-            produit=produit,
-            type_mouvement=MouvementStock.TypeMouvement.RETOUR,
-            quantite=promis.quantite,
-            stock_apres=final_stock,
-            user=request.user,
-            description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
-        )
+        if produit and produit.use_lot_management:
+            # Aucun lot n'a été réservé : pas de réintégration physique, juste un mouvement neutre
+            MouvementStock.objects.create(
+                produit=produit,
+                type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+                quantite=0,
+                stock_apres=final_stock,
+                user=request.user,
+                description=f"Annulation promis #{promis.id} - pas de réintégration (gestion par lots) (Client: {promis.client_display})"
+            )
+        else:
+            MouvementStock.objects.create(
+                produit=produit,
+                type_mouvement=MouvementStock.TypeMouvement.RETOUR,
+                quantite=promis.quantite,
+                stock_apres=final_stock,
+                user=request.user,
+                description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
+            )
 
         # 3. Mettre à jour le statut du promis
         promis.status = Promis.Status.ANNULE
@@ -105,7 +117,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         promis.save()
 
         return Response({
-            'detail': f'Promis #{promis.id} annulé. {promis.quantite} unité(s) réintégrée(s) au stock de {produit.name if produit else "Produit inconnu"}.',
+            'detail': f'Promis #{promis.id} annulé. {stock_reintegre} unité(s) réintégrée(s) au stock de {produit.name if produit else "Produit inconnu"}.',
             'promis': PromisSerializer(promis).data,
             'nouveau_stock': final_stock
         })
@@ -165,27 +177,39 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         reintegrated = []
         for promis in promis_list:
             produit = locked_products.get(promis.produit_id) if promis.produit_id else None
+            stock_reintegre = 0
 
-            # Réintégrer le stock
+            # Réintégrer le stock (uniquement si le produit n'est pas géré par lots)
             if produit and not produit.use_lot_management:
                 produit.stock += promis.quantite
                 produit.save(update_fields=['stock'])
+                stock_reintegre = promis.quantite
 
-            # Créer le mouvement de stock
+            # Mouvement de traçabilité
             final_stock = produit.total_stock if produit else 0
-            MouvementStock.objects.create(
-                produit=produit,
-                type_mouvement=MouvementStock.TypeMouvement.RETOUR,
-                quantite=promis.quantite,
-                stock_apres=final_stock,
-                user=request.user,
-                description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
-            )
+            if produit and produit.use_lot_management:
+                MouvementStock.objects.create(
+                    produit=produit,
+                    type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+                    quantite=0,
+                    stock_apres=final_stock,
+                    user=request.user,
+                    description=f"Annulation promis #{promis.id} - pas de réintégration (gestion par lots) (Client: {promis.client_display})"
+                )
+            else:
+                MouvementStock.objects.create(
+                    produit=produit,
+                    type_mouvement=MouvementStock.TypeMouvement.RETOUR,
+                    quantite=promis.quantite,
+                    stock_apres=final_stock,
+                    user=request.user,
+                    description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
+                )
 
             reintegrated.append({
                 'id': promis.id,
                 'produit': produit.name if produit else 'Produit inconnu',
-                'quantite': promis.quantite
+                'quantite': stock_reintegre
             })
 
         # Bulk update status

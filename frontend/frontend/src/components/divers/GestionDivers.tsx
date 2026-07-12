@@ -10,7 +10,11 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
-  Warehouse
+  Warehouse,
+  ArrowLeft,
+  Eye,
+  X,
+  CalendarCheck
 } from 'lucide-react';
 import api from '../../services/api';
 import { format, parseISO } from 'date-fns';
@@ -43,6 +47,20 @@ interface VentesDiversesResponse {
   count: number;
   total_ca: number;
   results: VenteDivers[];
+}
+
+interface VenteJournaliere {
+  date: string;
+  total_ca: number;
+  total_quantity: number;
+  nb_produits: number;
+  nb_factures: number;
+}
+
+interface VentesJournalieresResponse {
+  count: number;
+  total_ca: number;
+  results: VenteJournaliere[];
 }
 
 interface StockDiversResponse {
@@ -84,6 +102,12 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
   const [valorisation, setValorisation] = useState<'ACHAT' | 'VENTE'>('ACHAT');
   const isInitialMount = useRef(true);
 
+  // Vue journalière
+  const [dailyVentes, setDailyVentes] = useState<VenteJournaliere[]>([]);
+  const [dailyLoading, setDailyLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'daily' | 'detail'>('daily');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
   // Fix #2 : Reset du store Zustand au démontage pour éviter la pollution LOC/DIR/DIV
   const setActiveTabStore = useCommandesStore((s) => s.setActiveTab);
   const setCommandeType = useCommandesStore((s) => s.setCommandeType);
@@ -100,8 +124,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
     try {
       const response = await api.get<VentesDiversesResponse>('/caisse/ventes_diverses/', {
         params: {
-          date_debut: dateRange.debut,
-          date_fin: dateRange.fin,
+          date: selectedDate,
           page: pageToFetch,
           page_size: pageSize
         }
@@ -111,22 +134,60 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       setTotalCount(response.data.count);
     } catch (error) {
       console.error('Error fetching divers sales:', error);
-      toast.error('Erreur lors du chargement des ventes diverses');
+      toast.error('Erreur lors du chargement du détail des ventes diverses');
     } finally {
       setLoading(false);
     }
-  }, [dateRange.debut, dateRange.fin]); // Retirer 'page' pour éviter la boucle
+  }, [selectedDate]); // Retirer 'page' pour éviter la boucle
+
+  const fetchVentesJournalieres = useCallback(async () => {
+    setDailyLoading(true);
+    try {
+      const response = await api.get<VentesJournalieresResponse>('/caisse/ventes_diverses/', {
+        params: {
+          date_debut: dateRange.debut,
+          date_fin: dateRange.fin,
+          group_by: 'day'
+        }
+      });
+      setDailyVentes(response.data.results);
+      setTotalCA(response.data.total_ca);
+      setTotalCount(response.data.count);
+    } catch (error) {
+      console.error('Error fetching daily divers sales:', error);
+      toast.error('Erreur lors du chargement des ventes diverses par jour');
+    } finally {
+      setDailyLoading(false);
+    }
+  }, [dateRange.debut, dateRange.fin]);
 
   useEffect(() => {
     if (activeTab === 'ca') {
-      if (isInitialMount.current) {
-        isInitialMount.current = false;
-        fetchVentesDiverses(1);
+      if (viewMode === 'daily') {
+        fetchVentesJournalieres();
       } else {
-        fetchVentesDiverses(page);
+        if (isInitialMount.current) {
+          isInitialMount.current = false;
+          fetchVentesDiverses(1);
+        } else {
+          fetchVentesDiverses(page);
+        }
       }
     }
-  }, [activeTab, page]); // Retirer fetchVentesDiverses des dépendances
+  }, [activeTab, viewMode, page, fetchVentesJournalieres, fetchVentesDiverses]);
+
+  const handleViewDetail = (date: string) => {
+    setSelectedDate(date);
+    setViewMode('detail');
+    setPage(1);
+    fetchVentesDiverses(1);
+  };
+
+  const handleBackToDaily = () => {
+    setSelectedDate(null);
+    setViewMode('daily');
+    setVentes([]);
+  };
 
   const fetchStockDivers = useCallback(async () => {
     setStockLoading(true);
@@ -215,52 +276,128 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
           <Card className="flex-1 flex flex-col min-h-0 overflow-hidden p-0">
             <div className="px-6 py-4 border-b flex justify-between items-center bg-muted/30">
               <h3 className="font-semibold flex items-center gap-2 text-sm">
-                <ClipboardList className="h-4 w-4 text-emerald-600" />
-                {t('divers.detail_sales')}
+                {viewMode === 'daily' ? (
+                  <>
+                    <CalendarDays className="h-4 w-4 text-emerald-600" />
+                    Ventes par jour
+                  </>
+                ) : (
+                  <>
+                    <ClipboardList className="h-4 w-4 text-emerald-600" />
+                    Détail du {selectedDate ? format(parseISO(selectedDate), 'dd/MM/yyyy', { locale: fr }) : ''}
+                  </>
+                )}
               </h3>
-              <span className="text-xs text-muted-foreground">{t('divers.transactions_found', { count: totalCount })}</span>
+              {viewMode === 'detail' && (
+                <Button variant="outline" size="sm" onClick={handleBackToDaily} className="gap-2">
+                  <ArrowLeft className="h-4 w-4" /> Retour aux jours
+                </Button>
+              )}
             </div>
             <div className="flex-1 overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('divers.table.date')}</TableHead>
-                    <TableHead>{t('divers.table.invoice')}</TableHead>
-                    <TableHead>{t('divers.table.product')}</TableHead>
-                    <TableHead>{t('divers.table.lot')}</TableHead>
-                    <TableHead className="text-right">{t('divers.table.qty')}</TableHead>
-                    <TableHead className="text-right">{t('divers.table.unit_price')}</TableHead>
-                    <TableHead className="text-right">{t('divers.table.total')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell colSpan={7}><div className="h-4 bg-muted rounded animate-pulse w-full" /></TableCell>
-                      </TableRow>
-                    ))
-                  ) : ventes.length === 0 ? (
+              {viewMode === 'daily' ? (
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-12">{t('divers.no_sales_found')}</TableCell>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Produits</TableHead>
+                      <TableHead className="text-right">Qté</TableHead>
+                      <TableHead className="text-right">Factures</TableHead>
+                      <TableHead className="text-right">Total CA</TableHead>
+                      <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    ventes.map((v) => (
-                      <TableRow key={v.id}>
-                        <TableCell className="text-muted-foreground">{v.date ? format(parseISO(v.date), 'dd/MM/yyyy HH:mm', { locale: fr }) : 'N/A'}</TableCell>
-                        <TableCell className="font-medium text-emerald-600">{v.facture_numero}</TableCell>
-                        <TableCell>{v.produit_name}</TableCell>
-                        <TableCell><Badge variant="secondary">{v.lot}</Badge></TableCell>
-                        <TableCell className="text-right font-medium">{v.quantity}</TableCell>
-                        <TableCell className="text-right text-muted-foreground">{v.selling_price.toLocaleString()}</TableCell>
-                        <TableCell className="text-right font-bold text-emerald-600">{v.total.toLocaleString()} F</TableCell>
+                  </TableHeader>
+                  <TableBody>
+                    {dailyLoading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell colSpan={6}><div className="h-4 bg-muted rounded animate-pulse w-full" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : dailyVentes.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-12">{t('divers.no_sales_found')}</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      dailyVentes.map((day) => (
+                        <TableRow
+                          key={day.date}
+                          className="cursor-pointer hover:bg-emerald-50/50 transition-colors"
+                          onClick={() => handleViewDetail(day.date)}
+                        >
+                          <TableCell className="font-medium">
+                            {format(parseISO(day.date), 'EEEE dd/MM/yyyy', { locale: fr })}
+                          </TableCell>
+                          <TableCell className="text-right">{day.nb_produits}</TableCell>
+                          <TableCell className="text-right">{day.total_quantity}</TableCell>
+                          <TableCell className="text-right">{day.nb_factures}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{day.total_ca.toLocaleString()} F</TableCell>
+                          <TableCell className="text-center">
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleViewDetail(day.date); }} className="text-emerald-600 h-8 w-8 p-0">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('divers.table.date')}</TableHead>
+                      <TableHead>{t('divers.table.invoice')}</TableHead>
+                      <TableHead>{t('divers.table.product')}</TableHead>
+                      <TableHead>{t('divers.table.lot')}</TableHead>
+                      <TableHead className="text-right">{t('divers.table.qty')}</TableHead>
+                      <TableHead className="text-right">{t('divers.table.unit_price')}</TableHead>
+                      <TableHead className="text-right">{t('divers.table.total')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell colSpan={7}><div className="h-4 bg-muted rounded animate-pulse w-full" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : ventes.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-12">{t('divers.no_sales_found')}</TableCell>
+                      </TableRow>
+                    ) : (
+                      ventes.map((v) => (
+                        <TableRow key={v.id}>
+                          <TableCell className="text-muted-foreground">{v.date ? format(parseISO(v.date), 'dd/MM/yyyy HH:mm', { locale: fr }) : 'N/A'}</TableCell>
+                          <TableCell className="font-medium text-emerald-600">{v.facture_numero}</TableCell>
+                          <TableCell>{v.produit_name}</TableCell>
+                          <TableCell className="font-mono text-xs text-slate-600">{v.lot}</TableCell>
+                          <TableCell className="text-right font-medium">{v.quantity}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{v.selling_price.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{v.total.toLocaleString()} F</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </div>
-            {totalPages > 1 && (
+            {viewMode === 'daily' && dailyVentes.length > 0 && (
+              <div className="px-6 py-4 border-t bg-muted/30">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-6 text-sm">
+                    <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_produits, 0)}</strong> produits</span>
+                    <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.total_quantity, 0)}</strong> quantités</span>
+                    <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_factures, 0)}</strong> factures</span>
+                  </div>
+                  <div className="text-lg font-bold text-emerald-600">
+                    Total : {totalCA.toLocaleString()} F
+                  </div>
+                </div>
+              </div>
+            )}
+            {viewMode === 'detail' && totalPages > 1 && (
               <div className="px-6 py-4 border-t flex items-center justify-between bg-muted/30">
                 <span className="text-sm text-muted-foreground">Page {page} / {totalPages} · {totalCount} {t('divers.results')}</span>
                 <div className="flex gap-2">
@@ -336,8 +473,8 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {stockData.tva_breakdown.map((item, idx) => (
-                        <TableRow key={idx}>
+                      {stockData.tva_breakdown.map((item) => (
+                        <TableRow key={item.rate}>
                           <TableCell className="font-medium">{item.rate}%</TableCell>
                           <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} F</TableCell>
                           <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} F</TableCell>
@@ -367,8 +504,8 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {stockData.rayon_breakdown.map((item, idx) => (
-                        <TableRow key={idx}>
+                      {stockData.rayon_breakdown.map((item) => (
+                        <TableRow key={item.name}>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} F</TableCell>
                           <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} F</TableCell>

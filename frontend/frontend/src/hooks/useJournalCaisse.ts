@@ -8,31 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { escHtml } from '../utils/print/printHelpers';
-import { formatDate, formatDateTime } from '../utils/dateUtils';
+import { formatDate, formatDateTime, toApiDateTime, toApiDateStart, toApiDateEnd } from '../utils/dateUtils';
 import { getPaymentModeLabel } from '../config/paymentModes';
-
-const formatLocalISOString = (date: Date): string => {
-    const pad = (num: number) => num.toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1);
-    const day = pad(date.getDate());
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-};
-
-const formatLocalISOStringEnd = (date: Date): string => {
-    const adjustedDate = new Date(date.getTime() + 1000);
-    const pad = (num: number) => num.toString().padStart(2, '0');
-    const year = adjustedDate.getFullYear();
-    const month = pad(adjustedDate.getMonth() + 1);
-    const day = pad(adjustedDate.getDate());
-    const hours = pad(adjustedDate.getHours());
-    const minutes = pad(adjustedDate.getMinutes());
-    const seconds = pad(adjustedDate.getSeconds());
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-};
 
 export function useJournalCaisse() {
   const { t } = useTranslation(['cash_journal', 'common']);
@@ -111,7 +88,14 @@ export function useJournalCaisse() {
   const [actualAmount, setActualAmount] = useState<string>('');
   const [manualMovements, setManualMovements] = useState<{ id: number; motif: string; montant: number; type: 'ENTREE' | 'SORTIE' }[]>([]);
   const [fondDeCaisse, setFondDeCaisse] = useState<number>(0);
-  const [theoriqueFrontend, setTheorique] = useState<number | null>(null);
+
+  const computedTheorique = useMemo(() => {
+    if (!closingTotals) return null;
+    const manualEntrees = manualMovements.filter(m => m.type === 'ENTREE').reduce((s, m) => s + m.montant, 0);
+    const manualSorties = manualMovements.filter(m => m.type === 'SORTIE').reduce((s, m) => s + m.montant, 0);
+    const baseTheorique = closingTotals.total_theorique || 0;
+    return baseTheorique + manualEntrees - manualSorties;
+  }, [closingTotals, manualMovements]);
 
   const toggleReleve = (releveId: number) => {
     setExpandedReleves(prev => {
@@ -149,8 +133,8 @@ export function useJournalCaisse() {
         page_size: PAGE_SIZE.toString()
       };
       if (selectedUser) params.user = selectedUser;
-      if (dateDebut) params.date_debut = formatLocalISOString(dateDebut);
-      if (dateFin) params.date_fin = formatLocalISOStringEnd(dateFin);
+      if (dateDebut) params.date_debut = toApiDateTime(dateDebut);
+      if (dateFin) params.date_fin = toApiDateEnd(dateFin);
 
       const response = await api.get('caisse/page_init/', { params, signal });
       const { transactions: txData, mouvements: mouvData, totals: totalsData, users: usersData } = response.data;
@@ -267,8 +251,8 @@ export function useJournalCaisse() {
       params.append('page', page.toString());
       params.append('page_size', PAGE_SIZE.toString());
       if (selectedUser) params.append('user', selectedUser);
-      if (dateDebut) params.append('date_debut', formatLocalISOString(dateDebut));
-      if (dateFin) params.append('date_fin', formatLocalISOStringEnd(dateFin));
+      if (dateDebut) params.append('date_debut', toApiDateTime(dateDebut));
+      if (dateFin) params.append('date_fin', toApiDateEnd(dateFin));
       
       const response = await api.get('caisse/', { params, signal });
       processTransactionsData(response.data);
@@ -395,8 +379,8 @@ export function useJournalCaisse() {
       const currentTotals = (serverTotals || totauxParMode) as any;
       
       const modalTotals = {
-          start_date: dateDebut ? formatLocalISOString(dateDebut) : currentTotals?.start_date || null,
-          end_date: dateFin ? formatLocalISOStringEnd(dateFin) : null,
+          start_date: dateDebut ? toApiDateTime(dateDebut) : currentTotals?.start_date || null,
+          end_date: dateFin ? toApiDateEnd(dateFin) : null,
           total_theorique: currentTotals.total_theorique ?? currentTotals.total,
           total_ventes: currentTotals.total_ventes ?? currentTotals.ventes,
           total_ca_pharmacie: currentTotals.total_ca_pharmacie,
@@ -579,9 +563,9 @@ export function useJournalCaisse() {
     try {
       const response = await api.post('caisse/cloturer/', {
         montant_reel: normalizeNumberInput(actualAmount),
-        montant_theorique_frontend: theoriqueFrontend,
-        date_debut: dateDebut ? formatLocalISOString(dateDebut) : null,
-        date_fin: dateFin ? formatLocalISOStringEnd(dateFin) : null,
+        montant_theorique_frontend: computedTheorique,
+        date_debut: dateDebut ? toApiDateTime(dateDebut) : null,
+        date_fin: dateFin ? toApiDateEnd(dateFin) : null,
         user_id: selectedUser,
         mouvements_manuels: manualMovements.map(m => ({ motif: m.motif, montant: m.montant, type: m.type }))
       });
@@ -656,7 +640,6 @@ export function useJournalCaisse() {
     setIsMovementModalOpen,
     setManualMovements,
     setFondDeCaisse,
-    setTheorique,
 
     // Derived
     filteredItems,
@@ -671,7 +654,7 @@ export function useJournalCaisse() {
     handleImprimerCloture,
     setTodayDateRange,
     
-    theoriqueFrontend,
+    theoriqueFrontend: computedTheorique,
 
     // Utils out for components
     t,

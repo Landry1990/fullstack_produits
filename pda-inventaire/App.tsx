@@ -3,8 +3,11 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { LoginScreen, HomeScreen, ScannerScreen } from './src/screens';
-import { authService, Inventaire } from './src/services';
+import LoginScreen from './src/screens/LoginScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import ScannerScreen from './src/screens/ScannerScreen';
+import { authService } from './src/services/auth';
+import type { Inventaire } from './src/services/inventaire';
 import { setUnauthorizedCallback } from './src/services/api';
 
 // Client React Query

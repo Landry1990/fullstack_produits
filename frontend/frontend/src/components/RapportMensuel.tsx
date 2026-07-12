@@ -586,8 +586,8 @@ export default function RapportMensuel() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {rapport.encaissements.map((enc, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                      {rapport.encaissements.map((enc) => (
+                        <tr key={enc.mode ?? enc.mode_label} className="hover:bg-slate-50 transition-colors">
                           <td className="py-2.5 pl-4 font-medium text-slate-700">{enc.mode_label}</td>
                           <td className="py-2.5 text-right font-bold text-slate-800 pr-4">{formatCurrency(Math.round(Number(enc.montant)))}</td>
                         </tr>
@@ -750,8 +750,8 @@ export default function RapportMensuel() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {rapport.ca_par_tva.map((tva, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                    {rapport.ca_par_tva.map((tva) => (
+                      <tr key={`tva-${tva.taux}`} className="hover:bg-slate-50 transition-colors">
                         <td className="py-2.5 pl-4 font-medium text-slate-700">{tva.taux}%</td>
                         <td className="py-2.5 text-right text-slate-600">{formatCurrency(Math.round(Number(tva.ca_ht)))}</td>
                         <td className="py-2.5 text-right text-slate-600">{formatCurrency(Math.round(Number(tva.montant_tva)))}</td>

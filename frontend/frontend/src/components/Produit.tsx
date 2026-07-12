@@ -205,15 +205,16 @@ export default function Produit() {
   };
 
   const handleMovementClick = async (item: any) => {
-    if (item.facture && (item.type === 'SORTIE' || item.type === 'RETOUR')) {
+    if (!item) return;
+    if (item.facture) {
       try {
         setLoadingFacture(true);
-        setShowSalesModal(true);
         const response = await api.get(`factures/${item.facture}/`);
         setSelectedFacture(response.data);
+        setShowSalesModal(true);
       } catch (error) {
+        console.error('Error loading invoice from movement:', error);
         toast.error(t('products:messages.facture_load_error'));
-        setShowSalesModal(false);
       } finally { setLoadingFacture(false); }
     } else if (item.commande) {
       navigate('/app/commandes', { state: { openDetailsId: item.commande } });
@@ -326,7 +327,7 @@ export default function Produit() {
           oldStock: selectedProduit.stock, 
           newStock: adjustmentForm.new_quantity,
           ...((selectedProduit.has_reserve_storage) && {
-            reserveDetails: ` (Réserve: ${selectedProduit.stock_reserve} -> ${adjustmentForm.new_reserve_quantity})`
+            reserveDetails: t('products:messages.adjust_reserve_details', { oldReserve: selectedProduit.stock_reserve, newReserve: adjustmentForm.new_reserve_quantity })
           })
         })
     })
@@ -345,9 +346,10 @@ export default function Produit() {
     setActionLoading(true)
     let successCount = 0
     try {
-      for (const id of selectedProductIds) {
-        try { await api.delete(`produits/${id}/`); successCount++; } catch {}
-      }
+      const results = await Promise.all(selectedProductIds.map(async (id) => {
+        try { await api.delete(`produits/${id}/`); return true; } catch { return false; }
+      }));
+      successCount = results.filter(Boolean).length;
       if (successCount > 0) { refetchProduits(); setSelectedProductIds([]); toast.success(`${successCount} ${t('products:messages.delete_success')}`); }
     } finally { setActionLoading(false) }
   }
@@ -360,7 +362,7 @@ export default function Produit() {
     try {
       const resp = await api.post('produits/generate_labels/', { products: [{ id: produit.id, quantity }] }, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([resp.data]));
-      const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${produit.name}.pdf`);
+      const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${t('products:labels.filename_prefix')}_${produit.name}.pdf`);
       document.body.appendChild(link); link.click(); link.remove();
     } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.generation_error'))) }
   }
@@ -499,15 +501,15 @@ export default function Produit() {
 
           <div className="px-4 py-2 border-t border-base-200 bg-base-200 shrink-0 flex justify-between items-center">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">Global</span>
+              <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wider">{t('products:stats.total')}</span>
               <span className="text-primary font-bold text-sm">{totalCount}</span>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5" title="Stock Faible">
+              <div className="flex items-center gap-1.5" title={t('products:stats.low_stock')}>
                 <div className="size-2 rounded-full bg-amber-400"></div>
                 <span className="text-warning font-semibold text-sm">{lowStockCount}</span>
               </div>
-              <div className="flex items-center gap-1.5" title="Rupture">
+              <div className="flex items-center gap-1.5" title={t('products:stats.out_of_stock')}>
                 <div className="size-2 rounded-full bg-red-500"></div>
                 <span className="text-error font-semibold text-sm">{outOfStockCount}</span>
               </div>
@@ -584,7 +586,7 @@ export default function Produit() {
           refetchProduits();
           setIsCreateModalOpen(false);
           setSelectedProduit(produit);
-          toast.success(`✅ ${produit.name} — ${t('products:messages.create_success', { defaultValue: 'Produit créé avec succès' })}`);
+          toast.success(`✅ ${produit.name} — ${t('products:messages.create_success')}`);
         }}
         produitsEndpoint={'produits/'}
         rayons={rayons}

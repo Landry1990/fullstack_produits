@@ -70,7 +70,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
     const sortedLines = useMemo(() => {
         return lignes
             .filter(l => (l.quantite_physique || 0) !== (l.stock_theorique || 0))
-            .toSorted((a, b) => {
+            .slice().sort((a, b) => {
             let comparison = 0;
             switch (sortBy) {
                 case 'nom': {

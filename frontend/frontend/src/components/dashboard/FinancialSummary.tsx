@@ -10,13 +10,7 @@ import {
 } from 'lucide-react';
 import type { Echeance } from '../../hooks/useDashboard';
 import { formatDate } from '../../utils/dateUtils';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  Tooltip, 
-  ResponsiveContainer 
-} from 'recharts';
+import { useRecharts } from '../../hooks/useRecharts';
 
 interface FinancialSummaryProps {
   stats: any;
@@ -33,7 +27,10 @@ export default function FinancialSummary({
   t,
   formatCurrencyLocal
 }: FinancialSummaryProps) {
-  
+  const Recharts = useRecharts();
+  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  const { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } = Recharts;
+
   const formatCurrency = (val: number) => formatCurrencyLocal(val);
 
   const showUG = ugStats && ugStats.results && stats?.role !== 'VENDEUR' && stats?.role !== 'CAISSIER';
@@ -71,7 +68,7 @@ export default function FinancialSummary({
                 </thead>
                 <tbody className="divide-y divide-base-200">
                   {ugStats.results.map((stat: any, index: number) => (
-                    <tr key={index} className="hover:bg-base-200 transition-all group">
+                    <tr key={stat.fournisseur_id || stat.fournisseur_nom} className="hover:bg-base-200 transition-all group">
                       <td className="py-2 pl-4 font-bold text-sm text-base-content group-hover:text-primary transition-colors">{stat.fournisseur_nom}</td>
                       <td className="text-right py-2 font-mono font-bold text-sm text-purple-600">
                         {formatCurrencyLocal(stat.valeur_acquise)}
@@ -151,7 +148,7 @@ export default function FinancialSummary({
                     const isRetard = e.status === 'EN RETARD';
                     const isAujourdhui = e.status === "AUJOURD'HUI";
                     return (
-                      <tr key={i} className={`transition-all group ${
+                      <tr key={e.numero_facture} className={`transition-all group ${
                         isRetard ? 'hover:bg-error/10/50' : isAujourdhui ? 'hover:bg-warning/10/50' : 'hover:bg-base-200'
                       }`}>
                         <td className="py-3 pl-4 font-bold text-sm text-base-content">{e.fournisseur_nom}</td>
@@ -198,8 +195,8 @@ export default function FinancialSummary({
               <PieChartIcon className="size-5" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.payment_mix', { defaultValue: 'Qualité du CA' })}</h2>
-              <p className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t('dashboard.charts.today_payments', { defaultValue: 'Répartition des paiements du jour' })}</p>
+              <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('charts.payment_mix')}</h2>
+              <p className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t('charts.today_payments')}</p>
             </div>
           </div>
           <div className="flex-grow h-[300px]">
@@ -216,8 +213,8 @@ export default function FinancialSummary({
                     dataKey="value"
                     nameKey="label"
                   >
-                    {stats.payment_mix.map((_: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444'][index % 6]} />
+                    {stats.payment_mix.map((entry: any, index: number) => (
+                      <Cell key={`cell-${entry.label}`} fill={['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444'][index % 6]} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -229,7 +226,7 @@ export default function FinancialSummary({
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-base-content/20">
                 <CreditCard className="size-12 mb-2" />
-                <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.charts.no_data', { defaultValue: 'Aucun paiement aujourd\'hui' })}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">{t('charts.no_data')}</span>
               </div>
             )}
           </div>

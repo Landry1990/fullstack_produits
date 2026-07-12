@@ -57,19 +57,16 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
           ...prev,
           patient_nom: facture.client_name || '',
           lignes: facture.produits
-            .filter((p) => {
+            .flatMap((p) => {
                 const prod = typeof p.produit === 'object' ? p.produit : null;
-                if (!prod) return false;
-                return prod.requires_prescription || (prod.surveillance_category && prod.surveillance_category !== 'NONE');
-            })
-            .map((p) => {
-              const prod = p.produit as ProduitModel;
-              return {
-                produit_id: prod.id,
-                produit_nom: prod.name,
-                quantite: p.quantity,
-                surveillance_category: prod.surveillance_category || 'NONE'
-              };
+                if (!prod) return [];
+                if (!prod.requires_prescription && !(prod.surveillance_category && prod.surveillance_category !== 'NONE')) return [];
+                return [{
+                  produit_id: prod.id,
+                  produit_nom: prod.name,
+                  quantite: p.quantity,
+                  surveillance_category: prod.surveillance_category || 'NONE'
+                }];
             })
         }));
       } else if (lignes) {
@@ -77,13 +74,14 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
           ...prev,
           patient_nom: '',
           lignes: lignes
-            .filter(l => l.produit.requires_prescription || (l.produit.surveillance_category && l.produit.surveillance_category !== 'NONE'))
-            .map(l => ({
+            .flatMap(l => {
+              if (!l.produit.requires_prescription && !(l.produit.surveillance_category && l.produit.surveillance_category !== 'NONE')) return [];
+              return [{
               produit_id: l.produit.id,
               produit_nom: l.produit.name,
               quantite: l.quantite,
               surveillance_category: l.produit.surveillance_category || 'NONE'
-            }))
+            }]; })
         }));
       }
     }
@@ -180,8 +178,8 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
                   </tr>
               </thead>
               <tbody>
-                  {relevantProducts.map((ligne, idx) => (
-                      <tr key={idx}>
+                  {relevantProducts.map((ligne) => (
+                      <tr key={ligne.produit_nom}>
                           <td className="font-medium">{ligne.produit_nom}</td>
                           <td className="text-right">{ligne.quantite}</td>
                           <td>

@@ -3,9 +3,13 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert, ActivityIndicator,
 } from 'react-native';
 import { Search, Send, Trash2, User, Wifi, WifiOff, ArrowLeft } from 'lucide-react-native';
-import { useCartStore, useAuthStore } from '../stores';
-import { pdaWS, searchProducts, getProductByBarcode, searchClients } from '../services';
-import { ProductRow, CartItemRow, LotModal } from '../components';
+import { useCartStore } from '../stores/useCartStore';
+import { useAuthStore } from '../stores/useAuthStore';
+import { pdaWS } from '../services/websocket';
+import { searchProducts, getProductByBarcode, searchClients } from '../services/api';
+import { ProductRow } from '../components/ProductRow';
+import { CartItemRow } from '../components/CartItemRow';
+import { LotModal } from '../components/LotModal';
 import type { Product, StockLot, Client, AyantDroit } from '../types';
 
 export function FacturationScreen({ onLogout }: { onLogout: () => void }) {

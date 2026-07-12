@@ -1,16 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts';
+import { useRecharts } from '../../hooks/useRecharts';
 import type { ProduitModel, StockLot } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -44,7 +35,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
             ? achats
             : achats.filter((a) => a.fournisseur_name === selectedFournisseur);
         return filtered
-            .toSorted((a, b) => new Date(a.commande_date).getTime() - new Date(b.commande_date).getTime())
+            .slice().sort((a, b) => new Date(a.commande_date).getTime() - new Date(b.commande_date).getTime())
             .map((a) => ({
                 date: new Date(a.commande_date).toLocaleDateString(undefined, { month: 'short', year: '2-digit' }),
                 prix: Math.round(Number(a.price_cost)),
@@ -52,6 +43,10 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
                 fullDate: formatDate(a.commande_date),
             }));
     }, [achats, selectedFournisseur]);
+
+    const Recharts = useRecharts();
+    if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+    const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } = Recharts;
 
     if (chartData.length === 0) return null;
 
@@ -96,13 +91,13 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
 
             <div className="flex gap-4 mb-3 text-xs">
                 <span className="font-bold text-base-content/50">
-                    Min : <span className="text-success font-black">{formatCurrency(minPrix)}</span>
+                    {t('products:detail.purchases.min')} <span className="text-success font-black">{formatCurrency(minPrix)}</span>
                 </span>
                 <span className="font-bold text-base-content/50">
-                    Max : <span className="text-error font-black">{formatCurrency(maxPrix)}</span>
+                    {t('products:detail.purchases.max')} <span className="text-error font-black">{formatCurrency(maxPrix)}</span>
                 </span>
                 <span className="font-bold text-base-content/50">
-                    Dernier : <span className="text-info font-black">{formatCurrency(lastPrix)}</span>
+                    {t('products:detail.purchases.latest')} <span className="text-info font-black">{formatCurrency(lastPrix)}</span>
                 </span>
             </div>
 
@@ -120,7 +115,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
                         width={70}
                     />
                     <Tooltip
-                        formatter={(value: number) => [formatCurrency(value), t('products:detail.purchases.price', { defaultValue: 'Prix achat' })]}
+                        formatter={(value: number) => [formatCurrency(value), t('products:detail.purchases.price_label')]}
                         labelFormatter={(label: string, payload: readonly any[]) => {
                             const item = payload?.[0]?.payload;
                             return item ? `${item.fullDate}${item.fournisseur ? ` — ${item.fournisseur}` : ''}` : label;
@@ -338,11 +333,11 @@ const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: any[]; t: any }) =
                     </tr>
                 </thead>
                 <tbody>
-                    {(monthlyStats || []).map((stat, index) => {
+                    {(monthlyStats || []).map((stat) => {
                         const showYear = stat.year !== currentYear;
                         currentYear = stat.year;
                         return (
-                            <tr key={index} className={`border-b border-gray-50 ${showYear ? 'border-t-2 border-base-300' : ''}`}>
+                            <tr key={`${stat.year}-${stat.month_name}`} className={`border-b border-gray-50 ${showYear ? 'border-t-2 border-base-300' : ''}`}>
                                 <td className="font-black text-sm text-base-content/50">
                                     {showYear ? stat.year : ''}
                                 </td>
@@ -388,7 +383,7 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t 
                     </tr>
                 </thead>
                 <tbody>
-                    {(stockHistory || []).map((item, index) => {
+                    {(stockHistory || []).map((item) => {
                         const isPositive = item.type === 'AJUSTEMENT' 
                             ? item.quantity > 0 
                             : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
@@ -400,7 +395,7 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t 
 
                         return (
                             <tr 
-                                key={index} 
+                                key={item.id || `${item.date}-${item.type}`} 
                                 className={`hover:bg-base-200 transition-colors border-b border-gray-50 ${(item.facture || item.commande) ? 'cursor-pointer' : ''}`}
                                 onClick={() => onMovementClick(item)}
                             >

@@ -3,19 +3,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatters';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
+import { useRecharts } from '../hooks/useRecharts';
 
 
 interface VendeurRanking {
@@ -127,6 +115,10 @@ export default function ClassementVendeurs() {
     });
     return mergedPoint;
   }) : [];
+
+  const Recharts = useRecharts();
+  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  const { LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
   return (
     <div className="p-6 space-y-6">
@@ -303,8 +295,8 @@ export default function ClassementVendeurs() {
                 <YAxis type="category" dataKey="vendeur" width={100} fontSize={12} />
                 <Tooltip formatter={(value: number) => formatMoney(value, t('common:currency'))} />
                 <Bar dataKey="chiffre_affaires" name={t('sellers:ranking.revenue')} radius={[0, 4, 4, 0]}>
-                  {ranking.data.slice(0, 5).map((_, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                  {ranking.data.slice(0, 5).map((entry, index) => (
+                    <Cell key={entry.vendeur} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>
               </BarChart>

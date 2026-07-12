@@ -7,6 +7,7 @@ import logging
 from django.utils import timezone
 from datetime import datetime
 
+from ..rapports.tz_utils import parse_api_datetime
 from ...models import MouvementCaisse, AuditLog
 from ...serializers import MouvementCaisseSerializer
 from ...audit_helpers import log_audit
@@ -33,26 +34,14 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
         date_fin = self.request.query_params.get('date_fin')
         
         if date_debut:
-            try:
-                clean = date_debut.replace('T', ' ').replace('Z', '')
-                try:
-                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M')
-                if timezone.is_naive(dt): dt = timezone.make_aware(dt)
+            dt = parse_api_datetime(date_debut)
+            if dt:
                 queryset = queryset.filter(date__gte=dt)
-            except ValueError: pass
-            
+
         if date_fin:
-            try:
-                clean = date_fin.replace('T', ' ').replace('Z', '')
-                try:
-                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    dt = datetime.strptime(clean, '%Y-%m-%d %H:%M')
-                if timezone.is_naive(dt): dt = timezone.make_aware(dt)
+            dt = parse_api_datetime(date_fin, end_of_day=True)
+            if dt:
                 queryset = queryset.filter(date__lte=dt)
-            except ValueError: pass
             
         return queryset
     

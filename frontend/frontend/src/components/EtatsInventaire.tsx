@@ -24,6 +24,16 @@ interface InventaireOption { id: number; reference: string; description: string;
 
 // ─── Sous-composant : Sélecteur Radio Card ────────────────────────────────────
 
+const radioCardAccents: Record<string, string> = {
+  emerald: 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20',
+  blue:    'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20',
+  violet:  'border-violet-500 bg-violet-50 ring-2 ring-violet-500/20',
+  amber:   'border-amber-500 bg-amber-50 ring-2 ring-amber-500/20',
+};
+const radioCardDotColors: Record<string, string> = {
+  emerald: 'bg-emerald-500', blue: 'bg-blue-500', violet: 'bg-violet-500', amber: 'bg-amber-500',
+};
+
 function RadioCard({
   value, current, label, description, icon, accent = 'emerald', onChange,
 }: {
@@ -32,27 +42,18 @@ function RadioCard({
   onChange: (v: string) => void;
 }) {
   const active = current === value;
-  const accents: Record<string, string> = {
-    emerald: 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20',
-    blue:    'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20',
-    violet:  'border-violet-500 bg-violet-50 ring-2 ring-violet-500/20',
-    amber:   'border-amber-500 bg-amber-50 ring-2 ring-amber-500/20',
-  };
-  const dotColors: Record<string, string> = {
-    emerald: 'bg-emerald-500', blue: 'bg-blue-500', violet: 'bg-violet-500', amber: 'bg-amber-500',
-  };
   return (
     <button
       type="button"
       onClick={() => onChange(value)}
       className={cn(
         'w-full text-left flex items-start gap-2 lg:gap-3 p-2 lg:p-3 rounded-xl border-2 transition-all duration-150 cursor-pointer',
-        active ? accents[accent] : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+        active ? radioCardAccents[accent] : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
       )}
     >
       <div className={cn(
         'mt-0.5 shrink-0 size-7 lg:size-8 rounded-lg flex items-center justify-center transition-colors',
-        active ? `${dotColors[accent].replace('bg-', 'bg-').replace('500','100')} text-${accent}-600` : 'bg-slate-100 text-slate-400'
+        active ? `${radioCardDotColors[accent].replace('bg-', 'bg-').replace('500','100')} text-${accent}-600` : 'bg-slate-100 text-slate-400'
       )}>
         {icon}
       </div>
@@ -61,7 +62,7 @@ function RadioCard({
         {description && <p className="text-[10px] lg:text-[11px] text-slate-400 mt-0.5 truncate">{description}</p>}
       </div>
       {active && (
-        <div className={cn('shrink-0 size-4 rounded-full flex items-center justify-center mt-1', dotColors[accent])}>
+        <div className={cn('shrink-0 size-4 rounded-full flex items-center justify-center mt-1', radioCardDotColors[accent])}>
           <div className="size-1.5 rounded-full bg-white" />
         </div>
       )}
@@ -71,18 +72,19 @@ function RadioCard({
 
 // ─── Sous-composant : Badge résumé ────────────────────────────────────────────
 
+const summaryLineColors: Record<string, string> = {
+  blue:    'bg-blue-100 text-blue-700',
+  violet:  'bg-violet-100 text-violet-700',
+  emerald: 'bg-emerald-100 text-emerald-700',
+  amber:   'bg-amber-100 text-amber-700',
+  slate:   'bg-slate-100 text-slate-600',
+};
+
 function SummaryLine({ label, value, color }: { label: string; value: string; color: string }) {
-  const colors: Record<string, string> = {
-    blue:    'bg-blue-100 text-blue-700',
-    violet:  'bg-violet-100 text-violet-700',
-    emerald: 'bg-emerald-100 text-emerald-700',
-    amber:   'bg-amber-100 text-amber-700',
-    slate:   'bg-slate-100 text-slate-600',
-  };
   return (
     <div className="flex items-center justify-between gap-2 text-xs">
       <span className="text-slate-500 font-medium">{label}</span>
-      <span className={cn('px-2 py-0.5 rounded-full font-semibold max-w-[160px] truncate text-right', colors[color] || colors.slate)}>
+      <span className={cn('px-2 py-0.5 rounded-full font-semibold max-w-[160px] truncate text-right', summaryLineColors[color] || summaryLineColors.slate)}>
         {value}
       </span>
     </div>
@@ -90,6 +92,19 @@ function SummaryLine({ label, value, color }: { label: string; value: string; co
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────
+
+const groupByOptions: { value: GroupByOption; label: string; desc: string; icon: React.ReactNode }[] = [
+  { value: 'rayon',       label: 'Par Rayon',             desc: 'Emplacement physique',         icon: <Grid3X3 className="size-4" /> },
+  { value: 'forme',       label: 'Par Forme galénique',   desc: 'Comprimé, sirop, pommade…',    icon: <FlaskConical className="size-4" /> },
+  { value: 'groupe',      label: 'Par Groupe thérap.',    desc: 'Classification DCI / ATC',     icon: <Tag className="size-4" /> },
+  { value: 'fournisseur', label: 'Par Fournisseur',       desc: 'Fournisseur des lots',         icon: <Building2 className="size-4" /> },
+];
+
+const stockFilterOptions: { value: StockFilterOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = [
+  { value: 'tous',     label: 'Tous les produits',     desc: 'Stock nul et positif',          icon: <Package className="size-4" />,      accent: 'blue' },
+  { value: 'non_zero', label: 'Stocks positifs (> 0)', desc: 'Produits en stock uniquement',   icon: <CheckCircle2 className="size-4" />, accent: 'emerald' },
+  { value: 'zero',     label: 'Stocks nuls (= 0)',     desc: 'Ruptures / produits à saisir',  icon: <AlertCircle className="size-4" />,  accent: 'amber' },
+];
 
 export default function EtatsInventaire() {
   const [source, setSource] = useState<SourceOption>('stock');
@@ -182,18 +197,6 @@ export default function EtatsInventaire() {
   };
 
   // ── Options ────────────────────────────────────────────────────────────────
-  const groupByOptions: { value: GroupByOption; label: string; desc: string; icon: React.ReactNode }[] = [
-    { value: 'rayon',       label: 'Par Rayon',             desc: 'Emplacement physique',         icon: <Grid3X3 className="size-4" /> },
-    { value: 'forme',       label: 'Par Forme galénique',   desc: 'Comprimé, sirop, pommade…',    icon: <FlaskConical className="size-4" /> },
-    { value: 'groupe',      label: 'Par Groupe thérap.',    desc: 'Classification DCI / ATC',     icon: <Tag className="size-4" /> },
-    { value: 'fournisseur', label: 'Par Fournisseur',       desc: 'Fournisseur des lots',         icon: <Building2 className="size-4" /> },
-  ];
-
-  const stockFilterOptions: { value: StockFilterOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = [
-    { value: 'tous',     label: 'Tous les produits',     desc: 'Stock nul et positif',          icon: <Package className="size-4" />,      accent: 'blue' },
-    { value: 'non_zero', label: 'Stocks positifs (> 0)', desc: 'Produits en stock uniquement',   icon: <CheckCircle2 className="size-4" />, accent: 'emerald' },
-    { value: 'zero',     label: 'Stocks nuls (= 0)',     desc: 'Ruptures / produits à saisir',  icon: <AlertCircle className="size-4" />,  accent: 'amber' },
-  ];
 
   const entityLabel = groupByOptions.find(o => o.value === groupBy)?.label.replace('Par ', '') || '';
   const selectedEntityName = entities.find(e => e.id === selectedEntity)?.name;

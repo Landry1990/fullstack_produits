@@ -51,9 +51,9 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((stat, idx) => (
+            {stats.map((stat) => (
                 <div
-                    key={idx}
+                    key={stat.label}
                     className={`${stat.bgColor} ${stat.borderColor} border p-4 rounded-xl shadow-sm transition-all hover:shadow-md flex items-center gap-4`}
                 >
                     <div className="p-3 bg-white rounded-xl shadow-sm">

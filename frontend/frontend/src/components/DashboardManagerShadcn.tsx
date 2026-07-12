@@ -152,51 +152,51 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
 }
 
 /* ─── Alerts ─── */
+const alertStyles: Record<string, { border: string; iconBg: string; iconColor: string; titleColor: string; badgeClass: string }> = {
+  danger: {
+    border: 'border-l-4 border-l-red-500',
+    iconBg: 'bg-red-50',
+    iconColor: 'text-red-500',
+    titleColor: 'text-red-700',
+    badgeClass: 'bg-red-100 text-red-700',
+  },
+  warning: {
+    border: 'border-l-4 border-l-amber-400',
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-amber-500',
+    titleColor: 'text-amber-700',
+    badgeClass: 'bg-amber-100 text-amber-700',
+  },
+  success: {
+    border: 'border-l-4 border-l-emerald-500',
+    iconBg: 'bg-emerald-50',
+    iconColor: 'text-emerald-500',
+    titleColor: 'text-emerald-700',
+    badgeClass: 'bg-emerald-100 text-emerald-700',
+  },
+  info: {
+    border: 'border-l-4 border-l-blue-500',
+    iconBg: 'bg-blue-50',
+    iconColor: 'text-blue-500',
+    titleColor: 'text-blue-700',
+    badgeClass: 'bg-blue-100 text-blue-700',
+  },
+};
+
+const iconMap: Record<string, React.ReactNode> = {
+  trending_down: <TrendingDown className="size-4" />,
+  package_x: <PackageX className="size-4" />,
+  credit_card: <CreditCard className="size-4" />,
+  archive: <Archive className="size-4" />,
+  clock: <Clock className="size-4" />,
+  trophy: <Trophy className="size-4" />,
+};
+
 function AlertsShadcn({ alerts }: { alerts?: any[] }) {
   const { t } = useTranslation(['dashboard', 'common']);
   const navigate = useNavigate();
 
-  const alertStyles: Record<string, { border: string; iconBg: string; iconColor: string; titleColor: string; badgeClass: string }> = {
-    danger: {
-      border: 'border-l-4 border-l-red-500',
-      iconBg: 'bg-red-50',
-      iconColor: 'text-red-500',
-      titleColor: 'text-red-700',
-      badgeClass: 'bg-red-100 text-red-700',
-    },
-    warning: {
-      border: 'border-l-4 border-l-amber-400',
-      iconBg: 'bg-amber-50',
-      iconColor: 'text-amber-500',
-      titleColor: 'text-amber-700',
-      badgeClass: 'bg-amber-100 text-amber-700',
-    },
-    success: {
-      border: 'border-l-4 border-l-emerald-500',
-      iconBg: 'bg-emerald-50',
-      iconColor: 'text-emerald-500',
-      titleColor: 'text-emerald-700',
-      badgeClass: 'bg-emerald-100 text-emerald-700',
-    },
-    info: {
-      border: 'border-l-4 border-l-blue-500',
-      iconBg: 'bg-blue-50',
-      iconColor: 'text-blue-500',
-      titleColor: 'text-blue-700',
-      badgeClass: 'bg-blue-100 text-blue-700',
-    },
-  };
-
-  const iconMap: Record<string, React.ReactNode> = {
-    trending_down: <TrendingDown className="size-4" />,
-    package_x: <PackageX className="size-4" />,
-    credit_card: <CreditCard className="size-4" />,
-    archive: <Archive className="size-4" />,
-    clock: <Clock className="size-4" />,
-    trophy: <Trophy className="size-4" />,
-  };
-
-  const sorted = alerts ? [...alerts].sort((a, b) => (a.priority ?? 9) - (b.priority ?? 9)) : [];
+  const sorted = alerts ? alerts.slice().sort((a, b) => (a.priority ?? 9) - (b.priority ?? 9)) : [];
   const criticalCount = sorted.filter(a => a.type === 'danger').length;
 
   return (
@@ -233,7 +233,7 @@ function AlertsShadcn({ alerts }: { alerts?: any[] }) {
             const icon = iconMap[alert.icon] || <AlertCircle className="size-4" />;
             return (
               <div
-                key={idx}
+                key={alert.id ?? alert.title_key}
                 className={`flex items-start gap-3 p-3.5 rounded-xl bg-white border border-slate-100 ${style.border} shadow-sm transition-all hover:shadow-md`}
               >
                 <div className={`${style.iconBg} rounded-lg p-2 shrink-0 mt-0.5`}>

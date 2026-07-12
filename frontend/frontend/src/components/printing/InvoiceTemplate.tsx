@@ -214,7 +214,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     const totalLineNetHT = ((Number(item.selling_price) - Number(item.discount)) * item.quantity) / (1 + (Number(item.tva)||0)/100);
                     
                     return (
-                      <tr key={idx} className="group border-b border-slate-50 hover:bg-base-200/30 transition-colors break-inside-avoid">
+                      <tr key={item.cip ?? item.produit_nom ?? idx} className="group border-b border-slate-50 hover:bg-base-200/30 transition-colors break-inside-avoid">
                           <td className="py-2 px-3">
                               <div className="font-bold text-base-content text-[10.5px] uppercase leading-tight">{item.produit_nom}</div>
                               {item.cip && <div className="text-[8.5px] text-base-content/40 font-mono mt-0.5 tracking-tight inline-block mr-3">{t('invoice.cip')}: {item.cip}</div>}
@@ -263,9 +263,9 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                       </thead>
                       <tbody className="leading-tight">
                           {data.tva_analysis && data.tva_analysis.length > 0 ? (
-                              data.tva_analysis.map((line, idx) => (
-                                  <tr key={idx} className="text-base-content/90">
-                                      <td className="py-1 text-left font-bold uppercase">TVA-{idx+1}</td>
+                              data.tva_analysis.map((line, tvaIdx) => (
+                                  <tr key={`tva-${line.taux}`} className="text-base-content/90">
+                                      <td className="py-1 text-left font-bold uppercase">TVA-{tvaIdx+1}</td>
                                       <td className="py-1 text-right font-medium">{formatNumber(Number(line.taux), 2)}%</td>
                                       <td className="py-1 text-right">{formatNumber(line.base_ht, 0)}</td>
                                       <td className="py-1 text-right font-bold text-base-content">{formatNumber(line.montant_tva, 0)}</td>

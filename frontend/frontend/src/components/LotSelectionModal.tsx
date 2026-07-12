@@ -16,7 +16,7 @@ type LotSelectionModalProps = {
 }
 
 function sortLotsFEFO(lots: StockLot[]): StockLot[] {
-  return [...lots].sort((a, b) => {
+  return lots.slice().sort((a, b) => {
     const expA = a.date_expiration ? new Date(a.date_expiration).getTime() : Infinity
     const expB = b.date_expiration ? new Date(b.date_expiration).getTime() : Infinity
     if (expA !== expB) return expA - expB

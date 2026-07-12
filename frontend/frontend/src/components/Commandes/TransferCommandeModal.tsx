@@ -123,7 +123,7 @@ export default function TransferCommandeModal({
             const { data: newCommande } = await api.post<Commande>(commandesEndpoint, newCommandePayload);
 
             // 2. Ajouter les produits transférés
-            for (const p of selectedProducts) {
+            await Promise.all(selectedProducts.map(async (p) => {
                 const payload = {
                     commande: newCommande.id,
                     produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
@@ -140,7 +140,7 @@ export default function TransferCommandeModal({
                 };
                 
                 await api.post('commande-produits/', payload);
-            }
+            }));
 
             const fournisseurName = fournisseurs.find(f => f.id === parseInt(transferTargetFournisseur))?.name || 'Inconnu';
             onTransferSuccess(selectedProducts.length, fournisseurName, newCommande.id);
@@ -177,10 +177,7 @@ export default function TransferCommandeModal({
                     >
                         <option value="">{t('orders:transfer_modal.select_supplier')}</option>
                         {fournisseurs
-                            .filter(f => f.id !== parseInt(currentSupplierId || '0'))
-                            .map(f => (
-                                <option key={f.id} value={f.id}>{f.name}</option>
-                            ))
+                            .flatMap(f => f.id !== parseInt(currentSupplierId || '0') ? [<option key={f.id} value={f.id}>{f.name}</option>] : [])
                         }
                     </select>
                 </div>
@@ -208,7 +205,7 @@ export default function TransferCommandeModal({
                             const priceDiff = hasPriceInfo ? currentPrice - newPrice : 0;
 
                             return (
-                                <div key={i} className="flex justify-between items-center text-sm bg-base-100 p-2 rounded">
+                                <div key={produitId} className="flex justify-between items-center text-sm bg-base-100 p-2 rounded">
                                     <div>
                                         <span className={`font-medium ${isDeleted ? 'italic text-base-content/50' : ''}`}>
                                             {produitName}

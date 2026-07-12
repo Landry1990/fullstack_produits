@@ -156,9 +156,9 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                         value={modePaiement}
                                         onChange={e => setModePaiement(e.target.value)}
                                     >
-                                        {getCaissePaymentModes(settings?.disabled_payment_modes, settings?.custom_payment_modes).filter(m => m.value !== 'depot').map(m => (
+                                        {getCaissePaymentModes(settings?.disabled_payment_modes, settings?.custom_payment_modes).flatMap(m => m.value !== 'depot' ? [(
                                             <option key={m.value} value={m.value}>{getPaymentModeLabel(m.value, t, settings?.custom_payment_modes)}</option>
-                                        ))}
+                                        )] : [])}
                                     </select>
                                 </div>
                             </div>

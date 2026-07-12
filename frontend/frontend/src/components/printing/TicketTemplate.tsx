@@ -149,7 +149,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
                 const lineTotal = qty * price;
                 
                 return (
-                  <tr key={idx} className="border-b border-black/10">
+                  <tr key={p.id ?? p.produit_id ?? p.produit ?? idx} className="border-b border-black/10">
                     <td className="py-2 align-top leading-tight overflow-hidden">
                         <div className="font-bold uppercase" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{getProductName(p)}</div>
                         <div className="text-[8px] font-mono italic">
@@ -200,7 +200,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
             <tbody>
               {ticket.paiements_details && ticket.paiements_details.length > 0 ? (
                   ticket.paiements_details.map((paiement, idx) => (
-                      <tr key={idx}>
+                      <tr key={(paiement as any).mode_paiement ?? paiement.mode ?? idx}>
                           <td className="uppercase font-bold">[{getModeLabel((paiement as any).mode_paiement || paiement.mode)}]</td>
                           <td className="text-right font-mono font-black">{formatM(paiement.montant)}</td>
                       </tr>

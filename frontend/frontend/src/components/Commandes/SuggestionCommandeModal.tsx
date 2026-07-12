@@ -499,7 +499,7 @@ export default function SuggestionCommandeModal({
                                 <tbody>
                                     {suggestions.map((item, index) => (
                                         <tr 
-                                            key={index} 
+                                            key={item.produit_id} 
                                             className={`hover:bg-primary/10 transition-colors cursor-pointer group ${selectedSuggestions.has(index) ? 'bg-primary/10' : ''}`}
                                             onClick={() => toggleSuggestionSelection(index)}
                                         >

@@ -127,14 +127,17 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
     produit_name = serializers.SerializerMethodField()
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
     reason_type_display = serializers.SerializerMethodField()
+    lot_id = serializers.IntegerField(source='stock_lot.id', read_only=True, allow_null=True)
     lot_number = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
+    lot_expiration = serializers.DateField(source='stock_lot.date_expiration', read_only=True, allow_null=True)
+    lot_quantity_remaining = serializers.IntegerField(source='stock_lot.quantity_remaining', read_only=True, allow_null=True)
     valorisation = serializers.SerializerMethodField()
 
     class Meta:
         model = StockAdjustment
         fields = [
             'id', 'produit', 'produit_name', 'produit_cip',
-            'stock_lot', 'lot_number',
+            'stock_lot', 'lot_id', 'lot_number', 'lot_expiration', 'lot_quantity_remaining',
             'user', 'user_name', 'username',
             'quantity_before', 'quantity_after', 'quantity_change',
             'reserve_before', 'reserve_after', 'reserve_change',

@@ -326,9 +326,9 @@ export function useFournisseurs() {
     }
   }
 
-  const executeDeleteFournisseur = async (id: number) => {
+  const executeDeleteFournisseur = async (id: number, validatorId?: number, password?: string) => {
     try {
-      await api.delete(`fournisseurs/${id}/`);
+      await api.delete(`fournisseurs/${id}/`, { data: { validated_by_id: validatorId, sudo_password: password } });
       setFournisseurs(prev => prev.filter(f => f.id !== id));
       setSelectedFournisseur(null);
       toast.success(t('providers:messages.delete_success'));
@@ -349,9 +349,9 @@ export function useFournisseurs() {
     }
   }
 
-  const executeBulkDeleteFournisseurs = async () => {
+  const executeBulkDeleteFournisseurs = async (validatorId?: number, password?: string) => {
     try {
-      await api.post('fournisseurs/bulk_delete/', { ids: selectedIds });
+      await api.post('fournisseurs/bulk_delete/', { ids: selectedIds, validated_by_id: validatorId, sudo_password: password });
       setFournisseurs(prev => prev.filter(f => !selectedIds.includes(f.id!)));
       setSelectedIds([]);
       if (selectedFournisseur && selectedIds.includes(selectedFournisseur.id!)) {
@@ -383,8 +383,8 @@ export function useFournisseurs() {
     });
     
     if (confirmed) {
-        requireSudo(async () => {
-            await executeBulkDeleteFournisseurs();
+        requireSudo(async (validatorId, password) => {
+            await executeBulkDeleteFournisseurs(validatorId, password);
         }, {
             title: t('providers:messages.sudo_title'),
             message: t('providers:messages.sudo_message'),
@@ -419,8 +419,8 @@ export function useFournisseurs() {
     });
     
     if (confirmed) {
-        requireSudo(async () => {
-            await executeDeleteFournisseur(selectedFournisseur.id as number);
+        requireSudo(async (validatorId, password) => {
+            await executeDeleteFournisseur(selectedFournisseur.id as number, validatorId, password);
         }, {
             title: t('providers:messages.sudo_title'),
             message: t('providers:messages.sudo_message'),

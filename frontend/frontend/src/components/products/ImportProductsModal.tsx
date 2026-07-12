@@ -182,8 +182,8 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
                <div className="bg-base-200 p-4 rounded-xl max-h-40 overflow-y-auto border border-base-200">
                  <h4 className="font-semibold text-xs mb-2 text-error">{t('products:import.errors_title')}</h4>
                  <ul className="list-disc list-inside text-xs space-y-1 text-base-content/70">
-                   {result.errors.slice(0, 10).map((err, idx) => (
-                     <li key={idx}>{err}</li>
+                   {result.errors.slice(0, 10).map((err) => (
+                     <li key={err}>{err}</li>
                    ))}
                    {result.errors.length > 10 && (
                      <li className="italic text-base-content/50">{t('products:import.more_errors', { count: result.errors.length - 10 })}</li>

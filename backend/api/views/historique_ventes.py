@@ -6,6 +6,7 @@ from django.db.models import Sum, Count, Q, Avg, F as models_f, ExpressionWrappe
 from django.db.models.functions import TruncDate, Coalesce
 from django.utils import timezone
 from datetime import datetime
+from .rapports.tz_utils import parse_api_datetime
 from decimal import Decimal
 from ..models import Facture, Caisse, FactureProduit, FactureProduitAllocation
 import logging
@@ -177,18 +178,9 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         if not date_debut or not date_fin:
             return Response({'error': 'date_debut and date_fin are required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Parse datetime and make timezone-aware
-        try:
-            debut = datetime.fromisoformat(date_debut.replace('Z', '+00:00'))
-            fin = datetime.fromisoformat(date_fin.replace('Z', '+00:00'))
-            
-            # If datetime is naive (no timezone info), assume local timezone
-            if debut.tzinfo is None:
-                debut = timezone.make_aware(debut, timezone.get_current_timezone())
-            if fin.tzinfo is None:
-                fin = timezone.make_aware(fin, timezone.get_current_timezone())
-                
-        except ValueError:
+        debut = parse_api_datetime(date_debut)
+        fin = parse_api_datetime(date_fin, end_of_day=True)
+        if debut is None or fin is None:
             return Response({'error': 'Invalid datetime format'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Get FactureProduit for validated/paid invoices in the time range

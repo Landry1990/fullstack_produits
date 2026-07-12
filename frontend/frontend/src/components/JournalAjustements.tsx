@@ -1,7 +1,6 @@
 ﻿import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAjustementsData } from '../hooks/useAjustementsData';
-import { AjustementsQuickStats } from './adjustments/AjustementsQuickStats';
 import { AjustementsFilters } from './adjustments/AjustementsFilters';
 import { AjustementsTable } from './adjustments/AjustementsTable';
 
@@ -13,7 +12,6 @@ export default function JournalAjustements() {
         totalCount,
         totalPages,
         currentPage,
-        stats,
         filters,
         setFilters,
         pagination,
@@ -21,22 +19,22 @@ export default function JournalAjustements() {
     } = useAjustementsData();
 
     return (
-        <div className="min-h-screen bg-slate-100 p-3 sm:p-4 lg:p-8">
+        <div className="h-screen bg-slate-100 p-3 sm:p-4 lg:p-6 flex flex-col overflow-hidden">
             <Toaster position="top-right" />
 
-            <div className="max-w-[1600px] mx-auto space-y-8">
+            <div className="max-w-[1600px] mx-auto w-full flex flex-col h-full gap-4">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 shrink-0">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="size-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-                                <span className="text-2xl">📋</span>
+                            <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                                <span className="text-xl">📋</span>
                             </div>
                             <div>
-                                <h1 className="text-3xl font-black tracking-tight text-slate-800">
+                                <h1 className="text-2xl font-black tracking-tight text-slate-800">
                                     {t('ajustements.title')}
                                 </h1>
-                                <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest">
+                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
                                     {t('ajustements.subtitle')}
                                 </p>
                             </div>
@@ -44,15 +42,8 @@ export default function JournalAjustements() {
                     </div>
                 </div>
 
-                {/* Main Stats Dashboard */}
-                <AjustementsQuickStats
-                    totalCount={stats.total_count}
-                    positiveSum={stats.positive_sum}
-                    negativeSum={stats.negative_sum}
-                />
-
                 {/* Search & Filter Bar */}
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
                     <AjustementsFilters
                         searchQuery={filters.searchQuery}
                         onSearchChange={setFilters.setSearchQuery}
@@ -75,7 +66,7 @@ export default function JournalAjustements() {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-0 sm:min-h-[480px] lg:min-h-[600px]">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
                     <AjustementsTable
                         adjustments={adjustments}
                         loading={loading}

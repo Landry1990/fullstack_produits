@@ -220,7 +220,7 @@ export default function CaisseCentralisee() {
 
   // Trier les factures par date chronologique (plus ancienne en premier)
   const sortedFactures = useMemo(() => 
-    facturesEnAttente.toSorted((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+    facturesEnAttente.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [facturesEnAttente]
   )
 

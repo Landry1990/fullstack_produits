@@ -68,11 +68,11 @@ export default function MergeCommandesModal({
 
         try {
             // Utiliser l'action backend 'merge' pour chaque commande source
-            for (const sourceOrderId of orderIdsToMerge) {
+            await Promise.all(orderIdsToMerge.map(async (sourceOrderId) => {
                 await api.post(`${commandesEndpoint}${mergeTargetOrderId}/merge/`, {
                     source_commande_id: sourceOrderId
                 });
-            }
+            }));
 
             // Notifier succès
             onMergeSuccess(orderIdsToMerge.length, mergeTargetOrderId);

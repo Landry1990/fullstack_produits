@@ -91,7 +91,7 @@ export const useUsers = () => {
 };
 
 /** Utility to invalidate the users cache (e.g., after user creation/deletion) */
-export const invalidateUsersCache = () => {
+const invalidateUsersCache = () => {
     cachedUsers = null;
     fetchPromise = null;
 };

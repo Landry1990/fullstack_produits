@@ -289,8 +289,8 @@ export default function SystemAdmin() {
             </div>
             <p className="text-xs text-gray-500 mb-4">{t('restore_do_not_close')}</p>
             <div className="bg-gray-950 rounded-lg p-4 font-mono text-xs text-emerald-400 min-h-[120px] max-h-48 overflow-y-auto space-y-1">
-              {restoreProgress.map((line, i) => (
-                <div key={i} className="flex items-start gap-2">
+              {restoreProgress.map((line) => (
+                <div key={line} className="flex items-start gap-2">
                   <span className="text-emerald-600 select-none">{'>'}</span>
                   <span>{line}</span>
                 </div>

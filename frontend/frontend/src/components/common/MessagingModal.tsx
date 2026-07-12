@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useReducer } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Send, MessageSquare, Trash2, Edit2, Plus, Bell, Clock, CheckCheck, Check, Archive, Reply, Paperclip, X, Shield } from 'lucide-react';
@@ -10,6 +10,50 @@ import PremiumModal from './PremiumModal';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import toast from 'react-hot-toast';
+
+// ── Composer reducer ────────────────────────────────────────────────────────
+interface ComposerState {
+  recipientId: number | '';
+  msgContent: string;
+  replyingTo: import('../../services/communicationService').InternalMessage | null;
+  attachmentFile: File | null;
+}
+
+type ComposerAction =
+  | { type: 'SET_RECIPIENT'; payload: number | '' }
+  | { type: 'SET_CONTENT'; payload: string }
+  | { type: 'SET_REPLY_TO'; payload: import('../../services/communicationService').InternalMessage | null; recipientId?: number | '' }
+  | { type: 'SET_ATTACHMENT'; payload: File | null }
+  | { type: 'RESET' };
+
+const initialComposerState: ComposerState = {
+  recipientId: '',
+  msgContent: '',
+  replyingTo: null,
+  attachmentFile: null,
+};
+
+function composerReducer(state: ComposerState, action: ComposerAction): ComposerState {
+  switch (action.type) {
+    case 'SET_RECIPIENT':
+      return { ...state, recipientId: action.payload };
+    case 'SET_CONTENT':
+      return { ...state, msgContent: action.payload };
+    case 'SET_REPLY_TO':
+      return {
+        ...state,
+        replyingTo: action.payload,
+        recipientId: action.payload === null ? '' : (action.recipientId ?? state.recipientId),
+      };
+    case 'SET_ATTACHMENT':
+      return { ...state, attachmentFile: action.payload };
+    case 'RESET':
+      return initialComposerState;
+    default:
+      return state;
+  }
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 interface MessagingModalProps {
   isOpen: boolean;
@@ -27,15 +71,13 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [users, setUsers] = useState<SimpleUser[]>([]);
 
-  // Form states
-  const [recipientId, setRecipientId] = useState<number | ''>('');
-  const [msgContent, setMsgContent] = useState('');
+  // Form states — managed as a single reducer for atomic transitions
+  const [composerState, dispatchComposer] = useReducer(composerReducer, initialComposerState);
+  const { recipientId, msgContent, replyingTo, attachmentFile } = composerState;
   const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
   const [templateForm, setTemplateForm] = useState({ title: '', content: '' });
 
   // New feature states
-  const [replyingTo, setReplyingTo] = useState<InternalMessage | null>(null);
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
 
   const loadData = async () => {
@@ -114,10 +156,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
         attachment: attachmentFile
       });
       toast.success(t('new.success_sent'));
-      setMsgContent('');
-      setRecipientId('');
-      setAttachmentFile(null);
-      setReplyingTo(null);
+      dispatchComposer({ type: 'RESET' });
       setActiveTab('sent');
       loadData();
     } catch (error) {
@@ -148,8 +187,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
 
   const handleReplyToMessage = (e: React.MouseEvent, m: InternalMessage) => {
     e.stopPropagation();
-    setReplyingTo(m);
-    setRecipientId(m.recipient === null ? '' : m.sender);
+    dispatchComposer({ type: 'SET_REPLY_TO', payload: m, recipientId: m.recipient === null ? '' : m.sender });
     setActiveTab('new');
   };
 
@@ -183,7 +221,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
   };
 
   const applyTemplate = (content: string) => {
-    setMsgContent(content);
+    dispatchComposer({ type: 'SET_CONTENT', payload: content });
     setActiveTab('new');
   };
 
@@ -566,7 +604,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                     <select 
                       className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                       value={recipientId}
-                      onChange={(e) => setRecipientId(e.target.value === '' ? '' : Number(e.target.value))}
+                      onChange={(e) => dispatchComposer({ type: 'SET_RECIPIENT', payload: e.target.value === '' ? '' : Number(e.target.value) })}
                     >
                       <option value="">{t('new.all')}</option>
                       {users.map((u: any) => (
@@ -582,7 +620,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                        <button 
                          type="button" 
                          className="absolute right-2 top-2 text-slate-400 hover:text-red-500"
-                         onClick={() => setReplyingTo(null)}
+                         onClick={() => dispatchComposer({ type: 'SET_REPLY_TO', payload: null })}
                        >
                          <X size={14} />
                        </button>
@@ -596,7 +634,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                   <textarea 
                     className="w-full flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-sm bg-white"
                     value={editingTemplate ? templateForm.content : msgContent}
-                    onChange={(e) => editingTemplate ? setTemplateForm({ ...templateForm, content: e.target.value }) : setMsgContent(e.target.value)}
+                    onChange={(e) => editingTemplate ? setTemplateForm({ ...templateForm, content: e.target.value }) : dispatchComposer({ type: 'SET_CONTENT', payload: e.target.value })}
                     required={!attachmentFile}
                     placeholder={t('new.placeholder')}
                   />
@@ -614,7 +652,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                         className="hidden" 
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
-                            setAttachmentFile(e.target.files[0]);
+                            dispatchComposer({ type: 'SET_ATTACHMENT', payload: e.target.files[0] });
                           }
                         }}
                       />
@@ -622,7 +660,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                         <button 
                           type="button" 
                           className="absolute right-3 p-1 text-red-500 hover:bg-red-50 rounded-full bg-white shadow-sm"
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAttachmentFile(null); }}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); dispatchComposer({ type: 'SET_ATTACHMENT', payload: null }); }}
                         >
                           <X size={14} />
                         </button>

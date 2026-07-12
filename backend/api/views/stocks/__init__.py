@@ -6,6 +6,7 @@ from .analysis import (
     StatsUGViewSet, StockAnalysisUnsoldView,
     StockAnalysisOverstockView, StockAnalysisShortageView
 )
+from .cadencier import CadencierViewSet
 
 __all__ = [
     'StockLotViewSet',
@@ -18,4 +19,5 @@ __all__ = [
     'StockAnalysisUnsoldView',
     'StockAnalysisOverstockView',
     'StockAnalysisShortageView',
+    'CadencierViewSet',
 ]

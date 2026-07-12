@@ -7,6 +7,7 @@ import { useConfirm } from '../hooks/useConfirm';
 import { useProductSearch } from '../hooks/useProductSearch';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
 import PremiumModal from './common/PremiumModal';
+import { Checkbox } from './ui/Checkbox';
 import type { ProduitModel } from '../types';
 import { 
   ChevronRight, Trash2, Plus 
@@ -215,6 +216,28 @@ const Transformations: React.FC = () => {
     notes: ''
   });
 
+  const [preview, setPreview] = useState<{
+    stock_source: number;
+    stock_source_after: number;
+    quantite_source: number;
+    quantite_destination: number;
+    ratio: number;
+    use_lot_management: boolean;
+    lots: {
+      lot_id: number;
+      lot: string;
+      quantity_remaining: number;
+      quantity_consumed: number;
+      quantity_remaining_after: number;
+      date_expiration: string | null;
+      fournisseur: string | null;
+      selected: boolean;
+    }[];
+    manual_lots_enabled: boolean;
+  } | null>(null);
+
+  const [manualLots, setManualLots] = useState<Record<number, number>>({});
+
   const [submitting, setSubmitting] = useState(false);
 
   // URL de base API dynamique
@@ -288,6 +311,7 @@ const Transformations: React.FC = () => {
 
   const openTransformerModal = (relation: RelationTransformation) => {
     setSubmitting(false);
+    setManualLots({});
     setTransformationData({
       relation,
       quantite: 1,
@@ -312,7 +336,9 @@ const Transformations: React.FC = () => {
     try {
       const res = await api.post(`relations-transformation/${transformationData.relation.id}/transformer/`, {
         quantite: transformationData.quantite,
-        notes: transformationData.notes
+        notes: transformationData.notes,
+        lots: Object.entries(manualLots)
+          .flatMap(([lot_id, qty]) => qty > 0 ? [{ lot_id: Number(lot_id), quantity: qty }] : [])
       });
 
       if (res.data.success) {
@@ -330,6 +356,70 @@ const Transformations: React.FC = () => {
   const quantiteDestinationCalculee = transformationData.relation 
     ? Math.floor(transformationData.quantite * transformationData.relation.ratio) 
     : 0;
+
+  // Récupérer la prévisualisation des lots consommés
+  const fetchPreview = async (relation: RelationTransformation, quantite: number) => {
+    if (!relation || quantite <= 0) {
+      setPreview(null);
+      setManualLots({});
+      return;
+    }
+    try {
+      const res = await api.post(`relations-transformation/${relation.id}/preview/`, { quantite });
+      setPreview(res.data);
+      // Initialiser les lots manuels depuis la sélection FEFO
+      const initialManual: Record<number, number> = {};
+      res.data.lots?.forEach((lot: any) => {
+        if (lot.quantity_consumed > 0) {
+          initialManual[lot.lot_id] = lot.quantity_consumed;
+        }
+      });
+      setManualLots(initialManual);
+    } catch (error) {
+      console.error('Erreur preview transformation:', error);
+      setPreview(null);
+      setManualLots({});
+    }
+  };
+
+  useEffect(() => {
+    if (transformationData.relation) {
+      fetchPreview(transformationData.relation, transformationData.quantite);
+    } else {
+      setPreview(null);
+      setManualLots({});
+    }
+  }, [transformationData.relation, transformationData.quantite]);
+
+  // Calculer le total sélectionné manuellement
+  const manualTotal = Object.values(manualLots).reduce((sum, qty) => sum + (qty || 0), 0);
+
+  // Mettre à jour la quantité d'un lot manuellement
+  const updateManualLotQty = (lot_id: number, qty: number) => {
+    setManualLots(prev => {
+      const next = { ...prev };
+      if (qty <= 0) {
+        delete next[lot_id];
+      } else {
+        next[lot_id] = qty;
+      }
+      return next;
+    });
+  };
+
+  // Basculer la sélection d'un lot
+  const toggleManualLot = (lot_id: number, maxQty: number, currentQty: number) => {
+    if (currentQty > 0) {
+      updateManualLotQty(lot_id, 0);
+    } else {
+      // Attribuer automatiquement ce qui manque jusqu'à la quantité totale
+      const remainingNeeded = transformationData.quantite - manualTotal;
+      const qty = Math.min(maxQty, Math.max(0, remainingNeeded));
+      if (qty > 0) {
+        updateManualLotQty(lot_id, qty);
+      }
+    }
+  };
 
   return (
     <div className="h-full flex flex-col bg-slate-100 overflow-hidden font-sans">
@@ -559,7 +649,7 @@ const Transformations: React.FC = () => {
               type="number" 
               step="0.01"
               className="w-full h-12 rounded-xl border-2 border-slate-200 bg-slate-50 text-lg font-black text-center focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all" 
-              placeholder="Ex: 20"
+              placeholder={t('stock:transformations.modal_relation.ratio_placeholder')}
               value={ratioValue}
               onChange={e => setRatioValue(e.target.value)}
               required
@@ -676,6 +766,77 @@ const Transformations: React.FC = () => {
               </div>
             </div>
 
+            {/* Informations stock source et lots */}
+            {preview && (
+              <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">{t('stock:transformations.preview.stock_remaining')}</span>
+                  <span className="font-bold text-slate-800">
+                    {formatNumber(preview.stock_source - manualTotal)} / {formatNumber(preview.stock_source)}
+                  </span>
+                </div>
+                {preview.use_lot_management && preview.lots.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        {t('stock:transformations.preview.lots_consumed')}
+                      </div>
+                      <div className={`text-[10px] font-bold ${manualTotal === transformationData.quantite ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        {formatNumber(manualTotal)} / {formatNumber(transformationData.quantite)} {t('stock:transformations.preview.selected')}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {preview.lots.map((lot) => {
+                        const currentQty = manualLots[lot.lot_id] || 0;
+                        return (
+                          <div key={lot.lot_id} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-slate-100 text-xs">
+                            <Checkbox
+                              checked={currentQty > 0}
+                              onChange={() => toggleManualLot(lot.lot_id, lot.quantity_remaining, currentQty)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-emerald-600 truncate">{lot.lot}</span>
+                                {lot.date_expiration && (
+                                  <span className="text-[10px] text-slate-400">{formatDate(lot.date_expiration)}</span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-slate-400">
+                                {formatNumber(lot.quantity_remaining)} {t('stock:transformations.preview.available')}{lot.quantity_remaining > 1 ? 's' : ''}
+                              </div>
+                            </div>
+                            <input
+                              type="number"
+                              min={0}
+                              max={lot.quantity_remaining}
+                              value={currentQty}
+                              disabled={currentQty <= 0}
+                              onChange={(e) => {
+                                const val = normalizeNumberInput(e.target.value);
+                                updateManualLotQty(lot.lot_id, Math.min(val, lot.quantity_remaining));
+                              }}
+                              className="w-16 h-8 rounded-lg border border-slate-200 text-center text-xs font-bold focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400"
+                            />
+                            <div className="text-right w-14 shrink-0 text-[10px] text-slate-400">
+                              {formatNumber(lot.quantity_remaining - currentQty)} {t('stock:transformations.preview.remaining')}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {manualTotal !== transformationData.quantite && (
+                      <p className="text-[11px] text-amber-600 mt-2">
+                        {t('stock:transformations.preview.lot_qty_mismatch', {
+                          selected: formatNumber(manualTotal),
+                          total: formatNumber(transformationData.quantite)
+                        })}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Notes */}
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-2">
@@ -705,7 +866,7 @@ const Transformations: React.FC = () => {
               <button 
                 type="submit" 
                 className="inline-flex items-center gap-2 h-10 px-8 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-50"
-                disabled={submitting}
+                disabled={submitting || (preview?.use_lot_management && manualTotal !== transformationData.quantite)}
               >
                 {submitting ? (
                   <span className="size-4 border-2 border-purple-300 border-t-white rounded-full animate-spin"></span>

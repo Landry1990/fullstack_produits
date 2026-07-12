@@ -39,12 +39,12 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
     return children ? <>{children}</> : <Outlet />;
   }
 
-  const allowed = user.allowed_menus || [];
+  const allowed = new Set(user.allowed_menus || []);
   const permissionsToCheck = Array.isArray(permission) ? permission : [permission];
   
   const hasPermission = requireAll
-    ? permissionsToCheck.every(p => allowed.includes(p))
-    : permissionsToCheck.some(p => allowed.includes(p));
+    ? permissionsToCheck.every(p => allowed.has(p))
+    : permissionsToCheck.some(p => allowed.has(p));
 
   if (!hasPermission) {
     // If not authorized, redirect back to the home redirector 

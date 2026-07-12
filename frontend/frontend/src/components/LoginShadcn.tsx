@@ -101,13 +101,6 @@ export default function LoginShadcn() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Reset highlighted index when dropdown opens or filtered list changes
-  useEffect(() => {
-    if (isOpen) {
-      setHighlightedIndex(0);
-    }
-  }, [isOpen, searchTerm]);
-
   // Keyboard navigation for dropdown
   useEffect(() => {
     if (!isOpen) return;
@@ -399,7 +392,7 @@ export default function LoginShadcn() {
                     <div className="relative" ref={dropdownRef}>
                       <button
                         type="button"
-                        onClick={() => { setIsOpen(prev => { if (!prev) setSearchTerm(''); return !prev; }); }}
+                        onClick={() => { setIsOpen(prev => { if (!prev) { setSearchTerm(''); setHighlightedIndex(0); } return !prev; }); }}
                         className={cn(
                           "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
                           isDark
@@ -444,7 +437,7 @@ export default function LoginShadcn() {
                                 autoFocus
                                 placeholder="Rechercher..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => { setSearchTerm(e.target.value); setHighlightedIndex(0); }}
                                 onClick={(e) => e.stopPropagation()}
                                 className={cn(
                                   "w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none transition-all",

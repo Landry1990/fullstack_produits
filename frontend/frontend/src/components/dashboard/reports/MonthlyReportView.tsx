@@ -80,7 +80,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                     </div>
                     <div className="p-4 space-y-3">
                         {(data.encaissements || []).map((enc: any, idx: number) => (
-                            <div key={idx} className="flex justify-between items-center p-2 rounded-xl border border-base-200">
+                            <div key={enc.id ?? enc.mode_label ?? enc.mode} className="flex justify-between items-center p-2 rounded-xl border border-base-200">
                                 <span className="text-xs font-bold text-base-content/60 uppercase">{enc.mode_label || enc.mode}</span>
                                 <span className="text-sm font-black text-base-content">{formatMoney(enc.montant)}</span>
                             </div>
@@ -103,7 +103,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                     </div>
                     <div className="p-4 space-y-3">
                         {(data.ca_par_tva || []).map((tva: any, idx: number) => (
-                            <div key={idx} className="flex justify-between items-center p-2 rounded-xl border border-base-200">
+                            <div key={`tva-${tva.taux}`} className="flex justify-between items-center p-2 rounded-xl border border-base-200">
                                 <span className="text-xs font-bold text-base-content/60 uppercase">TVA {tva.taux}%</span>
                                 <span className="text-sm font-black text-base-content">{formatMoney(tva.montant_tva)}</span>
                             </div>
@@ -154,7 +154,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                         </div>
                         <div className="p-4 space-y-2">
                             {data.achats_par_fournisseur.slice(0, 5).map((f: any, idx: number) => (
-                                <div key={idx} className="flex justify-between items-center text-xs">
+                                <div key={f.fournisseur_id ?? f.fournisseur_nom} className="flex justify-between items-center text-xs">
                                     <span className="font-bold text-base-content/60 truncate max-w-[150px] uppercase">{f.fournisseur_nom}</span>
                                     <span className="font-black text-base-content">{formatMoney(f.montant_total)}</span>
                                 </div>

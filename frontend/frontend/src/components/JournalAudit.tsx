@@ -151,8 +151,8 @@ const JournalAudit: React.FC = () => {
         let result = logs;
         // Filtre multi-valeurs pour les quick filters avec virgules
         if (quickFilter && quickFilter.includes(',')) {
-            const values = quickFilter.split(',');
-            result = result.filter(log => values.includes(log.action));
+            const values = new Set(quickFilter.split(','));
+            result = result.filter(log => values.has(log.action));
         }
         if (!searchQuery.trim()) return result;
         const q = searchQuery.toLowerCase();
@@ -236,8 +236,8 @@ const JournalAudit: React.FC = () => {
                         { label: 'Dernières 24h', value: statistics.recent_activity.last_24h, color: 'text-indigo-700', sub: 'aujourd\'hui' },
                         { label: '7 derniers jours', value: statistics.recent_activity.last_7d, color: 'text-sky-700', sub: 'cette semaine' },
                         { label: '30 derniers jours', value: statistics.recent_activity.last_30d, color: 'text-emerald-700', sub: 'ce mois' },
-                    ].map((kpi, i) => (
-                        <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4">
+                    ].map((kpi) => (
+                        <div key={kpi.label} className="bg-white border border-slate-200 rounded-2xl p-4">
                             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{kpi.label}</div>
                             <div className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</div>
                             <div className="text-[10px] text-slate-300 font-medium mt-0.5">{kpi.sub}</div>
@@ -276,11 +276,11 @@ const JournalAudit: React.FC = () => {
                         <label className="text-[10px] font-black uppercase text-slate-400">{t('filters.user_label')}</label>
                         <select className="select select-bordered select-sm font-bold" value={userFilter} onChange={e => { setUserFilter(e.target.value); setPage(1); }}>
                             <option value="">{t('filters.all_users')}</option>
-                            {users.filter(u => u.id).map(u => (
+                            {users.flatMap(u => u.id ? [(
                                 <option key={u.id} value={u.id?.toString()}>
                                     {u.first_name || u.last_name ? `${u.first_name} ${u.last_name}`.trim() : u.username}
                                 </option>
-                            ))}
+                            )] : [])}
                         </select>
                     </div>
                     <div className="flex flex-col gap-1">

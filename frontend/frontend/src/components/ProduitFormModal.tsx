@@ -288,14 +288,18 @@ export default function ProduitFormModal({
                 <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:form.rayon')}</label>
                 <select className={selectBase} value={form.rayon} onChange={(e) => setForm((f) => ({ ...f, rayon: e.target.value }))}>
                   <option value="">{t('products:form.select_rayon')}</option>
-                  {rayons.filter(r => !r.parent).map(parent => (
-                    <optgroup key={parent.id} label={parent.name}>
-                      <option value={parent.id}>{parent.name}</option>
-                      {rayons.filter(child => child.parent === parent.id).map(child => (
-                        <option key={child.id} value={child.id}>↳ {child.name}</option>
-                      ))}
-                    </optgroup>
-                  ))}
+                  {rayons.flatMap(parent => {
+                    if (parent.parent) return [];
+                    const children = rayons.filter(child => child.parent === parent.id);
+                    return [(
+                      <optgroup key={parent.id} label={parent.name}>
+                        <option value={parent.id}>{parent.name}</option>
+                        {children.map(child => (
+                          <option key={child.id} value={child.id}>↳ {child.name}</option>
+                        ))}
+                      </optgroup>
+                    )];
+                  })}
                 </select>
               </div>
               <div>

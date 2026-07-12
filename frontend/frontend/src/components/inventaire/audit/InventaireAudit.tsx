@@ -5,10 +5,7 @@ import {
     TrendingDown, TrendingUp, Package, LayoutDashboard,
     Calendar, ArrowLeft, AlertTriangle, ChevronUp, ChevronDown
 } from 'lucide-react';
-import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-    ResponsiveContainer, Cell
-} from 'recharts';
+import { useRecharts } from '../../../hooks/useRecharts';
 import { useInventaireAudit } from '../../../hooks/inventaire/useInventaireAudit';
 
 interface InventaireAuditProps {
@@ -23,7 +20,7 @@ const SortIcon = ({ column, sortConfig }: { column: string; sortConfig: { key: s
 
 export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
     const { t } = useTranslation(['stock', 'common']);
-    
+
     const {
         data, loading,
         startDate, setStartDate,
@@ -36,6 +33,10 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
     });
     const [groupBy, setGroupBy] = React.useState<'RAYON' | 'GROUPE'>('RAYON');
     const [metric, setMetric] = React.useState<'VALEUR' | 'OCCURRENCE'>('VALEUR');
+
+    const Recharts = useRecharts();
+    if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = Recharts;
 
     const renderList = (title: string, data: any[], type: 'negative' | 'positive') => {
         const Icon = type === 'negative' ? AlertTriangle : TrendingUp;
@@ -60,7 +61,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                         </div>
                     ) : (
                         data.map((p, i) => (
-                            <div key={i} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
+                            <div key={p.produit_id || p.produit_nom} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
                                 <div className="flex items-center gap-4">
                                     <div className={`size-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400`}>
                                         {i + 1}
@@ -300,7 +301,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                 >
                                     {(groupBy === 'RAYON' ? data?.par_rayon : data?.par_groupe)?.map((entry: any, index: number) => (
                                         <Cell 
-                                            key={`cell-${index}`} 
+                                            key={`cell-${entry.label || entry.name}`} 
                                             fill={metric === 'VALEUR' 
                                                 ? (entry.total_valeur < 0 ? '#ff5252' : '#4caf50') 
                                                 : '#2196f3'
@@ -337,7 +338,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                             </thead>
                             <tbody className="font-medium">
                                 {sortedProducts.slice(0, 10).map((p, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50 border-b border-slate-50 transition-colors">
+                                    <tr key={p.produit__cip1 || p.produit__name} className="hover:bg-slate-50 border-b border-slate-50 transition-colors">
                                         <td className="max-w-[150px] truncate font-bold py-2">
                                             <div className="flex flex-col">
                                                 <span className="text-slate-700">{p.produit__name}</span>

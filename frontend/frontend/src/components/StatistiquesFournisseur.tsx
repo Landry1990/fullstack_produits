@@ -2,19 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
+import { useRecharts } from '../hooks/useRecharts';
 import {
   useAnalyseFournisseurs,
   useComparaisonPrix,
@@ -97,6 +85,10 @@ export default function StatistiquesFournisseur() {
       quantite_vendue: acc.quantite_vendue + curr.quantite_vendue
     }), { ca_ttc: 0, cout_achat: 0, marge_brute: 0, quantite_vendue: 0 });
   }, [stats]);
+
+  const Recharts = useRecharts();
+  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } = Recharts;
 
   return (
     <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 animate-fade-in">
@@ -362,8 +354,8 @@ export default function StatistiquesFournisseur() {
                                         </span>
                                     </td>
                                     <td className="space-y-1">
-                                        {prod.offres.map((offre, idx) => (
-                                            <div key={idx} className="flex justify-between text-xs w-64">
+                                        {prod.offres.map((offre) => (
+                                            <div key={offre.fournisseur} className="flex justify-between text-xs w-64">
                                                 <span>{offre.fournisseur}:</span>
                                                  <span className={offre.prix_moyen === prod.meilleur_prix ? 'font-bold text-success' : ''}>
                                                      {formatCurrency(Math.round(offre.prix_moyen), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
@@ -408,8 +400,8 @@ export default function StatistiquesFournisseur() {
                                             paddingAngle={5}
                                             dataKey="ca"
                                         >
-                                            {repartitionAchats?.data.map((_, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            {repartitionAchats?.data.map((entry, index) => (
+                                                <Cell key={entry.nom} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
                                          <Tooltip formatter={(value: number | string) => `${formatCurrency(Number(value), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}`} />

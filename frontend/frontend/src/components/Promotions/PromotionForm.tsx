@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType, ApplicationMode } from '../../types/Promotion';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
-import { useProductSearch as useProductSearchBase } from '../../hooks/product-search';
+import { useProductSearch as useProductSearchBase } from '../../hooks/product-search/useProductSearch';
 import { useKeyboardNavigation } from '../../hooks/useKeyboardNavigation';
 import { ShoppingBag, X, Plus, Minus, Calendar, Tag, Package, Trash2, Search } from 'lucide-react';
 import api from '../../services/api';

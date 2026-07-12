@@ -41,7 +41,7 @@ function lazyWithRetry<T extends ComponentType<any>>(
 }
 
 // Prefetch helper - charge en arrière-plan au survol
-export function prefetchRoute(factory: () => Promise<any>) {
+function prefetchRoute(factory: () => Promise<any>) {
   if ('requestIdleCallback' in window) {
     requestIdleCallback(() => {
       factory().catch(() => {}); // Silencieux si erreur
@@ -87,6 +87,7 @@ const Transformations = lazyWithRetry(() => import('./components/Transformations
 const ReapproRayon = lazyWithRetry(() => import('./components/stock/ReapproRayon'));
 const ReapproHistory = lazyWithRetry(() => import('./components/stock/ReapproHistory'));
 const Ruptures = lazyWithRetry(() => import('./components/stock/Ruptures'));
+const Cadencier = lazyWithRetry(() => import('./components/stock/Cadencier'));
 const JournalAudit = lazyWithRetry(() => import('./components/JournalAudit'));
 const JournalAjustements = lazyWithRetry(() => import('./components/JournalAjustements'));
 const Promis = lazyWithRetry(() => import('./components/Promis'));
@@ -193,6 +194,7 @@ export const router = createBrowserRouter([
           { path: 'promis', ...perm(['inventaire', 'inventaire_promis', 'promis'], Promis) },
           { path: 'stock-analysis', ...perm(['inventaire', 'inventaire_analyse'], StockAnalysis) },
           { path: 'ruptures', ...perm(['inventaire', 'inventaire_ruptures'], Ruptures) },
+          { path: 'cadencier', ...perm(['inventaire', 'inventaire_cadencier'], Cadencier) },
           { path: 'reappro-rayon', ...perm(['inventaire', 'inventaire_reappro'], ReapproRayon) },
           { path: 'reappro-history', ...perm(['inventaire', 'inventaire_reappro'], ReapproHistory) },
           { path: 'rapport-ug', ...perm(['inventaire', 'inventaire_rapport_ug'], StockUGReport) },

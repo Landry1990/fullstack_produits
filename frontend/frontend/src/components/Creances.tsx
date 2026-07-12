@@ -127,7 +127,7 @@ export default function Creances() {
                     selectedIds={data.selectedIds}
                     onSelectAll={(e) => {
                         if (e.target.checked) {
-                            const ids = data.filteredCreances.filter(c => normalizeNumberInput(c.reste_a_payer) > 0).map(c => c.id);
+                            const ids = data.filteredCreances.flatMap(c => normalizeNumberInput(c.reste_a_payer) > 0 ? [c.id] : []);
                             data.setSelectedIds(ids);
                         } else {
                             data.setSelectedIds([]);

@@ -104,20 +104,27 @@
         "rayon_active": "Rayon Actif",
         "provider_active": "Fournisseur Actif",
         "exclusive_only": "Exclusifs",
-        "inactive_only": "Inactifs"
+        "inactive_only": "Inactifs",
+        "in_stock_only": "En stock uniquement",
+        "show_inactive": "Afficher inactifs"
     },
     "table": {
         "cip": "CIP",
         "product": "Produit",
         "stock": "Stock",
         "empty": "Aucun produit",
+        "empty_title": "Aucun produit",
+        "empty_subtitle": "Créez votre premier produit ou service pour commencer.",
         "select_all": "Tout sélectionner",
-        "exclusivity": "Exclusivité"
+        "exclusivity": "Exclusivité",
+        "exclusive_badge": "EXCLU"
     },
     "adjustment": {
         "title": "Ajuster le Stock",
         "current_stock": "Stock actuel :",
         "new_quantity": "Nouvelle quantité *",
+        "new_shelf_stock": "Nouveau Stock Rayon",
+        "new_reserve_stock": "Nouveau Stock Réserve",
         "difference": "Différence :",
         "reason_type": "Type de motif *",
         "reasons": {
@@ -134,6 +141,7 @@
         "title": "Détails du Produit",
         "none_selected": "Aucun produit sélectionné",
         "select_hint": "Sélectionnez un produit dans la liste pour voir ses détails",
+        "stock_label": "Stock",
         "rayon_label": "Rayon",
         "total_stock": "Stock Total",
         "reserve_label": "Réserve",
@@ -180,7 +188,13 @@
             "price": "Prix",
             "lot": "Lot",
             "exp": "Exp.",
-            "empty": "Aucun achat enregistré"
+            "empty": "Aucun achat enregistré",
+            "price_evolution": "Évolution Prix Achat",
+            "all_providers": "Tous les fournisseurs",
+            "min": "Min :",
+            "max": "Max :",
+            "latest": "Dernier :",
+            "price_label": "Prix achat"
         },
         "lots": {
             "lot": "Lot",
@@ -235,6 +249,8 @@
     },
     "messages": {
         "loading": "Chargement des produits...",
+        "create_success": "Produit créé avec succès",
+        "adjust_reserve_details": " (Réserve: {{oldReserve}} -> {{newReserve}})",
         "delete_confirm_title": "Supprimer le produit",
         "delete_confirm_body": "Voulez-vous vraiment supprimer le produit \"{{name}}\" ?\n\nCette action est irréversible.",
         "delete_success": "Produit supprimé avec succès",
@@ -273,6 +289,9 @@
         "update_error": "Erreur lors de la mise à jour du produit",
         "adjust_success": "Stock ajusté ({{change}})",
         "adjust_error": "Erreur lors de l'ajustement de stock"
+    },
+    "labels": {
+        "filename_prefix": "etiquettes"
     },
     "import": {
         "title": "Importer des Produits",

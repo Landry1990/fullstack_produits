@@ -52,8 +52,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const paymentModes = [
     ...getCaissePaymentModes(settings?.disabled_payment_modes, settings?.custom_payment_modes)
-      .filter(m => m.value !== 'depot')
-      .map(m => ({ value: m.value, label: getPaymentModeLabel(m.value, t, settings?.custom_payment_modes) })),
+      .flatMap(m => m.value !== 'depot' ? [{ value: m.value, label: getPaymentModeLabel(m.value, t, settings?.custom_payment_modes) }] : []),
     ...(soldeDepot > 0 && isIndividual && isDepositEnabled ? [{ value: 'depot', label: `${getPaymentModeLabel('depot', t)} (${soldeDepot})` }] : [])
   ]
 
@@ -293,7 +292,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 {t('payment.payments_list')}
               </div>
               {paiements.map((p, idx) => (
-                <div key={idx} className="flex justify-between items-center px-3 py-2 border-t border-slate-100">
+                <div key={`${p.mode}-${p.montant}`} className="flex justify-between items-center px-3 py-2 border-t border-slate-100">
                   <span className="text-sm text-slate-700">{getModeLabel(p.mode)}</span>
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-slate-800">{p.montant} {t('common:currency_symbol', 'F')}</span>

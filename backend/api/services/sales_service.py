@@ -481,7 +481,6 @@ class SalesService:
             is_return = item.quantity < 0
             prefix = "Retour" if is_return else "Vente"
             desc = f"{prefix} Facture #{facture.numero_facture or facture.id}"
-            if facture.client or facture.client_name_override: desc += f" - Client: {facture.client.name if facture.client else facture.client_name_override}"
             
             mouvements_to_create.append(MouvementStock(
                 produit_id=item.produit_id,
@@ -567,25 +566,62 @@ class SalesService:
         was_validated = facture.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]
         
         if was_validated:
-            # 1. Restore Lots
-            allocations = FactureProduitAllocation.objects.filter(facture_produit__facture=facture).select_related('stock_lot')
-            for alloc in allocations:
-                if alloc.stock_lot:
-                    StockLot.objects.filter(pk=alloc.stock_lot.pk).update(quantity_remaining=F('quantity_remaining') + alloc.quantity)
+            # 1. Restore Lots (with .save() to trigger signals and keep traceability)
+            allocations = list(
+                FactureProduitAllocation.objects.filter(facture_produit__facture=facture)
+                .select_related('stock_lot', 'facture_produit', 'facture_produit__produit')
+            )
+            lot_ids = [alloc.stock_lot_id for alloc in allocations if alloc.stock_lot_id]
+            locked_lots = {
+                lot.id: lot
+                for lot in StockLot.objects.filter(id__in=lot_ids).select_for_update().order_by('id')
+            } if lot_ids else {}
 
-            # 2. Restore Stock and create movement
+            for alloc in allocations:
+                lot = locked_lots.get(alloc.stock_lot_id) if alloc.stock_lot_id else None
+                if not lot:
+                    continue
+                lot.quantity_remaining += alloc.quantity
+                # Restaurer les unités gratuites sans dépasser le total gratuit initial
+                lot.quantity_free_remaining = min(
+                    lot.quantity_free_remaining + alloc.quantity,
+                    lot.quantity_free
+                )
+                lot.save()
+
+            # 2. Determine which products were actually allocated from lots
+            product_ids_with_allocations = set()
+            for alloc in allocations:
+                if alloc.facture_produit and alloc.facture_produit.produit_id:
+                    product_ids_with_allocations.add(alloc.facture_produit.produit_id)
+            FactureProduitAllocation.objects.filter(id__in=[a.id for a in allocations]).delete()
+
+            # 3. Restore stock: recalculate from lots only when lots were used, otherwise manual restore
             items = FactureProduit.objects.filter(facture=facture).select_related('produit')
+            products_to_refresh = set()
+            for item in items:
+                produit = item.produit
+                if produit and produit.use_lot_management and item.produit_id in product_ids_with_allocations:
+                    produit.calculate_stock_from_lots()
+                    products_to_refresh.add(produit.id)
+                else:
+                    Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
+
+            # Refresh in-memory products to get correct stock for movements
+            refreshed_products = {
+                p.id: p for p in Produit.objects.filter(id__in=products_to_refresh)
+            }
+
             mouvements_to_create = []
             for item in items:
-                Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
+                produit = refreshed_products.get(item.produit_id, item.produit)
                 mouvements_to_create.append(MouvementStock(
-                    produit=item.produit, type_mouvement=MouvementStock.TypeMouvement.RETOUR,
-                    quantite=item.quantity, stock_apres=item.produit.total_stock + item.quantity,
+                    produit=produit, type_mouvement=MouvementStock.TypeMouvement.RETOUR,
+                    quantite=item.quantity, stock_apres=produit.total_stock if produit else 0,
                     description=f"Annulation Facture #{facture.numero_facture or facture.id}",
                     user=user, facture=facture
                 ))
             MouvementStock.objects.bulk_create(mouvements_to_create)
-            allocations.delete()
 
         facture.date_annulation = timezone.now()
         facture.status = Facture.Status.ANNULEE
@@ -635,19 +671,41 @@ class SalesService:
              raise ValueError("La liste des produits est requise.")
         
         # 1. Restore Stock (Temporary)
-        allocations = FactureProduitAllocation.objects.filter(facture_produit__facture=facture).select_related('stock_lot')
+        allocations = list(
+            FactureProduitAllocation.objects.filter(facture_produit__facture=facture)
+            .select_related('stock_lot', 'facture_produit')
+        )
+        lot_ids = [alloc.stock_lot_id for alloc in allocations if alloc.stock_lot_id]
+        locked_lots = {
+            lot.id: lot
+            for lot in StockLot.objects.filter(id__in=lot_ids).select_for_update().order_by('id')
+        } if lot_ids else {}
         for alloc in allocations:
-            if alloc.stock_lot:
-                StockLot.objects.filter(pk=alloc.stock_lot.pk).update(quantity_remaining=F('quantity_remaining') + alloc.quantity)
-        allocations.delete()
+            lot = locked_lots.get(alloc.stock_lot_id) if alloc.stock_lot_id else None
+            if not lot:
+                continue
+            lot.quantity_remaining += alloc.quantity
+            lot.quantity_free_remaining = min(
+                lot.quantity_free_remaining + alloc.quantity,
+                lot.quantity_free
+            )
+            lot.save()
+        FactureProduitAllocation.objects.filter(id__in=[a.id for a in allocations]).delete()
 
         old_items = FactureProduit.objects.filter(facture=facture)
         old_items_data = []
         old_quantity_by_product = {}
+        old_product_ids = set()
+        old_product_ids_with_allocations = set()
+        for alloc in allocations:
+            if alloc.facture_produit and alloc.facture_produit.produit_id:
+                old_product_ids_with_allocations.add(alloc.facture_produit.produit_id)
         for item in old_items:
             old_items_data.append({'produit_id': item.produit_id, 'quantity': item.quantity})
             old_quantity_by_product[item.produit_id] = old_quantity_by_product.get(item.produit_id, 0) + item.quantity
-            Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
+            old_product_ids.add(item.produit_id)
+            if item.produit and (not item.produit.use_lot_management or item.produit_id not in old_product_ids_with_allocations):
+                Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
         old_items.delete()
 
         # 2. Apply Changes
@@ -658,11 +716,17 @@ class SalesService:
 
         # 3. Create New Products
         new_quantity_by_product = {}
+        new_product_ids = set()
+        new_product_ids_with_allocations = set()
+        product_ids = [p.get('produit') for p in new_products]
+        products_by_id = Produit.objects.in_bulk(product_ids) if product_ids else {}
+
         for prod_data in new_products:
             produit_id = prod_data.get('produit')
             quantity = int(prod_data.get('quantity', 1))
             selling_price = prod_data.get('selling_price', '0')
             lot_id = prod_data.get('lot_id')
+            produit = products_by_id.get(produit_id)
 
             fp = FactureProduit.objects.create(
                 facture=facture, produit_id=produit_id, quantity=quantity,
@@ -670,9 +734,10 @@ class SalesService:
                 tva=Decimal(str(prod_data.get('tva', '0'))), stock_lot_id=lot_id
             )
             new_quantity_by_product[produit_id] = new_quantity_by_product.get(produit_id, 0) + quantity
-            Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
+            new_product_ids.add(produit_id)
             
-            if quantity > 0:
+            lots_allocated_for_this_item = False
+            if quantity > 0 and produit and produit.use_lot_management:
                 quantity_to_allocate = quantity
                 if lot_id:
                     target_lot = StockLot.objects.get(id=lot_id)
@@ -680,11 +745,11 @@ class SalesService:
                         facture_produit=fp, stock_lot=target_lot, quantity=quantity_to_allocate,
                         cost_price=target_lot.price_cost, selling_price=selling_price
                     )
-                    StockLot.objects.filter(pk=target_lot.pk).update(
-                        quantity_remaining=F('quantity_remaining') - quantity_to_allocate,
-                        quantity_free_remaining=F('quantity_free_remaining') - min(quantity_to_allocate, target_lot.quantity_free_remaining),
-                        version=F('version') + 1
-                    )
+                    target_lot.quantity_remaining -= quantity_to_allocate
+                    if target_lot.quantity_free_remaining > 0:
+                        target_lot.quantity_free_remaining -= min(quantity_to_allocate, target_lot.quantity_free_remaining)
+                    target_lot.save()
+                    lots_allocated_for_this_item = True
                 else:
                     available_lots = StockLot.objects.filter(produit_id=produit_id, quantity_remaining__gt=0).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
                     for lot in available_lots:
@@ -698,23 +763,35 @@ class SalesService:
                         if lot.quantity_free_remaining > 0: lot.quantity_free_remaining -= min(qty_from_lot, lot.quantity_free_remaining)
                         lot.save()
                         quantity_to_allocate -= qty_from_lot
+                        lots_allocated_for_this_item = True
+            
+            if lots_allocated_for_this_item:
+                new_product_ids_with_allocations.add(produit_id)
+            elif produit and not produit.use_lot_management:
+                Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
+            elif produit and produit.use_lot_management:
+                # Produit en gestion par lots mais aucun lot disponible : ajustement manuel
+                Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
 
             # Sync FactureProduit fields from allocated lots
-            if prod_data.get('lot_id'):
-                target_lot = StockLot.objects.get(id=prod_data.get('lot_id'))
+            if lot_id:
+                target_lot = StockLot.objects.get(id=lot_id)
                 fp.lot = target_lot.lot[:20]
                 fp.date_expiration = target_lot.date_expiration
                 fp.save(update_fields=['lot', 'date_expiration'])
-            else:
-                # FIFO allocation details already handled in the loop above?
-                # Actually, modify_sale loop already creates allocations but doesn't update fp.lot/date_expiration
-                # Let's fix that too.
-                # Actually, I'll just refetch because its easier given the loop structure.
+            elif produit and produit.use_lot_management and lots_allocated_for_this_item:
                 allocations = FactureProduitAllocation.objects.filter(facture_produit=fp).select_related('stock_lot')
                 if allocations.exists():
                     fp.lot = ",".join([a.stock_lot.lot for a in allocations if a.stock_lot and a.stock_lot.lot])[:20]
                     fp.date_expiration = min([a.stock_lot.date_expiration for a in allocations if a.stock_lot and a.stock_lot.date_expiration]) if any(a.stock_lot.date_expiration for a in allocations if a.stock_lot) else None
                     fp.save(update_fields=['lot', 'date_expiration'])
+
+        # Recalculate stock from lots only for products that actually had lot allocations
+        products_to_sync = old_product_ids_with_allocations | new_product_ids_with_allocations
+        for pid in products_to_sync:
+            produit = products_by_id.get(pid) or Produit.objects.filter(pk=pid).first()
+            if produit and produit.use_lot_management:
+                produit.calculate_stock_from_lots()
         
         # 4. Finalize totals and adjustment
         PromotionService.apply_promotions_to_invoice(facture)

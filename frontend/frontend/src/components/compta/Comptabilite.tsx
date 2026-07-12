@@ -814,6 +814,16 @@ function ResultatTab({ resultat, t }: any) {
     );
 }
 
+const categoriesOHADA = [
+    { id: 'loyer', compte: '613000', label: 'Loyer (Bail)', icon: '🏢' },
+    { id: 'energie', compte: '605000', label: 'Eau & Électricité (ENEO/CAMWATER)', icon: '⚡' },
+    { id: 'salaires', compte: '660000', label: 'Salaires du personnel', icon: '👥' },
+    { id: 'impots', compte: '640000', label: 'Impôts et Taxes', icon: '🏛️' },
+    { id: 'internet', compte: '622000', label: 'Internet & Téléphone', icon: '🌐' },
+    { id: 'fournitures', compte: '604000', label: 'Fournitures de bureau', icon: '📎' },
+    { id: 'autre', compte: 'autre', label: 'Autre charge...', icon: '⚙️' },
+];
+
 function ChargesTab({ actions, comptes, journaux, t }: any) {
     const [formData, setFormData] = useState({
         typeCharge: '',
@@ -823,16 +833,6 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
         montant: '',
         date: new Date().toISOString().split('T')[0]
     });
-
-    const categoriesOHADA = [
-        { id: 'loyer', compte: '613000', label: 'Loyer (Bail)', icon: '🏢' },
-        { id: 'energie', compte: '605000', label: 'Eau & Électricité (ENEO/CAMWATER)', icon: '⚡' },
-        { id: 'salaires', compte: '660000', label: 'Salaires du personnel', icon: '👥' },
-        { id: 'impots', compte: '640000', label: 'Impôts et Taxes', icon: '🏛️' },
-        { id: 'internet', compte: '622000', label: 'Internet & Téléphone', icon: '🌐' },
-        { id: 'fournitures', compte: '604000', label: 'Fournitures de bureau', icon: '📎' },
-        { id: 'autre', compte: 'autre', label: 'Autre charge...', icon: '⚙️' },
-    ];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

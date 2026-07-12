@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';
@@ -61,6 +61,28 @@ const modeBadgeVariant = (mode: string) => {
   }
 };
 
+// ── Payment form reducer ──────────────────────────────────────────────────
+interface PaymentFormState {
+  montant: string;
+  modePaiement: string;
+  reference: string;
+  notes: string;
+}
+type PaymentFormAction =
+  | { type: 'SET_FIELD'; field: keyof PaymentFormState; value: string }
+  | { type: 'INIT'; montant: string; notes: string }
+  | { type: 'RESET' };
+const initialPaymentForm: PaymentFormState = { montant: '', modePaiement: 'ESP', reference: '', notes: '' };
+function paymentFormReducer(state: PaymentFormState, action: PaymentFormAction): PaymentFormState {
+  switch (action.type) {
+    case 'SET_FIELD': return { ...state, [action.field]: action.value };
+    case 'INIT': return { montant: action.montant, modePaiement: 'ESP', reference: '', notes: action.notes };
+    case 'RESET': return { ...initialPaymentForm };
+    default: return state;
+  }
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 export default function FinanceFournisseurModal({
   isOpen,
   onClose,
@@ -78,25 +100,24 @@ export default function FinanceFournisseurModal({
     deletePaiement,
   } = useFinanceFournisseurs();
 
-  const [montant, setMontant] = useState('');
-  const [modePaiement, setModePaiement] = useState('ESP');
-  const [reference, setReference] = useState('');
-  const [notes, setNotes] = useState('');
+  const [paymentForm, dispatchPaymentForm] = useReducer(paymentFormReducer, initialPaymentForm);
+  const { montant, modePaiement, reference, notes } = paymentForm;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [justPaid, setJustPaid] = useState(false);
   const [echeances, setEcheances] = useState<any[]>([]);
   const [echeancesLoading, setEcheancesLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && fournisseur) {
       fetchPaiements(fournisseur.id);
-      setMontant(prefilledMontant ? prefilledMontant.toString() : '');
-      setModePaiement('ESP');
-      setReference('');
-      setNotes(
-        commandeIds && commandeIds.length > 0
+      dispatchPaymentForm({
+        type: 'INIT',
+        montant: prefilledMontant ? prefilledMontant.toString() : '',
+        notes: commandeIds && commandeIds.length > 0
           ? t('providers:finance.pointage_note', { count: commandeIds.length })
-          : ''
-      );
+          : '',
+      });
+      setJustPaid(false);
       // Charger les échéances
       setEcheancesLoading(true);
       fournisseurService.getEcheancesDetaillees(fournisseur.id)
@@ -125,9 +146,8 @@ export default function FinanceFournisseurModal({
       }
 
       await createPaiement(payload);
-      setMontant('');
-      setReference('');
-      setNotes('');
+      dispatchPaymentForm({ type: 'RESET' });
+      setJustPaid(true);
       if (onSuccess) onSuccess();
     } catch (error) {
       // Error handling is done in hook
@@ -160,12 +180,12 @@ export default function FinanceFournisseurModal({
     });
   };
 
-  const solde = normalizeNumberInput(fournisseur.solde_dette || 0);
+  const soldeRestant = Math.max(0, normalizeNumberInput(fournisseur.solde_dette || 0));
   const totalPaye = useMemo(
     () => paiements.reduce((acc, p) => acc + normalizeNumberInput(p.montant), 0),
     [paiements]
   );
-  const soldeRestant = Math.max(0, solde - totalPaye);
+  const totalDu = soldeRestant + totalPaye;
 
   const modeLabel = (mode: string) => {
     switch (mode) {
@@ -211,9 +231,9 @@ export default function FinanceFournisseurModal({
                 <span className="text-xs font-semibold text-base-content/70 block">
                   {t('providers:details.debt_balance')} (restant)
                 </span>
-                {totalPaye > 0 && (
+                {totalPaye > 0 && totalDu > 0 && (
                   <span className="text-[10px] text-base-content/40">
-                    {formatCurrency(totalPaye)} payé sur {formatCurrency(solde)}
+                    {formatCurrency(totalPaye)} payé sur {formatCurrency(totalDu)} dû
                   </span>
                 )}
               </div>
@@ -250,7 +270,7 @@ export default function FinanceFournisseurModal({
                     step="0.01"
                     size="sm"
                     value={montant}
-                    onChange={(e) => setMontant(e.target.value)}
+                    onChange={(e) => { dispatchPaymentForm({ type: 'SET_FIELD', field: 'montant', value: e.target.value }); setJustPaid(false); }}
                     placeholder="0.00"
                     className={`pl-8 font-mono font-bold text-base ${
                       prefilledMontant
@@ -270,7 +290,7 @@ export default function FinanceFournisseurModal({
                   id="mode"
                   size="sm"
                   value={modePaiement}
-                  onChange={(e) => setModePaiement(e.target.value)}
+                  onChange={(e) => dispatchPaymentForm({ type: 'SET_FIELD', field: 'modePaiement', value: e.target.value })}
                 >
                   <option value="ESP">{t('providers:finance.modes.cash')}</option>
                   <option value="CHQ">{t('providers:finance.modes.check')}</option>
@@ -290,7 +310,7 @@ export default function FinanceFournisseurModal({
                   size="sm"
                   placeholder={t('providers:finance.reference_placeholder')}
                   value={reference}
-                  onChange={(e) => setReference(e.target.value)}
+                  onChange={(e) => dispatchPaymentForm({ type: 'SET_FIELD', field: 'reference', value: e.target.value })}
                 />
               </div>
 
@@ -302,7 +322,7 @@ export default function FinanceFournisseurModal({
                   id="notes"
                   placeholder={t('providers:finance.notes_placeholder')}
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => dispatchPaymentForm({ type: 'SET_FIELD', field: 'notes', value: e.target.value })}
                   className="flex-1 min-h-0 text-sm"
                 />
               </div>
@@ -313,6 +333,7 @@ export default function FinanceFournisseurModal({
                 size="sm"
                 fullWidth
                 isLoading={isSubmitting}
+                disabled={isSubmitting || justPaid || !montant || normalizeNumberInput(montant) <= 0}
                 leftIcon={<Receipt className="h-4 w-4" />}
                 className="mt-auto shrink-0"
               >
@@ -359,8 +380,8 @@ export default function FinanceFournisseurModal({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {computeDistribution().map((ech: any, idx: number) => (
-                        <TableRow key={idx} className={ech.montant_alloue > 0 ? 'bg-emerald-50/50' : ''}>
+                      {computeDistribution().map((ech: any) => (
+                        <TableRow key={ech.id || ech.numero_facture} className={ech.montant_alloue > 0 ? 'bg-emerald-50/50' : ''}>
                           <TableCell className="py-1.5">
                             <div className="font-medium text-xs truncate max-w-[140px]" title={ech.numero_facture}>
                               {ech.numero_facture}

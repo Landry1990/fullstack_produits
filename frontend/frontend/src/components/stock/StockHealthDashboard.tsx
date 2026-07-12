@@ -19,6 +19,7 @@ import { useStockHealth } from '../../hooks/useStockHealth';
 import { formatCurrency } from '../../utils/formatters';
 import { AnimatedNumber } from '../common/AnimatedNumber';
 import StockHealthSettingsModal from './StockHealthSettingsModal';
+import StockMatrixPanel from './StockMatrixPanel';
 
 const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-emerald-600';
@@ -351,6 +352,9 @@ const StockHealthDashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Matrice 4 Quadrants + Actions + Top Pénalités */}
+            <StockMatrixPanel data={data} />
 
             <StockHealthSettingsModal 
                 isOpen={isSettingsOpen} 
