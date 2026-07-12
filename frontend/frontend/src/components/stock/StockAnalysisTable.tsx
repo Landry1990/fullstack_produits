@@ -44,6 +44,8 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
 
     const getUrgencyBadge = (urgency: string) => {
         switch (urgency) {
+            case 'rupture':
+                return <Badge className="bg-red-700 hover:bg-red-800 text-white">{t('stock:analyse.shortage.urgency.rupture', 'RUPTURE')}</Badge>;
             case 'critical':
                 return <Badge variant="destructive">{t('stock:analyse.shortage.urgency.critical')}</Badge>;
             case 'warning':

@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from ..rapports.tz_utils import parse_api_datetime
 from decimal import Decimal
 
-from ...models import Facture, Commande, Produit, Client, StockLot, Caisse, ObjectifCommercial, FactureProduit, FactureProduitAllocation
+from ...models import Facture, Commande, CommandeProduit, Produit, Client, StockLot, Caisse, ObjectifCommercial, FactureProduit, FactureProduitAllocation
 
 
 class StatistiquesViewSet(viewsets.ViewSet):
@@ -208,30 +208,102 @@ class StatistiquesViewSet(viewsets.ViewSet):
             total=Coalesce(Sum(ExpressionWrapper(F('rotation_moyenne') * (F('selling_price') - F('pmp')), output_field=DecimalField())), Decimal('0'))
         )['total']
     
-        # 3. Ruptures Imminentes
+        # 3. Ruptures Imminentes — aligné sur l'onglet Ruptures (ventes réelles pondérées)
         critical_days = ps.critical_stock_days if (ps and ps.critical_stock_days) else 7
-        critical_soon_qs = Produit.objects.filter(
-            is_active=True,
-            rotation_moyenne__gt=0,
-            stock__gt=0
-        ).annotate(
-            days_left=ExpressionWrapper(F('stock') * Value(30.0) / F('rotation_moyenne'), output_field=DecimalField())
-        ).filter(days_left__lt=critical_days)
-    
-        critical_soon_count = critical_soon_qs.count()
-        critical_soon_value = critical_soon_qs.aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
-        )['total']
+        date_30_days_ago = today - timedelta(days=30)
+        date_7_days_ago = today - timedelta(days=7)
+
+        ventes_recentes = (
+            FactureProduit.objects
+            .filter(
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                facture__date__date__gte=date_7_days_ago,
+                produit__isnull=False
+            )
+            .values('produit_id')
+            .annotate(total_vendu=Sum('quantity'))
+        )
+        map_recentes = {v['produit_id']: v['total_vendu'] for v in ventes_recentes}
+
+        ventes_anciennes = (
+            FactureProduit.objects
+            .filter(
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                facture__date__date__gte=date_30_days_ago,
+                facture__date__date__lt=date_7_days_ago,
+                produit__isnull=False
+            )
+            .values('produit_id')
+            .annotate(total_vendu=Sum('quantity'))
+        )
+        map_anciennes = {v['produit_id']: v['total_vendu'] for v in ventes_anciennes}
+
+        commandes_en_cours = (
+            CommandeProduit.objects
+            .filter(
+                commande__status__in=[Commande.Status.EN_PREPARATION, Commande.Status.EN_ATTENTE],
+                produit__isnull=False
+            )
+            .values('produit_id')
+            .annotate(
+                qte_commandee=Sum('quantity'),
+                ug_commandees=Sum('unites_gratuites')
+            )
+        )
+        map_commandes = {
+            c['produit_id']: (c['qte_commandee'] or 0) + (c['ug_commandees'] or 0)
+            for c in commandes_en_cours
+        }
+
+        critical_soon_count = 0
+        critical_soon_value = Decimal('0')
+        produits_actifs = Produit.objects.filter(stock__gt=0, is_active=True).select_related('fournisseur')
+        for produit in produits_actifs:
+            vendu_recent = map_recentes.get(produit.id, 0)
+            vendu_ancien = map_anciennes.get(produit.id, 0)
+
+            if vendu_recent + vendu_ancien <= 0:
+                continue
+
+            taux_journalier_recent = vendu_recent / 7.0
+            taux_journalier_ancien = vendu_ancien / 23.0 if vendu_ancien > 0 else 0
+            if taux_journalier_ancien > 0:
+                ventes_jour = (taux_journalier_recent * 2 + taux_journalier_ancien) / 3.0
+            else:
+                ventes_jour = taux_journalier_recent
+
+            if ventes_jour <= 0:
+                continue
+
+            jours_avant_rupture = produit.stock / ventes_jour
+            if jours_avant_rupture < critical_days:
+                critical_soon_count += 1
+                critical_soon_value += Decimal(str(produit.stock)) * Decimal(str(produit.pmp or 0))
     
         # 4. Score de Santé Global — 5 composantes dynamiques
         total_active_count = Produit.objects.filter(is_active=True).count() or 1
         total_stock_value = Produit.objects.filter(is_active=True, stock__gt=0).aggregate(
             total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
         )['total'] or Decimal('1')
-    
+
+        # ── Définition des produits pertinents ─────────────────────────────────
+        # Un produit est pertinent s'il est en stock OU a eu de l'activité récente (vente/achat < 90j)
+        relevant_days = 90
+        relevant_cutoff = today - timedelta(days=relevant_days)
+        relevant_qs = Produit.objects.filter(
+            is_active=True
+        ).filter(
+            Q(stock__gt=0) |
+            Q(dernier_vente__gte=relevant_cutoff) |
+            Q(dernier_achat__gte=relevant_cutoff)
+        )
+        relevant_count = relevant_qs.count() or 1
+
         # ── Composante A : Disponibilité (pas de rupture) — 30 pts ──────────────
-        rupture_total_count = Produit.objects.filter(is_active=True, stock__lte=0).count()
-        availability_rate = (1 - float(rupture_total_count) / float(total_active_count)) * 100
+        # Disponibilité = % des produits pertinents qui sont actuellement en stock
+        available_relevant_count = relevant_qs.filter(stock__gt=0).count()
+        availability_rate = (float(available_relevant_count) / float(relevant_count)) * 100
+        rupture_total_count = relevant_qs.filter(stock__lte=0).count()
         score_a = availability_rate * 0.30  # max 30 pts
     
         # ── Composante B : Fluidité du stock (peu de stock dormant) — 25 pts ────
@@ -313,17 +385,27 @@ class StatistiquesViewSet(viewsets.ViewSet):
         health_score_raw = score_a + score_b + score_c + score_d + score_e
         health_score = max(0.0, min(100.0, health_score_raw))
 
-        # Pour la compatibilité frontend (rotation_rate = fluidity_rate)
-        rotation_rate = fluidity_rate
+        # Rotation = part des produits actuellement en stock qui ont généré des ventes sur les 30 derniers jours
+        produits_en_stock_ids = set(
+            Produit.objects.filter(is_active=True, stock__gt=0).values_list('id', flat=True)
+        )
+        produits_avec_ventes_recentes = len(
+            (set(map_recentes.keys()) | set(map_anciennes.keys())) & produits_en_stock_ids
+        )
+        produits_en_stock_count = len(produits_en_stock_ids) or 1
+        rotation_rate = (produits_avec_ventes_recentes / produits_en_stock_count) * 100
 
         # Poids (pour l'affichage UI — on garde les settings mais la formule est fixe maintenant)
         avail_weight = Decimal(str(ps.availability_weight)) / Decimal('100.0') if ps else Decimal('0.6')
         rot_weight = Decimal(str(ps.rotation_weight)) / Decimal('100.0') if ps else Decimal('0.4')
 
+        rupture_rate = 100.0 - availability_rate
+
         return Response({
             'health_score': round(float(health_score), 1),
             'availability_rate': round(float(availability_rate), 1),
             'rotation_rate': round(float(rotation_rate), 1),
+            'rupture_rate': round(float(rupture_rate), 1),
             'availability_weight': int(avail_weight * 100),
             'rotation_weight': int(rot_weight * 100),
             'score_details': {

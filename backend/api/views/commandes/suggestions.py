@@ -8,6 +8,59 @@ from django.conf import settings
 from ...models import Produit, Facture, FactureProduit
 
 
+def get_produits_a_par_marge(periode=90, fournisseur_id=None):
+    """
+    Classifie les produits selon la méthode ABC sur la marge générée.
+    Retourne l'ensemble des IDs des produits de classe A (top ~80% de la marge cumulée).
+    """
+    from django.db.models import Sum, Q, F
+    from django.db.models.functions import Coalesce
+    from decimal import Decimal
+
+    date_debut = timezone.now() - timedelta(days=periode)
+
+    qs = Produit.objects.filter(is_active=True)
+    if fournisseur_id:
+        from ...models import StockLot
+        lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
+        qs = qs.filter(
+            Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
+        )
+
+    ventes = FactureProduit.objects.filter(
+        facture__date__gte=date_debut,
+        facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+        produit__isnull=False
+    ).values('produit_id').annotate(
+        marge_totale=Sum(
+            Coalesce(F('quantity') * (F('selling_price') - F('produit__cost_price')), Decimal('0')),
+            default=Decimal('0')
+        ),
+        qte_totale=Sum('quantity')
+    )
+
+    # Garder les produits avec une marge positive
+    marges = [(v['produit_id'], float(v['marge_totale'] or 0)) for v in ventes if (v['marge_totale'] or 0) > 0]
+    if not marges:
+        return set()
+
+    marges.sort(key=lambda x: x[1], reverse=True)
+    total_marge = sum(m for _, m in marges)
+    if total_marge <= 0:
+        return set()
+
+    seuil_abc = total_marge * 0.80
+    cumul = 0.0
+    produits_a = set()
+    for pid, marge in marges:
+        cumul += marge
+        produits_a.add(pid)
+        if cumul >= seuil_abc:
+            break
+
+    return produits_a
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def generer_suggestions_commande(request):
@@ -19,6 +72,7 @@ def generer_suggestions_commande(request):
     periode = int(request.data.get('periode', 30))
     fournisseur_id = request.data.get('fournisseur_id')
     budget_max = request.data.get('budget_max')  # Optionnel, en HT
+    abc_a_only = request.data.get('abc_a_only', False)
     
     # Convertir budget en float si fourni
     if budget_max:
@@ -49,6 +103,7 @@ def generer_suggestions_commande(request):
             fournisseur_id=fournisseur_id,
             budget_max=budget_max,
             delai_couverture=periode,
+            abc_a_only=abc_a_only,
         )
     
     # ── Enrichir avec indicateurs Promis & Rupture Fournisseur ──
@@ -212,12 +267,13 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     return suggestions, round(total_ht, 2)
 
 
-def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=None, delai_couverture=None):
+def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=None, delai_couverture=None, abc_a_only=False):
     """
     Calcul optimisé avec rotation, tendances, stock.
     Stock cible = délai de couverture (en jours de consommation).
     Le délai de couverture est paramétrable par commande/schedule (pas figé sur le fournisseur).
     Si budget_max est fourni, on priorise les produits à plus fortes ventes.
+    Si abc_a_only est True, on ne garde que les produits de classe A (marge 80/20).
     """
     # Défaut : delai_couverture = periode si non spécifié
     delai_couverture = delai_couverture or periode
@@ -230,7 +286,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     # Produits actifs uniquement, filtrer par fournisseur si spécifié
     from django.db.models import Q
     produits_qs = Produit.objects.filter(is_active=True)
-    
+
     fournisseur_obj = None
     if fournisseur_id:
         from ...models import Fournisseur, StockLot
@@ -239,6 +295,12 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         produits_qs = produits_qs.filter(
             Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
         )
+
+    # Filtre optionnel : produits A uniquement (classification ABC sur la marge)
+    if abc_a_only:
+        produits_a_ids = get_produits_a_par_marge(periode=90, fournisseur_id=fournisseur_id)
+        if produits_a_ids:
+            produits_qs = produits_qs.filter(id__in=produits_a_ids)
     
     # Dates pour le moteur de réapprovisionnement (90j, 4 semaines, 8 semaines)
     date_90j = timezone.now() - timedelta(days=90)
