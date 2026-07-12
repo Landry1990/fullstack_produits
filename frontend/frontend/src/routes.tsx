@@ -86,7 +86,6 @@ const RapportMensuel = lazyWithRetry(() => import('./components/RapportMensuel')
 const Transformations = lazyWithRetry(() => import('./components/Transformations'));
 const ReapproRayon = lazyWithRetry(() => import('./components/stock/ReapproRayon'));
 const ReapproHistory = lazyWithRetry(() => import('./components/stock/ReapproHistory'));
-const Ruptures = lazyWithRetry(() => import('./components/stock/Ruptures'));
 const Cadencier = lazyWithRetry(() => import('./components/stock/Cadencier'));
 const JournalAudit = lazyWithRetry(() => import('./components/JournalAudit'));
 const JournalAjustements = lazyWithRetry(() => import('./components/JournalAjustements'));
@@ -193,7 +192,6 @@ export const router = createBrowserRouter([
           { path: 'avoirs', ...perm(['inventaire', 'inventaire_avoirs', 'avoirs'], Avoirs) },
           { path: 'promis', ...perm(['inventaire', 'inventaire_promis', 'promis'], Promis) },
           { path: 'stock-analysis', ...perm(['inventaire', 'inventaire_analyse'], StockAnalysis) },
-          { path: 'ruptures', ...perm(['inventaire', 'inventaire_ruptures'], Ruptures) },
           { path: 'cadencier', ...perm(['inventaire', 'inventaire_cadencier'], Cadencier) },
           { path: 'reappro-rayon', ...perm(['inventaire', 'inventaire_reappro'], ReapproRayon) },
           { path: 'reappro-history', ...perm(['inventaire', 'inventaire_reappro'], ReapproHistory) },

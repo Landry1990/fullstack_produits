@@ -17,6 +17,8 @@ import { cn } from '../../lib/utils'
 import {
   Brain,
   Calendar,
+  CheckSquare,
+  Square,
   Clock,
   DollarSign,
   Info,
@@ -58,6 +60,7 @@ interface SuggestionParams {
   budgetMax: string
   dateDebut: string
   dateFin: string
+  abcAOnly: boolean
 }
 
 interface SuggestionCommandeModalProps {
@@ -85,6 +88,7 @@ export default function SuggestionCommandeModal({
     budgetMax: '',
     dateDebut: yesterday.toISOString().slice(0, 16),
     dateFin: now.toISOString().slice(0, 16),
+    abcAOnly: false,
   })
 
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([])
@@ -99,6 +103,7 @@ export default function SuggestionCommandeModal({
       const basePayload = {
         mode: suggestionParams.mode,
         fournisseur_id: suggestionParams.fournisseurId ? parseInt(suggestionParams.fournisseurId) : null,
+        abc_a_only: suggestionParams.abcAOnly,
       }
       const payload =
         suggestionParams.mode === 'ventes_horaire'
@@ -286,6 +291,24 @@ export default function SuggestionCommandeModal({
                     </button>
                   ))}
                 </div>
+
+                {suggestionParams.mode === 'optimise' && (
+                  <button
+                    type="button"
+                    onClick={() => setSuggestionParams(prev => ({ ...prev, abcAOnly: !prev.abcAOnly }))}
+                    className={cn(
+                      'mt-3 flex items-center gap-2 text-sm font-medium transition-colors',
+                      suggestionParams.abcAOnly ? 'text-emerald-700' : 'text-slate-600 hover:text-emerald-600'
+                    )}
+                  >
+                    {suggestionParams.abcAOnly ? (
+                      <CheckSquare className="size-5 text-emerald-600" />
+                    ) : (
+                      <Square className="size-5 text-slate-400" />
+                    )}
+                    {t('orders:suggestion_modal.abc_a_only_label')}
+                  </button>
+                )}
               </div>
 
               {/* Filters */}

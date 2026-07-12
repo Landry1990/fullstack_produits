@@ -61,9 +61,9 @@ const StockHealthDashboard: React.FC = () => {
     if (error || !data) return null;
 
     return (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             {/* Main Health Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                 {/* Health Score Card */}
                 <div
                     onMouseMove={handleMouseMove}
@@ -147,13 +147,13 @@ const StockHealthDashboard: React.FC = () => {
                     {/* Lost Revenue Card */}
                     <div
                         onMouseMove={handleMouseMove}
-                        className="expert-card stagger-2 bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative group hover:shadow-xl hover:shadow-red-500/5 transition-all duration-500 !overflow-visible z-10 hover:z-[100]"
+                        className="expert-card stagger-2 bg-white p-4 rounded-[24px] border border-slate-200 shadow-sm relative group hover:shadow-xl hover:shadow-red-500/5 transition-all duration-500 !overflow-visible z-10 hover:z-[100]"
                     >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                            <TrendingDown className="size-24 text-red-500" />
+                        <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <TrendingDown className="size-20 text-red-500" />
                         </div>
-                        <div className="size-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-4">
-                            <AlertCircle className="size-6" />
+                        <div className="size-10 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-3">
+                            <AlertCircle className="size-5" />
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-red-400">
@@ -167,14 +167,14 @@ const StockHealthDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-2xl font-black text-red-500 tracking-tighter mb-1">
+                        <div className="text-xl font-black text-red-500 tracking-tighter mb-1">
                             -<AnimatedNumber
                                 value={data.missed_sales.monthly_revenue}
                                 formatValue={(v) => formatCurrency(v)}
                             />
                         </div>
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="flex items-center gap-2 text-sm font-bold text-red-400 bg-red-50 w-fit px-3 py-1 rounded-full">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center gap-2 text-xs font-bold text-red-400 bg-red-50 w-fit px-2.5 py-0.5 rounded-full">
                                 <div className="size-1.5 rounded-full bg-red-500 animate-pulse"></div>
                                 {t('stock:analyse.dashboard.lost_revenue_label')}
                             </div>
@@ -182,13 +182,13 @@ const StockHealthDashboard: React.FC = () => {
 
                         <button
                             onClick={() => navigate('/app/commandes', { state: { action: 'OPEN_SUGGESTIONS', mode: 'optimise' } })}
-                            className="inline-flex items-center justify-center h-9 px-3 text-xs font-bold bg-red-500 text-white hover:bg-red-600 rounded-xl gap-2 shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
+                            className="inline-flex items-center justify-center h-8 px-3 text-[10px] font-bold bg-red-500 text-white hover:bg-red-600 rounded-xl gap-2 shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
                         >
                             <ShoppingCart className="size-4" />
                             {t('stock:analyse.dashboard.fix_ruptures_btn')}
                         </button>
 
-                        <p className="mt-3 text-[10px] text-slate-400 font-medium leading-relaxed italic">
+                        <p className="mt-2 text-[10px] text-slate-400 font-medium leading-relaxed italic">
                             {t('stock:analyse.dashboard.lost_revenue_desc')}
                         </p>
                     </div>
@@ -196,13 +196,13 @@ const StockHealthDashboard: React.FC = () => {
                     {/* Dead Capital Card */}
                     <div
                         onMouseMove={handleMouseMove}
-                        className="expert-card stagger-3 bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative group hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 !overflow-visible z-10 hover:z-[100]"
+                        className="expert-card stagger-3 bg-white p-4 rounded-[24px] border border-slate-200 shadow-sm relative group hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 !overflow-visible z-10 hover:z-[100]"
                     >
-                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                            <Clock className="size-24 text-amber-500" />
+                        <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <Clock className="size-20 text-amber-500" />
                         </div>
-                        <div className="size-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-4">
-                            <Wallet className="size-6" />
+                        <div className="size-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-3">
+                            <Wallet className="size-5" />
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
@@ -216,27 +216,27 @@ const StockHealthDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-2xl font-black text-blue-600 tracking-tighter mb-1">
+                        <div className="text-xl font-black text-blue-600 tracking-tighter mb-1">
                             <AnimatedNumber
                                 value={data.dead_stock.value}
                                 formatValue={(v) => formatCurrency(v)}
                             />
                         </div>
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="flex items-center gap-2 text-sm font-bold text-blue-400 bg-blue-50 w-fit px-3 py-1 rounded-full">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center gap-2 text-xs font-bold text-blue-400 bg-blue-50 w-fit px-2.5 py-0.5 rounded-full">
                                 {t('stock:analyse.dashboard.dead_stock_impact', { count: data.dead_stock.count, days: data.dead_stock.days_threshold })}
                             </div>
                         </div>
 
                         <button
                             onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-                            className="inline-flex items-center justify-center h-9 px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
+                            className="inline-flex items-center justify-center h-8 px-3 text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
                         >
                             <Filter className="size-4" />
                             {t('stock:analyse.dashboard.optimize_cash_btn')}
                         </button>
 
-                        <p className="mt-3 text-[10px] text-slate-400 font-medium leading-relaxed italic">
+                        <p className="mt-2 text-[10px] text-slate-400 font-medium leading-relaxed italic">
                             {t('stock:analyse.dashboard.dead_stock_desc', { days: data.dead_stock.days_threshold })}
                         </p>
                     </div>
@@ -244,13 +244,13 @@ const StockHealthDashboard: React.FC = () => {
             </div>
 
             {/* Sub Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
                 <div
                     onMouseMove={handleMouseMove}
-                    className="expert-card stagger-4 bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex items-center gap-4 group hover:border-emerald-300 transition-all !overflow-visible z-10 hover:z-[100]"
+                    className="expert-card stagger-4 bg-white p-4 rounded-[20px] border border-slate-200 shadow-sm flex items-center gap-3 group hover:border-emerald-300 transition-all !overflow-visible z-10 hover:z-[100]"
                 >
-                    <div className="size-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
-                        <CheckCircle2 className="size-6" />
+                    <div className="size-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                        <CheckCircle2 className="size-5" />
                     </div>
                     <div>
                         <div className="flex items-center gap-1.5">
@@ -265,7 +265,7 @@ const StockHealthDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-lg font-black text-slate-800">
+                        <div className="text-base font-black text-slate-800">
                             <AnimatedNumber value={data.availability_rate} />%
                         </div>
                     </div>
@@ -273,10 +273,36 @@ const StockHealthDashboard: React.FC = () => {
 
                 <div
                     onMouseMove={handleMouseMove}
-                    className="expert-card stagger-4 bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex items-center gap-4 group hover:border-blue-300 transition-all !overflow-visible z-10 hover:z-[100]"
+                    className="expert-card stagger-4 bg-white p-4 rounded-[20px] border border-slate-200 shadow-sm flex items-center gap-3 group hover:border-red-300 transition-all !overflow-visible z-10 hover:z-[100]"
                 >
-                    <div className="size-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                        <Activity className="size-6" />
+                    <div className="size-10 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                        <TrendingDown className="size-5" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-1.5">
+                            <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                {t('stock:analyse.dashboard.rupture_rate')}
+                            </div>
+                            <div className="relative group/tip">
+                                <Info className="size-3 text-slate-400 hover:text-slate-700 transition-colors cursor-help" />
+                                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 hidden group-hover/tip:block z-[100] bg-white border border-slate-200 rounded-2xl shadow-xl p-3 text-left">
+                                    <h4 className="font-bold text-sm text-slate-700 mb-1">Taux de rupture</h4>
+                                    <p className="text-xs text-slate-500 whitespace-normal">Part des produits pertinents (en stock ou avec activité récente) qui sont actuellement en rupture.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-base font-black text-slate-800">
+                            <AnimatedNumber value={data.rupture_rate} />%
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    onMouseMove={handleMouseMove}
+                    className="expert-card stagger-4 bg-white p-4 rounded-[20px] border border-slate-200 shadow-sm flex items-center gap-3 group hover:border-blue-300 transition-all !overflow-visible z-10 hover:z-[100]"
+                >
+                    <div className="size-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                        <Activity className="size-5" />
                     </div>
                     <div>
                         <div className="flex items-center gap-1.5">
@@ -291,7 +317,7 @@ const StockHealthDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-lg font-black text-slate-800">
+                        <div className="text-base font-black text-slate-800">
                             <AnimatedNumber value={data.rotation_rate} />%
                         </div>
                     </div>
@@ -299,10 +325,10 @@ const StockHealthDashboard: React.FC = () => {
 
                 <div
                     onMouseMove={handleMouseMove}
-                    className="expert-card stagger-4 bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex items-center gap-4 group hover:border-red-300 transition-all !overflow-visible z-10 hover:z-[100]"
+                    className="expert-card stagger-4 bg-white p-4 rounded-[20px] border border-slate-200 shadow-sm flex items-center gap-3 group hover:border-red-300 transition-all !overflow-visible z-10 hover:z-[100]"
                 >
-                    <div className="size-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
-                        <AlertCircle className="size-6" />
+                    <div className="size-10 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                        <AlertCircle className="size-5" />
                     </div>
                     <div>
                         <div className="flex items-center gap-1.5">
@@ -317,7 +343,7 @@ const StockHealthDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-lg font-black text-slate-800">
+                        <div className="text-base font-black text-slate-800">
                             <AnimatedNumber value={data.critical_alerts.soon_out_of_stock_count} />
                         </div>
                     </div>
@@ -325,10 +351,10 @@ const StockHealthDashboard: React.FC = () => {
 
                 <div
                     onMouseMove={handleMouseMove}
-                    className="expert-card stagger-4 bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex items-center gap-4 group hover:border-emerald-300 transition-all !overflow-visible z-10 hover:z-[100]"
+                    className="expert-card stagger-4 bg-white p-4 rounded-[20px] border border-slate-200 shadow-sm flex items-center gap-3 group hover:border-emerald-300 transition-all !overflow-visible z-10 hover:z-[100]"
                 >
-                    <div className="size-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
-                        <DollarSign className="size-6" />
+                    <div className="size-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                        <DollarSign className="size-5" />
                     </div>
                     <div>
                         <div className="flex items-center gap-1.5">
@@ -343,7 +369,7 @@ const StockHealthDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-lg font-black text-slate-800">
+                        <div className="text-base font-black text-slate-800">
                             <AnimatedNumber
                                 value={data.total_stock_value}
                                 formatValue={(v) => formatCurrency(v)}

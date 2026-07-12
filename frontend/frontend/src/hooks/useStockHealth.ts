@@ -11,6 +11,7 @@ export interface StockHealthData {
     health_score: number;
     availability_rate: number;
     rotation_rate: number;
+    rupture_rate: number;
     availability_weight: number;
     rotation_weight: number;
     score_details?: {
