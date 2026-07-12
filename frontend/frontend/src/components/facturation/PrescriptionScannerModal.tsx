@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Camera, Upload, Trash2, Search, Check, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 import PremiumModal from '../common/PremiumModal';
@@ -30,23 +30,23 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
   onExtractionDone 
 }) => {
   const { t } = useTranslation(['facturation', 'common']);
-  const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [matchResults, setMatchResults] = useState<MatchResult[]>([]);
-  const [products, setProducts] = useState<ProduitModel[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [extractionData, setExtractionData] = useState<ScannedPrescription | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<File | null>(null);
+  const productsRef = useRef<ProduitModel[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showCamera, setShowCamera] = useState(false);
 
   // Load products for fuzzy matching when modal opens
   useEffect(() => {
-    if (isOpen && products.length === 0) {
+    if (isOpen && productsRef.current.length === 0) {
       loadProducts();
     }
   }, [isOpen]);
@@ -56,9 +56,9 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
     try {
       const response = await api.get('produits/', { params: { page_size: 10000 } });
       const results = Array.isArray(response.data) ? response.data : response.data.results;
-      setProducts(results || []);
-    } catch (err) {
-      console.error('Failed to load products for OCR matching', err);
+      productsRef.current = results || [];
+    } catch (error) {
+      console.error('Failed to load products for OCR matching', error);
       toast.error(t('facturation:prescription_scanner.error_load_products'));
     } finally {
       setLoadingProducts(false);
@@ -68,7 +68,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setImage(file);
+      imageRef.current = file;
       setPreview(URL.createObjectURL(file));
       setMatchResults([]);
       setShowCamera(false);
@@ -78,7 +78,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
   const startCamera = async () => {
     setShowCamera(true);
     setPreview(null);
-    setImage(null);
+    imageRef.current = null;
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -86,7 +86,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
           videoRef.current.srcObject = stream;
         }
       }
-    } catch (err) {
+    } catch {
       toast.error(t('facturation:prescription_scanner.error_camera'));
       setShowCamera(false);
     }
@@ -112,7 +112,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
         canvas.toBlob((blob) => {
           if (blob) {
             const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
-            setImage(file);
+            imageRef.current = file;
             setPreview(URL.createObjectURL(file));
             stopCamera();
           }
@@ -122,6 +122,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
   };
 
   const processOcr = async () => {
+    const image = imageRef.current;
     if (!image) return;
 
     setIsProcessing(true);
@@ -142,7 +143,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
         const query = cleanQuery.length > 2 ? cleanQuery : ocrLine;
 
         // Utiliser fuzzysort pour un matching rapide et précis
-        const results = fuzzysort.go(query, products, {
+        const results = fuzzysort.go(query, productsRef.current, {
           key: 'name',
           limit: 3,
           threshold: -10000, // Ajuster si besoin pour être plus ou moins permissif
@@ -164,7 +165,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       if (matches.length === 0) {
         toast.error(t('facturation:prescription_scanner.error_no_products'));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('OCR Error:', err);
       const errorMessage = err && typeof err === 'object' && 'message' in err ? err.message : t('facturation:prescription_scanner.error_console');
       toast.error(t('facturation:prescription_scanner.error_ocr', { error: errorMessage }));
@@ -179,16 +180,6 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
     setMatchResults(updated);
   };
 
-  const handleToggleProduct = (index: number) => {
-      const updated = [...matchResults];
-      if (updated[index].matchedProduct) {
-          updated[index].matchedProduct = null;
-      } else if (updated[index].suggestions.length > 0) {
-          updated[index].matchedProduct = updated[index].suggestions[0];
-      }
-      setMatchResults(updated);
-  }
-
   const validateScan = () => {
     const selectedProducts = matchResults
       .map(m => m.matchedProduct)
@@ -199,7 +190,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
     if (extractionData) {
         onExtractionDone({
             ...extractionData,
-            imageFile: image || undefined
+            imageFile: imageRef.current || undefined
         });
     }
     
@@ -208,7 +199,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
   };
 
   const reset = () => {
-    setImage(null);
+    imageRef.current = null;
     setPreview(null);
     setMatchResults([]);
     setExtractionData(null);
@@ -335,7 +326,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                         <p className="font-medium text-sm mb-2 text-slate-800">{result.ocrLine}</p>
 
                         <div className="space-y-1">
-                          {result.suggestions.map((product, sIdx) => (
+                          {result.suggestions.map((product) => (
                             <button
                                 key={product.id}
                                 className={`w-full text-left p-2 rounded-lg text-xs flex justify-between items-center transition-colors ${result.matchedProduct?.id === product.id ? 'bg-emerald-600 text-white' : 'hover:bg-slate-100 bg-slate-50'}`}

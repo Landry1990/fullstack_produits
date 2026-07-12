@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel } from '../../types';
 import { useRayons } from '../../hooks/useProduits';
 import SudoValidationModal from '../common/SudoValidationModal';
 import { useAuth } from '../../context/AuthContext';
+import { getApiErrorDetail } from '../../utils/errorHandling';
 import produitService from '../../services/produitService';
 import { 
   Package, 
@@ -49,20 +50,19 @@ const handleDownloadPdf = async (sessionId: number) => {
 };
 
 export default function ReapproRayon() {
-  const { t, i18n } = useTranslation(['stock', 'common']);
+  const { t } = useTranslation(['stock', 'common']);
   const { user } = useAuth();
   const [products, setProducts] = useState<ProduitModel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [transferringIds, setTransferringIds] = useState<number[]>([]);
   const [showConfirmBulk, setShowConfirmBulk] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [lastSessionId, setLastSessionId] = useState<number | null>(null);
+  const lastSessionIdRef = useRef<number | null>(null);
   
   // Sudo Mode States
   const [sudoModalOpen, setSudoModalOpen] = useState(false);
   const [sudoSaving, setSudoSaving] = useState(false);
-  const [bulkActionType, setBulkActionType] = useState<'selection' | 'all' | null>(null);
+  const bulkActionTypeRef = useRef<'selection' | 'all' | null>(null);
   
   // Filtres
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,7 +155,7 @@ export default function ReapproRayon() {
     const hasPermission = user?.is_superuser || user?.can_adjust_stock || user?.profile?.can_adjust_stock;
     
     if (!hasPermission) {
-      setBulkActionType(null); // Not really bulk but we'll use sudo modal
+      bulkActionTypeRef.current = null; // Not really bulk but we'll use sudo modal
       // We'll reuse bulkTransferToShelf with a single ID for consistency
       setPendingIds([produit.id]);
       setSudoModalOpen(true);
@@ -172,7 +172,7 @@ export default function ReapproRayon() {
     if (ids.length === 0) return;
 
     setPendingIds(ids);
-    setBulkActionType(type);
+    bulkActionTypeRef.current = type;
 
     const hasPermission = user?.is_superuser || user?.can_adjust_stock || user?.profile?.can_adjust_stock;
     if (!hasPermission) {
@@ -190,13 +190,13 @@ export default function ReapproRayon() {
         toast.success(res.detail || t('reappro.messages.bulk_success', { success: ids.length, total: ids.length }));
         
         if (res.session_id) {
-            setLastSessionId(res.session_id);
+            lastSessionIdRef.current = res.session_id;
             setShowSuccessModal(true);
         }
 
         fetchNeedsRefill();
-    } catch (error: any) {
-        toast.error(error.response?.data?.detail || t('common:error_generic'));
+    } catch (error) {
+        toast.error(getApiErrorDetail(error, t('common:error_generic')));
     } finally {
         setLoading(false);
         setPendingIds([]);
@@ -208,8 +208,8 @@ export default function ReapproRayon() {
     try {
       await executeBulkTransfer(pendingIds, { validated_by_id: validatorId, sudo_password: password });
       setSudoModalOpen(false);
-      setBulkActionType(null);
-    } catch (err) {
+      bulkActionTypeRef.current = null;
+    } catch {
       // Error handled in executeBulkTransfer
     } finally {
       setSudoSaving(false);
@@ -527,7 +527,7 @@ export default function ReapproRayon() {
 
       {/* ── Modal Confirmation Transfert Groupé ── */}
       <Dialog open={showConfirmBulk} onOpenChange={(open) => {
-        if (!open) { setShowConfirmBulk(false); if (bulkActionType === null) setPendingIds([]); }
+        if (!open) { setShowConfirmBulk(false); if (bulkActionTypeRef.current === null) setPendingIds([]); }
       }}>
         <DialogContent className="max-w-md rounded-2xl border-0 shadow-2xl p-0 overflow-hidden">
           {/* Bande accent emerald */}
@@ -601,7 +601,7 @@ export default function ReapproRayon() {
             <div className="flex flex-col gap-3 mt-6">
               <Button
                 className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25"
-                onClick={() => { if (lastSessionId) handleDownloadPdf(lastSessionId); setShowSuccessModal(false); }}
+                onClick={() => { if (lastSessionIdRef.current) handleDownloadPdf(lastSessionIdRef.current); setShowSuccessModal(false); }}
               >
                 <Download className="size-3.5 mr-2" />
                 {t('stock:reappro.modal.download_pdf')}
@@ -633,7 +633,7 @@ export default function ReapproRayon() {
         onClose={() => {
           setSudoModalOpen(false);
           setPendingIds([]);
-          setBulkActionType(null);
+          bulkActionTypeRef.current = null;
         }}
         onValidate={handleSudoValidate}
         saving={sudoSaving}

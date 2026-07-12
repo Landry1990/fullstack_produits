@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Eye, Trash2, Printer, GitMerge, Sparkles, Clock, Plus, ArrowUpDown, Search, X } from 'lucide-react';
+import { Eye, Trash2, Printer, GitMerge, Sparkles, Plus, ArrowUpDown, Search, X } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -80,8 +80,6 @@ interface CommandeListProps {
 
   onOpenSuggestionModal: () => void;
 
-  onOpenScheduledList: () => void;
-
   onViewDetails: (commande: Commande) => void;
 
   onBulkDelete: () => void;
@@ -141,8 +139,6 @@ export default function CommandeList({
 
   onOpenSuggestionModal,
 
-  onOpenScheduledList,
-
   onViewDetails,
 
   onBulkDelete
@@ -179,33 +175,22 @@ export default function CommandeList({
           <Button
             variant="outline"
             size="sm"
-            className="gap-2"
+            className="gap-2 bg-white border-emerald-500 text-emerald-700 hover:bg-white hover:border-emerald-700 hover:text-emerald-800 transition-colors"
             onClick={() => onOpenSuggestionModal()}
             disabled={loading}
           >
-            {loading ? <span className="size-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <Sparkles className="size-4 text-amber-500" />}
+            {loading ? <span className="size-4 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" /> : <Sparkles className="size-4" />}
             {t('orders:list.suggestions_btn')}
           </Button>
 
           <Button
             variant="outline"
             size="sm"
-            className="gap-2"
-            onClick={onOpenScheduledList}
-            disabled={loading}
-            title="Planification automatique"
-          >
-            {loading ? <span className="size-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <Clock className="size-4 text-blue-500" />}
-            <span className="hidden sm:inline">{t('orders:list.scheduling_btn', 'Planification')}</span>
-          </Button>
-
-          <Button
-            size="sm"
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+            className="gap-2 bg-white border-emerald-500 text-emerald-700 hover:bg-white hover:border-emerald-700 hover:text-emerald-800 transition-colors"
             onClick={onOpenCreateView}
             disabled={loading}
           >
-            {loading ? <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus className="size-4" />}
+            {loading ? <span className="size-4 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" /> : <Plus className="size-4" />}
             {t('orders:list.create_btn')}
           </Button>
         </div>

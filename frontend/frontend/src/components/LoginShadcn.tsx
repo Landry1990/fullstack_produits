@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from './shadcn/button';
 import { Card, CardContent } from './shadcn/card';
-import { Badge } from './shadcn/badge';
 import { cn } from '../lib/utils';
 
 const getDeviceType = () => {
@@ -167,12 +166,12 @@ export default function LoginShadcn() {
         workstation: workstationName
       });
 
-      const { token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock } = response.data;
-      login({ username, token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock });
+      const { token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role } = response.data;
+      login({ username, token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role });
       navigate('/app');
     } catch (err) {
       console.error('Login error:', err);
-      const e = err as any;
+      const e = err as { response?: { status: number } };
       if (!e.response) {
         setError(t('common:messages.server_unreachable'));
       } else if (e.response.status === 400 || e.response.status === 401) {
@@ -392,7 +391,14 @@ export default function LoginShadcn() {
                     <div className="relative" ref={dropdownRef}>
                       <button
                         type="button"
-                        onClick={() => { setIsOpen(prev => { if (!prev) { setSearchTerm(''); setHighlightedIndex(0); } return !prev; }); }}
+                        onClick={() => {
+                          const next = !isOpen;
+                          setIsOpen(next);
+                          if (next) {
+                            setSearchTerm('');
+                            setHighlightedIndex(0);
+                          }
+                        }}
                         className={cn(
                           "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
                           isDark

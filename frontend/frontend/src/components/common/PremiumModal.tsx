@@ -67,8 +67,11 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
   // without needing to re-subscribe on every render.
   const onCloseRef = useRef(onClose);
   const disableCloseRef = useRef(disableClose);
-  onCloseRef.current = onClose;
-  disableCloseRef.current = disableClose;
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    disableCloseRef.current = disableClose;
+  });
 
   useEffect(() => {
     if (!isOpen) return;

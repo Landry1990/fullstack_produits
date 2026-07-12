@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
@@ -64,7 +64,7 @@ const UserSessionsShadcn: React.FC = () => {
 
   // Daily filters
   const [startDate, setStartDate] = useState(() => format(getServerDate(), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(() => format(getServerDate(), 'yyyy-MM-dd'));
+  const endDateRef = useRef(format(getServerDate(), 'yyyy-MM-dd'));
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [operators, setOperators] = useState<{ id: number; username: string }[]>([]);
 
@@ -93,6 +93,7 @@ const UserSessionsShadcn: React.FC = () => {
   const fetchSessions = async () => {
     setLoading(true);
     try {
+      const endDate = endDateRef.current;
       let url = `user-sessions/?ordering=-date,-first_login`;
       if (startDate) url += `&date_after=${startDate}`;
       if (endDate) url += `&date_before=${endDate}`;
@@ -204,7 +205,7 @@ const UserSessionsShadcn: React.FC = () => {
                   value={startDate}
                   onChange={(e) => {
                     setStartDate(e.target.value);
-                    setEndDate(e.target.value);
+                    endDateRef.current = e.target.value;
                   }}
                 />
               </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import {
   Trash2, Download, Eye, ShieldAlert, AlertTriangle,
@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
+import { getApiErrorDetail } from '../utils/errorHandling';
 
 interface PurgeTable {
   key: string;
@@ -30,8 +31,27 @@ interface PurgeResult {
   deleted: number;
 }
 
+interface ImportResult {
+  created: number;
+  updated: number;
+  errors: number;
+  rapport_xlsx?: string;
+  rapport_txt?: string;
+}
+
+interface ProductPurgeResult {
+  deleted: number;
+  conserves: number;
+}
+
+interface PharmacySettings {
+  backup_enabled?: boolean;
+  backup_time?: string;
+  secondary_backup_path?: string;
+}
+
 // Group tables by category for display
-const getTableCategories = (t: any) => ({
+const getTableCategories = (t: (key: string) => string) => ({
   ventes: {
     label: t('categories.ventes'),
     icon: '💰',
@@ -94,7 +114,7 @@ export default function Maintenance() {
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupProgress, setBackupProgress] = useState(0);
   const [backupStep, setBackupStep] = useState('');
-  const [pharmacySettings, setPharmacySettings] = useState<any>(null);
+  const [pharmacySettings, setPharmacySettings] = useState<PharmacySettings | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [restorePassword, setRestorePassword] = useState('');
@@ -107,15 +127,15 @@ export default function Maintenance() {
   const [produitsCount, setProduitsCount] = useState<number | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<any>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importProgress, setImportProgress] = useState(0);
   const [importMessage, setImportMessage] = useState('');
-  const [importJobId, setImportJobId] = useState<string | null>(null);
+  const importJobIdRef = useRef<string | null>(null);
   const [showPurgeModal, setShowPurgeModal] = useState(false);
   const [purgePassword, setPurgePassword] = useState('');
   const [purgeSansVentes, setPurgeSansVentes] = useState(true);
   const [purging2, setPurging2] = useState(false);
-  const [purgeResult, setPurgeResult] = useState<any>(null);
+  const [purgeResult, setPurgeResult] = useState<ProductPurgeResult | null>(null);
 
   // Code Source States
   const [codeBackupLoading, setCodeBackupLoading] = useState(false);
@@ -151,7 +171,7 @@ export default function Maintenance() {
         timeout: 30000,
       });
       const jobId = res.data.job_id;
-      setImportJobId(jobId);
+      importJobIdRef.current = jobId;
       setImportMessage('Import démarré en arrière-plan...');
 
       // Polling toutes les 2 secondes
@@ -166,24 +186,24 @@ export default function Maintenance() {
             clearInterval(poll);
             setImporting(false);
             setImportResult(d);
-            setImportJobId(null);
+            importJobIdRef.current = null;
             toast.success(d.message);
             api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {});
           } else if (d.status === 'error') {
             clearInterval(poll);
             setImporting(false);
-            setImportJobId(null);
+            importJobIdRef.current = null;
             toast.error(d.message);
           }
         } catch {
           clearInterval(poll);
           setImporting(false);
-          setImportJobId(null);
+          importJobIdRef.current = null;
         }
       }, 2000);
 
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Erreur lors du lancement de l\'import');
+    } catch (err) {
+      toast.error(getApiErrorDetail(err, 'Erreur lors du lancement de l\'import'));
       setImporting(false);
     }
   };
@@ -201,8 +221,8 @@ export default function Maintenance() {
       setPurgePassword('');
       toast.success(res.data.message);
       api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {});
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Erreur lors de la purge');
+    } catch (err) {
+      toast.error(getApiErrorDetail(err, 'Erreur lors de la purge'));
     } finally {
       setPurging2(false);
     }
@@ -322,9 +342,8 @@ export default function Maintenance() {
       setShowConfirmModal(false);
       setPassword('');
       toast.success(t('toasts.purge_success'));
-    } catch (err: any) {
-      const msg = err.response?.data?.detail || t('toasts.purge_error');
-      toast.error(msg);
+    } catch (err) {
+      toast.error(getApiErrorDetail(err, t('toasts.purge_error')));
     } finally {
       setPurging(false);
     }
@@ -368,12 +387,12 @@ export default function Maintenance() {
         setBackupProgress(0);
         setBackupStep('');
       }, 3000);
-    } catch (err: any) {
+    } catch (err) {
       clearInterval(progressInterval);
       setBackupLoading(false);
       setBackupProgress(0);
       setBackupStep('');
-      toast.error(err.response?.data?.detail || t('toasts.backup_error'));
+      toast.error(getApiErrorDetail(err, t('toasts.backup_error')));
     }
   };
 
@@ -440,12 +459,12 @@ export default function Maintenance() {
        
        // Rechargement après succès car la DB a changé
        setTimeout(() => window.location.reload(), 2000);
-    } catch (err: any) {
+    } catch (err) {
       clearInterval(progressInterval);
       setRestoring(false);
       setRestoreProgress(0);
       setRestoreStep('');
-      toast.error(err.response?.data?.detail || t('toasts.restore_error'));
+      toast.error(getApiErrorDetail(err, t('toasts.restore_error')));
     }
   };
 
@@ -481,8 +500,8 @@ export default function Maintenance() {
       await api.post('code-backup/restore/', formData);
       toast.success(t('code_management.restore_success'));
       setCodeRestoreFile(null);
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || t('common:error_occurred'));
+    } catch (err) {
+      toast.error(getApiErrorDetail(err, t('common:error_occurred')));
     } finally {
       setCodeRestoring(false);
     }
@@ -745,7 +764,7 @@ export default function Maintenance() {
                     {importResult.rapport_xlsx && (
                       <button
                         className="btn btn-xs btn-outline btn-success w-full gap-1 mt-2"
-                        onClick={() => downloadRapport(importResult.rapport_xlsx)}
+                        onClick={() => downloadRapport(importResult.rapport_xlsx as string)}
                       >
                         <FileDown className="size-3" /> Télécharger le rapport Excel
                       </button>
@@ -753,7 +772,7 @@ export default function Maintenance() {
                     {importResult.rapport_txt && (
                       <button
                         className="btn btn-xs btn-outline w-full gap-1"
-                        onClick={() => downloadRapport(importResult.rapport_txt)}
+                        onClick={() => downloadRapport(importResult.rapport_txt as string)}
                       >
                         <FileDown className="size-3" /> Télécharger le rapport texte
                       </button>

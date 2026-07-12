@@ -154,8 +154,8 @@
         "recouvrement_caps": "RECOVERY"
     },
     "locale": "en-US",
-    "currency_symbol": "F",
-    "currency": "F",
+    "currency_symbol": "FCFA",
+    "currency": "FCFA",
     "date_format_short": "MM/dd/yyyy",
     "date_format_long": "MMMM dd, yyyy",
     "date_locale": "en-US",
