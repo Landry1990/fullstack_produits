@@ -158,6 +158,7 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
         'date': ['gte', 'lte', 'date'],
         'numero_facture': ['exact', 'icontains'],
         'created_by': ['exact'],
+        'poste_caisse': ['exact'],
         'produits__produit__name': ['icontains'],
     }
     search_fields = ['numero_facture', 'client__name', 'produits__produit__name']
@@ -279,9 +280,10 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
 
         validation_user = None
         is_avoir_client = data.get('is_avoir_client', False)
+        is_terminal_account = bool(hasattr(user, 'profile') and user.profile and getattr(user.profile, 'is_terminal_account', False))
 
-        # Enforce Sudo for non-positive amounts OR centralized cash register
-        needs_sudo = (total_ttc <= 0 and not is_avoir_client) or centralized
+        # Enforce Sudo for non-positive amounts, centralized cash register, or shared terminal accounts
+        needs_sudo = (total_ttc <= 0 and not is_avoir_client) or centralized or is_terminal_account
 
         if needs_sudo:
             try:
@@ -289,8 +291,14 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
                 if error_res:
                     return error_res
 
-                # For centralized cash register, the validator must be the currently logged-in user
-                if centralized and validation_user != user:
+                # For shared terminal accounts, the seller must be a different real user
+                if is_terminal_account:
+                    if validation_user == user:
+                        return Response({
+                            'detail': "Ce compte est un poste partagé. Veuillez saisir les identifiants du vendeur réel."
+                        }, status=status.HTTP_403_FORBIDDEN)
+                # For centralized cash register (non-terminal), the validator must be the currently logged-in user
+                elif centralized and validation_user != user:
                     return Response({
                         'detail': "L'envoi à la caisse centralisée doit être validé par l'utilisateur connecté."
                     }, status=status.HTTP_403_FORBIDDEN)

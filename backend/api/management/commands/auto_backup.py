@@ -59,27 +59,3 @@ class Command(BaseCommand):
         self.stdout.write(f"Lancement du backup automatique (intervalle: {interval} min)...")
         call_command('backup_database')
 
-        # Handle secondary backup
-        if conf.secondary_backup_path and os.path.exists(conf.secondary_backup_path):
-            import shutil
-            backups = [f for f in os.listdir(backup_dir) if f.endswith('.sql.gz')]
-            if backups:
-                latest_backup = max([os.path.join(backup_dir, f) for f in backups], key=os.path.getmtime)
-                dest_path = os.path.join(conf.secondary_backup_path, os.path.basename(latest_backup))
-                shutil.copy2(latest_backup, dest_path)
-                self.stdout.write(f"Copie vers destination secondaire OK: {dest_path}")
-
-        # Handle Google Drive backup
-        gdrive_path = (conf.google_drive_backup_path or '').strip()
-        if gdrive_path and os.path.exists(gdrive_path):
-            import shutil
-            backups = [f for f in os.listdir(backup_dir) if f.endswith('.sql.gz')]
-            if backups:
-                latest_backup = max([os.path.join(backup_dir, f) for f in backups], key=os.path.getmtime)
-                gdrive_backup_dir = os.path.join(gdrive_path, 'pharmacie-backups')
-                os.makedirs(gdrive_backup_dir, exist_ok=True)
-                dest_path = os.path.join(gdrive_backup_dir, os.path.basename(latest_backup))
-                shutil.copy2(latest_backup, dest_path)
-                self.stdout.write(self.style.SUCCESS(f"[GDRIVE] Copie Google Drive OK: {dest_path}"))
-        elif gdrive_path:
-            self.stdout.write(self.style.WARNING(f"[GDRIVE] Chemin Google Drive configuré mais introuvable: {gdrive_path}"))

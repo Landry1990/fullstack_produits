@@ -138,6 +138,8 @@ class Command(BaseCommand):
             ))
             self.stdout.write(f'   MD5: {hasher.hexdigest()}')
 
+            self.copy_to_secondary(str(backup_file), str(checksum_file))
+
             # Upload to cloud (S3-compatible)
             self.upload_to_cloud(str(backup_file))
 
@@ -177,6 +179,24 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(
                 f'[CLEANUP] Supprimé {removed_count} backup(s) (conservé les {retention_count} plus récents)'
             ))
+
+    def copy_to_secondary(self, backup_file_path, checksum_file_path):
+        try:
+            from api.models.settings import PharmacySettings
+            conf, _ = PharmacySettings.objects.get_or_create(pk=1)
+            destination = (conf.secondary_backup_path or '').strip()
+            if not destination:
+                self.stdout.write(self.style.WARNING('[SUPPORT] Destination secondaire non configurée'))
+                return
+            if not os.path.isdir(destination):
+                self.stdout.write(self.style.WARNING(f'[SUPPORT] Destination secondaire inaccessible: {destination}'))
+                return
+
+            shutil.copy2(backup_file_path, os.path.join(destination, os.path.basename(backup_file_path)))
+            shutil.copy2(checksum_file_path, os.path.join(destination, os.path.basename(checksum_file_path)))
+            self.stdout.write(self.style.SUCCESS(f'[SUPPORT] Copie secondaire OK: {destination}'))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'[SUPPORT] Erreur copie: {str(e)}'))
 
     def copy_to_google_drive(self, backup_file_path):
         """Copy backup file to a locally mounted Google Drive folder"""

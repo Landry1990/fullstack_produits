@@ -10,6 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
+import math
 
 from ...models import (
     StockLot, Produit, Fournisseur, Commande, CommandeProduit
@@ -271,10 +272,10 @@ class StockAnalysisOverstockView(APIView):
         
         for produit in produits:
             rotation = float(produit.rotation_moyenne)
-            threshold = rotation * 1.7
+            threshold = math.ceil(rotation * 1.7)
             
             if produit.stock > threshold:
-                excess_qty = produit.stock - int(threshold)
+                excess_qty = produit.stock - threshold
                 excess_value = Decimal(excess_qty) * Decimal(str(produit.cost_price))
                 
                 results.append({
@@ -283,7 +284,7 @@ class StockAnalysisOverstockView(APIView):
                     'name': produit.name,
                     'stock': produit.stock,
                     'rotation': rotation,
-                    'threshold': round(threshold, 2),
+                    'threshold': threshold,
                     'excess_qty': excess_qty,
                     'cost_price': float(produit.cost_price or 0),
                     'selling_price': float(produit.selling_price or 0),

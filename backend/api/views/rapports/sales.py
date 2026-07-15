@@ -26,6 +26,11 @@ class RapportSalesMixin:
         if date_debut is None or date_fin is None:
             return Response({'error': 'Date invalide'}, status=400)
 
+        # Si le frontend envoie une heure de fin (ex: 23:59), on ajoute une minute
+        # pour inclure les secondes de la borne (ex: 23:59:30).
+        if len(df_str.strip()) > 10:
+            date_fin += timedelta(minutes=1)
+
         # ── 1 seule requête GROUP BY created_by ────────────────────────────
         from django.contrib.auth import get_user_model
         User = get_user_model()

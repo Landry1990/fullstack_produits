@@ -98,6 +98,7 @@ const mockAuthValue = {
         can_close_commande: true,
         can_generate_coupon: true,
         is_superuser: true,
+        is_terminal_account: false,
         profile: {
             max_discount_rate: 100,
             can_generate_coupon: true,

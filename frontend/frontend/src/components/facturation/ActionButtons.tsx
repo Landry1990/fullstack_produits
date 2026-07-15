@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../lib/utils'
 import { Button } from '../shadcn/button'
+import { Checkbox } from '../shadcn/checkbox'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from '../shadcn/dropdown-menu'
@@ -45,20 +46,18 @@ function SidebarActions({
       {/* Modes Bar */}
       <div className="flex items-center justify-between gap-2">
           <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={isRetrocession}
-              onChange={(e) => setIsRetrocession?.(e.target.checked)}
-              className="size-4 rounded border-amber-300 text-amber-500 focus:ring-amber-500"
+              onCheckedChange={(v) => setIsRetrocession?.(!!v)}
+              className="border-amber-300 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
             />
             <span className="text-xs uppercase font-semibold text-slate-500 group-hover:text-amber-600 transition-colors">{t('facturation:actions.retrocession_mode')}</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={isFactureA4}
-              onChange={(e) => setIsFactureA4?.(e.target.checked)}
-              className="size-4 rounded border-blue-300 text-blue-500 focus:ring-blue-500"
+              onCheckedChange={(v) => setIsFactureA4?.(!!v)}
+              className="border-blue-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
             />
             <span className="text-xs uppercase font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">{t('facturation:actions.format_a4')}</span>
           </label>
@@ -154,20 +153,18 @@ function FooterActions({
             <div className="px-2 py-1.5 text-xs uppercase text-slate-400 font-semibold">{t('facturation:actions.modes_section')}</div>
             <DropdownMenuItem className="flex items-center justify-between py-2">
                 <span className="text-xs font-medium uppercase">{t('facturation:actions.retrocession_mode')}</span>
-                <input
-                    type="checkbox"
+                <Checkbox
                     checked={isRetrocession}
-                    onChange={(e) => setIsRetrocession?.(e.target.checked)}
-                    className="size-4 rounded border-amber-300 text-amber-500"
+                    onCheckedChange={(v) => setIsRetrocession?.(!!v)}
+                    className="border-amber-300 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
                 />
             </DropdownMenuItem>
             <DropdownMenuItem className="flex items-center justify-between py-2">
                 <span className="text-xs font-medium uppercase">{t('facturation:actions.facture_a4')}</span>
-                <input
-                    type="checkbox"
+                <Checkbox
                     checked={isFactureA4}
-                    onChange={(e) => setIsFactureA4?.(e.target.checked)}
-                    className="size-4 rounded border-blue-300 text-blue-500"
+                    onCheckedChange={(v) => setIsFactureA4?.(!!v)}
+                    className="border-blue-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                 />
             </DropdownMenuItem>
 

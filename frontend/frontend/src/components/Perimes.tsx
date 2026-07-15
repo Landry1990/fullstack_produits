@@ -32,6 +32,14 @@ import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs'
 import { Checkbox } from './shadcn/checkbox'
 import { Input } from './shadcn/input'
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/Table'
+import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -496,32 +504,32 @@ export default function Perimes() {
                     </CardHeader>
                     <CardContent>
                       <div className="overflow-x-auto">
-                        <table className="w-full text-sm border-separate border-spacing-0">
-                          <thead>
-                            <tr className="bg-slate-50">
-                              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.product')}</th>
-                              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.lot')}</th>
-                              <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.expiration')}</th>
-                              <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.qty')}</th>
-                              <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.value_cost')}</th>
-                              <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.value_sale')}</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
+                        <Table className="w-full text-sm">
+                          <TableHeader>
+                            <TableRow className="bg-slate-50 hover:bg-slate-50">
+                              <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.product')}</TableHead>
+                              <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.lot')}</TableHead>
+                              <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.expiration')}</TableHead>
+                              <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.qty')}</TableHead>
+                              <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.value_cost')}</TableHead>
+                              <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.value_sale')}</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
                             {stats.perimes.details.slice(0, 10).map((item) => (
-                              <tr key={item.lot_id} className="hover:bg-slate-50 transition-colors">
-                                <td className="font-medium px-4 py-2.5 text-slate-700">{item.produit_nom}</td>
-                                <td className="font-mono text-xs px-4 py-2.5 text-slate-500">{item.lot_numero || '-'}</td>
-                                <td className="px-4 py-2.5">
+                              <TableRow key={item.lot_id} className="hover:bg-slate-50 transition-colors">
+                                <TableCell className="font-medium px-4 py-2.5 text-slate-700">{item.produit_nom}</TableCell>
+                                <TableCell className="font-mono text-xs px-4 py-2.5 text-slate-500">{item.lot_numero || '-'}</TableCell>
+                                <TableCell className="px-4 py-2.5">
                                   <Badge variant="outline" className="bg-red-50 text-red-500 border-red-200">{item.date_expiration ? formatDate(item.date_expiration) : '-'}</Badge>
-                                </td>
-                                <td className="text-right font-bold px-4 py-2.5 text-slate-700">{item.quantity}</td>
-                                <td className="text-right px-4 py-2.5 text-red-500 font-medium">{formatCurrency(item.valeur_cout)}</td>
-                                <td className="text-right px-4 py-2.5 text-amber-600 font-medium">{formatCurrency(item.valeur_vente)}</td>
-                              </tr>
+                                </TableCell>
+                                <TableCell className="text-right font-bold px-4 py-2.5 text-slate-700">{item.quantity}</TableCell>
+                                <TableCell className="text-right px-4 py-2.5 text-red-500 font-medium">{formatCurrency(item.valeur_cout)}</TableCell>
+                                <TableCell className="text-right px-4 py-2.5 text-amber-600 font-medium">{formatCurrency(item.valeur_vente)}</TableCell>
+                              </TableRow>
                             ))}
-                          </tbody>
-                        </table>
+                          </TableBody>
+                        </Table>
                       </div>
                       {stats.perimes.details.length > 10 && (
                         <div className="mt-3 text-center">
@@ -622,61 +630,61 @@ export default function Perimes() {
                   <p className="text-sm font-bold uppercase tracking-widest text-slate-400">{t('perimes.no_result')}</p>
                 </div>
               ) : (
-                <table className="w-full text-xs border-separate border-spacing-0">
-                  <thead className="bg-slate-50 sticky top-0 z-30 border-b border-slate-100">
-                    <tr className="text-slate-400 uppercase text-[10px] tracking-widest font-black">
-                      <th className="py-3 px-4 w-12 text-center">
+                <Table className="w-full text-xs">
+                  <TableHeader className="bg-slate-50 sticky top-0 z-30 border-b border-slate-100">
+                    <TableRow className="text-slate-400 uppercase text-[10px] tracking-widest font-black hover:bg-slate-50">
+                      <TableHead className="py-3 px-4 w-12 text-center">
                         <Checkbox
                           checked={selectedLotIds.size === lots.filter(l => l.quantity_remaining > 0).length && lots.filter(l => l.quantity_remaining > 0).length > 0}
                           onCheckedChange={toggleAllSelection}
                           className="data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
                         />
-                      </th>
-                      <th className="py-3 px-4 text-left">{t('perimes.table.product')}</th>
-                      <th className="py-3 px-4 text-center">{t('perimes.table.lot')}</th>
-                      <th className="py-3 px-4 text-center">{t('perimes.table.expiration')}</th>
-                      <th className="py-3 px-4 text-left">{t('perimes.table.provider')}</th>
-                      <th className="py-3 px-4 text-right">{t('perimes.table.stock')}</th>
-                      <th className="py-3 px-4 text-right">{t('perimes.table.value')}</th>
-                      <th className="py-3 px-4 text-center">{t('perimes.table.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
+                      </TableHead>
+                      <TableHead className="py-3 px-4 text-left">{t('perimes.table.product')}</TableHead>
+                      <TableHead className="py-3 px-4 text-center">{t('perimes.table.lot')}</TableHead>
+                      <TableHead className="py-3 px-4 text-center">{t('perimes.table.expiration')}</TableHead>
+                      <TableHead className="py-3 px-4 text-left">{t('perimes.table.provider')}</TableHead>
+                      <TableHead className="py-3 px-4 text-right">{t('perimes.table.stock')}</TableHead>
+                      <TableHead className="py-3 px-4 text-right">{t('perimes.table.value')}</TableHead>
+                      <TableHead className="py-3 px-4 text-center">{t('perimes.table.actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {lots.map((lot) => (
-                      <tr key={lot.id} className={cn("hover:bg-slate-50 transition-colors group", lot.quantity_remaining <= 0 && 'opacity-50', selectedLotIds.has(lot.id) && 'bg-red-50/40')}>
-                        <td className="py-2.5 px-4 text-center">
+                      <TableRow key={lot.id} className={cn("hover:bg-slate-50 transition-colors group", lot.quantity_remaining <= 0 && 'opacity-50', selectedLotIds.has(lot.id) && 'bg-red-50/40')}>
+                        <TableCell className="py-2.5 px-4 text-center">
                           <Checkbox
                             checked={selectedLotIds.has(lot.id)}
                             onCheckedChange={() => toggleLotSelection(lot.id)}
                             disabled={lot.quantity_remaining <= 0}
                             className="data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
                           />
-                        </td>
-                        <td className="py-2.5 px-4">
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4">
                           <div className="font-bold text-sm text-slate-800">{lot.produit_nom}</div>
                           <div className="text-[10px] font-mono text-slate-400">#{lot.produit}</div>
-                        </td>
-                        <td className="py-2.5 px-4 text-center font-mono text-[11px] font-bold text-slate-500">
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-center font-mono text-[11px] font-bold text-slate-500">
                           {lot.lot || '-'}
-                        </td>
-                        <td className="py-2.5 px-4 text-center">
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-center">
                           <Badge variant="outline" className={cn("gap-1.5", lot.date_expiration && isExpiredByEndOfMonth(lot.date_expiration) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-200')}>
                             <Calendar className="size-3" />
                             {formatDate(lot.date_expiration || '')}
                           </Badge>
-                        </td>
-                        <td className="py-2.5 px-4 text-xs font-semibold text-slate-500 truncate max-w-[140px]" title={lot.fournisseur_nom}>
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-xs font-semibold text-slate-500 truncate max-w-[140px]" title={lot.fournisseur_nom}>
                           {lot.fournisseur_nom}
-                        </td>
-                        <td className="py-2.5 px-4 text-right">
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-right">
                           <div className={cn("font-black text-sm", lot.quantity_remaining > 0 ? 'text-slate-800' : 'text-slate-300')}>
                             {lot.quantity_remaining}
                           </div>
-                        </td>
-                        <td className="py-2.5 px-4 text-right text-red-500 font-mono font-black text-xs">
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-right text-red-500 font-mono font-black text-xs">
                           {formatCurrency(Number(lot.price_cost || 0) * lot.quantity_remaining)}
-                        </td>
-                        <td className="py-2.5 px-4 text-center">
+                        </TableCell>
+                        <TableCell className="py-2.5 px-4 text-center">
                           {lot.quantity_remaining > 0 ? (
                             <Button
                               variant="outline"
@@ -694,11 +702,11 @@ export default function Perimes() {
                               {t('perimes.table.sorti')}
                             </span>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               )}
             </div>
           </div>
@@ -774,37 +782,37 @@ export default function Perimes() {
              ) : (
                <Card className="overflow-hidden">
                  <div className="overflow-x-auto">
-                   <table className="w-full text-sm border-separate border-spacing-0">
-                     <thead>
-                       <tr className="bg-slate-50">
-                         <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.date')}</th>
-                         <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.product')}</th>
-                         <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.lot')}</th>
-                         <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.qty')}</th>
-                         <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.value')}</th>
-                         <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.user')}</th>
-                         <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.details')}</th>
-                       </tr>
-                     </thead>
-                     <tbody className="divide-y divide-slate-100">
+                   <Table className="w-full text-sm">
+                     <TableHeader>
+                       <TableRow className="bg-slate-50 hover:bg-slate-50">
+                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.date')}</TableHead>
+                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.product')}</TableHead>
+                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.lot')}</TableHead>
+                         <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.qty')}</TableHead>
+                         <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.value')}</TableHead>
+                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.user')}</TableHead>
+                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.details')}</TableHead>
+                       </TableRow>
+                     </TableHeader>
+                     <TableBody>
                        {adjustments.map((adj) => (
-                         <tr key={adj.id} className="hover:bg-slate-50 transition-colors">
-                           <td className="text-xs px-4 py-2.5 text-slate-500">{formatDate(adj.created_at)}</td>
-                           <td className="px-4 py-2.5">
+                         <TableRow key={adj.id} className="hover:bg-slate-50 transition-colors">
+                           <TableCell className="text-xs px-4 py-2.5 text-slate-500">{formatDate(adj.created_at)}</TableCell>
+                           <TableCell className="px-4 py-2.5">
                              <div className="font-bold text-xs text-slate-800">{adj.produit_name}</div>
                              <div className="text-[10px] text-slate-400 font-mono">{adj.produit_cip}</div>
-                           </td>
-                           <td className="font-mono text-[11px] px-4 py-2.5 text-slate-500">{adj.lot_number || '-'}</td>
-                           <td className="text-right font-bold text-red-500 px-4 py-2.5">{adj.quantity_change}</td>
-                           <td className="text-right font-bold px-4 py-2.5 text-slate-700">{formatCurrency(adj.valorisation)}</td>
-                           <td className="text-xs px-4 py-2.5 text-slate-500">{adj.user_name}</td>
-                           <td className="text-xs truncate max-w-[150px] px-4 py-2.5 text-slate-500" title={adj.reason_detail}>
+                           </TableCell>
+                           <TableCell className="font-mono text-[11px] px-4 py-2.5 text-slate-500">{adj.lot_number || '-'}</TableCell>
+                           <TableCell className="text-right font-bold text-red-500 px-4 py-2.5">{adj.quantity_change}</TableCell>
+                           <TableCell className="text-right font-bold px-4 py-2.5 text-slate-700">{formatCurrency(adj.valorisation)}</TableCell>
+                           <TableCell className="text-xs px-4 py-2.5 text-slate-500">{adj.user_name}</TableCell>
+                           <TableCell className="text-xs truncate max-w-[150px] px-4 py-2.5 text-slate-500" title={adj.reason_detail}>
                              {t(`stock:ajustements.filters.reasons.${adj.reason_type}`, { defaultValue: adj.reason_type_display })} {adj.reason_detail ? `- ${adj.reason_detail}` : ''}
-                           </td>
-                         </tr>
+                           </TableCell>
+                         </TableRow>
                        ))}
-                     </tbody>
-                   </table>
+                     </TableBody>
+                   </Table>
                  </div>
                </Card>
              )}

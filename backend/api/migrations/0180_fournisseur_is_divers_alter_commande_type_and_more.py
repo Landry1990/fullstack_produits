@@ -72,7 +72,12 @@ class Migration(migrations.Migration):
             name='is_divers',
             field=models.BooleanField(db_index=True, default=False, help_text="Lot provenant d'une commande diverse"),
         ),
-        migrations.DeleteModel(
-            name='LettrageLignes',
+        migrations.SeparateDatabaseAndState(
+            database_operations=[],
+            state_operations=[
+                migrations.DeleteModel(
+                    name='LettrageLignes',
+                ),
+            ],
         ),
     ]

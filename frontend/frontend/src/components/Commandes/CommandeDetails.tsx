@@ -2,12 +2,22 @@ import React, { useState, useCallback } from 'react';
 import { useDocumentLock } from '../../hooks/useDocumentLock';
 import { LockBanner } from '../common/LockBanner';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package } from 'lucide-react';
+import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X } from 'lucide-react';
 import type { Commande, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
+import { Checkbox } from '../shadcn/checkbox';
+import { Input } from '../shadcn/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/Table';
 import { cn } from '../../lib/utils';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -400,18 +410,18 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
           </div>
           {selectedCommande.produits && selectedCommande.produits.length > 0 && (
             <div className="relative">
-              <input
+              <Input
                 type="text"
                 placeholder={t('orders:product_table.search_placeholder', 'Rechercher un produit...')}
-                className="w-full sm:w-64 pl-8 h-9 rounded-lg bg-white border border-slate-200 focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 text-sm px-3 outline-none transition-all"
+                className="w-full sm:w-64 pl-8 h-9"
                 value={searchDetailQuery}
                 onChange={(e) => setSearchDetailQuery(e.target.value)}
               />
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               {searchDetailQuery && (
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setSearchDetailQuery('')}>✕</button>
+                <button className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setSearchDetailQuery('')}>
+                  <X className="size-3.5" />
+                </button>
               )}
             </div>
           )}
@@ -424,15 +434,13 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
               <p className="text-sm">{t('orders:details.empty_products')}</p>
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="w-10 px-3 py-2">
-                    <input
-                      type="checkbox"
-                      className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+            <Table>
+              <TableHeader className="bg-slate-50">
+                <TableRow className="hover:bg-slate-50">
+                  <TableHead className="w-10 px-3 py-2">
+                    <Checkbox
                       checked={selectedRows.size === selectedCommande.produits.length && selectedCommande.produits.length > 0}
-                      onChange={() => {
+                      onCheckedChange={() => {
                         if (selectedRows.size === selectedCommande.produits.length) {
                           setSelectedRows(new Set());
                         } else {
@@ -440,29 +448,29 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                         }
                       }}
                     />
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
+                  </TableHead>
+                  <TableHead className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
                     {t('orders:product_table.headers.product')} {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.cip')}</th>
-                  <th className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">{t('products:table.stock')}</th>
-                  <th className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.rotation', 'Rot.')}</th>
-                  <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
+                  </TableHead>
+                  <TableHead className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.cip')}</TableHead>
+                  <TableHead className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">{t('products:table.stock')}</TableHead>
+                  <TableHead className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.rotation', 'Rot.')}</TableHead>
+                  <TableHead className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
                     {t('orders:product_table.headers.qty')} {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
 
-                  </th>
+                  </TableHead>
 
-                  <th className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase bg-emerald-50">{t('orders:product_table.headers.ug')}</th>
-                  <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }}>
+                  <TableHead className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase bg-emerald-50">{t('orders:product_table.headers.ug')}</TableHead>
+                  <TableHead className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }}>
                     {t('orders:details.price_unit')} {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.lot')}</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.exp_date')}</th>
-                  <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.total_ht')}</th>
-                  {selectedCommande.status === 'CLOT' && <th className="w-8"></th>}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
+                  </TableHead>
+                  <TableHead className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.lot')}</TableHead>
+                  <TableHead className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.exp_date')}</TableHead>
+                  <TableHead className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.total_ht')}</TableHead>
+                  {selectedCommande.status === 'CLOT' && <TableHead className="w-8"></TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody className="bg-white divide-y divide-slate-200">
 
                 {[...(localProduits || [])]
 
@@ -513,72 +521,76 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                     const isDeleted = p.produit === null;
 
                     return (
-                      <tr key={p.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100" onClick={() => toggleRowSelection(p.originalIndex)}>
-                        <td className="px-3 py-2">
-                          <input
-                            type="checkbox"
-                            className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      <TableRow key={p.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100" onClick={() => toggleRowSelection(p.originalIndex)}>
+                        <TableCell className="px-3 py-2">
+                          <Checkbox
                             checked={selectedRows.has(p.originalIndex)}
-                            onChange={() => toggleRowSelection(p.originalIndex)}
+                            onCheckedChange={() => toggleRowSelection(p.originalIndex)}
                             onClick={(e) => e.stopPropagation()}
                           />
-                        </td>
-                        <td className={cn("px-3 py-2 text-sm font-medium", isDeleted ? 'italic text-slate-400' : 'text-slate-800')}>
+                        </TableCell>
+                        <TableCell className={cn("px-3 py-2 text-sm font-medium", isDeleted ? 'italic text-slate-400' : 'text-slate-800')}>
                           {p.produitName}
                           {isDeleted && <span className="text-xs ml-2 text-slate-400">({t('products:us.deleted', 'Supprimé')})</span>}
-                        </td>
-                        <td className="px-3 py-2 font-mono text-xs text-slate-500">{p.cip}</td>
-                        <td className="px-3 py-2 text-center">
+                        </TableCell>
+                        <TableCell className="px-3 py-2 font-mono text-xs text-slate-500">{p.cip}</TableCell>
+                        <TableCell className="px-3 py-2 text-center">
                           <span className={cn("font-mono text-sm", stockNum === 0 ? 'text-red-500 font-semibold' : stockNum < 0 ? 'text-red-500' : 'text-emerald-600')}>{stock}</span>
-                        </td>
-                        <td className="px-3 py-2 text-center font-mono text-sm text-slate-400">{rotationDisplay}</td>
-                        <td className="px-3 py-2 text-right font-semibold text-slate-800">{p.quantity}</td>
-                        <td className="px-3 py-2 text-center bg-emerald-50">
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-center font-mono text-sm text-slate-400">{rotationDisplay}</TableCell>
+                        <TableCell className="px-3 py-2 text-right font-semibold text-slate-800">{p.quantity}</TableCell>
+                        <TableCell className="px-3 py-2 text-center bg-emerald-50">
                           <span className={cn("font-semibold text-sm", (p.unites_gratuites || 0) > 0 ? 'text-emerald-600' : 'text-slate-400')}>{p.unites_gratuites || 0}</span>
-                        </td>
-                        <td className="px-3 py-2 text-right font-mono text-sm text-slate-600">{formatCurrency(normalizeNumberInput(p.price))}</td>
-                        <td className="px-3 py-2 text-xs font-mono text-slate-500" onClick={e => e.stopPropagation()}>
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right font-mono text-sm text-slate-600">{formatCurrency(normalizeNumberInput(p.price))}</TableCell>
+                        <TableCell className="px-3 py-2 text-xs font-mono text-slate-500" onClick={e => e.stopPropagation()}>
                           {editingLotId === p.id ? (
-                            <input
+                            <Input
                               type="text"
-                              className="border border-slate-300 rounded px-1 py-0.5 text-xs w-24 font-mono"
+                              className="w-24 font-mono text-xs h-7"
                               value={editLotValues.lot}
                               onChange={e => setEditLotValues(v => ({ ...v, lot: e.target.value }))}
                               autoFocus
                             />
                           ) : p.lot || '-'}
-                        </td>
-                        <td className="px-3 py-2 text-xs text-slate-400" onClick={e => e.stopPropagation()}>
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-xs text-slate-400" onClick={e => e.stopPropagation()}>
                           {editingLotId === p.id ? (
-                            <input
+                            <Input
                               type="date"
-                              className="border border-slate-300 rounded px-1 py-0.5 text-xs w-32"
+                              className="w-32 text-xs h-7"
                               value={editLotValues.date_expiration}
                               onChange={e => setEditLotValues(v => ({ ...v, date_expiration: e.target.value }))}
                             />
                           ) : (p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : '')}
-                        </td>
-                        <td className="px-3 py-2 text-right font-semibold text-emerald-600">{formatCurrency(normalizeNumberInput(p.quantity) * normalizeNumberInput(p.price))}</td>
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right font-semibold text-emerald-600">{formatCurrency(normalizeNumberInput(p.quantity) * normalizeNumberInput(p.price))}</TableCell>
                         {selectedCommande.status === 'CLOT' && (
-                          <td className="px-2 py-2 text-center" onClick={e => e.stopPropagation()}>
+                          <TableCell className="px-2 py-2 text-center" onClick={e => e.stopPropagation()}>
                             {editingLotId === p.id ? (
                               <div className="flex items-center gap-1">
-                                <button className="text-emerald-600 hover:text-emerald-800 font-bold text-sm" onClick={() => saveLotEdit(p.id)} disabled={savingLot} title="Enregistrer">✓</button>
-                                <button className="text-slate-400 hover:text-slate-600 text-sm" onClick={cancelLotEdit} disabled={savingLot} title="Annuler">✕</button>
+                                <Button variant="ghost" size="sm" className="h-6 px-1 text-emerald-600 hover:text-emerald-800" onClick={() => saveLotEdit(p.id)} disabled={savingLot} title="Enregistrer">
+                                  <Check className="size-3.5" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-400 hover:text-slate-600" onClick={cancelLotEdit} disabled={savingLot} title="Annuler">
+                                  <X className="size-3.5" />
+                                </Button>
                               </div>
                             ) : (
-                              <button className="text-slate-300 hover:text-blue-500 transition-colors" onClick={() => startLotEdit(p)} title="Corriger lot / date péremption">✏️</button>
+                              <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-300 hover:text-blue-500" onClick={() => startLotEdit(p)} title="Corriger lot / date péremption">
+                                <Pencil className="size-3" />
+                              </Button>
                             )}
-                          </td>
+                          </TableCell>
                         )}
-                      </tr>
+                      </TableRow>
                     );
 
                   })}
 
-              </tbody>
+              </TableBody>
 
-            </table>
+            </Table>
 
           )}
 

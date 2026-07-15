@@ -6,6 +6,15 @@ import { useAuth } from '../../context/AuthContext'
 import { toast } from 'react-hot-toast'
 import { Button } from '../shadcn/button'
 import { Badge } from '../shadcn/badge'
+import { Input } from '../shadcn/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/Table'
 import { Tag, X, Package, Trash2, ShoppingCart } from 'lucide-react'
 
 function getFEFOPreview(lots: StockLot[] | undefined, quantity: number): { lot: string; qty: number; expiration?: string }[] {
@@ -339,14 +348,14 @@ const CartRow = React.memo(({
   }
 
   return (
-    <tr
+    <TableRow
       className={`hover:bg-slate-50/50 group border-b border-slate-100 last:border-0 cursor-pointer transition-colors duration-150
         ${index === selectedIndex ? '!bg-emerald-50/70 border-l-4 border-l-emerald-500 shadow-sm' : ''}
         ${isReturn ? 'bg-red-50 text-red-600 font-semibold' : ''}`}
       ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
       onClick={() => onSelectLine?.(index)}
     >
-      <td className="pl-2 md:pl-4 py-2">
+      <TableCell className="pl-2 md:pl-4 py-2">
         <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
           <div className="flex items-center gap-2">
             <span className="truncate text-slate-800">{ligne.produit.name}</span>
@@ -376,9 +385,9 @@ const CartRow = React.memo(({
             </div>
           )}
         </div>
-      </td>
-      <td className="text-right py-1">
-        <input
+      </TableCell>
+      <TableCell className="text-right py-1">
+        <Input
           ref={(el) => {
             if (el) quantityInputsRef.current.set(ligne.produit.id, el)
             else quantityInputsRef.current.delete(ligne.produit.id)
@@ -394,11 +403,11 @@ const CartRow = React.memo(({
               onReturnFocus()
             }
           }}
-          className="w-full text-right font-medium text-sm bg-transparent border border-slate-200 rounded px-2 py-1 focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-100 min-h-[32px] sm:min-h-0"
+          className="w-full text-right font-medium text-sm h-8 min-h-[32px] sm:min-h-0"
         />
-      </td>
-      <td className="text-right py-1">
-        <input
+      </TableCell>
+      <TableCell className="text-right py-1">
+        <Input
           type="text"
           value={localPrice}
           onChange={(e) => setLocalPrice(e.target.value.replace(/[^0-9.]/g, ''))}
@@ -409,13 +418,13 @@ const CartRow = React.memo(({
               onReturnFocus()
             }
           }}
-          className={`w-full text-right font-medium text-sm bg-transparent border border-slate-200 rounded px-2 py-1 focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-100 min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700'}`}
+          className={`w-full text-right font-medium text-sm h-8 min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700'}`}
           disabled={!canModifyPrice}
           title={!canModifyPrice ? t('facturation:messages.price_modification_forbidden') : ""}
         />
-      </td>
-      <td className="text-right py-1 hidden lg:table-cell">
-        <input
+      </TableCell>
+      <TableCell className="text-right py-1 hidden lg:table-cell">
+        <Input
           type="text"
           value={localRemise}
           onChange={(e) => setLocalRemise(e.target.value.replace(/[^0-9.]/g, ''))}
@@ -426,19 +435,19 @@ const CartRow = React.memo(({
               onReturnFocus()
             }
           }}
-          className="w-full text-right font-medium text-sm bg-transparent border border-slate-200 rounded px-2 py-1 focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-100 text-amber-600 placeholder-amber-300"
+          className="w-full text-right font-medium text-sm h-8 min-h-[32px] sm:min-h-0 text-amber-600 placeholder-amber-300"
           placeholder="%"
         />
-      </td>
-      <td className="text-center py-2 hidden md:table-cell">
+      </TableCell>
+      <TableCell className="text-center py-2 hidden md:table-cell">
         <div className={`font-mono font-semibold ${
           (ligne.produit.stock ?? 0) <= 0 ? 'text-red-500' :
           (ligne.produit.stock ?? 0) < 5 ? 'text-amber-500' : 'text-emerald-600'
         }`}>
           {ligne.produit.stock ?? 0}
         </div>
-      </td>
-      <td className="text-center py-2 hidden md:table-cell">
+      </TableCell>
+      <TableCell className="text-center py-2 hidden md:table-cell">
         <Button
           variant={(ligne.lotId || ligne.lotAllocations?.length) ? 'default' : 'outline'}
           size="sm"
@@ -448,11 +457,11 @@ const CartRow = React.memo(({
         >
           {lotDisplayText}
         </Button>
-      </td>
-      <td className="text-right font-semibold text-slate-800 pr-2 md:pr-4 py-2">
+      </TableCell>
+      <TableCell className="text-right font-semibold text-slate-800 pr-2 md:pr-4 py-2">
         {formatCurrency(normalizeNumberInput(ligne.total_ligne))}
-      </td>
-      <td className="text-center py-2">
+      </TableCell>
+      <TableCell className="text-center py-2">
         <Button
           variant="ghost"
           size="icon"
@@ -462,8 +471,8 @@ const CartRow = React.memo(({
           <span className="sr-only">{t('facturation:cart.actions.remove')}</span>
           <Trash2 className="size-3.5" />
         </Button>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   )
 })
 
@@ -528,20 +537,20 @@ const CartTable = React.memo(({
   }
 
   return (
-    <table className="table table-pin-rows table-sm w-full">
-      <thead className="sticky top-0 z-30 bg-slate-100">
-        <tr className="bg-slate-100 uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200 text-xs">
-          <th className="bg-slate-100 pl-2 md:pl-4 min-w-[120px] py-2">{t('facturation:cart.headers.product')}</th>
-          <th className="bg-slate-100 text-right w-12 sm:w-20 py-2">{t('facturation:cart.headers.qty')}</th>
-          <th className="bg-slate-100 text-right w-16 sm:w-24 py-2">{t('facturation:cart.headers.price')}</th>
-          <th className="bg-slate-100 text-right w-14 md:w-16 hidden lg:table-cell py-2">{t('facturation:cart.headers.discount')}</th>
-          <th className="bg-slate-100 text-center w-24 hidden md:table-cell py-2">{t('facturation:cart.headers.stock')}</th>
-          <th className="bg-slate-100 text-center w-36 sm:w-64 hidden md:table-cell py-2">{t('facturation:cart.headers.lot')}</th>
-          <th className="bg-slate-100 text-right w-18 sm:w-28 pr-2 md:pr-4 py-2">{t('facturation:cart.headers.total')}</th>
-          <th className="bg-slate-100 w-8 py-2"></th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table className="w-full">
+      <TableHeader className="sticky top-0 z-30 bg-slate-100">
+        <TableRow className="bg-slate-100 uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200 text-xs hover:bg-slate-100">
+          <TableHead className="bg-slate-100 pl-2 md:pl-4 min-w-[120px] py-2">{t('facturation:cart.headers.product')}</TableHead>
+          <TableHead className="bg-slate-100 text-right w-12 sm:w-20 py-2">{t('facturation:cart.headers.qty')}</TableHead>
+          <TableHead className="bg-slate-100 text-right w-16 sm:w-24 py-2">{t('facturation:cart.headers.price')}</TableHead>
+          <TableHead className="bg-slate-100 text-right w-14 md:w-16 hidden lg:table-cell py-2">{t('facturation:cart.headers.discount')}</TableHead>
+          <TableHead className="bg-slate-100 text-center w-24 hidden md:table-cell py-2">{t('facturation:cart.headers.stock')}</TableHead>
+          <TableHead className="bg-slate-100 text-center w-36 sm:w-64 hidden md:table-cell py-2">{t('facturation:cart.headers.lot')}</TableHead>
+          <TableHead className="bg-slate-100 text-right w-18 sm:w-28 pr-2 md:pr-4 py-2">{t('facturation:cart.headers.total')}</TableHead>
+          <TableHead className="bg-slate-100 w-8 py-2"></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {lignesFacture.map((ligne, index) => (
           <CartRow
             key={ligne.produit.id}
@@ -563,8 +572,8 @@ const CartTable = React.memo(({
             refreshTrigger={refreshTrigger}
           />
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   )
 })
 

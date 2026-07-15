@@ -45,33 +45,32 @@ def generate_lot_number():
     Utilise Redis (cache) pour éviter le verrouillage global de la base de données.
     """
     CACHE_KEY = 'lot_sequence'
-    
+
     try:
         sequence = cache.incr(CACHE_KEY)
-    except ValueError:
-        last_number = 0
-        
-        # Import here to avoid circular imports
-        last_stock = StockLot.objects.order_by('-created_at', '-id').first()
-        
-        if last_stock and last_stock.lot and last_stock.lot.startswith('L'):
-            try:
-                last_number = int(last_stock.lot[1:])
-            except ValueError:
-                pass
-                
-        try:
-            seq_obj = LotSequence.objects.get(id=1)
-            if seq_obj.last_number > last_number:
-                last_number = seq_obj.last_number
-        except LotSequence.DoesNotExist:
-            pass
-            
-        cache.set(CACHE_KEY, last_number, timeout=None)
-        sequence = cache.incr(CACHE_KEY)
         LotSequence.objects.update_or_create(id=1, defaults={'last_number': sequence})
+        return f'L{sequence:02d}'
+    except ValueError:
+        pass
 
-    return f'L{sequence:02d}'
+    from django.db import transaction
+
+    with transaction.atomic():
+        try:
+            seq_obj = LotSequence.objects.select_for_update().get(id=1)
+        except LotSequence.DoesNotExist:
+            last_number = 0
+            last_stock = StockLot.objects.order_by('-created_at', '-id').first()
+            if last_stock and last_stock.lot and last_stock.lot.startswith('L'):
+                try:
+                    last_number = int(last_stock.lot[1:])
+                except ValueError:
+                    pass
+            seq_obj = LotSequence.objects.create(id=1, last_number=last_number)
+
+        seq_obj.last_number += 1
+        seq_obj.save(update_fields=['last_number'])
+        return f'L{seq_obj.last_number:02d}'
 
 
 def get_next_ticket_session():
@@ -80,27 +79,28 @@ def get_next_ticket_session():
     Utilise Redis (cache) pour éviter le verrouillage global de la base de données.
     """
     from django.core.cache import cache
+    from django.db import transaction
     today = timezone.localtime(timezone.now()).date()
     cache_key = f"ticket_session_sequence:{today}"
-    
+
     try:
         sequence = cache.incr(cache_key)
-    except ValueError:
-        # Cache non initialisé : récupérer la dernière valeur en base
-        last_number = 0
-        seq_obj = TicketSessionSequence.objects.filter(date=today).first()
-        if seq_obj:
-            last_number = seq_obj.last_number
-        
-        cache.set(cache_key, last_number, timeout=None)
-        sequence = cache.incr(cache_key)
-        # Persister la valeur initiale pour reprise après Redis restart
         TicketSessionSequence.objects.update_or_create(
             date=today,
             defaults={'last_number': sequence}
         )
-    
-    return sequence
+        return sequence
+    except ValueError:
+        pass
+
+    with transaction.atomic():
+        seq_obj, _ = TicketSessionSequence.objects.select_for_update().get_or_create(
+            date=today,
+            defaults={'last_number': 0}
+        )
+        seq_obj.last_number += 1
+        seq_obj.save(update_fields=['last_number'])
+        return seq_obj.last_number
 
 
 class StockLot(models.Model):

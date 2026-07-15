@@ -13,6 +13,16 @@ import {
 } from '../shadcn/dialog'
 import { Button } from '../shadcn/button'
 import { Badge } from '../shadcn/badge'
+import { Checkbox } from '../shadcn/checkbox'
+import { Input } from '../shadcn/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/Table'
 import { cn } from '../../lib/utils'
 import {
   Brain,
@@ -341,10 +351,10 @@ export default function SuggestionCommandeModal({
                         <span title={t('orders:suggestion_modal.budget_tooltip')} className="cursor-help"><Info className="size-3 text-slate-300" /></span>
                       </label>
                       <div className="flex">
-                        <input
+                        <Input
                           type="number"
                           placeholder={t('orders:suggestion_modal.budget_placeholder')}
-                          className="flex-1 h-10 px-3 rounded-l-lg border border-slate-300 border-r-0 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                          className="flex-1 h-10 px-3 rounded-l-lg border border-slate-300 border-r-0 bg-white text-sm text-slate-800"
                           value={suggestionParams.budgetMax}
                           onChange={(e) => setSuggestionParams(prev => ({ ...prev, budgetMax: e.target.value }))}
                         />
@@ -386,18 +396,18 @@ export default function SuggestionCommandeModal({
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <span className="text-xs text-slate-500">{t('orders:suggestion_modal.date_from')}</span>
-                        <input
+                        <Input
                           type="datetime-local"
-                          className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
+                          className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800"
                           value={suggestionParams.dateDebut}
                           onChange={(e) => setSuggestionParams(prev => ({ ...prev, dateDebut: e.target.value }))}
                         />
                       </div>
                       <div className="space-y-1">
                         <span className="text-xs text-slate-500">{t('orders:suggestion_modal.date_to')}</span>
-                        <input
+                        <Input
                           type="datetime-local"
-                          className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
+                          className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800"
                           value={suggestionParams.dateFin}
                           onChange={(e) => setSuggestionParams(prev => ({ ...prev, dateFin: e.target.value }))}
                         />
@@ -427,9 +437,9 @@ export default function SuggestionCommandeModal({
                         </button>
                       ))}
                       <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-300 rounded-full ml-auto">
-                        <input
+                        <Input
                           type="number"
-                          className="w-10 bg-transparent border-none focus:outline-none text-right text-xs font-bold text-emerald-700"
+                          className="w-10 bg-transparent border-none text-right text-xs font-bold text-emerald-700 h-7"
                           value={suggestionParams.periode}
                           min={1}
                           max={365}
@@ -470,31 +480,29 @@ export default function SuggestionCommandeModal({
               {/* Table */}
               {suggestions.length > 0 ? (
                 <div className="flex-1 overflow-auto rounded-xl border border-slate-200 bg-white">
-                  <table className="w-full text-sm">
-                    <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200">
-                      <tr>
-                        <th className="px-3 py-3 w-10">
-                          <input
-                            type="checkbox"
-                            className="size-4 rounded accent-emerald-600 cursor-pointer"
+                  <Table className="w-full text-sm">
+                    <TableHeader className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200">
+                      <TableRow className="hover:bg-slate-50">
+                        <TableHead className="px-3 py-3 w-10">
+                          <Checkbox
                             checked={selectedSuggestions.size === suggestions.length && suggestions.length > 0}
-                            onChange={() => {
+                            onCheckedChange={() => {
                               if (selectedSuggestions.size === suggestions.length) setSelectedSuggestions(new Set())
                               else setSelectedSuggestions(new Set(suggestions.map((_, i) => i)))
                             }}
                           />
-                        </th>
-                        <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_designation')}</th>
-                        <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_stock')}</th>
-                        <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_sales')}</th>
-                        <th className="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_qty')}</th>
-                        <th className="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_total_ht')}</th>
-                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_priority')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
+                        </TableHead>
+                        <TableHead className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_designation')}</TableHead>
+                        <TableHead className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_stock')}</TableHead>
+                        <TableHead className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_sales')}</TableHead>
+                        <TableHead className="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_qty')}</TableHead>
+                        <TableHead className="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_total_ht')}</TableHead>
+                        <TableHead className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:suggestion_modal.table_priority')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {suggestions.map((item, index) => (
-                        <tr
+                        <TableRow
                           key={item.produit_id}
                           className={cn(
                             'transition-colors cursor-pointer group',
@@ -504,16 +512,14 @@ export default function SuggestionCommandeModal({
                           )}
                           onClick={() => toggleSuggestionSelection(index)}
                         >
-                          <td className="px-3 py-2.5 w-10">
-                            <input
-                              type="checkbox"
-                              className="size-4 rounded accent-emerald-600 cursor-pointer"
+                          <TableCell className="px-3 py-2.5 w-10">
+                            <Checkbox
                               checked={selectedSuggestions.has(index)}
                               onClick={(e) => e.stopPropagation()}
-                              onChange={() => toggleSuggestionSelection(index)}
+                              onCheckedChange={() => toggleSuggestionSelection(index)}
                             />
-                          </td>
-                          <td className="px-3 py-2.5">
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
                             <div className="flex flex-col gap-1">
                               <div className="font-semibold text-slate-800 flex items-center gap-1.5 flex-wrap text-sm">
                                 {item.produit_nom}
@@ -529,8 +535,8 @@ export default function SuggestionCommandeModal({
                               </div>
                               <span className="text-[11px] text-slate-400 font-mono">REF: {item.produit_ref}</span>
                             </div>
-                          </td>
-                          <td className="px-3 py-2.5 text-center">
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5 text-center">
                             <span className={cn(
                               'px-2 py-0.5 rounded-full text-xs font-bold',
                               item.stock_actuel <= 0
@@ -539,22 +545,22 @@ export default function SuggestionCommandeModal({
                             )}>
                               {item.stock_actuel}
                             </span>
-                          </td>
-                          <td className="px-3 py-2.5 text-center text-sm font-medium text-slate-500">
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5 text-center text-sm font-medium text-slate-500">
                             {item.ventes_periode}
-                          </td>
-                          <td className="px-3 py-2.5 text-right">
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5 text-right">
                             <div className="flex flex-col items-end">
                               <span className="text-base font-bold text-emerald-600">{item.quantite_suggeree}</span>
                               <span className="text-[10px] text-slate-400">
                                 {formatPrice(item.prix_achat)} {t('common:currency_symbol', 'F')}/{t('common:units_short', 'u')}
                               </span>
                             </div>
-                          </td>
-                          <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-700 tabular-nums text-sm">
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5 text-right font-mono font-bold text-slate-700 tabular-nums text-sm">
                             {formatPrice(item.montant_ht ?? (item.prix_achat * item.quantite_suggeree))} {t('common:currency_symbol', 'F')}
-                          </td>
-                          <td className="px-3 py-2.5">
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
                             <div className="flex items-center gap-1.5">
                               {item.score_urgence > 50 ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600">
@@ -568,11 +574,11 @@ export default function SuggestionCommandeModal({
                               )}
                               <span title={item.raison} className="cursor-help"><ArrowUpRight className="size-3.5 text-slate-300 group-hover:text-emerald-500 transition-colors" /></span>
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 p-12 text-center bg-slate-50">

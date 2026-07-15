@@ -1,11 +1,21 @@
 import { useTranslation } from 'react-i18next';
-import { Eye, Trash2, Printer, GitMerge, Sparkles, Plus, ArrowUpDown, Search, X } from 'lucide-react';
+import { Eye, Trash2, Printer, GitMerge, Sparkles, Plus, ArrowUpDown, Search, X, Package } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
 import SelectionHeader from '../ui/SelectionHeader';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
+import { Checkbox } from '../shadcn/checkbox';
+import { Input } from '../shadcn/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/Table';
 import { cn } from '../../lib/utils';
 
 
@@ -256,12 +266,12 @@ export default function CommandeList({
         <div className="flex items-center gap-2 flex-1 min-w-[200px]">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-            <input
+            <Input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
               placeholder={t('orders:list.search_placeholder', 'Rechercher (N° facture, ID)…')}
-              className="w-full h-8 pl-8 pr-7 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-300 focus:ring-1 focus:ring-emerald-200 outline-none transition-all"
+              className="w-full h-8 pl-8 pr-7 text-xs"
             />
             {searchQuery && (
               <button
@@ -325,19 +335,15 @@ export default function CommandeList({
 
       {/* Table Section */}
       <div className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200 max-h-[60vh]">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-slate-50 text-slate-500 border-b border-slate-200">
-              <th className="w-12 text-center sticky top-0 z-30 bg-slate-50">
-                <label className="cursor-pointer flex items-center justify-center p-0">
-                  <input
-                    type="checkbox"
-                    className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                    checked={selectedOrderIds.size === sortedCommandes.length && sortedCommandes.length > 0}
-                    onChange={onToggleAllOrdersSelection}
-                  />
-                </label>
-              </th>
+        <Table className="w-full text-sm">
+          <TableHeader>
+            <TableRow className="bg-slate-50 text-slate-500 border-b border-slate-200 hover:bg-slate-50">
+              <TableHead className="w-12 text-center sticky top-0 z-30 bg-slate-50">
+                <Checkbox
+                  checked={selectedOrderIds.size === sortedCommandes.length && sortedCommandes.length > 0}
+                  onCheckedChange={onToggleAllOrdersSelection}
+                />
+              </TableHead>
 
                 {selectedOrderIds.size > 0 ? (
 
@@ -355,7 +361,7 @@ export default function CommandeList({
 
                         <>
 
-                          <li className="menu-title px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-base-content/50">
+                          <li className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
 
                             {t('common:single_selection', { defaultValue: 'Sélection' })}
 
@@ -375,7 +381,7 @@ export default function CommandeList({
 
                                 <li>
 
-                                  <a onClick={() => onViewDetails(commande)} className="flex items-center gap-2 py-2 hover:bg-info/10 text-info font-medium text-sm">
+                                  <a onClick={() => onViewDetails(commande)} className="flex items-center gap-2 py-2 hover:bg-sky-50 text-sky-600 font-medium text-sm">
 
                                     <Eye className="size-4" /> {t('orders:list.table.view_details')}
 
@@ -387,7 +393,7 @@ export default function CommandeList({
 
                                     <li>
 
-                                        <a onClick={() => {/* Handle print if available */}} className="flex items-center gap-2 py-2 hover:bg-base-200 text-base-content/70 font-medium text-sm">
+                                        <a onClick={() => {/* Handle print if available */}} className="flex items-center gap-2 py-2 hover:bg-slate-100 text-slate-600 font-medium text-sm">
 
                                             <Printer className="size-4" /> {t('common:print', 'Imprimer')}
 
@@ -401,7 +407,7 @@ export default function CommandeList({
 
                                      <li>
 
-                                        <a onClick={onBulkDelete} className="flex items-center gap-2 py-2 hover:bg-error/10 text-error font-medium text-sm">
+                                        <a onClick={onBulkDelete} className="flex items-center gap-2 py-2 hover:bg-red-50 text-red-600 font-medium text-sm">
 
                                             <Trash2 className="size-4" /> {t('common:actions.delete')}
 
@@ -423,7 +429,7 @@ export default function CommandeList({
 
                         <>
 
-                          <li className="menu-title px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-base-content/50">
+                          <li className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
 
                             {t('common:bulk_actions', { defaultValue: 'Actions Groupées' })}
 
@@ -433,7 +439,7 @@ export default function CommandeList({
 
                             <li>
 
-                                <a onClick={onOpenMergeModal} className="flex items-center gap-2 py-2 hover:bg-info/10 text-info font-medium text-sm">
+                                <a onClick={onOpenMergeModal} className="flex items-center gap-2 py-2 hover:bg-sky-50 text-sky-600 font-medium text-sm">
 
                                     <GitMerge className="size-4" /> {t('orders:list.selection.merge')}
 
@@ -467,54 +473,54 @@ export default function CommandeList({
 
                 ) : (
                   <>
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('numero')}>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('numero')}>
                       <div className="flex items-center gap-2">
                         {t('orders:list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
-                    </th>
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left sticky top-0 z-30 bg-slate-50">
+                    </TableHead>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.invoice_number')}
-                    </th>
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('date')}>
+                    </TableHead>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('date')}>
                       <div className="flex items-center gap-2">
                         {t('common:date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
-                    </th>
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('fournisseur')}>
+                    </TableHead>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('fournisseur')}>
                       <div className="flex items-center gap-2">
                         {t('common:supplier')} {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
-                    </th>
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-center sticky top-0 z-30 bg-slate-50">
+                    </TableHead>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-center sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.items')}
-                    </th>
+                    </TableHead>
 
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       HT
-                    </th>
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
+                    </TableHead>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       TVA
-                    </th>
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
+                    </TableHead>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       TTC
-                    </th>
-                    <th className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('status')}>
+                    </TableHead>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('status')}>
                       <div className="flex items-center gap-2 justify-center">
                         {t('common:us_title')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
-                    </th>
+                    </TableHead>
 
                   </>
 
                 )}
 
-            </tr>
+            </TableRow>
 
-          </thead>
+          </TableHeader>
 
-          <tbody className="text-slate-700 font-medium">
+          <TableBody className="text-slate-700 font-medium">
             {sortedCommandes.map(commande => (
-              <tr
+              <TableRow
                 key={commande.id}
                 className={cn(
                   "hover:bg-slate-50 transition-colors group cursor-pointer border-b border-slate-100 last:border-0",
@@ -522,28 +528,24 @@ export default function CommandeList({
                 )}
                 onClick={() => selectedOrderIds.size === 0 && onViewDetails(commande)}
               >
-                <td className="text-center py-3" onClick={(e) => e.stopPropagation()}>
-                  <label className="cursor-pointer flex items-center justify-center p-0">
-                    <input
-                      type="checkbox"
-                      className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                      checked={selectedOrderIds.has(commande.id)}
-                      onChange={() => onToggleOrderSelection(commande.id)}
-                    />
-                  </label>
-                </td>
-                <td className="text-left py-3 px-4">
+                <TableCell className="text-center py-3" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedOrderIds.has(commande.id)}
+                    onCheckedChange={() => onToggleOrderSelection(commande.id)}
+                  />
+                </TableCell>
+                <TableCell className="text-left py-3 px-4">
                   <span className="font-mono font-semibold text-sm text-slate-500">#{commande.id}</span>
-                </td>
-                <td className="text-left py-3 px-4">
+                </TableCell>
+                <TableCell className="text-left py-3 px-4">
                   <span className="font-mono text-sm text-slate-400">{commande.numero_facture || '-'}</span>
-                </td>
-                <td className="py-3 px-4">
+                </TableCell>
+                <TableCell className="py-3 px-4">
                   <span className="text-sm font-medium text-slate-500">
                     {formatDate(commande.date)}
                   </span>
-                </td>
-                <td className="py-3 px-4">
+                </TableCell>
+                <TableCell className="py-3 px-4">
                   {(() => {
                     const fournisseur = fournisseurs.find(f => f.id === commande.fournisseur);
                     const isDeleted = !fournisseur && !!commande.fournisseur_nom;
@@ -556,23 +558,23 @@ export default function CommandeList({
                       </div>
                     );
                   })()}
-                </td>
-                <td className="text-center py-3 px-4">
+                </TableCell>
+                <TableCell className="text-center py-3 px-4">
                   <Badge variant="secondary" className="text-xs font-mono">
                     {commande.items_count || 0}
                   </Badge>
-                </td>
-                <td className="text-right text-slate-500 text-xs py-3 px-4">
+                </TableCell>
+                <TableCell className="text-right text-slate-500 text-xs py-3 px-4">
                   {formatCurrency(Number(commande.total_ht || commande.total))}
-                </td>
-                <td className="text-right text-slate-500 text-xs py-3 px-4">
+                </TableCell>
+                <TableCell className="text-right text-slate-500 text-xs py-3 px-4">
                   {formatCurrency(Number(commande.total_tva || 0))}
-                </td>
-                <td className="font-semibold text-right text-emerald-600 py-3 px-4">
+                </TableCell>
+                <TableCell className="font-semibold text-right text-emerald-600 py-3 px-4">
                   {formatCurrency(Number(commande.total_ttc || commande.total))}
-                </td>
+                </TableCell>
 
-                <td className="text-center py-3 px-4">
+                <TableCell className="text-center py-3 px-4">
                   <Badge
                     variant="outline"
                     className={cn(
@@ -582,30 +584,28 @@ export default function CommandeList({
                   >
                     {getStatusLabel(commande.status)}
                   </Badge>
-                </td>
+                </TableCell>
 
-              </tr>
+              </TableRow>
 
             ))}
 
             {sortedCommandes.length === 0 && (
-              <tr>
-                <td colSpan={10} className="text-center py-12 text-slate-400">
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-12 text-slate-400">
                   <div className="flex flex-col items-center gap-3">
                     <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="size-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
+                      <Package className="size-6 text-slate-400" />
                     </div>
                     <p className="text-sm">{t('orders:list.table.empty')}</p>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
 
-          </tbody>
+          </TableBody>
 
-        </table>
+        </Table>
 
       </div>
 

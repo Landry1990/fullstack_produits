@@ -102,6 +102,7 @@ class PharmacySettings(models.Model):
         default=15,
         help_text="Seuil d'alerte stock bas (en jours de couverture)"
     )
+    last_stock_analytics_run = models.DateTimeField(null=True, blank=True)
     dormant_stock_days = models.IntegerField(
         default=90,
         help_text="Seuil pour considérer un stock comme dormant (sans vente depuis X jours)"

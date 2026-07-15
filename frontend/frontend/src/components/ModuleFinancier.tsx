@@ -15,6 +15,10 @@ import {
 } from '../hooks/useFinanceStats';
 
 import { formatCurrency, formatNumber } from '../utils/formatters';
+import { Button } from './ui/Button';
+import { Select } from './ui/Select';
+import { Badge } from './shadcn/badge';
+import { Loader2 } from 'lucide-react';
 
 // Color palette
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
@@ -120,7 +124,7 @@ export default function ModuleFinancier() {
   );
 
   const Recharts = useRecharts();
-  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  if (!Recharts) return <div className="flex items-center justify-center p-8"><Loader2 className="size-8 animate-spin text-slate-400" /></div>;
   const { AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
   return (
@@ -128,85 +132,85 @@ export default function ModuleFinancier() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-base-content">
+            <h1 className="text-2xl font-bold text-slate-800">
               {t('title', 'Module Financier')}
             </h1>
-            <p className="text-base-content/60">
+            <p className="text-slate-500">
               {t('subtitle', 'Analyse et prédictions du chiffre d\'affaires')}
             </p>
           </div>
           <div className="flex gap-2">
-            <select 
-              className="select select-bordered select-sm"
+            <Select
+              size="sm"
               value={periode}
               onChange={(e) => setPeriode(e.target.value as 'mois' | 'trimestre' | 'annee')}
             >
               <option value="mois">{t('periode.mois', 'Ce mois')}</option>
               <option value="trimestre">{t('periode.trimestre', 'Ce trimestre')}</option>
               <option value="annee">{t('periode.annee', 'Cette année')}</option>
-            </select>
+            </Select>
           </div>
         </div>
       {/* KPIs Cards */}
       {loadingKPIs ? (
         <div data-testid="finance-loading" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="card bg-base-100 shadow-lg animate-pulse h-32"></div>
+            <div key={i} className="bg-white rounded-xl shadow-lg animate-pulse h-32"></div>
           ))}
         </div>
       ) : kpis && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Panier Moyen */}
-          <div className="card bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg">
-            <div className="card-body p-4">
+          <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg">
+            <div className="p-4">
               <h3 className="text-sm font-medium opacity-80">
                 {t('kpis.avg_basket', 'Panier Moyen')}
               </h3>
               <p className="text-3xl font-bold">{formatMoneyFull(kpis.panier_moyen.mois)}</p>
-              <p className="text-xs text-base-content/70">
+              <p className="text-xs text-white/70">
                 {t('kpis.annual')}: {formatMoneyFull(kpis.panier_moyen.annee)}
               </p>
             </div>
           </div>
 
           {/* Taux de Marge */}
-          <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg">
-            <div className="card-body p-4">
+          <div className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg">
+            <div className="p-4">
               <h3 className="text-sm font-medium opacity-80">
                 {t('kpis.margin_rate', 'Taux de Marge')}
               </h3>
               <p className="text-3xl font-bold">{kpis.taux_marge}%</p>
-              <p className="text-xs text-base-content/70">
+              <p className="text-xs text-white/70">
                 {kpis.nb_ventes_mois} {t('charts.sales_count', 'ventes ce mois')}
               </p>
             </div>
           </div>
 
           {/* DSI */}
-          <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg">
-            <div className="card-body p-4">
+          <div className="rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg">
+            <div className="p-4">
               <h3 className="text-sm font-medium opacity-80">
                 {t('kpis.dsi', 'Jours Stock (DSI)')}
               </h3>
               <p className="text-3xl font-bold">{kpis.dsi} j</p>
-              <p className="text-xs text-base-content/70">
+              <p className="text-xs text-white/70">
                 Stock: {formatMoneyFull(kpis.stock_value)}
               </p>
             </div>
           </div>
 
           {/* Croissance */}
-          <div className={`card shadow-lg ${kpis.croissance_mensuelle >= 0 
-            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' 
+          <div className={`rounded-xl shadow-lg ${kpis.croissance_mensuelle >= 0
+            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
             : 'bg-gradient-to-br from-red-500 to-red-600'} text-white`}>
-            <div className="card-body p-4">
+            <div className="p-4">
               <h3 className="text-sm font-medium opacity-80">
                 {t('kpis.growth', 'Croissance Mensuelle')}
               </h3>
               <p className="text-3xl font-bold">
                 {kpis.croissance_mensuelle >= 0 ? '+' : ''}{kpis.croissance_mensuelle}%
               </p>
-              <p className="text-xs text-base-content/70">
+              <p className="text-xs text-white/70">
                 CA: {formatMoneyFull(kpis.ca_mois)}
               </p>
             </div>
@@ -215,51 +219,51 @@ export default function ModuleFinancier() {
       )}
 
       {/* Margin Variance Report (NEW) */}
-      <div className="card bg-base-100 shadow-xl border-t-4 border-primary overflow-hidden">
-        <div className="card-body p-0">
-          <div className="bg-primary/5 p-4 flex items-center justify-between">
+      <div className="bg-white rounded-xl shadow-xl border-t-4 border-indigo-500 overflow-hidden">
+        <div className="p-0">
+          <div className="bg-indigo-50 p-4 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <span className="text-2xl">📊</span>
                 {isEnglish ? 'Margin Variance Report' : 'Rapport de Variation de Marge'}
               </h2>
-              <p className="text-sm text-base-content/70">
+              <p className="text-sm text-slate-500">
                 {isEnglish ? 'Analysis of profit fluctuations and data integrity' : 'Analyse des fluctuations de profit et intégrité des données'}
               </p>
             </div>
             {varianceReport && (
-              <div className={`px-4 py-2 rounded-lg font-bold text-lg ${varianceReport.variance_pct >= 0 ? 'bg-success/20 text-success' : 'bg-error/20 text-error'}`}>
+              <div className={`px-4 py-2 rounded-lg font-bold text-lg ${varianceReport.variance_pct >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
                 {varianceReport.variance_pct >= 0 ? '+' : ''}{varianceReport.variance_pct}%
               </div>
             )}
           </div>
 
           {loadingVariance ? (
-            <div className="p-8 flex justify-center"><span className="loading loading-spinner loading-lg"></span></div>
+            <div className="p-8 flex justify-center"><Loader2 className="size-8 animate-spin text-slate-400" /></div>
           ) : varianceReport && (
             <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left: Summary & Insights */}
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 bg-base-200 rounded-xl">
-                    <p className="text-xs uppercase font-bold text-base-content/50 mb-1">{isEnglish ? 'Current Period' : 'Période Actuelle'}</p>
+                  <div className="p-4 bg-slate-100 rounded-xl">
+                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{isEnglish ? 'Current Period' : 'Période Actuelle'}</p>
                     <p className="text-2xl font-black">{Number(varianceReport?.period1?.stats?.margin_pct || 0).toFixed(1)}%</p>
-                    <p className="text-xs text-base-content/70">{formatMoney(Number(varianceReport?.period1?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
+                    <p className="text-xs text-slate-500">{formatMoney(Number(varianceReport?.period1?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
                   </div>
-                  <div className="p-4 bg-base-200 rounded-xl">
-                    <p className="text-xs uppercase font-bold text-base-content/50 mb-1">{isEnglish ? 'Baseline' : 'Référence (Hier)'}</p>
+                  <div className="p-4 bg-slate-100 rounded-xl">
+                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{isEnglish ? 'Baseline' : 'Référence (Hier)'}</p>
                     <p className="text-2xl font-black">{Number(varianceReport?.period2?.stats?.margin_pct || 0).toFixed(1)}%</p>
-                    <p className="text-xs text-base-content/70">{formatMoney(Number(varianceReport?.period2?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
+                    <p className="text-xs text-slate-500">{formatMoney(Number(varianceReport?.period2?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-bold text-sm uppercase tracking-wider opacity-60">{isEnglish ? 'Key Insights' : 'Analyses Clés'}</h3>
+                  <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">{isEnglish ? 'Key Insights' : 'Analyses Clés'}</h3>
                   {varianceReport.insights.map((insight: any) => {
                     const text = isEnglish ? insight?.en : insight?.fr;
                     const safeText = typeof text === 'string' ? text : JSON.stringify(text);
                     return (
-                      <div key={insight.en ?? insight.fr} className="alert alert-info shadow-sm bg-info/10 border-info/20 text-sm">
+                      <div key={insight.en ?? insight.fr} className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-slate-700">
                         <span>{safeText}</span>
                       </div>
                     );
@@ -268,20 +272,20 @@ export default function ModuleFinancier() {
               </div>
 
               {/* Right: Suspicious Products */}
-              <div className="bg-base-200/50 rounded-2xl p-4 border border-base-content/5">
-                <h3 className="font-bold text-sm uppercase tracking-wider opacity-60 mb-4 flex items-center gap-2">
-                  <span className="text-warning">🚩</span>
+              <div className="bg-slate-100/50 rounded-2xl p-4 border border-slate-200">
+                <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                  <span className="text-amber-600">🚩</span>
                   {isEnglish ? 'Atypical Margins Detected' : 'Marges Atypiques Détectées'}
                 </h3>
                 
                 {varianceReport.suspicious_products.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="table table-xs w-full">
+                    <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-base-content/50">
-                          <th>{isEnglish ? 'Product' : 'Produit'}</th>
-                          <th className="text-right">{isEnglish ? 'Margin' : 'Marge'}</th>
-                          <th className="text-right">{isEnglish ? 'Cost (PMP)' : 'Coût (PMP)'}</th>
+                        <tr className="text-slate-400">
+                          <th className="text-left py-1">{isEnglish ? 'Product' : 'Produit'}</th>
+                          <th className="text-right py-1">{isEnglish ? 'Margin' : 'Marge'}</th>
+                          <th className="text-right py-1">{isEnglish ? 'Cost (PMP)' : 'Coût (PMP)'}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -294,25 +298,25 @@ export default function ModuleFinancier() {
                           const pmp = typeof p?.produit__pmp === 'number' ? p.produit__pmp : 
                                     typeof p?.produit__pmp === 'string' ? parseFloat(p.produit__pmp) : 0;
                           return (
-                            <tr key={productId} className="hover:bg-base-content/5 transition-colors">
-                              <td className="font-medium max-w-[150px] truncate">{String(productName)}</td>
-                              <td className={`text-right font-bold ${marginPct > 80 ? 'text-purple-500' : 'text-orange-500'}`}>
+                            <tr key={productId} className="hover:bg-slate-200/50 transition-colors border-b border-slate-200">
+                              <td className="font-medium max-w-[150px] truncate py-1">{String(productName)}</td>
+                              <td className={`text-right font-bold py-1 ${marginPct > 80 ? 'text-purple-500' : 'text-orange-500'}`}>
                                 {marginPct.toFixed(1)}%
                               </td>
-                              <td className="text-right text-base-content/70">{formatMoney(pmp)}</td>
+                              <td className="text-right text-slate-500 py-1">{formatMoney(pmp)}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
-                    <p className="text-[10px] mt-4 italic text-base-content/50">
+                    <p className="text-[10px] mt-4 italic text-slate-400">
                       {isEnglish 
                         ? '* High margins (>80%) often indicate missing cost prices (PMP = 0).' 
                         : '* Les marges élevées (>80%) indiquent souvent des prix d\'achat manquants (PMP = 0).'}
                     </p>
                   </div>
                 ) : (
-                  <div className="h-40 flex items-center justify-center text-sm opacity-40 italic">
+                  <div className="h-40 flex items-center justify-center text-sm text-slate-400 italic">
                     {isEnglish ? 'No abnormal margins detected today.' : 'Aucune marge anormale détectée aujourd\'hui.'}
                   </div>
                 )}
@@ -323,28 +327,31 @@ export default function ModuleFinancier() {
       </div>
 
       {/* Main Charts */}
-      <div className="card bg-base-100 shadow-lg">
-        <div className="card-body">
+      <div className="bg-white rounded-xl shadow-lg">
+        <div className="p-6">
           {/* Chart Tabs */}
-          <div className="tabs tabs-boxed mb-4 w-fit">
-            <button 
-              className={`tab ${activeChart === 'ca' ? 'tab-active' : ''}`}
+          <div className="inline-flex bg-slate-100 p-1 rounded-lg mb-4 w-fit gap-1">
+            <Button 
+              variant="ghost" size="sm"
+              className={`rounded-md ${activeChart === 'ca' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'}`}
               onClick={() => setActiveChart('ca')}
             >
               {t('charts.ca_evolution', 'Évolution CA')}
-            </button>
-            <button 
-              className={`tab ${activeChart === 'marges' ? 'tab-active' : ''}`}
+            </Button>
+            <Button 
+              variant="ghost" size="sm"
+              className={`rounded-md ${activeChart === 'marges' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'}`}
               onClick={() => setActiveChart('marges')}
             >
               {t('charts.margins', 'Marges')}
-            </button>
-            <button 
-              className={`tab ${activeChart === 'predictions' ? 'tab-active' : ''}`}
+            </Button>
+            <Button 
+              variant="ghost" size="sm"
+              className={`rounded-md ${activeChart === 'predictions' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400'}`}
               onClick={() => setActiveChart('predictions')}
             >
               {t('charts.predictions', 'Prédictions')} {trendInfo && <span className="ml-1">{trendInfo.icon}</span>}
-            </button>
+            </Button>
           </div>
 
           {/* CA Evolution Chart */}
@@ -355,14 +362,14 @@ export default function ModuleFinancier() {
                   {t('charts.ca_12_months', 'Chiffre d\'Affaires (12 derniers mois)')}
                 </h3>
                 {caEvolution && (
-                  <div className={`badge ${caEvolution.croissance_yoy >= 0 ? 'badge-success' : 'badge-error'} badge-lg`}>
+                  <Badge variant={caEvolution.croissance_yoy >= 0 ? 'default' : 'destructive'} className="text-sm">
                     {caEvolution.croissance_yoy >= 0 ? '+' : ''}{caEvolution.croissance_yoy}% vs N-1
-                  </div>
+                  </Badge>
                 )}
               </div>
               {loadingCA ? (
                 <div className="h-80 flex items-center justify-center">
-                  <span className="loading loading-spinner loading-lg"></span>
+                  <Loader2 className="size-8 animate-spin text-slate-400" />
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={350}>
@@ -409,14 +416,14 @@ export default function ModuleFinancier() {
                   {t('charts.margin_evolution', 'Évolution des Marges')}
                 </h3>
                 {margesData && (
-                  <div className="badge badge-primary badge-lg">
+                  <Badge variant="default" className="text-sm">
                     Taux moyen: {margesData.taux_moyen}%
-                  </div>
+                  </Badge>
                 )}
               </div>
               {loadingMarges ? (
                 <div className="h-80 flex items-center justify-center">
-                  <span className="loading loading-spinner loading-lg"></span>
+                  <Loader2 className="size-8 animate-spin text-slate-400" />
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={350}>
@@ -444,12 +451,12 @@ export default function ModuleFinancier() {
                 </h3>
                 {predictions && (
                   <div className="flex items-center gap-2">
-                    <span className={`badge ${
-                      predictions.confiance === 'haute' ? 'badge-success' :
-                      predictions.confiance === 'moyenne' ? 'badge-warning' : 'badge-error'
-                    }`}>
+                    <Badge variant={
+                      predictions.confiance === 'haute' ? 'default' :
+                      predictions.confiance === 'moyenne' ? 'secondary' : 'destructive'
+                    }>
                       Confiance: {predictions.confiance}
-                    </span>
+                    </Badge>
                     <span className={`font-medium ${trendInfo?.color}`}>
                       {trendInfo?.icon} {trendInfo?.label}
                     </span>
@@ -458,7 +465,7 @@ export default function ModuleFinancier() {
               </div>
               {loadingPredictions ? (
                 <div className="h-80 flex items-center justify-center">
-                  <span className="loading loading-spinner loading-lg"></span>
+                  <Loader2 className="size-8 animate-spin text-slate-400" />
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={350}>
@@ -498,24 +505,24 @@ export default function ModuleFinancier() {
       {/* Bottom Section: Repartition + Top Products */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Repartition CA */}
-        <div className="card bg-base-100 shadow-lg">
-          <div className="card-body">
+        <div className="bg-white rounded-xl shadow-lg">
+          <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">
                 {t('charts.repartition', 'Répartition CA')}
               </h3>
-              <select 
-                className="select select-bordered select-sm"
+              <Select
+                size="sm"
                 value={repartitionBy}
                 onChange={(e) => setRepartitionBy(e.target.value as 'categorie' | 'fournisseur')}
               >
                 <option value="categorie">{t('by_category', 'Par Catégorie')}</option>
                 <option value="fournisseur">{t('by_supplier', 'Par Fournisseur')}</option>
-              </select>
+              </Select>
             </div>
             {loadingRepartition ? (
               <div className="h-64 flex items-center justify-center">
-                <span className="loading loading-spinner loading-lg"></span>
+                <Loader2 className="size-8 animate-spin text-slate-400" />
               </div>
             ) : repartition && repartition.data.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -539,7 +546,7 @@ export default function ModuleFinancier() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-64 flex items-center justify-center text-base-content/50">
+              <div className="h-64 flex items-center justify-center text-slate-400">
                 {t('common:no_data', 'Aucune donnée')}
               </div>
             )}
@@ -547,54 +554,54 @@ export default function ModuleFinancier() {
         </div>
 
         {/* Top Products */}
-        <div className="card bg-base-100 shadow-lg">
-          <div className="card-body">
+        <div className="bg-white rounded-xl shadow-lg">
+          <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">
                 {t('top_products', 'Top Produits')}
               </h3>
-              <select 
-                className="select select-bordered select-sm"
+              <Select
+                size="sm"
                 value={critereTop}
                 onChange={(e) => setCritereTop(e.target.value as 'ca' | 'marge')}
               >
                 <option value="ca">{t('by_revenue', 'Par CA')}</option>
                 <option value="marge">{t('by_margin', 'Par Marge')}</option>
-              </select>
+              </Select>
             </div>
             {loadingTop ? (
               <div className="h-64 flex items-center justify-center">
-                <span className="loading loading-spinner loading-lg"></span>
+                <Loader2 className="size-8 animate-spin text-slate-400" />
               </div>
             ) : topProducts && topProducts.data.length > 0 ? (
               <div className="overflow-x-auto max-h-72">
-                <table className="table table-sm table-zebra">
+                <table className="w-full text-sm">
                   <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>{t('product', 'Produit')}</th>
-                      <th className="text-right">CA</th>
-                      <th className="text-right">{t('margin', 'Marge')}</th>
-                      <th className="text-right">%</th>
+                    <tr className="text-slate-400 text-xs">
+                      <th className="text-left py-2">#</th>
+                      <th className="text-left py-2">{t('product', 'Produit')}</th>
+                      <th className="text-right py-2">CA</th>
+                      <th className="text-right py-2">{t('margin', 'Marge')}</th>
+                      <th className="text-right py-2">%</th>
                     </tr>
                   </thead>
                   <tbody>
                     {topProducts.data.map((product, index) => (
-                      <tr key={product.id}>
-                        <td className="font-bold text-primary">{index + 1}</td>
-                        <td className="max-w-[150px] truncate" title={product.nom}>
+                      <tr key={product.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="font-bold text-indigo-600 py-2">{index + 1}</td>
+                        <td className="max-w-[150px] truncate py-2" title={product.nom}>
                           {product.nom}
                         </td>
-                        <td className="text-right font-mono">{formatMoneyFull(product.ca)}</td>
-                        <td className="text-right font-mono text-success">{formatMoneyFull(product.marge)}</td>
-                        <td className="text-right">{product.taux_marge}%</td>
+                        <td className="text-right font-mono py-2">{formatMoneyFull(product.ca)}</td>
+                        <td className="text-right font-mono text-emerald-600 py-2">{formatMoneyFull(product.marge)}</td>
+                        <td className="text-right py-2">{product.taux_marge}%</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <div className="h-64 flex items-center justify-center text-base-content/50">
+              <div className="h-64 flex items-center justify-center text-slate-400">
                 {t('common:no_data', 'Aucune donnée')}
               </div>
             )}
@@ -603,39 +610,42 @@ export default function ModuleFinancier() {
       </div>
 
       {/* Category Analysis Section */}
-      <div className="card bg-base-100 shadow-lg">
-        <div className="card-body">
+      <div className="bg-white rounded-xl shadow-lg">
+        <div className="p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
             <h3 className="text-lg font-semibold">
               {t('category_analysis', 'Analyse par Catégorie')}
             </h3>
             <div className="flex gap-2">
-              <div className="btn-group">
-                <button
-                  className={`btn btn-sm ${categoryType === 'rayon' ? 'btn-primary' : 'btn-ghost'}`}
+              <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+                <Button
+                  variant="ghost" size="sm"
+                  className={`rounded-none ${categoryType === 'rayon' ? 'bg-indigo-600 text-white' : ''}`}
                   onClick={() => setCategoryType('rayon')}
                 >
                   {t('category.rayon', 'Rayon')}
-                </button>
-                <button
-                  className={`btn btn-sm ${categoryType === 'groupe' ? 'btn-primary' : 'btn-ghost'}`}
+                </Button>
+                <Button
+                  variant="ghost" size="sm"
+                  className={`rounded-none ${categoryType === 'groupe' ? 'bg-indigo-600 text-white' : ''}`}
                   onClick={() => setCategoryType('groupe')}
                 >
                   {t('category.groupe', 'Groupe')}
-                </button>
-                <button
-                  className={`btn btn-sm ${categoryType === 'forme' ? 'btn-primary' : 'btn-ghost'}`}
+                </Button>
+                <Button
+                  variant="ghost" size="sm"
+                  className={`rounded-none ${categoryType === 'forme' ? 'bg-indigo-600 text-white' : ''}`}
                   onClick={() => setCategoryType('forme')}
                 >
                   {t('category.forme', 'Forme')}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
           
           {loadingCategories ? (
             <div className="h-64 flex items-center justify-center">
-              <span className="loading loading-spinner loading-lg"></span>
+              <Loader2 className="size-8 animate-spin text-slate-400" />
             </div>
           ) : categoryAnalysis && categoryAnalysis.data.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -660,27 +670,27 @@ export default function ModuleFinancier() {
               
               {/* Table */}
               <div className="overflow-x-auto max-h-80">
-                <table className="table table-sm table-zebra">
-                  <thead className="sticky top-0 z-10 bg-base-100 opacity-100">
-                    <tr>
-                      <th>{categoryType === 'rayon' ? t('category.rayon', 'Rayon') : categoryType === 'groupe' ? t('category.groupe', 'Groupe') : t('category.forme', 'Forme')}</th>
-                      <th className="text-right">CA</th>
-                      <th className="text-right">{t('margin', 'Marge')}</th>
-                      <th className="text-right">{t('margin_rate', 'Taux')}</th>
-                      <th className="text-right">%</th>
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 z-10 bg-white">
+                    <tr className="text-slate-400 text-xs">
+                      <th className="text-left py-2">{categoryType === 'rayon' ? t('category.rayon', 'Rayon') : categoryType === 'groupe' ? t('category.groupe', 'Groupe') : t('category.forme', 'Forme')}</th>
+                      <th className="text-right py-2">CA</th>
+                      <th className="text-right py-2">{t('margin', 'Marge')}</th>
+                      <th className="text-right py-2">{t('margin_rate', 'Taux')}</th>
+                      <th className="text-right py-2">%</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categoryAnalysis.data.map((item) => (
-                      <tr key={item.id}>
-                        <td className="max-w-[150px] truncate" title={item.nom}>
+                      <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="max-w-[150px] truncate py-2" title={item.nom}>
                           {item.nom}
                         </td>
-                        <td className="text-right font-mono">{formatMoneyFull(item.ca)}</td>
-                        <td className="text-right font-mono text-success">{formatMoneyFull(item.marge)}</td>
-                        <td className="text-right">{item.taux_marge}%</td>
-                        <td className="text-right">
-                          <span className="badge badge-primary badge-sm">{item.pourcentage_ca}%</span>
+                        <td className="text-right font-mono py-2">{formatMoneyFull(item.ca)}</td>
+                        <td className="text-right font-mono text-emerald-600 py-2">{formatMoneyFull(item.marge)}</td>
+                        <td className="text-right py-2">{item.taux_marge}%</td>
+                        <td className="text-right py-2">
+                          <Badge variant="default" className="text-xs">{item.pourcentage_ca}%</Badge>
                         </td>
                       </tr>
                     ))}
@@ -689,7 +699,7 @@ export default function ModuleFinancier() {
               </div>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-base-content/50">
+            <div className="h-64 flex items-center justify-center text-slate-400">
               {t('category.no_data', 'Aucune donnée pour cette catégorie')}
             </div>
           )}
@@ -697,17 +707,17 @@ export default function ModuleFinancier() {
           {/* Category Summary */}
           {categoryAnalysis && (
             <div className="mt-4 flex gap-4 flex-wrap">
-              <div className="stat bg-base-200 rounded-lg p-3">
-                <div className="stat-title text-xs">{t('category.total_ca', 'CA Total')}</div>
-                <div className="stat-value text-lg text-primary">{formatMoneyFull(categoryAnalysis.total_ca)}</div>
+              <div className="bg-slate-100 rounded-lg p-3">
+                <div className="text-xs text-slate-400">{t('category.total_ca', 'CA Total')}</div>
+                <div className="text-lg font-bold text-indigo-600">{formatMoneyFull(categoryAnalysis.total_ca)}</div>
               </div>
-              <div className="stat bg-base-200 rounded-lg p-3">
-                <div className="stat-title text-xs">{t('category.total_margin', 'Marge Totale')}</div>
-                <div className="stat-value text-lg text-success">{formatMoneyFull(categoryAnalysis.total_marge)}</div>
+              <div className="bg-slate-100 rounded-lg p-3">
+                <div className="text-xs text-slate-400">{t('category.total_margin', 'Marge Totale')}</div>
+                <div className="text-lg font-bold text-emerald-600">{formatMoneyFull(categoryAnalysis.total_marge)}</div>
               </div>
-              <div className="stat bg-base-200 rounded-lg p-3">
-                <div className="stat-title text-xs">{t('category.global_rate', 'Taux Marge Global')}</div>
-                <div className="stat-value text-lg">{categoryAnalysis.taux_marge_global}%</div>
+              <div className="bg-slate-100 rounded-lg p-3">
+                <div className="text-xs text-slate-400">{t('category.global_rate', 'Taux Marge Global')}</div>
+                <div className="text-lg font-bold">{categoryAnalysis.taux_marge_global}%</div>
               </div>
             </div>
           )}
@@ -717,37 +727,37 @@ export default function ModuleFinancier() {
 
 
       {/* Margin Analysis Section */}
-      <div className="card bg-base-100 shadow-lg">
-        <div className="card-body">
+      <div className="bg-white rounded-xl shadow-lg">
+        <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">
             {t('margin_analysis', 'Analyse Avancée et Opportunités')}
           </h3>
           
           {loadingMarginAnalysis ? (
             <div className="h-48 flex items-center justify-center">
-              <span className="loading loading-spinner loading-lg"></span>
+              <Loader2 className="size-8 animate-spin text-slate-400" />
             </div>
           ) : marginAnalysis ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Opportunités Moyenne Marge */}
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <h4 className="card-title text-sm flex items-center gap-2">
-                    <span className="text-warning">⚠️</span>
+              <div className="bg-slate-100 rounded-xl">
+                <div className="p-4">
+                  <h4 className="text-sm font-bold flex items-center gap-2">
+                    <span className="text-amber-600">⚠️</span>
                     {t('analysis.opportunities', 'Faible Marge / Fort Volume')}
                   </h4>
-                  <p className="text-xs text-base-content/70 mb-2">
+                  <p className="text-xs text-slate-500 mb-2">
                     {t('analysis.negotiation', 'Opportunités de négociation fournisseur')}
                   </p>
                   
                   <div className="overflow-x-auto max-h-60">
-                    <table className="table table-xs">
+                    <table className="w-full text-xs">
                       <thead>
-                        <tr>
-                          <th>{t('product', 'Produit')}</th>
-                          <th className="text-right">{t('margin', 'Marge')}</th>
-                          <th className="text-right">{t('analysis.gain', 'Gain Pot.')}</th>
+                        <tr className="text-slate-400">
+                          <th className="text-left py-1">{t('product', 'Produit')}</th>
+                          <th className="text-right py-1">{t('margin', 'Marge')}</th>
+                          <th className="text-right py-1">{t('analysis.gain', 'Gain Pot.')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -760,21 +770,21 @@ export default function ModuleFinancier() {
                             const margePerdue = typeof item?.marge_perdue === 'number' ? item.marge_perdue :
                                               typeof item?.marge_perdue === 'string' ? parseFloat(item.marge_perdue) : 0;
                             return (
-                              <tr key={itemId}>
-                                <td className="max-w-[120px] truncate" title={itemName}>
+                              <tr key={itemId} className="border-b border-slate-200">
+                                <td className="max-w-[120px] truncate py-1" title={itemName}>
                                   {itemName}
                                 </td>
-                                <td className="text-right text-warning font-bold">
+                                <td className="text-right text-amber-600 font-bold py-1">
                                   {tauxMarge}%
                                 </td>
-                                <td className="text-right text-success">
+                                <td className="text-right text-emerald-600 py-1">
                                   +{formatMoney(margePerdue)}
                                 </td>
                               </tr>
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center text-base-content/50">{t('analysis.no_opportunity', 'Aucune opportunité détectée')}</td></tr>
+                          <tr><td colSpan={3} className="text-center text-slate-400 py-2">{t('analysis.no_opportunity', 'Aucune opportunité détectée')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -783,23 +793,23 @@ export default function ModuleFinancier() {
               </div>
 
               {/* Stock Dormant */}
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <h4 className="card-title text-sm flex items-center gap-2">
-                    <span className="text-error">🛑</span>
+              <div className="bg-slate-100 rounded-xl">
+                <div className="p-4">
+                  <h4 className="text-sm font-bold flex items-center gap-2">
+                    <span className="text-red-600">🛑</span>
                     {t('analysis.dormant', 'Forte Marge / Faible Rotation')}
                   </h4>
-                  <p className="text-xs text-base-content/70 mb-2">
+                  <p className="text-xs text-slate-500 mb-2">
                     {t('analysis.dormant_risk', 'Risque de stock dormant (Argent immobilisé)')}
                   </p>
                   
                   <div className="overflow-x-auto max-h-60">
-                    <table className="table table-xs">
+                    <table className="w-full text-xs">
                       <thead>
-                        <tr>
-                          <th>{t('product', 'Produit')}</th>
-                          <th className="text-right">{t('margin', 'Marge')}</th>
-                          <th className="text-right">{t('analysis.price', 'Prix')}</th>
+                        <tr className="text-slate-400">
+                          <th className="text-left py-1">{t('product', 'Produit')}</th>
+                          <th className="text-right py-1">{t('margin', 'Marge')}</th>
+                          <th className="text-right py-1">{t('analysis.price', 'Prix')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -812,21 +822,21 @@ export default function ModuleFinancier() {
                             const prixActuel = typeof item?.prix_actuel === 'number' ? item.prix_actuel :
                                              typeof item?.prix_actuel === 'string' ? parseFloat(item.prix_actuel) : 0;
                             return (
-                              <tr key={itemId}>
-                                <td className="max-w-[120px] truncate" title={itemName}>
+                              <tr key={itemId} className="border-b border-slate-200">
+                                <td className="max-w-[120px] truncate py-1" title={itemName}>
                                   {itemName}
                                 </td>
-                                <td className="text-right text-success font-bold">
+                                <td className="text-right text-emerald-600 font-bold py-1">
                                   {tauxMarge}%
                                 </td>
-                                <td className="text-right">
+                                <td className="text-right py-1">
                                   {formatMoney(prixActuel)}
                                 </td>
                               </tr>
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center text-base-content/50">{t('analysis.no_dormant', 'Aucun produit dormant détecté')}</td></tr>
+                          <tr><td colSpan={3} className="text-center text-slate-400 py-2">{t('analysis.no_dormant', 'Aucun produit dormant détecté')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -835,23 +845,23 @@ export default function ModuleFinancier() {
               </div>
 
               {/* Suggestions Prix */}
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <h4 className="card-title text-sm flex items-center gap-2">
-                    <span className="text-success">💡</span>
+              <div className="bg-slate-100 rounded-xl">
+                <div className="p-4">
+                  <h4 className="text-sm font-bold flex items-center gap-2">
+                    <span className="text-emerald-600">💡</span>
                     {t('analysis.price_opt', 'Optimisation Prix (+5%)')}
                   </h4>
-                  <p className="text-xs text-base-content/70 mb-2">
+                  <p className="text-xs text-slate-500 mb-2">
                     {t('analysis.low_margin_impact', 'Produits à marge très faible (Impact estimé)')}
                   </p>
                   
                   <div className="overflow-x-auto max-h-60">
-                    <table className="table table-xs">
+                    <table className="w-full text-xs">
                       <thead>
-                        <tr>
-                          <th>{t('product', 'Produit')}</th>
-                          <th className="text-right">{t('analysis.current_price', 'Actuel')}</th>
-                          <th className="text-right">{t('analysis.suggested_price', 'Suggéré')}</th>
+                        <tr className="text-slate-400">
+                          <th className="text-left py-1">{t('product', 'Produit')}</th>
+                          <th className="text-right py-1">{t('analysis.current_price', 'Actuel')}</th>
+                          <th className="text-right py-1">{t('analysis.suggested_price', 'Suggéré')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -864,21 +874,21 @@ export default function ModuleFinancier() {
                             const prixSuggere = typeof item?.prix_suggere === 'number' ? item.prix_suggere :
                                               typeof item?.prix_suggere === 'string' ? parseFloat(item.prix_suggere) : 0;
                             return (
-                              <tr key={itemId}>
-                                <td className="max-w-[120px] truncate" title={itemName}>
+                              <tr key={itemId} className="border-b border-slate-200">
+                                <td className="max-w-[120px] truncate py-1" title={itemName}>
                                   {itemName}
                                 </td>
-                                <td className="text-right text-error font-bold">
+                                <td className="text-right text-red-600 font-bold py-1">
                                   {tauxActuel}%
                                 </td>
-                                <td className="text-right text-success font-bold">
+                                <td className="text-right text-emerald-600 font-bold py-1">
                                   {formatMoney(prixSuggere)}
                                 </td>
                               </tr>
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center text-base-content/50">{t('analysis.optimized', 'Prix optimisés')}</td></tr>
+                          <tr><td colSpan={3} className="text-center text-slate-400 py-2">{t('analysis.optimized', 'Prix optimisés')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -888,7 +898,7 @@ export default function ModuleFinancier() {
 
             </div>
           ) : (
-            <div className="h-48 flex items-center justify-center text-base-content/50">
+            <div className="h-48 flex items-center justify-center text-slate-400">
               {t('common:no_data', 'Aucune donnée disponible')}
             </div>
           )}
@@ -898,27 +908,27 @@ export default function ModuleFinancier() {
 
 
       {/* Supplier Analysis Section */}
-      <div className="card bg-base-100 shadow-lg">
-        <div className="card-body">
+      <div className="bg-white rounded-xl shadow-lg">
+        <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">
             {t('supplier_analysis', 'Analyse Fournisseurs')}
           </h3>
 
           {loadingSupplierAnalysis ? (
             <div className="h-48 flex items-center justify-center">
-              <span className="loading loading-spinner loading-lg"></span>
+              <Loader2 className="size-8 animate-spin text-slate-400" />
             </div>
           ) : supplierAnalysis && supplierAnalysis.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="table table-zebra w-full">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>{t('supplier.name', 'Fournisseur')}</th>
-                    <th className="text-center">{t('supplier.score', 'Score Global')}</th>
-                    <th className="text-center">{t('supplier.volume', 'Volume (30%)')}</th>
-                    <th className="text-center">{t('supplier.quality', 'Qualité (30%)')}</th>
-                    <th className="text-center">{t('supplier.regularity', 'Régularité (40%)')}</th>
+                  <tr className="text-slate-400 text-xs">
+                    <th className="text-left py-2">#</th>
+                    <th className="text-left py-2">{t('supplier.name', 'Fournisseur')}</th>
+                    <th className="text-center py-2">{t('supplier.score', 'Score Global')}</th>
+                    <th className="text-center py-2">{t('supplier.volume', 'Volume (30%)')}</th>
+                    <th className="text-center py-2">{t('supplier.quality', 'Qualité (30%)')}</th>
+                    <th className="text-center py-2">{t('supplier.regularity', 'Régularité (40%)')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -933,34 +943,38 @@ export default function ModuleFinancier() {
                     const supplierName = typeof item?.nom === 'string' ? item.nom : 'Fournisseur inconnu';
                     const supplierId = item?.id || `supplier-${index}`;
                     return (
-                      <tr key={supplierId}>
-                        <td className="font-bold">{index + 1}</td>
-                        <td>{supplierName}</td>
-                        <td className="text-center">
+                      <tr key={supplierId} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="font-bold py-2">{index + 1}</td>
+                        <td className="py-2">{supplierName}</td>
+                        <td className="text-center py-2">
                           <div className="flex flex-col items-center">
-                            <div className={`radial-progress text-xs ${
-                              scoreGlobal >= 80 ? 'text-success' : 
-                              scoreGlobal >= 50 ? 'text-warning' : 'text-error'
-                            }`} style={{ "--value": scoreGlobal, "--size": "3rem" } as any}>
+                            <div className={`text-xs font-bold ${
+                              scoreGlobal >= 80 ? 'text-emerald-600' : 
+                              scoreGlobal >= 50 ? 'text-amber-600' : 'text-red-600'
+                            }`}>
                               {scoreGlobal}
                             </div>
                           </div>
                         </td>
-                        <td className="text-center">
-                          <div className="tooltip" data-tip={`${formatMoneyFull(volumeValeur)}`}>
-                            <progress className="progress progress-primary w-20" value={volumeScore} max="100"></progress>
+                        <td className="text-center py-2">
+                          <div className="flex flex-col items-center gap-1" title={`${formatMoneyFull(volumeValeur)}`}>
+                            <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${volumeScore}%` }} />
+                            </div>
                           </div>
                         </td>
-                        <td className="text-center">
-                          <div className="tooltip" data-tip={`${qualiteIncidents} incidents`}>
-                            <progress className={`progress w-20 ${
-                              qualiteScore >= 90 ? 'progress-success' : 'progress-error'
-                            }`} value={qualiteScore} max="100"></progress>
+                        <td className="text-center py-2">
+                          <div className="flex flex-col items-center gap-1" title={`${qualiteIncidents} incidents`}>
+                            <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${qualiteScore >= 90 ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${qualiteScore}%` }} />
+                            </div>
                           </div>
                         </td>
-                        <td className="text-center">
-                          <div className="tooltip" data-tip={`${regulariteLivraisons} livraisons`}>
-                            <progress className="progress progress-info w-20" value={regulariteScore} max="100"></progress>
+                        <td className="text-center py-2">
+                          <div className="flex flex-col items-center gap-1" title={`${regulariteLivraisons} livraisons`}>
+                            <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${regulariteScore}%` }} />
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -970,7 +984,7 @@ export default function ModuleFinancier() {
               </table>
             </div>
           ) : (
-             <div className="h-48 flex items-center justify-center text-base-content/50">
+             <div className="h-48 flex items-center justify-center text-slate-400">
               {t('supplier.no_data_12m', 'Aucune donnée fournisseur disponible sur 12 mois')}
             </div>
           )}
@@ -979,29 +993,29 @@ export default function ModuleFinancier() {
 
       {/* Summary Stats */}
       {caEvolution && (
-        <div className="card bg-base-100 shadow-lg">
-          <div className="card-body">
+        <div className="bg-white rounded-xl shadow-lg">
+          <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">
               {t('summary', 'Résumé Annuel')}
             </h3>
-            <div className="stats stats-vertical lg:stats-horizontal w-full">
-              <div className="stat">
-                <div className="stat-title">{t('summary_stats.total_ca_12m', 'CA Total (12 mois)')}</div>
-                <div className="stat-value text-primary">{formatMoneyFull(caEvolution.total_current)}</div>
-                <div className="stat-desc">{t('summary_stats.vs_n1', { amount: formatMoneyFull(caEvolution.total_n1) })}</div>
+            <div className="flex flex-col lg:flex-row gap-4 w-full">
+              <div className="bg-slate-100 rounded-lg p-4 flex-1">
+                <div className="text-xs text-slate-400">{t('summary_stats.total_ca_12m', 'CA Total (12 mois)')}</div>
+                <div className="text-xl font-bold text-indigo-600">{formatMoneyFull(caEvolution.total_current)}</div>
+                <div className="text-xs text-slate-400">{t('summary_stats.vs_n1', { amount: formatMoneyFull(caEvolution.total_n1) })}</div>
               </div>
               {margesData && (
-                <div className="stat">
-                  <div className="stat-title">{t('summary_stats.total_margin', 'Marge Totale')}</div>
-                  <div className="stat-value text-success">{formatMoneyFull(margesData.total_marge)}</div>
-                  <div className="stat-desc">{t('summary_stats.avg_rate', { rate: margesData.taux_moyen })}</div>
+                <div className="bg-slate-100 rounded-lg p-4 flex-1">
+                  <div className="text-xs text-slate-400">{t('summary_stats.total_margin', 'Marge Totale')}</div>
+                  <div className="text-xl font-bold text-emerald-600">{formatMoneyFull(margesData.total_marge)}</div>
+                  <div className="text-xs text-slate-400">{t('summary_stats.avg_rate', { rate: margesData.taux_moyen })}</div>
                 </div>
               )}
               {kpis && (
-                <div className="stat">
-                  <div className="stat-title">{t('summary_stats.annual_ca', 'CA Annuel')}</div>
-                  <div className="stat-value">{formatMoneyFull(kpis.ca_annee)}</div>
-                  <div className="stat-desc">{t('summary_stats.sales_count', { count: kpis.nb_ventes_annee })}</div>
+                <div className="bg-slate-100 rounded-lg p-4 flex-1">
+                  <div className="text-xs text-slate-400">{t('summary_stats.annual_ca', 'CA Annuel')}</div>
+                  <div className="text-xl font-bold">{formatMoneyFull(kpis.ca_annee)}</div>
+                  <div className="text-xs text-slate-400">{t('summary_stats.sales_count', { count: kpis.nb_ventes_annee })}</div>
                 </div>
               )}
             </div>
