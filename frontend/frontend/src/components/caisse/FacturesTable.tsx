@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Package, Minus, Plus, Trash2 } from 'lucide-react'
+import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import type { Facture, CouponMonnaie } from '../../types'
 import {
   Dialog,
@@ -11,6 +11,8 @@ import {
   DialogFooter,
 } from '../shadcn/dialog'
 import { Button } from '../shadcn/button'
+import { Badge } from '../shadcn/badge'
+import { Checkbox } from '../shadcn/checkbox'
 import {
   Table,
   TableBody,
@@ -93,7 +95,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   if (loading && sortedFactures.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
-        <span className="loading loading-spinner loading-lg"></span>
+        <Loader2 className="size-8 animate-spin text-slate-400" />
       </div>
     )
   }
@@ -132,31 +134,30 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   return (
     <>
       <div className="overflow-auto flex-1 min-h-0">
-        <table className="table table-sm w-full">
-          <thead className="bg-slate-100 sticky top-0 z-10 border-b border-slate-200">
-            <tr className="text-xs uppercase tracking-wider text-slate-600 font-bold">
+        <Table>
+          <TableHeader className="bg-slate-100 sticky top-0 z-10 border-b border-slate-200">
+            <TableRow className="text-xs uppercase tracking-wider text-slate-600 font-bold hover:bg-slate-100">
               {onToggleSelect && (
-                <th className="w-10">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-sm checkbox-error"
+                <TableHead className="w-10">
+                  <Checkbox
                     checked={selectedIds ? selectedIds.size === pagedFactures.length && pagedFactures.length > 0 : false}
-                    onChange={(e) => { if (onSelectAll) onSelectAll() }}
+                    onCheckedChange={() => { if (onSelectAll) onSelectAll() }}
                     onClick={(e) => e.stopPropagation()}
+                    className="border-red-400 data-[state=checked]:bg-red-500"
                   />
-                </th>
+                </TableHead>
               )}
-              <th>{t('table.ticket')}</th>
-              <th>{t('table.invoice')}</th>
-              <th>{t('table.client')}</th>
-              <th className="hidden lg:table-cell">{t('table.date')}</th>
-              <th className="hidden xl:table-cell">{t('table.products')}</th>
-              <th className="hidden md:table-cell">{t('table.seller', 'Vendeur')}</th>
-              <th className="text-right">{t('table.amount')}</th>
-              <th className="text-center">{t('table.actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
+              <TableHead>{t('table.ticket')}</TableHead>
+              <TableHead>{t('table.invoice')}</TableHead>
+              <TableHead>{t('table.client')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t('table.date')}</TableHead>
+              <TableHead className="hidden xl:table-cell">{t('table.products')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('table.seller', 'Vendeur')}</TableHead>
+              <TableHead className="text-right">{t('table.amount')}</TableHead>
+              <TableHead className="text-center">{t('table.actions')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {pagedFactures.map((facture, index) => {
               // Récupérer le coupon appliqué à CETTE facture spécifique
               const couponPourCetteFacture = couponsParFacture[facture.id]
@@ -189,33 +190,32 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   }}
                 >
                   {onToggleSelect && (
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-sm checkbox-error"
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
                         checked={isChecked}
-                        onChange={() => { if (onToggleSelect) onToggleSelect(facture.id) }}
+                        onCheckedChange={() => { if (onToggleSelect) onToggleSelect(facture.id) }}
+                        className="border-red-400 data-[state=checked]:bg-red-500"
                       />
-                    </td>
+                    </TableCell>
                   )}
-                  <td>
+                  <TableCell>
                     <span className="inline-flex items-center justify-center min-w-[1.75rem] px-2 h-6 rounded-md bg-slate-800 text-white text-xs font-bold shadow-sm">
                       {facture.session_ticket_number || '?'}
                     </span>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <div className="font-bold text-sky-600">#{facture.numero_facture}</div>
                     {hasTiersPayant && (
-                      <div className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 mt-1">{t('table.tiers_payant')}</div>
+                      <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200 mt-1 text-[10px]">{t('table.tiers_payant')}</Badge>
                     )}
                     {couponPourCetteFacture && (
-                      <div className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 mt-1">{t('table.coupon_applied')}</div>
+                      <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 mt-1 text-[10px]">{t('table.coupon_applied')}</Badge>
                     )}
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <div className="font-bold">{facture.client_name || t('table.passerby_client')}</div>
-                  </td>
-                  <td className="text-xs hidden lg:table-cell text-slate-600">
+                  </TableCell>
+                  <TableCell className="text-xs hidden lg:table-cell text-slate-600">
                     <div className="font-medium">{new Date(facture.date).toLocaleDateString('fr-FR', {
                       day: '2-digit',
                       month: '2-digit',
@@ -225,8 +225,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       hour: '2-digit',
                       minute: '2-digit'
                     })}</div>
-                  </td>
-                  <td className="text-xs max-w-xs hidden xl:table-cell">
+                  </TableCell>
+                  <TableCell className="text-xs max-w-xs hidden xl:table-cell">
                     <button
                       type="button"
                       className="text-sky-600 hover:text-sky-700 hover:underline text-left truncate block max-w-[150px] font-medium"
@@ -239,100 +239,102 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     >
                       {getProductsSummary(facture)}
                     </button>
-                  </td>
-                  <td className="text-xs hidden md:table-cell">
+                  </TableCell>
+                  <TableCell className="text-xs hidden md:table-cell">
                     <div className="font-medium">{facture.created_by_name || '-'}</div>
-                  </td>
-                  <td className="text-right font-mono font-bold text-lg text-slate-800">
+                  </TableCell>
+                  <TableCell className="text-right font-mono font-bold text-lg text-slate-800">
                     {montantAPayer} {t('common:currency_symbol', 'F')}
                     {couponPourCetteFacture && (
                       <div className="text-xs font-normal text-emerald-600 line-through text-slate-500 flex items-center justify-end gap-1">
                         {hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc)} {t('common:currency_symbol', 'F')}
-                         <button 
-                          onClick={(e) => { 
+                         <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-4 text-red-500 hover:bg-red-50"
+                          onClick={(e) => {
                             e.stopPropagation()
-                            onRemoveCoupon(facture.id) 
+                            onRemoveCoupon(facture.id)
                           }}
                           onDoubleClick={(e) => e.stopPropagation()}
-                          className="btn btn-xs btn-circle btn-ghost text-error h-4 w-4 min-h-0"
                           title={t('table.remove_coupon')}
                         >
-                          ✕
-                        </button>
+                          <XCircle className="size-3" />
+                        </Button>
                       </div>
                     )}
-                  </td>
-                  <td className="text-center">
+                  </TableCell>
+                  <TableCell className="text-center">
                     <div className="flex justify-center gap-1">
-                      <button
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300 h-8 w-8 p-0"
                         onClick={(e) => {
                            e.stopPropagation()
                            onModify(facture)
                         }}
                         onDoubleClick={(e) => e.stopPropagation()}
-                        className="btn btn-xs bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300"
                         title={canModify ? t('table.modify') : t('table.not_authorized')}
                         disabled={!canModify}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300 h-8 w-8 p-0"
                         onClick={(e) => {
                            e.stopPropagation()
                            onCancel(facture)
                         }}
                         onDoubleClick={(e) => e.stopPropagation()}
-                        className="btn btn-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300"
                         title={canCancel ? t('table.cancel') : t('table.not_authorized')}
                         disabled={!canCancel}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                        <Trash2 className="size-4" />
+                      </Button>
                       {!couponPourCetteFacture && (
-                        <button
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100 hover:border-fuchsia-300 h-8 w-8 p-0"
                           onClick={(e) => {
                              e.stopPropagation()
                              onApplyCoupon(facture)
                           }}
                           onDoubleClick={(e) => e.stopPropagation()}
-                          className="btn btn-xs bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100 hover:border-fuchsia-300"
                           title={t('table.apply_coupon')}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                          </svg>
-                        </button>
+                          <Ticket className="size-4" />
+                        </Button>
                       )}
-                      <button
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-emerald-600 text-white hover:bg-emerald-700 gap-1 shadow-sm h-8"
                         onClick={(e) => {
                           e.stopPropagation()
                           onEncaisser(facture)
                         }}
                         onDoubleClick={(e) => e.stopPropagation()}
                         disabled={!canCashOut}
-                        className="btn btn-xs bg-emerald-600 text-white hover:bg-emerald-700 gap-1 shadow-sm"
                         title={!canCashOut
                           ? (!hasActiveCashSession && !user?.is_superuser
                             ? t('table.open_cash_register_first', { defaultValue: 'Veuillez d\'abord ouvrir votre caisse' })
                             : t('table.not_authorized'))
                           : t('table.cash_in')}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
+                        <Banknote className="size-4" />
                         {t('table.cash_in')}
-                      </button>
+                      </Button>
                     </div>
-                  </td>
+                  </TableCell>
                 </tr>
               )
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination */}
@@ -341,10 +343,16 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
           <span className="text-slate-500">
             {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sortedFactures.length)} {t('common.pagination.of', 'sur')} {sortedFactures.length}
           </span>
-          <div className="join">
-            <button className="join-item btn btn-sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>{t('common.pagination.prev', 'Précédent')}</button>
-            <button className="join-item btn btn-sm bg-slate-100 text-slate-700 pointer-events-none">{page}/{totalPages}</button>
-            <button className="join-item btn btn-sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>{t('common.pagination.next', 'Suivant')}</button>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+              <ChevronLeft className="size-4" />
+              {t('common.pagination.prev', 'Précédent')}
+            </Button>
+            <span className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-md">{page}/{totalPages}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+              {t('common.pagination.next', 'Suivant')}
+              <ChevronRight className="size-4" />
+            </Button>
           </div>
         </div>
       )}

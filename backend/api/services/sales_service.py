@@ -121,6 +121,7 @@ class SalesService:
                 facture.client_name_override = client_name_override
                 facture.ayant_droit_id = ayant_droit_id  # type: ignore[attr-defined]
                 facture.remise = remise_montant
+                facture.created_by = validation_user
                 facture.validated_by = validation_user  # type: ignore[attr-defined]
                 if poste_caisse_id:
                     facture.poste_caisse_id = poste_caisse_id  # type: ignore[attr-defined]
@@ -141,7 +142,7 @@ class SalesService:
                 ayant_droit_id=ayant_droit_id,  # type: ignore[attr-defined]
                 remise=remise_montant,
                 status=Facture.Status.BROUILLON,
-                created_by=user,
+                created_by=validation_user,
                 validated_by=validation_user,  # type: ignore[attr-defined]
                 poste_caisse_id=poste_caisse_id,  # type: ignore[attr-defined]
                 ticket_session=get_next_ticket_session() if centralized else None

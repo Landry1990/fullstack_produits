@@ -33,6 +33,11 @@ class Profile(models.Model):
     can_manage_avoirs = models.BooleanField(default=False, verbose_name="Gérer les avoirs fournisseurs")
     can_validate_zero_amount = models.BooleanField(default=False, verbose_name="Valider des ventes à montant nul ou négatif")
     can_view_cash_sessions = models.BooleanField(default=False, verbose_name="Voir l'historique des sessions de caisse")
+    is_terminal_account = models.BooleanField(
+        default=False,
+        verbose_name="Compte poste de vente partagé",
+        help_text="Si coché, ce compte représente un poste de vente physique. Le vrai vendeur doit s'identifier par mot de passe à chaque vente."
+    )
 
     # Price & Discount Control
     can_modify_price = models.BooleanField(default=False, verbose_name="Modifier le prix de vente")

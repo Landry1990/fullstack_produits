@@ -409,13 +409,17 @@ class MouvementRetourPromisTestCase(APITestCase):
         self.client_obj = TestDataFactory.create_client()
 
     def _creer_promis(self, quantite=5):
-        return Promis.objects.create(
-            produit=self.produit,
-            quantite=quantite,
-            client=self.client_obj,
-            status=Promis.Status.EN_ATTENTE,
-            created_by=self.user,
+        response = self.client.post(
+            reverse("promis-list"),
+            {
+                "produit": self.produit.id,
+                "quantite": quantite,
+                "client": self.client_obj.id,
+            },
+            format="json",
         )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        return Promis.objects.get(pk=response.data["id"])
 
     def test_annulation_promis_cree_mouvement_retour(self):
         promis = self._creer_promis(5)
@@ -435,10 +439,12 @@ class MouvementRetourPromisTestCase(APITestCase):
     def test_annulation_promis_reinjecte_stock(self):
         stock_avant = self.produit.stock
         promis = self._creer_promis(3)
+        self.produit.refresh_from_db()
+        self.assertEqual(self.produit.stock, stock_avant - 3)
         url = reverse("promis-annuler-et-reintegrer", kwargs={"pk": promis.pk})
         self.client.post(url)
         self.produit.refresh_from_db()
-        self.assertEqual(self.produit.stock, stock_avant + 3)
+        self.assertEqual(self.produit.stock, stock_avant)
 
     def test_annulation_promis_quantite_mouvement(self):
         promis = self._creer_promis(7)

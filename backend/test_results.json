@@ -2,14 +2,14 @@
   {
     "desc": "Empty payload",
     "status": 201,
-    "len": 556,
-    "content": "{\"id\":43,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"System Administrator\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Autre\",\"numero\":\"AV-202606-0041\",\"fournisseur_nom\":null,\"type_avoir\":\"AUTRE\",\"date\":\"2026-06-13\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-06-13T08:33:09.884037+01:00\",\"updated_at\":\"2026-06-13T08:33:09.884048+01:00\",\"is_active\":true,\"stock_decharge\":false,\"stock_decharge_at\":null,\"fournisseur\":null,\"created_by\":1,\"validated_by\":null,\"stock_decharge_by\":null}"
+    "len": 541,
+    "content": "{\"id\":66,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"nkaha\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Autre\",\"numero\":\"AV-202607-0049\",\"fournisseur_nom\":null,\"type_avoir\":\"AUTRE\",\"date\":\"2026-07-15\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-07-15T17:51:08.513760+01:00\",\"updated_at\":\"2026-07-15T17:51:08.513768+01:00\",\"is_active\":true,\"stock_decharge\":false,\"stock_decharge_at\":null,\"fournisseur\":null,\"created_by\":1,\"validated_by\":null,\"stock_decharge_by\":null}"
   },
   {
     "desc": "Null fournisseur",
     "status": 201,
-    "len": 568,
-    "content": "{\"id\":44,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"System Administrator\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Produit périmé\",\"numero\":\"AV-202606-0042\",\"fournisseur_nom\":null,\"type_avoir\":\"PERIME\",\"date\":\"2026-06-13\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-06-13T08:33:09.890624+01:00\",\"updated_at\":\"2026-06-13T08:33:09.890632+01:00\",\"is_active\":true,\"stock_decharge\":false,\"stock_decharge_at\":null,\"fournisseur\":null,\"created_by\":1,\"validated_by\":null,\"stock_decharge_by\":null}"
+    "len": 553,
+    "content": "{\"id\":67,\"produits\":[],\"fournisseur_name\":null,\"created_by_name\":\"nkaha\",\"validated_by_name\":\"\",\"total_ht\":\"0.00\",\"status_display\":\"Brouillon\",\"type_avoir_display\":\"Produit périmé\",\"numero\":\"AV-202607-0050\",\"fournisseur_nom\":null,\"type_avoir\":\"PERIME\",\"date\":\"2026-07-15\",\"observations\":\"\",\"status\":\"BROUILLON\",\"created_at\":\"2026-07-15T17:51:08.520085+01:00\",\"updated_at\":\"2026-07-15T17:51:08.520093+01:00\",\"is_active\":true,\"stock_decharge\":false,\"stock_decharge_at\":null,\"fournisseur\":null,\"created_by\":1,\"validated_by\":null,\"stock_decharge_by\":null}"
   },
   {
     "desc": "Invalid type_avoir",

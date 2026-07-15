@@ -3,6 +3,7 @@ from django.db.models import Sum, Q
 from django.utils import timezone
 from api.models import Produit, Facture
 from api.services.margin_service import MarginService
+from api.services.replenishment_service import get_replenishment_metrics
 from decimal import Decimal
 
 class Command(BaseCommand):
@@ -35,14 +36,8 @@ class Command(BaseCommand):
                 except (ValueError, TypeError):
                     pass
 
-            # 2. Recalculate Rotation (Units Sold / Months)
-            created_at = p.created_at
-            months = (now.year - created_at.year) * 12 + (now.month - created_at.month)
-            if months < 1:
-                months = 1
-            
-            units_sold = p.total_vendus or 0
-            p.rotation_moyenne = Decimal(units_sold) / Decimal(months)
+            # 2. Recalculate monthly consumption used by replenishment
+            p.rotation_moyenne = Decimal(str(get_replenishment_metrics(p.id)['consommation_mensuelle']))
             
             updated_produits.append(p)
             count += 1

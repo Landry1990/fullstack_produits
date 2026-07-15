@@ -72,6 +72,7 @@ class CustomAuthToken(ObtainAuthToken):
         can_do_returns = False
         can_sell_negative_stock = False
         can_cash_out = True
+        is_terminal_account = False
         
         if user.is_superuser:
             role = 'admin'
@@ -91,6 +92,7 @@ class CustomAuthToken(ObtainAuthToken):
             can_do_returns = user.profile.can_do_returns
             can_sell_negative_stock = user.profile.can_sell_negative_stock
             can_cash_out = user.profile.can_cash_out
+            is_terminal_account = user.profile.is_terminal_account
             
         # Record daily session (login)
         import datetime
@@ -124,6 +126,7 @@ class CustomAuthToken(ObtainAuthToken):
             'can_do_returns': can_do_returns,
             'can_sell_negative_stock': can_sell_negative_stock,
             'can_cash_out': can_cash_out,
+            'is_terminal_account': is_terminal_account,
             'server_time': datetime.datetime.now().isoformat(),
             'permissions': {
                 'can_delete_invoice': user.is_superuser,

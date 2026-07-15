@@ -15,15 +15,16 @@ Recalcule automatiquement:
 2. Après chaque vente (pour réactivité immédiate)
 """
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
-from .models import FactureProduit, Produit, Fournisseur
+from .models import Facture, FactureProduit, Produit, Fournisseur
 from .cache_utils import SearchCache
+from .services.replenishment_service import calculate_stock_thresholds
 
 
 def calculate_ventes_mensuelles(produit):
@@ -105,7 +106,8 @@ def calculate_and_apply_stock_levels(produit_id=None):
     for produit in produits:
         try:
             # 1. Calculer les ventes mensuelles (30 derniers jours)
-            ventes_mensuelles = calculate_ventes_mensuelles(produit)
+            thresholds = calculate_stock_thresholds(produit)
+            ventes_mensuelles = thresholds['consommation_mensuelle']
             
             if ventes_mensuelles == 0:
                 # Si aucune vente, ne pas modifier les seuils existants
@@ -121,10 +123,10 @@ def calculate_and_apply_stock_levels(produit_id=None):
             # 3. Calculer les seuils
             # MINIMUM: quantité pour tenir pendant le délai de livraison
             ventes_par_jour = ventes_mensuelles / 30.0
-            stock_minimum = ventes_par_jour * delai_livraison
+            stock_minimum = thresholds['stock_minimum']
             
             # MAXIMUM: quantité pour tenir 1 mois + 20% de sécurité
-            stock_maximum = ventes_mensuelles * COEFFICIENT_SECURITE
+            stock_maximum = thresholds['stock_maximum']
             
             # 4. Convertir en entiers (arrondi)
             stock_minimum_int = int(Decimal(str(stock_minimum)).quantize(Decimal('1'), rounding=ROUND_HALF_UP))
@@ -158,10 +160,25 @@ def update_stock_levels_on_sale(sender, instance, created, **kwargs):
     Recalcule les seuils après chaque vente pour ce produit spécifique.
     Léger et rapide (un seul produit).
     """
-    if created and instance.produit_id:
+    if instance.produit_id:
         updated = calculate_and_apply_stock_levels(instance.produit_id)
         if updated:
             print(f"[StockLevels] Recalculé pour produit #{instance.produit_id} (vente)")
+
+
+@receiver(post_delete, sender=FactureProduit)
+def update_stock_levels_on_sale_delete(sender, instance, **kwargs):
+    if instance.produit_id:
+        updated = calculate_and_apply_stock_levels(instance.produit_id)
+        if updated:
+            print(f"[StockLevels] Recalculé pour produit #{instance.produit_id} (annulation)")
+
+
+@receiver(post_save, sender=Facture)
+def update_stock_levels_on_invoice_save(sender, instance, **kwargs):
+    produit_ids = instance.produits.exclude(produit_id__isnull=True).values_list('produit_id', flat=True)
+    for produit_id in produit_ids:
+        calculate_and_apply_stock_levels(produit_id)
 
 
 def monthly_stock_levels_update():

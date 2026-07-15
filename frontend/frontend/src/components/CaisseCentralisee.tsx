@@ -199,8 +199,12 @@ export default function CaisseCentralisee() {
         }
         
         const postesList = postesRes.data.results || postesRes.data || []
+        const activePoste = myActive.length > 0 ? myActive[0] : null
         setPostesCaisses(postesList)
-        setMyActivePoste(myActive.length > 0 ? myActive[0] : null)
+        setMyActivePoste(activePoste)
+        if (activePoste) {
+          setSelectedPosteCaisseId(String(activePoste.id))
+        }
         
         // Détecter si on est en mode multi-caisse
         const hasMultipleActive = postesList.filter((p: PosteCaisse) => p.est_ouvert).length > 1

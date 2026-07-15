@@ -5,6 +5,14 @@ import { formatCurrency } from '../../utils/formatters';
 import type { StockAnalysisItem } from '../../hooks/useStockAnalysis';
 import { Checkbox } from '../shadcn/checkbox';
 import { Badge } from '../shadcn/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/Table';
 
 interface StockAnalysisTableProps {
     items: StockAnalysisItem[];
@@ -22,14 +30,14 @@ const emptyStateIcons = {
 };
 
 const SkeletonRow = ({ widths, hasCheckbox }: { widths: string[]; hasCheckbox: boolean }) => (
-    <tr className="border-b border-slate-100 animate-pulse">
-        {hasCheckbox && <td className="py-2 px-3 text-center"><div className="size-4 rounded bg-slate-200 mx-auto" /></td>}
+    <TableRow className="border-b border-slate-100 animate-pulse hover:bg-transparent">
+        {hasCheckbox && <TableCell className="py-2 px-3 text-center"><div className="size-4 rounded bg-slate-200 mx-auto" /></TableCell>}
         {widths.map((_, i) => (
-            <td key={i} className="py-2 px-3">
+            <TableCell key={i} className="py-2 px-3">
                 <div className="h-4 rounded bg-slate-200" style={{ width: `${60 + Math.random() * 30}%` }} />
-            </td>
+            </TableCell>
         ))}
-    </tr>
+    </TableRow>
 );
 
 export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
@@ -102,32 +110,32 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
     if (loading) {
         return (
             <div className="overflow-x-auto overflow-y-auto max-h-[55vh]">
-                <table className="w-full table-fixed text-sm">
-                    <thead className="sticky top-0 z-10">
-                        <tr className="bg-slate-50 border-b border-slate-100">
+                <Table className="w-full table-fixed text-sm">
+                    <TableHeader className="sticky top-0 z-10">
+                        <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
                             {hasSelection && (
-                                <th className="w-12 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                <TableHead className="w-12 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
                                     <span className="sr-only">Sélection</span>
-                                </th>
+                                </TableHead>
                             )}
                             {headers.map((h, i) => (
-                                <th
+                                <TableHead
                                     key={h}
                                     className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
                                         i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
                                     }`}
                                 >
                                     {h}
-                                </th>
+                                </TableHead>
                             ))}
-                        </tr>
-                    </thead>
-                    <tbody>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {Array.from({ length: 6 }).map((_, i) => (
                             <SkeletonRow key={i} widths={widths} hasCheckbox={hasSelection} />
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
         );
     }
@@ -154,20 +162,20 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
 
     return (
         <div className="overflow-auto max-h-[55vh]">
-            <table className="w-full table-fixed text-sm">
-                <thead className="sticky top-0 z-10">
-                    <tr className="bg-slate-50 border-b border-slate-100">
+            <Table className="w-full table-fixed text-sm">
+                <TableHeader className="sticky top-0 z-10">
+                    <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
                         {hasSelection && (
-                            <th className="w-12 px-3 py-2 text-center">
+                            <TableHead className="w-12 px-3 py-2 text-center">
                                 <Checkbox
                                     checked={allSelected}
                                     onCheckedChange={onToggleSelectAll}
                                     aria-label="Sélectionner tout"
                                 />
-                            </th>
+                            </TableHead>
                         )}
                         {headers.map((h, i) => (
-                            <th
+                            <TableHead
                                 key={h}
                                 className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
                                     i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
@@ -178,104 +186,104 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                         <Package className="size-3.5" /> {h}
                                     </div>
                                 ) : h}
-                            </th>
+                            </TableHead>
                         ))}
-                    </tr>
-                </thead>
-                <tbody className="text-sm">
+                    </TableRow>
+                </TableHeader>
+                <TableBody className="text-sm">
                     {items.map((item) => {
                         const isSelected = selectedItems.has(item.id);
                         return (
-                            <tr
+                            <TableRow
                                 key={item.id}
                                 className={`border-b border-slate-100 transition-colors hover:bg-slate-50/80 ${isSelected ? 'bg-emerald-50/40' : ''}`}
                             >
                                 {hasSelection && (
-                                    <td className="px-3 py-2 text-center">
+                                    <TableCell className="px-3 py-2 text-center">
                                         <Checkbox
                                             checked={isSelected}
                                             onCheckedChange={() => onToggleSelect(item.id)}
                                             aria-label={`Sélectionner ${item.name}`}
                                         />
-                                    </td>
+                                    </TableCell>
                                 )}
-                                <td className="px-3 py-2">
+                                <TableCell className="px-3 py-2">
                                     <div className="font-semibold text-slate-900 truncate text-sm" title={item.name}>{item.name}</div>
                                     <div className="text-[10px] text-slate-500 mt-0.5">
                                         CIP: {item.cip || item.id}
                                     </div>
-                                </td>
-                                <td className="px-3 py-2 text-center">
+                                </TableCell>
+                                <TableCell className="px-3 py-2 text-center">
                                     <Badge variant="outline" className="font-mono text-xs">
                                         {item.stock}
                                     </Badge>
-                                </td>
+                                </TableCell>
 
                                 {activeTab === 'unsold' ? (
                                     <>
-                                        <td className="px-3 py-2 font-mono text-xs text-slate-600">
+                                        <TableCell className="px-3 py-2 font-mono text-xs text-slate-600">
                                             {item.dernier_achat ? new Date(item.dernier_achat).toLocaleDateString(i18n.language) : '-'}
-                                        </td>
-                                        <td className="px-3 py-2 font-mono text-xs text-slate-600">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 font-mono text-xs text-slate-600">
                                             {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString(i18n.language) : (
                                                 <span className="text-red-600 font-semibold">{t('stock:analyse.messages.never_sold')}</span>
                                             )}
-                                        </td>
-                                        <td className="px-3 py-2 text-center">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 text-center">
                                             <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs">
                                                 {item.days_since_sale ?? '-'} {t('stock:analyse.day_short', { defaultValue: 'j' })}
                                             </Badge>
-                                        </td>
-                                        <td className="px-3 py-2 text-right font-mono text-xs text-slate-600">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 text-right font-mono text-xs text-slate-600">
                                             {formatCurrency(Math.round(item.cost_price))}
-                                        </td>
-                                        <td className="px-3 py-2 text-right font-semibold text-red-600 text-sm">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 text-right font-semibold text-red-600 text-sm">
                                             {formatCurrency(Math.round(item.value))}
-                                        </td>
+                                        </TableCell>
                                     </>
                                 ) : activeTab === 'overstock' ? (
                                     <>
-                                        <td className="px-3 py-2 text-center font-mono text-xs text-slate-700">
+                                        <TableCell className="px-3 py-2 text-center font-mono text-xs text-slate-700">
                                             {Number(item.rotation || 0).toFixed(0)}
                                             <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_month')}</span>
-                                        </td>
-                                        <td className="px-3 py-2 text-center font-semibold text-slate-700 text-sm">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 text-center font-semibold text-slate-700 text-sm">
                                             {item.threshold}
-                                        </td>
-                                        <td className="px-3 py-2 text-center font-semibold text-red-600 text-sm">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 text-center font-semibold text-red-600 text-sm">
                                             +{item.excess_qty}
-                                        </td>
-                                        <td className="px-3 py-2 text-right font-semibold text-red-600 text-sm">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 text-right font-semibold text-red-600 text-sm">
                                             {formatCurrency(Math.round(item.value))}
-                                        </td>
+                                        </TableCell>
                                     </>
                                 ) : (
                                     <>
-                                        <td className="px-3 py-2 text-center font-mono text-xs text-slate-700">
+                                        <TableCell className="px-3 py-2 text-center font-mono text-xs text-slate-700">
                                             {item.avg_daily_sales}
                                             <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_day')}</span>
-                                        </td>
-                                        <td className="px-3 py-2 text-center font-semibold text-sm">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 text-center font-semibold text-sm">
                                             <span className={`text-xs ${
                                                 (item.days_until_stockout || 0) < 7 ? 'text-red-600' :
                                                 (item.days_until_stockout || 0) < 14 ? 'text-amber-600' : 'text-blue-600'
                                             }`}>
                                                 {item.days_until_stockout} {t('stock:analyse.days')}
                                             </span>
-                                        </td>
-                                        <td className="px-3 py-2 text-center">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 text-center">
                                             {getUrgencyBadge(item.urgency || '')}
-                                        </td>
-                                        <td className="px-3 py-2 text-right font-semibold text-red-600 text-sm">
+                                        </TableCell>
+                                        <TableCell className="px-3 py-2 text-right font-semibold text-red-600 text-sm">
                                             {formatCurrency(Math.round(item.value))}
-                                        </td>
+                                        </TableCell>
                                     </>
                                 )}
-                            </tr>
+                            </TableRow>
                         );
                     })}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
         </div>
     );
 };

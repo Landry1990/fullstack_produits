@@ -40,7 +40,8 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   handleKeyDown,
   getItemProps,
   // Permissions
-  user
+  user,
+  compact = false
 }) => {
   const { t } = useTranslation(['facturation', 'common'])
   const [internalMode, setInternalMode] = React.useState<SearchMode>(modes[0])
@@ -354,15 +355,22 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   const hasResults = searchQuery || selectedDci
   
   return (
-    <div className="flex-1 relative flex flex-col gap-2 p-3 md:p-4">
-      <div className="flex justify-between items-center">
-        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider py-0">
-          {searchMode === 'packs' ? t('facturation:search.label_pack') : 
-           searchMode === 'dci' ? t('facturation:search.label_dci') : 
-           t('facturation:search.label')}
-        </label>
-        {renderModeTabs()}
-      </div>
+    <div className={cn("flex-1 relative flex flex-col gap-2", compact ? "p-0" : "p-3 md:p-4")}>
+      {!compact && (
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider py-0">
+            {searchMode === 'packs' ? t('facturation:search.label_pack') : 
+             searchMode === 'dci' ? t('facturation:search.label_dci') : 
+             t('facturation:search.label')}
+          </label>
+          {renderModeTabs()}
+        </div>
+      )}
+      {compact && modes.length > 1 && (
+        <div className="absolute right-0 top-0 z-10">
+          {renderModeTabs()}
+        </div>
+      )}
       
       {renderSearchInput()}
       

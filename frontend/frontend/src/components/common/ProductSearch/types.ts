@@ -51,6 +51,7 @@ export interface ProductSearchProps {
   placeholder?: string
   modes?: SearchMode[]
   showCsvImport?: boolean
+  compact?: boolean
   
   // Callbacks
   onSelect: (item: SearchResult | ProduitModel) => void
