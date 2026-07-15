@@ -2,6 +2,112 @@
 
 ---
 
+## 2026-07-15
+
+### 🎨 UI / UX
+
+- **En-têtes de tableau fixes au scroll**
+  - `frontend/frontend/src/components/ui/Table.tsx` : les cellules d’en-tête des tableaux Shadcn sont désormais `sticky top-0` avec un fond opaque (`bg-base-100`) par défaut.
+  - Le wrapper du composant `Table` est passé en `overflow-x-auto overflow-y-clip` pour que l’en-tête colle au conteneur de scroll vertical extérieur (ce qui corrigeait `StockAnalysis` et les autres tableaux shadcn dans un `overflow-auto max-h-[...]`).
+  - Les tableaux DaisyUI (`className="table"`) conservaient déjà cette règle via `index.css`.
+  - Résultat : dans tout tableau défilant, l’intitulé des colonnes reste visible pendant le scroll vertical.
+  - Frontend redéployé.
+
+### � Exports
+
+- **Export Excel dans Analyse de stock**
+  - `frontend/frontend/src/components/StockAnalysis.tsx` : ajout d’un bouton `Excel` accessible dans les onglets **Invendus**, **Surstock** et **Ruptures**.
+  - L’export repose sur la fonction `exportToExcel` déjà utilisée par les autres modules.
+  - Colonnes exportées adaptées à chaque onglet :
+    - *Invendus* : Produit, CIP, Stock, Dernier achat, Dernière vente, Inactif depuis, Prix d’achat, Valeur stock.
+    - *Surstock* : Produit, CIP, Stock, Rotation moyenne, Seuil, Excès quantité, Valeur excès.
+    - *Ruptures* : Produit, CIP, Stock, Ventes journalières moy., Jours avant rupture, Urgence, Valeur à risque.
+  - Nom de fichier : `analyse_stock_<onglet>_<date>.xlsx`.
+  - Frontend redéployé.
+
+### �🐛 Corrections
+
+- **Seuil de surstock arrondi à l’unité supérieure**
+  - `backend/api/views/stocks/analysis.py` : le seuil `rotation * 1.7` est désormais arrondi par excès (`math.ceil`) car le stock est en unités entières.
+  - L’excès de stock est recalculé à partir de ce seuil entier, ce qui évite les seuils et quantités décimales dans l’analyse.
+  - Backend redéployé.
+
+- **Prévention des doubles règlements fournisseurs**
+  - `backend/api/views/fournisseurs.py` : le relevé de pointage ne retourne plus les commandes entièrement réglées.
+  - Les règlements existants sont imputés chronologiquement ; une commande partiellement réglée est proposée uniquement avec son montant restant.
+  - Le modal de règlement ne peut donc plus sélectionner une facture soldée pour un nouveau paiement.
+
+### ⚡ Performance / Fiabilité
+
+- **Centralisation des calculs financiers fournisseurs**
+  - `backend/api/services/supplier_finance.py` : extraction des annotations de dette, échéanciers globaux et détaillés, ainsi que des relevés de pointage.
+  - `backend/api/views/fournisseurs.py` : les endpoints existants délèguent les calculs au service sans changement de routes ni de format de réponse.
+  - Validation effectuée sur `echeancier`, `echeances_detaillees` et `releve_factures`.
+  - Nettoyage du code mort laissé après le refactor.
+
+### 🧪 Tests automatisés
+
+- Correction du démarrage des tests sous Windows : `scheduler.py` rend l'import `fcntl` optionnel (module Unix indisponible).
+- Correction de `generate_lot_number()` et `get_next_ticket_session()` : fallback DB atomique quand le cache n'est pas fonctionnel (DummyCache sans Redis).
+- Correction de `stats_vendeurs` : les ventes jusqu'à `23:59:30` sont incluses quand l'heure de fin est `23:59:00`.
+- Correction des warnings comptables `api_lettrage_lignes n'existe pas` :
+  - `backend/api/migrations/0180_...` : le `DeleteModel(LettrageLignes)` est maintenant une opération d'état uniquement pour ne pas supprimer la table de liaison M2M.
+  - `backend/api/migrations/0215_create_lettrage_lignes_if_missing.py` : recrée la table si elle est manquante sur les bases existantes.
+- **Résultat final : 160 tests OK (3 skipped), 0 erreur/warning bloquant**.
+- **Couverture complète des mouvements de stock** :
+  - Nouveau fichier `backend/api/tests/test_stock_movements_comprehensive.py` (14 tests).
+  - Vérifie que chaque action métier impactant le stock crée le `MouvementStock` attendu avec la bonne quantité et le bon `stock_apres` :
+    - Réception/annulation de commande fournisseur (`ENTREE`, `AJUSTEMENT` négatif)
+    - Ajustement manuel de stock (`AJUSTEMENT`)
+    - Transfert réserve → rayon (`REAPPRO_INTERSTOCK` double mouvement)
+    - Transformation produit (`TRANSFORMATION_SORTIE` / `TRANSFORMATION_ENTREE`)
+    - Promis (réservation `SORTIE`, livraison sans double mouvement, annulation `RETOUR`)
+    - Vente finalisée (`SORTIE`) et annulation vente (`RETOUR`)
+    - Avoir fournisseur déchargé (`AVOIR`)
+    - Sortie de lots périmés (`AVOIR`)
+    - Validation d'inventaire (`AJUSTEMENT`)
+    - Proforma centralisée (aucun mouvement)
+
+### 🐛 Corrections
+
+- **Cycle de vie Promis : réservation du stock à la création**
+  - `backend/api/views/commandes/promis.py` : un promis non-géré par lots réserve immédiatement le stock (`SORTIE`) ; l'annulation libère la réservation (`RETOUR`). La livraison ne fait que changer le statut, le stock étant déjà réservé.
+  - Gestion atomique : roll-back de la création si le stock est insuffisant.
+  - `backend/api/tests/test_mouvements_stock.py` : mis à jour pour refléter la création via API et le cycle création/réservation/annulation.
+
+## 2026-07-14
+
+### 🎨 Migration DaisyUI → Shadcn/UI + Tailwind CSS (10 composants)
+
+Migration complète de 10 composants frontend depuis DaisyUI et éléments HTML natifs vers Shadcn/UI et Tailwind CSS. Remplacement systématique des classes DaisyUI (`bg-base-100`, `border-base-300`, `text-base-content/50`, `btn`, `input-bordered`, `select-bordered`, `badge`, `checkbox`) par des équivalents Tailwind (`bg-white`, `border-slate-200`, `text-slate-400`) et composants Shadcn (`Button`, `Input`, `Select`, `Checkbox`, `Badge`, `Loader2`).
+
+- **`PharmacySettingsForm.tsx`** (157 occurrences) — formulaire paramètres pharmacie
+- **`Maintenance.tsx`** (84 occurrences) — page maintenance
+- **`CommandeProductTable.tsx`** (67 occurrences) — tableau produits de commande
+- **`OrderSchedulingModal.tsx`** (64 occurrences) — modal planification commandes
+- **`ModuleFinancier.tsx`** (62 occurrences) — module financier complet
+- **`ProductTabsContent.tsx`** (62 occurrences) — onglets détail produit (stats, achats, lots, mouvements)
+- **`ProduitFormModal.tsx`** (57 occurrences) — modal création/édition produit
+- **`ReportFilters.tsx`** (53 occurrences) — filtres de rapports (presets, date pickers, dropdowns, constructeur de conditions dynamiques, sélecteur de colonnes)
+- **`MonthlyReportView.tsx`** (47 occurrences) — vue rapport mensuel (KPIs, encaissements, TVA, mouvements caisse, top fournisseurs, clients pro, unités gratuites)
+- **`AvoirsDetails.tsx`** (34 occurrences) — détail des avoirs (en-tête, actions, tableau produits)
+
+### 🔧 Corrections
+
+- **`CommandeForm.tsx`** : réorganisation de la section supérieure de saisie de commande. Suppression de la ligne dédiée à la recherche produit — le champ de recherche est maintenant sur la même ligne que le fournisseur, le n° de facture et les boutons d'action. Ajout d'un mode `compact` au composant `ProductSearch` (pas de padding/label) pour une intégration en ligne. Gagne environ 60–70 px de hauteur pour le tableau des produits.
+- **`ExportCommandeModal.tsx`** : modernisation du modal d'export avec Shadcn/UI (`Dialog`, `Button`, `Badge`). Suppression de `PremiumModal` et des classes DaisyUI. Largeur réduite à `max-w-2xl`. Sélection CIP remplacée par des boutons segmentés. Réduction du padding et amélioration visuelle des listes de produits avec/sans CIP.
+- **`api/views/commandes/export.py`** : correction `AttributeError` `'Produit' object has no attribute 'libelle'` — remplacement de `produit.libelle or produit.name` par `produit.name` (4 occurrences).
+- **Export des commandes** : correction du `404` lors du téléchargement CSV/TXT. Le paramètre `format` entrait en conflit avec la négociation de contenu native de Django REST Framework ; remplacé par `export_format` côté frontend et backend.
+- **`FacturesTable.tsx`** : correction balise JSX `</TableRow>` → `</tr>` (erreur build TS17002)
+- **`CommandeProductTable.tsx`** : correction label rotation — `rotation_moyenne` est mensuelle (calcul backend : `total_vendus / mois`), l'étiquette indiquait "/ jour" au lieu de "/ mois". Ajout de la rotation journalière `(rotation_moyenne / 30)` en complément. Correction du calcul "Durée de vie stock" qui utilisait la rotation mensuelle au lieu de journalière pour afficher des jours.
+- **`CommandeProductTable.tsx`** : correction raccourci clavier **Shift+Entrée** pour afficher les détails d'un produit. L'écouteur natif en phase de capture était en conflit avec le handler `Enter` des champs de saisie qui déplaçait le focus. Remplacé par un handler React `onKeyDownCapture` qui s'arrête après avoir ouvert la fiche produit (`e.stopPropagation()`).
+
+### 🔒 Sécurité
+
+- **`licence_key.txt`** : retrait du suivi Git (`git rm --cached`) — le fichier était suivi malgré le `.gitignore`. Supprimé de l'index, commit `0cc1c6d`.
+
+---
+
 ## 2026-07-11
 
 ### 🧹 Qualité du code — React Doctor (session 2)

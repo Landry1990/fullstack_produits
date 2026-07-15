@@ -42,7 +42,7 @@ export default function Facturation() {
 
   useEffect(() => {
     if (hook.forceStockProduct && forceStockModalRef.current) {
-      const primaryBtn = forceStockModalRef.current.querySelector('.btn-primary') as HTMLButtonElement | null
+      const primaryBtn = forceStockModalRef.current.querySelector('[data-action="confirm"]') as HTMLButtonElement | null
       primaryBtn?.focus()
     }
   }, [hook.forceStockProduct])
@@ -431,28 +431,28 @@ export default function Facturation() {
         isOpen={!!hook.confirmModal?.isOpen}
         onClose={() => hook.setConfirmModal(null)}
         title={hook.t('common:confirmation', { defaultValue: 'Confirmation' })}
-        icon={<span className="text-warning text-xl">⚠️</span>}
+        icon={<span className="text-amber-500 text-xl">⚠️</span>}
         gradientFrom="warning/10"
         gradientTo="warning/5"
         footer={
           <div className="flex justify-end gap-2 w-full">
-            <button className="btn" onClick={() => hook.setConfirmModal(null)}>
+            <Button variant="outline" onClick={() => hook.setConfirmModal(null)}>
               {hook.t('common:cancel', { defaultValue: 'Annuler' })}
-            </button>
-            <button
-              className="btn btn-error"
+            </Button>
+            <Button
+              variant="destructive"
               onClick={() => {
                 if (hook.confirmModal?.onConfirm) hook.confirmModal.onConfirm();
                 hook.setConfirmModal(null);
               }}
             >
               {hook.t('common:confirm', { defaultValue: 'Confirmer' })}
-            </button>
+            </Button>
           </div>
         }
       >
         <div className="p-6">
-          <p className="text-base-content/80 text-lg">{hook.confirmModal?.message}</p>
+          <p className="text-slate-600 text-lg">{hook.confirmModal?.message}</p>
         </div>
       </PremiumModal>
 
@@ -510,57 +510,57 @@ export default function Facturation() {
         isOpen={hook.showHelp}
         onClose={() => hook.setShowHelp(false)}
         title={hook.t('pos.keyboard_shortcuts')}
-        icon={<span className="text-primary text-xl">⌨️</span>}
+        icon={<span className="text-sky-500 text-xl">⌨️</span>}
         gradientFrom="primary/10"
         gradientTo="primary/5"
       >
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              <h3 className="font-bold text-primary border-b border-primary/20 pb-1 mb-2">{hook.t('pos.navigation_search')}</h3>
+              <h3 className="font-bold text-sky-600 border-b border-sky-200 pb-1 mb-2">{hook.t('pos.navigation_search')}</h3>
               <div className="flex justify-between items-center text-sm">
                 <span>{hook.t('pos.search_product')}</span>
-                <kbd className="kbd kbd-sm font-sans">F2</kbd>
+                <kbd>F2</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span>{hook.t('pos.focus_search')}</span>
-                <kbd className="kbd kbd-sm font-sans">/</kbd>
+                <kbd>/</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span>{hook.t('pos.search_client_qty')}</span>
-                <kbd className="kbd kbd-sm font-sans">F4</kbd>
+                <kbd>F4</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span>{hook.t('pos.search_client_direct')}</span>
-                <kbd className="kbd kbd-sm font-sans">Ctrl + F</kbd>
+                <kbd>Ctrl + F</kbd>
               </div>
             </div>
             
             <div className="space-y-3">
-              <h3 className="font-bold text-secondary border-b border-secondary/20 pb-1 mb-2">{hook.t('pos.sales_actions')}</h3>
+              <h3 className="font-bold text-slate-600 border-b border-slate-200 pb-1 mb-2">{hook.t('pos.sales_actions')}</h3>
               <div className="flex justify-between items-center text-sm">
-                <span className="font-bold text-success">{hook.t('pos.pay_cash')}</span>
-                <kbd className="kbd kbd-sm font-sans">F9</kbd>
+                <span className="font-bold text-emerald-600">{hook.t('pos.pay_cash')}</span>
+                <kbd>F9</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="font-bold text-warning">{hook.t('pos.suspend_hold')}</span>
-                <kbd className="kbd kbd-sm font-sans">Ctrl + S / F7</kbd>
+                <span className="font-bold text-amber-500">{hook.t('pos.suspend_hold')}</span>
+                <kbd>Ctrl + S / F7</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="font-bold text-warning-focus">{hook.t('pos.recall_sale')}</span>
-                <kbd className="kbd kbd-sm font-sans">F8</kbd>
+                <span className="font-bold text-amber-600">{hook.t('pos.recall_sale')}</span>
+                <kbd>F8</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span>{hook.t('pos.zenith_mode')}</span>
-                <kbd className="kbd kbd-sm font-sans">Alt + Z</kbd>
+                <kbd>Alt + Z</kbd>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span>{hook.t('pos.close_cancel')}</span>
-                <kbd className="kbd kbd-sm font-sans">Esc</kbd>
+                <kbd>Esc</kbd>
               </div>
             </div>
           </div>
-          <div className="mt-6 p-3 bg-base-200 rounded-lg text-xs text-center text-base-content/60 italic">
+          <div className="mt-6 p-3 bg-slate-100 rounded-lg text-xs text-center text-slate-500 italic">
             {hook.t('pos.keyboard_shortcuts_tip')}
           </div>
         </div>
@@ -647,9 +647,9 @@ export default function Facturation() {
       {hook.forceStockProduct && (
         <div
           ref={forceStockModalRef}
-          className="modal modal-open z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           onKeyDown={(e) => {
-            const buttons = e.currentTarget.querySelectorAll<HTMLButtonElement>('.modal-action button')
+            const buttons = e.currentTarget.querySelectorAll<HTMLButtonElement>('[data-action]')
             if (!buttons.length) return
             const current = Array.from(buttons).indexOf(document.activeElement as HTMLButtonElement)
             if (e.key === 'ArrowRight') {
@@ -666,31 +666,31 @@ export default function Facturation() {
             }
           }}
         >
-          <div className="modal-box max-w-md">
-            <h3 className="font-bold text-lg mb-2">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+            <h3 className="font-bold text-lg mb-2 text-slate-800">
               {hook.t('common:force_stock.title', { produit: hook.forceStockProduct.name, defaultValue: `Stock insuffisant — ${hook.forceStockProduct.name}` })}
             </h3>
-            <p className="text-sm text-base-content/70 mb-4">
+            <p className="text-sm text-slate-600 mb-4">
               {hook.t('common:force_stock.message', { stock: hook.forceStockProduct.stock, defaultValue: `Ce produit a un stock de ${hook.forceStockProduct.stock}. Souhaitez-vous forcer la vente malgré tout ?` })}
             </p>
-            <div className="modal-action flex gap-2 justify-end">
-              <button className="btn btn-ghost btn-sm" onClick={() => {
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" data-action="substitute" onClick={() => {
                 const p = hook.forceStockProduct
                 hook.setForceStockProduct(null)
                 if (p) hook.setSubstitutionProduct(p)
               }}>
                 {hook.t('common:force_stock.substitute', { defaultValue: 'Voir les substituts' })}
-              </button>
-              <button className="btn btn-primary btn-sm" onClick={() => {
+              </Button>
+              <Button variant="default" size="sm" data-action="confirm" onClick={() => {
                 const p = hook.forceStockProduct
                 hook.setForceStockProduct(null)
                 if (p) hook.cart.addProduit(p, { forceStock: true, isRetrocession: hook.isRetrocession })
               }}>
                 {hook.t('common:force_stock.force', { defaultValue: 'Forcer la vente' })}
-              </button>
-              <button className="btn btn-sm" onClick={() => hook.setForceStockProduct(null)}>
+              </Button>
+              <Button variant="outline" size="sm" data-action="cancel" onClick={() => hook.setForceStockProduct(null)}>
                 {hook.t('common:force_stock.cancel', { defaultValue: 'Annuler' })}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

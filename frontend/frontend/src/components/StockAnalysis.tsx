@@ -2,9 +2,12 @@ import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
     PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight,
-    TrendingUp, AlertTriangle, Package, Clock
+    TrendingUp, AlertTriangle, Package, Clock, FileSpreadsheet
 } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
+import { formatDate } from '../utils/dateUtils';
+import { exportToExcel } from '../utils/excelExport';
+import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { useStockAnalysis } from '../hooks/useStockAnalysis';
 import { StockAnalysisFilters } from './stock/StockAnalysisFilters';
 import { StockAnalysisTable } from './stock/StockAnalysisTable';
@@ -44,6 +47,53 @@ const StockAnalysis = () => {
 
     const currentTab = tabs.find(t => t.id === activeTab) || tabs[0];
     const TabIcon = currentTab.icon;
+    const { settings } = usePharmacySettings();
+
+    const handleExportExcel = () => {
+        if (!data || activeTab === 'pilotage') return;
+        const tabLabel = t(`stock:analyse.tabs.${activeTab}`, currentTab.label);
+        let records: Record<string, string | number>[] = [];
+
+        if (activeTab === 'unsold') {
+            records = data.items.map(item => ({
+                [t('stock:analyse.columns.product', 'Produit')]: item.name,
+                CIP: item.cip || '-',
+                [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
+                [t('stock:analyse.columns.last_purchase', 'Dernier achat')]: formatDate(item.dernier_achat),
+                [t('stock:analyse.columns.last_sale', 'Dernière vente')]: formatDate(item.derniere_vente),
+                [t('stock:analyse.columns.inactive_since', 'Inactif depuis')]: item.days_since_sale != null ? `${item.days_since_sale} j` : '-',
+                [t('stock:analyse.columns.cost_price', "Prix d'achat")]: item.cost_price,
+                [t('stock:analyse.columns.stock_value', 'Valeur stock')]: item.value,
+            }));
+        } else if (activeTab === 'overstock') {
+            records = data.items.map(item => ({
+                [t('stock:analyse.columns.product', 'Produit')]: item.name,
+                CIP: item.cip || '-',
+                [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
+                [t('stock:analyse.columns.avg_rotation', 'Rotation moyenne')]: item.rotation ?? '-',
+                [t('stock:analyse.columns.threshold', 'Seuil')]: item.threshold ?? '-',
+                [t('stock:analyse.columns.excess_qty', 'Excès quantité')]: item.excess_qty ?? '-',
+                [t('stock:analyse.columns.excess_value', 'Valeur excès')]: item.value,
+            }));
+        } else {
+            records = data.items.map(item => ({
+                [t('stock:analyse.columns.product', 'Produit')]: item.name,
+                CIP: item.cip || '-',
+                [t('stock:analyse.columns.current_stock', 'Stock actuel')]: item.stock,
+                [t('stock:analyse.columns.avg_daily_sales', 'Ventes journalières moy.')]: item.avg_daily_sales ?? '-',
+                [t('stock:analyse.columns.days_until_stockout', 'Jours avant rupture')]: item.days_until_stockout ?? '-',
+                [t('stock:analyse.columns.urgency', 'Urgence')]: item.urgency ?? '-',
+                [t('stock:analyse.columns.value_at_risk', 'Valeur à risque')]: item.value,
+            }));
+        }
+
+        const dateStr = new Date().toISOString().slice(0, 10);
+        exportToExcel(records, settings, {
+            filename: `analyse_stock_${activeTab}_${dateStr}.xlsx`,
+            title: `${t('stock:analyse.title', 'Analyse de stock')} - ${tabLabel}`,
+            sheetName: activeTab,
+        });
+    };
 
     return (
         <div className="h-screen overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
@@ -67,9 +117,21 @@ const StockAnalysis = () => {
                     </div>
 
                     {activeTab !== 'pilotage' && data && !loading && (
-                        <Badge variant="outline" className="self-start sm:self-auto text-xs">
-                            {data.total_items} articles · {formatCurrency(Math.round(data.total_value))}
-                        </Badge>
+                        <div className="flex items-center gap-2 self-start sm:self-auto">
+                            <Badge variant="outline" className="text-xs">
+                                {data.total_items} articles · {formatCurrency(Math.round(data.total_value))}
+                            </Badge>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleExportExcel}
+                                disabled={!data.items.length}
+                                title={t('stock:analyse.export_excel', 'Exporter Excel')}
+                            >
+                                <FileSpreadsheet className="size-4 mr-1.5 text-emerald-600" />
+                                <span className="hidden sm:inline">{t('stock:analyse.export_excel', 'Excel')}</span>
+                            </Button>
+                        </div>
                     )}
                 </div>
 

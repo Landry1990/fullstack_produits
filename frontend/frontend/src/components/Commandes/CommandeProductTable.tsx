@@ -1,12 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
-
+import React, { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle } from 'lucide-react';
-
+import { AlertTriangle, Search, Info, Trash2, Package } from 'lucide-react';
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
-
 import { formatCurrency } from '../../utils/formatters';
 import { usePharmacySettings } from '../../context/PharmacySettingsContext';
+import { Button } from '../ui/Button';
+import { Input } from '../shadcn/input';
+import { Checkbox } from '../shadcn/checkbox';
+import { Select } from '../ui/Select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '../shadcn/dialog';
 
 
 
@@ -172,31 +180,24 @@ export default function CommandeProductTable({
 
     const tableRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const el = tableRef.current;
-        if (!el || !onViewProductDetails) return;
+    const handleTableKeyDownCapture = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (!onViewProductDetails) return;
+        if (e.shiftKey && e.key === 'Enter') {
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' && target.hasAttribute('data-row')) {
+                const rowIdx = parseInt(target.getAttribute('data-row')!, 10);
+                const p = commandeProduits[rowIdx];
+                if (!p) return;
 
-        const handler = (e: KeyboardEvent) => {
-            if (e.shiftKey && e.key === 'Enter') {
-                const target = e.target as HTMLElement;
-                if (target.tagName === 'INPUT' && target.hasAttribute('data-row')) {
-                    const rowIdx = parseInt(target.getAttribute('data-row')!, 10);
-                    const p = commandeProduits[rowIdx];
-                    if (!p) return;
-
-                    const isObjectProduit = p.produit && typeof p.produit === 'object';
-                    const produitId = isObjectProduit ? (p.produit as any).id : p.produit;
-                    if (produitId) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onViewProductDetails(Number(produitId));
-                    }
+                const isObjectProduit = p.produit && typeof p.produit === 'object';
+                const produitId = isObjectProduit ? (p.produit as { id: number }).id : p.produit;
+                if (produitId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onViewProductDetails(Number(produitId));
                 }
             }
-        };
-
-        el.addEventListener('keydown', handler, true);
-        return () => el.removeEventListener('keydown', handler, true);
+        }
     }, [commandeProduits, onViewProductDetails]);
 
 
@@ -211,15 +212,15 @@ export default function CommandeProductTable({
 
     return (
 
-        <div ref={tableRef} className="flex-1 min-h-0 flex flex-col bg-base-100 rounded-xl shadow-sm border border-base-200">
+        <div ref={tableRef} onKeyDownCapture={handleTableKeyDownCapture} className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200">
 
-            <div className="py-1.5 px-3 border-b border-base-200 flex justify-between items-center shrink-0 flex-wrap gap-x-4 gap-y-2">
+            <div className="py-1.5 px-3 border-b border-slate-200 flex justify-between items-center shrink-0 flex-wrap gap-x-4 gap-y-2">
 
                 {/* PARTIE GAUCHE: Titre + Recherche + Tri */}
 
                 <div className="flex items-center gap-2 flex-wrap">
 
-                    <h2 className="font-bold text-xs text-base-content whitespace-nowrap">
+                    <h2 className="font-bold text-xs text-slate-800 whitespace-nowrap">
 
                     📦 {commandeProduits.length}
 
@@ -231,13 +232,13 @@ export default function CommandeProductTable({
 
                         <div className="relative">
 
-                            <input
+                            <Input
 
                                 type="text"
 
                                 placeholder={t('orders:product_table.search_placeholder')}
 
-                                className="w-40 h-7 rounded-lg border border-base-200 bg-base-100 pl-7 text-xs text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                className="w-40 h-7 pl-7 text-xs"
 
                                 value={searchQuery}
 
@@ -245,11 +246,7 @@ export default function CommandeProductTable({
 
                             />
 
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 absolute left-2 top-2 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-
-                            </svg>
+                            <Search className="h-3 w-3 absolute left-2 top-2 text-slate-400" />
 
                         </div>
 
@@ -257,11 +254,12 @@ export default function CommandeProductTable({
 
                     {commandeProduits.length > 0 && onSortProduits && (
 
-                        <select 
+                        <Select
 
-                            className="select-ref select-bordered select-xs text-[10px] h-7 min-h-7" 
+                            size="sm"
+                            className="text-[10px] h-7"
 
-                            value={commandeSortBy || 'chrono'} 
+                            value={commandeSortBy || 'chrono'}
 
                             onChange={(e) => onSortProduits(e.target.value as any)}
 
@@ -275,11 +273,11 @@ export default function CommandeProductTable({
 
                             <option value="qty">🔢 {t('orders:product_table.sort_options.qty')}</option>
 
-                        </select>
+                        </Select>
 
                     )}
 
-                    {saving && <span className="text-[10px] text-warning animate-pulse font-bold">{t('orders:form.saving')}</span>}
+                    {saving && <span className="text-[10px] text-amber-600 animate-pulse font-bold">{t('orders:form.saving')}</span>}
 
                 </div>
 
@@ -291,23 +289,25 @@ export default function CommandeProductTable({
 
                     {selectedRows.size > 0 && (
 
-                        <div className="flex items-center gap-1.5 border-l pl-3 ml-1">
+                        <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3 ml-1">
 
-                            <span className="text-[10px] text-base-content/60 font-bold">{selectedRows.size} sél.</span>
+                            <span className="text-[10px] text-slate-500 font-bold">{selectedRows.size} sél.</span>
 
-                            <button type="button" className="btn-ref btn-error btn-xs h-6 min-h-6 px-2 text-[10px]" onClick={() => setIsDeletingMultiple(true)}>
+                            <Button type="button" variant="danger" size="sm" className="h-6 px-2 text-[10px]" onClick={() => setIsDeletingMultiple(true)}>
 
                                 Suppr.
 
-                            </button>
+                            </Button>
 
                             {viewMode === 'EDIT' && selectedCommande?.status === 'PREP' && (
 
-                                <button 
+                                <Button
 
-                                    type="button" 
+                                    type="button"
 
-                                    className="btn-ref btn-info btn-xs h-6 min-h-6 px-2 text-[10px] flex items-center gap-1" 
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-6 px-2 text-[10px] flex items-center gap-1 border-blue-500 text-blue-600 hover:bg-blue-50"
 
                                     onClick={openTransferModal}
 
@@ -319,7 +319,7 @@ export default function CommandeProductTable({
 
                                     <span className="hidden sm:inline">{t('orders:actions.transfer')}</span>
 
-                                </button>
+                                </Button>
 
                             )}
 
@@ -337,13 +337,9 @@ export default function CommandeProductTable({
 
             {commandeProduits.length === 0 ? (
 
-                <div className="h-full flex flex-col items-center justify-center text-base-content/30 gap-4 py-12">
+                <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 py-12">
 
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-
-                </svg>
+                <Package className="h-16 w-16 text-slate-200" />
 
                 <p className="font-light">{t('orders:product_table.empty_e')}</p>
 
@@ -351,59 +347,55 @@ export default function CommandeProductTable({
 
             ) : (
 
-                <table className="table w-full relative text-sm">
+                <table className="w-full relative text-sm">
 
                 <thead className="sticky top-0 z-30">
 
-                    <tr className="!bg-base-200 text-[11px] uppercase tracking-wider text-base-content/80 font-bold border-b-2 border-base-300">
+                    <tr className="!bg-slate-100 text-[11px] uppercase tracking-wider text-slate-600 font-bold border-b-2 border-slate-300">
 
-                    <th className="!bg-base-200 w-8 px-2">
+                    <th className="!bg-slate-100 w-8 px-2">
 
-                        <input
-
-                        type="checkbox"
-
-                        className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
+                        <Checkbox
 
                         checked={selectedRows.size === commandeProduits.length && commandeProduits.length > 0}
 
-                        onChange={toggleAllRows}
+                        onCheckedChange={() => toggleAllRows()}
 
                         />
 
                     </th>
 
-                    <th className="!bg-base-200 pl-2 font-bold w-[35%] min-w-[350px]">{t('orders:product_table.headers.product')}</th>
+                    <th className="!bg-slate-100 pl-2 font-bold w-[35%] min-w-[350px]">{t('orders:product_table.headers.product')}</th>
 
-                    <th className="!bg-base-200 pl-2 font-bold w-24">{t('orders:product_table.headers.cip')}</th>
+                    <th className="!bg-slate-100 pl-2 font-bold w-24">{t('orders:product_table.headers.cip')}</th>
 
-                    <th className="!bg-base-200 text-center w-14 text-warning font-bold border-x border-base-300/30">{t('orders:product_table.info_row.stock', 'Stk')}</th>
+                    <th className="!bg-slate-100 text-center w-14 text-amber-600 font-bold border-x border-slate-300/30">{t('orders:product_table.info_row.stock', 'Stk')}</th>
 
-                    <th className="!bg-base-200 text-right w-16 font-bold">{t('orders:product_table.headers.qty')}</th>
+                    <th className="!bg-slate-100 text-right w-16 font-bold">{t('orders:product_table.headers.qty')}</th>
 
-                    <th className="!bg-base-200 text-center w-14 font-bold text-success border-l border-base-300/30">{t('orders:product_table.headers.ug')}</th>
+                    <th className="!bg-slate-100 text-center w-14 font-bold text-emerald-600 border-l border-slate-300/30">{t('orders:product_table.headers.ug')}</th>
 
                     {commandeType === 'DIR' && (
 
-                        <th className="!bg-base-200 text-right w-24 font-bold text-info border-l border-base-300/30">{t('orders:product_table.headers.dev_price')}</th>
+                        <th className="!bg-slate-100 text-right w-24 font-bold text-blue-600 border-l border-slate-300/30">{t('orders:product_table.headers.dev_price')}</th>
 
                     )}
 
-                    <th className="!bg-base-200 text-right w-24 font-bold border-l border-base-300/30">{t('orders:product_table.headers.buy_price_ht')}</th>
+                    <th className="!bg-slate-100 text-right w-24 font-bold border-l border-slate-300/30">{t('orders:product_table.headers.buy_price_ht')}</th>
 
-                    <th className="!bg-base-200 text-right w-24 font-bold text-primary border-l border-base-300/30">Montant</th>
+                    <th className="!bg-slate-100 text-right w-24 font-bold text-indigo-600 border-l border-slate-300/30">Montant</th>
 
-                    <th className="!bg-base-200 text-right w-16 font-bold">{t('orders:product_table.headers.tva')}</th>
+                    <th className="!bg-slate-100 text-right w-16 font-bold">{t('orders:product_table.headers.tva')}</th>
 
-                    <th className="!bg-base-200 text-right w-16 font-bold">{t('orders:product_table.headers.margin')}</th>
+                    <th className="!bg-slate-100 text-right w-16 font-bold">{t('orders:product_table.headers.margin')}</th>
 
-                    <th className="!bg-base-200 text-right w-24 font-bold border-l border-base-300/30">{t('orders:product_table.headers.sell_price')}</th>
+                    <th className="!bg-slate-100 text-right w-24 font-bold border-l border-slate-300/30">{t('orders:product_table.headers.sell_price')}</th>
 
-                    <th className="!bg-base-200 text-left w-24 font-bold border-l border-base-300/30">{t('orders:product_table.headers.lot')}</th>
+                    <th className="!bg-slate-100 text-left w-24 font-bold border-l border-slate-300/30">{t('orders:product_table.headers.lot')}</th>
 
-                    <th className="!bg-base-200 text-left w-24 font-bold border-l border-base-300/30">{t('orders:product_table.headers.exp_date')}</th>
+                    <th className="!bg-slate-100 text-left w-24 font-bold border-l border-slate-300/30">{t('orders:product_table.headers.exp_date')}</th>
 
-                    <th className="!bg-base-200 w-12 rounded-tr-lg"></th>
+                    <th className="!bg-slate-100 w-12 rounded-tr-lg"></th>
 
                     </tr>
 
@@ -509,21 +501,17 @@ export default function CommandeProductTable({
 
                         <tr 
 
-                            className={`hover:bg-base-200/50 group border-b border-base-200 last:border-0 ${selectedRows.has(index) ? 'bg-primary/10' : ''} ${highlightedIndex === index ? 'ring-2 ring-amber-400 bg-amber-50 animate-pulse' : ''}`}
+                            className={`hover:bg-slate-100/50 group border-b border-slate-200 last:border-0 ${selectedRows.has(index) ? 'bg-indigo-50' : ''} ${highlightedIndex === index ? 'ring-2 ring-amber-400 bg-amber-50 animate-pulse' : ''}`}
 
                         >
 
                             <td className="px-2">
 
-                            <input
-
-                                type="checkbox"
-
-                                className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
+                            <Checkbox
 
                                 checked={selectedRows.has(index)}
 
-                                onChange={() => toggleRowSelection(index)}
+                                onCheckedChange={() => toggleRowSelection(index)}
 
                             />
 
@@ -535,7 +523,7 @@ export default function CommandeProductTable({
 
                                 <div className="flex items-center gap-1">
 
-                                    <span className={`${isDeleted ? 'italic text-base-content/50' : ''} whitespace-nowrap overflow-hidden text-ellipsis`} title={produitName}>
+                                    <span className={`${isDeleted ? 'italic text-slate-400' : ''} whitespace-nowrap overflow-hidden text-ellipsis`} title={produitName}>
 
                                         {produitName}
 
@@ -551,7 +539,7 @@ export default function CommandeProductTable({
 
                                         >
 
-                                            <span className="inline-flex items-center justify-center size-4 rounded text-[8px] font-bold bg-success/20 text-success">
+                                            <span className="inline-flex items-center justify-center size-4 rounded text-[8px] font-bold bg-emerald-100 text-emerald-600">
 
                                               E
 
@@ -571,7 +559,7 @@ export default function CommandeProductTable({
 
                         <td className="pl-2 py-0.5">
 
-                            <span className="text-sm font-mono font-bold text-base-content/80">
+                            <span className="text-sm font-mono font-bold text-slate-600">
 
                                 {(() => {
 
@@ -597,7 +585,7 @@ export default function CommandeProductTable({
 
                         {/* Stock Actuel */}
 
-                        <td className="text-center py-0.5 bg-warning/10/20">
+                        <td className="text-center py-0.5 bg-amber-50/20">
 
                             {(() => {
 
@@ -609,7 +597,7 @@ export default function CommandeProductTable({
 
                                 return (
 
-                                    <span className={`text-xs font-bold px-1 rounded ${currentStock <= 0 ? 'text-error bg-error/10' : 'text-warning'}`}>
+                                    <span className={`text-xs font-bold px-1 rounded ${currentStock <= 0 ? 'text-red-600 bg-red-50' : 'text-amber-600'}`}>
 
                                         {currentStock}
 
@@ -625,7 +613,7 @@ export default function CommandeProductTable({
 
                         <td className="text-right py-0.5">
 
-                        <input
+                        <Input
 
                             type="text"
 
@@ -641,7 +629,7 @@ export default function CommandeProductTable({
 
                             onFocus={handleSelectAll}
 
-                            className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right font-bold focus:bg-base-100 focus:text-primary ${!fieldsConfig[0].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`h-8 px-2 text-sm w-full text-right font-bold focus:bg-white focus:text-indigo-600 ${!fieldsConfig[0].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
 
                             autoFocus={focusedField?.row === index && focusedField?.field === 0}
 
@@ -657,7 +645,7 @@ export default function CommandeProductTable({
 
                         <td className="text-center py-0.5">
 
-                        <input
+                        <Input
 
                             type="text"
 
@@ -685,7 +673,7 @@ export default function CommandeProductTable({
 
                             onFocus={handleSelectAll}
 
-                            className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-xs w-full text-center font-bold bg-success/5 focus:bg-success/10 focus:text-success ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`h-8 px-2 text-xs w-full text-center font-bold bg-emerald-50 focus:bg-emerald-100 focus:text-emerald-600 ${!fieldsConfig[1].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
 
                             placeholder="0"
 
@@ -703,9 +691,9 @@ export default function CommandeProductTable({
 
                         {commandeType === 'DIR' && (
 
-                            <td className="text-right py-0.5 bg-info/10/10 border-l border-blue-100">
+                            <td className="text-right py-0.5 bg-blue-50/10 border-l border-blue-100">
 
-                            <input
+                            <Input
 
                                 type="text"
 
@@ -721,7 +709,7 @@ export default function CommandeProductTable({
 
                                 onKeyDown={(e) => handleTableFieldKeyDown(e, index, 2)}
 
-                                className="input-ref input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right focus:bg-info/10 focus:text-info font-mono"
+                                className="h-8 px-2 text-sm w-full text-right focus:bg-blue-50 focus:text-blue-600 font-mono"
 
                                 placeholder="..."
 
@@ -735,7 +723,7 @@ export default function CommandeProductTable({
 
                         <td className="text-right py-0.5">
 
-                        <input
+                        <Input
 
                             type="text"
 
@@ -751,7 +739,7 @@ export default function CommandeProductTable({
 
                             onFocus={handleSelectAll}
 
-                            className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[2].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`h-8 px-2 text-sm w-full text-right focus:bg-white focus:text-indigo-600 ${!fieldsConfig[2].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
 
                             autoFocus={focusedField?.row === index && focusedField?.field === 2}
 
@@ -765,7 +753,7 @@ export default function CommandeProductTable({
 
                         {/* Montant = qty × price (UG non inclus) */}
 
-                        <td className="text-right py-0.5 font-bold text-primary font-mono">
+                        <td className="text-right py-0.5 font-bold text-indigo-600 font-mono">
 
                             {(() => {
 
@@ -783,7 +771,7 @@ export default function CommandeProductTable({
 
                         <td className="text-right py-0.5">
 
-                        <input
+                        <Input
 
                             type="text"
 
@@ -799,7 +787,7 @@ export default function CommandeProductTable({
 
                             onFocus={handleSelectAll}
 
-                            className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right text-base-content/70 focus:opacity-100 ${!fieldsConfig[3].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`h-8 px-2 text-sm w-full text-right text-slate-500 focus:opacity-100 ${!fieldsConfig[3].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
 
                             autoFocus={focusedField?.row === index && focusedField?.field === 3}
 
@@ -816,7 +804,7 @@ export default function CommandeProductTable({
                         <td className="text-right py-0.5">
 
                         <div className="relative flex items-center justify-end">
-                            <input
+                            <Input
 
                                 type="text"
 
@@ -832,7 +820,7 @@ export default function CommandeProductTable({
 
                                 onFocus={handleSelectAll}
 
-                                className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right font-bold focus:bg-base-100 ${Number(p.marge || 0) >= marginThreshold ? 'text-success' : 'text-warning bg-warning/10 border-warning'} ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                                className={`h-8 px-2 text-sm w-full text-right font-bold focus:bg-white ${Number(p.marge || 0) >= marginThreshold ? 'text-emerald-600' : 'text-amber-600 bg-amber-50 border-amber-300'} ${!fieldsConfig[4].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
 
                                 autoFocus={focusedField?.row === index && focusedField?.field === 4}
 
@@ -843,7 +831,7 @@ export default function CommandeProductTable({
                             />
                             {Number(p.marge || 0) > 0 && Number(p.marge || 0) < marginThreshold && (
                                 <div className="absolute right-1 top-1/2 -translate-y-1/2" title={t('orders:product_table.low_margin_tooltip', { threshold: marginThreshold, defaultValue: `Marge faible (seuil: ${marginThreshold})` })}>
-                                    <AlertTriangle className="size-3.5 text-warning" />
+                                    <AlertTriangle className="size-3.5 text-amber-600" />
                                 </div>
                             )}
                         </div>
@@ -854,7 +842,7 @@ export default function CommandeProductTable({
 
                         <td className="text-right py-0.5">
 
-                        <input
+                        <Input
 
                             type="text"
 
@@ -870,7 +858,7 @@ export default function CommandeProductTable({
 
                             onFocus={handleSelectAll}
 
-                            className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-sm w-full text-right font-bold focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`h-8 px-2 text-sm w-full text-right font-bold focus:bg-white focus:text-indigo-600 ${!fieldsConfig[5].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
 
                             autoFocus={focusedField?.row === index && focusedField?.field === 5}
 
@@ -886,7 +874,7 @@ export default function CommandeProductTable({
 
                         <td className="text-left py-0.5">
 
-                        <input
+                        <Input
 
                             type="text"
 
@@ -902,7 +890,7 @@ export default function CommandeProductTable({
 
                             onFocus={handleSelectAll}
 
-                            className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-[10px] w-full focus:bg-base-100 ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                            className={`h-9 px-2.5 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[6].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
 
                             placeholder="Lot"
 
@@ -920,7 +908,7 @@ export default function CommandeProductTable({
 
                         <td className="text-left py-0.5">
 
-                        <input
+                        <Input
 
                             type="text"
 
@@ -948,7 +936,7 @@ export default function CommandeProductTable({
 
                             onFocus={handleSelectAll}
 
-                            className={`input-ref input-bordered input-sm h-8 min-h-8 px-2 text-[10px] w-full focus:bg-base-100 ${!fieldsConfig[7].editable ? 'bg-base-200 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'input-error text-error' : ''}`}
+                            className={`h-9 px-2.5 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[7].editable ? 'bg-slate-100 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'border-red-500 text-red-600' : ''}`}
 
                             placeholder="MM/YY"
 
@@ -968,9 +956,9 @@ export default function CommandeProductTable({
 
                             <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
 
-                                <button type="button" className="btn-ref btn-ghost btn-xs h-6 w-6 p-0 text-info" onClick={() => setExpandedRow(expandedRow === index ? null : index)}>ℹ️</button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-600" onClick={() => setExpandedRow(expandedRow === index ? null : index)}><Info className="size-3.5" /></Button>
 
-                                <button type="button" className="btn-ref btn-ghost btn-xs h-6 w-6 p-0 text-error" onClick={() => setProductToDelete(index)}>🗑️</button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-600" onClick={() => setProductToDelete(index)}><Trash2 className="size-3.5" /></Button>
 
                             </div>
 
@@ -984,7 +972,7 @@ export default function CommandeProductTable({
 
                     {expandedRow === index && (
 
-                        <tr className="bg-info/10/30 border-b border-base-200">
+                        <tr className="bg-blue-50/30 border-b border-slate-200">
 
                             <td colSpan={14} className="p-0">
 
@@ -1034,23 +1022,26 @@ export default function CommandeProductTable({
 
                                             <div>
 
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.purchase_history', "Historique d'Achat")}</div>
+                                                <div className="text-xs uppercase font-bold text-slate-400 mb-1">{t('orders:product_table.info_row.purchase_history', "Historique d'Achat")}</div>
 
-                                                <div className="font-medium text-base-content">{formatAchat}</div>
+                                                <div className="font-medium text-slate-800">{formatAchat}</div>
 
-                                                <div className="text-xs text-base-content/60 mt-0.5">{t('orders:product_table.info_row.last_buy_price', "Dernier prix d'achat")}: {s.cost_price ? formatCurrency(Number(s.cost_price)) : '-'}</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">{t('orders:product_table.info_row.last_buy_price', "Dernier prix d'achat")}: {s.cost_price ? formatCurrency(Number(s.cost_price)) : '-'}</div>
 
                                             </div>
 
                                             <div>
 
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.sales_history', "Historique de Vente")}</div>
+                                                <div className="text-xs uppercase font-bold text-slate-400 mb-1">{t('orders:product_table.info_row.sales_history', "Historique de Vente")}</div>
 
-                                                <div className="font-medium text-base-content">{formatVente}</div>
+                                                <div className="font-medium text-slate-800">{formatVente}</div>
 
-                                                {s.rotation_moyenne && (
+                                                {s.rotation_moyenne && Number(s.rotation_moyenne) > 0 && (
 
-                                                    <div className="text-xs text-info mt-0.5 font-medium">{t('orders:product_table.info_row.rotation', 'Rotation')}: {Number(s.rotation_moyenne).toFixed(2)} / jour</div>
+                                                    <div className="text-xs text-blue-600 mt-0.5 font-medium">
+                                                        {t('orders:product_table.info_row.rotation', 'Rotation')}: {Number(s.rotation_moyenne).toFixed(2)} / mois
+                                                        <span className="text-slate-400 ml-1">({(Number(s.rotation_moyenne) / 30).toFixed(2)} / j)</span>
+                                                    </div>
 
                                                 )}
 
@@ -1058,17 +1049,17 @@ export default function CommandeProductTable({
 
                                             <div>
 
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.stock_alerts', 'Alertes Stock')}</div>
+                                                <div className="text-xs uppercase font-bold text-slate-400 mb-1">{t('orders:product_table.info_row.stock_alerts', 'Alertes Stock')}</div>
 
                                                 <div className="font-medium">
 
-                                                    Min: <span className="text-warning">{s.stock_minimum}</span> / Max: <span className="text-success">{s.stock_maximum}</span>
+                                                    Min: <span className="text-amber-600">{s.stock_minimum}</span> / Max: <span className="text-emerald-600">{s.stock_maximum}</span>
 
                                                 </div>
 
                                                 {s.stock_alert > 0 && (
 
-                                                    <div className="text-xs text-error mt-0.5">{t('orders:product_table.info_row.alert_threshold', "Seuil d'alerte")}: {s.stock_alert}</div>
+                                                    <div className="text-xs text-red-600 mt-0.5">{t('orders:product_table.info_row.alert_threshold', "Seuil d'alerte")}: {s.stock_alert}</div>
 
                                                 )}
 
@@ -1076,25 +1067,25 @@ export default function CommandeProductTable({
 
                                             <div>
 
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.indicators', 'Indicateurs')}</div>
+                                                <div className="text-xs uppercase font-bold text-slate-400 mb-1">{t('orders:product_table.info_row.indicators', 'Indicateurs')}</div>
 
                                                 <div className="flex flex-col gap-1">
 
                                                     {s.stock <= 0 ? (
 
-                                                        <div className="text-xs text-error font-medium">⚠️ {t('orders:product_table.info_row.stock_out', 'Stock en rupture')}</div>
+                                                        <div className="text-xs text-red-600 font-medium">⚠️ {t('orders:product_table.info_row.stock_out', 'Stock en rupture')}</div>
 
                                                     ) : s.rotation_moyenne && Number(s.rotation_moyenne) > 0 ? (
 
                                                         <div className="text-xs">
 
-                                                            {t('orders:product_table.info_row.stock_life', "Durée de vie stock actuel")}: <span className="font-bold">~{Math.round(s.stock / Number(s.rotation_moyenne))} j</span>
+                                                            {t('orders:product_table.info_row.stock_life', "Durée de vie stock actuel")}: <span className="font-bold">~{Math.round(s.stock / (Number(s.rotation_moyenne) / 30))} j</span>
 
                                                         </div>
 
                                                     ) : (
 
-                                                        <div className="text-xs text-base-content/50">{t('orders:product_table.info_row.rotation_unknown', 'Rotation inconnue')}</div>
+                                                        <div className="text-xs text-slate-400">{t('orders:product_table.info_row.rotation_unknown', 'Rotation inconnue')}</div>
 
                                                     )}
 
@@ -1124,31 +1115,31 @@ export default function CommandeProductTable({
 
                 <tfoot className="sticky bottom-0 z-30">
 
-                    <tr className="!bg-base-200 text-[10px] uppercase font-bold text-base-content/60 border-t-2 border-base-300 shadow-[0_-2px_4px_rgba(0,0,0,0.05)]">
+                    <tr className="!bg-slate-100 text-[10px] uppercase font-bold text-slate-500 border-t-2 border-slate-300 shadow-[0_-2px_4px_rgba(0,0,0,0.05)]">
 
-                        <th colSpan={3} className="!bg-base-200 pl-4 py-2">Fin de liste - {commandeProduits.length} articles</th>
+                        <th colSpan={3} className="!bg-slate-100 pl-4 py-2">Fin de liste - {commandeProduits.length} articles</th>
 
-                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-slate-100 py-2"></th>
 
-                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-slate-100 py-2"></th>
 
-                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-slate-100 py-2"></th>
 
-                        {commandeType === 'DIR' && <th className="!bg-base-200 py-2"></th>}
+                        {commandeType === 'DIR' && <th className="!bg-slate-100 py-2"></th>}
 
-                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-slate-100 py-2"></th>
 
-                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-slate-100 py-2"></th>
 
-                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-slate-100 py-2"></th>
 
-                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-slate-100 py-2"></th>
 
-                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-slate-100 py-2"></th>
 
-                        <th className="!bg-base-200 py-2"></th>
+                        <th className="!bg-slate-100 py-2"></th>
 
-                        <th className="!bg-base-200 py-2 rounded-br-lg"></th>
+                        <th className="!bg-slate-100 py-2 rounded-br-lg"></th>
 
                     </tr>
 
@@ -1164,67 +1155,39 @@ export default function CommandeProductTable({
 
             {/* Deletion Modals */}
 
-            {productToDelete !== null && (
-
-                <div className="modal modal-open">
-
-                    <div className="modal-box">
-
-                        <h3 className="font-bold text-lg text-error">{t('common:confirm_deletion', 'Confirmer la suppression')}</h3>
-
-                        <p className="py-4">{t('orders:messages.remove_product_confirm', 'Êtes-vous sûr de vouloir retirer ce produit de la commande ?')}</p>
-
-                        <div className="flex justify-end gap-3 pt-4">
-
-                            <button className="btn-ref btn-ghost" onClick={() => setProductToDelete(null)}>{t('common:cancel', 'Annuler')}</button>
-
-                            <button className="btn-ref btn-error text-white" onClick={() => {
-
-                                onRemoveProduct(productToDelete);
-
-                                setProductToDelete(null);
-
-                            }}>{t('common:confirm', 'Confirmer')}</button>
-
-                        </div>
-
+            <Dialog open={productToDelete !== null} onOpenChange={(open) => { if (!open) setProductToDelete(null); }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-red-600">{t('common:confirm_deletion', 'Confirmer la suppression')}</DialogTitle>
+                        <DialogDescription>{t('orders:messages.remove_product_confirm', 'Êtes-vous sûr de vouloir retirer ce produit de la commande ?')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button variant="ghost" onClick={() => setProductToDelete(null)}>{t('common:cancel', 'Annuler')}</Button>
+                        <Button variant="danger" onClick={() => {
+                            onRemoveProduct(productToDelete!);
+                            setProductToDelete(null);
+                        }}>{t('common:confirm', 'Confirmer')}</Button>
                     </div>
-
-                </div>
-
-            )}
+                </DialogContent>
+            </Dialog>
 
 
 
-            {isDeletingMultiple && (
-
-                <div className="modal modal-open">
-
-                    <div className="modal-box">
-
-                        <h3 className="font-bold text-lg text-error">{t('orders:bulk_delete_title', 'Confirmer la suppression multiple')}</h3>
-
-                        <p className="py-4">{t('orders:bulk_delete_confirm_minimal', { count: selectedRows.size, defaultValue: `Êtes-vous sûr de vouloir supprimer les ${selectedRows.size} produits sélectionnés ?` })}</p>
-
-                        <div className="flex justify-end gap-3 pt-4">
-
-                            <button className="btn-ref btn-ghost" onClick={() => setIsDeletingMultiple(false)}>{t('common:cancel', 'Annuler')}</button>
-
-                            <button className="btn-ref btn-error text-white" onClick={() => {
-
-                                deleteSelectedRows();
-
-                                setIsDeletingMultiple(false);
-
-                            }}>{t('common:confirm', 'Confirmer')}</button>
-
-                        </div>
-
+            <Dialog open={isDeletingMultiple} onOpenChange={(open) => { if (!open) setIsDeletingMultiple(false); }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-red-600">{t('orders:bulk_delete_title', 'Confirmer la suppression multiple')}</DialogTitle>
+                        <DialogDescription>{t('orders:bulk_delete_confirm_minimal', { count: selectedRows.size, defaultValue: `Êtes-vous sûr de vouloir supprimer les ${selectedRows.size} produits sélectionnés ?` })}</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button variant="ghost" onClick={() => setIsDeletingMultiple(false)}>{t('common:cancel', 'Annuler')}</Button>
+                        <Button variant="danger" onClick={() => {
+                            deleteSelectedRows();
+                            setIsDeletingMultiple(false);
+                        }}>{t('common:confirm', 'Confirmer')}</Button>
                     </div>
-
-                </div>
-
-            )}
+                </DialogContent>
+            </Dialog>
 
         </div>
 

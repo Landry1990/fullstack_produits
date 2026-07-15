@@ -357,7 +357,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
 
         # ── 2. Paramètres logistiques du fournisseur ──
         fournisseur = produit.fournisseur
-        delai_livraison = getattr(fournisseur, 'delai_livraison_jours', 7) or 7
+        delai_livraison = getattr(fournisseur, 'delai_livraison_jours', 2) or 2
         marge_retard = getattr(fournisseur, 'marge_retard_jours', 2) or 2
         # delai_couverture vient du paramètre de la commande/schedule, pas du fournisseur
 

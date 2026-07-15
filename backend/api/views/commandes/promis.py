@@ -32,11 +32,60 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     ordering_fields = ['date_promis', 'status']
     ordering = ['-date_promis']
 
+    def _reserve_stock_for_promis(self, promis):
+        """Réserve le stock au moment de la création d'un promis."""
+        if not promis.produit_id:
+            return
+
+        produit = Produit.objects.select_for_update().get(pk=promis.produit_id)
+        if produit.use_lot_management:
+            # Produits gérés par lots : pas de réservation physique automatique,
+            # on trace juste la création du promis par un mouvement neutre.
+            MouvementStock.objects.create(
+                produit=produit,
+                type_mouvement=MouvementStock.TypeMouvement.SORTIE,
+                quantite=0,
+                stock_apres=produit.total_stock,
+                user=promis.created_by,
+                description=f"Réservation logique - Promis #{promis.id} (gestion par lots) (Client: {promis.client_display})"
+            )
+            return
+
+        if produit.stock < promis.quantite:
+            raise ValueError(
+                f"Stock insuffisant pour réserver {promis.quantite} unité(s) de {produit.name}."
+            )
+
+        produit.stock -= promis.quantite
+        produit.save(update_fields=['stock'])
+
+        MouvementStock.objects.create(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.SORTIE,
+            quantite=-promis.quantite,
+            stock_apres=produit.total_stock,
+            user=promis.created_by,
+            description=f"Réservation stock - Promis #{promis.id} (Client: {promis.client_display})"
+        )
+
+    @transaction.atomic
     def perform_create(self, serializer):
         # DEBUG: Log the incoming data
         logger.info(f"DEBUG PROMIS - Request data: {self.request.data}")
         logger.info(f"DEBUG PROMIS - Client ID: {self.request.data.get('client')}, Client name: {self.request.data.get('client_name')}, Client phone: {self.request.data.get('client_phone')}")
-        serializer.save(created_by=self.request.user)
+        promis = serializer.save(created_by=self.request.user)
+        self._reserve_stock_for_promis(promis)
+        return promis
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            self.perform_create(serializer)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_destroy(self, instance):
         instance.is_active = False

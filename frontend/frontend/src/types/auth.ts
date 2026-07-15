@@ -39,6 +39,7 @@ export interface User {
     can_close_commande?: boolean;
     can_delete_fournisseur?: boolean;
     can_generate_coupon?: boolean;
+    is_terminal_account?: boolean;
 }
 
 export interface SudoOptions {

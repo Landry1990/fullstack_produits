@@ -11,6 +11,25 @@ import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
 import { getApiErrorDetail } from '../utils/errorHandling';
+import { Button } from './ui/Button';
+import { Input } from './shadcn/input';
+import { Checkbox } from './shadcn/checkbox';
+import { Badge } from './shadcn/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/Table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from './shadcn/dialog';
 
 interface PurgeTable {
   key: string;
@@ -523,32 +542,32 @@ export default function Maintenance() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <p className="text-sm text-base-content/60">{t('subtitle')}</p>
+          <p className="text-sm text-slate-500">{t('subtitle')}</p>
         </div>
       </div>
 
       {/* Warning Banner */}
-      <div className="alert alert-warning mb-6 shadow-lg">
-        <AlertTriangle className="size-5" />
+      <div className="flex items-center gap-3 mb-6 shadow-lg bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <AlertTriangle className="size-5 text-amber-600 shrink-0" />
         <div>
-          <h3 className="font-bold">{t('irreversible')}</h3>
-          <p className="text-sm">{t('warning_msg')}</p>
+          <h3 className="font-bold text-amber-800">{t('irreversible')}</h3>
+          <p className="text-sm text-amber-700">{t('warning_msg')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Table Selection */}
         <div className="lg:col-span-2">
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
+          <div className="bg-white shadow-xl rounded-2xl border border-slate-200">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="card-title text-lg">
-                  <CheckSquare className="size-5 text-primary" />
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                  <CheckSquare className="size-5 text-indigo-600" />
                   {t('tables_title')}
                 </h2>
                 <div className="flex gap-2">
-                  <button className="btn btn-xs btn-ghost" onClick={selectAll}>{t('select_all')}</button>
-                  <button className="btn btn-xs btn-ghost" onClick={deselectAll}>{t('deselect_all')}</button>
+                  <Button variant="ghost" size="sm" onClick={selectAll}>{t('select_all')}</Button>
+                  <Button variant="ghost" size="sm" onClick={deselectAll}>{t('deselect_all')}</Button>
                 </div>
               </div>
 
@@ -561,51 +580,51 @@ export default function Maintenance() {
                   const isExpanded = expandedCategories.has(catKey);
 
                   return (
-                    <div key={catKey} className="border border-base-300 rounded-lg overflow-hidden">
+                    <div key={catKey} className="border border-slate-200 rounded-lg overflow-hidden">
                       {/* Category header */}
                       <div
-                        className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${someCatSelected ? 'bg-primary/10' : 'bg-base-200/50 hover:bg-base-200'}`}
+                        className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${someCatSelected ? 'bg-indigo-50' : 'bg-slate-100/50 hover:bg-slate-100'}`}
                         onClick={() => toggleExpandCategory(catKey)}
                       >
                         <div className="flex items-center gap-3">
-                          <button
-                            className="btn btn-xs btn-ghost p-0"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-0"
                             onClick={(e) => { e.stopPropagation(); toggleCategory(availableKeys); }}
                           >
                             {allCatSelected ? (
-                              <CheckSquare className="size-4 text-primary" />
+                              <CheckSquare className="size-4 text-indigo-600" />
                             ) : someCatSelected ? (
-                              <CheckSquare className="size-4 text-primary/50" />
+                              <CheckSquare className="size-4 text-indigo-600/50" />
                             ) : (
-                              <Square className="size-4 text-base-content/40" />
+                              <Square className="size-4 text-slate-400" />
                             )}
-                          </button>
+                          </Button>
                           <span className="font-semibold text-sm">{cat.label}</span>
-                          <span className="badge badge-sm badge-ghost">{availableKeys.length}</span>
+                          <Badge variant="secondary" className="text-xs">{availableKeys.length}</Badge>
                         </div>
                         {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
                       </div>
 
                       {/* Category items */}
                       {isExpanded && (
-                        <div className="divide-y divide-base-200">
+                        <div className="divide-y divide-slate-200">
                           {availableKeys.map(key => {
                             const table = tableMap.get(key)!;
                             const isSelected = selectedTables.has(key);
                             return (
                               <label
                                 key={key}
-                                className={`flex items-center gap-3 px-6 py-2.5 cursor-pointer transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-base-200/30'}`}
+                                className={`flex items-center gap-3 px-6 py-2.5 cursor-pointer transition-colors ${isSelected ? 'bg-indigo-50/50' : 'hover:bg-slate-100/30'}`}
                               >
-                                <input
-                                  type="checkbox"
-                                  className="checkbox checkbox-sm checkbox-primary"
+                                <Checkbox
                                   checked={isSelected}
-                                  onChange={() => toggleTable(key)}
+                                  onCheckedChange={() => toggleTable(key)}
                                 />
                                   <span className="text-sm flex-1">{t('tables.' + table.key, table.label)}</span>
                                 {table.children.length > 0 && (
-                                  <span className="text-xs text-base-content/50">
+                                  <span className="text-xs text-slate-400">
                                     +{table.children.length} {t('common:sub_table', { count: table.children.length })}
                                   </span>
                                 )}
@@ -625,286 +644,300 @@ export default function Maintenance() {
         {/* Right Column: Controls */}
         <div className="space-y-4">
           {/* Date Range */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title text-lg mb-2">
-                <Calendar className="size-5 text-secondary" />
+          <div className="bg-white shadow-xl rounded-2xl border border-slate-200">
+            <div className="p-6">
+              <h2 className="text-lg font-bold flex items-center gap-2 mb-2">
+                <Calendar className="size-5 text-slate-600" />
                 {t('period_title')}
               </h2>
-              <div className="form-control mb-2">
-                <label className="label"><span className="label-text text-xs">{t('date_from')}</span></label>
-                <input
+              <div className="mb-2">
+                <label className="block"><span className="text-xs text-slate-600">{t('date_from')}</span></label>
+                <Input
                   type="date"
                   lang={getLocale()}
-                  className="input input-bordered input-sm"
+                  className="h-9 text-sm"
                   value={dateFrom}
                   onChange={e => { setDateFrom(e.target.value); setPreview(null); setPurgeResults(null); }}
                 />
               </div>
-              <div className="form-control">
-                <label className="label"><span className="label-text text-xs">{t('date_to')}</span></label>
-                <input
+              <div>
+                <label className="block"><span className="text-xs text-slate-600">{t('date_to')}</span></label>
+                <Input
                   type="date"
                   lang={getLocale()}
-                  className="input input-bordered input-sm"
+                  className="h-9 text-sm"
                   value={dateTo}
                   onChange={e => { setDateTo(e.target.value); setPreview(null); setPurgeResults(null); }}
                 />
               </div>
               {!dateFrom && !dateTo && (
-                <p className="text-xs text-warning mt-2">{t('date_warning')}</p>
+                <p className="text-xs text-amber-600 mt-2">{t('date_warning')}</p>
               )}
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body gap-3">
-              <h2 className="card-title text-lg">{t('actions')}</h2>
+          <div className="bg-white shadow-xl rounded-2xl border border-slate-200">
+            <div className="p-6 space-y-3">
+              <h2 className="text-lg font-bold">{t('actions')}</h2>
 
-              <button
-                className="btn btn-primary btn-sm w-full gap-2"
+              <Button
+                variant="primary"
+                size="sm"
+                className="w-full gap-2"
                 onClick={handlePreview}
                 disabled={loading || selectedTables.size === 0}
               >
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />}
                 {t('preview_btn')}
-              </button>
+              </Button>
 
-              <button
-                className="btn btn-info btn-sm btn-outline w-full gap-2"
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                 onClick={handleExport}
                 disabled={exporting || selectedTables.size === 0}
               >
                 {exporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
                 {t('export_btn')}
-              </button>
+              </Button>
 
-              <div className="divider my-0"></div>
+              <div className="border-t border-slate-200 my-0"></div>
 
-              <button
-                className="btn btn-error btn-sm w-full gap-2"
+              <Button
+                variant="danger"
+                size="sm"
+                className="w-full gap-2"
                 onClick={() => { if (selectedTables.size > 0) setShowConfirmModal(true); else toast.error(t('common:select_tables')); }}
                 disabled={selectedTables.size === 0}
               >
                 <Trash2 className="size-4" />
                 {t('purge_btn')}
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* Gestion des Produits */}
-          <div className="card bg-base-100 shadow-xl border border-indigo-500/20">
-            <div className="card-body gap-4">
-              <h2 className="card-title text-lg flex items-center gap-2">
+          <div className="bg-white shadow-xl rounded-2xl border border-indigo-500/20">
+            <div className="p-6 space-y-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
                 <Package className="size-5 text-indigo-500" />
                 Gestion des Produits
               </h2>
 
               {/* Compteur */}
-              <div className="flex items-center justify-between bg-base-200/50 rounded-lg px-4 py-2">
-                <span className="text-sm text-base-content/60">Produits en base</span>
+              <div className="flex items-center justify-between bg-slate-100/50 rounded-lg px-4 py-2">
+                <span className="text-sm text-slate-500">Produits en base</span>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-lg text-indigo-500">
                     {produitsCount === null ? '...' : produitsCount.toLocaleString()}
                   </span>
-                  <button className="btn btn-ghost btn-xs" onClick={() => api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {})}>
+                  <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {})}>
                     <RefreshCw className="size-3" />
-                  </button>
+                  </Button>
                 </div>
               </div>
 
-              <div className="divider my-0 text-xs">IMPORT</div>
+              <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">IMPORT</div>
 
               {/* Import Excel */}
               <div className="space-y-2">
-                <p className="text-xs text-base-content/60">Importez un fichier Excel (.xlsx) ou CSV pour créer/mettre à jour les produits.</p>
-                <div className="form-control w-full">
+                <p className="text-xs text-slate-500">Importez un fichier Excel (.xlsx) ou CSV pour créer/mettre à jour les produits.</p>
+                <div className="w-full">
                   <input
                     type="file"
                     accept=".xlsx,.xls,.csv"
-                    className="file-input file-input-bordered file-input-sm w-full"
+                    className="block w-full text-sm text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
                     onChange={e => { setImportFile(e.target.files?.[0] || null); setImportResult(null); }}
                   />
                 </div>
-                <button
-                  className="btn btn-primary btn-sm w-full gap-2"
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="w-full gap-2"
                   onClick={handleImportProduits}
                   disabled={importing || !importFile}
                 >
                   {importing ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}
                   {importing ? 'Import en cours...' : 'Importer'}
-                </button>
+                </Button>
 
                 {importing && (
                   <div className="space-y-1 animate-in fade-in duration-300">
-                    <div className="flex justify-between text-xs text-base-content/60">
+                    <div className="flex justify-between text-xs text-slate-500">
                       <span className="italic">{importMessage}</span>
                       <span className="font-bold text-indigo-500">{importProgress}%</span>
                     </div>
-                    <progress className="progress progress-primary w-full h-2" value={importProgress} max="100" />
+                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-600 rounded-full transition-all" style={{ width: `${importProgress}%` }} />
+                    </div>
                   </div>
                 )}
 
                 {/* Résultat import */}
                 {importResult && (
-                  <div className="bg-base-200 rounded-lg p-3 space-y-1 text-sm">
+                  <div className="bg-slate-100 rounded-lg p-3 space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-base-content/60">Créés</span>
-                      <span className="font-bold text-success">{importResult.created}</span>
+                      <span className="text-slate-500">Créés</span>
+                      <span className="font-bold text-emerald-600">{importResult.created}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-base-content/60">Mis à jour</span>
-                      <span className="font-bold text-info">{importResult.updated}</span>
+                      <span className="text-slate-500">Mis à jour</span>
+                      <span className="font-bold text-blue-600">{importResult.updated}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-base-content/60">Erreurs</span>
-                      <span className={`font-bold ${importResult.errors > 0 ? 'text-error' : 'text-base-content/40'}`}>{importResult.errors}</span>
+                      <span className="text-slate-500">Erreurs</span>
+                      <span className={`font-bold ${importResult.errors > 0 ? 'text-red-600' : 'text-slate-400'}`}>{importResult.errors}</span>
                     </div>
                     {importResult.rapport_xlsx && (
-                      <button
-                        className="btn btn-xs btn-outline btn-success w-full gap-1 mt-2"
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-1 mt-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
                         onClick={() => downloadRapport(importResult.rapport_xlsx as string)}
                       >
                         <FileDown className="size-3" /> Télécharger le rapport Excel
-                      </button>
+                      </Button>
                     )}
                     {importResult.rapport_txt && (
-                      <button
-                        className="btn btn-xs btn-outline w-full gap-1"
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-1"
                         onClick={() => downloadRapport(importResult.rapport_txt as string)}
                       >
                         <FileDown className="size-3" /> Télécharger le rapport texte
-                      </button>
+                      </Button>
                     )}
                   </div>
                 )}
               </div>
 
-              <div className="divider my-0 text-xs">PURGE</div>
+              <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">PURGE</div>
 
               {/* Purge */}
               {purgeResult && (
-                <div className="bg-success/10 border border-success/30 rounded-lg p-3 text-sm">
-                  <p className="font-bold text-success">✅ {purgeResult.deleted} produit(s) supprimé(s)</p>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm">
+                  <p className="font-bold text-emerald-600">✅ {purgeResult.deleted} produit(s) supprimé(s)</p>
                   {purgeResult.conserves > 0 && (
-                    <p className="text-xs text-base-content/60">{purgeResult.conserves} conservé(s) car liés à des ventes</p>
+                    <p className="text-xs text-slate-500">{purgeResult.conserves} conservé(s) car liés à des ventes</p>
                   )}
                 </div>
               )}
               <div className="space-y-1">
-                <p className="text-xs text-base-content/60">Supprime tous les produits (utile si mauvais fichier importé).</p>
+                <p className="text-xs text-slate-500">Supprime tous les produits (utile si mauvais fichier importé).</p>
                 <label className="flex items-center gap-2 text-xs cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-xs checkbox-warning"
+                  <Checkbox
                     checked={purgeSansVentes}
-                    onChange={e => setPurgeSansVentes(e.target.checked)}
+                    onCheckedChange={(checked) => setPurgeSansVentes(!!checked)}
                   />
                   Conserver les produits liés à des ventes
                 </label>
-                <button
-                  className="btn btn-error btn-sm w-full gap-2"
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="w-full gap-2"
                   onClick={() => { setPurgeResult(null); setShowPurgeModal(true); }}
                 >
                   <Trash2 className="size-4" />
                   Purger les produits
-                </button>
+                </Button>
               </div>
             </div>
           </div>
 
           {/* Backup Section */}
-          <div className="card bg-base-100 shadow-xl border border-primary/20">
-            <div className="card-body gap-4">
-              <h2 className="card-title text-lg flex items-center gap-2">
-                <Database className="size-5 text-primary" />
+          <div className="bg-white shadow-xl rounded-2xl border border-indigo-500/20">
+            <div className="p-6 space-y-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Database className="size-5 text-indigo-600" />
                 {t('backup_title')}
               </h2>
 
               <div className="space-y-4">
                 {/* Manual Backup */}
                 <div>
-                  <p className="text-xs text-base-content/60 mb-2">{t('backup_desc')}</p>
-                  <button
-                    className="btn btn-primary btn-sm w-full gap-2"
+                  <p className="text-xs text-slate-500 mb-2">{t('backup_desc')}</p>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full gap-2"
                     onClick={handleManualBackup}
                     disabled={backupLoading}
                   >
                     {backupLoading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
                     {t('backup_now')}
-                  </button>
+                  </Button>
 
                   {backupLoading && (
                     <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-primary">
+                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-indigo-600">
                         <span>{backupStep}</span>
                         <span>{Math.round(backupProgress)}%</span>
                       </div>
-                      <progress 
-                        className="progress progress-primary w-full h-2 shadow-inner" 
-                        value={backupProgress} 
-                        max="100"
-                      ></progress>
+                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                        <div className="h-full bg-indigo-600 rounded-full transition-all" style={{ width: `${backupProgress}%` }} />
+                      </div>
                     </div>
                   )}
                 </div>
 
-                <div className="divider my-0"></div>
+                <div className="border-t border-slate-200 my-0"></div>
 
                 {/* Scheduled Backup */}
                 <div className="space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/50 flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <Clock className="size-4" />
                     {t('automatic')}
                   </h3>
                   
-                  <div className="form-control">
-                    <label className="label cursor-pointer justify-start gap-3 p-0">
-                      <input 
-                        type="checkbox" 
-                        className="toggle toggle-primary toggle-sm" 
+                  <div>
+                    <label className="flex items-center gap-3 cursor-pointer p-0">
+                      <Checkbox 
                         checked={pharmacySettings?.backup_enabled || false}
-                        onChange={e => setPharmacySettings({...pharmacySettings, backup_enabled: e.target.checked})}
+                        onCheckedChange={(checked) => setPharmacySettings({...pharmacySettings, backup_enabled: !!checked})}
                       />
-                      <span className="label-text">{t('enable_auto')}</span>
+                      <span className="text-sm text-slate-700">{t('enable_auto')}</span>
                     </label>
                   </div>
 
-                  <div className="form-control">
-                    <label className="label p-0 py-1">
-                      <span className="label-text text-xs">{t('scheduled_time')}</span>
+                  <div>
+                    <label className="block py-1">
+                      <span className="text-xs text-slate-600">{t('scheduled_time')}</span>
                     </label>
-                    <input 
+                    <Input 
                       type="time"
                       lang={getLocale()}
-                      className="input input-bordered input-sm w-full" 
+                      className="h-9 text-sm w-full" 
                       value={pharmacySettings?.backup_time?.substring(0, 5) || "02:00"}
                       onChange={e => setPharmacySettings({...pharmacySettings, backup_time: e.target.value})}
                     />
                   </div>
 
-                  <div className="form-control">
-                    <label className="label p-0 py-1">
-                      <span className="label-text text-xs">{t('secondary_path')}</span>
+                  <div>
+                    <label className="block py-1">
+                      <span className="text-xs text-slate-600">{t('secondary_path')}</span>
                     </label>
-                    <input 
+                    <Input 
                       type="text" 
-                      className="input input-bordered input-sm w-full" 
+                      className="h-9 text-sm w-full" 
                       placeholder="Ex: E:\Backups_Pharma"
                       value={pharmacySettings?.secondary_backup_path || ""}
                       onChange={e => setPharmacySettings({...pharmacySettings, secondary_backup_path: e.target.value})}
                     />
                   </div>
 
-                  <button
-                    className="btn btn-outline btn-primary btn-xs w-full gap-2 mt-2"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2 mt-2"
                     onClick={saveBackupSettings}
                     disabled={savingSettings || !pharmacySettings}
                   >
                     {savingSettings ? <Loader2 className="size-3 animate-spin" /> : <Save className="size-3" />}
                     {t('save_settings')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -912,46 +945,46 @@ export default function Maintenance() {
 
 
           {/* Restoration Section */}
-          <div className="card bg-base-100 shadow-xl border border-error/20">
-            <div className="card-body gap-4">
-              <h2 className="card-title text-lg flex items-center gap-2">
-                <Upload className="size-5 text-error" />
+          <div className="bg-white shadow-xl rounded-2xl border border-red-500/20">
+            <div className="p-6 space-y-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Upload className="size-5 text-red-600" />
                 {t('restore_title')}
               </h2>
 
               <div className="space-y-4">
-                <p className="text-xs text-base-content/60">{t('restore_desc')}</p>
+                <p className="text-xs text-slate-500">{t('restore_desc')}</p>
                 
-                <div className="form-control w-full">
+                <div className="w-full">
                   <input 
                     type="file" 
                     accept=".sql.gz"
-                    className="file-input file-input-bordered file-input-sm w-full" 
+                    className="block w-full text-sm text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-red-50 file:text-red-700 hover:file:bg-red-100 cursor-pointer" 
                     onChange={e => setRestoreFile(e.target.files?.[0] || null)}
                   />
                 </div>
 
-                <button
-                  className="btn btn-error btn-outline btn-sm w-full gap-2"
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="w-full gap-2"
                   onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else toast.error(t('common:select_file')); }}
                   disabled={restoring || !restoreFile}
                 >
                   {restoring ? <Loader2 className="size-4 animate-spin" /> : <ShieldAlert className="size-4" />}
                   {t('restore_now')}
-                </button>
+                </Button>
                 
                 {restoring && (
                   <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-error">
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-red-600">
                       <span>{restoreStep}</span>
                       <span>{Math.round(restoreProgress)}%</span>
                     </div>
-                    <progress 
-                      className="progress progress-error w-full h-2 shadow-inner" 
-                      value={restoreProgress} 
-                      max="100"
-                    ></progress>
-                    <p className="text-[10px] text-center text-error/60 italic">{t('restore_restart_msg')}</p>
+                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                      <div className="h-full bg-red-600 rounded-full transition-all" style={{ width: `${restoreProgress}%` }} />
+                    </div>
+                    <p className="text-[10px] text-center text-red-600/60 italic">{t('restore_restart_msg')}</p>
                   </div>
                 )}
               </div>
@@ -960,48 +993,52 @@ export default function Maintenance() {
 
 
           {/* Source Code Management Section */}
-          <div className="card bg-base-100 shadow-xl border border-secondary/20">
-            <div className="card-body gap-4">
-              <h2 className="card-title text-lg flex items-center gap-2">
-                <ShieldAlert className="size-5 text-secondary" />
+          <div className="bg-white shadow-xl rounded-2xl border border-slate-400/20">
+            <div className="p-6 space-y-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <ShieldAlert className="size-5 text-slate-600" />
                 {t('code_management.title')}
               </h2>
 
               <div className="space-y-4">
                 {/* Code Backup */}
                 <div>
-                  <p className="text-xs text-base-content/60 mb-2">{t('code_management.desc')}</p>
-                  <button
-                    className="btn btn-secondary btn-sm w-full gap-2"
+                  <p className="text-xs text-slate-500 mb-2">{t('code_management.desc')}</p>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full gap-2"
                     onClick={handleCodeBackup}
                     disabled={codeBackupLoading}
                   >
                     {codeBackupLoading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
                     {t('code_management.backup_now')}
-                  </button>
+                  </Button>
                 </div>
 
-                <div className="divider my-0"></div>
+                <div className="border-t border-slate-200 my-0"></div>
 
                 {/* Code Restore */}
                 <div>
-                  <p className="text-xs text-base-content/60 mb-2">{t('code_management.restore_desc')}</p>
-                  <div className="form-control w-full mb-2">
+                  <p className="text-xs text-slate-500 mb-2">{t('code_management.restore_desc')}</p>
+                  <div className="w-full mb-2">
                     <input 
                       type="file" 
                       accept=".zip"
-                      className="file-input file-input-bordered file-input-sm w-full" 
+                      className="block w-full text-sm text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer" 
                       onChange={e => setCodeRestoreFile(e.target.files?.[0] || null)}
                     />
                   </div>
-                  <button
-                    className="btn btn-outline btn-secondary btn-sm w-full gap-2"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2"
                     onClick={handleCodeRestore}
                     disabled={codeRestoring || !codeRestoreFile}
                   >
                     {codeRestoring ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
                     {t('code_management.restore_now')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1009,13 +1046,13 @@ export default function Maintenance() {
 
 
           {/* Selection Summary */}
-          <div className="card bg-base-200/50">
-            <div className="card-body py-3">
+          <div className="bg-slate-100/50 rounded-2xl">
+            <div className="p-3">
               <p className="text-sm">
-                <span className="font-bold text-primary">{selectedTables.size}</span> {t('selection_summary', { count: selectedTables.size })}
+                <span className="font-bold text-indigo-600">{selectedTables.size}</span> {t('selection_summary', { count: selectedTables.size })}
               </p>
-              {dateFrom && <p className="text-xs text-base-content/60">{t('from')}: {dateFrom}</p>}
-              {dateTo && <p className="text-xs text-base-content/60">{t('to')}: {dateTo}</p>}
+              {dateFrom && <p className="text-xs text-slate-500">{t('from')}: {dateFrom}</p>}
+              {dateTo && <p className="text-xs text-slate-500">{t('to')}: {dateTo}</p>}
             </div>
           </div>
         </div>
@@ -1023,47 +1060,47 @@ export default function Maintenance() {
 
       {/* Preview Results */}
       {preview && (
-        <div className="card bg-base-100 shadow-xl mt-6">
-          <div className="card-body">
-            <h2 className="card-title text-lg mb-4">
-              <Eye className="size-5 text-info" />
+        <div className="bg-white shadow-xl rounded-2xl border border-slate-200 mt-6">
+          <div className="p-6">
+            <h2 className="text-lg font-bold flex items-center gap-2 mb-4">
+              <Eye className="size-5 text-blue-600" />
               {t('preview_title', { count: totalPreviewCount })}
             </h2>
             <div className="overflow-x-auto">
-              <table className="table table-sm table-zebra">
-                <thead>
-                  <tr>
-                    <th>{t('common:table')}</th>
-                    <th className="text-right">{t('common:rows')}</th>
-                    <th>{t('common:sub_tables')}</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('common:table')}</TableHead>
+                    <TableHead className="text-right">{t('common:rows')}</TableHead>
+                    <TableHead>{t('common:sub_tables')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                    {preview.map(p => (
-                     <tr key={p.key}>
-                       <td className="font-medium">{t('tables.' + p.key, p.label)}</td>
-                      <td className="text-right">
-                        <span className={`badge ${p.count > 0 ? 'badge-error' : 'badge-ghost'} badge-sm`}>
+                     <TableRow key={p.key}>
+                       <TableCell className="font-medium">{t('tables.' + p.key, p.label)}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={p.count > 0 ? 'destructive' : 'secondary'} className="text-xs">
                           {formatNumber(p.count)}
-                        </span>
-                      </td>
-                      <td>
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         {p.children.length > 0 ? (
                           <div className="flex gap-2 flex-wrap">
                              {p.children.map((c) => (
-                               <span key={c.label} className="badge badge-sm badge-outline">
+                               <Badge key={c.label} variant="outline" className="text-xs">
                                  {t('tables.children.' + c.label.toLowerCase().replace(/ /g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, ""), c.label)}: {formatNumber(c.count)}
-                               </span>
+                               </Badge>
                              ))}
                           </div>
                         ) : (
-                          <span className="text-base-content/30 text-xs">-</span>
+                          <span className="text-slate-300 text-xs">-</span>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
         </div>
@@ -1071,207 +1108,208 @@ export default function Maintenance() {
 
       {/* Purge Results */}
       {purgeResults && (
-        <div className="card bg-success/10 border border-success/30 shadow-xl mt-6">
-          <div className="card-body">
-            <h2 className="card-title text-lg text-success mb-4">
+        <div className="bg-emerald-50 border border-emerald-200 shadow-xl rounded-2xl mt-6">
+          <div className="p-6">
+            <h2 className="text-lg font-bold text-emerald-600 flex items-center gap-2 mb-4">
               <Trash2 className="size-5" />
               {t('purge_finished')}
             </h2>
             <div className="overflow-x-auto">
-              <table className="table table-sm">
-                <thead>
-                  <tr>
-                    <th>{t('common:table')}</th>
-                    <th className="text-right">{t('common:rows_deleted')}</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('common:table')}</TableHead>
+                    <TableHead className="text-right">{t('common:rows_deleted')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                    {purgeResults.map(r => (
-                     <tr key={r.key}>
-                       <td>{t('tables.' + r.key, r.label)}</td>
-                      <td className="text-right font-bold text-success">{formatNumber(r.deleted)}</td>
-                    </tr>
+                     <TableRow key={r.key}>
+                       <TableCell>{t('tables.' + r.key, r.label)}</TableCell>
+                      <TableCell className="text-right font-bold text-emerald-600">{formatNumber(r.deleted)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
         </div>
       )}
 
       {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-md">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-full bg-error/20">
-                <ShieldAlert className="size-6 text-error" />
+      <Dialog open={showConfirmModal} onOpenChange={(open) => { if (!open) { setShowConfirmModal(false); setPassword(''); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-red-100">
+                <ShieldAlert className="size-6 text-red-600" />
               </div>
-              <h3 className="font-bold text-lg">{t('confirm_title')}</h3>
-            </div>
+              {t('confirm_title')}
+            </DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+                <AlertTriangle className="size-5 text-red-600 shrink-0" />
+                <span className="text-sm text-red-700">
+                  {t('confirm_msg')}
+                </span>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="alert alert-error mb-4">
-              <AlertTriangle className="size-5" />
-              <span className="text-sm">
-                {t('confirm_msg')}
-              </span>
-            </div>
-
-            <div className="bg-base-200 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto">
-              <p className="text-xs font-semibold mb-1">{t('common:concerned_tables')} :</p>
-              <ul className="text-xs space-y-0.5">
-                 {Array.from(selectedTables).map(key => {
-                   const tbl = tableMap.get(key);
-                   return <li key={key}>• {t('tables.' + key, tbl?.label || key)}</li>;
-                 })}
-              </ul>
-              {(dateFrom || dateTo) && (
-                <p className="text-xs mt-2 text-base-content/60">
-                  {t('period')} : {dateFrom || '...'} → {dateTo || '...'}
-                </p>
-              )}
-            </div>
-
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text text-sm font-semibold">{t('password_label')}</span>
-              </label>
-              <input
-                type="password"
-                className="input input-bordered"
-                placeholder={t('placeholders.enter_password')}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handlePurge(); }}
-                autoFocus
-              />
-            </div>
-
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={() => { setShowConfirmModal(false); setPassword(''); }}>
-                {t('cancel')}
-              </button>
-              <button
-                className="btn btn-error gap-2"
-                onClick={handlePurge}
-                disabled={purging || !password}
-              >
-                {purging ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                {t('confirm_purge')}
-              </button>
-            </div>
+          <div className="bg-slate-100 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto">
+            <p className="text-xs font-semibold mb-1">{t('common:concerned_tables')} :</p>
+            <ul className="text-xs space-y-0.5">
+               {Array.from(selectedTables).map(key => {
+                 const tbl = tableMap.get(key);
+                 return <li key={key}>• {t('tables.' + key, tbl?.label || key)}</li>;
+               })}
+            </ul>
+            {(dateFrom || dateTo) && (
+              <p className="text-xs mt-2 text-slate-500">
+                {t('period')} : {dateFrom || '...'} → {dateTo || '...'}
+              </p>
+            )}
           </div>
-          <div className="modal-backdrop" onClick={() => { setShowConfirmModal(false); setPassword(''); }}></div>
-        </div>
-      )}
+
+          <div className="mb-4">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">{t('password_label')}</span>
+            </label>
+            <Input
+              type="password"
+              placeholder={t('placeholders.enter_password')}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handlePurge(); }}
+              autoFocus
+            />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => { setShowConfirmModal(false); setPassword(''); }}>
+              {t('cancel')}
+            </Button>
+            <Button
+              variant="danger"
+              className="gap-2"
+              onClick={handlePurge}
+              disabled={purging || !password}
+            >
+              {purging ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+              {t('confirm_purge')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Restore Confirmation Modal */}
-      {showRestoreConfirm && (
-        <div className="modal modal-open">
-          <div className="modal-box border-2 border-error/50 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-full bg-error/20">
-                <AlertTriangle className="size-6 text-error" />
+      <Dialog open={showRestoreConfirm} onOpenChange={(open) => { if (!open) { setShowRestoreConfirm(false); setRestorePassword(''); } }}>
+        <DialogContent className="border-2 border-red-500/50 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-red-600">
+              <div className="p-2 rounded-full bg-red-100">
+                <AlertTriangle className="size-6 text-red-600" />
               </div>
-              <h3 className="font-bold text-lg text-error">{t('restore_title')}</h3>
-            </div>
+              {t('restore_title')}
+            </DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3 mt-2 shadow-sm">
+                <ShieldAlert className="size-5 text-red-600 shrink-0" />
+                <span className="text-sm text-red-700">
+                  {t('confirm_msg')}
+                  <div className="font-mono mt-1 font-bold text-xs">{restoreFile?.name}</div>
+                </span>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="alert alert-error mb-4 shadow-sm">
-              <ShieldAlert className="size-5" />
-              <span className="text-sm">
-                {t('confirm_msg')}
-                <div className="font-mono mt-1 font-bold text-xs">{restoreFile?.name}</div>
-              </span>
-            </div>
-
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text text-sm font-semibold">{t('password_label')}</span>
-              </label>
-              <input
-                type="password"
-                className="input input-bordered border-error"
-                placeholder={t('placeholders.password_required')}
-                value={restorePassword}
-                onChange={e => setRestorePassword(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleRestore(); }}
-                autoFocus
-              />
-            </div>
-
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={() => { setShowRestoreConfirm(false); setRestorePassword(''); }}>
-                {t('cancel')}
-              </button>
-              <button
-                className="btn btn-error gap-2 px-8"
-                onClick={handleRestore}
-                disabled={restoring || !restorePassword}
-              >
-                {restoring ? <Loader2 className="size-4 animate-spin" /> : <Database className="size-4" />}
-                {t('restore_now')}
-              </button>
-            </div>
+          <div className="mb-4">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">{t('password_label')}</span>
+            </label>
+            <Input
+              type="password"
+              className="border-red-300"
+              placeholder={t('placeholders.password_required')}
+              value={restorePassword}
+              onChange={e => setRestorePassword(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleRestore(); }}
+              autoFocus
+            />
           </div>
-          <div className="modal-backdrop" onClick={() => { setShowRestoreConfirm(false); setRestorePassword(''); }}></div>
-        </div>
-      )}
+
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => { setShowRestoreConfirm(false); setRestorePassword(''); }}>
+              {t('cancel')}
+            </Button>
+            <Button
+              variant="danger"
+              className="gap-2 px-8"
+              onClick={handleRestore}
+              disabled={restoring || !restorePassword}
+            >
+              {restoring ? <Loader2 className="size-4 animate-spin" /> : <Database className="size-4" />}
+              {t('restore_now')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Purge Produits */}
-      {showPurgeModal && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-md">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-full bg-error/20">
-                <Trash2 className="size-6 text-error" />
+      <Dialog open={showPurgeModal} onOpenChange={(open) => { if (!open) { setShowPurgeModal(false); setPurgePassword(''); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-red-100">
+                <Trash2 className="size-6 text-red-600" />
               </div>
-              <h3 className="font-bold text-lg">Purger les produits</h3>
-            </div>
-
-            <div className="alert alert-error mb-4">
-              <AlertTriangle className="size-5" />
-              <div>
-                <p className="font-bold">Opération irréversible</p>
-                <p className="text-sm">
-                  {purgeSansVentes
-                    ? 'Tous les produits NON liés à des ventes seront supprimés.'
-                    : 'TOUS les produits seront supprimés.'}
-                </p>
+              Purger les produits
+            </DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+                <AlertTriangle className="size-5 text-red-600 shrink-0" />
+                <div>
+                  <p className="font-bold text-red-800">Opération irréversible</p>
+                  <p className="text-sm text-red-700">
+                    {purgeSansVentes
+                      ? 'Tous les produits NON liés à des ventes seront supprimés.'
+                      : 'TOUS les produits seront supprimés.'}
+                  </p>
+                </div>
               </div>
-            </div>
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text text-sm font-semibold">Confirmez votre mot de passe</span>
-              </label>
-              <input
-                type="password"
-                className="input input-bordered"
-                placeholder="Mot de passe admin"
-                value={purgePassword}
-                onChange={e => setPurgePassword(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handlePurgeProduits(); }}
-                autoFocus
-              />
-            </div>
-
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={() => { setShowPurgeModal(false); setPurgePassword(''); }}>
-                Annuler
-              </button>
-              <button
-                className="btn btn-error gap-2"
-                onClick={handlePurgeProduits}
-                disabled={purging2 || !purgePassword}
-              >
-                {purging2 ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                Confirmer la purge
-              </button>
-            </div>
+          <div className="mb-4">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Confirmez votre mot de passe</span>
+            </label>
+            <Input
+              type="password"
+              placeholder="Mot de passe admin"
+              value={purgePassword}
+              onChange={e => setPurgePassword(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handlePurgeProduits(); }}
+              autoFocus
+            />
           </div>
-          <div className="modal-backdrop" onClick={() => { setShowPurgeModal(false); setPurgePassword(''); }}></div>
-        </div>
-      )}
+
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => { setShowPurgeModal(false); setPurgePassword(''); }}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              className="gap-2"
+              onClick={handlePurgeProduits}
+              disabled={purging2 || !purgePassword}
+            >
+              {purging2 ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+              Confirmer la purge
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

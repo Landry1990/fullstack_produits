@@ -27,108 +27,122 @@ import {
   Clock,
   DollarSign,
   Users,
-  Lock
+  Lock,
+  Trash2,
+  Loader2
 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs'
+import { Input } from '../shadcn/input'
+import { Checkbox } from '../shadcn/checkbox'
+import { Badge } from '../shadcn/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../ui/Table'
+import { Select } from '../ui/Select'
 import { getConfigurablePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
 
 type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'notifications' | 'reports'
 
 function TVARow({ tva, onDelete, t }: { tva: TVA; onDelete: (id: number) => void; t: (key: string) => string }) {
   return (
-    <tr className="hover:bg-primary/10/50 transition-colors group">
-      <td className="font-black text-2xl text-primary">{tva.taux}%</td>
-      <td className="font-medium text-base-content/60">{tva.libelle || '-'}</td>
-      <td>
+    <TableRow className="hover:bg-indigo-50/50 transition-colors group">
+      <TableCell className="font-black text-2xl text-indigo-600">{tva.taux}%</TableCell>
+      <TableCell className="font-medium text-slate-500">{tva.libelle || '-'}</TableCell>
+      <TableCell>
         {tva.is_active ? (
-          <span className="badge badge-success badge-md font-bold px-4 py-3 rounded-lg shadow-sm shadow-success/20">{t('tva.active')}</span>
+          <Badge className="bg-emerald-500 text-white font-bold px-4 py-1.5 rounded-lg shadow-sm shadow-emerald-500/20">{t('tva.active')}</Badge>
         ) : (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-base-200 text-base-content/70 border border-base-300 badge-md font-medium px-4 py-3 rounded-lg opacity-60">{t('tva.inactive')}</span>
+          <Badge variant="outline" className="font-medium px-4 py-1.5 rounded-lg opacity-60">{t('tva.inactive')}</Badge>
         )}
-      </td>
-      <td className="text-right">
-        <button
+      </TableCell>
+      <TableCell className="text-right">
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => onDelete(tva.id)}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-base-content/70 hover:bg-base-200 rounded-lg text-sm font-medium transition-colors btn-circle text-error hover:bg-error/10 scale-90 group-hover:scale-100 transition-all opacity-0 group-hover:"
+          className="text-red-600 hover:bg-red-50 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"
           title={t('tva.delete')}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-      </td>
-    </tr>
+          <Trash2 className="h-5 w-5" />
+        </Button>
+      </TableCell>
+    </TableRow>
   )
 }
 
 function TVATable({ tvaList, loadingTVA, deleteTVA, t }: { tvaList: TVA[]; loadingTVA: boolean; deleteTVA: (id: number) => void; t: (key: string) => string }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-base-200">
-      <table className="table table-zebra table-lg">
-        <thead className="bg-base-200">
-          <tr>
-            <th className="font-bold text-base-content/60">{t('tva.rate')}</th>
-            <th className="font-bold text-base-content/60">{t('tva.label')}</th>
-            <th className="font-bold text-base-content/60">{t('tva.status')}</th>
-            <th className="text-right font-bold text-base-content/60">{t('tva.actions')}</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+      <Table className="w-full">
+        <TableHeader>
+          <TableRow className="bg-slate-100 hover:bg-slate-100">
+            <TableHead className="font-bold text-slate-500">{t('tva.rate')}</TableHead>
+            <TableHead className="font-bold text-slate-500">{t('tva.label')}</TableHead>
+            <TableHead className="font-bold text-slate-500">{t('tva.status')}</TableHead>
+            <TableHead className="text-right font-bold text-slate-500">{t('tva.actions')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {loadingTVA ? (
-            <tr><td colSpan={4} className="text-center p-12"><span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin text-primary"></span></td></tr>
+            <TableRow><TableCell colSpan={4} className="text-center p-12"><Loader2 className="inline-block size-8 animate-spin text-indigo-600" /></TableCell></TableRow>
           ) : !Array.isArray(tvaList) || tvaList.length === 0 ? (
-            <tr><td colSpan={4} className="text-center p-12 opacity-40 italic">{t('tva.empty')}</td></tr>
+            <TableRow><TableCell colSpan={4} className="text-center p-12 opacity-40 italic">{t('tva.empty')}</TableCell></TableRow>
           ) : (
             tvaList.map(tva => <TVARow key={tva.id} tva={tva} onDelete={deleteTVA} t={t} />)
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 }
 
 function TVAForm({ t, newTvaRate, setNewTvaRate, newTvaLabel, setNewTvaLabel, addingTva, handleAddTva }: { t: (key: string) => string; newTvaRate: string; setNewTvaRate: (v: string) => void; newTvaLabel: string; setNewTvaLabel: (v: string) => void; addingTva: boolean; handleAddTva: () => void }) {
   return (
-    <div className="bg-base-200 p-8 rounded-[2rem] border border-base-200">
+    <div className="bg-slate-100 p-8 rounded-[2rem] border border-slate-200">
       <h3 className="font-bold text-lg mb-6 flex items-center gap-3">
-        <Settings className="size-5 text-primary" />
+        <Settings className="size-5 text-indigo-600" />
         {t('tva.add_title')}
       </h3>
       <div className="flex flex-col md:flex-row gap-6 items-end">
         <div className="flex flex-col gap-1 w-full md:w-48">
-          <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('tva.rate')} *</span></label>
+          <label><span className="text-sm font-bold text-slate-500">{t('tva.rate')} *</span></label>
           <div className="relative">
-            <input
+            <Input
               type="number"
               step="0.01"
               placeholder="0.00"
-              className="input input-bordered w-full focus:input-primary h-12 rounded-xl font-bold pr-10"
+              className="w-full h-12 rounded-xl font-bold pr-10"
               value={newTvaRate}
               onChange={e => setNewTvaRate(e.target.value)}
             />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-base-content/30">%</div>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-300">%</div>
           </div>
         </div>
         <div className="flex flex-col gap-1 w-full md:flex-1">
-          <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('tva.label')}</span></label>
-          <input
+          <label><span className="text-sm font-bold text-slate-500">{t('tva.label')}</span></label>
+          <Input
             type="text"
             placeholder={t('placeholders.tva_label')}
-            className="input input-bordered w-full focus:input-primary h-12 rounded-xl"
+            className="w-full h-12 rounded-xl"
             value={newTvaLabel}
             onChange={e => setNewTvaLabel(e.target.value)}
           />
         </div>
-        <button
+        <Button
           type="button"
-          className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-focus transition-colors shadow-sm h-12 px-10 rounded-xl shadow-lg shadow-primary/30 font-bold"
           onClick={handleAddTva}
           disabled={addingTva || !newTvaRate}
+          className="h-12 px-10 rounded-xl shadow-lg shadow-indigo-500/30"
         >
-          {addingTva ? <span className="loading loading-spinner"></span> : t('tva.add_btn')}
-        </button>
+          {addingTva ? <Loader2 className="size-5 animate-spin" /> : t('tva.add_btn')}
+        </Button>
       </div>
     </div>
   )
@@ -286,7 +300,7 @@ export default function PharmacySettingsForm() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
       </div>
     )
   }
@@ -305,7 +319,7 @@ export default function PharmacySettingsForm() {
       {/* Header */}
       <div className="px-6 py-4 border-b shrink-0">
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
-          <Settings className="h-6 w-6 text-primary" />
+          <Settings className="h-6 w-6 text-indigo-600" />
           {t('title')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
@@ -329,37 +343,37 @@ export default function PharmacySettingsForm() {
             {/* --- TAB: GENERAL --- */}
             <TabsContent value="general" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 {/* Section: Identité */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50 flex items-center justify-between">
+                    <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
                       <h2 className="font-bold text-xl flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Info className="h-5 w-5 text-primary" />
+                        <div className="p-2 bg-indigo-50 rounded-lg">
+                          <Info className="h-5 w-5 text-indigo-600" />
                         </div>
                         {t('sections.identity')}
                       </h2>
                     </div>
                     <div className="p-8 space-y-6">
-                      <div className="flex items-start gap-4 p-5 rounded-xl bg-primary/10/50 border border-indigo-100 text-sm text-base-content/60 leading-relaxed">
-                        <Info className="h-6 w-6 text-primary shrink-0" />
+                      <div className="flex items-start gap-4 p-5 rounded-xl bg-indigo-50/50 border border-indigo-100 text-sm text-slate-500 leading-relaxed">
+                        <Info className="h-6 w-6 text-indigo-600 shrink-0" />
                         <span>{t('hints.pharmacy_name_from_licence')}</span>
                       </div>
 
                       {/* Logo upload */}
                       <div className="flex flex-col gap-3">
-                        <label className="label">
-                          <span className="text-sm font-bold text-base-content/60">Logo de la pharmacie</span>
+                        <label>
+                          <span className="text-sm font-bold text-slate-500">Logo de la pharmacie</span>
                         </label>
                         <div className="flex items-center gap-6">
-                          <div className="shrink-0 w-24 h-24 rounded-2xl border-2 border-dashed border-base-300 bg-base-50 flex items-center justify-center overflow-hidden">
+                          <div className="shrink-0 w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden">
                             {settings.logo ? (
                               <img src={settings.logo} alt="Logo" className="w-full h-full object-contain" />
                             ) : (
-                              <Settings className="h-8 w-8 text-base-content/20" />
+                              <Settings className="h-8 w-8 text-slate-200" />
                             )}
                           </div>
                           <div className="flex flex-col gap-2 flex-1">
-                            <p className="text-xs text-base-content/50">
+                            <p className="text-xs text-slate-400">
                               Le logo apparaîtra sur les tickets de caisse et les factures. Format PNG ou JPG, 2 Mo max.
                             </p>
                             <div className="flex items-center gap-3">
@@ -386,7 +400,7 @@ export default function PharmacySettingsForm() {
                                   size="sm"
                                   disabled={removingLogo}
                                   onClick={handleLogoRemove}
-                                  className="text-error hover:text-error"
+                                  className="text-red-600 hover:text-red-600"
                                 >
                                   {removingLogo ? 'Suppression...' : 'Supprimer'}
                                 </Button>
@@ -398,37 +412,37 @@ export default function PharmacySettingsForm() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.niu')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.niu')}</span>
                           </label>
-                          <input
+                          <Input
                             type="text"
                             value={formData.niu || ''}
                             onChange={(e) => handleChange('niu', e.target.value.toUpperCase().slice(0, 15))}
-                            className="w-full rounded-xl border border-base-300 bg-base-100 h-12 px-4 text-sm font-mono font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-mono font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                             placeholder={t('placeholders.niu')}
                             maxLength={15}
                           />
-                          <label className="label">
-                            <span className="text-xs text-base-content/50 flex items-center gap-1">
+                          <label>
+                            <span className="text-xs text-slate-400 flex items-center gap-1">
                                 <ChevronRight className="size-3" /> {t('hints.niu')}
                             </span>
                           </label>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.rccm')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.rccm')}</span>
                           </label>
-                          <input
+                          <Input
                             type="text"
                             value={formData.registre_commerce || ''}
                             onChange={(e) => handleChange('registre_commerce', e.target.value.toUpperCase().slice(0, 20))}
-                            className="w-full rounded-xl border border-base-300 bg-base-100 h-12 px-4 text-sm font-mono font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-mono font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                             placeholder={t('placeholders.rccm')}
                             maxLength={20}
                           />
-                          <label className="label">
-                            <span className="text-xs text-base-content/50 flex items-center gap-1">
+                          <label>
+                            <span className="text-xs text-slate-400 flex items-center gap-1">
                                 <ChevronRight className="size-3" /> {t('hints.rccm')}
                             </span>
                           </label>
@@ -439,52 +453,52 @@ export default function PharmacySettingsForm() {
                 </div>
 
                 {/* Section: Coordonnées */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                    <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
                       <h2 className="font-bold text-xl flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <MapPin className="h-5 w-5 text-primary" />
+                        <div className="p-2 bg-indigo-50 rounded-lg">
+                          <MapPin className="h-5 w-5 text-indigo-600" />
                         </div>
                         {t('sections.contact')}
                       </h2>
                     </div>
                     <div className="p-8 space-y-6">
                       <div className="flex flex-col gap-1">
-                        <label className="label">
-                          <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.address')}</span>
+                        <label>
+                          <span className="text-sm font-bold text-slate-500">{t('labels.address')}</span>
                         </label>
-                        <input
+                        <Input
                           type="text"
                           value={formData.address || ''}
                           onChange={(e) => handleChange('address', e.target.value)}
-                          className="w-full rounded-xl border border-base-300 bg-base-100 h-12 px-4 text-sm font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                          className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                           placeholder={t('placeholders.address')}
                         />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.city')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.city')}</span>
                           </label>
-                          <input
+                          <Input
                             type="text"
                             value={formData.city || ''}
                             onChange={(e) => handleChange('city', e.target.value)}
-                            className="w-full rounded-xl border border-base-300 bg-base-100 h-12 px-4 text-sm font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                             placeholder={t('placeholders.city')}
                           />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.country')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.country')}</span>
                           </label>
-                          <input
+                          <Input
                             type="text"
                             value={formData.country || ''}
                             onChange={(e) => handleChange('country', e.target.value)}
-                            className="w-full rounded-xl border border-base-300 bg-base-100 h-12 px-4 text-sm font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                             placeholder={t('placeholders.country')}
                           />
                         </div>
@@ -492,26 +506,26 @@ export default function PharmacySettingsForm() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.phone')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.phone')}</span>
                           </label>
-                          <input
+                          <Input
                             type="tel"
                             value={formData.phone || ''}
                             onChange={(e) => handleChange('phone', e.target.value)}
-                            className="w-full rounded-xl border border-base-300 bg-base-100 h-12 px-4 text-sm font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                             placeholder={t('placeholders.phone')}
                           />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.email')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.email')}</span>
                           </label>
-                          <input
+                          <Input
                             type="email"
                             value={formData.email || ''}
                             onChange={(e) => handleChange('email', e.target.value)}
-                            className="w-full rounded-xl border border-base-300 bg-base-100 h-12 px-4 text-sm font-bold focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                             placeholder={t('placeholders.email')}
                           />
                         </div>
@@ -521,23 +535,23 @@ export default function PharmacySettingsForm() {
                 </div>
 
                 {/* Section: Devise */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                    <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
                       <h2 className="font-bold text-xl flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <CreditCard className="h-5 w-5 text-primary" />
+                        <div className="p-2 bg-indigo-50 rounded-lg">
+                          <CreditCard className="h-5 w-5 text-indigo-600" />
                         </div>
                         {t('labels.currency')}
                       </h2>
                     </div>
                     <div className="p-8">
                       <div className="flex flex-col gap-1 max-w-xs">
-                        <input
+                        <Input
                           type="text"
                           value={formData.currency_symbol || 'FCFA'}
                           onChange={(e) => handleChange('currency_symbol', e.target.value)}
-                          className="input input-bordered w-full font-bold text-primary focus:input-primary h-12 rounded-xl text-center text-xl"
+                          className="w-full font-bold text-indigo-600 h-12 rounded-xl text-center text-xl"
                           placeholder={t('placeholders.currency')}
                         />
                       </div>
@@ -546,18 +560,18 @@ export default function PharmacySettingsForm() {
                 </div>
 
                 {/* Section: Modes de paiement */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                    <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
                       <h2 className="font-bold text-xl flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <CreditCard className="h-5 w-5 text-primary" />
+                        <div className="p-2 bg-indigo-50 rounded-lg">
+                          <CreditCard className="h-5 w-5 text-indigo-600" />
                         </div>
                         {t('sections.payment_modes', { defaultValue: 'Modes de paiement' })}
                       </h2>
                     </div>
                     <div className="p-8 space-y-6">
-                      <p className="text-sm text-base-content/60">
+                      <p className="text-sm text-slate-500">
                         {t('hints.payment_modes', { defaultValue: 'Désactivez les modes de paiement que vous n\'utilisez pas. Ils ne seront plus proposés dans la caisse et la facturation.' })}
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -575,40 +589,39 @@ export default function PharmacySettingsForm() {
                                   : 'border-emerald-200 bg-emerald-50/50'
                               }`}
                             >
-                              <input
-                                type="checkbox"
+                              <Checkbox
                                 checked={!isDisabled}
-                                onChange={(e) => {
+                                onCheckedChange={(checked) => {
                                   const current = formData.disabled_payment_modes || []
-                                  if (e.target.checked) {
+                                  if (checked) {
                                     handleChange('disabled_payment_modes', current.filter((v: string) => v !== mode.value))
                                   } else {
                                     handleChange('disabled_payment_modes', [...current, mode.value])
                                   }
                                 }}
-                                className="size-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
                               />
                               <span className="text-lg">{mode.icon}</span>
-                              <span className="text-sm font-medium text-base-content flex-1">
+                              <span className="text-sm font-medium text-slate-800 flex-1">
                                 {getPaymentModeLabel(mode.value, t, formData.custom_payment_modes)}
                               </span>
                               {isCustom && (
-                                <button
+                                <Button
                                   type="button"
+                                  variant="ghost"
+                                  size="sm"
                                   onClick={(e) => {
                                     e.preventDefault()
                                     e.stopPropagation()
                                     const updated = (formData.custom_payment_modes || []).filter((c: { value: string }) => c.value !== mode.value)
                                     handleChange('custom_payment_modes', updated)
-                                    // Also remove from disabled if was disabled
                                     const currentDisabled = formData.disabled_payment_modes || []
                                     if (currentDisabled.includes(mode.value)) {
                                       handleChange('disabled_payment_modes', currentDisabled.filter((v: string) => v !== mode.value))
                                     }
                                   }}
-                                  className="text-red-400 hover:text-red-600 text-xs font-bold transition-colors"
+                                  className="text-red-400 hover:text-red-600 text-xs font-bold transition-colors h-auto p-0"
                                   title="Supprimer ce mode"
-                                >✕</button>
+                                >✕</Button>
                               )}
                             </label>
                           )
@@ -616,16 +629,16 @@ export default function PharmacySettingsForm() {
                       </div>
 
                       {/* Ajouter un mode personnalisé */}
-                      <div className="border-t border-base-200 pt-4">
-                        <h3 className="text-sm font-bold text-base-content/70 mb-3">
+                      <div className="border-t border-slate-200 pt-4">
+                        <h3 className="text-sm font-bold text-slate-600 mb-3">
                           {t('labels.add_custom_mode', { defaultValue: 'Ajouter un mode personnalisé' })}
                         </h3>
                         <div className="flex items-center gap-3">
-                          <input
+                          <Input
                             type="text"
                             id="new-payment-mode-input"
                             placeholder={t('placeholders.custom_mode', { defaultValue: 'Ex: PayPal, Stripe, Wave...' })}
-                            className="flex-1 h-10 px-4 rounded-lg border border-base-300 bg-base-100 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="flex-1 h-10 px-4 rounded-lg border border-slate-300 bg-white text-sm focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault()
@@ -667,7 +680,7 @@ export default function PharmacySettingsForm() {
                             + Ajouter
                           </Button>
                         </div>
-                        <p className="text-xs text-base-content/40 mt-2">
+                        <p className="text-xs text-slate-400 mt-2">
                           {t('hints.custom_mode', { defaultValue: 'Saisissez un nom et appuyez sur Entrée ou cliquez Ajouter. N\'oubliez pas de sauvegarder.' })}
                         </p>
                       </div>
@@ -679,48 +692,48 @@ export default function PharmacySettingsForm() {
             {/* --- TAB: PRINTING --- */}
             <TabsContent value="printing" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 {/* Section: Messages Ticket */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                    <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
                       <h2 className="font-bold text-xl flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <MessageSquare className="h-5 w-5 text-primary" />
+                        <div className="p-2 bg-indigo-50 rounded-lg">
+                          <MessageSquare className="h-5 w-5 text-indigo-600" />
                         </div>
                         {t('sections.ticket')}
                       </h2>
                     </div>
                     <div className="p-8 space-y-6">
                       <div className="flex flex-col gap-1">
-                        <label className="label">
-                          <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.receipt_header')}</span>
+                        <label>
+                          <span className="text-sm font-bold text-slate-500">{t('labels.receipt_header')}</span>
                         </label>
                         <textarea
                           value={formData.receipt_header || ''}
                           onChange={(e) => handleChange('receipt_header', e.target.value)}
-                          className="textarea textarea-bordered w-full focus:textarea-primary rounded-xl p-4 transition-all leading-relaxed"
+                          className="w-full rounded-xl p-4 transition-all leading-relaxed"
                           rows={4}
                           placeholder={t('placeholders.receipt_header')}
                         />
-                        <label className="label">
-                          <span className="text-xs text-base-content/50 flex items-center gap-1">
+                        <label>
+                          <span className="text-xs text-slate-400 flex items-center gap-1">
                             <ChevronRight className="size-3" /> {t('hints.receipt_header')}
                           </span>
                         </label>
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label className="label">
-                          <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.ticket_footer')}</span>
+                        <label>
+                          <span className="text-sm font-bold text-slate-500">{t('labels.ticket_footer')}</span>
                         </label>
                         <textarea
                           value={formData.ticket_footer_message || ''}
                           onChange={(e) => handleChange('ticket_footer_message', e.target.value)}
-                          className="textarea textarea-bordered w-full focus:textarea-primary rounded-xl p-4 transition-all"
+                          className="w-full rounded-xl p-4 transition-all"
                           rows={3}
                           placeholder={t('placeholders.ticket_footer')}
                         />
-                        <label className="label">
-                          <span className="text-xs text-base-content/50 flex items-center gap-1">
+                        <label>
+                          <span className="text-xs text-slate-400 flex items-center gap-1">
                             <ChevronRight className="size-3" /> {t('hints.ticket_footer')}
                           </span>
                         </label>
@@ -731,58 +744,56 @@ export default function PharmacySettingsForm() {
 
                 {/* Section: Format & Multi-Caisse */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="card bg-base-100 shadow-xl border border-base-200 rounded-2xl">
+                  <div className="bg-white shadow-xl border border-slate-200 rounded-2xl">
                     <div className="p-6 p-8">
                       <h3 className="font-bold text-lg flex items-center gap-3 mb-6">
-                        <Printer className="size-6 text-primary" />
+                        <Printer className="size-6 text-indigo-600" />
                         Format d'Impression
                       </h3>
                       <div className="flex flex-col gap-1">
-                        <label className="label">
-                          <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.paper_width')}</span>
+                        <label>
+                          <span className="text-sm font-bold text-slate-500">{t('labels.paper_width')}</span>
                         </label>
-                        <select
+                        <Select
+                          size="lg"
                           value={formData.ticket_paper_width || 80}
                           onChange={(e) => handleChange('ticket_paper_width', parseInt(e.target.value))}
-                          className="select select-bordered w-full h-12 rounded-xl focus:select-primary"
+                          className="rounded-xl"
                         >
                           <option value={80}>{t('labels.paper_standard')}</option>
                           <option value={58}>{t('labels.paper_small')}</option>
-                        </select>
+                        </Select>
                       </div>
                     </div>
                   </div>
 
-                  <div className="card bg-base-100 shadow-xl border border-base-200 rounded-2xl">
+                  <div className="bg-white shadow-xl border border-slate-200 rounded-2xl">
                     <div className="p-6 p-8">
                       <div className="flex items-center justify-between mb-6">
                         <h3 className="font-bold text-lg flex items-center gap-3">
-                          <Smartphone className="size-6 text-primary" />
+                          <Smartphone className="size-6 text-indigo-600" />
                           Multi-Postes
                         </h3>
-                        <input
-                          type="checkbox"
-                          className="toggle toggle-primary toggle-lg"
+                        <Checkbox
                           checked={invSettings?.is_multi_caisse || false}
-                          onChange={(e) => updateInvSettings({ is_multi_caisse: e.target.checked })}
+                          onCheckedChange={(checked) => updateInvSettings({ is_multi_caisse: !!checked })}
+                          className="ml-2"
                         />
                       </div>
-                      <p className="text-sm text-base-content/60 italic leading-relaxed">
+                      <p className="text-sm text-slate-500 italic leading-relaxed">
                         Si activé, le système permet de dispatcher les ventes vers différents terminaux physiques.
                       </p>
                       
                       {invSettings?.is_multi_caisse && (
-                        <div className="mt-6 p-5 bg-primary/10/50 rounded-xl space-y-4 border border-indigo-100 animate-in zoom-in-95 duration-300">
+                        <div className="mt-6 p-5 bg-indigo-50/50 rounded-xl space-y-4 border border-indigo-100 animate-in zoom-in-95 duration-300">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold">Caisse Centralisée</span>
-                            <input
-                              type="checkbox"
-                              className="toggle toggle-sm toggle-primary"
+                            <Checkbox
                               checked={invSettings?.centralized_cash_register || false}
-                              onChange={(e) => updateInvSettings({ centralized_cash_register: e.target.checked })}
+                              onCheckedChange={(checked) => updateInvSettings({ centralized_cash_register: !!checked })}
                             />
                           </div>
-                          <p className="text-xs text-base-content/60">
+                          <p className="text-xs text-slate-500">
                             Active le groupement des ventes par session journalière pour une clôture centralisée.
                           </p>
                         </div>
@@ -794,12 +805,12 @@ export default function PharmacySettingsForm() {
 
             {/* --- TAB: STOCKS & ORDERS --- */}
             <TabsContent value="stocks" className="mt-0 data-[state=inactive]:hidden space-y-8">
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                    <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
                       <h2 className="font-bold text-xl flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Package className="h-5 w-5 text-primary" />
+                        <div className="p-2 bg-indigo-50 rounded-lg">
+                          <Package className="h-5 w-5 text-indigo-600" />
                         </div>
                         Seuils d'Alerte & Système
                       </h2>
@@ -807,33 +818,33 @@ export default function PharmacySettingsForm() {
                     <div className="p-8 space-y-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.low_stock_days')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.low_stock_days')}</span>
                           </label>
-                          <input
+                          <Input
                             type="number"
                             value={formData.low_stock_threshold_days || 15}
                             onChange={(e) => handleChange('low_stock_threshold_days', parseInt(e.target.value))}
-                            className="input input-bordered w-full h-12 rounded-xl focus:input-primary"
+                            className="w-full h-12 rounded-xl"
                           />
-                          <label className="label">
-                            <span className="text-xs text-base-content/50 flex items-center gap-1">
+                          <label>
+                            <span className="text-xs text-slate-400 flex items-center gap-1">
                                 <ChevronRight className="size-3" /> {t('hints.low_stock')}
                             </span>
                           </label>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.dormant_stock_days')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.dormant_stock_days')}</span>
                           </label>
-                          <input
+                          <Input
                             type="number"
                             value={formData.dormant_stock_days || 90}
                             onChange={(e) => handleChange('dormant_stock_days', parseInt(e.target.value))}
-                            className="input input-bordered w-full h-12 rounded-xl focus:input-primary"
+                            className="w-full h-12 rounded-xl"
                           />
-                          <label className="label">
-                            <span className="text-xs text-base-content/50 flex items-center gap-1">
+                          <label>
+                            <span className="text-xs text-slate-400 flex items-center gap-1">
                                 <ChevronRight className="size-3" /> {t('hints.dormant_stock')}
                             </span>
                           </label>
@@ -842,34 +853,34 @@ export default function PharmacySettingsForm() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.debt_threshold')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.debt_threshold')}</span>
                           </label>
-                          <input
+                          <Input
                             type="number"
                             value={formData.debt_alert_threshold || '100000'}
                             onChange={(e) => handleChange('debt_alert_threshold', e.target.value)}
-                            className="input input-bordered w-full h-12 rounded-xl focus:input-primary"
+                            className="w-full h-12 rounded-xl"
                           />
-                          <label className="label">
-                            <span className="text-xs text-base-content/50 flex items-center gap-1">
+                          <label>
+                            <span className="text-xs text-slate-400 flex items-center gap-1">
                                 <ChevronRight className="size-3" /> {t('hints.debt')}
                             </span>
                           </label>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.auto_logout')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.auto_logout')}</span>
                           </label>
-                          <input
+                          <Input
                             type="number"
                             min="0"
                             value={formData.auto_logout_timeout !== undefined ? formData.auto_logout_timeout : 15}
                             onChange={(e) => handleChange('auto_logout_timeout', parseInt(e.target.value) || 0)}
-                            className="input input-bordered w-full h-12 rounded-xl focus:input-primary"
+                            className="w-full h-12 rounded-xl"
                           />
-                          <label className="label">
-                            <span className="text-xs text-base-content/50 flex items-center gap-1">
+                          <label>
+                            <span className="text-xs text-slate-400 flex items-center gap-1">
                                 <ChevronRight className="size-3" /> {t('hints.auto_logout')}
                             </span>
                           </label>
@@ -880,30 +891,29 @@ export default function PharmacySettingsForm() {
                 </div>
 
                 {/* Section: Paramètres Caisse (Sécurité) */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                    <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
                       <h2 className="font-bold text-xl flex items-center gap-3">
-                        <div className="p-2 bg-warning/10 rounded-lg">
-                          <Lock className="h-5 w-5 text-warning" />
+                        <div className="p-2 bg-amber-50 rounded-lg">
+                          <Lock className="h-5 w-5 text-amber-600" />
                         </div>
                         {t('sections.cash_security', { defaultValue: 'Sécurité Caisse' })}
                       </h2>
                     </div>
                     <div className="p-8 space-y-6">
                       <div className="flex items-start gap-4">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           id="hide_cash_totals"
                           checked={formData.hide_cash_totals || false}
-                          onChange={(e) => handleChange('hide_cash_totals', e.target.checked)}
-                          className="checkbox checkbox-warning mt-1"
+                          onCheckedChange={(checked) => handleChange('hide_cash_totals', !!checked)}
+                          className="mt-1"
                         />
                         <div className="flex-1">
-                          <label htmlFor="hide_cash_totals" className="font-medium text-base-content cursor-pointer">
+                          <label htmlFor="hide_cash_totals" className="font-medium text-slate-800 cursor-pointer">
                             {t('labels.hide_cash_totals', { defaultValue: 'Masquer les montants de caisse aux caissières' })}
                           </label>
-                          <p className="text-sm text-base-content/60 mt-1">
+                          <p className="text-sm text-slate-500 mt-1">
                             {t('hints.hide_cash_totals', { defaultValue: 'Si activé : les caissières ne verront pas le récapitulatif live (totaux par mode de règlement) ni les montants dans le rapport de fermeture de caisse. Le titulaire (admin) verra toujours tout. Décochez pour permettre aux caissières de suivre leur caisse en temps réel.' })}
                           </p>
                         </div>
@@ -912,12 +922,12 @@ export default function PharmacySettingsForm() {
                   </div>
                 </div>
 
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                    <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
                       <h2 className="font-bold text-xl flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Settings className="h-5 w-5 text-primary" />
+                        <div className="p-2 bg-indigo-50 rounded-lg">
+                          <Settings className="h-5 w-5 text-indigo-600" />
                         </div>
                         {t('sections.orders')}
                       </h2>
@@ -925,20 +935,20 @@ export default function PharmacySettingsForm() {
                     <div className="p-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.coeff_direct')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.coeff_direct')}</span>
                           </label>
-                          <input
+                          <Input
                             type="number"
                             step="0.01"
                             min="1"
                             value={formData.coefficient_direct_commande || ''}
                             onChange={(e) => handleChange('coefficient_direct_commande', e.target.value)}
-                            className="input input-bordered w-full font-bold text-primary h-12 rounded-xl focus:input-primary"
+                            className="w-full font-bold text-indigo-600 h-12 rounded-xl"
                             placeholder={t('placeholders.coeff_direct')}
                           />
-                          <label className="label">
-                            <span className="text-xs text-base-content/50 flex flex-col gap-1 mt-1">
+                          <label>
+                            <span className="text-xs text-slate-400 flex flex-col gap-1 mt-1">
                               <span className="flex items-center gap-1 font-medium"><ChevronRight className="size-3" /> {t('hints.coeff_direct')}</span>
                               <span className="flex items-center gap-1 italic"><ChevronRight className="size-3" /> {t('hints.coeff_formula')}</span>
                             </span>
@@ -946,20 +956,20 @@ export default function PharmacySettingsForm() {
                         </div>
 
                         <div className="flex flex-col gap-1">
-                          <label className="label">
-                            <span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.taux_change')}</span>
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.taux_change')}</span>
                           </label>
-                          <input
+                          <Input
                             type="number"
                             step="0.001"
                             min="1"
                             value={formData.taux_change_actif || ''}
                             onChange={(e) => handleChange('taux_change_actif', e.target.value)}
-                            className="input input-bordered w-full font-bold text-primary h-12 rounded-xl focus:input-primary"
+                            className="w-full font-bold text-indigo-600 h-12 rounded-xl"
                             placeholder={t('placeholders.taux_change')}
                           />
-                          <label className="label">
-                            <span className="text-xs text-base-content/50 flex items-center gap-1 mt-1">
+                          <label>
+                            <span className="text-xs text-slate-400 flex items-center gap-1 mt-1">
                               <ChevronRight className="size-3" /> {t('hints.taux_change')}
                             </span>
                           </label>
@@ -972,12 +982,12 @@ export default function PharmacySettingsForm() {
 
             {/* --- TAB: TVA --- */}
             <TabsContent value="tva" className="mt-0 data-[state=inactive]:hidden space-y-8">
-              <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+              <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                 <div className="p-0">
-                  <div className="px-8 py-5 border-b border-base-200 bg-base-50/50">
+                  <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
                     <h2 className="font-bold text-xl flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Percent className="h-5 w-5 text-primary" />
+                      <div className="p-2 bg-indigo-50 rounded-lg">
+                        <Percent className="h-5 w-5 text-indigo-600" />
                       </div>
                       {t('sections.tva')}
                     </h2>
@@ -1001,83 +1011,82 @@ export default function PharmacySettingsForm() {
             {/* --- TAB: NOTIFICATIONS --- */}
             <TabsContent value="notifications" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 {/* Section: WhatsApp */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 flex items-center justify-between bg-[#25D366]/5">
+                    <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-[#25D366]/5">
                       <h2 className="font-bold text-xl flex items-center gap-3">
                         <div className="p-2 bg-[#25D366]/20 rounded-lg">
                           <Smartphone className="h-5 w-5 text-[#25D366]" />
                         </div>
                         {t('sections.whatsapp')}
                       </h2>
-                      <input
-                        type="checkbox"
-                        className="toggle toggle-success toggle-lg"
+                      <Checkbox
                         checked={formData.whatsapp_enabled || false}
-                        onChange={(e) => handleChange('whatsapp_enabled', e.target.checked)}
+                        onCheckedChange={(checked) => handleChange('whatsapp_enabled', !!checked)}
                       />
                     </div>
                     <div className={`p-8 space-y-8 transition-all duration-300 ${!formData.whatsapp_enabled ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
-                      <div className="flex gap-4 p-5 rounded-xl bg-info/5 border border-info/10 text-sm leading-relaxed">
-                        <Info className="size-6 text-info shrink-0" />
+                      <div className="flex gap-4 p-5 rounded-xl bg-blue-50 border border-blue-200 text-sm leading-relaxed">
+                        <Info className="size-6 text-blue-500 shrink-0" />
                         <span>{t('hints.whatsapp_help')}</span>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="flex flex-col gap-1">
-                          <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.whatsapp_phone_id')}</span></label>
-                          <input
+                          <label><span className="text-sm font-bold text-slate-500">{t('labels.whatsapp_phone_id')}</span></label>
+                          <Input
                             type="text"
                             value={formData.whatsapp_phone_id || ''}
                             onChange={(e) => handleChange('whatsapp_phone_id', e.target.value)}
-                            className="input input-bordered w-full font-mono h-12 rounded-xl focus:input-success"
+                            className="w-full font-mono h-12 rounded-xl"
                             placeholder="ID numérique de 15 chiffres"
                           />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.whatsapp_account_id')}</span></label>
-                          <input
+                          <label><span className="text-sm font-bold text-slate-500">{t('labels.whatsapp_account_id')}</span></label>
+                          <Input
                             type="text"
                             value={formData.whatsapp_business_id || ''}
                             onChange={(e) => handleChange('whatsapp_business_id', e.target.value)}
-                            className="input input-bordered w-full font-mono h-12 rounded-xl focus:input-success"
+                            className="w-full font-mono h-12 rounded-xl"
                             placeholder="ID du compte business"
                           />
                         </div>
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.whatsapp_token')}</span></label>
+                        <label><span className="text-sm font-bold text-slate-500">{t('labels.whatsapp_token')}</span></label>
                         <textarea
                           value={formData.whatsapp_access_token || ''}
                           onChange={(e) => handleChange('whatsapp_access_token', e.target.value)}
-                          className="textarea textarea-bordered w-full font-mono text-xs focus:textarea-success rounded-xl p-4"
+                          className="w-full font-mono text-xs rounded-xl p-4"
                           rows={3}
                           placeholder="Token EAAG..."
                         />
                       </div>
 
                       <div className="flex flex-col gap-1 max-w-lg">
-                        <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">{t('labels.pharmacist_whatsapp')}</span></label>
+                        <label><span className="text-sm font-bold text-slate-500">{t('labels.pharmacist_whatsapp')}</span></label>
                         <div className="flex gap-4">
-                          <input
+                          <Input
                             type="text"
                             value={formData.pharmacist_whatsapp_number || ''}
                             onChange={(e) => handleChange('pharmacist_whatsapp_number', e.target.value)}
-                            className="input input-bordered flex-1 font-mono h-12 rounded-xl focus:input-success"
+                            className="flex-1 font-mono h-12 rounded-xl"
                             placeholder="Ex: 2376XXXXXXXX"
                           />
-                          <button
+                          <Button
                             type="button"
+                            variant="primary"
                             onClick={handleTestWhatsapp}
                             disabled={testingWhatsapp || !formData.whatsapp_enabled}
-                            className="btn btn-success h-12 px-6 rounded-xl shadow-lg shadow-success/20"
+                            className="h-12 px-6 rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700"
                           >
-                            {testingWhatsapp ? <span className="loading loading-spinner"></span> : <Smartphone className="size-5" />}
-                          </button>
+                            {testingWhatsapp ? <Loader2 className="size-5 animate-spin" /> : <Smartphone className="size-5" />}
+                          </Button>
                         </div>
-                        <label className="label">
-                          <span className="text-xs text-base-content/50 italic">{t('hints.pharmacist_whatsapp')}</span>
+                        <label>
+                          <span className="text-xs text-slate-400 italic">{t('hints.pharmacist_whatsapp')}</span>
                         </label>
                       </div>
                     </div>
@@ -1085,70 +1094,69 @@ export default function PharmacySettingsForm() {
                 </div>
 
                 {/* Section: Telegram */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
                   <div className="p-0">
-                    <div className="px-8 py-5 border-b border-base-200 flex items-center justify-between bg-[#229ED9]/5">
+                    <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-[#229ED9]/5">
                       <h2 className="font-bold text-xl flex items-center gap-3">
                         <div className="p-2 bg-[#229ED9]/20 rounded-lg">
                           <Bell className="h-5 w-5 text-[#229ED9]" />
                         </div>
                         Rapports Telegram Bot
                       </h2>
-                      <input
-                        type="checkbox"
-                        className="toggle toggle-info toggle-lg"
+                      <Checkbox
                         checked={formData.telegram_enabled || false}
-                        onChange={(e) => handleChange('telegram_enabled', e.target.checked)}
+                        onCheckedChange={(checked) => handleChange('telegram_enabled', !!checked)}
                       />
                     </div>
                     <div className={`p-8 space-y-8 transition-all duration-300 ${!formData.telegram_enabled ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
-                      <div className="flex gap-4 p-5 rounded-xl bg-info/5 border border-info/10 text-sm">
-                        <Info className="size-6 text-info shrink-0" />
+                      <div className="flex gap-4 p-5 rounded-xl bg-blue-50 border border-blue-200 text-sm">
+                        <Info className="size-6 text-blue-500 shrink-0" />
                         <span>Créez un bot via <strong>@BotFather</strong>, copiez le token, envoyez <strong>/start</strong> au bot, puis récupérez le Chat ID.</span>
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">Token Bot Telegram</span></label>
-                        <input
+                        <label><span className="text-sm font-bold text-slate-500">Token Bot Telegram</span></label>
+                        <Input
                           type="text"
                           value={formData.telegram_bot_token || ''}
                           onChange={(e) => handleChange('telegram_bot_token', e.target.value)}
-                          className="input input-bordered w-full font-mono h-12 rounded-xl focus:input-info"
+                          className="w-full font-mono h-12 rounded-xl"
                           placeholder="123456789:ABCDefGh..."
                         />
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label className="label"><span className="text-sm font-bold text-base-content font-bold text-base-content/60">Chat ID</span></label>
+                        <label><span className="text-sm font-bold text-slate-500">Chat ID</span></label>
                         <div className="flex flex-col sm:flex-row gap-4">
-                          <input
+                          <Input
                             type="text"
                             value={formData.telegram_chat_id || ''}
                             onChange={(e) => handleChange('telegram_chat_id', e.target.value)}
-                            className="input input-bordered flex-1 font-mono h-12 rounded-xl focus:input-info"
+                            className="flex-1 font-mono h-12 rounded-xl"
                             placeholder="Identifiant numérique du chat"
                           />
                           <div className="flex gap-2">
-                            <button
+                            <Button
                               type="button"
+                              variant="outline"
                               onClick={handleGetChatId}
                               disabled={gettingChatId || !formData.telegram_enabled}
-                              className="btn btn-info btn-outline h-12 px-6 rounded-xl flex-1 font-bold"
+                              className="h-12 px-6 rounded-xl flex-1 font-bold border-blue-500 text-blue-600 hover:bg-blue-50"
                             >
-                              {gettingChatId ? <span className="loading loading-spinner"></span> : '🔍 Récupérer Chat ID'}
-                            </button>
-                            <button
+                              {gettingChatId ? <Loader2 className="size-5 animate-spin" /> : '🔍 Récupérer Chat ID'}
+                            </Button>
+                            <Button
                               type="button"
                               onClick={handleTestTelegram}
                               disabled={testingTelegram || !formData.telegram_enabled}
-                              className="btn btn-info h-12 px-8 rounded-xl shadow-lg shadow-info/20 font-bold"
+                              className="h-12 px-8 rounded-xl shadow-lg shadow-blue-500/20 font-bold bg-blue-600 hover:bg-blue-700"
                             >
-                              {testingTelegram ? <span className="loading loading-spinner"></span> : 'Tester'}
-                            </button>
+                              {testingTelegram ? <Loader2 className="size-5 animate-spin" /> : 'Tester'}
+                            </Button>
                           </div>
                         </div>
-                        <label className="label">
-                            <span className="text-xs text-base-content/50">Envoyez /start à votre bot avant de cliquer sur Récupérer.</span>
+                        <label>
+                            <span className="text-xs text-slate-400">Envoyez /start à votre bot avant de cliquer sur Récupérer.</span>
                         </label>
                       </div>
                     </div>
@@ -1159,74 +1167,72 @@ export default function PharmacySettingsForm() {
             {/* --- TAB: RAPPORTS AUTOMATIQUES --- */}
             <TabsContent value="reports" className="mt-0 data-[state=inactive]:hidden space-y-8">
                 {/* Section: Activation et Configuration Générale */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
-                  <div className="card-body p-6 space-y-6">
-                    <div className="flex items-center gap-3 border-b border-base-200 pb-4">
-                      <div className="p-3 bg-primary/10 rounded-xl">
-                        <FileText className="size-6 text-primary" />
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
+                  <div className="p-6 space-y-6">
+                    <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+                      <div className="p-3 bg-indigo-50 rounded-xl">
+                        <FileText className="size-6 text-indigo-600" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-base-content">Rapport Mensuel Automatique</h3>
-                        <p className="text-sm text-base-content/60">Configurez les éléments à inclure dans le rapport mensuel</p>
+                        <h3 className="text-lg font-bold text-slate-800">Rapport Mensuel Automatique</h3>
+                        <p className="text-sm text-slate-500">Configurez les éléments à inclure dans le rapport mensuel</p>
                       </div>
                     </div>
 
                     {/* Activation */}
-                    <div className="flex items-center justify-between p-4 bg-base-200 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-slate-100 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <Bell className="size-5 text-primary" />
+                        <Bell className="size-5 text-indigo-600" />
                         <div>
-                          <p className="font-medium text-base-content">Activer le rapport automatique</p>
-                          <p className="text-xs text-base-content/60">Envoyé chaque mois aux destinataires configurés</p>
+                          <p className="font-medium text-slate-800">Activer le rapport automatique</p>
+                          <p className="text-xs text-slate-500">Envoyé chaque mois aux destinataires configurés</p>
                         </div>
                       </div>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={formData.monthly_report_enabled || false}
-                        onChange={(e) => handleChange('monthly_report_enabled', e.target.checked)}
-                        className="toggle toggle-primary toggle-lg"
+                        onCheckedChange={(checked) => handleChange('monthly_report_enabled', !!checked)}
                       />
                     </div>
 
                     {/* Jour d'envoi */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text font-medium text-base-content flex items-center gap-2">
-                            <Clock className="size-4 text-base-content/50" />
+                      <div>
+                        <label>
+                          <span className="font-medium text-slate-800 flex items-center gap-2">
+                            <Clock className="size-4 text-slate-400" />
                             Jour d'envoi du rapport
                           </span>
                         </label>
-                        <input
+                        <Input
                           type="number"
                           min={1}
                           max={28}
                           value={formData.monthly_report_day || 1}
                           onChange={(e) => handleChange('monthly_report_day', parseInt(e.target.value))}
-                          className="input input-bordered w-full h-12 rounded-xl focus:input-primary"
+                          className="w-full h-12 rounded-xl"
                           disabled={!formData.monthly_report_enabled}
                         />
-                        <label className="label">
-                          <span className="text-xs text-base-content/50">Jour du mois (1-28)</span>
+                        <label>
+                          <span className="text-xs text-slate-400">Jour du mois (1-28)</span>
                         </label>
                       </div>
 
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text font-medium text-base-content flex items-center gap-2">
-                            <Mail className="size-4 text-base-content/50" />
+                      <div>
+                        <label>
+                          <span className="font-medium text-slate-800 flex items-center gap-2">
+                            <Mail className="size-4 text-slate-400" />
                             Destinataires (emails)
                           </span>
                         </label>
                         <textarea
                           value={formData.report_recipients_email || ''}
                           onChange={(e) => handleChange('report_recipients_email', e.target.value)}
-                          className="textarea textarea-bordered w-full rounded-xl focus:textarea-primary min-h-[48px]"
+                          className="w-full rounded-xl min-h-[48px]"
                           placeholder="email1@exemple.com, email2@exemple.com"
                           disabled={!formData.monthly_report_enabled}
                         />
-                        <label className="label">
-                          <span className="text-xs text-base-content/50">Séparés par des virgules</span>
+                        <label>
+                          <span className="text-xs text-slate-400">Séparés par des virgules</span>
                         </label>
                       </div>
                     </div>
@@ -1234,27 +1240,23 @@ export default function PharmacySettingsForm() {
                     {/* Options d'envoi */}
                     <div className="flex flex-wrap gap-4">
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={formData.report_send_whatsapp || false}
-                          onChange={(e) => handleChange('report_send_whatsapp', e.target.checked)}
-                          className="checkbox checkbox-primary"
+                          onCheckedChange={(checked) => handleChange('report_send_whatsapp', !!checked)}
                           disabled={!formData.monthly_report_enabled}
                         />
-                        <span className="text-sm text-base-content flex items-center gap-1">
+                        <span className="text-sm text-slate-800 flex items-center gap-1">
                           <Smartphone className="size-4 text-emerald-600" />
                           Envoyer via WhatsApp
                         </span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={formData.report_send_telegram || false}
-                          onChange={(e) => handleChange('report_send_telegram', e.target.checked)}
-                          className="checkbox checkbox-primary"
+                          onCheckedChange={(checked) => handleChange('report_send_telegram', !!checked)}
                           disabled={!formData.monthly_report_enabled}
                         />
-                        <span className="text-sm text-base-content flex items-center gap-1">
+                        <span className="text-sm text-slate-800 flex items-center gap-1">
                           <MessageSquare className="size-4 text-blue-500" />
                           Envoyer via Telegram
                         </span>
@@ -1264,196 +1266,186 @@ export default function PharmacySettingsForm() {
                 </div>
 
                 {/* Section: Éléments du Rapport */}
-                <div className="card bg-base-100 shadow-xl shadow-base-content/5 border border-base-200 overflow-hidden rounded-2xl">
-                  <div className="card-body p-6 space-y-6">
-                    <div className="flex items-center gap-3 border-b border-base-200 pb-4">
-                      <div className="p-3 bg-success/10 rounded-xl">
-                        <BarChart3 className="size-6 text-success" />
+                <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
+                  <div className="p-6 space-y-6">
+                    <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+                      <div className="p-3 bg-emerald-50 rounded-xl">
+                        <BarChart3 className="size-6 text-emerald-600" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-base-content">Éléments du Rapport</h3>
-                        <p className="text-sm text-base-content/60">Cochez les éléments à inclure dans le rapport mensuel</p>
+                        <h3 className="text-lg font-bold text-slate-800">Éléments du Rapport</h3>
+                        <p className="text-sm text-slate-500">Cochez les éléments à inclure dans le rapport mensuel</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {/* Ventes */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Checkbox
                           checked={formData.report_include_sales || false}
-                          onChange={(e) => handleChange('report_include_sales', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_sales', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <TrendingUp className="size-4 text-success" />
-                            <span className="font-medium text-base-content">Ventes du mois</span>
+                            <TrendingUp className="size-4 text-emerald-600" />
+                            <span className="font-medium text-slate-800">Ventes du mois</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Chiffre d'affaires et nombre de transactions</p>
+                          <p className="text-xs text-slate-500 mt-1">Chiffre d'affaires et nombre de transactions</p>
                         </div>
                       </label>
 
                       {/* Marges */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Checkbox
                           checked={formData.report_include_margin || false}
-                          onChange={(e) => handleChange('report_include_margin', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_margin', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <DollarSign className="size-4 text-emerald-600" />
-                            <span className="font-medium text-base-content">Marges réalisées</span>
+                            <span className="font-medium text-slate-800">Marges réalisées</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Taux de marge et profit net</p>
+                          <p className="text-xs text-slate-500 mt-1">Taux de marge et profit net</p>
                         </div>
                       </label>
 
                       {/* Santé stock */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Checkbox
                           checked={formData.report_include_stock_health || false}
-                          onChange={(e) => handleChange('report_include_stock_health', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_stock_health', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <Package className="size-4 text-info" />
-                            <span className="font-medium text-base-content">Santé du stock</span>
+                            <Package className="size-4 text-blue-500" />
+                            <span className="font-medium text-slate-800">Santé du stock</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Score global et disponibilité</p>
+                          <p className="text-xs text-slate-500 mt-1">Score global et disponibilité</p>
                         </div>
                       </label>
 
                       {/* Ruptures */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Checkbox
                           checked={formData.report_include_ruptures || false}
-                          onChange={(e) => handleChange('report_include_ruptures', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_ruptures', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <PackageX className="size-4 text-error" />
-                            <span className="font-medium text-base-content">Ruptures de stock</span>
+                            <PackageX className="size-4 text-red-600" />
+                            <span className="font-medium text-slate-800">Ruptures de stock</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Produits en rupture et pertes estimées</p>
+                          <p className="text-xs text-slate-500 mt-1">Produits en rupture et pertes estimées</p>
                         </div>
                       </label>
 
                       {/* Péremption */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Checkbox
                           checked={formData.report_include_expiration || false}
-                          onChange={(e) => handleChange('report_include_expiration', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_expiration', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <AlertTriangle className="size-4 text-warning" />
-                            <span className="font-medium text-base-content">Alertes péremption</span>
+                            <AlertTriangle className="size-4 text-amber-600" />
+                            <span className="font-medium text-slate-800">Alertes péremption</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Produits proches de la péremption</p>
+                          <p className="text-xs text-slate-500 mt-1">Produits proches de la péremption</p>
                         </div>
                       </label>
 
                       {/* Top produits */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Checkbox
                           checked={formData.report_include_top_products || false}
-                          onChange={(e) => handleChange('report_include_top_products', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_top_products', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <BarChart3 className="size-4 text-purple-600" />
-                            <span className="font-medium text-base-content">Top 10 produits</span>
+                            <span className="font-medium text-slate-800">Top 10 produits</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Produits les plus vendus du mois</p>
+                          <p className="text-xs text-slate-500 mt-1">Produits les plus vendus du mois</p>
                         </div>
                       </label>
 
                       {/* Rotation lente */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Checkbox
                           checked={formData.report_include_slow_moving || false}
-                          onChange={(e) => handleChange('report_include_slow_moving', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_slow_moving', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <Clock className="size-4 text-base-content/70" />
-                            <span className="font-medium text-base-content">Rotation lente</span>
+                            <Clock className="size-4 text-slate-600" />
+                            <span className="font-medium text-slate-800">Rotation lente</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Produits dormants et surstock</p>
+                          <p className="text-xs text-slate-500 mt-1">Produits dormants et surstock</p>
                         </div>
                       </label>
 
                       {/* Dettes */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Checkbox
                           checked={formData.report_include_debt || false}
-                          onChange={(e) => handleChange('report_include_debt', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_debt', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <Users className="size-4 text-primary" />
-                            <span className="font-medium text-base-content">Dettes clients/fournisseurs</span>
+                            <Users className="size-4 text-indigo-600" />
+                            <span className="font-medium text-slate-800">Dettes clients/fournisseurs</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Créances et dettes fournisseurs</p>
+                          <p className="text-xs text-slate-500 mt-1">Créances et dettes fournisseurs</p>
                         </div>
                       </label>
 
                       {/* Résumé financier */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                        <Checkbox
                           checked={formData.report_include_financial_summary || false}
-                          onChange={(e) => handleChange('report_include_financial_summary', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_financial_summary', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <DollarSign className="size-4 text-success" />
-                            <span className="font-medium text-base-content">Résumé financier</span>
+                            <DollarSign className="size-4 text-emerald-600" />
+                            <span className="font-medium text-slate-800">Résumé financier</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Balance et flux de trésorerie</p>
+                          <p className="text-xs text-slate-500 mt-1">Balance et flux de trésorerie</p>
                         </div>
                       </label>
 
                       {/* Comparaison */}
-                      <label className="flex items-start gap-3 p-4 bg-base-200 rounded-xl cursor-pointer hover:bg-base-200 transition-colors md:col-span-2 lg:col-span-3">
-                        <input
-                          type="checkbox"
+                      <label className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors md:col-span-2 lg:col-span-3">
+                        <Checkbox
                           checked={formData.report_include_comparison || false}
-                          onChange={(e) => handleChange('report_include_comparison', e.target.checked)}
-                          className="checkbox checkbox-primary mt-0.5"
+                          onCheckedChange={(checked) => handleChange('report_include_comparison', !!checked)}
+                          className="mt-0.5"
                           disabled={!formData.monthly_report_enabled}
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <TrendingUp className="size-4 text-info" />
-                            <span className="font-medium text-base-content">Comparaison avec le mois précédent</span>
+                            <TrendingUp className="size-4 text-blue-500" />
+                            <span className="font-medium text-slate-800">Comparaison avec le mois précédent</span>
                           </div>
-                          <p className="text-xs text-base-content/60 mt-1">Évolution mensuelle en pourcentage (ex: +15% vs mois dernier)</p>
+                          <p className="text-xs text-slate-500 mt-1">Évolution mensuelle en pourcentage (ex: +15% vs mois dernier)</p>
                         </div>
                       </label>
                     </div>
@@ -1466,7 +1458,7 @@ export default function PharmacySettingsForm() {
       </Tabs>
 
       {/* STICKY BOTTOM ACTION BAR */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-background/90 backdrop-blur-xl border-t z-50 flex justify-center items-center">
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t z-50 flex justify-center items-center">
         <Button
           onClick={() => handleSubmit()}
           disabled={saving}

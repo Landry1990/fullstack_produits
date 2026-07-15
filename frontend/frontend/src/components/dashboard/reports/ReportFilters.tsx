@@ -5,6 +5,11 @@ import { fr } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
 import type { QueryDefinition, Client } from '../../../hooks/useCentreRapports';
 import { Search, User, Truck, Users, Tag, Save, History, Trash2, LayoutPanelTop, Filter, Plus, X } from 'lucide-react';
+import { Button } from '../../ui/Button';
+import { Input } from '../../shadcn/input';
+import { Select } from '../../ui/Select';
+import { Checkbox } from '../../shadcn/checkbox';
+import { Badge } from '../../shadcn/badge';
 
 registerLocale('fr', fr);
 
@@ -115,46 +120,48 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
     return (
         <div className="flex flex-col gap-6">
             {/* Presets Toolbar */}
-            <div className="flex flex-wrap items-center gap-3 border-b border-base-200 pb-4">
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-base-content/40">
+            <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-4">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-300">
                     <History className="size-3" />
                     {t('reports.my_configs', { defaultValue: 'Mes Configurations :' })}
                 </div>
                 {presetList.flatMap(p => p.queryId === selectedQuery.id ? [(
                     <div key={p.id} className="group flex items-center gap-1">
-                        <button
+                        <Button
+                            variant="ghost" size="sm"
                             onClick={() => presets.apply(p)}
-                            className="btn btn-xs rounded-full bg-base-200 hover:bg-primary hover:text-white border-none transition-all px-3"
+                            className="rounded-full bg-slate-100 hover:bg-indigo-600 hover:text-white border-none transition-all px-3"
                         >
                             {p.name}
-                        </button>
+                        </Button>
                         <button 
                             onClick={() => presets.delete(p.id)}
-                            className="btn btn-xs btn-circle btn-ghost opacity-0 group-hover:opacity-100 text-error transition-all"
+                            className="size-7 p-0 rounded-full opacity-0 group-hover:opacity-100 text-red-600 hover:bg-red-50 transition-all flex items-center justify-center"
                         >
                             <Trash2 className="size-3" />
                         </button>
                     </div>
                 )] : [])}
-                <button 
+                <Button 
+                    variant="outline" size="sm"
                     onClick={() => {
                         const name = prompt(t('reports.preset_prompt_name', { defaultValue: 'Nom de cette configuration ?' }));
                         if (name) presets.save(name);
                     }}
-                    className="btn btn-xs btn-primary btn-outline rounded-full gap-2"
+                    className="rounded-full gap-2"
                 >
                     <Save className="size-3" />
                     {t('reports.preset_save_btn', { defaultValue: 'Sauvegarder' })}
-                </button>
+                </Button>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6 sm:items-end w-full">
             {filteredParams.map(param => (
-                <div key={param.key} className="form-control w-full sm:w-auto sm:min-w-[200px] min-w-0">
-                    <label className="label py-1">
-                        <span className="label-text text-[10px] font-bold uppercase tracking-widest text-base-content/50">
+                <div key={param.key} className="w-full sm:w-auto sm:min-w-[200px] min-w-0">
+                    <label className="block py-1">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                             {t(`params.${param.key}`, { defaultValue: param.label })}
-                            {param.required && <span className="text-error ml-1">*</span>}
+                            {param.required && <span className="text-red-600 ml-1">*</span>}
                         </span>
                     </label>
 
@@ -170,7 +177,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                 dateFormat="MM/yyyy"
                                 showMonthYearPicker
                                 locale="fr"
-                                className="input input-bordered input-md w-full rounded-xl font-bold bg-base-200/50"
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             />
                         )}
 
@@ -185,7 +192,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                 }}
                                 dateFormat="dd/MM/yyyy"
                                 locale="fr"
-                                className="input input-bordered input-md w-full rounded-xl font-bold bg-base-200/50"
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             />
                         )}
 
@@ -208,34 +215,34 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                 timeIntervals={15}
                                 dateFormat="dd/MM/yyyy HH:mm"
                                 locale="fr"
-                                className="input input-bordered input-md w-full rounded-xl font-bold bg-base-200/50"
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             />
                         )}
 
                         {param.type === 'number' && (
-                            <input
+                            <Input
                                 type="number"
                                 value={params[param.key] !== undefined && params[param.key] !== null ? params[param.key] : ''}
                                 onChange={e => setParam(param.key, e.target.value === '' ? '' : Number(e.target.value))}
-                                className="input input-bordered input-md w-full rounded-xl font-bold bg-base-200/50"
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             />
                         )}
 
                         {param.type === 'text' && (
-                            <input
+                            <Input
                                 type="text"
                                 value={params[param.key] || ''}
                                 onChange={e => setParam(param.key, e.target.value)}
-                                className="input input-bordered input-md w-full rounded-xl font-bold bg-base-200/50"
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             />
                         )}
 
                         {param.type === 'client_id' && (
                             <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors">
                                     <Search className="size-4" />
                                 </div>
-                                <input
+                                <Input
                                     type="text"
                                     value={clientSearch.query || clientSearch.selectedName}
                                     onChange={e => {
@@ -245,15 +252,15 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     }}
                                     onFocus={() => clientSearch.query.length > 0 && clientActions.setShowDropdown(true)}
                                     placeholder={t('params.client_id', 'Rechercher un client...')}
-                                    className="input input-bordered input-md w-full pl-10 rounded-xl font-bold bg-base-200/50"
+                                    className="w-full pl-10 rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                                 />
                                 {clientSearch.showDropdown && clientSearch.filtered.length > 0 && (
-                                    <ul className="absolute z-50 w-full bg-base-100 shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-base-200 py-2 animate-in fade-in zoom-in duration-200">
+                                    <ul className="absolute z-50 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-slate-200 py-2 animate-in fade-in zoom-in duration-200">
                                         {clientSearch.filtered.map(client => (
                                             <li key={client.id}>
                                                 <button
                                                     type="button"
-                                                    className="w-full text-left px-4 py-3 hover:bg-base-200 transition-colors flex items-center gap-3"
+                                                    className="w-full text-left px-4 py-3 hover:bg-slate-100 transition-colors flex items-center gap-3"
                                                     onClick={() => {
                                                         setParam(param.key, client.id);
                                                         clientActions.setSelectedName(client.name);
@@ -261,12 +268,12 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         clientActions.setShowDropdown(false);
                                                     }}
                                                 >
-                                                    <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                                    <div className="size-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
                                                         <User className="size-4" />
                                                     </div>
                                                     <div className="flex-1">
                                                         <div className="font-bold text-sm">{client.name}</div>
-                                                        {client.phone && <div className="text-[10px] text-base-content/40 font-bold">{client.phone}</div>}
+                                                        {client.phone && <div className="text-[10px] text-slate-300 font-bold">{client.phone}</div>}
                                                     </div>
                                                 </button>
                                             </li>
@@ -278,10 +285,10 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'fournisseur_id' && (
                             <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors">
                                     <Search className="size-4" />
                                 </div>
-                                <input
+                                <Input
                                     type="text"
                                     value={supplierSearch.query || supplierSearch.selectedName}
                                     onChange={e => {
@@ -291,15 +298,15 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     }}
                                     onFocus={() => supplierSearch.query.length > 0 && supplierActions.setShowDropdown(true)}
                                     placeholder={t('params.fournisseur_id', 'Rechercher un fournisseur...')}
-                                    className="input input-bordered input-md w-full pl-10 rounded-xl font-bold bg-base-200/50"
+                                    className="w-full pl-10 rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                                 />
                                 {supplierSearch.showDropdown && supplierSearch.filtered.length > 0 && (
-                                    <ul className="absolute z-50 w-full bg-base-100 shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-base-200 py-2 animate-in fade-in zoom-in duration-200">
+                                    <ul className="absolute z-50 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-slate-200 py-2 animate-in fade-in zoom-in duration-200">
                                         {supplierSearch.filtered.map(supplier => (
                                             <li key={supplier.id}>
                                                 <button
                                                     type="button"
-                                                    className="w-full text-left px-4 py-3 hover:bg-base-200 transition-colors flex items-center gap-3"
+                                                    className="w-full text-left px-4 py-3 hover:bg-slate-100 transition-colors flex items-center gap-3"
                                                     onClick={() => {
                                                         setParam(param.key, supplier.id);
                                                         supplierActions.setSelectedName(supplier.name);
@@ -307,7 +314,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         supplierActions.setShowDropdown(false);
                                                     }}
                                                 >
-                                                    <div className="size-8 rounded-full bg-success/10 flex items-center justify-center text-success">
+                                                    <div className="size-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
                                                         <Truck className="size-4" />
                                                     </div>
                                                     <div className="flex-1">
@@ -323,10 +330,10 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'vendeur_id' && (
                             <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors">
                                     <Search className="size-4" />
                                 </div>
-                                <input
+                                <Input
                                     type="text"
                                     value={userSearch.query || userSearch.selectedName}
                                     onChange={e => {
@@ -336,15 +343,15 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     }}
                                     onFocus={() => userSearch.query.length > 0 && userActions.setShowDropdown(true)}
                                     placeholder={t('params.vendeur_id', 'Rechercher un vendeur...')}
-                                    className="input input-bordered input-md w-full pl-10 rounded-xl font-bold bg-base-200/50"
+                                    className="w-full pl-10 rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                                 />
                                 {userSearch.showDropdown && userSearch.filtered.length > 0 && (
-                                    <ul className="absolute z-50 w-full bg-base-100 shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-base-200 py-2 animate-in fade-in zoom-in duration-200">
+                                    <ul className="absolute z-50 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-slate-200 py-2 animate-in fade-in zoom-in duration-200">
                                         {userSearch.filtered.map(user => (
                                             <li key={user.id}>
                                                 <button
                                                     type="button"
-                                                    className="w-full text-left px-4 py-3 hover:bg-base-200 transition-colors flex items-center gap-3"
+                                                    className="w-full text-left px-4 py-3 hover:bg-slate-100 transition-colors flex items-center gap-3"
                                                     onClick={() => {
                                                         setParam(param.key, user.id);
                                                         userActions.setSelectedName(user.username);
@@ -352,7 +359,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         userActions.setShowDropdown(false);
                                                     }}
                                                 >
-                                                    <div className="size-8 rounded-full bg-info/10 flex items-center justify-center text-info">
+                                                    <div className="size-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                                                         <Users className="size-4" />
                                                     </div>
                                                     <div className="flex-1">
@@ -368,10 +375,10 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'famille_id' && (
                             <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/30 group-focus-within:text-primary transition-colors">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors">
                                     <Search className="size-4" />
                                 </div>
-                                <input
+                                <Input
                                     type="text"
                                     value={familleSearch.query || familleSearch.selectedName}
                                     onChange={e => {
@@ -381,15 +388,15 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     }}
                                     onFocus={() => familleSearch.query.length > 0 && familleActions.setShowDropdown(true)}
                                     placeholder={t('params.famille_id', 'Rechercher une famille...')}
-                                    className="input input-bordered input-md w-full pl-10 rounded-xl font-bold bg-base-200/50"
+                                    className="w-full pl-10 rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                                 />
                                 {familleSearch.showDropdown && familleSearch.filtered.length > 0 && (
-                                    <ul className="absolute z-50 w-full bg-base-100 shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-base-200 py-2 animate-in fade-in zoom-in duration-200">
+                                    <ul className="absolute z-50 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-slate-200 py-2 animate-in fade-in zoom-in duration-200">
                                         {familleSearch.filtered.map(famille => (
                                             <li key={famille.id}>
                                                 <button
                                                     type="button"
-                                                    className="w-full text-left px-4 py-3 hover:bg-base-200 transition-colors flex items-center gap-3"
+                                                    className="w-full text-left px-4 py-3 hover:bg-slate-100 transition-colors flex items-center gap-3"
                                                     onClick={() => {
                                                         setParam(param.key, famille.id);
                                                         familleActions.setSelectedName(famille.nom);
@@ -397,7 +404,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         familleActions.setShowDropdown(false);
                                                     }}
                                                 >
-                                                    <div className="size-8 rounded-full bg-warning/10 flex items-center justify-center text-warning">
+                                                    <div className="size-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
                                                         <Tag className="size-4" />
                                                     </div>
                                                     <div className="flex-1">
@@ -412,28 +419,26 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         )}
 
                         {param.type === 'select' && param.options && (
-                            <select
+                            <Select
                                 value={params[param.key] || ''}
                                 onChange={e => setParam(param.key, e.target.value)}
-                                className="select select-bordered select-md w-full rounded-xl font-bold bg-base-200/50"
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             >
                                 {param.options.map(opt => (
                                     <option key={opt.value} value={opt.value}>
                                         {t(`reports.query_options.${selectedQuery.id}.${param.key}.${opt.value}`, { defaultValue: opt.label })}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         )}
 
                         {param.type === 'checkbox' && (
-                            <div className="flex items-center gap-3 bg-base-200/50 px-4 h-12 rounded-xl border border-base-300">
-                                <input
-                                    type="checkbox"
+                            <div className="flex items-center gap-3 bg-slate-50/50 px-4 h-12 rounded-lg border border-slate-200">
+                                <Checkbox
                                     checked={!!params[param.key]}
-                                    onChange={e => setParam(param.key, e.target.checked)}
-                                    className="checkbox checkbox-primary checkbox-sm rounded-lg"
+                                    onCheckedChange={(checked) => setParam(param.key, !!checked)}
                                 />
-                                <span className="text-xs font-bold uppercase tracking-tight text-base-content/70">
+                                <span className="text-xs font-bold uppercase tracking-tight text-slate-500">
                                     {t(`params.${param.key}_active`, { defaultValue: t('common:active', { defaultValue: 'Activé' }) })}
                                 </span>
                             </div>
@@ -443,38 +448,40 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                                 {/* Condition Builder */}
                                 <div className="dropdown dropdown-bottom dropdown-start">
-                                    <label tabIndex={0} className="btn btn-outline btn-sm rounded-xl gap-2 h-12 px-6 border-base-300 hover:bg-base-200 hover:border-base-content/20 text-base-content/70">
-                                        <Filter className="size-4 text-primary" />
+                                    <label tabIndex={0} className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
+                                        <Filter className="size-4 text-indigo-600" />
                                         <span>{t('dynamic_constructor.conditions_title')}</span>
                                         {currentConditions.length > 0 && (
-                                            <div className="badge badge-secondary badge-sm ml-1">{currentConditions.length}</div>
+                                            <Badge variant="secondary" className="ml-1">{currentConditions.length}</Badge>
                                         )}
                                     </label>
-                                    <div tabIndex={0} className="dropdown-content z-[100] p-6 shadow-2xl bg-base-100 rounded-3xl border border-base-300 w-[320px] sm:w-[580px] mt-2 animate-in slide-in-from-top-2 duration-300">
+                                    <div tabIndex={0} className="dropdown-content z-[100] p-6 shadow-2xl bg-white rounded-3xl border border-slate-200 w-[320px] sm:w-[580px] mt-2 animate-in slide-in-from-top-2 duration-300">
                                         <div className="flex items-center justify-between mb-6">
-                                            <div className="text-xs font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2">
+                                            <div className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
                                                 <Filter className="size-3" />
                                                 {t('dynamic_constructor.conditions_title')}
                                             </div>
                                             
                                             {/* Global Logic Toggle (AND/OR) */}
-                                            <div className="flex items-center bg-base-200 rounded-xl p-1 gap-1">
-                                                <button 
-                                                    className={`btn btn-xs rounded-lg px-3 transition-all ${(!params.logic || params.logic === 'AND') ? 'bg-primary text-white' : 'btn-ghost'}`}
+                                            <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+                                                <Button 
+                                                    variant="ghost" size="sm"
+                                                    className={`rounded-lg px-3 transition-all ${(!params.logic || params.logic === 'AND') ? 'bg-indigo-600 text-white' : ''}`}
                                                     onClick={() => setParam('logic', 'AND')}
                                                 >
                                                     {t('dynamic_constructor.logic_and')}
-                                                </button>
-                                                <button 
-                                                    className={`btn btn-xs rounded-lg px-3 transition-all ${params.logic === 'OR' ? 'bg-secondary text-white' : 'btn-ghost'}`}
+                                                </Button>
+                                                <Button 
+                                                    variant="ghost" size="sm"
+                                                    className={`rounded-lg px-3 transition-all ${params.logic === 'OR' ? 'bg-slate-700 text-white' : ''}`}
                                                     onClick={() => setParam('logic', 'OR')}
                                                 >
                                                     {t('dynamic_constructor.logic_or')}
-                                                </button>
+                                                </Button>
                                             </div>
 
                                             <button 
-                                                className="btn btn-ghost btn-xs text-error"
+                                                className="text-xs font-medium text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
                                                 onClick={() => setParam('conditions', '[]')}
                                             >
                                                 {t('dynamic_constructor.reset_conditions')}
@@ -486,9 +493,9 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                 const showValueInput = !['isnull', 'notnull'].includes(cond.operator);
                                                 
                                                 return (
-                                                    <div key={`cond-${cond.field}-${cond.operator}`} className="flex flex-wrap items-center gap-2 p-3 bg-base-200/50 rounded-2xl border border-base-200 animate-in zoom-in-95 duration-200">
-                                                        <select 
-                                                            className="select select-sm select-bordered rounded-xl flex-1 min-w-[140px] font-bold text-[11px] uppercase bg-base-100"
+                                                    <div key={`cond-${cond.field}-${cond.operator}`} className="flex flex-wrap items-center gap-2 p-3 bg-slate-50/50 rounded-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
+                                                        <Select 
+                                                            className="rounded-lg flex-1 min-w-[140px] font-bold text-[11px] uppercase bg-white h-8 px-2 text-xs border border-slate-200"
                                                             value={cond.field}
                                                             onChange={(e) => {
                                                                 const newConds = [...currentConditions];
@@ -505,10 +512,10 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                             <option value="tva">{t('dynamic_constructor.fields.tva')}</option>
                                                             <option value="cip">{t('dynamic_constructor.fields.cip')}</option>
                                                             <option value="stock_minimum">{t('dynamic_constructor.fields.stock_minimum')}</option>
-                                                        </select>
+                                                        </Select>
 
-                                                        <select 
-                                                            className="select select-sm select-bordered rounded-xl w-32 font-bold text-[11px] bg-base-100"
+                                                        <Select 
+                                                            className="rounded-lg w-32 font-bold text-[11px] bg-white h-8 px-2 text-xs border border-slate-200"
                                                             value={cond.operator}
                                                             onChange={(e) => {
                                                                 const newConds = [...currentConditions];
@@ -523,12 +530,12 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                             <option value="eq">=</option>
                                                             <option value="isnull">{t('dynamic_constructor.operators.isnull')}</option>
                                                             <option value="notnull">{t('dynamic_constructor.operators.notnull')}</option>
-                                                        </select>
+                                                        </Select>
 
                                                         {showValueInput ? (
-                                                            <input 
+                                                            <Input 
                                                                 type="text"
-                                                                className="input input-sm input-bordered rounded-xl w-24 font-bold text-[11px] bg-base-100"
+                                                                className="rounded-lg w-24 font-bold text-[11px] bg-white h-8 px-2 text-xs border border-slate-200"
                                                                 placeholder={t('dynamic_constructor.value_placeholder')}
                                                                 value={cond.value}
                                                                 onChange={(e) => {
@@ -538,13 +545,13 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                                 }}
                                                             />
                                                         ) : (
-                                                            <div className="w-24 px-2 py-1 bg-base-300/30 rounded-lg text-[10px] font-black uppercase text-center text-base-content/40 border border-base-300 border-dashed">
+                                                            <div className="w-24 px-2 py-1 bg-slate-200/50 rounded-lg text-[10px] font-black uppercase text-center text-slate-300 border border-slate-200 border-dashed">
                                                                 {t('dynamic_constructor.no_value')}
                                                             </div>
                                                         )}
 
                                                         <button 
-                                                            className="btn btn-ghost btn-sm btn-circle text-error hover:bg-error/10 ml-auto"
+                                                            className="size-7 p-0 rounded-full text-red-600 hover:bg-red-50 ml-auto flex items-center justify-center transition-colors"
                                                             onClick={() => {
                                                                 const newConds = currentConditions.filter((_: any, i: number) => i !== idx);
                                                                 setParam('conditions', JSON.stringify(newConds));
@@ -557,8 +564,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                             })}
                                         </div>
 
-                                        <button 
-                                            className="btn btn-primary btn-sm btn-block rounded-xl gap-2 mt-6 h-10 shadow-lg shadow-primary/20"
+                                        <Button 
+                                            className="w-full rounded-xl gap-2 mt-6 h-10 shadow-lg shadow-indigo-500/20"
                                             onClick={() => {
                                                 const newConds = [...currentConditions, { field: '', operator: 'gte', value: '' }];
                                                 setParam('conditions', JSON.stringify(newConds));
@@ -566,21 +573,21 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         >
                                             <Plus className="size-4" />
                                             {t('dynamic_constructor.add_condition')}
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
 
                                 {/* Fields Selector Dropdown */}
                                 <div className="dropdown dropdown-bottom dropdown-end">
-                                    <label tabIndex={0} className="btn btn-outline btn-sm rounded-xl gap-2 h-12 px-6 border-base-300 hover:bg-base-200 hover:border-base-content/20 text-base-content/70">
+                                    <label tabIndex={0} className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
                                         <LayoutPanelTop className="size-4" />
                                         <span>{t('dynamic_constructor.select_columns')}</span>
-                                        <div className="badge badge-primary badge-sm ml-1">
+                                        <Badge className="ml-1">
                                             {(params[param.key] || '').split(',').filter(Boolean).length}
-                                        </div>
+                                        </Badge>
                                     </label>
-                                    <div tabIndex={0} className="dropdown-content z-[100] p-4 shadow-2xl bg-base-100 rounded-2xl border border-base-300 w-[300px] sm:w-[450px] mt-2 animate-in slide-in-from-top-2 duration-300">
-                                        <div className="text-xs font-black uppercase tracking-widest text-base-content/40 mb-4 flex items-center gap-2">
+                                    <div tabIndex={0} className="dropdown-content z-[100] p-4 shadow-2xl bg-white rounded-2xl border border-slate-200 w-[300px] sm:w-[450px] mt-2 animate-in slide-in-from-top-2 duration-300">
+                                        <div className="text-xs font-black uppercase tracking-widest text-slate-300 mb-4 flex items-center gap-2">
                                             <LayoutPanelTop className="size-3" />
                                             {t('dynamic_constructor.table_composition')}
                                         </div>
@@ -607,22 +614,20 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                 const isChecked = currentFields.includes(opt.value);
                                                 
                                                 return (
-                                                    <label key={opt.value} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isChecked ? 'bg-primary/5 border-primary/30 shadow-sm' : 'bg-base-200/30 border-base-200 hover:border-base-content/10'}`}>
-                                                        <input
-                                                            type="checkbox"
+                                                    <label key={opt.value} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isChecked ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-slate-50/30 border-slate-200 hover:border-slate-300'}`}>
+                                                        <Checkbox
                                                             checked={isChecked}
-                                                            onChange={e => {
+                                                            onCheckedChange={(checked) => {
                                                                 let newFields;
-                                                                if (e.target.checked) {
+                                                                if (checked) {
                                                                     newFields = [...currentFields, opt.value];
                                                                 } else {
                                                                     newFields = currentFields.filter((f: string) => f !== opt.value);
                                                                 }
                                                                 setParam(param.key, newFields.join(','));
                                                             }}
-                                                            className="checkbox checkbox-primary checkbox-xs rounded-md"
                                                         />
-                                                        <span className={`text-[11px] font-bold uppercase tracking-tight ${isChecked ? 'text-primary' : 'text-base-content/60'}`}>
+                                                        <span className={`text-[11px] font-bold uppercase tracking-tight ${isChecked ? 'text-indigo-600' : 'text-slate-500'}`}>
                                                             {t(`reports.query_options.${selectedQuery.id}.${param.key}.${opt.value}`, { defaultValue: opt.label })}
                                                         </span>
                                                     </label>
@@ -630,12 +635,12 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                             });
                                             })()}
                                         </div>
-                                        <div className="mt-4 pt-4 border-t border-base-200 flex justify-between items-center">
-                                            <div className="text-[9px] font-bold uppercase text-base-content/30 italic">
+                                        <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
+                                            <div className="text-[9px] font-bold uppercase text-slate-300 italic">
                                                 * {t('reports.select_columns_hint', { defaultValue: 'Sélectionnez les colonnes à afficher' })}
                                             </div>
                                             <button 
-                                                className="btn btn-ghost btn-xs text-primary"
+                                                className="text-xs font-medium text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-colors"
                                                 onClick={() => {
                                                     if (param.options) {
                                                         const all = param.options.map(o => o.value).join(',');

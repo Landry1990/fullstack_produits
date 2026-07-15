@@ -23,10 +23,10 @@ class ExportCommandeView(APIView):
         """
         Paramètres:
         - cip_field: 'cip1' ou 'cip3' (défaut: cip1)
-        - format: 'csv' ou 'txt' (défaut: csv)
+        - export_format: 'csv' ou 'txt' (défaut: csv)
         """
         cip_field = request.query_params.get('cip_field', 'cip1')
-        export_format = request.query_params.get('format', 'csv')
+        export_format = request.query_params.get('export_format', request.query_params.get('format', 'csv'))
         
         if cip_field not in ['cip1', 'cip3']:
             return JsonResponse(
@@ -58,14 +58,14 @@ class ExportCommandeView(APIView):
             if cip_value:
                 produits_avec_cip.append({
                     'cip': cip_value,
-                    'libelle': produit.libelle or produit.name,
+                    'libelle': produit.name,
                     'quantite': ligne.quantity,
                     'unites_gratuites': ligne.unites_gratuites or 0,
                     'prix': ligne.price,
                 })
             else:
                 produits_sans_cip.append({
-                    'libelle': produit.libelle or produit.name,
+                    'libelle': produit.name,
                     'quantite': ligne.quantity,
                     'unites_gratuites': ligne.unites_gratuites or 0,
                 })
@@ -192,14 +192,14 @@ class ExportCommandePreviewView(APIView):
                 produits_avec_cip.append({
                     'id': produit.id,
                     'cip': cip_value,
-                    'libelle': produit.libelle or produit.name,
+                    'libelle': produit.name,
                     'quantite': ligne.quantity,
                     'unites_gratuites': ligne.unites_gratuites or 0,
                 })
             else:
                 produits_sans_cip.append({
                     'id': produit.id,
-                    'libelle': produit.libelle or produit.name,
+                    'libelle': produit.name,
                     'quantite': ligne.quantity,
                     'unites_gratuites': ligne.unites_gratuites or 0,
                 })

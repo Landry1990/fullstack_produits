@@ -9,6 +9,16 @@ import {
 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
+import { Checkbox } from './shadcn/checkbox';
+import { Input } from './shadcn/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/Table';
 import { cn } from '../lib/utils';
 
 import type { Client, AyantDroit } from '../types';
@@ -350,7 +360,7 @@ export default function Clients() {
                 colSpan={1}
                 actions={
                   <li>
-                    <a onClick={handleBulkDelete} className="text-error hover:bg-error/10 font-medium">
+                    <a onClick={handleBulkDelete} className="text-red-600 hover:bg-red-50 font-medium">
                       <Trash2 className="size-4" />
                       {t('clients:actions.bulk_delete', { count: selectedIds.length })}
                     </a>
@@ -396,8 +406,8 @@ export default function Clients() {
 
            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-              <input
-                className="w-full pl-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
+              <Input
+                className="w-full pl-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700"
                 placeholder={t('clients:filters.search_placeholder')}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -417,11 +427,9 @@ export default function Clients() {
                  return (
                  <li key={client.id}>
                     <div className={cn("flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer", selectedClient?.id === client.id ? 'bg-emerald-50' : 'hover:bg-slate-100')} onClick={() => handleSelectClient(client)}>
-                       <input
-                         type="checkbox"
-                         className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                       <Checkbox
                          checked={selectedSet.has(client.id)}
-                         onChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id]; })}
+                         onCheckedChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id]; })}
                          onClick={(e) => e.stopPropagation()}
                        />
                        <div className="flex-1 min-w-0">
@@ -559,17 +567,21 @@ export default function Clients() {
                      </div>
                      <div className="p-5 grid grid-cols-2 gap-3">
                         {selectedClient.client_type === 'PARTICULIER' && (
-                           <div className="p-3 bg-warning/10 border border-amber-100 rounded-lg flex flex-col gap-1 relative">
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-warning/70">{t('clients:history.loyalty')}</span>
+                           <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex flex-col gap-1 relative">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600/70">{t('clients:history.loyalty')}</span>
                               <div className="flex justify-between items-end">
-                                 <div className="text-lg font-bold text-warning">
+                                 <div className="text-lg font-bold text-amber-600">
                                     {selectedClient.points_fidelite ?? 0} {t('clients:units.pts')}
                                  </div>
                                  {loyaltyThreshold > 0 && (
-                                   <div className="radial-progress text-amber-300" style={{ "--value": Math.min(100, ((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100), "--size": "2.5rem", "--thickness": "3px" } as any}>
-                                      <span className="text-[10px] font-bold text-warning">
-                                         {Math.min(100, Math.round(((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100))}%
-                                      </span>
+                                   <div className="relative size-10 flex items-center justify-center">
+                                     <svg className="absolute inset-0 size-10 -rotate-90" viewBox="0 0 36 36">
+                                       <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="3" className="text-amber-200" />
+                                       <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray={`${Math.min(100, ((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100)} 100`} strokeLinecap="round" className="text-amber-500 transition-all" />
+                                     </svg>
+                                     <span className="text-[10px] font-bold text-amber-600">
+                                       {Math.min(100, Math.round(((selectedClient.points_fidelite ?? 0) / loyaltyThreshold) * 100))}%
+                                     </span>
                                    </div>
                                  )}
                               </div>
@@ -583,45 +595,49 @@ export default function Clients() {
                         {selectedClient.client_type === 'PARTICULIER' && (
                           <>
                             {selectedClient.is_deposit_enabled ? (
-                              <div className="p-3 bg-primary/10 border border-indigo-100 rounded-lg flex flex-col gap-1 cursor-pointer hover:bg-primary/20 transition-colors" onClick={() => setIsDepositModalOpen(true)}>
+                              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex flex-col gap-1 cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => setIsDepositModalOpen(true)}>
                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500/70">{t('clients:finance.solde_depot')}</span>
-                                 <div className="text-lg font-bold text-primary">{formatCurrency(parseFloat(selectedClient.solde_depot || '0'))}</div>
+                                 <div className="text-lg font-bold text-indigo-600">{formatCurrency(parseFloat(selectedClient.solde_depot || '0'))}</div>
                               </div>
                             ) : (
-                              <div className="p-3 bg-base-200 border border-base-200 rounded-lg flex flex-col gap-1 text-base-content/50">
-                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('clients:finance.solde_depot')}</span>
-                                 <div className="text-lg font-bold text-base-content/60">{formatCurrency(0)}</div>
+                              <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg flex flex-col gap-1 text-slate-400">
+                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('clients:finance.solde_depot')}</span>
+                                 <div className="text-lg font-bold text-slate-400">{formatCurrency(0)}</div>
                               </div>
                             )}
-                            <div className="p-3 bg-base-200 border border-base-200 rounded-lg flex flex-col gap-1">
-                               <span className="text-[10px] font-semibold uppercase tracking-wider text-base-content/50">{t('clients:finance.auto_discount')}</span>
-                               <div className="text-lg font-bold text-base-content">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
+                            <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg flex flex-col gap-1">
+                               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('clients:finance.auto_discount')}</span>
+                               <div className="text-lg font-bold text-slate-700">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
                             </div>
                           </>
                         )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && (
-                          <div className="col-span-2 p-3 bg-primary/10 border border-indigo-100 rounded-lg flex flex-col gap-1">
+                          <div className="col-span-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex flex-col gap-1">
                              <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500/70">{t('clients:finance.auto_discount')}</span>
-                             <div className="text-lg font-bold text-primary">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
+                             <div className="text-lg font-bold text-indigo-600">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
                           </div>
                         )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && (
-                          <div className="col-span-2 p-3 bg-warning/10 border border-orange-100 rounded-lg flex justify-between items-center">
+                          <div className="col-span-2 p-3 bg-amber-50 border border-orange-100 rounded-lg flex justify-between items-center">
                              <div>
                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-500/70">{t('clients:finance.debt_usage')}</span>
-                                <div className="text-base font-bold text-base-content">
-                                  {formatCurrency(normalizeNumberInput(selectedClient.current_debt || '0'))} <span className="text-base-content/50 font-normal">/ {formatCurrency(normalizeNumberInput(selectedClient.plafond || '0'))}</span>
+                                <div className="text-base font-bold text-slate-700">
+                                  {formatCurrency(normalizeNumberInput(selectedClient.current_debt || '0'))} <span className="text-slate-400 font-normal">/ {formatCurrency(normalizeNumberInput(selectedClient.plafond || '0'))}</span>
                                 </div>
                              </div>
-                             <div className="radial-progress text-orange-300" style={{ "--value": Math.min(100, (normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1')) * 100), "--size": "3rem", "--thickness": "4px" } as any}>
-                                <span className="text-[10px] font-bold text-warning">{(normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1') * 100).toFixed(0)}%</span>
+                             <div className="relative size-12 flex items-center justify-center">
+                               <svg className="absolute inset-0 size-12 -rotate-90" viewBox="0 0 36 36">
+                                 <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="4" className="text-orange-200" />
+                                 <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray={`${Math.min(100, (normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1')) * 100)} 100`} strokeLinecap="round" className="text-orange-500 transition-all" />
+                               </svg>
+                               <span className="text-[10px] font-bold text-amber-600">{(normalizeNumberInput(selectedClient.current_debt || '0') / normalizeNumberInput(selectedClient.plafond || '1') * 100).toFixed(0)}%</span>
                              </div>
                           </div>
                         )}
                         {selectedClient.client_type === 'PROFESSIONNEL' && selectedClient.majoration_pro_pourcentage && parseFloat(selectedClient.majoration_pro_pourcentage) > 0 && (
-                           <div className="col-span-2 p-3 bg-error/10 border border-red-100 rounded-lg flex flex-col gap-1">
+                           <div className="col-span-2 p-3 bg-red-50 border border-red-100 rounded-lg flex flex-col gap-1">
                               <span className="text-[10px] font-semibold uppercase tracking-wider text-red-500/70">{t('clients:finance.majoration_pro')}</span>
-                              <div className="text-lg font-bold text-error">+{selectedClient.majoration_pro_pourcentage}{t('clients:units.percent')}</div>
+                              <div className="text-lg font-bold text-red-600">+{selectedClient.majoration_pro_pourcentage}{t('clients:units.percent')}</div>
                            </div>
                         )}
                      </div>
@@ -629,34 +645,34 @@ export default function Clients() {
 
                   {/* Beneficiaries Table */}
                   {selectedClient.client_type === 'PROFESSIONNEL' && (
-                    <div className="lg:col-span-2 bg-base-100 rounded-xl border border-base-200 shadow-sm overflow-hidden">
-                       <div className="px-5 py-3 border-b border-base-200 bg-base-200/50 flex items-center gap-2">
+                    <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                       <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
                           <Users className="size-4 text-indigo-500" />
-                          <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">{t('clients:beneficiaries.title')}</h3>
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t('clients:beneficiaries.title')}</h3>
                        </div>
                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-base-200">
-                             <thead className="bg-base-200">
-                                <tr>
-                                   <th className="px-6 py-3 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.col_name')}</th>
-                                   <th className="px-6 py-3 text-left text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.company') || 'Société'}</th>
-                                   <th className="px-6 py-3 text-right text-[10px] font-semibold text-base-content/60 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</th>
-                                </tr>
-                             </thead>
-                             <tbody className="bg-base-100 divide-y divide-base-200">
+                          <Table className="min-w-full">
+                             <TableHeader>
+                                <TableRow className="bg-slate-100 hover:bg-slate-100">
+                                   <TableHead className="px-6 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('clients:beneficiaries.col_name')}</TableHead>
+                                   <TableHead className="px-6 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('clients:beneficiaries.company') || 'Société'}</TableHead>
+                                   <TableHead className="px-6 py-3 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('clients:beneficiaries.col_id')}</TableHead>
+                                </TableRow>
+                             </TableHeader>
+                             <TableBody>
                                 {selectedClient.ayants_droit && selectedClient.ayants_droit.length > 0 ? (
                                   selectedClient.ayants_droit.map((ad: AyantDroit, idx: number) => (
-                                    <tr key={ad.matricule || ad.nom} className="hover:bg-base-200 transition-colors">
-                                       <td className="px-6 py-3 text-sm font-medium text-base-content">{ad.nom}</td>
-                                       <td className="px-6 py-3 text-sm text-base-content/60">{ad.societe || '—'}</td>
-                                       <td className="px-6 py-3 text-sm font-mono text-base-content/60 text-right">{ad.matricule}</td>
-                                    </tr>
+                                    <TableRow key={ad.matricule || ad.nom} className="hover:bg-slate-50 transition-colors">
+                                       <TableCell className="px-6 py-3 text-sm font-medium text-slate-700">{ad.nom}</TableCell>
+                                       <TableCell className="px-6 py-3 text-sm text-slate-500">{ad.societe || '—'}</TableCell>
+                                       <TableCell className="px-6 py-3 text-sm font-mono text-slate-500 text-right">{ad.matricule}</TableCell>
+                                    </TableRow>
                                   ))
                                 ) : (
-                                  <tr><td colSpan={3} className="py-12 text-center text-sm text-base-content/50">{t('clients:beneficiaries.empty')}</td></tr>
+                                  <TableRow><TableCell colSpan={3} className="py-12 text-center text-sm text-slate-400">{t('clients:beneficiaries.empty')}</TableCell></TableRow>
                                 )}
-                             </tbody>
-                          </table>
+                             </TableBody>
+                          </Table>
                        </div>
                     </div>
                   )}
@@ -664,11 +680,11 @@ export default function Clients() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-6 text-base-content/20 p-12 text-center">
-             <Users className="size-24 text-base-content/50" />
+          <div className="flex-1 flex flex-col items-center justify-center gap-6 text-slate-300 p-12 text-center">
+             <Users className="size-24 text-slate-300" />
              <div>
-                <h3 className="text-xl font-bold text-base-content/50">{t('clients:modals.select_client_empty')}</h3>
-                <p className="text-sm text-base-content/50 mt-2 max-w-sm mx-auto">{t('clients:modals.select_client_empty_desc')}</p>
+                <h3 className="text-xl font-bold text-slate-400">{t('clients:modals.select_client_empty')}</h3>
+                <p className="text-sm text-slate-400 mt-2 max-w-sm mx-auto">{t('clients:modals.select_client_empty_desc')}</p>
              </div>
           </div>
         )}

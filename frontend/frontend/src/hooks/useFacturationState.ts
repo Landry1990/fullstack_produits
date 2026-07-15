@@ -249,16 +249,20 @@ export function useFacturationState() {
     onError: (msg: string) => setError(msg)
   })
 
+  const isTerminalAccount = user?.is_terminal_account || false
+
   // --- Complete Sale Handler ---
   const handleCompleteSale = async (sudoCredentials?: { validatorId: number, password: string }) => {
-    // Sudo required when sending to centralized cash register
-    if (multiCaisse.centralizedCashRegister && !sudoCredentials) {
+    // Sudo required when sending to centralized cash register or when using a shared terminal account
+    if ((multiCaisse.centralizedCashRegister || isTerminalAccount) && !sudoCredentials) {
       requireSudo(async (validatorId, password) => {
         await handleCompleteSale({ validatorId, password })
       }, {
-        title: t('facturation:payment.sudo_confirm_identity'),
-        message: t('facturation:payment.sudo_send_to_caisse'),
-        forceCurrentUser: true,
+        title: isTerminalAccount ? 'Identification vendeur' : t('facturation:payment.sudo_confirm_identity'),
+        message: isTerminalAccount
+          ? 'Ce poste est partagé. Veuillez saisir vos identifiants de vendeur pour cette vente.'
+          : t('facturation:payment.sudo_send_to_caisse'),
+        forceCurrentUser: !isTerminalAccount,
       })
       return
     }
