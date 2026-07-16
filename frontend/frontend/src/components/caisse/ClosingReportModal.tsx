@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Ticket } from 'lucide-react'
 import PremiumModal from '../common/PremiumModal'
+import { formatCurrency } from '../../utils/formatters'
+import { getPaymentModeWithIcon } from '../../config/paymentModes'
 
 interface ClosingReportModalProps {
   isOpen: boolean
@@ -69,6 +71,26 @@ export function ClosingReportModal({
                   {report.session?.montant_theorique?.toLocaleString('fr-FR')} F
                 </p>
               </div>
+
+              {/* Détails par mode de règlement */}
+              {report.details_par_mode && Object.keys(report.details_par_mode).length > 0 && (
+                <div className="bg-white p-4 rounded-lg border border-slate-200">
+                  <p className="text-[10px] uppercase text-slate-500 font-semibold mb-2">
+                    {t('cash_session.details_by_mode', { defaultValue: 'Détails par mode de règlement' })}
+                  </p>
+                  <div className="space-y-1.5">
+                    {Object.entries(report.details_par_mode)
+                      .filter(([, v]) => Number(v) > 0)
+                      .sort(([, a], [, b]) => Number(b) - Number(a))
+                      .map(([mode, montant]) => (
+                        <div key={mode} className="flex items-center justify-between text-sm">
+                          <span className="text-slate-600">{getPaymentModeWithIcon(mode, t)}</span>
+                          <span className="font-mono font-bold text-slate-800">{formatCurrency(Math.round(Number(montant)))}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             /* Mode sécurité - montants masqués */

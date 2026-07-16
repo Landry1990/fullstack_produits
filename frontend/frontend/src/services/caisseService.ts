@@ -6,6 +6,7 @@ export interface PaiementData {
     mode_paiement: string;
     montant: string | number;
     reference?: string | null;
+    poste_vente_id?: number | null;
     poste_caisse_id?: number | null;
     releve_id?: number | null;
 }

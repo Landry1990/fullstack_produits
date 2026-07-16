@@ -1,5 +1,5 @@
-import { useRef, useEffect } from 'react'
-import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle } from 'lucide-react'
+import { useRef, useEffect, useState } from 'react'
+import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle, Monitor, Store } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import { formatDateShort } from '../utils/dateUtils'
 import { Button } from './shadcn/button'
@@ -26,13 +26,49 @@ import { SubstitutionModal } from './SubstitutionModal'
 import AlertMessageModal from './facturation/AlertMessageModal'
 import DisplayAlertModal from './facturation/DisplayAlertModal'
 import PrescriptionScannerModal from './facturation/PrescriptionScannerModal'
+import { OpenPointDeVenteModal } from './caisse/OpenPointDeVenteModal'
 
 import { useFacturationState } from '../hooks/useFacturationState'
 import { useDatamatrixScan } from '../hooks/useDatamatrixScan'
 
+function PosteRequisOverlay({ postesCaisses, hasMyActivePoste, onOpenExisting }: { postesCaisses: { id: number; nom: string }[], hasMyActivePoste: boolean, onOpenExisting: () => void }) {
+  return (
+    <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-100/95 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
+        <div className="mx-auto w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+          <Store className="size-7" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">
+          {hasMyActivePoste ? 'Point de vente actif' : 'Point de vente requis'}
+        </h2>
+        <p className="text-sm text-slate-600">
+          {hasMyActivePoste
+            ? 'Vous avez déjà un point de vente ouvert. Vous pouvez le réactiver pour reprendre la facturation.'
+            : 'La facturation est verrouillée tant qu\'aucun point de vente n\'est ouvert.'}
+        </p>
+        {postesCaisses.length > 0 ? (
+          <Button
+            type="button"
+            size="sm"
+            onClick={onOpenExisting}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg w-full"
+          >
+            {hasMyActivePoste ? 'Réactiver mon point de vente' : 'Ouvrir un point de vente'}
+          </Button>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-slate-500">Aucun poste de caisse configuré. Contactez un administrateur pour en créer un depuis la page Caisse Centralisée.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Facturation() {
   const hook = useFacturationState()
   const forceStockModalRef = useRef<HTMLDivElement>(null)
+  const [showOpenPosteModal, setShowOpenPosteModal] = useState(false)
 
   const scan = useDatamatrixScan({
     addProduit: (p, opts) => hook.cart.addProduit(p, opts),
@@ -48,7 +84,7 @@ export default function Facturation() {
   }, [hook.forceStockProduct])
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 font-sans text-slate-900 overflow-hidden">
+    <div className="relative h-full flex flex-col bg-slate-50 font-sans text-slate-900 overflow-hidden">
 
       {/* ── HEADER SHADCN ─────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 bg-white shrink-0 shadow-sm">
@@ -112,6 +148,26 @@ export default function Facturation() {
         </div>
       </div>
 
+      {/* ── BANNIÈRE POINT DE VENTE NON ACTIF ── */}
+      {!hook.isPosteCaisseActive && hook.allPostes.length > 0 && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-amber-50 border-b border-amber-200 shrink-0">
+          <div className="flex items-center gap-2 text-sm text-amber-800">
+            <Monitor className="size-4" />
+            <span>{hook.hasMyActivePoste
+              ? 'Vous avez un point de vente ouvert sur une autre session. Cliquez pour le réactiver.'
+              : 'Aucun point de vente ouvert. Ouvrez un point pour verrouiller ce poste sur la facturation.'}</span>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setShowOpenPosteModal(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg"
+          >
+            {hook.hasMyActivePoste ? 'Réactiver' : 'Ouvrir un point de vente'}
+          </Button>
+        </div>
+      )}
+
       {/* ── BANNIÈRE MODE MODIFICATION SHADCN ── */}
       {hook.isModificationMode && hook.modificationInvoiceId && (
         <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border-b border-amber-200 shrink-0">
@@ -145,6 +201,15 @@ export default function Facturation() {
             {hook.t('common:cancel')}
           </Button>
         </div>
+      )}
+
+      {/* ── VERROU POINT DE VENTE ── */}
+      {!hook.isPosteCaisseActive && (
+        <PosteRequisOverlay
+          postesCaisses={hook.allPostes}
+          hasMyActivePoste={hook.hasMyActivePoste}
+          onOpenExisting={() => setShowOpenPosteModal(true)}
+        />
       )}
 
       {/* ── NOTIFICATIONS ── */}
@@ -376,9 +441,10 @@ export default function Facturation() {
           paymentInputRef={hook.paymentInputRef}
           isMultiCaisse={hook.isMultiCaisse}
           centralizedCashRegister={hook.centralizedCashRegister}
-          postesCaissesActive={hook.postesCaisses}
+          postesVenteActifs={hook.activePostesVente}
+          selectedPosteVenteId={hook.activePoste?.id ?? null}
+          setSelectedPosteVenteId={() => {}}
           selectedPosteCaisseId={hook.selectedPosteCaisseId}
-          setSelectedPosteCaisseId={hook.setSelectedPosteCaisseId}
         />
       )}
 
@@ -705,6 +771,15 @@ export default function Facturation() {
           hook.setSubstitutionProduct(null)
         }}
         onClose={() => hook.setSubstitutionProduct(null)}
+      />
+
+      {/* Open Point-of-Sale Modal */}
+      <OpenPointDeVenteModal
+        isOpen={showOpenPosteModal}
+        onClose={() => setShowOpenPosteModal(false)}
+        onSessionOpened={() => {
+          // Le contexte PosteCaisseMode active automatiquement le mode point de vente
+        }}
       />
     </div>
   )

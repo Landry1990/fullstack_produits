@@ -156,24 +156,32 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             || 'Client de passage';
         
         const ticket: TicketCaisse = {
-            id: fullFacture.session_ticket_number || fullFacture.id, // Utiliser num ticket session si dispo
+            id: fullFacture.session_ticket_number || fullFacture.id,
             facture: fullFacture,
             facture_numero: fullFacture.numero_facture || undefined,
             client_name: clientNameForTicket,
             mode_paiement: modePaiement,
             montant: fullFacture.total_ttc,
             statut: 'completee',
-            date_paiement: fullFacture.date,
-            montant_verse: fullFacture.total_ttc,
-            rendu: '0',
+            date_paiement: fullFacture.paiements?.[0]?.date_paiement || fullFacture.date,
+            montant_verse: fullFacture.montant_verse || fullFacture.total_ttc,
+            rendu: fullFacture.montant_rendu || '0',
             reference: null,
-            is_duplicate: true, // Marquer comme duplicata
-            user_details: {
-                id: 0,
-                // Utiliser le nom retourné par l'API (qui est maintenant ajouté au serializer)
-                username: fullFacture.created_by_name || '?'
-            },
-            paiements_details: fullFacture.paiements || [] // Structure compatible ?
+            is_duplicate: true,
+            user_details: (() => {
+                const paymentUser = fullFacture.paiements?.[0]?.user_details;
+                if (paymentUser) {
+                    return {
+                        id: paymentUser.id,
+                        username: paymentUser.full_name || paymentUser.username || '?'
+                    };
+                }
+                return {
+                    id: 0,
+                    username: fullFacture.created_by_name || '?'
+                };
+            })(),
+            paiements_details: fullFacture.paiements || []
         };
 
         setSelectedTicket(ticket);

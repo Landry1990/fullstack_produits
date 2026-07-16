@@ -9,7 +9,7 @@ import itertools
 from ..models import (
     Produit, Rayon, Fournisseur, Client, Facture, FactureProduit,
     StockLot, Commande, CommandeProduit, ClotureCaisse, Caisse,
-    MouvementCaisse, StockAdjustment, PosteCaisse, SessionCaisse
+    MouvementCaisse, StockAdjustment, PosteCaisse, PosteVente
 )
 
 User = get_user_model()
@@ -231,21 +231,20 @@ class TestDataFactory:
         return PosteCaisse.objects.create(
             nom=nom,
             code=code,
-            est_ouvert=kwargs.pop('est_ouvert', True),
             **kwargs
         )
 
     @staticmethod
     def create_session_caisse(user=None, poste=None, **kwargs):
-        """Create an active cashier session for tests."""
+        """Create an active sales point session for tests."""
         if poste is None:
             poste = TestDataFactory.create_poste_caisse()
         if user is None:
             user = TestDataFactory.create_superuser()
-        return SessionCaisse.objects.create(
-            poste=poste,
-            ouvert_par=user,
+        return PosteVente.objects.create(
+            caisse=poste,
+            vendeur=user,
             fond_de_caisse=Decimal(str(kwargs.pop('fond_de_caisse', 0))),
-            est_active=kwargs.pop('est_active', True),
+            est_actif=kwargs.pop('est_active', True),
             **kwargs
         )

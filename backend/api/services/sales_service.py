@@ -44,45 +44,56 @@ class SalesService:
         if not isinstance(produits_data, list) or not produits_data:
             raise ValueError("La liste des produits ne peut pas être vide.")
 
-        # Vérification session caisse active obligatoire
-        from ..models import SessionCaisse
-        poste_caisse_id = data.get('poste_caisse_id')
+        # Vérification poste de vente actif obligatoire
+        from ..models import PosteVente
+        poste_vente_id = data.get('poste_vente_id')
+        poste_vente = None
         
-        if poste_caisse_id:
-            # Vérifier que le poste est ouvert et a une session active
-            session_active = SessionCaisse.objects.filter(
-                poste_id=poste_caisse_id,
-                est_active=True
-            ).select_related('ouvert_par').first()
+        if poste_vente_id:
+            # Vérifier que le poste de vente existe et est actif
+            poste_vente = PosteVente.objects.filter(
+                id=poste_vente_id,
+                est_actif=True
+            ).select_related('caisse', 'vendeur').first()
 
-            if not session_active:
+            if not poste_vente:
                 raise ValueError(
-                    "Aucune session de caisse active trouvée pour ce poste. "
-                    "Veuillez ouvrir une caisse avant de réaliser une vente."
+                    "Le point de vente sélectionné n'est pas actif ou n'existe pas. "
+                    "Veuillez ouvrir un point de vente avant de réaliser une vente."
                 )
 
-            # Vérifier que l'utilisateur courant est celui qui a ouvert la session
-            # (sauf pour les superusers qui peuvent encaisser sur n'importe quelle caisse)
-            if session_active.ouvert_par != user and not user.is_superuser:
+            # Vérifier que l'utilisateur courant est celui qui a ouvert le poste de vente
+            # (sauf en mode caisse centralisée où les POS envoient vers la caisse de la caissière,
+            #  et sauf pour les superusers)
+            if not centralized and poste_vente.vendeur != user and not user.is_superuser:
                 raise ValueError(
-                    f"Seul {session_active.ouvert_par.username} (qui a ouvert cette caisse) "
-                    f"peut encaisser sur ce poste. Veuillez ouvrir votre propre caisse."
+                    f"Seul {poste_vente.vendeur.username} (qui a ouvert ce point de vente) "
+                    f"peut encaisser ici. Veuillez ouvrir votre propre point de vente."
                 )
         else:
-            # Mode non-centralisé - vérifier si l'utilisateur a une session active
-            session_active = SessionCaisse.objects.filter(
-                ouvert_par=user,
-                est_active=True
-            ).first()
+            # Mode non-centralisé - vérifier si l'utilisateur a un poste de vente actif
+            poste_vente = PosteVente.objects.filter(
+                vendeur=user,
+                est_actif=True
+            ).select_related('caisse').first()
             
-            if not session_active:
+            if not poste_vente:
                 raise ValueError(
-                    "Vous n'avez aucune session de caisse active. "
-                    "Veuillez ouvrir une caisse avant de réaliser une vente."
+                    "Vous n'avez aucun point de vente actif. "
+                    "Veuillez ouvrir un point de vente avant de réaliser une vente."
                 )
-            
-            # Utiliser le poste de la session active
-            poste_caisse_id = session_active.poste_id  # type: ignore[attr-defined]
+        
+        poste_caisse_id = poste_vente.caisse_id if poste_vente else None
+        poste_vente_id = poste_vente.id if poste_vente else None
+
+        # En mode caisse centrale, une caisse physique doit être ouverte
+        if centralized:
+            caisse_ouverte = PosteVente.objects.filter(est_actif=True, caisse__isnull=False).first()
+            if not caisse_ouverte:
+                raise ValueError(
+                    "Aucun point de caisse n'est ouvert. "
+                    "Veuillez ouvrir un point de caisse avant de réaliser une vente."
+                )
 
         # Validate each product entry before touching the DB
         valid_product_ids = set(
@@ -108,9 +119,9 @@ class SalesService:
 
         # 2. Handle Existing Facture or Create New
         existing_id = data.get('existing_id')
-        # Ne pas écraser poste_caisse_id déjà résolu depuis la session active (lignes 51-87)
-        if data.get('poste_caisse_id'):
-            poste_caisse_id = data.get('poste_caisse_id')
+        if data.get('poste_vente_id') and poste_vente:
+            poste_vente_id = poste_vente.id
+            poste_caisse_id = poste_vente.caisse_id
         
         if existing_id:
             try:
@@ -123,6 +134,8 @@ class SalesService:
                 facture.remise = remise_montant
                 facture.created_by = validation_user
                 facture.validated_by = validation_user  # type: ignore[attr-defined]
+                if poste_vente:
+                    facture.poste_vente = poste_vente
                 if poste_caisse_id:
                     facture.poste_caisse_id = poste_caisse_id  # type: ignore[attr-defined]
                 if centralized and not facture.ticket_session:  # type: ignore[attr-defined]
@@ -145,6 +158,7 @@ class SalesService:
                 created_by=validation_user,
                 validated_by=validation_user,  # type: ignore[attr-defined]
                 poste_caisse_id=poste_caisse_id,  # type: ignore[attr-defined]
+                poste_vente=poste_vente,
                 ticket_session=get_next_ticket_session() if centralized else None
             )
 
@@ -181,7 +195,7 @@ class SalesService:
                 coupon.status = CouponMonnaie.Status.UTILISE
                 coupon.facture_utilisation = facture
                 coupon.date_utilisation = timezone.now()
-                coupon.utilise_par = user
+                coupon.utilise_par = validation_user
                 coupon.save()
             except CouponMonnaie.DoesNotExist:
                 pass
@@ -196,7 +210,7 @@ class SalesService:
                 produit_id=p['produit'],
                 quantite=p['promis_quantity'],
                 status=Promis.Status.EN_ATTENTE,
-                created_by=user
+                created_by=validation_user
             ) for p in produits_data if p.get('is_promis') and p.get('promis_quantity', 0) > 0
         ]
         if promis_to_create:
@@ -209,7 +223,7 @@ class SalesService:
                 prescripteur_nom=ordonnance_data.get('prescripteur_nom'),
                 image_ordonnance=image_file,
                 facture=facture,
-                enregistre_par=user
+                enregistre_par=validation_user
             )
             ordonnance_lignes_to_create = [
                 LigneOrdonnancier(
@@ -222,6 +236,21 @@ class SalesService:
             ]
             if ordonnance_lignes_to_create:
                 LigneOrdonnancier.objects.bulk_create(ordonnance_lignes_to_create)
+
+        # 6b. Store ticket payment info for accurate reprints
+        montant_verse = data.get('montant_verse')
+        montant_rendu = data.get('montant_rendu')
+        if montant_verse is not None:
+            try:
+                facture.montant_verse = Decimal(str(montant_verse))
+            except (InvalidOperation, TypeError, ValueError):
+                pass
+        if montant_rendu is not None:
+            try:
+                facture.montant_rendu = Decimal(str(montant_rendu))
+            except (InvalidOperation, TypeError, ValueError):
+                pass
+        facture.save(update_fields=['montant_verse', 'montant_rendu'] if (montant_verse is not None or montant_rendu is not None) else None)
 
         # 7. Validation Logic (Destocking, FIFO, loyalty)
         # En mode caisse centralisée : la facture reste PROFORMA et attend l'encaissement à la caisse.
@@ -237,7 +266,7 @@ class SalesService:
                 'paiement_immediat': sum(Decimal(str(p['montant'])) for p in paiements_data),
                 'mode_paiement': data.get('mode_paiement')
             }
-            SalesService.validate_invoice(facture, validation_user, validation_data, operator=user)
+            SalesService.validate_invoice(facture, validation_user, validation_data)
 
         # 8. Payments
         # En mode direct : les paiements sont enregistrés immédiatement.
@@ -252,7 +281,7 @@ class SalesService:
                             montant=Decimal(str(p_data['montant'])),
                             reference=p_data.get('reference'),
                             statut='completee',
-                            user=user,
+                            user=validation_user,
                             part_patient=p_data.get('part_patient'),
                             part_assurance=p_data.get('part_assurance')
                         )
@@ -264,13 +293,11 @@ class SalesService:
 
     @staticmethod
     @transaction.atomic
-    def validate_invoice(facture, validation_user, data, operator=None):
+    def validate_invoice(facture, validation_user, data):
         """
         Performs stock validation, FIFO/FEFO allocation, loyalty updates.
-        The operator is the person at the desk, validation_user may be a supervisor.
+        The validation_user is the user who authorized the sale (e.g. via sudo).
         """
-        if not operator:
-             operator = validation_user
         if facture.status == Facture.Status.VALIDEE:
             return facture
 
@@ -543,7 +570,7 @@ class SalesService:
             if part_assurance > 0:
                 paiement_en_compte = Caisse.objects.create(
                     facture=facture, mode_paiement='en_compte', montant=part_assurance, statut='completee',
-                    user=operator, part_assurance=part_assurance, part_patient=Decimal('0.00')
+                    user=validation_user, part_assurance=part_assurance, part_patient=Decimal('0.00')
                 )
                 from .payment_service import PaymentService
                 PaymentService.process_payment(paiement_en_compte, is_created=True)

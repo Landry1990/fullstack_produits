@@ -227,24 +227,28 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def verify_password(self, request):
         """
-        Vérifie le mot de passe d'un utilisateur (pour le mode sudo).
-        POST { "user_id": 1, "password": "xxx" }
+        Vérifie le mot de passe (mode sudo) et identifie automatiquement l'utilisateur.
+        POST { "password": "xxx" }
+        Retourne l'utilisateur correspondant si le mot de passe est valide.
         """
-        user_id = request.data.get('user_id')
         password = request.data.get('password')
         
-        if not user_id or not password:
-            return Response({'valid': False, 'detail': 'user_id et password requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not password:
+            return Response({'valid': False, 'detail': 'password requis.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            target_user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({'valid': False, 'detail': 'Utilisateur introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+        for target_user in User.objects.filter(is_active=True):
+            if target_user.check_password(password):
+                return Response({
+                    'valid': True,
+                    'user': {
+                        'id': target_user.id,
+                        'username': target_user.username,
+                        'first_name': target_user.first_name,
+                        'last_name': target_user.last_name,
+                    }
+                })
         
-        if target_user.check_password(password):
-            return Response({'valid': True})
-        else:
-            return Response({'valid': False, 'detail': 'Mot de passe incorrect.'})
+        return Response({'valid': False, 'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
 
     @action(detail=False, methods=['get'])
     def login_options(self, request):
