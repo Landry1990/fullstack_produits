@@ -5,6 +5,7 @@ import { useLicenceShortcut } from './hooks/useLicenceShortcut'
 import { AuthProvider } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
+import { PosteCaisseModeProvider } from './context/PosteCaisseModeContext'
 import { LicenceProvider } from './context/LicenceContext'
 import { Toaster } from 'react-hot-toast'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -157,7 +158,9 @@ export default function App() {
                     </div>
                   </div>
                 }>
-                  <RouterProvider router={router} />
+                  <PosteCaisseModeProvider>
+                    <RouterProvider router={router} />
+                  </PosteCaisseModeProvider>
                 </Suspense>
               </BackendHealthCheck>
             </ConfirmProvider>

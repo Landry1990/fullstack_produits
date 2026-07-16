@@ -14,7 +14,7 @@ from .models import (
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
     Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
     WhatsAppLog, TelegramLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
-    ReapproSession, PosteCaisse, SessionCaisse, OrderSchedule,
+    ReapproSession, PosteCaisse, PosteVente, SessionCaisse, OrderSchedule,
     Substance, MedicamentReference,
     CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable
 )
@@ -138,43 +138,45 @@ class PharmacySettingsSerializer(serializers.ModelSerializer):
         return obj.pharmacy_name
 
 class PosteCaisseSerializer(serializers.ModelSerializer):
-    ouvert_par_name = serializers.SerializerMethodField()
-    session_active = serializers.SerializerMethodField()
-
-    def get_ouvert_par_name(self, obj):
-        if obj.ouvert_par:
-            return obj.ouvert_par.get_full_name() or obj.ouvert_par.username
-        return None
-
     class Meta:
         model = PosteCaisse
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
 
-    def get_session_active(self, obj):
-        session = obj.sessions.filter(est_active=True).first()
-        if session:
-            return {
-                'id': session.id,
-                'fond_de_caisse': str(session.fond_de_caisse) if session.fond_de_caisse else None,
-                'date_ouverture': session.date_ouverture,
-                'ouvert_par_name': (session.ouvert_par.get_full_name() or session.ouvert_par.username) if session.ouvert_par else None,
-            }
+class PosteVenteSerializer(serializers.ModelSerializer):
+    caisse_nom = serializers.SerializerMethodField()
+    caisse_code = serializers.SerializerMethodField()
+    vendeur_name = serializers.SerializerMethodField()
+
+    def get_caisse_nom(self, obj):
+        return obj.caisse.nom if obj.caisse else None
+
+    def get_caisse_code(self, obj):
+        return obj.caisse.code if obj.caisse else None
+
+    def get_vendeur_name(self, obj):
+        if obj.vendeur:
+            return obj.vendeur.get_full_name() or obj.vendeur.username
         return None
 
+    class Meta:
+        model = PosteVente
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+
 class SessionCaisseSerializer(serializers.ModelSerializer):
-    poste_nom = serializers.CharField(source='poste.nom', read_only=True)
+    caisse_nom = serializers.CharField(source='caisse.nom', read_only=True)
     ouvert_par_name = serializers.SerializerMethodField()
 
     def get_ouvert_par_name(self, obj):
-        if obj.ouvert_par:
-            return obj.ouvert_par.get_full_name() or obj.ouvert_par.username
+        if obj.vendeur:
+            return obj.vendeur.get_full_name() or obj.vendeur.username
         return None
 
     ventilation_paiements = serializers.SerializerMethodField()
 
     class Meta:
-        model = SessionCaisse
+        model = PosteVente
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
 
@@ -186,7 +188,7 @@ class SessionCaisseSerializer(serializers.ModelSerializer):
         end_date = obj.date_fermeture or timezone.now()
         
         queryset = Caisse.objects.filter(
-            facture__poste_caisse=obj.poste,
+            facture__poste_vente=obj,
             date_paiement__gte=start_date,
             date_paiement__lte=end_date
         ).values('mode_paiement').annotate(total=Sum('montant'))

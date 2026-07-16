@@ -280,28 +280,25 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
 
         validation_user = None
         is_avoir_client = data.get('is_avoir_client', False)
-        is_terminal_account = bool(hasattr(user, 'profile') and user.profile and getattr(user.profile, 'is_terminal_account', False))
+        poste_vente_id = data.get('poste_vente_id')
 
-        # Enforce Sudo for non-positive amounts, centralized cash register, or shared terminal accounts
-        needs_sudo = (total_ttc <= 0 and not is_avoir_client) or centralized or is_terminal_account
+        # En mode caisse centrale, une caisse physique doit être ouverte avant toute vente
+        if centralized:
+            from ...models import PosteVente
+            if not PosteVente.objects.filter(est_actif=True, caisse__isnull=False).exists():
+                return Response(
+                    {'detail': "Aucun point de caisse n'est ouvert. Veuillez ouvrir un point de caisse avant de réaliser une vente."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # Enforce Sudo for non-positive amounts, centralized cash register, or sales made on an opened sales point
+        needs_sudo = (total_ttc <= 0 and not is_avoir_client) or centralized or bool(poste_vente_id)
 
         if needs_sudo:
             try:
-                validation_user, error_res = validate_sudo_mode(request)
+                validation_user, error_res = validate_sudo_mode(request, data_source=data)
                 if error_res:
                     return error_res
-
-                # For shared terminal accounts, the seller must be a different real user
-                if is_terminal_account:
-                    if validation_user == user:
-                        return Response({
-                            'detail': "Ce compte est un poste partagé. Veuillez saisir les identifiants du vendeur réel."
-                        }, status=status.HTTP_403_FORBIDDEN)
-                # For centralized cash register (non-terminal), the validator must be the currently logged-in user
-                elif centralized and validation_user != user:
-                    return Response({
-                        'detail': "L'envoi à la caisse centralisée doit être validé par l'utilisateur connecté."
-                    }, status=status.HTTP_403_FORBIDDEN)
 
                 # Allow if user is superuser OR has the specific permission
                 if total_ttc <= 0 and not is_avoir_client:

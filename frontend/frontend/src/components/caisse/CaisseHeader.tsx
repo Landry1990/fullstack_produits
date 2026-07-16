@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next'
 import { RefreshCw, Ticket, Monitor, Unlock, Lock, Trash2 } from 'lucide-react'
-import type { PosteCaisse } from '../../types'
+import type { PosteCaisse, PosteVente } from '../../types'
 
 interface CaisseHeaderProps {
   isMultiCaisse: boolean
   selectedPosteCaisseId: string
   onPosteCaisseChange: (id: string) => void
   postesCaisses: PosteCaisse[]
-  myActivePoste: PosteCaisse | null
+  myActivePoste: PosteVente | null
   hideAmounts: boolean
   onHideAmountsChange: (val: boolean) => void
   onCloseSession: () => void

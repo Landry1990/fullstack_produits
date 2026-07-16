@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { cashSessionService } from '../services/cashSessionService'
-import type { PosteCaisse } from '../types'
+import { cashSessionService, type PosteCaisse, type PosteVente } from '../services/cashSessionService'
+import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
 
 export interface UseMultiCaisseOptions {
 }
@@ -12,10 +12,12 @@ export interface UseMultiCaisseReturn {
     setCentralizedCashRegister: (v: boolean) => void
     postesCaisses: PosteCaisse[]
     setPostesCaisses: (v: PosteCaisse[]) => void
+    activePostesVente: PosteVente[]
+    setActivePostesVente: (v: PosteVente[]) => void
     selectedPosteCaisseId: number | null
     setSelectedPosteCaisseId: (v: number | null) => void
     multiCaisseLoading: boolean
-    myActivePoste: PosteCaisse | null
+    myActivePoste: PosteVente | null
     refreshPostes: () => Promise<void>
 }
 
@@ -23,50 +25,53 @@ export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCa
     const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
     const [isMultiCaisse, setIsMultiCaisse] = useState<boolean>(false)
     const [postesCaisses, setPostesCaisses] = useState<PosteCaisse[]>([])
-    const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<number | null>(null)
+    const [activePostesVente, setActivePostesVente] = useState<PosteVente[]>([])
     const [multiCaisseLoading, setMultiCaisseLoading] = useState(false)
-    const [myActivePoste, setMyActivePoste] = useState<PosteCaisse | null>(null)
 
-    // Ref pour lire selectedPosteCaisseId sans en faire une dépendance de refreshPostes
+    const {
+        activePoste,
+        selectedPosteCaisseId,
+        selectPoste,
+        refresh: refreshActivePoste
+    } = usePosteCaisseMode()
+
     const selectedPosteCaisseIdRef = useRef<number | null>(null)
     selectedPosteCaisseIdRef.current = selectedPosteCaisseId
 
     const refreshPostes = useCallback(async () => {
         setMultiCaisseLoading(true)
         try {
-            const [activePostes, myPostes] = await Promise.all([
-                cashSessionService.getActivePostes().catch(() => []),
-                cashSessionService.getMyActiveSessions().catch(() => [])
+            const [allCaisses, activePostes, myPostes] = await Promise.all([
+                cashSessionService.getAllCaisses().catch(() => []),
+                cashSessionService.getActivePostesVente().catch(() => []),
+                cashSessionService.getMyActivePostesVente().catch(() => [])
             ])
 
-            setPostesCaisses(activePostes)
-            const myPoste = myPostes.length > 0 ? myPostes[0] : null
-            setMyActivePoste(myPoste)
+            setPostesCaisses(allCaisses)
+            setActivePostesVente(activePostes)
 
             const hasMulti = activePostes.length > 1
             setIsMultiCaisse(hasMulti)
 
-            // Auto-select uniquement si aucun poste n'est déjà sélectionné
             if (!selectedPosteCaisseIdRef.current) {
+                const myPoste = myPostes.length > 0 ? myPostes[0] : null
                 if (myPoste) {
-                    setSelectedPosteCaisseId(myPoste.id)
-                } else if (activePostes.length === 1) {
-                    setSelectedPosteCaisseId(activePostes[0].id)
+                    selectPoste(myPoste.caisse)
                 }
             }
+
+            await refreshActivePoste()
         } catch (err) {
             console.error('Erreur chargement postes caisses:', err)
         } finally {
             setMultiCaisseLoading(false)
         }
-    }, []) // Pas de dépendances → fonction stable, pas de boucle
+    }, [selectPoste, refreshActivePoste])
 
-    // Initial fetch
     useEffect(() => {
         refreshPostes()
     }, [refreshPostes])
 
-    // Polling toutes les 60s (les sessions de caisse changent rarement)
     useEffect(() => {
         const interval = setInterval(refreshPostes, 60000)
         return () => clearInterval(interval)
@@ -76,9 +81,10 @@ export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCa
         isMultiCaisse, setIsMultiCaisse,
         centralizedCashRegister, setCentralizedCashRegister,
         postesCaisses, setPostesCaisses,
-        selectedPosteCaisseId, setSelectedPosteCaisseId,
+        activePostesVente, setActivePostesVente,
+        selectedPosteCaisseId, setSelectedPosteCaisseId: selectPoste,
         multiCaisseLoading,
-        myActivePoste,
+        myActivePoste: activePoste,
         refreshPostes
     }
 }

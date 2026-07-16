@@ -5,7 +5,7 @@ import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
-import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
+import type { Facture, TicketCaisse, CouponMonnaie, PosteCaisse, PosteVente } from '../types'
 import PasswordConfirmModal from './PasswordConfirmModal'
 import { PaymentModal } from './caisse/PaymentModal'
 import { FacturesTable } from './caisse/FacturesTable'
@@ -21,7 +21,6 @@ import { useCaisseCoupons } from '../hooks/useCaisseCoupons'
 import { useCaisseStats } from '../hooks/useCaisseStats'
 import { useInvoiceModification } from '../hooks/useInvoiceModification'
 import { useSudo } from '../hooks/useSudo'
-import type { PosteCaisse } from '../types'
 import SudoValidationModal from './common/SudoValidationModal'
 import { CaisseTicketPreviewModal } from './caisse/CaisseTicketPreviewModal'
 import { CouponGenerateModal } from './caisse/CouponGenerateModal'
@@ -67,7 +66,7 @@ export default function CaisseCentralisee() {
   const [postesCaisses, setPostesCaisses] = useState<any[]>([])
   const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<string>('all')
   const [isMultiCaisse, setIsMultiCaisse] = useState(false)
-  const [myActivePoste, setMyActivePoste] = useState<PosteCaisse | null>(null)
+  const [myActivePoste, setMyActivePoste] = useState<PosteVente | null>(null)
   const [showOpenSessionModal, setShowOpenSessionModal] = useState(false)
   const [closingReport, setClosingReport] = useState<any>(null)
   const [showClosingReport, setShowClosingReport] = useState(false)
@@ -189,7 +188,7 @@ export default function CaisseCentralisee() {
         const [settingsRes, postesRes, myActive] = await Promise.all([
           api.get('parametres/').catch(() => ({ data: {} })),
           api.get('postes-caisses/').catch(() => ({ data: { results: [] } })),
-          cashSessionService.getMyActiveSessions().catch(() => [])
+          cashSessionService.getMyActivePostesVente().catch(() => [])
         ])
         
         // Charger le paramètre de sécurité caisse
@@ -203,11 +202,11 @@ export default function CaisseCentralisee() {
         setPostesCaisses(postesList)
         setMyActivePoste(activePoste)
         if (activePoste) {
-          setSelectedPosteCaisseId(String(activePoste.id))
+          setSelectedPosteCaisseId(String(activePoste.caisse))
         }
-        
+
         // Détecter si on est en mode multi-caisse
-        const hasMultipleActive = postesList.filter((p: PosteCaisse) => p.est_ouvert).length > 1
+        const hasMultipleActive = myActive.length > 1
         setIsMultiCaisse(hasMultipleActive)
       } catch (err) {
         console.error('Erreur initialisation page:', err)
@@ -246,7 +245,7 @@ export default function CaisseCentralisee() {
 
     if (!window.confirm(t('cash_session.confirm_close', { defaultValue: 'Fermer votre caisse ?' }))) return
     try {
-      const { data } = await cashSessionService.closePoste(myActivePoste.id, hideAmounts)
+      const { data } = await cashSessionService.closePosteVente(myActivePoste.id, hideAmounts)
       setClosingReport(data)
       setShowClosingReport(true)
       setMyActivePoste(null)
@@ -649,9 +648,20 @@ export default function CaisseCentralisee() {
       <OpenCashSessionModal
         isOpen={showOpenSessionModal}
         onClose={() => setShowOpenSessionModal(false)}
-        onSessionOpened={async () => {
-          const myActive = await cashSessionService.getMyActiveSessions().catch(() => [])
-          setMyActivePoste(myActive.length > 0 ? myActive[0] : null)
+        onSessionOpened={async (poste) => {
+          if (poste) {
+            setMyActivePoste(poste)
+            if (poste.caisse) {
+              setSelectedPosteCaisseId(String(poste.caisse))
+            }
+          } else {
+            const myActive = await cashSessionService.getMyActivePostesVente().catch(() => [])
+            const activePoste = myActive.length > 0 ? myActive[0] : null
+            setMyActivePoste(activePoste)
+            if (activePoste?.caisse) {
+              setSelectedPosteCaisseId(String(activePoste.caisse))
+            }
+          }
         }}
       />
 

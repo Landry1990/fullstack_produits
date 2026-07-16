@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth, LAST_ACTIVITY_KEY } from '../context/AuthContext';
 import { usePharmacySettings } from './usePharmacySettings';
+import { usePosteCaisseMode } from '../context/PosteCaisseModeContext';
 import { safeStorage } from '../utils/storage';
 
 const EVENTS = [
@@ -16,11 +17,15 @@ const CHECK_INTERVAL = 30000; // 30 seconds
 export function useAutoLogout() {
     const { logout, user } = useAuth();
     const { settings } = usePharmacySettings();
+    const { activePoste } = usePosteCaisseMode();
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Default to 0 (disabled) if not loaded yet or undefined
-    const timeoutMinutes = settings?.auto_logout_timeout ?? 0;
+    // Also disabled if user has an active PosteVente (POS or caisse session)
+    const timeoutMinutes = (settings?.auto_logout_timeout ?? 0) && !activePoste
+        ? settings!.auto_logout_timeout!
+        : 0;
 
     const checkAndLogout = useCallback(() => {
         if (!user || timeoutMinutes <= 0) return;

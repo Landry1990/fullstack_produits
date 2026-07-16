@@ -130,6 +130,7 @@ class FactureSerializer(serializers.ModelSerializer):
             'created_by', 'validated_by',
             'montant_paye', 'reste_a_payer', 'paiements',
             'session_ticket_number',
+            'montant_verse', 'montant_rendu',
             'poste_caisse'
         ]
 

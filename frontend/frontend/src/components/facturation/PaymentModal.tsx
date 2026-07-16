@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { Facture } from '../../types'
+import type { Facture, PosteVente } from '../../types'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
 import PremiumModal from '../common/PremiumModal'
@@ -40,9 +40,10 @@ type PaymentModalProps = {
     clientSoldeDepot?: string | number
     isMultiCaisse?: boolean
     centralizedCashRegister?: boolean
-    postesCaissesActive?: any[]
+    postesVenteActifs?: PosteVente[]
+    selectedPosteVenteId?: number | null
+    setSelectedPosteVenteId?: (id: number | null) => void
     selectedPosteCaisseId?: number | null
-    setSelectedPosteCaisseId?: (id: number | null) => void
 }
 
 export default function PaymentModal({
@@ -66,9 +67,10 @@ export default function PaymentModal({
     clientSoldeDepot,
     isMultiCaisse,
     centralizedCashRegister,
-    postesCaissesActive,
-    selectedPosteCaisseId,
-    setSelectedPosteCaisseId
+    postesVenteActifs,
+    selectedPosteVenteId,
+    setSelectedPosteVenteId,
+    selectedPosteCaisseId
 }: PaymentModalProps) {
     const { t } = useTranslation(['facturation', 'common'])
     // Refs for keyboard-driven flow
@@ -140,7 +142,16 @@ export default function PaymentModal({
                 })()}
 
                 {/* Sélection de poste : affiché dès qu'il y a 2+ caisses ouvertes, quel que soit le mode */}
-                {isNewSale && postesCaissesActive && postesCaissesActive.length > 1 && (
+                {isNewSale && postesVenteActifs && (() => {
+                    const displayedPostes = centralizedCashRegister
+                        ? postesVenteActifs.filter((p) => !!p.caisse)
+                        : postesVenteActifs
+                    return displayedPostes.length > 1 ? displayedPostes : null
+                })() && (() => {
+                    const displayedPostes = centralizedCashRegister
+                        ? postesVenteActifs.filter((p) => !!p.caisse)
+                        : postesVenteActifs
+                    return (
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mt-2 mb-4">
                         <div className="mb-2">
                             <span className="uppercase font-bold text-emerald-600 flex items-center gap-1 text-xs">
@@ -151,19 +162,15 @@ export default function PaymentModal({
                             </span>
                         </div>
                         <div className="grid grid-cols-1 gap-2">
-                            {postesCaissesActive.map((poste) => {
-                                // Récupérer le nom du caissier qui a ouvert la session
-                                const caissierName = poste.session_active?.ouvert_par_name
-                                    || poste.ouvert_par_name
-                                    || poste.ouvert_par?.username
-                                    || t('facturation:payment.unknown_cashier');
+                            {displayedPostes.map((poste: PosteVente) => {
+                                const caissierName = poste.vendeur_name || t('facturation:payment.unknown_cashier');
 
                                 return (
                                     <button
                                         key={poste.id}
                                         type="button"
-                                        onClick={() => setSelectedPosteCaisseId?.(poste.id)}
-                                        className={`inline-flex items-center justify-start h-9 px-3 rounded-lg text-xs font-semibold transition-all duration-200 border-2 ${selectedPosteCaisseId === poste.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm scale-[1.02]' : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300'}`}
+                                        onClick={() => setSelectedPosteVenteId?.(poste.id)}
+                                        className={`inline-flex items-center justify-start h-9 px-3 rounded-lg text-xs font-semibold transition-all duration-200 border-2 ${selectedPosteVenteId === poste.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm scale-[1.02]' : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300'}`}
                                     >
                                         <div className="flex flex-col items-start">
                                             <span className="font-bold text-xs uppercase">{poste.nom}</span>
@@ -178,7 +185,7 @@ export default function PaymentModal({
                                 );
                             })}
                         </div>
-                        {!selectedPosteCaisseId && (
+                        {!selectedPosteVenteId && (
                             <p className="text-[10px] text-red-600 font-medium mt-2 italic flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -187,7 +194,8 @@ export default function PaymentModal({
                             </p>
                         )}
                     </div>
-                )}
+                    )
+                })()}
               </div>
 
               {/* Tiers Payant Display - Show breakdown if applicable */}
@@ -256,28 +264,44 @@ export default function PaymentModal({
               ) : (
                 <>
                   <div className="w-full">
-                    <label className="block py-1 text-xs uppercase font-bold text-slate-500">{t('facturation:payment.payment_mode_label')}</label>
                     {(() => {
-                          const selectedPoste = postesCaissesActive?.find(p => p.id === selectedPosteCaisseId)
-                            ?? postesCaissesActive?.[0]
-                          const caissierName = selectedPoste?.session_active?.ouvert_par_name
-                            || selectedPoste?.ouvert_par_name
-                            || selectedPoste?.ouvert_par?.username
-                            || null
+                          const caissePostes = postesVenteActifs?.filter((p) => !!p.caisse) ?? []
+                          const selectedPoste = centralizedCashRegister
+                            ? (selectedPosteCaisseId
+                                ? caissePostes.find((p) => p.caisse === selectedPosteCaisseId)
+                                : caissePostes[0])
+                            : (postesVenteActifs?.find((p: PosteVente) => p.id === selectedPosteVenteId) ?? postesVenteActifs?.[0])
+                          const caissierName = selectedPoste?.vendeur_name || null
                           const posteName = selectedPoste?.nom || t('facturation:payment.caisse_centrale')
+                          const isPointDeCaisse = !!selectedPoste?.caisse
+                          const label = centralizedCashRegister || isPointDeCaisse
+                            ? t('facturation:payment.payment_mode_label')
+                            : t('facturation:payment.point_de_vente_label')
+                          const noCaisseOpen = centralizedCashRegister && caissePostes.length === 0
                           return (
-                            <div className="p-3 bg-white border border-slate-200 rounded-lg text-sm font-medium flex items-center gap-2">
-                              <span className="inline-flex items-center px-2 h-5 text-[10px] rounded bg-emerald-100 text-emerald-700 font-medium"></span>
-                              <span>{posteName}</span>
-                              {caissierName && (
-                                <span className="text-[10px] text-slate-400 ml-auto font-normal flex items-center gap-1">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            <>
+                              {noCaisseOpen && (
+                                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                   </svg>
-                                  {caissierName}
-                                </span>
+                                  {t('facturation:messages.no_cash_register_open', { defaultValue: 'Aucun point de caisse ouvert. Veuillez ouvrir une caisse pour facturer.' })}
+                                </div>
                               )}
-                            </div>
+                              <label className="block py-1 text-xs uppercase font-bold text-slate-500">{label}</label>
+                              <div className="p-3 bg-white border border-slate-200 rounded-lg text-sm font-medium flex items-center gap-2">
+                                <span className="inline-flex items-center px-2 h-5 text-[10px] rounded bg-emerald-100 text-emerald-700 font-medium"></span>
+                                <span>{posteName}</span>
+                                {caissierName && (
+                                  <span className="text-[10px] text-slate-400 ml-auto font-normal flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                    </svg>
+                                    {caissierName}
+                                  </span>
+                                )}
+                              </div>
+                            </>
                           )
                         })()}
                     {/* Hidden input to maintain logic if needed, but we just use state 'especes' */}
@@ -321,7 +345,7 @@ export default function PaymentModal({
                 <button
                     ref={submitBtnRef}
                     type="submit"
-                    disabled={loading || (isNewSale && !montantPaye) || (isMultiCaisse && !centralizedCashRegister && isNewSale && !selectedPosteCaisseId)}
+                    disabled={loading || (isNewSale && !montantPaye) || (isMultiCaisse && !centralizedCashRegister && isNewSale && !selectedPosteVenteId) || (centralizedCashRegister && isNewSale && !postesVenteActifs?.some((p) => !!p.caisse))}
                     className="inline-flex items-center justify-center w-full h-10 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {loading ? (

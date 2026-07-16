@@ -1,14 +1,58 @@
-import { Suspense } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Suspense, useEffect } from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import UserHeader from './common/UserHeader'
 import Omnisearch from './common/Omnisearch'
 import { SidebarProvider } from '../context/SidebarContext'
 import { useSidebar } from '../hooks/useSidebar'
+import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
 import LicenceExpirationBanner from './LicenceExpirationBanner'
 
 function LayoutContent() {
   const { isZenithMode, isMidnightTheme } = useSidebar()
+  const { isPosMode, activePoste, closePoste, isLoading } = usePosteCaisseMode()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (isPosMode && location.pathname !== '/app/facturation') {
+      navigate('/app/facturation', { replace: true })
+    }
+  }, [isPosMode, location.pathname, navigate])
+
+  if (isPosMode) {
+    return (
+      <div className={`flex flex-col h-dvh bg-base-100 transition-colors duration-300 relative overflow-hidden`}>
+        <div className="shrink-0 z-50 flex items-center justify-between bg-emerald-600 text-white px-4 py-2 shadow-md">
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-sm uppercase tracking-wide">Mode point de vente</span>
+            {activePoste && (
+              <span className="text-xs bg-emerald-700 px-2 py-0.5 rounded">
+                {activePoste.nom}
+              </span>
+            )}
+            {isLoading && <span className="loading loading-spinner loading-xs"></span>}
+          </div>
+          <button
+            type="button"
+            onClick={() => closePoste()}
+            className="btn btn-xs btn-ghost text-white hover:bg-emerald-700"
+          >
+            Fermer le point
+          </button>
+        </div>
+        <main className="flex-1 overflow-hidden">
+          <Suspense fallback={
+            <div className="flex-1 flex items-center justify-center">
+              <span className="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+          }>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className={`flex flex-col h-dvh ${isZenithMode ? 'bg-base-100' : 'bg-base-200'} ${isMidnightTheme ? 'theme-midnight' : ''} transition-colors duration-300 relative overflow-hidden`}>

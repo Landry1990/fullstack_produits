@@ -14,6 +14,7 @@ export interface UseSecureCartOperationsOptions {
         options: { title: string; message: string; onCancel?: () => void }
     ) => void
     setActiveSudoCreds: (creds: { validatorId: number; password: string } | null) => void
+    activeSudoCreds: { validatorId: number; password: string } | null
     t: (key: string, options?: any) => string
     triggerUiRefresh: () => void
     maxDiscountRate: number
@@ -23,12 +24,17 @@ export function useSecureCartOperations({
     cart,
     requireSudo,
     setActiveSudoCreds,
+    activeSudoCreds,
     t,
     triggerUiRefresh,
     maxDiscountRate
 }: UseSecureCartOperationsOptions) {
     const secureUpdateQuantite = useCallback((produitId: number, newQty: number) => {
         if (newQty < 0) {
+            if (activeSudoCreds) {
+                cart.updateQuantite(produitId, newQty)
+                return
+            }
             const currentLine = cart.lignesFacture.find((l) => l.produit.id === produitId)
             requireSudo(async (validatorId, password) => {
                 setActiveSudoCreds({ validatorId, password })
@@ -41,12 +47,16 @@ export function useSecureCartOperations({
         } else {
             cart.updateQuantite(produitId, newQty)
         }
-    }, [cart.updateQuantite, cart.lignesFacture, requireSudo, setActiveSudoCreds, t, triggerUiRefresh])
+    }, [cart.updateQuantite, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
 
     const secureUpdatePrix = useCallback((produitId: number, newPrice: string) => {
         const currentLine = cart.lignesFacture.find((l) => l.produit.id === produitId)
         if (!currentLine) return
         if (newPrice !== currentLine.prix_unitaire) {
+            if (activeSudoCreds) {
+                cart.updatePrix(produitId, newPrice)
+                return
+            }
             requireSudo(async (validatorId, password) => {
                 setActiveSudoCreds({ validatorId, password })
                 cart.updatePrix(produitId, newPrice)
@@ -58,12 +68,16 @@ export function useSecureCartOperations({
         } else {
             cart.updatePrix(produitId, newPrice)
         }
-    }, [cart.updatePrix, cart.lignesFacture, requireSudo, setActiveSudoCreds, t, triggerUiRefresh])
+    }, [cart.updatePrix, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
 
     const secureUpdateRemiseProduit = useCallback((produitId: number, newRemise: string) => {
         const currentLine = cart.lignesFacture.find((l) => l.produit.id === produitId)
         if (!currentLine) return
         if (Number(newRemise) > 0 && newRemise !== currentLine.remise_produit) {
+            if (activeSudoCreds) {
+                cart.updateRemiseProduit(produitId, newRemise)
+                return
+            }
             requireSudo(async (validatorId, password) => {
                 setActiveSudoCreds({ validatorId, password })
                 cart.updateRemiseProduit(produitId, newRemise)
@@ -75,7 +89,7 @@ export function useSecureCartOperations({
         } else {
             cart.updateRemiseProduit(produitId, newRemise)
         }
-    }, [cart.updateRemiseProduit, cart.lignesFacture, requireSudo, setActiveSudoCreds, t, triggerUiRefresh])
+    }, [cart.updateRemiseProduit, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
 
     const secureSetRemiseGlobale = useCallback((
         newValue: string,
@@ -90,7 +104,21 @@ export function useSecureCartOperations({
         }
         // Calcul du taux effectif pour comparer au plafond
         const tauxEffectif = mode === 'taux' ? num : (totalTTC > 0 ? (num / totalTTC) * 100 : 0)
-        if (maxDiscountRate > 0 && tauxEffectif > maxDiscountRate) {
+        const exceedsMax = maxDiscountRate > 0 && tauxEffectif > maxDiscountRate
+
+        if (activeSudoCreds) {
+            if (exceedsMax) {
+                const cappedValue = mode === 'taux'
+                    ? String(maxDiscountRate)
+                    : String(Math.round(totalTTC * maxDiscountRate / 100))
+                setRemiseGlobale(cappedValue)
+            } else {
+                setRemiseGlobale(newValue)
+            }
+            return
+        }
+
+        if (exceedsMax) {
             const plafondAffiche = mode === 'taux'
                 ? `${maxDiscountRate}%`
                 : `${Math.round(totalTTC * maxDiscountRate / 100)} F`
@@ -118,7 +146,7 @@ export function useSecureCartOperations({
             message: `Autoriser une remise globale de ${newValue}${mode === 'taux' ? '%' : ' F'} ?`,
             onCancel: () => { setRemiseGlobale('0'); triggerUiRefresh() }
         })
-    }, [requireSudo, setActiveSudoCreds, t, triggerUiRefresh, maxDiscountRate])
+    }, [requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh, maxDiscountRate])
 
     return {
         secureUpdateQuantite,

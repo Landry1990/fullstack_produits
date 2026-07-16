@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
 from .models import (
     Produit,
     Rayon,
@@ -11,7 +13,8 @@ from .models import (
     DrugInteraction,
     Forme,
     Groupe,
-    FamilleRisque
+    FamilleRisque,
+    Profile
 )
 
 class CommandeProduitInline(admin.TabularInline):
@@ -29,6 +32,28 @@ class ProduitAdmin(admin.ModelAdmin):
     list_display = ('name', 'rayon', 'fournisseur', 'stock', 'selling_price')
     list_filter = ('rayon', 'fournisseur')
     search_fields = ('name', 'description', 'cip1', 'cip2', 'cip3')
+
+
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    can_delete = False
+    verbose_name_plural = 'Profil'
+
+
+class UserAdmin(BaseUserAdmin):
+    inlines = (ProfileInline,)
+
+
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'role', 'is_terminal_account')
+    list_filter = ('is_terminal_account', 'role')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name')
+
 
 # Enregistrement simple pour les autres modèles
 admin.site.register(Rayon)

@@ -6,17 +6,37 @@ export interface PosteCaisse {
     id: number;
     nom: string;
     code: string;
-    est_ouvert: boolean;
-    ouvert_par?: number;
-    ouvert_par_name?: string;
-    date_ouverture?: string;
-    fond_de_caisse?: string | null;
-    session_active?: {
-        id: number;
-        fond_de_caisse: string | null;
-        date_ouverture: string;
-        ouvert_par_name: string | null;
-    } | null;
+    est_actif?: boolean;
+}
+
+export interface PosteVente {
+    id: number;
+    nom: string;
+    caisse: number | null;
+    caisse_nom: string | null;
+    caisse_code: string | null;
+    vendeur: number | null;
+    vendeur_name: string | null;
+    fond_de_caisse: string | null;
+    date_ouverture: string | null;
+    date_fermeture: string | null;
+    montant_total_encaisse: string | null;
+    est_actif: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SessionCaisse {
+    id: number;
+    poste: number;
+    poste_nom: string;
+    ouvert_par: number | null;
+    ouvert_par_name: string | null;
+    fond_de_caisse: string | null;
+    date_ouverture: string;
+    date_fermeture: string | null;
+    montant_total_encaisse: string | null;
+    est_active: boolean;
 }
 
 export interface FactureProduitAllocation {
@@ -75,10 +95,13 @@ export interface Facture {
     validated_by_name?: string
     cancelled_by_name?: string
     session_ticket_number?: number
+    montant_verse?: string
+    montant_rendu?: string
     montant_regle?: string
     montant_en_compte?: string
     total_lettres?: string
     poste_caisse?: number | PosteCaisse
+    poste_vente?: number | PosteVente
     is_avoir_client?: boolean
 }
 
@@ -313,7 +336,7 @@ export interface SaleCompletionParams {
     tempOrdonnanceData: OrdonnanceData | null;
     validated_by_id?: number | null;
     sudo_password?: string;
-    poste_caisse_id?: number | null;
+    poste_vente_id?: number | null;
     prescriptionImage?: File | null;
     is_avoir_client?: boolean;
     isFactureA4?: boolean;

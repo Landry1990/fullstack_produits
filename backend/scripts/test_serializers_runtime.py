@@ -51,11 +51,11 @@ results = {}
 # Facture
 results['FactureSerializer'] = test_serializer(
     'FactureSerializer', FactureSerializer,
-    Facture.objects.all().select_related('client', 'created_by', 'validated_by', 'ayant_droit', 'poste_caisse').prefetch_related('produits', 'paiements')
+    Facture.objects.all().select_related('client', 'created_by', 'validated_by', 'ayant_droit', 'poste_caisse', 'poste_vente').prefetch_related('produits', 'paiements')
 )
 results['FactureDetailSerializer'] = test_serializer(
     'FactureDetailSerializer', FactureDetailSerializer,
-    Facture.objects.all().select_related('client', 'created_by', 'validated_by', 'ayant_droit', 'poste_caisse').prefetch_related('produits', 'paiements')
+    Facture.objects.all().select_related('client', 'created_by', 'validated_by', 'ayant_droit', 'poste_caisse', 'poste_vente').prefetch_related('produits', 'paiements')
 )
 results['FactureListSerializer'] = test_serializer(
     'FactureListSerializer', FactureListSerializer,

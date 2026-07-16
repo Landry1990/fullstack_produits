@@ -76,8 +76,8 @@ const createTicketData = (
     facture: facture as any,
     mode_paiement: paiements.length > 1 ? 'Mixte' : (paiements[0]?.mode || 'especes'),
     montant: facture.total_ttc,
-    montant_verse: montantTotal.toString(),
-    rendu: rendu.toString(),
+    montant_verse: (facture.montant_verse ? Number(facture.montant_verse) : montantTotal).toString(),
+    rendu: (facture.montant_rendu ? Number(facture.montant_rendu) : rendu).toString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     statut: 'completee',
@@ -147,8 +147,12 @@ export const useCaissePayment = ({
       const hasTiersPayant = factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
       await processRegularPayments(factureValidee.id, paiementsValides, montantAEncaisser, hasTiersPayant)
 
-      // 5. Mettre à jour le statut
-      await api.patch(`factures/${factureValidee.id}/`, { status: 'PAY' })
+      // 5. Mettre à jour le statut et stocker les infos ticket
+      await api.patch(`factures/${factureValidee.id}/`, {
+          status: 'PAY',
+          montant_verse: montantTotal.toString(),
+          montant_rendu: (montantTotal - montantAEncaisser).toString(),
+      });
 
       // 6. Récupérer la facture finale
       const { data: factureFinale } = await api.get<Facture>(`factures/${factureValidee.id}/`)

@@ -142,6 +142,7 @@
         "caisse_centrale": "Caisse Centrale",
         "en_compte_auto": "En compte (automatique)",
         "payment_mode_label": "Point de caisse",
+        "point_de_vente_label": "Point de vente",
         "add_btn": "Ajouter",
         "sudo_title": "Validation Requise",
         "sudo_confirm_identity": "Confirmer votre identité",

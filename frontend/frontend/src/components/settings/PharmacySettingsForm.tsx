@@ -5,6 +5,7 @@ import { useTVA } from '../../hooks/useTVA'
 import type { TVA } from '../../types'
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings'
 import { getApiErrorDetail } from '../../utils/errorHandling'
+import PosteVenteSettingsSection from './PosteVenteSettingsSection'
 import {
   Info,
   Printer,
@@ -29,7 +30,8 @@ import {
   Users,
   Lock,
   Trash2,
-  Loader2
+  Loader2,
+  Store
 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs'
@@ -47,7 +49,7 @@ import {
 import { Select } from '../ui/Select'
 import { getConfigurablePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
 
-type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'notifications' | 'reports'
+type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'notifications' | 'reports' | 'postes_vente'
 
 function TVARow({ tva, onDelete, t }: { tva: TVA; onDelete: (id: number) => void; t: (key: string) => string }) {
   return (
@@ -312,6 +314,7 @@ export default function PharmacySettingsForm() {
     { id: 'tva', label: t('tabs.tva'), icon: Percent },
     { id: 'notifications', label: t('tabs.notifications'), icon: Bell },
     { id: 'reports', label: 'Rapports Auto', icon: FileText },
+    { id: 'postes_vente', label: 'Points de vente', icon: Store },
   ] as const
 
   return (
@@ -1451,6 +1454,10 @@ export default function PharmacySettingsForm() {
                     </div>
                   </div>
                 </div>
+            </TabsContent>
+            {/* --- TAB: POINTS DE VENTE --- */}
+            <TabsContent value="postes_vente" className="mt-0 data-[state=inactive]:hidden space-y-8">
+              <PosteVenteSettingsSection />
             </TabsContent>
           </form>
         </div>

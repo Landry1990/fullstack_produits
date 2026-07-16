@@ -113,7 +113,9 @@
         "cancel_invoice_error": "Erreur lors de l'annulation",
         "empty_invoice_error": "Cette facture ne contient aucun produit",
         "load_invoice_error": "Impossible de charger la facture pour modification",
-        "enter_whatsapp_number_desc": "Entrez le numéro WhatsApp (format international ex: 237...)"
+        "enter_whatsapp_number_desc": "Entrez le numéro WhatsApp (format international ex: 237...)",
+        "poste_occupied": "Ce point de vente est déjà ouvert par un autre utilisateur.",
+        "caisse_already_open": "Ce poste de caisse est déjà ouvert."
     },
     "confirm_cancel_invoice": "Voulez-vous vraiment annuler la facture #{{numero}} ?",
     "confirm_modify_invoice": "Modifier cette facture ?\nElle sera retirée de la liste et rechargée dans l'écran de vente.",
@@ -436,7 +438,28 @@
         "total_theorique": "Total Théorique en Caisse",
         "transactions": "Transactions",
         "security_mode_title": "🔒 Mode Sécurité",
-        "amounts_hidden": "Les montants sont masqués pour des raisons de sécurité. Consultez le pharmacien pour les détails financiers."
+        "amounts_hidden": "Les montants sont masqués pour des raisons de sécurité. Consultez le pharmacien pour les détails financiers.",
+        "loading": "Chargement des postes de caisse...",
+        "no_caisse": "Aucun poste de caisse configuré.",
+        "open": "Ouvert",
+        "available": "Disponible",
+        "select_post": "Sélectionnez un poste de caisse",
+        "initial_amount": "Fond de caisse (optionnel)",
+        "amount_hint": "Laisser vide si pas de fond initial",
+        "open_btn": "Ouvrir"
+    },
+    "open_point_vente": {
+        "title": "Ouvrir un point de vente",
+        "subtitle": "Sélectionnez un point de vente pour commencer à facturer.",
+        "loading": "Chargement des points de vente...",
+        "select": "Sélectionnez un point de vente",
+        "available": "Disponible",
+        "open": "Ouvert",
+        "no_points": "Aucun point de vente disponible.",
+        "create_hint": "Créez-en un dans Paramètres > Points de vente.",
+        "cancel": "Annuler",
+        "opened_by": "Ouvert par {{name}}",
+        "your_post": "Votre poste actif"
     },
     "common": {
         "unknown": "Inconnu",
