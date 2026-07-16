@@ -1,0 +1,9 @@
+[Unit]
+Description=Zenith Pharma — Timer mise à jour nocturne (chaque soir à 2h00)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

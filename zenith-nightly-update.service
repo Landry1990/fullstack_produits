@@ -1,0 +1,11 @@
+[Unit]
+Description=Zenith Pharma — Mise à jour automatique nocturne
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/zenith-pharma/nightly-update.sh
+WorkingDirectory=/opt/zenith-pharma
+User=root
+TimeoutStartSec=600
