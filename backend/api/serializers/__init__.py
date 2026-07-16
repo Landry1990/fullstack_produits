@@ -19,6 +19,7 @@ from .users import (
     ProfileSerializer,
     UserSerializer,
     PosteCaisseSerializer,
+    PosteVenteSerializer,
     SessionCaisseSerializer,
 )
 
@@ -133,6 +134,7 @@ __all__ = [
     'ProfileSerializer',
     'UserSerializer',
     'PosteCaisseSerializer',
+    'PosteVenteSerializer',
     'SessionCaisseSerializer',
     # Clients
     'DepotClientSerializer',

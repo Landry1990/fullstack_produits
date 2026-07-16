@@ -1,15 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
 import PremiumModal from './PremiumModal';
-
-interface User {
-    id: number;
-    username: string;
-    first_name?: string;
-    last_name?: string;
-}
 
 interface SudoValidationModalProps {
     isOpen: boolean;
@@ -22,22 +14,24 @@ interface SudoValidationModalProps {
     forceCurrentUser?: boolean;
 }
 
-export default function SudoValidationModal({ 
-    isOpen, 
-    onClose, 
-    onValidate, 
+interface VerifiedUser {
+    id: number;
+    username: string;
+    first_name?: string;
+    last_name?: string;
+}
+
+export default function SudoValidationModal({
+    isOpen,
+    onClose,
+    onValidate,
     saving,
     title,
     message,
-    className,
-    forceCurrentUser
+    className
 }: SudoValidationModalProps) {
     const { t } = useTranslation(['common']);
-    const { user: currentUser } = useAuth();
-    const [users, setUsers] = useState<User[]>([]);
-    const [selectedValidator, setSelectedValidator] = useState<number | null>(null);
     const [password, setPassword] = useState('');
-    const [loadingUsers, setLoadingUsers] = useState(false);
     const [passwordError, setPasswordError] = useState<string | null>(null);
     const passwordInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,61 +39,26 @@ export default function SudoValidationModal({
         if (isOpen) {
             setPassword('');
             setPasswordError(null);
-            if (forceCurrentUser && currentUser?.id) {
-                setSelectedValidator(currentUser.id);
-                setUsers([{
-                    id: currentUser.id,
-                    username: currentUser.username,
-                    first_name: currentUser.first_name,
-                    last_name: currentUser.last_name,
-                }]);
-            } else {
-                setSelectedValidator(null);
-                fetchUsers();
-            }
-        }
-    }, [isOpen, forceCurrentUser, currentUser]);
-
-    useEffect(() => {
-        if (selectedValidator && isOpen) {
             const timer = setTimeout(() => {
                 passwordInputRef.current?.focus();
             }, 100);
             return () => clearTimeout(timer);
         }
-    }, [selectedValidator, isOpen]);
-
-    const fetchUsers = async () => {
-        try {
-            setLoadingUsers(true);
-            const res = await api.get('users/operators/');
-            const userList = res.data.results || res.data;
-            setUsers(userList);
-
-            if (currentUser) {
-                const found = userList.find((u: any) => u.username === currentUser.username);
-                if (found) {
-                    setSelectedValidator(found.id);
-                }
-            }
-        } catch (err) {
-            console.error("Error fetching users", err);
-        } finally {
-            setLoadingUsers(false);
-        }
-    };
+    }, [isOpen]);
 
     const handleConfirm = async () => {
-        if (!selectedValidator || !password) return;
+        if (!password) return;
         setPasswordError(null);
+        let verifiedUser: VerifiedUser | null = null;
         try {
-            const checkRes = await api.post('users/verify_password/', { user_id: selectedValidator, password });
-            if (!checkRes.data?.valid) {
+            const checkRes = await api.post('users/verify_password/', { password });
+            if (!checkRes.data?.valid || !checkRes.data?.user?.id) {
                 setPassword('');
                 setPasswordError(t('common:sudo.invalid_password'));
                 setTimeout(() => passwordInputRef.current?.focus(), 50);
                 return;
             }
+            verifiedUser = checkRes.data.user;
         } catch (error: any) {
             setPassword('');
             const msg = error?.response?.data?.detail || t('common:sudo.invalid_password');
@@ -107,8 +66,9 @@ export default function SudoValidationModal({
             setTimeout(() => passwordInputRef.current?.focus(), 50);
             return;
         }
+        if (!verifiedUser) return;
         try {
-            await onValidate(selectedValidator, password);
+            await onValidate(verifiedUser.id, password);
         } catch (error: any) {
             setPassword('');
             const msg = error?.response?.data?.detail || error?.response?.data?.error || error?.message || t('common:sudo.invalid_password');
@@ -141,56 +101,34 @@ export default function SudoValidationModal({
 
                 <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">
-                        {t('common:sudo.validate_as')}
-                        <span className="text-warning ml-2 normal-case">{t('common:sudo.validate_admin')}</span>
+                        {t('common:sudo.validate_password')}
+                        <span className="text-error ml-2 normal-case">{t('common:sudo.validate_required')}</span>
                     </label>
-                    <select 
-                        className="select select-bordered w-full h-12 rounded-xl"
-                        value={selectedValidator || ''}
-                        onChange={(e) => setSelectedValidator(e.target.value ? parseInt(e.target.value) : null)}
-                        disabled={loadingUsers || forceCurrentUser}
-                    >
-                        <option value="" disabled>{t('common:sudo.validate_me')}</option>
-                        {users.map(u => (
-                            <option key={u.id} value={u.id}>
-                                {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username} ({u.username})
-                            </option>
-                        ))}
-                    </select>
+                    <input
+                        ref={passwordInputRef}
+                        type="password"
+                        className={`input input-bordered w-full h-12 rounded-xl focus:ring-2 transition-all ${passwordError ? 'input-error focus:border-error focus:ring-error/20' : 'focus:border-success focus:ring-success/20'}`}
+                        placeholder={t('common:sudo.validate_password')}
+                        value={password}
+                        onChange={e => { setPassword(e.target.value); setPasswordError(null); }}
+                        onKeyDown={e => e.key === 'Enter' && handleConfirm()}
+                    />
+                    {passwordError && (
+                        <p className="text-error text-xs mt-1.5 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            {passwordError}
+                        </p>
+                    )}
                 </div>
-
-                {selectedValidator && (
-                    <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">
-                            {t('common:sudo.validate_password')}
-                            <span className="text-error ml-2 normal-case">{t('common:sudo.validate_required')}</span>
-                        </label>
-                        <input 
-                            ref={passwordInputRef}
-                            type="password" 
-                            className={`input input-bordered w-full h-12 rounded-xl focus:ring-2 transition-all ${passwordError ? 'input-error focus:border-error focus:ring-error/20' : 'focus:border-success focus:ring-success/20'}`}
-                            placeholder={t('common:sudo.validate_password')}
-                            value={password}
-                            onChange={e => { setPassword(e.target.value); setPasswordError(null); }}
-                            onKeyDown={e => e.key === 'Enter' && handleConfirm()}
-                        />
-                        {passwordError && (
-                            <p className="text-error text-xs mt-1.5 flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                {passwordError}
-                            </p>
-                        )}
-                    </div>
-                )}
 
                 <div className="flex justify-end gap-3 pt-2">
                     <button className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={saving}>
                         {t('common:sudo.cancel')}
                     </button>
-                    <button 
-                        className="btn btn-success px-8 rounded-xl shadow-lg shadow-success/20" 
+                    <button
+                        className="btn btn-success px-8 rounded-xl shadow-lg shadow-success/20"
                         onClick={handleConfirm}
-                        disabled={saving || !selectedValidator || !password}
+                        disabled={saving || !password}
                     >
                         {saving ? <span className="loading loading-spinner"></span> : t('common:sudo.confirm')}
                     </button>

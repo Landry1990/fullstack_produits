@@ -160,7 +160,7 @@ class CreateBackupView(APIView):
                 'api_mouvementstock', 'api_inventaire', 'api_ligneinventaire',
                 'api_ecriture', 'api_operation', 'api_journalcaisse',
                 'api_commande', 'api_lignecommande', 'api_couponmonnaie',
-                'api_sessioncaisse', 'api_client', 'api_paiement'
+                'api_postecaisse', 'api_postevente', 'api_client', 'api_paiement'
             ]
             
             os.makedirs(BACKUP_DIR, exist_ok=True)

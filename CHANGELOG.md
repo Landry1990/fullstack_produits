@@ -32,6 +32,18 @@
   - L’excès de stock est recalculé à partir de ce seuil entier, ce qui évite les seuils et quantités décimales dans l’analyse.
   - Backend redéployé.
 
+- **Facturation multi-utilisateurs / multi-postes**
+  - `backend/api/views/ventes/factures.py` : dès qu’une vente est faite sur un point de caisse ouvert (`poste_caisse_id`), une validation Sudo est exigée à la finalisation. Le validateur devient l’auteur de la facture, tout en conservant le poste d’origine.
+  - Suppression de l’obligation que le validateur centralisé soit l’utilisateur connecté : n’importe quel vendeur peut valider, ce qui permet d’interchanger les postes sans déconnexion.
+  - `frontend/frontend/src/hooks/useFacturationState.ts` : la fenêtre Sudo apparaît automatiquement à la finalisation si un point de caisse est actif.
+  - `frontend/frontend/src/hooks/useSecureCartOperations.ts` : une fois un Sudo saisi pour une vente, il reste actif pour les actions protégées (quantité négative, changement de prix, remise) jusqu’à la fin de la vente.
+  - `frontend/frontend/src/context/PosteCaisseModeContext.tsx` : détection du point de caisse actif de l’utilisateur courant.
+  - `frontend/frontend/src/components/Layout.tsx` : lorsqu’un point de caisse est actif, l’interface passe en **mode point de vente** : la barre latérale, l’omnisearch et l’en-tête utilisateur sont masquées, seule la facturation est accessible, avec un bandeau indiquant le poste ouvert et un bouton pour le fermer.
+  - `frontend/frontend/src/components/caisse/OpenCashSessionModal.tsx` et `src/hooks/useMultiCaisse.ts` : intégration au contexte POS pour activer le mode directement à l’ouverture du point.
+  - `frontend/frontend/src/components/Facturation.tsx` : bandeau “Aucun point de vente ouvert” avec un bouton permettant d’ouvrir un point existant, ou champ de création rapide “Créer et ouvrir” si aucun poste n’est configuré. Un overlay bloque désormais toute la page de facturation tant qu’aucun point n’est ouvert.
+  - `backend/api/models/users.py` : ajout du champ optionnel `Profile.is_terminal_account` conservé pour les cas où un poste dédié resterait connecté.
+  - Backend et frontend redéployés.
+
 - **Prévention des doubles règlements fournisseurs**
   - `backend/api/views/fournisseurs.py` : le relevé de pointage ne retourne plus les commandes entièrement réglées.
   - Les règlements existants sont imputés chronologiquement ; une commande partiellement réglée est proposée uniquement avec son montant restant.

@@ -14,34 +14,65 @@ from typing import TYPE_CHECKING
 
 
 class PosteCaisse(models.Model):
-    """Représente un poste de caisse physique."""
+    """Représente une caisse physique (matériel)."""
     nom = models.CharField(max_length=100, unique=True)
     code = models.SlugField(max_length=50, unique=True, help_text="Code court pour identification (ex: CAISSE-01)")
-    est_ouvert = models.BooleanField(default=False)
-    ouvert_par = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='postes_caisses_ouverts'
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Caisse"
+        verbose_name_plural = "Caisses"
+        ordering = ['nom']
+
+    def __str__(self):
+        return self.nom
+
+
+class PosteVente(models.Model):
+    """Représente un point de vente. Peut être une définition (créée depuis les paramètres)
+    ou une session active (quand un vendeur l'ouvre)."""
+    nom = models.CharField(max_length=100, default='Point de vente', help_text="Nom du point de vente")
+    caisse = models.ForeignKey(
+        PosteCaisse, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='postes_vente'
     )
-    date_ouverture = models.DateTimeField(null=True, blank=True)
+    vendeur = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='postes_vente'
+    )
     fond_de_caisse = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True,
         help_text="Fond de caisse initial saisi à l'ouverture"
+    )
+    date_ouverture = models.DateTimeField(null=True, blank=True)
+    date_fermeture = models.DateTimeField(null=True, blank=True)
+    montant_total_encaisse = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    est_actif = models.BooleanField(default=False)
+    mode_pos = models.BooleanField(
+        default=False,
+        help_text="True si ouvert depuis la Facturation (point de vente), "
+                  "False si ouvert depuis la Caisse Centrale (caisse physique)"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Poste de Caisse"
-        verbose_name_plural = "Postes de Caisse"
-        ordering = ['nom']
+        verbose_name = "Poste de Vente"
+        verbose_name_plural = "Postes de Vente"
+        ordering = ['-date_ouverture']
 
     def __str__(self):
-        return f"{self.nom} ({'Ouverte' if self.est_ouvert else 'Fermée'})"
+        vendeur_nom = self.vendeur.get_full_name() or self.vendeur.username if self.vendeur else 'Non assigné'
+        return f"{self.nom} — {vendeur_nom}"
 
 
 class SessionCaisse(models.Model):
-    """Session d'ouverture/fermeture d'un poste de caisse."""
+    """Session d'ouverture/fermeture d'un poste de caisse (obsolète, conservé pour historique)."""
     poste = models.ForeignKey(
         PosteCaisse, on_delete=models.CASCADE, related_name='sessions'
     )
@@ -63,9 +94,10 @@ class SessionCaisse(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Session de Caisse"
-        verbose_name_plural = "Sessions de Caisse"
+        verbose_name = "Session de Caisse (historique)"
+        verbose_name_plural = "Sessions de Caisse (historique)"
         ordering = ['-date_ouverture']
+        managed = False
 
     def __str__(self):
         return f"Session {self.poste.nom} — {self.ouvert_par} ({self.date_ouverture.strftime('%d/%m %H:%M')})"
@@ -99,7 +131,12 @@ class Facture(models.Model):
     poste_caisse = models.ForeignKey(
         'PosteCaisse', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='factures_assignees',
-        help_text="Poste de caisse auquel cette facture est assignée"
+        help_text="Caisse physique auquel cette facture est assignée"
+    )
+    poste_vente = models.ForeignKey(
+        'PosteVente', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='factures',
+        help_text="Poste de vente (session) ayant généré cette facture"
     )
     status = models.CharField(
         max_length=4,
@@ -138,6 +175,14 @@ class Facture(models.Model):
     total_tva = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     total_ttc = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     ticket_session = models.IntegerField(null=True, blank=True, help_text="Numéro de ticket pour la session du jour")
+    montant_verse = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True, default=0.00,
+        help_text="Montant total reçu du client (pour ticket de caisse)"
+    )
+    montant_rendu = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True, default=0.00,
+        help_text="Monnaie rendue au client (pour ticket de caisse)"
+    )
 
     validated_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,

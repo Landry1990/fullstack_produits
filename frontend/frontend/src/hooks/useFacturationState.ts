@@ -82,6 +82,7 @@ export function useFacturationState() {
     cart,
     requireSudo,
     setActiveSudoCreds,
+    activeSudoCreds,
     t,
     triggerUiRefresh,
     maxDiscountRate
@@ -242,32 +243,56 @@ export function useFacturationState() {
         })
 
         actions._resetSaleDataOnly()
+        setActiveSudoCreds(null)
         ui.closePaymentModal()
       }
     },
-    onReset: actions._resetSaleDataOnly,
+    onReset: () => {
+      actions._resetSaleDataOnly()
+      setActiveSudoCreds(null)
+    },
     onError: (msg: string) => setError(msg)
   })
 
-  const isTerminalAccount = user?.is_terminal_account || false
+  const isPosteCaisseActive = Boolean(multiCaisse.myActivePoste)
+  const hasActiveCaisse = multiCaisse.activePostesVente.some((p) => !!p.caisse)
+  const hasMyActivePoste = multiCaisse.activePostesVente.some((p) => p.vendeur === user?.id)
 
   // --- Complete Sale Handler ---
   const handleCompleteSale = async (sudoCredentials?: { validatorId: number, password: string }) => {
-    // Sudo required when sending to centralized cash register or when using a shared terminal account
-    if ((multiCaisse.centralizedCashRegister || isTerminalAccount) && !sudoCredentials) {
+    // En mode caisse centrale, une caisse doit être ouverte avant toute vente
+    if (multiCaisse.centralizedCashRegister && !hasActiveCaisse) {
+      setError(t('facturation:messages.no_cash_register_open'))
+      return
+    }
+
+    // Sudo required when sending to centralized cash register or when selling on an opened cash register point
+    if ((multiCaisse.centralizedCashRegister || isPosteCaisseActive) && !sudoCredentials) {
       requireSudo(async (validatorId, password) => {
         await handleCompleteSale({ validatorId, password })
       }, {
-        title: isTerminalAccount ? 'Identification vendeur' : t('facturation:payment.sudo_confirm_identity'),
-        message: isTerminalAccount
+        title: isPosteCaisseActive ? 'Validation vendeur' : t('facturation:payment.sudo_confirm_identity'),
+        message: isPosteCaisseActive
           ? 'Ce poste est partagé. Veuillez saisir vos identifiants de vendeur pour cette vente.'
           : t('facturation:payment.sudo_send_to_caisse'),
-        forceCurrentUser: !isTerminalAccount,
+        forceCurrentUser: false,
       })
       return
     }
 
     const effectiveSudo = sudoCredentials || activeSudoCreds
+
+    // En mode caisse centrale, les ventes des POS convergent vers le point de caisse ouvert.
+    // On cherche uniquement parmi les postes qui ont une caisse physique (caisse non null).
+    const activeCaissePosteVente = multiCaisse.centralizedCashRegister
+      ? multiCaisse.activePostesVente.find((p) => p.caisse && p.caisse === multiCaisse.selectedPosteCaisseId)
+        ?? multiCaisse.activePostesVente.find((p) => !!p.caisse)
+      : null
+
+    const posteVenteId = multiCaisse.centralizedCashRegister
+      ? (activeCaissePosteVente?.id ?? null)
+      : (multiCaisse.myActivePoste?.id ?? null)
+
     const params = {
       selectedClient: clientsHook.selectedClient,
       useManualClient: clientsHook.useManualClient,
@@ -296,7 +321,7 @@ export function useFacturationState() {
       validated_by_id: effectiveSudo?.validatorId || null,
       sudo_password: effectiveSudo?.password || undefined,
       modificationInvoiceStatus: ui.modificationInvoiceStatus || undefined,
-      poste_caisse_id: multiCaisse.selectedPosteCaisseId,
+      poste_vente_id: posteVenteId,
       prescriptionImage: ui.prescriptionImage,
       modificationInvoiceId: ui.modificationInvoiceId,
       isFactureA4: isFactureA4,
@@ -372,12 +397,16 @@ export function useFacturationState() {
 
       if (totalTtc <= 0) {
         // Enforce sudo for non-positive sales
-        requireSudo(async (validatorId, password) => {
-          await handleCompleteSale({ validatorId, password })
-        }, {
-          title: t('facturation:payment.sudo_mode.validate_by'),
-          message: `Cette vente avec un total de ${totalTtc} F nécessite l'autorisation d'un superviseur.`
-        })
+        if (activeSudoCreds) {
+          await handleCompleteSale(activeSudoCreds)
+        } else {
+          requireSudo(async (validatorId, password) => {
+            await handleCompleteSale({ validatorId, password })
+          }, {
+            title: t('facturation:payment.sudo_mode.validate_by'),
+            message: `Cette vente avec un total de ${totalTtc} F nécessite l'autorisation d'un superviseur.`
+          })
+        }
       } else {
         const montantInitial = (totals.tauxCouverture > 0) ? totals.partPatient : totalTtc
         ui.setMontantPaye(montantInitial.toString())
@@ -560,7 +589,12 @@ export function useFacturationState() {
     isMultiCaisse: multiCaisse.isMultiCaisse, setIsMultiCaisse: multiCaisse.setIsMultiCaisse,
     centralizedCashRegister: multiCaisse.centralizedCashRegister,
     postesCaisses: multiCaisse.postesCaisses, setPostesCaisses: multiCaisse.setPostesCaisses,
+    activePostesVente: multiCaisse.activePostesVente, setActivePostesVente: multiCaisse.setActivePostesVente,
     selectedPosteCaisseId: multiCaisse.selectedPosteCaisseId, setSelectedPosteCaisseId: multiCaisse.setSelectedPosteCaisseId,
+    activePoste: multiCaisse.myActivePoste,
+    isPosteCaisseActive,
+    hasMyActivePoste,
+    allPostes: multiCaisse.postesCaisses,
     lignesFacture: cart.lignesFacture,
     sortedLignes,
     totals,

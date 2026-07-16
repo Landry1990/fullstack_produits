@@ -25,16 +25,16 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
     
     # Paramètres Sudo standards
     # On supporte plusieurs noms de paramètres pour la compatibilité
-    validated_by_id = data.get('validated_by_id') or data.get('cancelled_by_id')
-    sudo_password = data.get('sudo_password') or data.get('password')
+    # Certains endpoints envoient les credentials dans un objet 'sudo' (ex: frontend sale completion)
+    sudo_data = data.get('sudo') or {} if isinstance(data.get('sudo'), dict) else {}
+    validated_by_id = data.get('validated_by_id') or data.get('cancelled_by_id') or sudo_data.get('validated_by_id') or sudo_data.get('cancelled_by_id')
+    sudo_password = data.get('sudo_password') or data.get('password') or sudo_data.get('sudo_password') or sudo_data.get('password')
     
-    # Si pas d'ID de validateur, on utilise l'utilisateur actuel
-    if not validated_by_id:
+    # Si pas d'ID de validateur ni de mot de passe, on utilise l'utilisateur actuel
+    if not validated_by_id and not sudo_password:
         validation_user = request.user
-    else:
-        # Tentative de validation par un tiers
-        # IMPORTANT: On utilise une transaction séparée pour isoler les erreurs DB
-        # et éviter de corrompre la transaction principale
+    elif validated_by_id:
+        # Tentative de validation par un tiers avec ID explicite
         try:
             with transaction.atomic():
                 validator_user = User.objects.get(id=validated_by_id)
@@ -52,6 +52,19 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
             return None, Response({'detail': 'Mot de passe incorrect pour le validateur.'}, status=status.HTTP_403_FORBIDDEN)
         
         validation_user = validator_user
+    else:
+        # Validation par mot de passe seul : identifier automatiquement le propriétaire du mot de passe
+        if not sudo_password:
+            return None, Response({'detail': 'Mot de passe requis pour la validation Sudo.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        validation_user = None
+        for candidate in User.objects.filter(is_active=True):
+            if candidate.check_password(sudo_password):
+                validation_user = candidate
+                break
+        
+        if not validation_user:
+            return None, Response({'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
 
     # Vérification de la permission granulaire sur le validateur
     if permission_attr and not validation_user.is_superuser:

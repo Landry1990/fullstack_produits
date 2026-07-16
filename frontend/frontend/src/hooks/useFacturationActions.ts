@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { safeStorage } from '../utils/storage';
 import type { Facture, LigneFacture, TotalsData, User, StockLot, Client, LotAllocation } from '../types';
+import type { PosteVente } from '../services/cashSessionService';
 import type { OrdonnanceData } from '../components/OrdonnanceModal';
 import type { useFacturationClients } from './useFacturationClients';
 import type { useFacturationUI } from './useFacturationUI';
@@ -31,7 +32,7 @@ export interface UseFacturationActionsProps {
     setShowClientNameModal: (show: boolean) => void;
     secureUpdateQuantite: (produitId: number, qty: number) => void;
     user: User | null;
-    myActivePoste?: { id: number; nom: string } | null;
+    myActivePoste?: PosteVente | null;
     postesCaisses?: { id: number }[];
 }
 
@@ -218,9 +219,8 @@ export function useFacturationActions({
     }, [pendingPrintFacture, setShowClientNameModal, setPendingPrintFacture, searchInputRef])
 
     const ouvrirModalPaiement = useCallback((facture?: Facture) => {
-        // Bloquer si aucune caisse n'est ouverte
-        const aucuneCaisseOuverte = !postesCaisses || postesCaisses.length === 0
-        if (aucuneCaisseOuverte) {
+        // Bloquer si aucun poste de vente actif pour l'utilisateur courant
+        if (!myActivePoste) {
             setError(t('facturation:messages.no_cash_register_open'))
             return
         }
@@ -247,7 +247,7 @@ export function useFacturationActions({
             paymentInputRef.current?.focus()
             paymentInputRef.current?.select()
         }, 100)
-    }, [ui, clientsHook.selectedClient, cart.lignesFacture.length, totals.totalTtc, totals.tauxCouverture, totals.partPatient, setError, paymentInputRef, postesCaisses, t])
+    }, [ui, clientsHook.selectedClient, cart.lignesFacture.length, totals.totalTtc, totals.tauxCouverture, totals.partPatient, setError, paymentInputRef, myActivePoste, t])
 
     const handleSendWhatsApp = useCallback(async () => {
         if (!ui.ticketCaisse || !ui.ticketCaisse.facture || typeof ui.ticketCaisse.facture === 'number') return

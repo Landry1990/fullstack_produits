@@ -74,6 +74,14 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if montant < Decimal('0'):
             return Response({'detail': "Le montant d'un paiement ne peut pas être négatif."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Bloquer l'encaissement si l'utilisateur n'a pas de point de vente actif
+        from ...models import PosteVente
+        if not PosteVente.objects.filter(vendeur=request.user, est_actif=True).exists():
+            return Response(
+                {'detail': "Vous n'avez aucun point de vente actif. Veuillez ouvrir un point de vente avant d'encaisser."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         # Cap montant at remaining balance before serializer validation
         facture_id = request.data.get('facture')
         mode = request.data.get('mode_paiement', '')
@@ -441,15 +449,15 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         txs = Caisse.objects.filter(user_id=user_id, date_paiement__gte=search_from).order_by('date_paiement')
         mvs = MouvementCaisse.objects.filter(user_id=user_id, date__gte=search_from).order_by('date')
 
-        # Récupérer la session active du caissier (poste + fond)
-        from ...models import SessionCaisse
-        active_session = SessionCaisse.objects.filter(
-            ouvert_par_id=user_id,
-            est_active=True
-        ).select_related('poste').first()
-        poste_caisse_id = active_session.poste_id if active_session else None
-        poste_caisse_nom = active_session.poste.nom if active_session and active_session.poste else None
-        has_active_session = active_session is not None
+        # Récupérer le poste de vente actif du caissier (poste + fond)
+        from ...models import PosteVente
+        active_poste_vente = PosteVente.objects.filter(
+            vendeur_id=user_id,
+            est_actif=True
+        ).select_related('caisse').first()
+        poste_caisse_id = active_poste_vente.caisse_id if active_poste_vente else None
+        poste_caisse_nom = active_poste_vente.caisse.nom if active_poste_vente and active_poste_vente.caisse else None
+        has_active_session = active_poste_vente is not None
 
         first_dates, last_dates = [], []
         if txs.exists():
@@ -568,15 +576,13 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         )['ca_div'] or Decimal('0.00')
         total_ca_pharmacie = total_ventes - total_ca_divers
 
-        # Récupérer le fond de caisse de la dernière session du caissier
-        # (fermée ou active, car la caissière peut avoir déjà fermé sa session
-        # avant que l'admin ne fasse la clôture comptable dans le journal)
-        from ...models import SessionCaisse
-        session_qs = SessionCaisse.objects.filter(ouvert_par=target_user)
+        # Récupérer le fond de caisse du dernier poste de vente du caissier
+        from ...models import PosteVente
+        poste_qs = PosteVente.objects.filter(vendeur=target_user)
         if poste_caisse_id:
-            session_qs = session_qs.filter(poste_id=poste_caisse_id)
-        last_session = session_qs.order_by('-date_ouverture').first()
-        fond_de_caisse = Decimal(str(last_session.fond_de_caisse)) if last_session and last_session.fond_de_caisse else Decimal('0.00')
+            poste_qs = poste_qs.filter(caisse_id=poste_caisse_id)
+        last_poste = poste_qs.order_by('-date_ouverture').first()
+        fond_de_caisse = Decimal(str(last_poste.fond_de_caisse)) if last_poste and last_poste.fond_de_caisse else Decimal('0.00')
 
         # Créer les mouvements manuels envoyés par le frontend
         mouvements_manuels_data = request.data.get('mouvements_manuels', [])
@@ -669,10 +675,11 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             poste_caisse_id=poste_caisse_id
         )
         
-        # Fermer la session si elle est encore active
-        if last_session and not last_session.date_fermeture:
-            last_session.date_fermeture = timezone.now()
-            last_session.save(update_fields=['date_fermeture'])
+        # Fermer le poste de vente s'il est encore actif
+        if last_poste and not last_poste.date_fermeture:
+            last_poste.date_fermeture = timezone.now()
+            last_poste.est_actif = False
+            last_poste.save(update_fields=['date_fermeture', 'est_actif'])
         
         log_audit(user=request.user, action=AuditLog.Action.CLOTURE_CAISSE, model_name='ClotureCaisse', object_id=cloture.pk,  # type: ignore[attr-defined]
             description=f"Clôture de caisse: Théorique={total_theorique:.0f}F, Réel={montant_reel:.0f}F, Écart={ecart:+.0f}F (tous modes)",
