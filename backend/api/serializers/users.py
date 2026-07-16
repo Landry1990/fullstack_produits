@@ -30,6 +30,17 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_superuser', 'is_active', 'password', 'profile']
         read_only_fields = ['is_superuser']
 
+    def validate_password(self, value):
+        """Valide le mot de passe lors de is_valid() — vérifie l'unicité."""
+        if value:
+            instance = self.instance
+            for existing in User.objects.exclude(id=instance.id) if instance else User.objects.all():
+                if existing.check_password(value):
+                    raise serializers.ValidationError(
+                        'Ce mot de passe est déjà utilisé. Veuillez en choisir un autre.'
+                    )
+        return value
+
     def create(self, validated_data):
         profile_data = validated_data.pop('profile', {})
         password = validated_data.pop('password', None)
