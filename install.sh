@@ -207,9 +207,17 @@ fi
 if [ -f zenith-watchdog.service ]; then
     sudo cp zenith-watchdog.service /etc/systemd/system/ 2>/dev/null || true
 fi
+# Service + Timer de mise à jour automatique nocturne
+if [ -f zenith-nightly-update.service ] && [ -f zenith-nightly-update.timer ]; then
+    sudo cp zenith-nightly-update.service /etc/systemd/system/ 2>/dev/null || true
+    sudo cp zenith-nightly-update.timer /etc/systemd/system/ 2>/dev/null || true
+    sudo chmod +x "$ZENITH_DIR/nightly-update.sh" 2>/dev/null || true
+fi
 sudo systemctl daemon-reload 2>/dev/null || true
 sudo systemctl enable zenith-webhook 2>/dev/null || warn "zenith-webhook non installé"
 sudo systemctl enable zenith-watchdog 2>/dev/null || warn "zenith-watchdog non installé"
+sudo systemctl enable zenith-nightly-update.timer 2>/dev/null || warn "zenith-nightly-update non installé"
+sudo systemctl start zenith-nightly-update.timer 2>/dev/null || true
 ok "Services systemd configurés"
 
 # ── 11. Portainer (optionnel) ─────────────────────────
@@ -238,6 +246,7 @@ echo ""
 echo -e "  ${BLUE}Accès application :${NC}  http://localhost/"
 echo -e "  ${BLUE}Accès Portainer   :${NC}  http://localhost:9001/"
 echo -e "  ${BLUE}Webhook deploy    :${NC}  http://localhost:9000/deploy"
+echo -e "  ${BLUE}MàJ auto nocturne :${NC}  chaque soir à 02:00 (systemd timer)"
 echo -e "  ${BLUE}Superutilisateur  :${NC}  admin / admin123"
 echo -e "  ${BLUE}Dossier projet    :${NC}  $ZENITH_DIR"
 
@@ -254,6 +263,8 @@ echo ""
 echo -e "  ${YELLOW}Commandes utiles :${NC}"
 echo -e "    cd $ZENITH_DIR && sudo docker compose -f docker-compose.prod.yml ps"
 echo -e "    sudo journalctl -u zenith-webhook -f"
+echo -e "    sudo journalctl -u zenith-nightly-update -f   # logs mise à jour auto"
+echo -e "    sudo systemctl list-timers                    # voir le timer"
 echo -e "    ./backup-db.sh"
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
