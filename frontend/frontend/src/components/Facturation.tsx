@@ -31,7 +31,7 @@ import { OpenPointDeVenteModal } from './caisse/OpenPointDeVenteModal'
 import { useFacturationState } from '../hooks/useFacturationState'
 import { useDatamatrixScan } from '../hooks/useDatamatrixScan'
 
-function PosteRequisOverlay({ postesCaisses, hasMyActivePoste, onOpenExisting }: { postesCaisses: { id: number; nom: string }[], hasMyActivePoste: boolean, onOpenExisting: () => void }) {
+function PosteRequisOverlay({ hasMyActivePoste, onOpenExisting }: { postesCaisses: { id: number; nom: string }[], hasMyActivePoste: boolean, onOpenExisting: () => void }) {
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-100/95 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
@@ -46,20 +46,14 @@ function PosteRequisOverlay({ postesCaisses, hasMyActivePoste, onOpenExisting }:
             ? 'Vous avez déjà un point de vente ouvert. Vous pouvez le réactiver pour reprendre la facturation.'
             : 'La facturation est verrouillée tant qu\'aucun point de vente n\'est ouvert.'}
         </p>
-        {postesCaisses.length > 0 ? (
-          <Button
-            type="button"
-            size="sm"
-            onClick={onOpenExisting}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg w-full"
-          >
-            {hasMyActivePoste ? 'Réactiver mon point de vente' : 'Ouvrir un point de vente'}
-          </Button>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-xs text-slate-500">Aucun poste de caisse configuré. Contactez un administrateur pour en créer un depuis la page Caisse Centralisée.</p>
-          </div>
-        )}
+        <Button
+          type="button"
+          size="sm"
+          onClick={onOpenExisting}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg w-full"
+        >
+          {hasMyActivePoste ? 'Réactiver mon point de vente' : 'Ouvrir un point de vente'}
+        </Button>
       </div>
     </div>
   )
@@ -149,7 +143,7 @@ export default function Facturation() {
       </div>
 
       {/* ── BANNIÈRE POINT DE VENTE NON ACTIF ── */}
-      {!hook.isPosteCaisseActive && hook.allPostes.length > 0 && (
+      {!hook.isPosteCaisseActive && (
         <div className="flex items-center justify-between gap-3 px-4 py-2 bg-amber-50 border-b border-amber-200 shrink-0">
           <div className="flex items-center gap-2 text-sm text-amber-800">
             <Monitor className="size-4" />
