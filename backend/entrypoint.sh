@@ -233,8 +233,8 @@ from api.models import PosteCaisse, PosteVente
 # Postes de caisse physiques
 caisses_defaults = [
     ('Caisse Principale', 'caisse-principale'),
-    ('Caisse Secondaire', 'caisse-secondaire'),
-    ('Caisse Tertiaire', 'caisse-tertiaire'),
+    ('Caisse Secondaire', 'caisse-secondaire')
+    
 ]
 caisses_created = []
 for nom, code in caisses_defaults:
