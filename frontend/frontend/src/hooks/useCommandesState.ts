@@ -323,6 +323,20 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
    const onCloture = async () => {
       if (!selectedCommande) return;
 
+      // Vérifier les produits sans date de péremption
+      const produits = commandeProduits || selectedCommande.produits || [];
+      const sansPeremption = produits.filter((p: any) => !p.date_expiration);
+
+      if (sansPeremption.length > 0) {
+          const confirmMissing = await confirm({
+              title: 'Date de péremption manquante',
+              message: `${sansPeremption.length} produit(s) n'ont pas de date de péremption renseignée. Voulez-vous continuer la clôture ?`,
+              confirmText: 'Continuer',
+              cancelText: 'Vérifier'
+          });
+          if (!confirmMissing) return;
+      }
+
       const confirmed = await confirm({
           title: t('orders:details.close'),
           message: t('orders:messages.close_confirm', { defaultValue: 'Voulez-vous vraiment clôturer cette commande ?' }),
