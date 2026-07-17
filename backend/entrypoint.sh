@@ -221,6 +221,52 @@ echo ""
 echo "🔐 Vérification du compte de secours..."
 python scripts/ensure_emergency_admin.py || echo "⚠️  Vérification du compte de secours échouée"
 
+# ── 6c. Garantir les postes de caisse et de vente par défaut ──
+echo ""
+echo "🏪 Vérification des postes de caisse et de vente par défaut..."
+python -c "
+import os, django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+from api.models import PosteCaisse, PosteVente
+
+# Postes de caisse physiques
+caisses_defaults = [
+    ('Caisse Principale', 'caisse-principale'),
+    ('Caisse Secondaire', 'caisse-secondaire'),
+    ('Caisse Tertiaire', 'caisse-tertiaire'),
+]
+caisses_created = []
+for nom, code in caisses_defaults:
+    obj, was_created = PosteCaisse.objects.get_or_create(
+        nom=nom,
+        defaults={'code': code}
+    )
+    if was_created:
+        caisses_created.append(nom)
+
+if caisses_created:
+    print('✓ Postes de caisse créés: ' + ', '.join(caisses_created))
+else:
+    print('✓ Postes de caisse par défaut déjà présents')
+
+# Postes de vente
+ventes_defaults = ['COMPTOIR1', 'COMPTOIR2', 'COMPTOIR3']
+ventes_created = []
+for nom in ventes_defaults:
+    poste, was_created = PosteVente.objects.get_or_create(
+        nom=nom,
+        defaults={'est_actif': False, 'caisse': None, 'vendeur': None}
+    )
+    if was_created:
+        ventes_created.append(nom)
+
+if ventes_created:
+    print('✓ Postes de vente créés: ' + ', '.join(ventes_created))
+else:
+    print('✓ Postes de vente par défaut déjà présents')
+"
+
 # ── 7. Import des données fournisseur si spécifié et base vide ──
 if [ -n "$SUPPLIER_DATA" ]; then
     echo ""
