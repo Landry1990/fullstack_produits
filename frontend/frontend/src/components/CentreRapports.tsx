@@ -294,7 +294,7 @@ export default function CentreRapports() {
                     .h-screen { height: auto !important; overflow: visible !important; }
                     .flex-1 { overflow: visible !important; }
                     .p-8 { padding: 0 !important; }
-                    .bg-base-200 { background: white !important; }
+                    .bg-slate-100 { background: white !important; }
                     .shadow-sm, .shadow-lg { shadow: none !important; }
                     .card, .rounded-2xl { border: 1px solid #eee !important; border-radius: 0 !important; }
                 }

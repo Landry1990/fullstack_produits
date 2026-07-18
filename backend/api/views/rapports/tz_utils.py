@@ -58,6 +58,10 @@ def parse_api_datetime(value: str | None, end_of_day: bool = False):
     if dt is not None:
         if timezone.is_naive(dt):
             dt = timezone.make_aware(dt, get_local_tz())
+        # Si la chaîne d'entrée est une date seule (YYYY-MM-DD), parse_datetime
+        # retourne 00:00:00 — appliquer end_of_day si demandé
+        if end_of_day and ':' not in value and 'T' not in value:
+            dt = dt.replace(hour=23, minute=59, second=59)
         return dt
 
     # Cas 2 : date seule YYYY-MM-DD

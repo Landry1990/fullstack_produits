@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-07-18
+
+### 🎨 UI / UX
+
+- **Modernisation des Centres de Rapports avec shadcn/ui**
+  - `ReportSidebar.tsx` : remplacement de toutes les classes DaisyUI (`bg-base-100`, `border-base-300`, `text-base-content/*`, `bg-primary`, `btn btn-ghost btn-sm btn-circle`) par des équivalents Tailwind/slate et emerald.
+  - `ReportResults.tsx` : migration des classes DaisyUI (`bg-base-*`, `text-base-content/*`, `text-error`, `text-warning`, `text-success`, `btn btn-xs btn-error/btn-warning/btn-primary`, `btn btn-ghost btn-xs`, `btn btn-sm btn-outline`) vers Tailwind + composant `Button` shadcn pour la pagination.
+  - `ReportFilters.tsx` : remplacement des dropdowns DaisyUI (`dropdown dropdown-bottom dropdown-start/end` + `dropdown-content`) par des dropdowns React state-based avec `useState` + gestion du click-outside via `useRef`/`useEffect`.
+  - `CentreRapports.tsx` : mise à jour du style d'impression (`bg-base-200` → `bg-slate-100`).
+  - Frontend redéployé.
+
+- **Scrollbar sidebar en emerald**
+  - `frontend/frontend/src/index.css` : la scrollbar `.custom-scrollbar` est désormais pleinement visible avec un thumb emerald (`#10b981`), un hover plus foncé (`#059669`), un track gris clair (`#f1f5f9`) et une largeur de 6px.
+
+### ✨ Nouvelles fonctionnalités
+
+- **Rapport "Ventes par Opérateur (Lots)"**
+  - `backend/api/views/rapports/sales.py` : nouvel endpoint `ventes_operateur_lots` détaillant les produits vendus par opérateur avec lot, date de péremption, quantité, numéro de facture, remise et date de création.
+  - `frontend/frontend/src/hooks/reports/queries.ts` : ajout de la définition du rapport dans le tableau `QUERIES`.
+
+- **Filtre vendeur amélioré**
+  - `frontend/frontend/src/hooks/useCentreRapports.ts` : affichage de tous les utilisateurs quand la recherche est vide (au lieu de vider la liste).
+  - `frontend/frontend/src/components/dashboard/reports/ReportFilters.tsx` : le dropdown vendeur s'ouvre au focus avec une option "Tous les vendeurs" en première position, plus fermeture au click-outside.
+
+### 🐛 Corrections
+
+- **`parse_api_datetime` : `end_of_day` ignoré pour les dates seules**
+  - `backend/api/views/rapports/tz_utils.py` : `parse_datetime` de Django réussit à parser une date seule `YYYY-MM-DD` et retournait `00:00:00`, court-circuitant le fallback qui applique `end_of_day=True`. Désormais, si l'input n'a pas de composant temps (`:` ou `T`), `end_of_day` est appliqué dans le cas 1 aussi.
+  - Impact : tous les rapports utilisant des dates seules avec `end_of_day=True` retournaient une borne de fin à minuit au lieu de 23:59:59, excluant toutes les ventes du jour sélectionné.
+
+---
+
 ## 2026-07-15
 
 ### 🎨 UI / UX

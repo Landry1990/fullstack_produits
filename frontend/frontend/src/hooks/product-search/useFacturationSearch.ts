@@ -124,11 +124,29 @@ export const useFacturationSearch = () => {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setSelectedIndex(prev => (prev < resultCount - 1 ? prev + 1 : prev))
+        setSelectedIndex(prev => {
+          const newIndex = prev < resultCount - 1 ? prev + 1 : prev
+          if (newIndex !== prev) {
+            setTimeout(() => {
+              const el = document.querySelector(`[data-search-index="${newIndex}"]`)
+              el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+            }, 0)
+          }
+          return newIndex
+        })
         break
       case 'ArrowUp':
         e.preventDefault()
-        setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1))
+        setSelectedIndex(prev => {
+          const newIndex = prev > 0 ? prev - 1 : -1
+          if (newIndex !== prev && newIndex >= 0) {
+            setTimeout(() => {
+              const el = document.querySelector(`[data-search-index="${newIndex}"]`)
+              el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+            }, 0)
+          }
+          return newIndex
+        })
         break
       case 'Enter':
         e.preventDefault()

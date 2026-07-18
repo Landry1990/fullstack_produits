@@ -412,5 +412,17 @@ export const QUERIES: QueryDefinition[] = [
             { key: 'date_fin', label: 'Fin', type: 'date', required: true, default: new Date().toISOString().split('T')[0] }
         ],
         resultType: 'raw'
+    },
+    {
+        id: 'ventes_operateur_lots',
+        name: 'Ventes par Opérateur (Lots)',
+        description: 'Produits vendus par opérateur avec lot, date de péremption, quantité, facture, remise',
+        endpoint: '/api/rapports/ventes_operateur_lots/',
+        params: [
+            { key: 'date_debut', label: 'Début', type: 'date', required: true },
+            { key: 'date_fin', label: 'Fin', type: 'date', required: true },
+            { key: 'vendeur_id', label: 'Opérateur', type: 'vendeur_id' }
+        ],
+        resultType: 'table'
     }
 ];

@@ -328,11 +328,16 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       const sansPeremption = produits.filter((p: any) => !p.date_expiration);
 
       if (sansPeremption.length > 0) {
+          const noms = sansPeremption.map((p: any) => {
+              const nom = typeof p.produit === 'object' ? p.produit?.name : p.produit_nom;
+              return `   • ${nom || 'Produit #' + (p.id || '?')}`;
+          });
           const confirmMissing = await confirm({
               title: 'Date de péremption manquante',
-              message: `${sansPeremption.length} produit(s) n'ont pas de date de péremption renseignée. Voulez-vous continuer la clôture ?`,
+              message: `${sansPeremption.length} produit(s) sans date de péremption :\n\n${noms.join('\n')}\n\nVoulez-vous continuer la clôture ?`,
               confirmText: 'Continuer',
-              cancelText: 'Vérifier'
+              cancelText: 'Vérifier',
+              variant: 'warning'
           });
           if (!confirmMissing) return;
       }
