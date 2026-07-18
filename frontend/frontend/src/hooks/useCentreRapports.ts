@@ -181,10 +181,8 @@ export function useCentreRapports() {
                 u.username.toLowerCase().includes(userSearch.toLowerCase())
             );
             setFilteredUsers(filtered.slice(0, 10));
-            setShowUserDropdown(true);
         } else {
-            setFilteredUsers([]);
-            setShowUserDropdown(false);
+            setFilteredUsers(users.slice(0, 10));
         }
     }, [userSearch, users]);
 

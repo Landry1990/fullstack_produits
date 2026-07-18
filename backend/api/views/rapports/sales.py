@@ -312,3 +312,75 @@ class RapportSalesMixin:
         active_fids = StockLot.objects.filter(fournisseur__isnull=False).values_list('fournisseur_id', flat=True).distinct()
         suppliers = Fournisseur.objects.filter(id__in=active_fids, is_active=True).values('id', 'name').order_by('name')
         return Response(list(suppliers))
+
+    @action(detail=False, methods=['get'])
+    def ventes_operateur_lots(self, request):
+        """
+        Rapport détaillé des produits vendus par opérateur avec lots, dates de péremption,
+        quantités, numéro de facture, remise et date de création.
+        """
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        db_str = request.query_params.get('date_debut')
+        df_str = request.query_params.get('date_fin')
+        vendeur_id = request.query_params.get('vendeur_id')
+
+        if not db_str or not df_str:
+            return Response({'error': 'Dates requises'}, status=400)
+
+        date_debut = parse_api_datetime(db_str)
+        date_fin = parse_api_datetime(df_str, end_of_day=True)
+        if date_debut is None or date_fin is None:
+            return Response({'error': 'Date invalide'}, status=400)
+
+        if len(df_str.strip()) > 10:
+            date_fin += timedelta(minutes=1)
+
+        qs = FactureProduit.objects.select_related(
+            'produit', 'facture', 'facture__created_by', 'stock_lot'
+        ).filter(
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            facture__date__gte=date_debut,
+            facture__date__lt=date_fin,
+            facture__is_active=True,
+        )
+
+        if vendeur_id:
+            qs = qs.filter(facture__created_by_id=vendeur_id)
+
+        qs = qs.order_by('-facture__date')
+
+        page = self.paginator.paginate_queryset(qs, request, view=self)
+
+        results = []
+        for item in (page if page is not None else qs):
+            user = item.facture.created_by
+            operateur = user.get_full_name() or user.username if user else 'Non attribué'
+
+            stock_lot = item.stock_lot
+            lot_number = item.lot or (stock_lot.lot if stock_lot else '') or ''
+            date_peremption = None
+            if stock_lot and stock_lot.date_expiration:
+                date_peremption = stock_lot.date_expiration.isoformat()
+            elif item.date_expiration:
+                date_peremption = item.date_expiration.isoformat()
+
+            results.append({
+                'operateur': operateur,
+                'operateur_id': user.id if user else None,
+                'produit': item.produit.name if item.produit else (item.produit_nom or 'N/A'),
+                'produit_id': item.produit_id,
+                'lot': lot_number,
+                'date_peremption': date_peremption,
+                'quantite': item.quantity,
+                'unites_gratuites': item.free_quantity,
+                'numero_facture': item.facture.numero_facture or f'#{item.facture.id}',
+                'facture_id': item.facture.id,
+                'remise': float(item.discount or 0),
+                'prix_vente': float(item.selling_price or 0),
+                'date_creation': item.facture.date.isoformat() if item.facture.date else None,
+                'created_at': item.created_at.isoformat() if item.created_at else None,
+            })
+
+        return self.paginator.get_paginated_response(results) if page is not None else Response(results)

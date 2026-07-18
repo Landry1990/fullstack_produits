@@ -186,26 +186,26 @@ input, button, textarea, select {
 /* Custom scrollbar for sidebar */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(16, 185, 129, 0.7) transparent;
+  scrollbar-color: #10b981 transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f1f5f9;
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(16, 185, 129, 0.7);
+  background: #10b981;
   border-radius: 10px;
   min-height: 40px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 1);
+  background: #059669;
 }
 
 /* Prevent horizontal overflow globally */

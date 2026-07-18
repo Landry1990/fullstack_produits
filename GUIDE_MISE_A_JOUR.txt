@@ -1,0 +1,110 @@
+═══════════════════════════════════════════════════════════════
+  ZENITH PHARMA — GUIDE DE MISE À JOUR & MAINTENANCE
+═══════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════
+  1. MISE À JOUR MANUELLE
+═══════════════════════════════════════════════════════════════
+
+── Mise à jour NORMALE (rapide, utilise le cache Docker) ──
+   À utiliser pour les mises à jour régulières (tous les 2 mois, etc.)
+
+cd /opt/zenith-pharma && git fetch origin && git reset --hard origin/main && sudo docker compose -f docker-compose.prod.yml down && sudo docker compose -f docker-compose.prod.yml build && sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans && sleep 5 && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput && echo "✅ Mise à jour terminée !"
+
+── Mise à jour COMPLÈTE (reconstruction totale, sans cache) ──
+   À utiliser en cas de problème ou après une mise à jour majeure.
+   Plus lent : re-télécharge toutes les dépendances depuis zéro.
+
+cd /opt/zenith-pharma && git fetch origin && git reset --hard origin/main && sudo docker compose -f docker-compose.prod.yml down && sudo docker compose -f docker-compose.prod.yml build --no-cache && sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans && sleep 5 && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput && echo "✅ Mise à jour terminée !"
+
+
+═══════════════════════════════════════════════════════════════
+  2. MISE À JOUR AUTOMATIQUE NOCTURNE (SYSTEMD TIMER)
+═══════════════════════════════════════════════════════════════
+
+Le système vérifie chaque soir à 02h00 si de nouveaux commits
+sont disponibles sur GitHub. Si oui :
+  1. Backup DB
+  2. Git pull
+  3. Rebuild Docker (docker-compose.prod.yml)
+  4. Migrations Django
+  5. Healthcheck (si échec → rollback automatique)
+
+── Activation sur une machine déjà installée ──
+
+cd /opt/zenith-pharma && git pull origin main && sudo cp zenith-nightly-update.service zenith-nightly-update.timer /etc/systemd/system/ && sudo chmod +x nightly-update.sh && sudo systemctl daemon-reload && sudo systemctl enable --now zenith-nightly-update.timer && echo "✅ Timer activé — mise à jour chaque soir à 02h00"
+
+── Commandes de suivi ──
+
+# Voir l'état du timer
+sudo systemctl list-timers zenith-nightly-update
+
+# Voir les logs de mise à jour (systemd)
+sudo journalctl -u zenith-nightly-update -f
+
+# Voir les logs du script
+cat /opt/zenith-pharma/logs/nightly-update.log
+
+# Déclencher une mise à jour manuelle immédiate
+sudo systemctl start zenith-nightly-update
+
+# Désactiver le timer
+sudo systemctl disable --now zenith-nightly-update.timer
+
+
+═══════════════════════════════════════════════════════════════
+  3. FICHIERS CRÉÉS POUR LA MISE À JOUR AUTO
+═══════════════════════════════════════════════════════════════
+
+Fichier                      Rôle
+──────────────────────────────────────────────────────────────
+nightly-update.sh            Script principal : vérifie GitHub,
+                             backup, pull, rebuild, migrate,
+                             healthcheck + rollback auto
+
+zenith-nightly-update.service  Service systemd oneshot (exécute
+                               le script une fois au déclenchement)
+
+zenith-nightly-update.timer    Timer systemd : déclenche le service
+                               chaque soir à 02:00 (Persistent=true)
+
+install.sh                   Modifié : installe et active le timer
+                             automatiquement sur les nouvelles
+                             installations
+
+
+═══════════════════════════════════════════════════════════════
+  4. COMMANDES DOCKER UTILES (MACHINE UBUNTU)
+═══════════════════════════════════════════════════════════════
+
+# Voir l'état des conteneurs
+cd /opt/zenith-pharma && sudo docker compose -f docker-compose.prod.yml ps
+
+# Voir les logs en temps réel
+sudo docker compose -f docker-compose.prod.yml logs -f backend
+sudo docker compose -f docker-compose.prod.yml logs -f frontend
+
+# Redémarrer un conteneur
+sudo docker compose -f docker-compose.prod.yml restart backend
+sudo docker compose -f docker-compose.prod.yml restart frontend
+
+# Backup manuel de la DB
+./backup-db.sh
+
+# Rollback manuel (en cas de problème)
+./rollback.sh --force
+
+
+═══════════════════════════════════════════════════════════════
+  5. SÉCURITÉ & BONNES PRATIQUES
+═══════════════════════════════════════════════════════════════
+
+- Le fichier .env est préservé lors des mises à jour (gitignore)
+- Les mots de passe et clés ne sont jamais écrasés
+- Le backup DB est fait avant chaque mise à jour
+- Le rollback automatique s'active si le healthcheck échoue
+- Les images Docker orphelines sont nettoyées après chaque update
+- Le timer utilise Persistent=true : si la machine était éteinte
+  à 02h00, la mise à jour se déclenchera au prochain démarrage
+
+═══════════════════════════════════════════════════════════════

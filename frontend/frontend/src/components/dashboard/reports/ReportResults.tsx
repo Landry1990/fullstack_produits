@@ -11,6 +11,7 @@ import {
 import type { QueryDefinition, PaginationData } from '../../../hooks/useCentreRapports';
 import { MonthlyReportView } from './MonthlyReportView';
 import { ChevronLeft, ChevronRight, Inbox, Eye, Download, AlertTriangle } from 'lucide-react';
+import { Button } from '../../shadcn/button';
 
 // Constante de module pour éviter la recréation à chaque render
 const EMPTY_PARAMS: Record<string, any> = {};
@@ -47,7 +48,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
 
     if (!results) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center text-base-content/20 animate-in fade-in duration-700">
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-300 animate-in fade-in duration-700">
                 <Inbox className="size-24 mb-4 opacity-10" />
                 <p className="text-xl font-black uppercase tracking-[0.2em]">{t('results.execute_prompt', 'En attente d\'exécution...')}</p>
             </div>
@@ -63,7 +64,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         // Special case: Direct Download / Raw results
         if (selectedQuery.resultType === 'raw') {
             return (
-                <div className="flex flex-col items-center justify-center py-20 text-success animate-in zoom-in duration-500">
+                <div className="flex flex-col items-center justify-center py-20 text-emerald-600 animate-in zoom-in duration-500">
                     <Download className="size-16 mb-4" />
                     <p className="text-lg font-black uppercase tracking-widest">{t('results.export_success_short', { defaultValue: 'Rapport Généré' })}</p>
                     {results && typeof results === 'object' && (results as any).filename && (
@@ -80,13 +81,13 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     {Object.entries(results).map(([key, value]) => {
                         if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                             return (
-                                <div key={key} className="bg-base-100 rounded-2xl p-6 border border-base-300 shadow-sm">
-                                    <div className="text-[10px] font-bold uppercase text-base-content/40 mb-4 tracking-widest">{key.replace(/_/g, ' ')}</div>
+                                <div key={key} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                                    <div className="text-[10px] font-bold uppercase text-slate-400 mb-4 tracking-widest">{key.replace(/_/g, ' ')}</div>
                                     <div className="space-y-2">
                                         {Object.entries(value as object).map(([subKey, subValue]) => (
-                                            <div key={subKey} className="flex justify-between items-center text-sm border-b border-base-200/50 pb-2 last:border-0 last:pb-0">
-                                                <span className="text-base-content/60 font-bold uppercase text-[10px] tracking-tight">{subKey.replace(/_/g, ' ')}</span>
-                                                <span className="font-black text-base-content">{formatValue(subKey, subValue, t)}</span>
+                                            <div key={subKey} className="flex justify-between items-center text-sm border-b border-slate-200/50 pb-2 last:border-0 last:pb-0">
+                                                <span className="text-slate-500 font-bold uppercase text-[10px] tracking-tight">{subKey.replace(/_/g, ' ')}</span>
+                                                <span className="font-black text-slate-800">{formatValue(subKey, subValue, t)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -94,9 +95,9 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             );
                         }
                         return (
-                            <div key={key} className="bg-base-100 rounded-2xl p-6 border border-base-300 shadow-sm flex flex-col justify-center">
-                                <div className="text-[10px] font-bold uppercase text-base-content/40 tracking-widest mb-1">{key.replace(/_/g, ' ')}</div>
-                                <div className="text-2xl font-black text-base-content">{formatValue(key, value, t)}</div>
+                            <div key={key} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-center">
+                                <div className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-1">{key.replace(/_/g, ' ')}</div>
+                                <div className="text-2xl font-black text-slate-800">{formatValue(key, value, t)}</div>
                             </div>
                         );
                     })}
@@ -108,8 +109,8 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         if (Array.isArray(results)) {
             if (results.length === 0) {
                 return (
-                    <div className="flex flex-col items-center justify-center py-20 text-base-content/30 italic">
-                        <Inbox className="size-12 mb-2 text-base-content/20" />
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400 italic">
+                        <Inbox className="size-12 mb-2 text-slate-300" />
                         <p>{t('results.empty', 'Aucun résultat trouvé pour cette période.')}</p>
                     </div>
                 );
@@ -146,26 +147,26 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                 : rawColumns;
 
             return (
-                <div ref={tableContainerRef} className="bg-base-100 rounded-3xl border border-base-300 shadow-sm overflow-hidden animate-in fade-in duration-500">
+                <div ref={tableContainerRef} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-500">
                     {/* Filtre marge — visible uniquement pour detail_marges_lots */}
                     {isMargesReport && (
-                        <div className="flex items-center gap-2 px-6 py-3 border-b border-base-200 bg-base-50">
-                            <AlertTriangle className="size-3.5 text-warning shrink-0" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mr-2">{t('reports.results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
+                        <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-200 bg-slate-50">
+                            <AlertTriangle className="size-3.5 text-amber-600 shrink-0" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2">{t('reports.results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
                             {(['all', 'negative', 'low'] as const).map(f => (
                                 <button
                                     key={f}
                                     onClick={() => setMargeFilter(f)}
-                                    className={`btn btn-xs rounded-full font-bold uppercase tracking-wider transition-all ${
+                                    className={`h-7 px-3 rounded-full font-bold uppercase tracking-wider text-[10px] transition-all ${
                                         margeFilter === f
-                                            ? f === 'negative' ? 'btn-error' : f === 'low' ? 'btn-warning' : 'btn-primary'
-                                            : 'btn-ghost border border-base-300'
+                                            ? f === 'negative' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : f === 'low' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
+                                            : 'border border-slate-200 text-slate-500 hover:bg-slate-100'
                                     }`}
                                 >
                                     {f === 'all' ? t('reports.results.filter_all', { defaultValue: 'Toutes' }) : f === 'negative' ? '⚠ ' + t('reports.results.filter_negative', { defaultValue: 'Négatives' }) : t('reports.results.filter_low', { defaultValue: '< 25%' })}
                                 </button>
                             ))}
-                            <span className="ml-auto text-[10px] text-base-content/40 font-bold">
+                            <span className="ml-auto text-[10px] text-slate-400 font-bold">
                                 {t('reports.results.lines_count', { filtered: filteredResults.length, total: results.length, defaultValue: `${filteredResults.length} / ${results.length} lignes` })}
                             </span>
                         </div>
@@ -173,11 +174,11 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     <div className="overflow-x-auto">
                         <table className="w-full border-separate border-spacing-0">
                             <thead>
-                                <tr className="bg-base-200/50">
+                                <tr className="bg-slate-50">
                                     {columns.map((col, idx) => (
                                         <th 
                                             key={col} 
-                                            className={`text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 px-4 ${idx === 0 ? 'pl-6 rounded-tl-2xl' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'}`}
+                                            className={`text-xs font-semibold uppercase tracking-wider text-slate-500 py-4 px-4 ${idx === 0 ? 'pl-6 rounded-tl-2xl' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'}`}
                                         >
                                             {formatColumnHeader(col, t)}
                                         </th>
@@ -185,22 +186,22 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                     <th className="w-10 rounded-tr-2xl"></th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-base-100">
+                            <tbody className="divide-y divide-slate-100">
                                 {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: any, idx: number) => (
-                                    <tr key={row.id ?? row.produit_id ?? row.code ?? idx} className={`hover:bg-primary/5 transition-all group ${
-                                        isMargesReport && Number(row['taux_marge'] ?? 0) < 0 ? 'bg-error/5' :
-                                        isMargesReport && Number(row['taux_marge'] ?? 0) < 25 ? 'bg-warning/5' : ''
+                                    <tr key={row.id ?? row.produit_id ?? row.code ?? idx} className={`hover:bg-emerald-50 transition-all group ${
+                                        isMargesReport && Number(row['taux_marge'] ?? 0) < 0 ? 'bg-red-50' :
+                                        isMargesReport && Number(row['taux_marge'] ?? 0) < 25 ? 'bg-amber-50' : ''
                                     }`}>
                                         {columns.map((col, subIdx) => (
                                             <td 
                                                 key={col} 
-                                                className={`py-4 px-4 text-sm font-medium text-base-content/80 ${subIdx === 0 ? 'pl-6 font-bold' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'} ${
-                                                    col === 'taux_marge' && Number(row[col]) < 0 ? 'text-error font-black' :
-                                                    col === 'taux_marge' && Number(row[col]) < 25 ? 'text-warning font-bold' :
-                                                    col === 'marge' && Number(row[col]) < 0 ? 'text-error font-black' :
-                                                    col === 'statut' && row[col] === 'PERTE' ? 'text-error font-black' :
-                                                    col === 'statut' && row[col] === 'FAIBLE' ? 'text-warning font-bold' :
-                                                    col === 'statut' && row[col] === 'OK' ? 'text-success font-bold' : ''
+                                                className={`py-4 px-4 text-sm font-medium text-slate-700 ${subIdx === 0 ? 'pl-6 font-bold' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'} ${
+                                                    col === 'taux_marge' && Number(row[col]) < 0 ? 'text-red-600 font-black' :
+                                                    col === 'taux_marge' && Number(row[col]) < 25 ? 'text-amber-600 font-bold' :
+                                                    col === 'marge' && Number(row[col]) < 0 ? 'text-red-600 font-black' :
+                                                    col === 'statut' && row[col] === 'PERTE' ? 'text-red-600 font-black' :
+                                                    col === 'statut' && row[col] === 'FAIBLE' ? 'text-amber-600 font-bold' :
+                                                    col === 'statut' && row[col] === 'OK' ? 'text-emerald-600 font-bold' : ''
                                                 }`}
                                             >
                                                 {col === 'statut' && row[col] === 'PERTE' ? '🔴 PERTE' :
@@ -210,7 +211,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                             </td>
                                         ))}
                                         <td className="pr-4">
-                                            <button className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-primary/10 hover:text-primary">
+                                            <button className="size-7 rounded-lg opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 flex items-center justify-center">
                                                 <Eye className="size-4" />
                                             </button>
                                         </td>
@@ -219,8 +220,8 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             </tbody>
                             {/* Generic Summary Footer for all Table Reports */}
                             {filteredResults.length > 0 && (
-                                <tfoot className="bg-primary/5 border-t-2 border-primary/20">
-                                    <tr className="font-black text-primary uppercase">
+                                <tfoot className="bg-emerald-50 border-t-2 border-emerald-600/20">
+                                    <tr className="font-black text-emerald-600 uppercase">
                                         {columns.map((col, idx) => {
                                             if (idx === 0) return <td key={col} className="py-4 px-6 text-[10px] tracking-widest">{t('common:total', 'TOTAL / MOYENNE')}</td>;
                                             
@@ -271,7 +272,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                         </table>
                     </div>
                     {!isMargesReport && filteredResults.length > 100 && !pagination && (
-                        <div className="p-4 bg-base-50 text-center text-[10px] font-black uppercase text-base-content/30 tracking-[0.2em] border-t border-base-200">
+                        <div className="p-4 bg-slate-50 text-center text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] border-t border-slate-200">
                             {t('results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: Array.isArray(results) ? results.length : 0 })}
                         </div>
                     )}
@@ -280,8 +281,8 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         }
 
         return (
-            <div className="bg-base-200 p-6 rounded-2xl border border-base-300 overflow-auto max-h-[600px] shadow-inner">
-                <pre className="text-xs font-mono text-base-content/70">
+            <div className="bg-slate-100 p-6 rounded-2xl border border-slate-200 overflow-auto max-h-[600px] shadow-inner">
+                <pre className="text-xs font-mono text-slate-600">
                     {JSON.stringify(results, null, 2)}
                 </pre>
             </div>
@@ -295,27 +296,29 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             </div>
 
             {pagination && (
-                <div className="mt-6 p-4 bg-base-100 rounded-2xl border border-base-300 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/40 text-center sm:text-left">
-                        Total: <span className="text-base-content">{pagination.count}</span> éléments
+                <div className="mt-6 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center sm:text-left">
+                        Total: <span className="text-slate-800">{pagination.count}</span> éléments
                     </div>
                     <div className="flex gap-2 w-full sm:w-auto">
-                        <button 
-                            className="btn btn-sm btn-outline rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
+                        <Button 
+                            variant="outline" size="sm"
+                            className="rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
                             disabled={!pagination.previous || loading}
                             onClick={() => onPageChange(pagination.previous)}
                         >
                             <ChevronLeft className="size-4" />
                             {t('common:previous', 'Précédent')}
-                        </button>
-                        <button 
-                            className="btn btn-sm btn-outline rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
+                        </Button>
+                        <Button 
+                            variant="outline" size="sm"
+                            className="rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
                             disabled={!pagination.next || loading}
                             onClick={() => onPageChange(pagination.next)}
                         >
                             {t('common:next', 'Suivant')}
                             <ChevronRight className="size-4" />
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
