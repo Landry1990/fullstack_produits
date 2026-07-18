@@ -4,6 +4,54 @@
 
 ## 2026-07-18
 
+### ✨ Nouvelles fonctionnalités
+
+- **Paramètres fiscaux dynamiques (UI)**
+  - `PharmacySettingsForm.tsx` : les champs de taux (accompte, précompte, CAC) sont désormais grisés/désactivés dynamiquement selon le régime fiscal (Réel/Simplifié) et le mode d'imposition (Marge Administrée/Droit Commun) sélectionnés.
+  - `PharmacySettingsContext.tsx` : exposition du contexte des paramètres fiscaux pour consommation par les composants.
+
+- **Calculs fiscaux backend précis**
+  - `backend/api/models/orders.py` : propriété `taux_precompte` retourne 0 si mode = `MARGE_ADMINISTREE`, sinon le taux selon le régime. Propriété `precompte` maintient la précision Decimal sans arrondi intermédiaire.
+  - `backend/api/serializers/orders.py` + `serializers_monolithic.py` : `precompte` et `taux_precompte` convertis en `SerializerMethodField` avec arrondi `ROUND_HALF_UP` uniquement sur le rendu final (FCFA sans centimes).
+  - `backend/api/views/rapports/finance.py` : `rapport_fiscal_mensuel` respecte le régime/mode, skip le précompte en Marge Administrée, arrondit seulement les montants finaux.
+
+- **Rapport Excel général — nouvelles feuilles**
+  - `backend/api/views/rapports/excel_general.py` :
+    - **Feuille "Synthèse Fiscale"** : CA HT/TTC/TVA, achats fiscaux, accompte (base + CAC + total) selon régime/mode.
+    - **Feuille "UGs (Unités Gratuites)"** : UGs reçues, vendues, restantes par produit avec taux de rotation.
+    - **Feuille "Achats Fournisseurs"** : colonne Précompte ajoutée avec totaux.
+
+- **Portainer — gestion des conteneurs via interface web**
+  - `docker-compose.prod.yml` : ajout du service Portainer (port 9443) avec volume persistant.
+  - Accessible sur `https://<IP>:9443` pour gérer tous les conteneurs Docker.
+
+### 🎨 UI / UX
+
+- **Modernisation Gestion Divers avec shadcn/ui**
+  - `GestionDivers.tsx` : remplacement des `div animate-pulse` par composant `Skeleton` shadcn/ui pour les états de chargement (tableaux daily/detail + stock valuation).
+  - Remplacement du spinner manuel par `Skeleton`.
+  - Nettoyage des imports inutilisés (`X`, `CalendarCheck`, `cn`, `Badge`).
+  - Nouveau composant `frontend/frontend/src/components/ui/Skeleton.tsx`.
+
+### 🌍 Internationalisation
+
+- **Gestion Divers — 17 clés de traduction ajoutées (FR + EN)**
+  - `public/locales/fr/orders.json` + `public/locales/en/orders.json` : clés pour messages d'erreur, titres de sections, en-têtes de tableaux, labels de pagination, suffixe monétaire "F", et comptes (produits/quantités/factures).
+  - Tous les textes en dur de `GestionDivers.tsx` remplacés par `t('divers.*')`.
+
+### 🐛 Corrections
+
+- **Version du commit git "unknown" dans la sidebar (Ubuntu/Docker)**
+  - `scripts/generate-version.mjs` + `.js` : utilisation de `process.env.GIT_COMMIT` en priorité, fallback sur `git rev-parse`.
+  - `Dockerfile` + `Dockerfile.prod` : ajout `ARG GIT_COMMIT` + `ENV GIT_COMMIT` pour injecter le hash depuis l'hôte.
+  - `docker-compose.yml` + `docker-compose.prod.yml` : passage du build arg `GIT_COMMIT: ${GIT_COMMIT:-unknown}`.
+  - 7 scripts shell mis à jour (`deploy.sh`, `safe-rebuild.sh`, `demarrer.sh`, `nightly-update.sh`, `install.sh`, `deployment/deploy.sh`, `deployment/auto_update.sh`, `scripts/deploy_client.sh`) pour exporter `GIT_COMMIT` avant le build.
+  - `GUIDE_MISE_A_JOUR.txt` : commandes de mise à jour manuelle corrigées avec `export GIT_COMMIT`.
+
+---
+
+## 2026-07-18 (précédent)
+
 ### 🎨 UI / UX
 
 - **Modernisation des Centres de Rapports avec shadcn/ui**
