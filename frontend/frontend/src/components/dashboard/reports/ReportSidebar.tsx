@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, ChevronRight, X } from 'lucide-react';
+import { Button } from '../../shadcn/button';
 import { QUERIES } from '../../../hooks/useCentreRapports';
 import type { QueryDefinition } from '../../../hooks/useCentreRapports';
 
@@ -17,20 +18,20 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
         <div
             className={[
                 // Mobile: tiroir plein hauteur
-                'h-full w-80 max-w-[85vw] bg-base-100 border-r border-base-300 flex flex-col shrink-0 print:hidden overflow-hidden',
+                'h-full w-80 max-w-[85vw] bg-white border-r border-slate-200 flex flex-col shrink-0 print:hidden overflow-hidden',
                 // Desktop: sidebar classique
                 'md:static md:translate-x-0 md:shadow-none',
             ].join(' ')}
         >
-            <div className="p-4 border-b border-base-200 flex items-center justify-between gap-3">
-                <h2 className="text-xs font-bold text-base-content/40 uppercase tracking-widest">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-3">
+                <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                     {t('queries_title', 'Rapports Disponibles')}
                 </h2>
                 {onClose && (
                     <button
                         type="button"
                         onClick={onClose}
-                        className="md:hidden btn btn-ghost btn-sm btn-circle -mr-1"
+                        className="md:hidden size-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors -mr-1"
                         aria-label={t('common:close', { defaultValue: 'Fermer' }) as string}
                     >
                         <X className="size-4" />
@@ -42,26 +43,26 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                     <button
                         key={query.id}
                         onClick={() => onSelect(query)}
-                        className={`w-full text-left p-4 border-b border-base-200 transition-all group flex items-start gap-3 ${
+                        className={`w-full text-left p-4 border-b border-slate-200 transition-all group flex items-start gap-3 ${
                             selectedQuery?.id === query.id 
-                                ? 'bg-primary/5 border-l-4 border-l-primary' 
-                                : 'hover:bg-base-200/50 border-l-4 border-l-transparent'
+                                ? 'bg-emerald-50 border-l-4 border-l-emerald-600' 
+                                : 'hover:bg-slate-100 border-l-4 border-l-transparent'
                         }`}
                     >
                         <div className={`p-2 rounded-lg shrink-0 ${
-                            selectedQuery?.id === query.id ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40 group-hover:text-primary transition-colors'
+                            selectedQuery?.id === query.id ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:text-emerald-600 transition-colors'
                         }`}>
                             <FileText className="size-4" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className={`font-bold text-sm truncate ${selectedQuery?.id === query.id ? 'text-primary' : 'text-base-content'}`}>
+                            <div className={`font-bold text-sm truncate ${selectedQuery?.id === query.id ? 'text-emerald-600' : 'text-slate-800'}`}>
                                 {t(`queries.${query.id}.name`, { defaultValue: query.name })}
                             </div>
-                            <div className="text-[10px] text-base-content/60 font-medium line-clamp-2 mt-0.5 leading-tight">
+                            <div className="text-[10px] text-slate-500 font-medium line-clamp-2 mt-0.5 leading-tight">
                                 {t(`queries.${query.id}.description`, { defaultValue: query.description || '' })}
                             </div>
                         </div>
-                        <ChevronRight className={`size-4 mt-1 shrink-0 transition-transform ${selectedQuery?.id === query.id ? 'text-primary translate-x-1' : 'text-base-content/20 opacity-0 group-hover:opacity-100'}`} />
+                        <ChevronRight className={`size-4 mt-1 shrink-0 transition-transform ${selectedQuery?.id === query.id ? 'text-emerald-600 translate-x-1' : 'text-slate-300 opacity-0 group-hover:opacity-100'}`} />
                     </button>
                 ))}
             </div>

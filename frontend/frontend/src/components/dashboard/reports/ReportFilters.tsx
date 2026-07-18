@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { fr } from 'date-fns/locale';
@@ -87,6 +87,21 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
     presetList
 }) => {
     const { t } = useTranslation(['reports', 'common', 'products']);
+    const [conditionsOpen, setConditionsOpen] = useState(false);
+    const [fieldsOpen, setFieldsOpen] = useState(false);
+    const conditionsRef = useRef<HTMLDivElement>(null);
+    const fieldsRef = useRef<HTMLDivElement>(null);
+    const vendeurRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (conditionsRef.current && !conditionsRef.current.contains(e.target as Node)) setConditionsOpen(false);
+            if (fieldsRef.current && !fieldsRef.current.contains(e.target as Node)) setFieldsOpen(false);
+            if (vendeurRef.current && !vendeurRef.current.contains(e.target as Node)) userActions.setShowDropdown(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
 
     if (selectedQuery.params.length === 0) return null;
 
@@ -329,9 +344,9 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         )}
 
                         {param.type === 'vendeur_id' && (
-                            <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors">
-                                    <Search className="size-4" />
+                            <div ref={vendeurRef} className="relative group">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors pointer-events-none">
+                                    <Users className="size-4" />
                                 </div>
                                 <Input
                                     type="text"
@@ -341,13 +356,32 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         userActions.setSelectedName('');
                                         setParam(param.key, '');
                                     }}
-                                    onFocus={() => userSearch.query.length > 0 && userActions.setShowDropdown(true)}
-                                    placeholder={t('params.vendeur_id', 'Rechercher un vendeur...')}
+                                    onFocus={() => userActions.setShowDropdown(true)}
+                                    placeholder={t('params.vendeur_id', 'Tous les vendeurs...')}
                                     className="w-full pl-10 rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                                 />
-                                {userSearch.showDropdown && userSearch.filtered.length > 0 && (
+                                {userSearch.showDropdown && (
                                     <ul className="absolute z-50 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-slate-200 py-2 animate-in fade-in zoom-in duration-200">
-                                        {userSearch.filtered.map(user => (
+                                        <li>
+                                            <button
+                                                type="button"
+                                                className="w-full text-left px-4 py-3 hover:bg-slate-100 transition-colors flex items-center gap-3"
+                                                onClick={() => {
+                                                    setParam(param.key, '');
+                                                    userActions.setSelectedName('');
+                                                    userActions.setQuery('');
+                                                    userActions.setShowDropdown(false);
+                                                }}
+                                            >
+                                                <div className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                                                    <Users className="size-4" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="font-bold text-sm text-slate-600">{t('params.all_vendors', 'Tous les vendeurs')}</div>
+                                                </div>
+                                            </button>
+                                        </li>
+                                        {(userSearch.query.length > 0 ? userSearch.filtered : []).map(user => (
                                             <li key={user.id}>
                                                 <button
                                                     type="button"
@@ -447,15 +481,16 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         {param.type === 'fields_selector' && param.options && (
                             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                                 {/* Condition Builder */}
-                                <div className="dropdown dropdown-bottom dropdown-start">
-                                    <label tabIndex={0} className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
+                                <div ref={conditionsRef} className="relative">
+                                    <button type="button" onClick={() => setConditionsOpen(v => !v)} className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
                                         <Filter className="size-4 text-indigo-600" />
                                         <span>{t('dynamic_constructor.conditions_title')}</span>
                                         {currentConditions.length > 0 && (
                                             <Badge variant="secondary" className="ml-1">{currentConditions.length}</Badge>
                                         )}
-                                    </label>
-                                    <div tabIndex={0} className="dropdown-content z-[100] p-6 shadow-2xl bg-white rounded-3xl border border-slate-200 w-[320px] sm:w-[580px] mt-2 animate-in slide-in-from-top-2 duration-300">
+                                    </button>
+                                    {conditionsOpen && (
+                                    <div className="absolute z-[100] left-0 top-full p-6 shadow-2xl bg-white rounded-3xl border border-slate-200 w-[320px] sm:w-[580px] mt-2 animate-in slide-in-from-top-2 duration-300">
                                         <div className="flex items-center justify-between mb-6">
                                             <div className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
                                                 <Filter className="size-3" />
@@ -575,18 +610,20 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                             {t('dynamic_constructor.add_condition')}
                                         </Button>
                                     </div>
+                                    )}
                                 </div>
 
                                 {/* Fields Selector Dropdown */}
-                                <div className="dropdown dropdown-bottom dropdown-end">
-                                    <label tabIndex={0} className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
+                                <div ref={fieldsRef} className="relative">
+                                    <button type="button" onClick={() => setFieldsOpen(v => !v)} className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
                                         <LayoutPanelTop className="size-4" />
                                         <span>{t('dynamic_constructor.select_columns')}</span>
                                         <Badge className="ml-1">
                                             {(params[param.key] || '').split(',').filter(Boolean).length}
                                         </Badge>
-                                    </label>
-                                    <div tabIndex={0} className="dropdown-content z-[100] p-4 shadow-2xl bg-white rounded-2xl border border-slate-200 w-[300px] sm:w-[450px] mt-2 animate-in slide-in-from-top-2 duration-300">
+                                    </button>
+                                    {fieldsOpen && (
+                                    <div className="absolute z-[100] right-0 top-full p-4 shadow-2xl bg-white rounded-2xl border border-slate-200 w-[300px] sm:w-[450px] mt-2 animate-in slide-in-from-top-2 duration-300">
                                         <div className="text-xs font-black uppercase tracking-widest text-slate-300 mb-4 flex items-center gap-2">
                                             <LayoutPanelTop className="size-3" />
                                             {t('dynamic_constructor.table_composition')}
@@ -652,6 +689,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                             </button>
                                         </div>
                                     </div>
+                                    )}
                                 </div>
                             </div>
                         )}

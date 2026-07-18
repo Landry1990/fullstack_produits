@@ -24,7 +24,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     isOpen: false,
     options: {
       title: '',
-      message: ''
+      message: '',
+      variant: 'warning'
     }
   })
 
