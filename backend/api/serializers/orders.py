@@ -4,7 +4,7 @@ Serializers pour les commandes, fournisseurs et paiements.
 """
 from rest_framework import serializers
 from django.db.models import Sum, Q
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from ..models import (
     Fournisseur, Commande, CommandeProduit, PaiementFournisseur, OrderSchedule,
 )
@@ -162,7 +162,16 @@ class CommandeSerializer(serializers.ModelSerializer):
     total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    precompte = serializers.SerializerMethodField()
+    taux_precompte = serializers.SerializerMethodField()
     closed_by_name = serializers.SerializerMethodField()
+
+    def get_precompte(self, obj):
+        val = obj.precompte
+        return int(val.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+
+    def get_taux_precompte(self, obj):
+        return float(obj.taux_precompte)
 
     class Meta:
         model = Commande

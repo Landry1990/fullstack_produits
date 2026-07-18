@@ -5,11 +5,13 @@ const { execSync } = require('child_process');
 const srcDir = path.join(__dirname, '..', 'src');
 const versionFile = path.join(srcDir, 'version.ts');
 
-let gitHash = 'unknown';
-try {
-    gitHash = execSync('git rev-parse --short HEAD', { cwd: path.join(__dirname, '..'), encoding: 'utf8' }).trim();
-} catch {
-    // git not available
+let gitHash = process.env.GIT_COMMIT || 'unknown';
+if (gitHash === 'unknown' || gitHash === '') {
+    try {
+        gitHash = execSync('git rev-parse --short HEAD', { cwd: path.join(__dirname, '..'), encoding: 'utf8' }).trim();
+    } catch {
+        // git not available
+    }
 }
 
 const buildDate = new Date().toISOString();

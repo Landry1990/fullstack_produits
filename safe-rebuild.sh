@@ -39,6 +39,11 @@ fi
 # 3. Rebuild + Up
 echo "[3/4] Rebuild des conteneurs..."
 cd "$SCRIPT_DIR"
+
+# Extraire le hash du commit git pour l'injecter dans le build frontend
+export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+echo "   Git commit: $GIT_COMMIT"
+
 docker compose up -d --build
 
 # 4. Verification

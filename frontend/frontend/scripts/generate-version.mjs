@@ -9,11 +9,13 @@ const __dirname = path.dirname(__filename);
 const srcDir = path.join(__dirname, '..', 'src');
 const versionFile = path.join(srcDir, 'version.ts');
 
-let gitHash = 'unknown';
-try {
-    gitHash = execSync('git rev-parse --short HEAD', { cwd: path.join(__dirname, '..'), encoding: 'utf8' }).trim();
-} catch {
-    // git not available
+let gitHash = process.env.GIT_COMMIT || 'unknown';
+if (gitHash === 'unknown' || gitHash === '') {
+    try {
+        gitHash = execSync('git rev-parse --short HEAD', { cwd: path.join(__dirname, '..'), encoding: 'utf8' }).trim();
+    } catch {
+        // git not available — keep 'unknown'
+    }
 }
 
 const buildDate = new Date().toISOString();

@@ -356,6 +356,52 @@ class PharmacySettings(models.Model):
         help_text="Modes de paiement personnalisés (ex: [{'value': 'paypal', 'label': 'PayPal'}])"
     )
 
+    # --- Paramètres Fiscaux (Précompte & Accompte) ---
+    REGIME_FISCAL_CHOICES = [
+        ('REEL', 'Régime du Réel'),
+        ('SIMPLIFIE', 'Régime Simplifié'),
+    ]
+    MODE_IMPOSITION_CHOICES = [
+        ('MARGE_ADMINISTREE', 'Marge Administrée (14% sur marge brute)'),
+        ('DROIT_COMMUN', 'Droit Commun (sur chiffre d\'affaires global)'),
+    ]
+    regime_fiscal = models.CharField(
+        max_length=15,
+        choices=REGIME_FISCAL_CHOICES,
+        default='REEL',
+        help_text="Régime fiscal de la pharmacie"
+    )
+    mode_imposition = models.CharField(
+        max_length=20,
+        choices=MODE_IMPOSITION_CHOICES,
+        default='MARGE_ADMINISTREE',
+        help_text="Mode d'imposition : marge administrée (pharmacie) ou droit commun"
+    )
+    taux_accompte_reel = models.DecimalField(
+        max_digits=5, decimal_places=2, default=2.00,
+        help_text="Taux d'accompte mensuel sur CA en régime Réel (2% par défaut)"
+    )
+    taux_accompte_simplifie = models.DecimalField(
+        max_digits=5, decimal_places=2, default=5.00,
+        help_text="Taux d'accompte mensuel sur CA en régime Simplifié (5% par défaut)"
+    )
+    taux_cac = models.DecimalField(
+        max_digits=5, decimal_places=2, default=10.00,
+        help_text="Taux CAC (Centimes Additionnels Communaux) appliqué sur l'accompte (10% par défaut)"
+    )
+    taux_precompte_reel = models.DecimalField(
+        max_digits=5, decimal_places=2, default=1.00,
+        help_text="Taux de précompte sur achats en régime Réel (1% par défaut)"
+    )
+    taux_precompte_simplifie = models.DecimalField(
+        max_digits=5, decimal_places=2, default=5.00,
+        help_text="Taux de précompte sur achats en régime Simplifié (3-5%, 5% par défaut)"
+    )
+    taux_marge_brute = models.DecimalField(
+        max_digits=5, decimal_places=2, default=14.00,
+        help_text="Taux sur marge brute en mode marge administrée (14% par défaut)"
+    )
+
     class Meta:
         verbose_name = "Paramètres Pharmacie"
         verbose_name_plural = "Paramètres Pharmacie"

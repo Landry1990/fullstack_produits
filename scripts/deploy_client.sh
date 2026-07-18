@@ -37,6 +37,7 @@ fi
 
 # 2. Lancer la pile Docker avec un nom de projet unique
 echo "🚀 Lancement des conteneurs pour $STACK_NAME..."
+export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 docker compose -f docker-compose.prod.yml -p "$STACK_NAME" --env-file "$ENV_FILE" up -d --build
 
 echo "✅ Déploiement terminé !"

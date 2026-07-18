@@ -151,12 +151,14 @@ export default function CaisseCentralisee() {
 
   const fetchSessionRecap = useCallback(async () => {
     try {
-      const res = await api.get('postes-caisses/recap_session/')
+      const params: Record<string, string> = {}
+      if (selectedPosteCaisseId !== 'all') params.poste_caisse = selectedPosteCaisseId
+      const res = await api.get('postes-caisses/recap_session/', { params })
       setSessionRecap(res.data)
     } catch {
       // silencieux si pas de session
     }
-  }, [])
+  }, [selectedPosteCaisseId])
 
   // Rafraîchissement automatique - toutes les 5 secondes pour plus de réactivité
   useEffect(() => {
@@ -169,10 +171,10 @@ export default function CaisseCentralisee() {
     return () => clearInterval(interval)
   }, [fetchFacturesEnAttente, fetchCoupons, selectedPosteCaisseId])
 
-  // Récap session : toutes les 15 secondes
+  // Récap session : toutes les 10 secondes + immédiat sur changement de poste
   useEffect(() => {
     fetchSessionRecap()
-    const interval = setInterval(fetchSessionRecap, 15000)
+    const interval = setInterval(fetchSessionRecap, 10000)
     return () => clearInterval(interval)
   }, [fetchSessionRecap])
 

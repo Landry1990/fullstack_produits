@@ -95,6 +95,8 @@ services:
     build:
       context: ./frontend/frontend
       dockerfile: Dockerfile.prod
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
     ports:
       - "80:80"
     depends_on:
