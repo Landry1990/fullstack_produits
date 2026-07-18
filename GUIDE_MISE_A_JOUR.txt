@@ -9,13 +9,13 @@
 ── Mise à jour NORMALE (rapide, utilise le cache Docker) ──
    À utiliser pour les mises à jour régulières (tous les 2 mois, etc.)
 
-cd /opt/zenith-pharma && git fetch origin && git reset --hard origin/main && sudo docker compose -f docker-compose.prod.yml down && sudo docker compose -f docker-compose.prod.yml build && sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans && sleep 5 && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput && echo "✅ Mise à jour terminée !"
+cd /opt/zenith-pharma && git fetch origin && git reset --hard origin/main && export GIT_COMMIT=$(git rev-parse --short HEAD) && sudo GIT_COMMIT=$GIT_COMMIT docker compose -f docker-compose.prod.yml down && sudo GIT_COMMIT=$GIT_COMMIT docker compose -f docker-compose.prod.yml build && sudo GIT_COMMIT=$GIT_COMMIT docker compose -f docker-compose.prod.yml up -d --remove-orphans && sleep 5 && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput && echo "✅ Mise à jour terminée !"
 
 ── Mise à jour COMPLÈTE (reconstruction totale, sans cache) ──
    À utiliser en cas de problème ou après une mise à jour majeure.
    Plus lent : re-télécharge toutes les dépendances depuis zéro.
 
-cd /opt/zenith-pharma && git fetch origin && git reset --hard origin/main && sudo docker compose -f docker-compose.prod.yml down && sudo docker compose -f docker-compose.prod.yml build --no-cache && sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans && sleep 5 && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput && echo "✅ Mise à jour terminée !"
+cd /opt/zenith-pharma && git fetch origin && git reset --hard origin/main && export GIT_COMMIT=$(git rev-parse --short HEAD) && sudo GIT_COMMIT=$GIT_COMMIT docker compose -f docker-compose.prod.yml down && sudo GIT_COMMIT=$GIT_COMMIT docker compose -f docker-compose.prod.yml build --no-cache && sudo GIT_COMMIT=$GIT_COMMIT docker compose -f docker-compose.prod.yml up -d --remove-orphans && sleep 5 && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate && sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput && echo "✅ Mise à jour terminée !"
 
 
 ═══════════════════════════════════════════════════════════════
