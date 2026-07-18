@@ -54,6 +54,10 @@ deploy_frontend() {
     log "🚀 Deploiement Frontend..."
     tag_image "fullstack_produits-frontend-1" "fullstack_produits-frontend"
 
+    # Extraire le hash du commit git pour la version affichée dans la sidebar
+    export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    info "  Git commit: $GIT_COMMIT"
+
     cd "$SCRIPT_DIR/frontend/frontend"
     warn "  Building..."
     npm run build 2>&1 | grep -E "error|built" || true

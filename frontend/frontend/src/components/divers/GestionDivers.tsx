@@ -13,8 +13,6 @@ import {
   Warehouse,
   ArrowLeft,
   Eye,
-  X,
-  CalendarCheck
 } from 'lucide-react';
 import api from '../../services/api';
 import { format, parseISO } from 'date-fns';
@@ -22,7 +20,6 @@ import { fr } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import Commandes from '../Commandes';
 import { useCommandesStore } from '../../stores/useCommandesStore';
-import { cn } from '../../lib/utils';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
@@ -30,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../ui/Table';
-import { Badge } from '../ui/Badge';
+import { Skeleton } from '../ui/Skeleton';
 
 interface VenteDivers {
   id: number;
@@ -134,7 +131,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       setTotalCount(response.data.count);
     } catch (error) {
       console.error('Error fetching divers sales:', error);
-      toast.error('Erreur lors du chargement du détail des ventes diverses');
+      toast.error(t('divers.error_load_detail'));
     } finally {
       setLoading(false);
     }
@@ -155,7 +152,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       setTotalCount(response.data.count);
     } catch (error) {
       console.error('Error fetching daily divers sales:', error);
-      toast.error('Erreur lors du chargement des ventes diverses par jour');
+      toast.error(t('divers.error_load_daily'));
     } finally {
       setDailyLoading(false);
     }
@@ -198,7 +195,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       setStockData(response.data);
     } catch (error) {
       console.error('Error fetching divers stock:', error);
-      toast.error('Erreur lors du chargement de la valorisation du stock divers');
+      toast.error(t('divers.error_load_stock'));
     } finally {
       setStockLoading(false);
     }
@@ -253,7 +250,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                 <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                 <Input type="date" value={dateRange.debut} onChange={(e) => setDateRange({ ...dateRange, debut: e.target.value })} className="h-9" />
               </div>
-              <span className="text-muted-foreground font-medium text-sm">à</span>
+              <span className="text-muted-foreground font-medium text-sm">{t('divers.to_date')}</span>
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
                 <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                 <Input type="date" value={dateRange.fin} onChange={(e) => setDateRange({ ...dateRange, fin: e.target.value })} className="h-9" />
@@ -265,7 +262,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
             </Card>
             <Card className="bg-emerald-600 text-white border-emerald-600 p-6 flex flex-col justify-center">
               <p className="text-emerald-100 text-xs font-semibold uppercase tracking-wider">{t('divers.revenue')}</p>
-              <h2 className="text-3xl font-bold mt-1">{totalCA.toLocaleString()} F</h2>
+              <h2 className="text-3xl font-bold mt-1">{totalCA.toLocaleString()} {t('divers.currency')}</h2>
               <div className="mt-3 flex items-center text-emerald-100 text-xs">
                 <CalendarDays className="h-3 w-3 mr-1" />
                 {format(new Date(dateRange.debut), 'dd/MM/yy')} → {format(new Date(dateRange.fin), 'dd/MM/yy')}
@@ -279,18 +276,18 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                 {viewMode === 'daily' ? (
                   <>
                     <CalendarDays className="h-4 w-4 text-emerald-600" />
-                    Ventes par jour
+                    {t('divers.daily_sales_title')}
                   </>
                 ) : (
                   <>
                     <ClipboardList className="h-4 w-4 text-emerald-600" />
-                    Détail du {selectedDate ? format(parseISO(selectedDate), 'dd/MM/yyyy', { locale: fr }) : ''}
+                    {t('divers.detail_of')} {selectedDate ? format(parseISO(selectedDate), 'dd/MM/yyyy', { locale: fr }) : ''}
                   </>
                 )}
               </h3>
               {viewMode === 'detail' && (
                 <Button variant="outline" size="sm" onClick={handleBackToDaily} className="gap-2">
-                  <ArrowLeft className="h-4 w-4" /> Retour aux jours
+                  <ArrowLeft className="h-4 w-4" /> {t('divers.back_to_days')}
                 </Button>
               )}
             </div>
@@ -299,19 +296,19 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="text-right">Produits</TableHead>
-                      <TableHead className="text-right">Qté</TableHead>
-                      <TableHead className="text-right">Factures</TableHead>
-                      <TableHead className="text-right">Total CA</TableHead>
-                      <TableHead className="text-center">Actions</TableHead>
+                      <TableHead>{t('divers.table.date')}</TableHead>
+                      <TableHead className="text-right">{t('divers.daily_products')}</TableHead>
+                      <TableHead className="text-right">{t('divers.daily_qty')}</TableHead>
+                      <TableHead className="text-right">{t('divers.daily_invoices')}</TableHead>
+                      <TableHead className="text-right">{t('divers.daily_total_ca')}</TableHead>
+                      <TableHead className="text-center">{t('divers.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {dailyLoading ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell colSpan={6}><div className="h-4 bg-muted rounded animate-pulse w-full" /></TableCell>
+                          <TableCell colSpan={6}><Skeleton className="h-4 w-full" /></TableCell>
                         </TableRow>
                       ))
                     ) : dailyVentes.length === 0 ? (
@@ -331,7 +328,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                           <TableCell className="text-right">{day.nb_produits}</TableCell>
                           <TableCell className="text-right">{day.total_quantity}</TableCell>
                           <TableCell className="text-right">{day.nb_factures}</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{day.total_ca.toLocaleString()} F</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{day.total_ca.toLocaleString()} {t('divers.currency')}</TableCell>
                           <TableCell className="text-center">
                             <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleViewDetail(day.date); }} className="text-emerald-600 h-8 w-8 p-0">
                               <Eye className="h-4 w-4" />
@@ -359,7 +356,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                     {loading ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell colSpan={7}><div className="h-4 bg-muted rounded animate-pulse w-full" /></TableCell>
+                          <TableCell colSpan={7}><Skeleton className="h-4 w-full" /></TableCell>
                         </TableRow>
                       ))
                     ) : ventes.length === 0 ? (
@@ -375,7 +372,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                           <TableCell className="font-mono text-xs text-slate-600">{v.lot}</TableCell>
                           <TableCell className="text-right font-medium">{v.quantity}</TableCell>
                           <TableCell className="text-right text-muted-foreground">{v.selling_price.toLocaleString()}</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{v.total.toLocaleString()} F</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{v.total.toLocaleString()} {t('divers.currency')}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -387,19 +384,19 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
               <div className="px-6 py-4 border-t bg-muted/30">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-6 text-sm">
-                    <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_produits, 0)}</strong> produits</span>
-                    <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.total_quantity, 0)}</strong> quantités</span>
-                    <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_factures, 0)}</strong> factures</span>
+                    <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_produits, 0)}</strong> {t('divers.products_count')}</span>
+                    <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.total_quantity, 0)}</strong> {t('divers.quantities_count')}</span>
+                    <span className="text-muted-foreground"><strong className="text-slate-700">{dailyVentes.reduce((s, d) => s + d.nb_factures, 0)}</strong> {t('divers.invoices_count')}</span>
                   </div>
                   <div className="text-lg font-bold text-emerald-600">
-                    Total : {totalCA.toLocaleString()} F
+                    {t('divers.total_label')} : {totalCA.toLocaleString()} {t('divers.currency')}
                   </div>
                 </div>
               </div>
             )}
             {viewMode === 'detail' && totalPages > 1 && (
               <div className="px-6 py-4 border-t flex items-center justify-between bg-muted/30">
-                <span className="text-sm text-muted-foreground">Page {page} / {totalPages} · {totalCount} {t('divers.results')}</span>
+                <span className="text-sm text-muted-foreground">{t('divers.page_label')} {page} {t('divers.of_label')} {totalPages} · {totalCount} {t('divers.results')}</span>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
                     <ChevronLeft className="h-4 w-4 mr-1" /> {t('divers.previous')}
@@ -434,7 +431,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
 
           {stockLoading ? (
             <Card className="p-12 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto" />
+              <Skeleton className="h-8 w-8 rounded-full mx-auto" />
               <p className="mt-4 text-muted-foreground">{t('divers.loading_valuation')}</p>
             </Card>
           ) : stockData ? (
@@ -442,16 +439,16 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="bg-emerald-600 text-white border-emerald-600 p-6">
                   <p className="text-emerald-100 text-xs font-semibold uppercase tracking-wider">{t('divers.total_value_ttc')}</p>
-                  <h2 className="text-3xl font-bold mt-1">{stockData.total_ttc.toLocaleString()} F</h2>
+                  <h2 className="text-3xl font-bold mt-1">{stockData.total_ttc.toLocaleString()} {t('divers.currency')}</h2>
                   <p className="mt-2 text-emerald-100 text-xs">{stockData.type_valorisation === 'PMP' ? t('divers.purchase_cost') : t('divers.selling_price')}</p>
                 </Card>
                 <Card className="p-6">
                   <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{t('divers.value_ht')}</p>
-                  <h2 className="text-2xl font-bold mt-1">{stockData.total_ht.toLocaleString()} F</h2>
+                  <h2 className="text-2xl font-bold mt-1">{stockData.total_ht.toLocaleString()} {t('divers.currency')}</h2>
                 </Card>
                 <Card className="p-6">
                   <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{t('divers.total_vat')}</p>
-                  <h2 className="text-2xl font-bold mt-1">{stockData.total_tva.toLocaleString()} F</h2>
+                  <h2 className="text-2xl font-bold mt-1">{stockData.total_tva.toLocaleString()} {t('divers.currency')}</h2>
                 </Card>
               </div>
 
@@ -476,9 +473,9 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                       {stockData.tva_breakdown.map((item) => (
                         <TableRow key={item.rate}>
                           <TableCell className="font-medium">{item.rate}%</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} F</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} F</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{item.ttc.toLocaleString()} F</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{item.ttc.toLocaleString()} {t('divers.currency')}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -507,9 +504,9 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                       {stockData.rayon_breakdown.map((item) => (
                         <TableRow key={item.name}>
                           <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} F</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} F</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{item.ttc.toLocaleString()} F</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{item.ht.toLocaleString()} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{item.tva.toLocaleString()} {t('divers.currency')}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">{item.ttc.toLocaleString()} {t('divers.currency')}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

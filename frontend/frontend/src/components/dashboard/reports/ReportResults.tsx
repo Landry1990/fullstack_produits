@@ -139,7 +139,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             // Utiliser filteredResults (et non results) pour obtenir les colonnes
             const dataForColumns = filteredResults.length > 0 ? filteredResults : results;
             const rawColumns = dataForColumns.length > 0 
-                ? Object.keys(dataForColumns[0]).filter(k => !k.startsWith('_') && k !== 'id')
+                ? Object.keys(dataForColumns[0]).filter(k => !k.startsWith('_') && k !== 'id' && !k.endsWith('_id'))
                 : [];
             const rawColumnsSet = new Set(rawColumns);
             const columns = selectedQuery.columns 

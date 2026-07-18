@@ -1164,3 +1164,151 @@ class RapportFinanceMixin:
             writer.writerow([journal, date_sage, '411100', p.facture.client.id if p.facture.client else '', libelle, '0', str(p.montant).replace('.', ',')])
 
         return response
+
+    # ── Rapport Fiscal Mensuel (Accompte + Précompte) ──────────────────────────
+
+    @action(detail=False, methods=['get'])
+    def rapport_fiscal_mensuel(self, request):
+        """
+        Rapport fiscal mensuel : calcule l'accompte sur CA et le précompte sur achats
+        selon le régime fiscal (Réel ou Simplifié) et le mode d'imposition configuré.
+        """
+        from api.models import Commande, PharmacySettings
+
+        db_str = request.query_params.get('date_debut')
+        df_str = request.query_params.get('date_fin')
+
+        if not db_str or not df_str:
+            return Response({'error': 'Dates requises'}, status=400)
+
+        date_debut = parse_api_datetime(db_str)
+        date_fin = parse_api_datetime(df_str, end_of_day=True)
+        if date_debut is None or date_fin is None:
+            return Response({'error': 'Date invalide'}, status=400)
+
+        if len(df_str.strip()) > 10:
+            date_fin += timedelta(minutes=1)
+
+        ps = PharmacySettings.objects.first()
+        if not ps:
+            return Response({'error': 'Paramètres pharmacie non configurés'}, status=400)
+
+        regime = ps.regime_fiscal
+        mode = ps.mode_imposition
+        taux_cac = ps.taux_cac
+
+        # --- 1. Chiffre d'affaires (factures validées/payées) ---
+        factures = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            date__gte=date_debut,
+            date__lt=date_fin,
+            is_active=True,
+        )
+        ca_ttc = factures.aggregate(
+            total=Coalesce(Sum('total_ttc'), Decimal('0.00'))
+        )['total']
+        ca_ht = factures.aggregate(
+            total=Coalesce(Sum('total_ht'), Decimal('0.00'))
+        )['total']
+        tva_collectee = factures.aggregate(
+            total=Coalesce(Sum('tva_total'), Decimal('0.00'))
+        )['total']
+
+        # --- 2. Achats (commandes clôturées) ---
+        commandes = Commande.objects.filter(
+            status=Commande.Status.CLOTUREE,
+            date__gte=date_debut,
+            date__lt=date_fin,
+            is_active=True,
+        )
+        total_achats_ht = Decimal('0')
+        total_precompte = Decimal('0')
+        details_achats = []
+
+        for cmd in commandes:
+            ht = cmd.total_ht
+            precompte = cmd.precompte
+            total_achats_ht += ht
+            total_precompte += precompte
+            details_achats.append({
+                'date': cmd.date.isoformat() if cmd.date else None,
+                'fournisseur': cmd.fournisseur.name if cmd.fournisseur else (cmd.fournisseur_nom or 'N/A'),
+                'numero_facture': cmd.numero_facture or f'#{cmd.id}',
+                'total_ht': int(ht.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'taux_precompte': float(cmd.taux_precompte),
+                'precompte': int(precompte.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+            })
+
+        # --- 3. Calcul de l'accompte ---
+        if mode == 'MARGE_ADMINISTREE':
+            # Marge brute = CA HT - Coût d'achat HT (sur les ventes de la période)
+            # Pour la pharmacie : 14% sur la marge brute
+            cout_ventes = Decimal('0')
+            for fp in FactureProduit.objects.filter(
+                facture__in=factures
+            ).select_related('produit'):
+                cout_ventes += Decimal(str(fp.produit.cost_price or 0)) * Decimal(str(fp.quantity))
+            marge_brute = ca_ht - cout_ventes
+            taux_imposition = ps.taux_marge_brute
+            base_imposition = marge_brute
+            base_label = 'Marge brute'
+        else:
+            # Droit commun : sur CA global
+            if regime == 'REEL':
+                taux_imposition = ps.taux_accompte_reel
+            else:
+                taux_imposition = ps.taux_accompte_simplifie
+            base_imposition = ca_ht
+            base_label = 'Chiffre d\'affaires HT'
+
+        # Calcul en précision maximale, arrondi uniquement sur le montant final
+        accompte_base = (base_imposition * taux_imposition / Decimal('100'))
+        accompte_cac = (accompte_base * taux_cac / Decimal('100'))
+        accompte_total = accompte_base + accompte_cac
+
+        # --- 4. Taux de précompte (uniquement en Droit Commun) ---
+        if mode == 'DROIT_COMMUN':
+            if regime == 'REEL':
+                taux_precompte = ps.taux_precompte_reel
+            else:
+                taux_precompte = ps.taux_precompte_simplifie
+        else:
+            taux_precompte = Decimal('0')
+
+        def round_fcf(d):
+            """Arrondit un Decimal à l'entier le plus proche (FCFA sans centimes)."""
+            return int(d.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+
+        results = {
+            'periode': {
+                'date_debut': date_debut.date().isoformat(),
+                'date_fin': date_fin.date().isoformat(),
+            },
+            'regime_fiscal': regime,
+            'regime_fiscal_label': ps.get_regime_fiscal_display(),
+            'mode_imposition': mode,
+            'mode_imposition_label': ps.get_mode_imposition_display(),
+            'chiffre_affaires': {
+                'ca_ht': round_fcf(ca_ht),
+                'ca_ttc': round_fcf(ca_ttc),
+                'tva_collectee': round_fcf(tva_collectee),
+            },
+            'achats': {
+                'total_achats_ht': round_fcf(total_achats_ht),
+                'taux_precompte': float(taux_precompte),
+                'total_precompte': round_fcf(total_precompte),
+                'nb_commandes': commandes.count(),
+            },
+            'accompte': {
+                'base_label': base_label,
+                'base_imposition': round_fcf(base_imposition),
+                'taux': float(taux_imposition),
+                'accompte_base': round_fcf(accompte_base),
+                'taux_cac': float(taux_cac),
+                'accompte_cac': round_fcf(accompte_cac),
+                'accompte_total': round_fcf(accompte_total),
+            },
+            'details_achats': details_achats,
+        }
+
+        return Response(results)

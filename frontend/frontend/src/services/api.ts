@@ -2,6 +2,12 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { safeStorage } from '../utils/storage';
 import * as navigationService from './navigationService';
+import i18n from '../i18n';
+
+const t = (key: string, fallback: string): string => {
+    const translated = i18n.t(key, { ns: 'common', defaultValue: fallback });
+    return translated;
+};
 
 const rawBaseUrl = String(import.meta.env.VITE_API_BASE_URL ?? '').trim();
 const trimmedBaseUrl = rawBaseUrl.replace(/\/+$/, '');
@@ -47,11 +53,35 @@ let hasShownOfflineToast = false;
 
 window.addEventListener('online', () => {
     hasShownOfflineToast = false;
-    toast.success('Connexion rétablie.', { id: 'back-online', duration: 3000 });
+    toast.success(t('messages.connection_restored', 'Connexion serveur rétablie.'), {
+        id: 'back-online',
+        duration: 3000,
+        style: {
+            background: '#059669',
+            color: '#fff',
+            fontWeight: '600',
+            padding: '12px 20px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        },
+        iconTheme: { primary: '#fff', secondary: '#059669' },
+    });
 });
 
 window.addEventListener('offline', () => {
-    toast.error('Connexion perdue. Vérifiez le réseau.', { id: 'offline-warning', duration: 0 });
+    toast.error(t('messages.network_offline', 'Connexion réseau perdue. Vérifiez votre réseau.'), {
+        id: 'offline-warning',
+        duration: Infinity,
+        style: {
+            background: '#dc2626',
+            color: '#fff',
+            fontWeight: '600',
+            padding: '12px 20px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        },
+        iconTheme: { primary: '#fff', secondary: '#dc2626' },
+    });
 });
 
 export const resetSessionExpiredFlag = () => {
@@ -86,7 +116,27 @@ api.interceptors.request.use(
 
 // Response Interceptor: Handle Global Errors + Retry réseau
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Si on était hors-ligne et qu'une requête réussit, le serveur est de nouveau accessible
+        if (hasShownOfflineToast) {
+            hasShownOfflineToast = false;
+            toast.dismiss('network-error');
+            toast.success(t('messages.connection_restored', 'Connexion serveur rétablie.'), {
+                id: 'back-online',
+                duration: 3000,
+                style: {
+                    background: '#059669',
+                    color: '#fff',
+                    fontWeight: '600',
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                },
+                iconTheme: { primary: '#fff', secondary: '#059669' },
+            });
+        }
+        return response;
+    },
     async (error) => {
         const config = error.config;
 
@@ -101,9 +151,18 @@ api.interceptors.response.use(
 
         if (isNetworkError(error) && !hasShownOfflineToast) {
             hasShownOfflineToast = true;
-            toast.error('Serveur injoignable. Vérifiez la connexion au serveur.', {
+            toast.error(t('messages.server_unreachable', 'Impossible de joindre le serveur. Vérifiez la connexion.'), {
                 id: 'network-error',
-                duration: 8000,
+                duration: Infinity,
+                style: {
+                    background: '#dc2626',
+                    color: '#fff',
+                    fontWeight: '600',
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                },
+                iconTheme: { primary: '#fff', secondary: '#dc2626' },
             });
             return Promise.reject(error);
         }
@@ -117,7 +176,7 @@ api.interceptors.response.use(
 
             if (!hasShownExpiredToast && !onLoginPage) {
                 hasShownExpiredToast = true;
-                toast.error('Session expirée. Veuillez vous reconnecter.', {
+                toast.error(t('messages.session_expired', 'Session expirée. Veuillez vous reconnecter.'), {
                     duration: 5000,
                     id: 'session-expired',
                 });
@@ -136,12 +195,12 @@ api.interceptors.response.use(
                     navigationService.navigate('/licence', { replace: true });
                 }
             } else if (!requestUrl.includes('verify-password')) {
-                toast.error('Accès refusé : permissions insuffisantes', { id: 'access-denied' });
+                toast.error(t('messages.access_denied', 'Accès refusé : permissions insuffisantes'), { id: 'access-denied' });
             }
         } else if (status === 429) {
-            toast.error('Trop de tentatives. Attendez quelques instants.', { id: 'rate-limited', duration: 6000 });
+            toast.error(i18n.t('common:messages.rate_limited', { defaultValue: 'Trop de tentatives. Attendez quelques instants.' }), { id: 'rate-limited', duration: 6000 });
         } else if (status >= 500) {
-            toast.error('Erreur serveur. Réessayez plus tard.', { id: 'server-error' });
+            toast.error(t('messages.server_error', 'Erreur serveur. Réessayez plus tard.'), { id: 'server-error' });
         }
 
         return Promise.reject(error);

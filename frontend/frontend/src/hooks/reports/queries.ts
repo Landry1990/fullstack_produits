@@ -424,5 +424,16 @@ export const QUERIES: QueryDefinition[] = [
             { key: 'vendeur_id', label: 'Opérateur', type: 'vendeur_id' }
         ],
         resultType: 'table'
+    },
+    {
+        id: 'rapport_fiscal_mensuel',
+        name: 'Rapport Fiscal Mensuel',
+        description: 'Accompte sur CA + Précompte sur achats (Réel/Simplifié, Marge administrée)',
+        endpoint: '/api/rapports/rapport_fiscal_mensuel/',
+        params: [
+            { key: 'date_debut', label: 'Date début', type: 'date', required: true },
+            { key: 'date_fin', label: 'Date fin', type: 'date', required: true }
+        ],
+        resultType: 'cards'
     }
 ];

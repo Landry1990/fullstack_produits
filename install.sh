@@ -146,8 +146,9 @@ ok "Scripts prêts"
 step "7. Construction & démarrage des conteneurs"
 sudo docker volume create fullstack_postgres_data_protected 2>/dev/null || true
 ok "Volume Docker PostgreSQL prêt"
-sudo docker compose -f docker-compose.prod.yml pull 2>/dev/null || true
-sudo docker compose -f docker-compose.prod.yml build --quiet 2>/dev/null || sudo docker compose -f docker-compose.prod.yml build
+export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml pull 2>/dev/null || true
+sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml build --quiet 2>/dev/null || sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml build
 sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
 ok "Conteneurs démarrés"
 

@@ -3,6 +3,10 @@ FROM node:20-alpine as build
 
 WORKDIR /app
 
+# Argument pour passer le hash du commit git depuis l'hôte
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=${GIT_COMMIT}
+
 # Copier les fichiers de dépendances
 COPY package.json package-lock.json ./
 

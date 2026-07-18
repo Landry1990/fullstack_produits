@@ -252,14 +252,40 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='recap_session')
     def recap_session(self, request):
-        """Retourne les totaux en temps réel par mode de paiement pour le poste de vente actif."""
+        """Retourne les totaux en temps réel par mode de paiement pour le poste de vente actif.
+        
+        Recherche dans l'ordre:
+        1. PosteVente actif du user courant
+        2. Si poste_caisse passé en paramètre, PosteVente actif lié à cette caisse
+        3. Tous les PosteVente actifs avec caisse physique (la caissière)
+        4. Si superuser, tous les PosteVente actifs
+        """
+        poste_caisse_id = request.query_params.get('poste_caisse')
+
+        # 1. PosteVente actif du user courant
         poste = PosteVente.objects.filter(
             vendeur=request.user,
             est_actif=True
         ).select_related('caisse').first()
 
-        if not poste and request.user.is_superuser:
-            postes = list(PosteVente.objects.filter(est_actif=True).select_related('caisse'))
+        # 2. Si on a un poste_caisse spécifié, chercher le PosteVente actif sur cette caisse
+        if not poste and poste_caisse_id:
+            poste = PosteVente.objects.filter(
+                caisse_id=poste_caisse_id,
+                est_actif=True
+            ).select_related('caisse').first()
+
+        # 3. Si toujours rien, chercher tous les PosteVente actifs avec caisse physique
+        if not poste:
+            postes = list(PosteVente.objects.filter(
+                est_actif=True,
+                caisse__isnull=False
+            ).select_related('caisse'))
+            
+            # 4. Fallback superuser: tous les postes actifs
+            if not postes and request.user.is_superuser:
+                postes = list(PosteVente.objects.filter(est_actif=True).select_related('caisse'))
+            
             if not postes:
                 return Response({'has_session': False})
 
