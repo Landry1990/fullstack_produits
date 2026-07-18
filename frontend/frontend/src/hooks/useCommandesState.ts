@@ -361,8 +361,17 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       }
   }
 
-  const onDelete = () => {
+  const onDelete = async () => {
       if (!selectedCommande) return;
+
+      const confirmed = await confirm({
+          title: t('orders:details.delete', { defaultValue: 'Supprimer la commande' }),
+          message: t('orders:messages.delete_confirm', { defaultValue: `Voulez-vous vraiment supprimer la commande #${selectedCommande.id} ? Cette action est réversible.` }),
+          confirmText: t('common:confirm', { defaultValue: 'Confirmer' }),
+          cancelText: t('common:cancel', { defaultValue: 'Annuler' })
+      });
+
+      if (!confirmed) return;
 
       requireSudo(
           (validatorId, password) => handleDeleteCommande(selectedCommande, { 
