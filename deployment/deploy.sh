@@ -24,6 +24,7 @@ python manage.py collectstatic --noinput
 # 3. Frontend
 echo "⚛️ Mise à jour Frontend..."
 cd $FRONTEND_DIR
+export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 npm install
 npm run build
 

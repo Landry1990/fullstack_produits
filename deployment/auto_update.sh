@@ -72,6 +72,7 @@ python "$BACKEND_DIR/manage.py" migrate --noinput 2>>"$LOG_FILE" || notify_error
 # ── Frontend : build ──────────────────────────────────────────────────────────
 log "Build du frontend..."
 cd "$FRONTEND_DIR"
+export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 npm ci --silent 2>>"$LOG_FILE" || notify_error "npm ci a échoué"
 npm run build 2>>"$LOG_FILE" || notify_error "npm run build a échoué"
 log "Frontend compilé"

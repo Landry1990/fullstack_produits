@@ -49,7 +49,7 @@ import {
 import { Select } from '../ui/Select'
 import { getConfigurablePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
 
-type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'notifications' | 'reports' | 'postes_vente'
+type TabId = 'general' | 'printing' | 'stocks' | 'tva' | 'fiscal' | 'notifications' | 'reports' | 'postes_vente'
 
 function TVARow({ tva, onDelete, t }: { tva: TVA; onDelete: (id: number) => void; t: (key: string) => string }) {
   return (
@@ -156,6 +156,8 @@ export default function PharmacySettingsForm() {
   const { tvaList, loading: loadingTVA, addTVA, deleteTVA } = useTVA()
   const { settings: invSettings, updateSettings: updateInvSettings } = useInvoiceSettings()
   const [formData, setFormData] = useState<Partial<PharmacySettings>>({})
+  const isMargeAdministree = formData.mode_imposition === 'MARGE_ADMINISTREE'
+  const isReel = formData.regime_fiscal === 'REEL'
   const [saving, setSaving] = useState(false)
   const [testingWhatsapp, setTestingWhatsapp] = useState(false)
   const [testingTelegram, setTestingTelegram] = useState(false)
@@ -312,6 +314,7 @@ export default function PharmacySettingsForm() {
     { id: 'printing', label: t('tabs.printing'), icon: Printer },
     { id: 'stocks', label: t('tabs.stocks'), icon: Package },
     { id: 'tva', label: t('tabs.tva'), icon: Percent },
+    { id: 'fiscal', label: 'Fiscalité', icon: DollarSign },
     { id: 'notifications', label: t('tabs.notifications'), icon: Bell },
     { id: 'reports', label: 'Rapports Auto', icon: FileText },
     { id: 'postes_vente', label: 'Points de vente', icon: Store },
@@ -1006,6 +1009,168 @@ export default function PharmacySettingsForm() {
                       addingTva={addingTva}
                       handleAddTva={handleAddTva}
                     />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* --- TAB: FISCALITÉ --- */}
+            <TabsContent value="fiscal" className="mt-0 data-[state=inactive]:hidden space-y-8">
+              <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
+                <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
+                  <h2 className="font-bold text-xl flex items-center gap-3">
+                    <div className="p-2 bg-indigo-100 rounded-lg">
+                      <DollarSign className="h-5 w-5 text-indigo-600" />
+                    </div>
+                    Précompte & Accompte
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-2">
+                    Configuration du régime fiscal applicable à la pharmacie.
+                  </p>
+                </div>
+                <div className="p-8 space-y-6">
+                  {/* Régime fiscal */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Régime fiscal</label>
+                      <Select
+                        value={formData.regime_fiscal || 'REEL'}
+                        onChange={(e) => handleChange('regime_fiscal', e.target.value)}
+                      >
+                        <option value="REEL">Régime du Réel</option>
+                        <option value="SIMPLIFIE">Régime Simplifié</option>
+                      </Select>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Réel : accompte 2% + précompte 1%. Simplifié : accompte 5% + précompte 3-5%.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Mode d'imposition</label>
+                      <Select
+                        value={formData.mode_imposition || 'MARGE_ADMINISTREE'}
+                        onChange={(e) => handleChange('mode_imposition', e.target.value)}
+                      >
+                        <option value="MARGE_ADMINISTREE">Marge Administrée (14% sur marge brute)</option>
+                        <option value="DROIT_COMMUN">Droit Commun (sur chiffre d'affaires global)</option>
+                      </Select>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Marge administrée : spécifique aux distributeurs de médicaments.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Taux d'accompte — actifs uniquement en Droit Commun */}
+                  <div className={`border-t border-slate-200 pt-6 transition-all duration-300 ${isMargeAdministree ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">Taux d'accompte (sur CA)</h3>
+                      {isMargeAdministree && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Désactivé en Marge Administrée</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className={`transition-all duration-300 ${isReel ? '' : 'opacity-40'}`}>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux Réel (%)</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.taux_accompte_reel ?? 2}
+                          onChange={(e) => handleChange('taux_accompte_reel', parseFloat(e.target.value))}
+                          className="font-bold"
+                          disabled={isMargeAdministree || !isReel}
+                        />
+                      </div>
+                      <div className={`transition-all duration-300 ${!isReel ? '' : 'opacity-40'}`}>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux Simplifié (%)</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.taux_accompte_simplifie ?? 5}
+                          onChange={(e) => handleChange('taux_accompte_simplifie', parseFloat(e.target.value))}
+                          className="font-bold"
+                          disabled={isMargeAdministree || isReel}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">CAC (%)</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.taux_cac ?? 10}
+                          onChange={(e) => handleChange('taux_cac', parseFloat(e.target.value))}
+                          className="font-bold"
+                          disabled={isMargeAdministree}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Taux de précompte — actifs uniquement en Droit Commun */}
+                  <div className={`border-t border-slate-200 pt-6 transition-all duration-300 ${isMargeAdministree ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">Taux de précompte (sur achats)</h3>
+                      {isMargeAdministree && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Désactivé en Marge Administrée</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className={`transition-all duration-300 ${isReel ? '' : 'opacity-40'}`}>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux Réel (%)</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.taux_precompte_reel ?? 1}
+                          onChange={(e) => handleChange('taux_precompte_reel', parseFloat(e.target.value))}
+                          className="font-bold"
+                          disabled={isMargeAdministree || !isReel}
+                        />
+                      </div>
+                      <div className={`transition-all duration-300 ${!isReel ? '' : 'opacity-40'}`}>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux Simplifié (%)</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.taux_precompte_simplifie ?? 5}
+                          onChange={(e) => handleChange('taux_precompte_simplifie', parseFloat(e.target.value))}
+                          className="font-bold"
+                          disabled={isMargeAdministree || isReel}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Marge administrée — active uniquement en Marge Administrée */}
+                  <div className={`border-t border-slate-200 pt-6 transition-all duration-300 ${!isMargeAdministree ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">Marge administrée</h3>
+                      {!isMargeAdministree && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Désactivé en Droit Commun</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux sur marge brute (%)</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.taux_marge_brute ?? 14}
+                          onChange={(e) => handleChange('taux_marge_brute', parseFloat(e.target.value))}
+                          className="font-bold"
+                          disabled={!isMargeAdministree}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Info box */}
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex gap-3">
+                    <Info className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+                    <div className="text-sm text-slate-600 space-y-1">
+                      <p className="font-bold text-slate-700">Rappel fiscal</p>
+                      <p>• <strong>Réel</strong> : Accompte 2% (+10% CAC = 2,2%) · Précompte 1%</p>
+                      <p>• <strong>Simplifié</strong> : Accompte 5% (+10% CAC = 5,5%) · Précompte 3-5%</p>
+                      <p>• <strong>Marge administrée</strong> : 14% sur la marge brute (pharmacie)</p>
+                      <p>• <strong>Droit commun</strong> : sur CA global (2,2% ou 5,5% selon régime)</p>
+                    </div>
                   </div>
                 </div>
               </div>

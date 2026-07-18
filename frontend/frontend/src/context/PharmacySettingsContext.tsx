@@ -60,6 +60,15 @@ export interface PharmacySettings {
   // Modes de paiement
   disabled_payment_modes?: string[];
   custom_payment_modes?: { value: string; label: string }[];
+  // Paramètres fiscaux
+  regime_fiscal?: string;
+  mode_imposition?: string;
+  taux_accompte_reel?: number;
+  taux_accompte_simplifie?: number;
+  taux_cac?: number;
+  taux_precompte_reel?: number;
+  taux_precompte_simplifie?: number;
+  taux_marge_brute?: number;
 }
 
 const DEFAULT_SETTINGS: PharmacySettings = {

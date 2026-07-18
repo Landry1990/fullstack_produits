@@ -1,5 +1,5 @@
 import { formatCurrency, formatNumber } from '../../utils/formatters';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate, formatDateTime } from '../../utils/dateUtils';
 
 export const COLUMN_LABELS: Record<string, string> = {
     rang: '#',
@@ -66,7 +66,13 @@ export const COLUMN_LABELS: Record<string, string> = {
     PRODUIT: 'Produit',
     QUANTITE: 'Qté',
     MT_VENTE: 'Montant Vente',
-    MT_ACHAT: 'Montant Achat'
+    MT_ACHAT: 'Montant Achat',
+    operateur: 'Opérateur',
+    date_peremption: 'Péremption',
+    date_creation: 'Date/Heure',
+    remise: 'Remise (F)',
+    prix_vente: 'Prix Vente (F)',
+    montant: 'Montant (F)'
 };
 
 export const formatColumnHeader = (col: string, t?: any): string => {
@@ -123,6 +129,7 @@ export const isSummableColumn = (col: string): boolean => {
            c.includes('nbre_ventes') ||
            c.includes('nb_ventes') ||
            c.includes('remise') ||
+           c.includes('prix_vente') ||
            c === 'mt_vente' ||
            c === 'mt_achat';
 };
@@ -176,6 +183,9 @@ export const formatValue = (key: string, value: unknown, t?: any): string => {
     if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
         const date = new Date(value);
         if (!isNaN(date.getTime())) {
+            if (key === 'date_creation' || key === 'created_at') {
+                return formatDateTime(date);
+            }
             return formatDate(date);
         }
     }

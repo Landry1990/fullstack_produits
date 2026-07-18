@@ -87,7 +87,8 @@ for container in "fullstack_produits-backend-1" "fullstack_produits-frontend-1";
 done
 
 sudo docker compose -f "$COMPOSE_FILE" down 2>>"$LOG_FILE" || { err "docker compose down a échoué"; exit 1; }
-sudo docker compose -f "$COMPOSE_FILE" build --no-cache 2>>"$LOG_FILE" || { err "docker build a échoué"; exit 1; }
+export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f "$COMPOSE_FILE" build --no-cache 2>>"$LOG_FILE" || { err "docker build a échoué"; exit 1; }
 sudo docker compose -f "$COMPOSE_FILE" up -d --remove-orphans 2>>"$LOG_FILE" || { err "docker up a échoué"; exit 1; }
 ok "Conteneurs redémarrés"
 

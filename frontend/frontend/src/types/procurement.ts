@@ -58,6 +58,8 @@ export interface Commande {
     total_ht?: string
     total_tva?: string
     total_ttc?: string
+    precompte?: string
+    taux_precompte?: string
     produits: CommandeProduit[]
     type?: 'LOC' | 'DIR' | 'DIV'
     taux_change?: string

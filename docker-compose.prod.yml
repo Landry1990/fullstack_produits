@@ -105,6 +105,8 @@ services:
     build:
       context: ./frontend/frontend
       dockerfile: Dockerfile.prod
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
     ports:
       - "${FRONTEND_PORT:-80}:80"
     healthcheck:

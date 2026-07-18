@@ -368,19 +368,15 @@ class RapportSalesMixin:
 
             results.append({
                 'operateur': operateur,
-                'operateur_id': user.id if user else None,
                 'produit': item.produit.name if item.produit else (item.produit_nom or 'N/A'),
-                'produit_id': item.produit_id,
                 'lot': lot_number,
                 'date_peremption': date_peremption,
                 'quantite': item.quantity,
-                'unites_gratuites': item.free_quantity,
                 'numero_facture': item.facture.numero_facture or f'#{item.facture.id}',
-                'facture_id': item.facture.id,
                 'remise': float(item.discount or 0),
                 'prix_vente': float(item.selling_price or 0),
+                'montant': float(item.selling_price or 0) * item.quantity,
                 'date_creation': item.facture.date.isoformat() if item.facture.date else None,
-                'created_at': item.created_at.isoformat() if item.created_at else None,
             })
 
         return self.paginator.get_paginated_response(results) if page is not None else Response(results)

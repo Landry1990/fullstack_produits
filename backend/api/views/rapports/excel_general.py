@@ -10,9 +10,11 @@ Feuilles :
   5. Dettes Fournisseurs
   6. Créances Clients
   7. Stock & Inventaire
-  8. Achats Fournisseurs
+  8. Achats Fournisseurs (avec précompte)
   9. État des Caisses
  10. Dépenses
+ 11. Synthèse Fiscale (accompte + précompte selon régime/mode)
+ 12. UGs (Unités Gratuites : reçues, vendues, restantes)
 """
 from __future__ import annotations
 
@@ -20,7 +22,7 @@ import io
 import os
 from collections import defaultdict
 from datetime import datetime, date, time, timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 import openpyxl
 from django.http import HttpResponse
@@ -504,20 +506,164 @@ def _sheet_stock(wb, stock_rows: list, pharmacy: dict, mois_label: str, logo_pat
 # Feuille 8 — Achats Fournisseurs
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _sheet_fiscal(wb, data: dict, pharmacy: dict, mois_label: str, logo_path):
+    """Feuille Synthèse Fiscale : accompte, précompte, et ventilation selon régime/mode."""
+    from api.models import PharmacySettings
+
+    ps = PharmacySettings.objects.first()
+    if not ps:
+        return
+
+    ws = wb.create_sheet("Synthèse Fiscale")
+    start = _write_sheet_header(ws, pharmacy, f"SYNTHÈSE FISCALE — {mois_label}", logo_path)
+
+    regime = ps.regime_fiscal
+    mode = ps.mode_imposition
+    regime_label = ps.get_regime_fiscal_display()
+    mode_label = ps.get_mode_imposition_display()
+
+    r = start + 1
+    # Section : Configuration
+    ws.cell(row=r, column=1, value="Régime fiscal").font = _font(bold=True)
+    ws.cell(row=r, column=2, value=regime_label).alignment = _align(h="right")
+    r += 1
+    ws.cell(row=r, column=1, value="Mode d'imposition").font = _font(bold=True)
+    ws.cell(row=r, column=2, value=mode_label).alignment = _align(h="right")
+    r += 2
+
+    # Section : Chiffre d'affaires
+    ca_data = data.get("ca", {})
+    ws.cell(row=r, column=1, value="CHIFFRE D'AFFAIRES").font = _font(bold=True, size=11)
+    r += 1
+    for label, key in [("CA HT", "ca_ht"), ("CA TTC", "ca_ttc"), ("TVA collectée", "tva_collectee")]:
+        ws.cell(row=r, column=1, value=label)
+        ws.cell(row=r, column=2, value=_fmt(ca_data.get(key, 0))).alignment = _align(h="right")
+        r += 1
+    r += 1
+
+    # Section : Achats & Précompte
+    achats_data = data.get("achats_fiscaux", {})
+    ws.cell(row=r, column=1, value="ACHATS & PRÉCOMPTE").font = _font(bold=True, size=11)
+    r += 1
+    ws.cell(row=r, column=1, value="Total achats HT")
+    ws.cell(row=r, column=2, value=_fmt(achats_data.get("total_achats_ht", 0))).alignment = _align(h="right")
+    r += 1
+    if mode == 'DROIT_COMMUN':
+        taux_prec = float(ps.taux_precompte_reel) if regime == 'REEL' else float(ps.taux_precompte_simplifie)
+        ws.cell(row=r, column=1, value=f"Taux précompte ({regime_label})")
+        ws.cell(row=r, column=2, value=f"{taux_prec}%").alignment = _align(h="right")
+        r += 1
+        ws.cell(row=r, column=1, value="Total précompte").font = _font(bold=True)
+        ws.cell(row=r, column=2, value=_fmt(achats_data.get("total_precompte", 0))).alignment = _align(h="right")
+        r += 1
+    else:
+        ws.cell(row=r, column=1, value="Précompte (non applicable en Marge Administrée)")
+        ws.cell(row=r, column=2, value="—").alignment = _align(h="right")
+        r += 1
+    r += 1
+
+    # Section : Accompte
+    accompte_data = data.get("accompte_fiscal", {})
+    ws.cell(row=r, column=1, value="ACCOMPTE (sur CA)").font = _font(bold=True, size=11)
+    r += 1
+    ws.cell(row=r, column=1, value=accompte_data.get("base_label", "Base"))
+    ws.cell(row=r, column=2, value=_fmt(accompte_data.get("base_imposition", 0))).alignment = _align(h="right")
+    r += 1
+    ws.cell(row=r, column=1, value="Taux")
+    ws.cell(row=r, column=2, value=f"{accompte_data.get('taux', 0)}%").alignment = _align(h="right")
+    r += 1
+    ws.cell(row=r, column=1, value="Accompte base")
+    ws.cell(row=r, column=2, value=_fmt(accompte_data.get("accompte_base", 0))).alignment = _align(h="right")
+    r += 1
+    ws.cell(row=r, column=1, value=f"CAC ({accompte_data.get('taux_cac', 0)}%)")
+    ws.cell(row=r, column=2, value=_fmt(accompte_data.get("accompte_cac", 0))).alignment = _align(h="right")
+    r += 1
+    ws.cell(row=r, column=1, value="Accompte total").font = _font(bold=True)
+    ws.cell(row=r, column=2, value=_fmt(accompte_data.get("accompte_total", 0))).alignment = _align(h="right")
+    r += 1
+
+    _auto_width(ws)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Feuille UGs — Unités Gratuites (achetées, vendues, restantes)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _sheet_ugs(wb, data: dict, pharmacy: dict, mois_label: str, logo_path):
+    """Feuille UGs : unités gratuites reçues en achat, vendues, et restantes en stock."""
+    from api.models import StockLot, FactureProduit, Produit
+
+    ws = wb.create_sheet("UGs (Unités Gratuites)")
+    start = _write_sheet_header(ws, pharmacy, f"UNITÉS GRATUITES (UGs) — {mois_label}", logo_path)
+
+    headers = ["Produit", "Fournisseur", "UG reçues", "UG vendues", "UG restantes", "Lot #"]
+    _write_col_headers(ws, start, headers)
+    r = start + 1
+    totals = defaultdict(int)
+
+    # Récupérer tous les lots avec UGs
+    lots = StockLot.objects.filter(
+        quantity_free__gt=0
+    ).select_related('produit', 'fournisseur').order_by('-quantity_free')
+
+    for lot in lots:
+        prod_name = lot.produit.name if lot.produit else (lot.produit_nom or "—")
+        fournisseur = lot.fournisseur.name if lot.fournisseur else (lot.fournisseur_nom or "—")
+        ug_recues = lot.quantity_free
+        ug_vendues = lot.quantity_free - lot.quantity_free_remaining
+        ug_restantes = lot.quantity_free_remaining
+
+        vals = [prod_name, fournisseur, ug_recues, ug_vendues, ug_restantes, f"#{lot.id}"]
+        for c, v in enumerate(vals, 1):
+            ws.cell(row=r, column=c, value=v).alignment = _align(h="right" if c > 2 else "left")
+        _row_style(ws, r, len(headers), is_alt=(r % 2 == 0))
+        totals["ug_recues"] += ug_recues
+        totals["ug_vendues"] += ug_vendues
+        totals["ug_restantes"] += ug_restantes
+        r += 1
+
+    # Ligne totale
+    for c, v in enumerate(["TOTAL", "", totals["ug_recues"], totals["ug_vendues"],
+                            totals["ug_restantes"], ""], 1):
+        ws.cell(row=r, column=c, value=v)
+    _row_style(ws, r, len(headers), is_total=True)
+    r += 2
+
+    # Section résumé
+    ws.cell(row=r, column=1, value="RÉSUMÉ").font = _font(bold=True, size=11)
+    r += 1
+    ws.cell(row=r, column=1, value="Total UGs reçues (achats)")
+    ws.cell(row=r, column=2, value=totals["ug_recues"]).alignment = _align(h="right")
+    r += 1
+    ws.cell(row=r, column=1, value="Total UGs vendues (avec factures)")
+    ws.cell(row=r, column=2, value=totals["ug_vendues"]).alignment = _align(h="right")
+    r += 1
+    ws.cell(row=r, column=1, value="Total UGs restantes (en stock)")
+    ws.cell(row=r, column=2, value=totals["ug_restantes"]).alignment = _align(h="right")
+    r += 1
+    ws.cell(row=r, column=1, value="Taux de rotation UG")
+    taux = (totals["ug_vendues"] / totals["ug_recues"] * 100) if totals["ug_recues"] else 0
+    ws.cell(row=r, column=2, value=f"{taux:.1f}%").alignment = _align(h="right")
+
+    _auto_width(ws)
+
+
 def _sheet_achats(wb, achats_rows: list, pharmacy: dict, mois_label: str, logo_path):
     ws = wb.create_sheet("Achats Fournisseurs")
     start = _write_sheet_header(ws, pharmacy, f"ACHATS FOURNISSEURS — {mois_label}", logo_path)
 
-    headers = ["Fournisseur", "Nb Commandes", "Montant HT (F)", "Nb Avoirs", "Montant Avoirs (F)", "Net (F)"]
+    headers = ["Fournisseur", "Nb Commandes", "Montant HT (F)", "Précompte (F)", "Nb Avoirs", "Montant Avoirs (F)", "Net (F)"]
     _write_col_headers(ws, start, headers)
     r = start + 1
     totals = defaultdict(Decimal)
     for i, row in enumerate(achats_rows):
         net = Decimal(str(row.get("montant_total", 0) or 0))
+        precompte = Decimal(str(row.get("precompte", 0) or 0))
         vals = [
             row.get("fournisseur_nom", ""),
             row.get("nb_commandes", 0),
             _fmt(net + Decimal(str(row.get("montant_avoirs", 0) or 0))),
+            _fmt(precompte),
             row.get("nb_avoirs", 0),
             _fmt(row.get("montant_avoirs", 0)),
             _fmt(net),
@@ -527,8 +673,10 @@ def _sheet_achats(wb, achats_rows: list, pharmacy: dict, mois_label: str, logo_p
         _row_style(ws, r, len(headers), is_alt=(i % 2 == 0))
         totals["montant_total"] += net
         totals["montant_avoirs"] += Decimal(str(row.get("montant_avoirs", 0) or 0))
+        totals["precompte"] += precompte
         r += 1
     for c, v in enumerate(["TOTAL", "", _fmt(totals["montant_total"] + totals["montant_avoirs"]),
+                            _fmt(totals["precompte"]),
                             "", _fmt(totals["montant_avoirs"]), _fmt(totals["montant_total"])], 1):
         ws.cell(row=r, column=c, value=v)
     _row_style(ws, r, len(headers), is_total=True)
@@ -674,6 +822,49 @@ def _sheet_depenses(wb, depenses_rows: list, pharmacy: dict, mois_label: str, lo
 # Collecte des données
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _compute_accompte_fiscal_inline(ca_ht, factures_qs):
+    """Calcule l'accompte fiscal selon le régime et mode configurés dans PharmacySettings."""
+    from api.models import PharmacySettings, FactureProduit
+
+    ps = PharmacySettings.objects.first()
+    if not ps:
+        return {}
+
+    regime = ps.regime_fiscal
+    mode = ps.mode_imposition
+    taux_cac = ps.taux_cac
+
+    if mode == 'MARGE_ADMINISTREE':
+        cout_ventes = Decimal('0')
+        for fp in FactureProduit.objects.filter(facture__in=factures_qs).select_related('produit'):
+            cout_ventes += Decimal(str(fp.produit.cost_price or 0)) * Decimal(str(fp.quantity))
+        marge_brute = ca_ht - cout_ventes
+        taux_imposition = ps.taux_marge_brute
+        base_imposition = marge_brute
+        base_label = 'Marge brute'
+    else:
+        if regime == 'REEL':
+            taux_imposition = ps.taux_accompte_reel
+        else:
+            taux_imposition = ps.taux_accompte_simplifie
+        base_imposition = ca_ht
+        base_label = "Chiffre d'affaires HT"
+
+    accompte_base = base_imposition * taux_imposition / Decimal('100')
+    accompte_cac = accompte_base * taux_cac / Decimal('100')
+    accompte_total = accompte_base + accompte_cac
+
+    return {
+        "base_label": base_label,
+        "base_imposition": int(base_imposition.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+        "taux": float(taux_imposition),
+        "accompte_base": int(accompte_base.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+        "taux_cac": float(taux_cac),
+        "accompte_cac": int(accompte_cac.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+        "accompte_total": int(accompte_total.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+    }
+
+
 def _collect_data(date_debut, date_fin):
     """Collecte toutes les données nécessaires aux 10 feuilles."""
     from django.db.models import (
@@ -710,6 +901,7 @@ def _collect_data(date_debut, date_fin):
     )
     agg = factures_ann.aggregate(
         ca_total_ttc=Coalesce(Sum("total_ttc"), Decimal("0")),
+        ca_total_ht=Coalesce(Sum("total_ht"), Decimal("0")),
         ca_divers_ttc=Coalesce(Sum("divers_amount"), Decimal("0")),
         remises=Coalesce(Sum("remise"), Decimal("0")),
         remises_fid=Coalesce(Sum("montant_fidelite"), Decimal("0")),
@@ -971,6 +1163,7 @@ def _collect_data(date_debut, date_fin):
 
     # ── Achats fournisseurs ──────────────────────────────────────────────────
     achats_map: dict = {}
+    total_precompte_excel = Decimal("0")
     for c in Commande.objects.filter(
         date__gte=date_debut, date__lt=date_fin,
         status=Commande.Status.CLOTUREE,
@@ -983,11 +1176,15 @@ def _collect_data(date_debut, date_fin):
                 "fournisseur_nom": c.fournisseur.name,
                 "nb_commandes": 0, "montant_total": Decimal("0"),
                 "nb_avoirs": 0, "montant_avoirs": Decimal("0"),
+                "precompte": Decimal("0"),
             }
         achats_map[fid]["montant_total"] += sum(
             cp.quantity * cp.price_cost for cp in c.produits.all()
         )
         achats_map[fid]["nb_commandes"] += 1
+        cmd_precompte = c.precompte
+        achats_map[fid]["precompte"] += cmd_precompte
+        total_precompte_excel += cmd_precompte
     for a in Avoir.objects.filter(
         date__gte=date_debut.date(), date__lt=date_fin.date(), status="VALIDEE"
     ).select_related("fournisseur"):
@@ -999,6 +1196,7 @@ def _collect_data(date_debut, date_fin):
                 "fournisseur_nom": a.fournisseur.name,
                 "nb_commandes": 0, "montant_total": Decimal("0"),
                 "nb_avoirs": 0, "montant_avoirs": Decimal("0"),
+                "precompte": Decimal("0"),
             }
         achats_map[fid]["montant_total"] -= a.total_ht
         achats_map[fid]["montant_avoirs"] += a.total_ht
@@ -1082,6 +1280,16 @@ def _collect_data(date_debut, date_fin):
         "achats_rows":       achats_rows,
         "clotures_rows":     clotures_rows,
         "depenses_rows":     depenses_rows,
+        "ca": {
+            "ca_ht": float(agg["ca_total_ht"]),
+            "ca_ttc": float(ca_total),
+            "tva_collectee": float(ca_total - agg["ca_total_ht"]) if ca_total else 0,
+        },
+        "achats_fiscaux": {
+            "total_achats_ht": int(sum(Decimal(str(r.get("montant_total", 0) or 0)) for r in achats_rows).quantize(Decimal("1"), rounding=ROUND_HALF_UP)),
+            "total_precompte": int(total_precompte_excel.quantize(Decimal("1"), rounding=ROUND_HALF_UP)) if total_precompte_excel else 0,
+        },
+        "accompte_fiscal": _compute_accompte_fiscal_inline(agg["ca_total_ht"], factures_ann),
     }
 
 
@@ -1138,6 +1346,12 @@ def build_rapport_general_excel(date_debut, date_fin, mois_label: str) -> HttpRe
     _sheet_achats(wb, data["achats_rows"], pharmacy, mois_label, logo_path)
     _sheet_etat_caisses(wb, data["clotures_rows"], pharmacy, mois_label, logo_path)
     _sheet_depenses(wb, data["depenses_rows"], pharmacy, mois_label, logo_path)
+
+    # ── Feuille fiscale ──
+    _sheet_fiscal(wb, data, pharmacy, mois_label, logo_path)
+
+    # ── Feuille UGs ──
+    _sheet_ugs(wb, data, pharmacy, mois_label, logo_path)
 
     # ── Nouvelles feuilles (11-17) ──
     sheet_modes_paiement(wb, extra, pharmacy, mois_label, logo_path)

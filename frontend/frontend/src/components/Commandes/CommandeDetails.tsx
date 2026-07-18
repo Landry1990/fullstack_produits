@@ -372,6 +372,13 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
               <span className={cn("text-[10px] font-semibold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-500' : 'text-amber-500')}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
             </div>
           </div>
+          {/* PRÉCOMPTE */}
+          {Number(selectedCommande.precompte) > 0 && (
+            <div className="flex flex-col items-end border-l pl-3 border-slate-200">
+              <span className="text-[9px] uppercase font-bold text-rose-500 -mb-1">PRÉCOMPTE ({selectedCommande.taux_precompte}%)</span>
+              <span className="text-sm font-bold text-rose-600">{formatCurrency(Number(selectedCommande.precompte) || 0)}</span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -27,6 +27,7 @@ echo "   ✅ Docker est actif"
 # --- Lancer les conteneurs ---
 echo ""
 echo "[2/3] Démarrage des services..."
+export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 docker compose up -d --build 2>&1 | grep -iE "Created|Starting|Started" || true
 
 # --- Attendre que le backend réponde ---

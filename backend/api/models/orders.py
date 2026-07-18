@@ -150,6 +150,33 @@ class Commande(models.Model):
         return self.total_ht + self.total_tva
 
     @property
+    def taux_precompte(self):
+        """Taux de précompte applicable selon le régime fiscal et le mode d'imposition."""
+        from decimal import Decimal
+        try:
+            from .settings import PharmacySettings
+            ps = PharmacySettings.objects.first()
+            if not ps:
+                return Decimal("0")
+            if ps.mode_imposition == 'MARGE_ADMINISTREE':
+                return Decimal("0")
+            if ps.regime_fiscal == 'REEL':
+                return ps.taux_precompte_reel
+            return ps.taux_precompte_simplifie
+        except Exception:
+            return Decimal("0")
+
+    @property
+    def precompte(self):
+        """Montant du précompte sur achat (collecté par le fournisseur).
+        Garde la précision Decimal maximale — l'arrondi se fait au niveau de l'affichage/serializer."""
+        from decimal import Decimal
+        taux = self.taux_precompte
+        if taux <= 0:
+            return Decimal("0")
+        return self.total_ht * taux / Decimal("100")
+
+    @property
     def statut_paiement(self):
         """État du règlement de la facture."""
         if self.status != self.Status.CLOTUREE:
