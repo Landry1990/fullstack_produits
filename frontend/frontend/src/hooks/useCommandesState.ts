@@ -366,7 +366,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
       const confirmed = await confirm({
           title: t('orders:details.delete', { defaultValue: 'Supprimer la commande' }),
-          message: t('orders:messages.delete_confirm', { defaultValue: `Voulez-vous vraiment supprimer la commande #${selectedCommande.id} ? Cette action est réversible.` }),
+          message: t('orders:messages.delete_confirm', { defaultValue: `Voulez-vous vraiment supprimer la commande #${selectedCommande.id} ?` }),
           confirmText: t('common:confirm', { defaultValue: 'Confirmer' }),
           cancelText: t('common:cancel', { defaultValue: 'Annuler' })
       });
