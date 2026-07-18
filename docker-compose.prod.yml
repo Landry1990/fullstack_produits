@@ -164,6 +164,18 @@ services:
     networks:
       - app-network
 
+  # Portainer — interface web de gestion des conteneurs Docker
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: always
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
@@ -174,4 +186,5 @@ volumes:
   static_volume:
   media_volume:
   redis_data:
+  portainer_data:
   tailscale_data:
