@@ -53,6 +53,12 @@ class StatsUGViewSet(viewsets.GenericViewSet):
             ug_recues=Sum('quantity_free'),
             ug_restantes=Sum('quantity_free_remaining'),
             valeur_economisee=Sum(F('quantity_free') * F('selling_price'), 
+                                output_field=DecimalField()),
+            valeur_acquise=Sum(F('quantity_free') * F('selling_price'),
+                                output_field=DecimalField()),
+            valeur_vendue=Sum((F('quantity_free') - F('quantity_free_remaining')) * F('selling_price'),
+                                output_field=DecimalField()),
+            valeur_restante=Sum(F('quantity_free_remaining') * F('selling_price'),
                                 output_field=DecimalField())
         ).order_by('-ug_recues')
         
@@ -66,7 +72,10 @@ class StatsUGViewSet(viewsets.GenericViewSet):
                 'ug_recues': int(stat['ug_recues'] or 0),
                 'ug_vendues': int(ug_vendues),
                 'ug_restantes': int(stat['ug_restantes'] or 0),
-                'valeur_economisee': float(stat['valeur_economisee'] or 0)
+                'valeur_economisee': float(stat['valeur_economisee'] or 0),
+                'valeur_acquise': float(stat['valeur_acquise'] or 0),
+                'valeur_vendue': float(stat['valeur_vendue'] or 0),
+                'valeur_restante': float(stat['valeur_restante'] or 0)
             })
         
         return Response({
@@ -75,7 +84,10 @@ class StatsUGViewSet(viewsets.GenericViewSet):
                 'ug_recues': sum(r['ug_recues'] for r in results),
                 'ug_vendues': sum(r['ug_vendues'] for r in results),
                 'ug_restantes': sum(r['ug_restantes'] for r in results),
-                'valeur_economisee': sum(r['valeur_economisee'] for r in results)
+                'valeur_economisee': sum(r['valeur_economisee'] for r in results),
+                'valeur_acquise': sum(r['valeur_acquise'] for r in results),
+                'valeur_vendue': sum(r['valeur_vendue'] for r in results),
+                'valeur_restante': sum(r['valeur_restante'] for r in results)
             }
         })
     
@@ -157,9 +169,10 @@ class StatsUGViewSet(viewsets.GenericViewSet):
             total=Sum('quantity_free_remaining')
         )['total'] or 0
         
-        # UG reçues ce mois
+        # UG reçues ce mois (filtrer par date de clôture de la commande, pas par created_at)
         ug_mois = CommandeProduit.objects.filter(
-            created_at__gte=debut_mois,
+            commande__date_cloture__gte=debut_mois,
+            commande__status='CLOT',
             unites_gratuites__gt=0
         ).aggregate(
             total=Sum('unites_gratuites')

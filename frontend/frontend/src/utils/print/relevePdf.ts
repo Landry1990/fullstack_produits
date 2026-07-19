@@ -62,14 +62,14 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
 
     // ── Ligne de séparation header ──────────────────────────────────────────
     const drawHeaderLine = () => {
-        doc.setDrawColor(20, 20, 20);
-        doc.setLineWidth(0.8);
+        doc.setDrawColor(150, 150, 150);
+        doc.setLineWidth(0.2);
         doc.line(margin, 48, pageWidth - margin, 48);
     };
 
     // ── HEADER ───────────────────────────────────────────────────────────────
     // Colonne gauche : pharmacie
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(16);
     doc.setTextColor(20, 20, 20);
     doc.text((data.settings.pharmacy_name || 'PHARMACIE').toUpperCase(), margin, 18);
@@ -88,7 +88,7 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
     if (data.settings.registre_commerce) { doc.text(`RCCM : ${data.settings.registre_commerce}`, margin, hy); }
 
     // Colonne droite : titre document
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(17);
     doc.setTextColor(20, 20, 20);
     doc.text('RELEVÉ DE FACTURES', pageWidth - margin, 18, { align: 'right' });
@@ -112,14 +112,14 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
     doc.roundedRect(margin, blockY, colW, blockH, 2, 2, 'S');
 
     doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(140, 140, 140);
     doc.text('CLIENT', margin + 4, blockY + 5);
     doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.2);
     doc.line(margin + 4, blockY + 6.5, margin + colW - 4, blockY + 6.5);
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(20, 20, 20);
     const clientLines = doc.splitTextToSize(data.client.name.toUpperCase(), colW - 8);
@@ -141,7 +141,7 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
     doc.roundedRect(col2X, blockY, colW, blockH, 2, 2, 'S');
 
     doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(140, 140, 140);
     doc.text('PÉRIODE COUVERTE', col2X + 4, blockY + 5);
     doc.setDrawColor(220, 220, 220);
@@ -152,11 +152,11 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
     doc.setFontSize(9);
     doc.setTextColor(60, 60, 60);
     doc.text('Du :', col2X + 4, blockY + 14);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text(fmtDate(data.periode.date_debut), col2X + colW - 4, blockY + 14, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.text('Au :', col2X + 4, blockY + 21);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text(fmtDate(data.periode.date_fin), col2X + colW - 4, blockY + 21, { align: 'right' });
 
     // ── TABLEAU DES CRÉANCES ──────────────────────────────────────────────────
@@ -175,11 +175,11 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
         startY: tableStartY,
         head: [['Date', 'N° Facture', 'Bénéficiaire / Ayant droit', 'Total TTC', 'Réglé', 'Reste']],
         body: rows,
-        theme: 'striped',
+        theme: 'plain',
         headStyles: {
-            fillColor: [20, 20, 20],
-            textColor: 255,
-            fontStyle: 'bold',
+            fillColor: [255, 255, 255],
+            textColor: [0, 0, 0],
+            fontStyle: 'normal',
             fontSize: 8,
             cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
         },
@@ -188,14 +188,14 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
             textColor: [40, 40, 40],
             cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
         },
-        alternateRowStyles: { fillColor: [248, 248, 248] },
+        alternateRowStyles: { fillColor: [255, 255, 255] },
         columnStyles: {
             0: { cellWidth: 22 },
-            1: { cellWidth: 28, fontStyle: 'bold' },
+            1: { cellWidth: 28, fontStyle: 'normal' },
             2: { cellWidth: 'auto' },
             3: { cellWidth: 28, halign: 'right' },
-            4: { cellWidth: 25, halign: 'right', textColor: [5, 150, 105] },
-            5: { cellWidth: 25, halign: 'right', textColor: [220, 38, 38], fontStyle: 'bold' },
+            4: { cellWidth: 25, halign: 'right', textColor: [0, 0, 0] },
+            5: { cellWidth: 25, halign: 'right', textColor: [0, 0, 0], fontStyle: 'normal' },
         },
         margin: { left: margin, right: margin },
         didDrawPage: (hookData) => {
@@ -217,8 +217,8 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
     const totW = 80;
     const totX = pageWidth - margin - totW;
 
-    doc.setDrawColor(20, 20, 20);
-    doc.setLineWidth(0.6);
+    doc.setDrawColor(150, 150, 150);
+    doc.setLineWidth(0.2);
     doc.line(totX, finalY, pageWidth - margin, finalY);
 
     doc.setFontSize(8);
@@ -227,14 +227,14 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
 
     // Total facturé
     doc.text('Total Facturé :', totX, finalY + 7);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text(`${fmt(data.totaux.total_factures)} F`, pageWidth - margin, finalY + 7, { align: 'right' });
 
     // Total réglé (vert)
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(5, 150, 105);
+    doc.setTextColor(0, 0, 0);
     doc.text('Total Réglé :', totX, finalY + 14);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text(`${fmt(data.totaux.total_paye)} F`, pageWidth - margin, finalY + 14, { align: 'right' });
 
     // Séparateur
@@ -244,14 +244,14 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
 
     // NET À PAYER (rouge, encadré)
     const netBoxY = finalY + 19;
-    doc.setFillColor(255, 245, 245);
-    doc.setDrawColor(220, 38, 38);
-    doc.setLineWidth(0.4);
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(150, 150, 150);
+    doc.setLineWidth(0.2);
     doc.roundedRect(totX, netBoxY, totW, 12, 2, 2, 'FD');
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(220, 38, 38);
+    doc.setTextColor(0, 0, 0);
     doc.text('NET À PAYER :', totX + 3, netBoxY + 7.5);
     doc.setFontSize(11);
     doc.text(`${fmt(data.totaux.total_reste)} F`, pageWidth - margin - 3, netBoxY + 7.5, { align: 'right' });
@@ -262,7 +262,7 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
     doc.setLineWidth(0.2);
     doc.line(margin, sigY, pageWidth - margin, sigY);
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(120, 120, 120);
     doc.text('SIGNATURE CLIENT', margin + 25, sigY + 5, { align: 'center' });

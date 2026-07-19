@@ -143,9 +143,23 @@ const PrintPage: React.FC = () => {
                 {`
                     @media print {
                         @page { margin: 10mm; size: A4; }
-                        body { margin: 0; background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        body { margin: 0; background: white; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
                         .no-print { display: none !important; }
-                        .print-page { background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .print-page { background: white !important; }
+
+                        /* Alléger les documents : moins de gras, de couleur et de bordures */
+                        .font-black, .font-bold, .font-semibold, .font-extrabold { font-weight: 500 !important; }
+                        .uppercase, .tracking-widest, .tracking-wider, .tracking-tighter, .tracking-tight { text-transform: none !important; letter-spacing: 0 !important; }
+                        .text-white, [class*="text-success"], [class*="text-error"], [class*="text-info"], [class*="text-primary"], [class*="text-emerald"], [class*="text-amber"], [class*="text-indigo"], [class*="text-blue"] { color: #000 !important; }
+                        [class*="bg-slate-900"], [class*="bg-slate-800"], [class*="bg-success"], [class*="bg-primary"], [class*="bg-error"], [class*="bg-info"], [class*="bg-warning"], [class*="bg-emerald"], [class*="bg-base-200"], [class*="bg-base-300"], [class*="bg-gray-50"], [class*="bg-gray-100"], [class*="bg-red"], [class*="bg-blue"] { background: white !important; color: #000 !important; }
+                        [class*="border-2"] { border-width: 0.5px !important; }
+                        [class*="border-b-2"] { border-bottom-width: 0.5px !important; }
+                        [class*="border-t-2"] { border-top-width: 0.5px !important; }
+                        [class*="border-l-2"] { border-left-width: 0.5px !important; }
+                        [class*="border-r-2"] { border-right-width: 0.5px !important; }
+                        [class*="border-slate-900"], [class*="border-black"] { border-color: #999 !important; }
+                        [class*="border-base-200"], [class*="border-base-300"] { border-color: #ccc !important; }
+                        [class*="shadow-sm"], [class*="shadow-md"], [class*="shadow-lg"] { box-shadow: none !important; }
                     }
                 `}
             </style>
