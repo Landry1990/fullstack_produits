@@ -1211,7 +1211,7 @@ class RapportFinanceMixin:
             total=Coalesce(Sum('total_ht'), Decimal('0.00'))
         )['total']
         tva_collectee = factures.aggregate(
-            total=Coalesce(Sum('tva_total'), Decimal('0.00'))
+            total=Coalesce(Sum('total_tva'), Decimal('0.00'))
         )['total']
 
         # --- 2. Achats (commandes clôturées) ---

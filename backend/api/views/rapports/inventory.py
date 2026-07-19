@@ -16,6 +16,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import cm, mm
 from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
 from api.models import Produit, CommandeProduit, Facture, FactureProduit, MouvementStock, StockLot
+from api.views.rapports.tz_utils import local_trunc_date
 
 class RapportInventoryMixin:
     """
@@ -43,9 +44,9 @@ class RapportInventoryMixin:
         current_stock_ttc = stock_totals['total_ttc']
         today = timezone.localtime(timezone.now()).date()
         
-        ventes_ca = Facture.objects.filter(date__date__gte=date_debut, status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=TruncDate('date')).values('jour').annotate(ca_net=Sum('total_ttc')).order_by('-jour')
-        ventes_details = FactureProduit.objects.filter(facture__date__date__gte=date_debut, facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=TruncDate('facture__date')).values('jour').annotate(ventes_ttc_brut=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), cout_ventes=Sum(F('quantity') * F('produit__pmp'), output_field=DecimalField())).order_by('-jour')
-        achats = CommandeProduit.objects.filter(commande__date_cloture__date__gte=date_debut, commande__status='CLOT').annotate(jour=TruncDate('commande__date_cloture')).values('jour').annotate(achats_cout=Sum((F('quantity') + F('unites_gratuites')) * F('price_cost'), output_field=DecimalField()), achats_ttc_virtuel=Sum((F('quantity') + F('unites_gratuites')) * F('produit__selling_price'), output_field=DecimalField())).order_by('-jour')
+        ventes_ca = Facture.objects.filter(date__date__gte=date_debut, status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('date')).values('jour').annotate(ca_net=Sum('total_ttc')).order_by('-jour')
+        ventes_details = FactureProduit.objects.filter(facture__date__date__gte=date_debut, facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('facture__date')).values('jour').annotate(ventes_ttc_brut=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), cout_ventes=Sum(F('quantity') * F('produit__pmp'), output_field=DecimalField())).order_by('-jour')
+        achats = CommandeProduit.objects.filter(commande__date_cloture__date__gte=date_debut, commande__status='CLOT').annotate(jour=local_trunc_date('commande__date_cloture')).values('jour').annotate(achats_cout=Sum((F('quantity') + F('unites_gratuites')) * F('price_cost'), output_field=DecimalField()), achats_ttc_virtuel=Sum((F('quantity') + F('unites_gratuites')) * F('produit__selling_price'), output_field=DecimalField())).order_by('-jour')
         
         mouvements_map = {}
         for v in ventes_ca:
