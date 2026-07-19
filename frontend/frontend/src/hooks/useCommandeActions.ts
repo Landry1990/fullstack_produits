@@ -230,22 +230,22 @@ export function useCommandeActions({
                 // Formule: stAnt + qtyTotal = currentStock
                 const stAnt = currentStock - qtyTotal;
 
-                const lotInfo = p.lot ? `<div style="font-size: 9px; color: #666; font-family: monospace;">LOT: ${escHtml(p.lot)} | EXP: ${escHtml(formatDateUtil(p.date_expiration))}</div>` : ''
-                const tvaLabel = p.tva ? `<span style="font-size: 8px; color: #64748b; margin-left: 4px;">(${p.tva}%)</span>` : '';
-                
+                const lotInfo = p.lot ? `<div style="font-size: 8px; color: #555; font-family: monospace;">LOT: ${escHtml(p.lot)} | EXP: ${escHtml(formatDateUtil(p.date_expiration))}</div>` : ''
+                const tvaLabel = p.tva ? `<span style="font-size: 8px; color: #555; margin-left: 4px;">(${p.tva}%)</span>` : '';
+
                 return `
-                    <tr style="border-bottom: 1px solid #eee; page-break-inside: avoid;">
-                        <td style="padding: 6px 8px; text-align: left;">
-                            <div style="font-weight: bold; text-transform: uppercase; font-size: 11px;">${escHtml(produitName)}</div>
+                    <tr style="border-bottom: 0.5px dotted #ccc; page-break-inside: avoid;">
+                        <td style="padding: 4px; text-align: left;">
+                            <div style="font-weight: 500; font-size: 10px;">${escHtml(produitName)}</div>
                             ${lotInfo}
                         </td>
-                        <td style="padding: 6px 8px; text-align: center; font-family: monospace; font-size: 10px;">${cip}</td>
-                        <td style="padding: 6px 8px; text-align: center; font-weight: bold;">${stAnt}</td>
-                        <td style="padding: 6px 8px; text-align: center; font-weight: bold;">${p.quantity}</td>
-                        <td style="padding: 6px 8px; text-align: center; color: #64748b; font-weight: bold; background: #f8fafc;">${p.unites_gratuites || 0}</td>
-                        <td style="padding: 6px 8px; text-align: center; font-weight: bold;">${currentStock}</td>
-                        <td style="padding: 6px 8px; text-align: right;">${formatM(p.price)}${tvaLabel}</td>
-                        <td style="padding: 6px 8px; text-align: right; font-weight: bold;">${formatM(lineTotal)}</td>
+                        <td style="padding: 4px; text-align: center; font-family: monospace; font-size: 9px;">${cip}</td>
+                        <td style="padding: 4px; text-align: center;">${stAnt}</td>
+                        <td style="padding: 4px; text-align: center;">${p.quantity}</td>
+                        <td style="padding: 4px; text-align: center;">${p.unites_gratuites || 0}</td>
+                        <td style="padding: 4px; text-align: center;">${currentStock}</td>
+                        <td style="padding: 4px; text-align: right;">${formatM(p.price)}${tvaLabel}</td>
+                        <td style="padding: 4px; text-align: right; font-weight: 500;">${formatM(lineTotal)}</td>
                     </tr>
                 `;
             }).join('');
@@ -260,91 +260,83 @@ export function useCommandeActions({
     <title>Bon de Réception - ${escHtml(commande.numero_facture || String(commande.id))}</title>
     <style>
         @media print {
-            @page { size: A4; margin: 15mm; }
-            body { margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            @page { size: A4; margin: 12mm; }
+            body { margin: 0; padding: 0; }
             .no-print { display: none !important; }
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #1e293b;
-            line-height: 1.5;
-            padding: 20px;
+            color: #000;
+            line-height: 1.4;
+            padding: 10px;
             max-width: 210mm;
             margin: 0 auto;
             background: white;
+            font-size: 10px;
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            border-bottom: 3px solid #0f172a;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
+            border-bottom: 0.5px solid #999;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
         }
         .pharmacy-name {
-            font-size: 24px;
-            font-weight: 900;
-            text-transform: uppercase;
-            color: #0f172a;
+            font-size: 16px;
+            font-weight: 600;
+            color: #000;
             margin: 0;
         }
         .pharmacy-info {
-            color: #64748b;
-            font-size: 12px;
-            margin-top: 5px;
+            color: #555;
+            font-size: 10px;
+            margin-top: 3px;
         }
         .doc-title-box {
-            border: 2px solid #0f172a;
-            color: #0f172a;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 18px;
-            font-weight: bold;
+            border: 0.5px solid #999;
+            color: #000;
+            padding: 6px 12px;
+            border-radius: 2px;
+            font-size: 13px;
+            font-weight: 600;
             text-align: right;
-            text-transform: uppercase;
         }
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: 10px;
+            margin-bottom: 10px;
         }
         .info-card {
-            background: #fff;
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
+            padding: 6px 0;
+            border-bottom: 0.5px solid #ccc;
         }
         .card-label {
             font-size: 9px;
-            font-weight: 900;
-            text-transform: uppercase;
-            color: #64748b;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 3px;
-            margin-bottom: 8px;
-            letter-spacing: 0.1em;
+            color: #555;
+            padding-bottom: 2px;
+            margin-bottom: 4px;
         }
         .provider-name {
-            font-size: 18px;
-            font-weight: 900;
-            color: #1e293b;
-            text-transform: uppercase;
+            font-size: 14px;
+            font-weight: 600;
+            color: #000;
         }
         .detail-row {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
-            margin-bottom: 4px;
+            font-size: 10px;
+            margin-bottom: 2px;
         }
-        .detail-value { font-weight: bold; }
+        .detail-value { font-weight: 500; }
         .operator-name { color: #000; text-decoration: underline; }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 11px;
+            margin-bottom: 15px;
+            font-size: 9px;
         }
         thead {
             display: table-header-group;
@@ -353,42 +345,43 @@ export function useCommandeActions({
             page-break-inside: avoid;
         }
         th {
-            background: #f1f5f9;
-            color: #0f172a;
-            border-bottom: 2px solid #0f172a;
-            text-transform: uppercase;
+            color: #000;
+            border-bottom: 0.5px solid #999;
             font-size: 9px;
-            padding: 8px 6px;
+            padding: 4px;
             text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 4px;
+            border-bottom: 0.5px dotted #ccc;
         }
         .footer-grid {
             display: flex;
             justify-content: space-between;
-            gap: 20px;
-            border-top: 2px solid #0f172a;
-            padding-top: 15px;
+            gap: 15px;
+            border-top: 0.5px solid #999;
+            padding-top: 10px;
             page-break-inside: avoid;
         }
         .totals-card {
-            background: #fff;
-            color: #0f172a;
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: 2px solid #0f172a;
+            color: #000;
+            padding: 8px 10px;
+            border-radius: 2px;
+            border: 0.5px solid #999;
             width: 240px;
         }
         .signature-box {
             width: 200px;
-            height: 80px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            margin-top: 10px;
+            height: 60px;
+            border: 0.5px solid #999;
+            border-radius: 2px;
+            margin-top: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #94a3b8;
-            font-size: 10px;
-            text-transform: uppercase;
+            color: #777;
+            font-size: 9px;
         }
     </style>
 </head>
@@ -399,12 +392,12 @@ export function useCommandeActions({
             <div class="pharmacy-info">
                 ${escHtml(pharmacySettings.address || '')}<br>
                 Tél: ${escHtml(pharmacySettings.phone || '')} | ${escHtml(pharmacySettings.email || '')}<br>
-                <span style="font-weight: bold; opacity: 0.7;">NIU: ${escHtml(pharmacySettings.niu || '')} | RC: ${escHtml(pharmacySettings.registre_commerce || '')}</span>
+                <span>NIU: ${escHtml(pharmacySettings.niu || '')} | RC: ${escHtml(pharmacySettings.registre_commerce || '')}</span>
             </div>
         </div>
         <div>
             <div class="doc-title-box">${t('orders.tabs.delivery', { defaultValue: 'BON DE RÉCEPTION' })}</div>
-            <div style="text-align: right; font-size: 10px; font-weight: bold; color: #64748b; margin-top: 5px; text-transform: uppercase;">
+            <div style="text-align: right; font-size: 9px; color: #555; margin-top: 4px;">
                 RÉF: ${escHtml(commande.numero_facture || '#' + commande.id)}
             </div>
         </div>
@@ -439,14 +432,14 @@ export function useCommandeActions({
     <table>
         <thead>
             <tr>
-                <th style="border-top-left-radius: 4px;">${t('orders.product_table.headers.product', { defaultValue: 'Désignation' })}</th>
+                <th>${t('orders.product_table.headers.product', { defaultValue: 'Désignation' })}</th>
                 <th style="text-align: center;">${t('orders.product_table.headers.cip', { defaultValue: 'CIP' })}</th>
                 <th style="text-align: center;">${t('orders.product_table.headers.stAnt', { defaultValue: 'stAnt' })}</th>
                 <th style="text-align: center;">${t('orders.product_table.headers.qty', { defaultValue: 'Qté' })}</th>
-                <th style="text-align: center; background: #f8fafc;">${t('orders.product_table.headers.ug', { defaultValue: 'UG' })}</th>
+                <th style="text-align: center;">${t('orders.product_table.headers.ug', { defaultValue: 'UG' })}</th>
                 <th style="text-align: center;">${t('orders.product_table.headers.stock', { defaultValue: 'Stock' })}</th>
                 <th style="text-align: right;">${t('orders.product_table.headers.buy_price_ht', { defaultValue: 'P.U HT' })}</th>
-                <th style="text-align: right; border-top-right-radius: 4px;">${t('orders.product_table.headers.total_ht', { defaultValue: 'Total HT' })}</th>
+                <th style="text-align: right;">${t('orders.product_table.headers.total_ht', { defaultValue: 'Total HT' })}</th>
             </tr>
         </thead>
         <tbody>
@@ -458,40 +451,40 @@ export function useCommandeActions({
         <div style="flex: 1;">
             <div class="info-card" style="margin-bottom: 10px;">
                 <div class="card-label">Récapitulatif Articles</div>
-                <div style="display: flex; gap: 20px; font-size: 10px; font-weight: bold;">
+                <div style="display: flex; gap: 20px; font-size: 9px;">
                     <div>Lignes: ${produits.length}</div>
                     <div>Unités: ${totalQty}</div>
-                    <div style="color: #64748b;">Gratuites: ${totalUG}</div>
+                    <div>Gratuites: ${totalUG}</div>
                 </div>
             </div>
-            <div style="font-size: 8px; color: #94a3b8; font-style: italic; line-height: 1.2;">
+            <div style="font-size: 8px; color: #777; font-style: italic; line-height: 1.2;">
                 Ce document certifie la réception physique des articles mentionnés dans les stocks de l'établissement.
             </div>
         </div>
         <div>
             <div class="totals-card">
-                <div class="detail-row" style="font-size: 9px; color: #64748b; margin-bottom: 2px;">
+                <div class="detail-row" style="font-size: 9px; margin-bottom: 2px;">
                     <span>TOTAL HT:</span>
-                    <span style="font-weight: bold;">${formatM(totalHT)} F</span>
+                    <span>${formatM(totalHT)} F</span>
                 </div>
-                <div class="detail-row" style="font-size: 9px; color: #64748b; border-bottom: 1px solid #f1f5f9; padding-bottom: 3px; margin-bottom: 6px;">
+                <div class="detail-row" style="font-size: 9px; border-bottom: 0.5px solid #eee; padding-bottom: 3px; margin-bottom: 6px;">
                     <span>TOTAL TVA:</span>
-                    <span style="font-weight: bold;">${formatM(totalTVA)} F</span>
+                    <span>${formatM(totalTVA)} F</span>
                 </div>
-                <div style="font-size: 9px; font-weight: 900; text-transform: uppercase; color: #94a3b8; margin-bottom: 2px; letter-spacing: 0.1em;">Total TTC Réception</div>
-                <div style="font-size: 22px; font-weight: 900; font-family: monospace; display: flex; justify-content: space-between; align-items: baseline; letter-spacing: -1px;">
+                <div style="font-size: 9px; margin-bottom: 2px;">Total TTC Réception</div>
+                <div style="font-size: 16px; font-weight: 600; font-family: monospace; display: flex; justify-content: space-between; align-items: baseline;">
                     ${formatM(totalTTC)}
-                    <span style="font-size: 10px; font-weight: normal; opacity: 0.6; margin-left: 5px;">FCFA</span>
+                    <span style="font-size: 9px; margin-left: 5px;">FCFA</span>
                 </div>
             </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <div style="font-size: 9px; font-weight: bold; text-transform: uppercase; color: #94a3b8;">Cachet & Signature</div>
+            <div style="text-align: center; margin-top: 16px;">
+                <div style="font-size: 9px; color: #555;">Cachet & Signature</div>
                 <div class="signature-box">Responsable Stocks</div>
             </div>
         </div>
     </div>
 
-    <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 9px; font-weight: bold; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.3em;">
+    <div style="margin-top: 40px; padding-top: 10px; border-top: 0.5px solid #ccc; text-align: center; font-size: 8px; color: #999;">
         Logiciel de Gestion Antigravity POS - Document Interne
     </div>
 

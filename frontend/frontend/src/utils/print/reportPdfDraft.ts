@@ -100,7 +100,7 @@ export async function generateMonthlyReportPdfDraft(
   };
 
   // Header
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
   doc.text(settings.pharmacy_name.toUpperCase(), margin, 20);
@@ -170,18 +170,18 @@ export async function generateMonthlyReportPdfDraft(
   const totalTax = data.ca_par_tva.reduce((sum, t) => sum + t.montant_tva, 0);
   const totalTTC = data.ca_par_tva.reduce((sum, t) => sum + t.ca_ttc, 0);
   tvaTableBody.push([
-    { content: 'TOTAL', styles: { fontStyle: 'bold' } },
-    { content: fmt(totalHT), styles: { fontStyle: 'bold' } },
-    { content: fmt(totalTax), styles: { fontStyle: 'bold' } },
-    { content: fmt(totalTTC), styles: { fontStyle: 'bold' } }
+    { content: 'TOTAL', styles: { fontStyle: 'normal' } },
+    { content: fmt(totalHT), styles: { fontStyle: 'normal' } },
+    { content: fmt(totalTax), styles: { fontStyle: 'normal' } },
+    { content: fmt(totalTTC), styles: { fontStyle: 'normal' } }
   ]);
 
   autoTable(doc, {
     startY: currentY,
     head: [[t('tva.rate'), t('tva.ht'), t('tva.tax'), t('tva.ttc')]],
     body: tvaTableBody,
-    theme: 'grid',
-    headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold' },
+    theme: 'plain',
+    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
     margin: { left: margin, right: margin },
     styles: { fontSize: 8 }
   });
@@ -190,16 +190,16 @@ export async function generateMonthlyReportPdfDraft(
   // Encaissements
   const encTableBody: any[][] = data.encaissements.map(e => [e.mode_label, fmt(e.montant)]);
   encTableBody.push([
-    { content: 'TOTAL ENCAISSEMENTS', styles: { fontStyle: 'bold' } },
-    { content: fmt(data.encaissements.reduce((sum, e) => sum + e.montant, 0) + data.depots_total), styles: { fontStyle: 'bold' } }
+    { content: 'TOTAL ENCAISSEMENTS', styles: { fontStyle: 'normal' } },
+    { content: fmt(data.encaissements.reduce((sum, e) => sum + e.montant, 0) + data.depots_total), styles: { fontStyle: 'normal' } }
   ]);
 
   autoTable(doc, {
     startY: currentY,
     head: [[t('encaissements.mode'), t('encaissements.amount')]],
     body: encTableBody,
-    theme: 'grid',
-    headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold' },
+    theme: 'plain',
+    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
     margin: { left: margin, right: margin, bottom: 20 },
     styles: { fontSize: 8 }
   });
@@ -211,17 +211,17 @@ export async function generateMonthlyReportPdfDraft(
 
     const supplierBody: any[][] = data.achats_par_fournisseur.map(f => [f.fournisseur_nom, f.nb_commandes, fmt(f.montant_total)]);
     supplierBody.push([
-        { content: 'TOTAL ACHATS', styles: { fontStyle: 'bold' } },
-        { content: data.achats_par_fournisseur.reduce((sum, f) => sum + f.nb_commandes, 0).toString(), styles: { fontStyle: 'bold' } },
-        { content: fmt(data.achats_par_fournisseur.reduce((sum, f) => sum + f.montant_total, 0)), styles: { fontStyle: 'bold' } }
+        { content: 'TOTAL ACHATS', styles: { fontStyle: 'normal' } },
+        { content: data.achats_par_fournisseur.reduce((sum, f) => sum + f.nb_commandes, 0).toString(), styles: { fontStyle: 'normal' } },
+        { content: fmt(data.achats_par_fournisseur.reduce((sum, f) => sum + f.montant_total, 0)), styles: { fontStyle: 'normal' } }
     ]);
 
     autoTable(doc, {
       startY: currentY,
       head: [[t('suppliers.name'), t('suppliers.orders'), t('suppliers.amount')]],
       body: supplierBody,
-      theme: 'grid',
-      headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold' },
+      theme: 'plain',
+      headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 8 }
     });
@@ -234,18 +234,18 @@ export async function generateMonthlyReportPdfDraft(
 
     const proBody: any[][] = data.clients_professionnels.top_clients.map(c => [c.client_nom, fmt(c.ca_total), fmt(c.montant_paye), fmt(c.reste_a_payer)]);
     proBody.push([
-        { content: 'TOTAL CLIENTS PRO', styles: { fontStyle: 'bold' } },
-        { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.ca_total, 0)), styles: { fontStyle: 'bold' } },
-        { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.montant_paye, 0)), styles: { fontStyle: 'bold' } },
-        { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.reste_a_payer, 0)), styles: { fontStyle: 'bold' } }
+        { content: 'TOTAL CLIENTS PRO', styles: { fontStyle: 'normal' } },
+        { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.ca_total, 0)), styles: { fontStyle: 'normal' } },
+        { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.montant_paye, 0)), styles: { fontStyle: 'normal' } },
+        { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.reste_a_payer, 0)), styles: { fontStyle: 'normal' } }
     ]);
 
     autoTable(doc, {
       startY: currentY,
       head: [[t('pro_clients.title'), t('pro_clients.ca_total'), t('pro_clients.paid'), t('pro_clients.balance')]],
       body: proBody,
-      theme: 'grid',
-      headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold' },
+      theme: 'plain',
+      headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 8 }
     });
@@ -258,17 +258,17 @@ export async function generateMonthlyReportPdfDraft(
 
     const freeBody: any[][] = data.unites_gratuites.top_produits.map(p => [p.produit_nom, p.quantite_gratuite, fmt(p.valeur_totale)]);
     freeBody.push([
-        { content: 'TOTAL UNITES GRATUITES', styles: { fontStyle: 'bold' } },
-        { content: data.unites_gratuites.top_produits.reduce((sum, p) => sum + p.quantite_gratuite, 0).toString(), styles: { fontStyle: 'bold' } },
-        { content: fmt(data.unites_gratuites.top_produits.reduce((sum, p) => sum + p.valeur_totale, 0)), styles: { fontStyle: 'bold' } }
+        { content: 'TOTAL UNITES GRATUITES', styles: { fontStyle: 'normal' } },
+        { content: data.unites_gratuites.top_produits.reduce((sum, p) => sum + p.quantite_gratuite, 0).toString(), styles: { fontStyle: 'normal' } },
+        { content: fmt(data.unites_gratuites.top_produits.reduce((sum, p) => sum + p.valeur_totale, 0)), styles: { fontStyle: 'normal' } }
     ]);
 
     autoTable(doc, {
       startY: currentY,
       head: [["UNITES GRATUITES (TOP PRODUITS)", t('free_units.qty'), t('free_units.value')]],
       body: freeBody,
-      theme: 'grid',
-      headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold' },
+      theme: 'plain',
+      headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 8 }
     });
@@ -287,8 +287,8 @@ export async function generateMonthlyReportPdfDraft(
         m.motif,
         fmt(m.montant)
       ]),
-      theme: 'grid',
-      headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold' },
+      theme: 'plain',
+      headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 7 }
     });

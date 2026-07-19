@@ -41,7 +41,7 @@ export const generatePromisTicket = (data: PromisTicketData) => {
 
     // Helper to draw a dashed line
     const drawDashedLine = (y: number) => {
-        doc.setLineWidth(0.5);
+        doc.setLineWidth(0.2);
         doc.setLineDashPattern([3, 3], 0);
         doc.line(5, y, width - 5, y);
         doc.setLineDashPattern([], 0); // Reset
@@ -51,7 +51,7 @@ export const generatePromisTicket = (data: PromisTicketData) => {
     const drawTicketCopy = (title: string) => {
         // --- Header ---
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.text(data.pharmacy.pharmacy_name.toUpperCase(), centerX, currentY, { align: 'center' });
         currentY += 5;
 
@@ -68,7 +68,7 @@ export const generatePromisTicket = (data: PromisTicketData) => {
 
         // Title
         doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.text("TICKET PROMIS", centerX, currentY, { align: 'center' });
         currentY += 5;
         doc.setFontSize(8);
@@ -80,7 +80,7 @@ export const generatePromisTicket = (data: PromisTicketData) => {
 
         // --- Client Info ---
         doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.text("CLIENT:", 5, currentY);
         doc.setFont('helvetica', 'normal');
         doc.text(data.client_name, 25, currentY);
@@ -101,7 +101,7 @@ export const generatePromisTicket = (data: PromisTicketData) => {
         currentY += 5;
 
         // --- Items ---
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.text("Produit", 5, currentY);
         doc.text("Qté", width - 15, currentY, { align: 'right' });
         currentY += 5;
@@ -119,7 +119,7 @@ export const generatePromisTicket = (data: PromisTicketData) => {
 
             // Quantity (aligned with first line of name)
             doc.setFontSize(10); // Bigger Qty
-            doc.setFont('helvetica', 'bold');
+            doc.setFont('helvetica', 'normal');
             doc.text(item.promisQuantity.toString(), width - 10, currentY, { align: 'right' });
             doc.setFontSize(9); // Reset
             doc.setFont('helvetica', 'normal');
@@ -143,7 +143,7 @@ export const generatePromisTicket = (data: PromisTicketData) => {
         currentY += 5;
 
         // --- Payment Status ---
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         const statusText = data.is_paid ? "STATUT: PAYÉ" : "STATUT: À RÉGLER";
         doc.text(statusText, centerX, currentY, { align: 'center' });
         currentY += 6;

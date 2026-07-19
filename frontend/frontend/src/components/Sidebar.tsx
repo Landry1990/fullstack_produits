@@ -487,7 +487,7 @@ export default function Sidebar() {
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-primary shadow-[0_0_6px] shadow-primary/50"></div>
             <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider truncate">Zenith OS</span>
-            <span className="text-[9px] text-white/30 font-mono ml-auto" title={formatVersion()}>v{formatVersion().split('.').slice(0,2).join('.')}</span>
+            <span className="text-[9px] text-white/30 font-mono ml-auto" title={formatVersion()}>{formatVersion().split('.').slice(0,2).join('.')}</span>
           </div>
         </div>
       </aside>

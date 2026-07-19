@@ -41,7 +41,7 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
 
     // ── HEADER ──
     doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text(data.settings.pharmacy_name || 'PHARMACIE', pageWidth / 2, y, { align: 'center' });
     y += 8;
 
@@ -59,7 +59,7 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
 
     // ── TITRE ──
     doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text('TICKET DE RÈGLEMENT', pageWidth / 2, y, { align: 'center' });
     y += 10;
 
@@ -71,7 +71,7 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
     const rightCol = pageWidth - margin;
 
     doc.text(`Référence:`, leftCol, y);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text(data.reference, leftCol + 25, y);
     doc.setFont('helvetica', 'normal');
     
@@ -80,7 +80,7 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
     y += 7;
 
     doc.text(`Client:`, leftCol, y);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text(data.client_name, leftCol + 25, y);
     doc.setFont('helvetica', 'normal');
     y += 7;
@@ -113,12 +113,12 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
         startY: y,
         head: [['N°', 'Facture', 'Total Facture', 'Montant Réglé', 'Statut']],
         body: tableData,
-        theme: 'grid',
+        theme: 'plain',
         headStyles: {
-            fillColor: [41, 98, 255],
-            textColor: 255,
+            fillColor: [255, 255, 255],
+            textColor: [0, 0, 0],
             fontSize: 9,
-            fontStyle: 'bold',
+            fontStyle: 'normal',
         },
         bodyStyles: {
             fontSize: 9,
@@ -137,10 +137,10 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
             if (hookData.section === 'body' && hookData.column.index === 4) {
                 const cellText = String(hookData.cell.text[0] || '');
                 if (cellText.includes('SOLDÉE')) {
-                    hookData.cell.styles.textColor = [34, 197, 94]; // Vert
+                    hookData.cell.styles.textColor = [0, 0, 0]; // Vert
                     hookData.cell.styles.fontStyle = 'bold';
                 } else if (cellText.includes('reste')) {
-                    hookData.cell.styles.textColor = [245, 158, 11]; // Orange
+                    hookData.cell.styles.textColor = [0, 0, 0]; // Orange
                     hookData.cell.styles.fontStyle = 'bold';
                 }
             }
@@ -152,7 +152,7 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
 
     // ── RÉCAPITULATIF ──
     doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text('RÉCAPITULATIF', margin, y);
     y += 8;
 
@@ -168,8 +168,8 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
     y += 6;
 
     // Montant réglé (en vert/gras)
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(41, 98, 255);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
     doc.text('Montant réglé:', recapX, y);
     doc.text(`${fmt(data.montant_regle)} F`, pageWidth - margin, y, { align: 'right' });
     y += 6;
@@ -177,7 +177,7 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
     // Reste à payer (en rouge si > 0)
     const reste = Number(data.reste_a_payer);
     if (reste > 0) {
-        doc.setTextColor(239, 68, 68);
+        doc.setTextColor(0, 0, 0);
     } else {
         doc.setTextColor(100, 100, 100);
     }
@@ -192,7 +192,7 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
     if (reste > 0) {
         doc.text(`⚠ Il reste ${fmt(data.reste_a_payer)} F à régler`, margin, y);
     } else {
-        doc.setTextColor(34, 197, 94);
+        doc.setTextColor(0, 0, 0);
         doc.text('✓ Toutes les factures sont soldées !', margin, y);
     }
     y += 15;

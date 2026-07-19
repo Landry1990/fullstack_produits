@@ -41,7 +41,7 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
 
     // Header
     doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
     doc.text(data.settings.pharmacy_name || 'PHARMACIE', pageWidth / 2, y, { align: 'center' });
     y += 7;
@@ -61,7 +61,7 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
 
     // Title
     doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
     doc.text('TICKET DE REGLEMENT', pageWidth / 2, y, { align: 'center' });
     y += 9;
@@ -111,12 +111,12 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
         startY: y,
         head: [['N', 'Facture', 'Total Facture', 'Montant Regle', 'Statut']],
         body: tableData,
-        theme: 'grid',
+        theme: 'plain',
         headStyles: {
-            fillColor: [245, 245, 245],
+            fillColor: [255, 255, 255],
             textColor: 0,
             fontSize: 9,
-            fontStyle: 'bold',
+            fontStyle: 'normal',
         },
         bodyStyles: {
             fontSize: 9,
@@ -136,7 +136,7 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
 
     // Recap
     doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
     doc.text('RECAPITULATIF', margin, y);
     y += 7;
@@ -152,13 +152,13 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
     doc.text(`${fmt(data.total_dettes)} F`, pageWidth - margin, y, { align: 'right' });
     y += 5;
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text('Montant regle:', recapX, y);
     doc.text(`${fmt(data.montant_regle)} F`, pageWidth - margin, y, { align: 'right' });
     y += 5;
 
     const reste = Number(data.reste_a_payer);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text('Reste a payer:', recapX, y);
     doc.text(`${fmt(data.reste_a_payer)} F`, pageWidth - margin, y, { align: 'right' });
     y += 10;

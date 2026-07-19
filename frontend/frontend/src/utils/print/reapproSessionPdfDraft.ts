@@ -54,7 +54,7 @@ export function generateReapproSessionPdfDraft(
 
   let y = 18;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
   doc.text((settings.pharmacy_name || 'PHARMACIE').toUpperCase(), margin, y);
@@ -122,9 +122,9 @@ export function generateReapproSessionPdfDraft(
       formatExpiry(adj.expiry),
       { content: `+${adj.quantity_change}`, styles: { halign: 'right' } }
     ]),
-    theme: 'grid',
+    theme: 'plain',
     headStyles: {
-      fillColor: [245, 245, 245],
+      fillColor: [255, 255, 255],
       textColor: 0,
       fontStyle: 'normal',
       fontSize: 9,

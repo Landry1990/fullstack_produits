@@ -456,54 +456,6 @@
             "avg_basket_short": "Avg. B."
         }
     },
-    "reappro": {
-        "title": "Shelf Replenishment",
-        "subtitle": "Transfer products from reserve to shelf",
-        "transfer_all": "Transfer All",
-        "print_title": "SHELF REPLENISHMENT NEEDS",
-        "print_hint": "List of products to be moved from reserve to shelf.",
-        "stats": {
-            "displayed_products": "{{count}} product(s) displayed",
-            "urgencies": "Urgencies",
-            "suggested_volume": "Suggested volume",
-            "units": "units"
-        },
-        "table": {
-            "product": "Product",
-            "level": "Level",
-            "min": "Min.",
-            "capacity": "Capac.",
-            "on_shelf": "On Shelf",
-            "in_reserve": "In Reserve",
-            "suggestion": "Reserve Exit",
-            "actions": "Actions",
-            "need_refill": "Urgent need",
-            "stabilized": "Stable",
-            "suggested": "Suggested",
-            "complete": "Complete",
-            "transfer_btn": "Move"
-        },
-        "messages": {
-            "error_loading_products": "Error loading products to replenish",
-            "no_refill_needed": "No replenishment needed for this product",
-            "transfer_success": "Transfer successful: {{count}} {{name}} moved to shelf",
-            "no_products_to_refill": "No products to replenish currently",
-            "bulk_success": "Replenishment completed: {{success}} products processed out of {{total}}",
-            "loading_stocks": "Analyzing needs...",
-            "no_reserve_products": "No products with reserve management found."
-        },
-        "modal_confirm": {
-            "title": "Global Transfer",
-            "question": "Confirm transfer?",
-            "message": "You are about to move suggested quantities from reserve for {{count}} products.",
-            "cancel": "Cancel",
-            "confirm": "Confirm Transfer"
-        },
-        "modal_sudo": {
-            "title": "Administrative Validation",
-            "message": "A pharmacist or administrator password is required to adjust stocks."
-        }
-    },
     "avoirs": {
         "title": "Returns Management",
         "subtitle": "Manage supplier returns and stock reinstatements",
@@ -973,7 +925,8 @@
             "date_from": "Start",
             "date_to": "End",
             "to": "to",
-            "clear_dates": "Clear dates"
+            "clear_dates": "Clear dates",
+            "search": "Search supplier, product, lot..."
         },
         "table": {
             "supplier": "Supplier",
@@ -982,6 +935,9 @@
             "remaining_stock": "Remaining UG Stock",
             "remaining_value": "Remaining Value (FCFA)",
             "empty": "No free units found during this period",
+            "ug_suffix": "UG",
+            "lots_badge_one": "{{count}} lot",
+            "lots_badge_other": "{{count}} lots",
             "details": {
                 "product": "Product",
                 "lot": "Lot No.",
@@ -994,10 +950,18 @@
                 "val_rest": "Rest. Value"
             }
         },
+        "dialog": {
+            "details_description": "{{count}} lot for this supplier",
+            "details_description_plural": "{{count}} lots for this supplier"
+        },
         "print_template": {
             "title": "Free Units Report",
             "situation": "Promotional stock situation as of {{date}}",
-            "footer": "End of promotional stock report"
+            "footer": "End of promotional stock report",
+            "lot_label": "Lot",
+            "invoice_label": "Inv",
+            "lots_count_one": "{{count}} lot",
+            "lots_count_other": "{{count}} lots"
         }
     },
     "ruptures": {
@@ -1058,6 +1022,50 @@
     },
     "reappro": {
         "title": "Shelf Replenishment",
+        "subtitle": "Transfer products from reserve to shelf",
+        "print_title": "SHELF REPLENISHMENT NEEDS",
+        "print_hint": "List of products to be moved from reserve to shelf.",
+        "stats": {
+            "displayed_products": "{{count}} product(s) displayed",
+            "urgencies": "Urgencies",
+            "suggested_volume": "Suggested volume",
+            "units": "units"
+        },
+        "table": {
+            "product": "Product",
+            "level": "Level",
+            "min": "Min.",
+            "capacity": "Cap.",
+            "on_shelf": "On Shelf",
+            "in_reserve": "In Reserve",
+            "suggestion": "Reserve Exit",
+            "actions": "Actions",
+            "need_refill": "Urgent Need",
+            "stabilized": "Stable",
+            "suggested": "Suggested",
+            "complete": "Complete",
+            "transfer_btn": "Exit"
+        },
+        "messages": {
+            "error_loading_products": "Error loading products to replenish",
+            "no_refill_needed": "No replenishment needed for this product",
+            "transfer_success": "Transfer successful: {{count}} {{name}} moved to shelf",
+            "no_products_to_refill": "No products to replenish currently",
+            "bulk_success": "Replenishment completed: {{success}} products processed out of {{total}}",
+            "loading_stocks": "Analyzing needs...",
+            "no_reserve_products": "No products with reserve management found."
+        },
+        "modal_confirm": {
+            "title": "Global Transfer",
+            "question": "Confirm transfer?",
+            "message": "You will move suggested quantities from reserve to shelf for {{count}} products.",
+            "cancel": "Cancel",
+            "confirm": "Confirm Transfer"
+        },
+        "modal_sudo": {
+            "title": "Administrative Validation",
+            "message": "A pharmacist or administrator password is required to adjust stock."
+        },
         "critical_alerts": "Critical Alerts",
         "suggested_volume": "Suggested Volume",
         "displayed_products": "Displayed Products",
