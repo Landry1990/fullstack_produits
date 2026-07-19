@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type ProduitModel, STOCK_ADJUSTMENT_REASONS } from '../../../types';
-import { BarChart3, X } from 'lucide-react';
+import { type ProduitModel, type StockLot, STOCK_ADJUSTMENT_REASONS } from '../../../types';
+import { BarChart3, Package } from 'lucide-react';
 import api from '../../../services/api';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
+} from '../../ui/Dialog';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Select } from '../../ui/Select';
 
 interface StockAdjustmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   selectedProduit: ProduitModel | null;
-  form: { new_quantity: string; new_reserve_quantity: string; reason_type: string };
-  setForm: (form: any) => void;
+  form: { new_quantity: string; new_reserve_quantity: string; reason_type: string; stock_lot_id?: string };
+  setForm: (form: (prev: any) => any) => void;
 }
 
 export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
@@ -22,7 +28,9 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   setForm
 }) => {
   const { t } = useTranslation(['products', 'common']);
-  const [dynamicReasons, setDynamicReasons] = useState<{value: string, label: string}[]>([]);
+  const [dynamicReasons, setDynamicReasons] = useState<{ value: string; label: string }[]>([]);
+  const [lots, setLots] = useState<StockLot[]>([]);
+  const [loadingLots, setLoadingLots] = useState(false);
 
   useEffect(() => {
     const fetchReasons = async () => {
@@ -43,112 +51,170 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
     if (isOpen) fetchReasons();
   }, [isOpen]);
 
+  useEffect(() => {
+    const fetchLots = async () => {
+      if (!selectedProduit?.id) { setLots([]); return; }
+      setLoadingLots(true);
+      try {
+        const res = await api.get(`produits/${selectedProduit.id}/`, { params: { include_lots: true } });
+        const productData = res.data;
+        const rawLots = productData.stock_lots || [];
+        const activeLots = rawLots.filter((lot: StockLot) =>
+          (lot.quantity_remaining > 0) || (lot.quantity_reserved ?? 0) > 0
+        );
+        setLots(activeLots);
+      } catch {
+        setLots([]);
+      } finally {
+        setLoadingLots(false);
+      }
+    };
+    if (isOpen && selectedProduit) fetchLots();
+    else setLots([]);
+  }, [isOpen, selectedProduit]);
+
   const allReasons = [...STOCK_ADJUSTMENT_REASONS, ...dynamicReasons];
 
-  if (!isOpen) return null;
+  const selectedLot = lots.find(l => String(l.id) === form.stock_lot_id);
+  const lotRayonQty = selectedLot?.quantity_remaining ?? 0;
+  const lotReserveQty = selectedLot?.quantity_reserved ?? 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-base-100 rounded-xl shadow-2xl border border-base-200 w-full max-w-md">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-base-200 flex items-center justify-between">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md" aria-labelledby="stock-adjust-title">
+        <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <BarChart3 className="size-5 text-primary" />
+            <div className="p-2 bg-amber-50 rounded-lg">
+              <BarChart3 className="size-5 text-amber-600" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-base-content">{t('products:adjustment.title')}</h3>
-              {selectedProduit?.name && <p className="text-xs text-base-content/50">{selectedProduit.name}</p>}
+              <DialogTitle id="stock-adjust-title">{t('products:adjustment.title')}</DialogTitle>
+              <DialogDescription>{selectedProduit?.name}</DialogDescription>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors">
-            <X className="size-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        <form className="p-6 space-y-5" onSubmit={onSubmit}>
-          <div className="bg-info/10 p-4 rounded-xl border border-blue-100 text-center">
-            <span className="text-sm text-info/70 font-medium">{t('products:adjustment.current_stock')}</span>
-            <div className="text-2xl font-bold text-info">{selectedProduit?.stock ?? 0}</div>
+        <form className="space-y-4" onSubmit={onSubmit}>
+          {/* Current stock display */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-center">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                {selectedProduit?.has_reserve_storage ? 'Rayon' : 'Stock actuel'}
+              </span>
+              <div className="text-2xl font-bold text-slate-800">{selectedProduit?.stock ?? 0}</div>
+            </div>
+            {selectedProduit?.has_reserve_storage && (
+              <div className="bg-indigo-50 rounded-xl border border-indigo-100 p-3 text-center">
+                <span className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wider">Réserve</span>
+                <div className="text-2xl font-bold text-indigo-700">{selectedProduit?.stock_reserve ?? 0}</div>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-4">
-            <div className="w-full">
-              <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">
-                {selectedProduit?.has_reserve_storage ? t('products:adjustment.new_shelf_stock') : t('products:adjustment.new_quantity')}
-              </label>
-              <input
+          {/* Lot selector */}
+          {lots.length > 0 && (
+            <Select
+              label="Lot concerné"
+              value={form.stock_lot_id || ''}
+              onChange={(e) => setForm((prev: any) => ({ ...prev, stock_lot_id: e.target.value }))}
+            >
+              <option value="">Tous les lots (global)</option>
+              {lots.map(lot => (
+                <option key={lot.id} value={lot.id}>
+                  {lot.lot || `Lot #${lot.id}`} — R: {lot.quantity_remaining} / Rés: {lot.quantity_reserved ?? 0}
+                  {lot.date_expiration ? ` · Exp: ${lot.date_expiration}` : ''}
+                </option>
+              ))}
+            </Select>
+          )}
+
+          {/* Lot info badge */}
+          {selectedLot && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
+              <Package className="size-4 shrink-0" />
+              <span>
+                Lot <strong>{selectedLot.lot || `#${selectedLot.id}`}</strong> —
+                Rayon: {lotRayonQty} / Réserve: {lotReserveQty}
+              </span>
+            </div>
+          )}
+
+          {/* New shelf quantity */}
+          <Input
+            type="number"
+            label={selectedProduit?.has_reserve_storage ? t('products:adjustment.new_shelf_stock') : t('products:adjustment.new_quantity')}
+            value={form.new_quantity}
+            onChange={(e) => setForm((prev: any) => ({ ...prev, new_quantity: e.target.value }))}
+            required
+            min={0}
+            size="lg"
+            className="text-center text-xl font-bold"
+          />
+          {form.new_quantity && selectedProduit && (
+            <div className="text-center -mt-2">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
+                parseInt(form.new_quantity) > (selectedProduit.stock || 0) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                parseInt(form.new_quantity) < (selectedProduit.stock || 0) ? 'bg-red-50 text-red-700 border border-red-100' :
+                'bg-slate-100 text-slate-500 border border-slate-200'
+              }`}>
+                {t('products:adjustment.difference')} {parseInt(form.new_quantity) - (selectedProduit.stock || 0) > 0 ? '+' : ''}
+                {parseInt(form.new_quantity) - (selectedProduit.stock || 0)}
+              </span>
+            </div>
+          )}
+
+          {/* New reserve quantity */}
+          {selectedProduit?.has_reserve_storage && (
+            <>
+              <Input
                 type="number"
-                className="w-full rounded-lg border border-base-300 bg-base-200 text-center text-xl font-bold text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none h-12 transition-all"
-                value={form.new_quantity}
-                onChange={(e) => setForm((prev: any) => ({ ...prev, new_quantity: e.target.value }))}
+                label={t('products:adjustment.new_reserve_stock')}
+                value={form.new_reserve_quantity}
+                onChange={(e) => setForm((prev: any) => ({ ...prev, new_reserve_quantity: e.target.value }))}
                 required
                 min={0}
+                size="lg"
+                className="text-center text-xl font-bold"
               />
-              {form.new_quantity && selectedProduit && (
-                <div className="mt-2 text-center">
+              {form.new_reserve_quantity && (
+                <div className="text-center -mt-2">
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
-                    parseInt(form.new_quantity) > selectedProduit.stock ? 'bg-success/10 text-success border border-emerald-100' :
-                    parseInt(form.new_quantity) < selectedProduit.stock ? 'bg-error/10 text-error border border-red-100' : 'bg-base-200 text-base-content/60 border border-base-300'
+                    parseInt(form.new_reserve_quantity) > (selectedProduit.stock_reserve || 0) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                    parseInt(form.new_reserve_quantity) < (selectedProduit.stock_reserve || 0) ? 'bg-red-50 text-red-700 border border-red-100' :
+                    'bg-slate-100 text-slate-500 border border-slate-200'
                   }`}>
-                    {t('products:adjustment.difference')} {parseInt(form.new_quantity) - (selectedProduit.stock || 0) > 0 ? '+' : ''}
-                    {parseInt(form.new_quantity) - (selectedProduit.stock || 0)}
+                    {t('products:adjustment.difference')} {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0) > 0 ? '+' : ''}
+                    {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0)}
                   </span>
                 </div>
               )}
-            </div>
+            </>
+          )}
 
-            {selectedProduit?.has_reserve_storage && (
-              <div className="w-full">
-                <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:adjustment.new_reserve_stock')}</label>
-                <input
-                  type="number"
-                  className="w-full rounded-lg border border-base-300 bg-base-200 text-center text-xl font-bold text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none h-12 transition-all"
-                  value={form.new_reserve_quantity}
-                  onChange={(e) => setForm((prev: any) => ({ ...prev, new_reserve_quantity: e.target.value }))}
-                  required
-                  min={0}
-                />
-                {form.new_reserve_quantity && (
-                  <div className="mt-2 text-center">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
-                      parseInt(form.new_reserve_quantity) > (selectedProduit.stock_reserve || 0) ? 'bg-success/10 text-success border border-emerald-100' :
-                      parseInt(form.new_reserve_quantity) < (selectedProduit.stock_reserve || 0) ? 'bg-error/10 text-error border border-red-100' : 'bg-base-200 text-base-content/60 border border-base-300'
-                    }`}>
-                      {t('products:adjustment.difference')} {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0) > 0 ? '+' : ''}
-                      {parseInt(form.new_reserve_quantity) - (selectedProduit.stock_reserve || 0)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+          {/* Reason selector */}
+          <Select
+            label={t('products:adjustment.reason_type')}
+            value={form.reason_type}
+            onChange={(e) => setForm((prev: any) => ({ ...prev, reason_type: e.target.value }))}
+            required
+          >
+            {allReasons.map(reason => (
+              <option key={reason.value} value={reason.value}>
+                {t(`products:adjustment.reasons.${reason.value}`) || reason.label}
+              </option>
+            ))}
+          </Select>
 
-            <div className="w-full">
-              <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('products:adjustment.reason_type')}</label>
-              <select
-                className="w-full rounded-lg border border-base-300 bg-base-100 text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none h-10 px-3 text-sm transition-all appearance-none"
-                value={form.reason_type}
-                onChange={(e) => setForm((prev: any) => ({ ...prev, reason_type: e.target.value }))}
-                required
-              >
-                {allReasons.map(reason => (
-                  <option key={reason.value} value={reason.value}>
-                    {t(`products:adjustment.reasons.${reason.value}`) || reason.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-5 border-t border-base-200">
-            <button type="button" className="px-6 py-2 text-sm font-medium text-base-content bg-base-100 border border-base-300 rounded-lg hover:bg-base-200 transition-colors" onClick={onClose}>{t('common:actions.cancel')}</button>
-            <button type="submit" className="px-8 py-2 text-sm font-medium text-white bg-warning rounded-lg hover:bg-warning-focus transition-colors shadow-sm" disabled={!form.new_quantity}>
-              ✓ {t('common:actions.confirm')}
-            </button>
-          </div>
+          <DialogFooter className="pt-4 border-t border-slate-200">
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t('common:actions.cancel')}
+            </Button>
+            <Button type="submit" variant="primary" disabled={!form.new_quantity}>
+              {t('common:actions.confirm')}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

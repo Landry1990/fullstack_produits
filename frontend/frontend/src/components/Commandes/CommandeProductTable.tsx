@@ -84,6 +84,8 @@ interface CommandeProductTableProps {
 
     handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
 
+    handleSellingPriceBlur?: (index: number) => void;
+
     onRemoveProduct: (index: number) => void;
 
     onCreateAvoir?: () => void; // Optional handler for creating credit note
@@ -157,6 +159,8 @@ export default function CommandeProductTable({
     onViewProductDetails,
 
     updateCommandeProduitField,
+
+    handleSellingPriceBlur,
 
     handleTableFieldKeyDown,
 
@@ -501,7 +505,7 @@ export default function CommandeProductTable({
 
                         <tr 
 
-                            className={`hover:bg-slate-100/50 group border-b border-slate-200 last:border-0 ${selectedRows.has(index) ? 'bg-indigo-50' : ''} ${highlightedIndex === index ? 'ring-2 ring-amber-400 bg-amber-50 animate-pulse' : ''}`}
+                            className={`hover:bg-slate-100/50 group border-b border-slate-200 last:border-0 ${selectedRows.has(index) ? 'bg-indigo-50' : ''} ${highlightedIndex === index ? 'ring-2 ring-amber-400 bg-amber-50 animate-pulse' : ''} ${(() => { const _price = Number(p.price || 0); const _selling = Number(p.selling_price || 0); const _tva = Number(p.tva || 0); return _price > 0 && _selling > 0 && (_selling / (1 + _tva / 100)) < _price ? 'bg-red-50' : ''; })()}`}
 
                         >
 
@@ -857,6 +861,8 @@ export default function CommandeProductTable({
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 6 : 5))}
 
                             onFocus={handleSelectAll}
+
+                            onBlur={() => handleSellingPriceBlur?.(index)}
 
                             className={`h-8 px-2 text-sm w-full text-right font-bold focus:bg-white focus:text-indigo-600 ${!fieldsConfig[5].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
 

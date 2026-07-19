@@ -10,6 +10,9 @@ import {
   LayoutDashboard,
   PackageSearch,
   Store,
+  Monitor,
+  AlertTriangle,
+  TrendingUp,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,7 +21,9 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
+  CommandSeparator,
 } from '../shadcn/command';
+import { Badge } from '../shadcn/badge';
 import type { ProduitModel, Client, Facture, Commande, Fournisseur } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
 
@@ -58,9 +63,9 @@ export default function OmnisearchResults({
   const { t } = useTranslation('common');
 
   const itemClass =
-    'flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-slate-100 text-slate-800 aria-selected:bg-blue-50 aria-selected:text-blue-600 transition-all group';
+    'flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100 text-slate-800 aria-selected:bg-blue-50 aria-selected:text-blue-600 transition-all group';
   const itemClassNav =
-    'flex items-center px-4 py-3 rounded-xl cursor-pointer hover:bg-slate-100 text-slate-800 aria-selected:bg-blue-50/50 aria-selected:text-blue-600 transition-all opacity-80 aria-selected:opacity-100';
+    'flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100 text-slate-800 aria-selected:bg-blue-50/50 aria-selected:text-blue-600 transition-all opacity-80 aria-selected:opacity-100';
 
   return (
     <CommandList className="flex-1 overflow-y-auto p-2 cmdk-list">
@@ -75,31 +80,44 @@ export default function OmnisearchResults({
         )}
       </CommandEmpty>
 
-      {!search && (
+      {!search && (<>
         <CommandGroup
           heading={t('omnisearch.groups.actions', '⚡ Actions Rapides')}
           className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
-          <CommandItem onSelect={() => onSelectAction('NEW_SALE')} value="action-new-sale" className={`${itemClass} py-3.5`}>
+          <CommandItem onSelect={() => onSelectAction('NEW_SALE')} value="action-new-sale" className={itemClass}>
             <Zap className="size-4 mr-3 text-amber-500 group-aria-selected:scale-110 transition-transform" />
             <span className="font-bold">{t('omnisearch.actions.new_sale')}</span>
           </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('NEW_PRODUCT')} value="action-new-product" className={`${itemClass} py-3.5`}>
+          <CommandItem onSelect={() => onSelectAction('NEW_PRODUCT')} value="action-new-product" className={itemClass}>
             <PlusCircle className="size-4 mr-3 text-cyan-500 group-aria-selected:scale-110 transition-transform" />
             <span className="font-bold">{t('omnisearch.actions.new_product')}</span>
           </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('NEW_CLIENT')} value="action-new-client" className={`${itemClass} py-3.5`}>
+          <CommandItem onSelect={() => onSelectAction('NEW_CLIENT')} value="action-new-client" className={itemClass}>
             <PlusCircle className="size-4 mr-3 text-emerald-600 group-aria-selected:scale-110 transition-transform" />
             <span className="font-bold">{t('omnisearch.actions.new_client')}</span>
           </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('NEW_ORDER')} value="action-new-order" className={`${itemClass} py-3.5`}>
+          <CommandItem onSelect={() => onSelectAction('NEW_ORDER')} value="action-new-order" className={itemClass}>
             <ShoppingCart className="size-4 mr-3 text-indigo-500 group-aria-selected:scale-110 transition-transform" />
             <span className="font-bold">{t('omnisearch.actions.new_order')}</span>
           </CommandItem>
+          <CommandItem onSelect={() => onSelectAction('OPEN_POS')} value="action-open-pos" className={itemClass}>
+            <Monitor className="size-4 mr-3 text-rose-500 group-aria-selected:scale-110 transition-transform" />
+            <span className="font-bold">{t('omnisearch.actions.open_pos', 'Ouvrir POS')}</span>
+          </CommandItem>
+          <CommandItem onSelect={() => onSelectAction('OPEN_PERIMES')} value="action-open-perimes" className={itemClass}>
+            <AlertTriangle className="size-4 mr-3 text-red-500 group-aria-selected:scale-110 transition-transform" />
+            <span className="font-bold">{t('omnisearch.actions.open_perimes', 'Produits périmés')}</span>
+          </CommandItem>
+          <CommandItem onSelect={() => onSelectAction('OPEN_CADENCIER')} value="action-open-cadencier" className={itemClass}>
+            <TrendingUp className="size-4 mr-3 text-emerald-500 group-aria-selected:scale-110 transition-transform" />
+            <span className="font-bold">{t('omnisearch.actions.open_cadencier', 'Cadencier')}</span>
+          </CommandItem>
         </CommandGroup>
-      )}
+        <CommandSeparator />
+      </>)}
 
-      {!search && (
+      {!search && (<>
         <CommandGroup
           heading={t('omnisearch.groups.navigation')}
           className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
@@ -129,9 +147,10 @@ export default function OmnisearchResults({
             <span className="font-medium">{t('omnisearch.nav.dashboard')}</span>
           </CommandItem>
         </CommandGroup>
-      )}
+        <CommandSeparator />
+      </>)}
 
-      {search && produits.length > 0 && (
+      {search && produits.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.products')}
           className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
@@ -153,16 +172,17 @@ export default function OmnisearchResults({
                 </span>
               </div>
               {prod.selling_price !== undefined && (
-                <span className="ml-2 px-3 py-1 bg-slate-100 text-slate-800 rounded-lg text-xs font-black tracking-tight group-aria-selected:bg-blue-600 group-aria-selected:text-white transition-colors">
+                <Badge variant="outline" className="ml-2 shrink-0 text-xs font-black tracking-tight group-aria-selected:bg-blue-600 group-aria-selected:text-white group-aria-selected:border-blue-600 transition-colors">
                   {Number(prod.selling_price).toLocaleString()} F
-                </span>
+                </Badge>
               )}
             </CommandItem>
           ))}
         </CommandGroup>
-      )}
+        <CommandSeparator />
+      </>)}
 
-      {search && clients.length > 0 && (
+      {search && clients.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.clients')}
           className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
@@ -184,9 +204,10 @@ export default function OmnisearchResults({
             </CommandItem>
           ))}
         </CommandGroup>
-      )}
+        <CommandSeparator />
+      </>)}
 
-      {search && factures.length > 0 && (
+      {search && factures.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.invoices')}
           className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
@@ -207,15 +228,16 @@ export default function OmnisearchResults({
                   {f.client_name || 'Client de passage'} • {formatDate(f.date)}
                 </span>
               </div>
-              <span className="ml-2 px-3 py-1 bg-slate-100 text-slate-800 rounded-lg text-xs font-black tracking-tight group-aria-selected:bg-blue-600 group-aria-selected:text-white transition-colors">
+              <Badge variant="outline" className="ml-2 shrink-0 text-xs font-black tracking-tight group-aria-selected:bg-blue-600 group-aria-selected:text-white group-aria-selected:border-blue-600 transition-colors">
                 {Number(f.total_ttc).toLocaleString()} F
-              </span>
+              </Badge>
             </CommandItem>
           ))}
         </CommandGroup>
-      )}
+        <CommandSeparator />
+      </>)}
 
-      {search && commandes.length > 0 && (
+      {search && commandes.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.procurements')}
           className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
@@ -239,9 +261,10 @@ export default function OmnisearchResults({
             </CommandItem>
           ))}
         </CommandGroup>
-      )}
+        <CommandSeparator />
+      </>)}
 
-      {search && fournisseurs.length > 0 && (
+      {search && fournisseurs.length > 0 && (<>
         <CommandGroup
           heading={t('omnisearch.groups.suppliers')}
           className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
@@ -263,7 +286,7 @@ export default function OmnisearchResults({
             </CommandItem>
           ))}
         </CommandGroup>
-      )}
+      </>)}
     </CommandList>
   );
 }

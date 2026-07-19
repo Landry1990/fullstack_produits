@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle, Monitor, Store } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import { formatDateShort } from '../utils/dateUtils'
@@ -61,8 +62,17 @@ function PosteRequisOverlay({ hasMyActivePoste, onOpenExisting }: { postesCaisse
 
 export default function Facturation() {
   const hook = useFacturationState()
+  const location = useLocation()
+  const navigate = useNavigate()
   const forceStockModalRef = useRef<HTMLDivElement>(null)
   const [showOpenPosteModal, setShowOpenPosteModal] = useState(false)
+
+  useEffect(() => {
+    if (location.state?.openPosteModal) {
+      setShowOpenPosteModal(true)
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location, navigate])
 
   const scan = useDatamatrixScan({
     addProduit: (p, opts) => hook.cart.addProduit(p, opts),

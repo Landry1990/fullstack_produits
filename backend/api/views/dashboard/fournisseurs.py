@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from django.core.cache import cache
 from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, ExpressionWrapper, Case, When, Exists, OuterRef
 from django.db.models.functions import TruncDay, TruncMonth, Coalesce, TruncDate
 from django.utils import timezone
@@ -21,6 +22,12 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
         For FACTURE type: returns individual invoices with due date status.
         For RELEVE type: returns grouped releves by period with due date status.
         """
+        # Cache: 2 min pour les dettes fournisseurs
+        cache_key = f"supplier_debts:{request.user.id}:{request.query_params.get('limit', '50')}:{request.query_params.get('offset', '0')}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
         from ...models import Fournisseur, CommandeProduit, PaiementFournisseur, Commande
         from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value, ExpressionWrapper
         from django.db.models.functions import Coalesce
@@ -217,11 +224,13 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
         offset = max(0, offset)
         paginated = data[offset:offset + limit]
     
-        return Response({
+        response_data = {
             'total_debt': float(total_debt_global),
             'total_suppliers': len(data),
             'limit': limit,
             'offset': offset,
             'suppliers': paginated
-        })
+        }
+        cache.set(cache_key, response_data, 120)  # 2 min
+        return Response(response_data)
     

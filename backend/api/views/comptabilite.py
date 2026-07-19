@@ -2,6 +2,7 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.core.cache import cache
 from django.db.models import Sum, Q, F
 from django.utils import timezone
 from decimal import Decimal
@@ -43,6 +44,12 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         """
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
+        
+        # Cache: 5 min pour la balance
+        cache_key = f"compta_balance:{date_debut}:{date_fin}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
         
         # 1. Calculer les soldes d'ouverture (cumul avant date_debut)
         solde_ouverture = {}
@@ -113,7 +120,7 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
                 'cloture_credit': clo_credit
             })
             
-        return Response({
+        response_data = {
             'comptes': results,
             'totaux': {
                 'ouverture_debit': total_ouv_debit,
@@ -128,13 +135,21 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
                 'mouvements': total_mvt_debit == total_mvt_credit,
                 'cloture': total_clo_debit == total_clo_credit
             }
-        })
+        }
+        cache.set(cache_key, response_data, 300)  # 5 min
+        return Response(response_data)
 
     @action(detail=False, methods=['get'])
     def compte_resultat(self, request):
         """Génère un compte de résultat simplifié (Produits - Charges)."""
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
+        
+        # Cache: 5 min
+        cache_key = f"compta_resultat:{date_debut}:{date_fin}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
         
         filters = Q()
         if date_debut: filters &= Q(ecriture__date__gte=date_debut)
@@ -170,20 +185,28 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
             'montant': valeur_stock_actuel
         })
         
-        return Response({
+        response_data = {
             'total_produits': total_produits,
             'valeur_stock': valeur_stock_actuel,
             'total_charges': total_charges,
             'resultat_net': resultat_net,
             'details_produits': details_produits,
             'details_charges': charges_qs.values('compte__numero', 'compte__libelle').annotate(montant=Sum('debit') - Sum('credit')),
-        })
+        }
+        cache.set(cache_key, response_data, 300)
+        return Response(response_data)
 
 
     @action(detail=False, methods=['get'])
     def bilan(self, request):
         """Génère un bilan simplifié (Actif vs Passif)."""
         date_fin = request.query_params.get('date_fin', timezone.now().date())
+        
+        # Cache: 5 min
+        cache_key = f"compta_bilan:{date_fin}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
         
         # Filtre cumulatif jusqu'à la date de fin
         filters = Q(ecriture__date__lte=date_fin)
@@ -250,13 +273,15 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         })
         total_passif += resultat_net
         
-        return Response({
+        response_data = {
             'total_actif': total_actif,
             'total_passif': total_passif,
             'details_actif': details_actif,
             'details_passif': details_passif,
             'equilibre': total_actif - total_passif
-        })
+        }
+        cache.set(cache_key, response_data, 300)  # 5 min
+        return Response(response_data)
 
     @action(detail=False, methods=['post'])
     def initialiser_historique(self, request):
@@ -291,6 +316,12 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         compte_numero = request.query_params.get('compte')
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
+        
+        # Cache: 5 min
+        cache_key = f"compta_grand_livre:{date_debut}:{date_fin}:{compte_numero}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
         
         filters = Q(compte__numero__startswith='4')  # Comptes tiers seulement
         
@@ -355,12 +386,14 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
             s = comptes_summary[num]
             s['solde'] = s['total_debit'] - s['total_credit']
         
-        return Response({
+        response_data = {
             'lignes': results,
             'comptes': comptes_summary,
             'date_debut': date_debut,
             'date_fin': date_fin
-        })
+        }
+        cache.set(cache_key, response_data, 300)  # 5 min
+        return Response(response_data)
 
     @action(detail=False, methods=['post'], url_path='creer_lettrage')
     def creer_lettrage(self, request):

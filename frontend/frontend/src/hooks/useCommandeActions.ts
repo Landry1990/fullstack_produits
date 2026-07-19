@@ -139,6 +139,7 @@ export function useCommandeActions({
             fetchCommandes();
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
+            setViewMode('DETAILS');
         } catch (err) {
             toast.error(getApiErrorDetail(err, "Erreur de clôture"));
             throw err;

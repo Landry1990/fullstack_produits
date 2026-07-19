@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from django.core.cache import cache
 from django.db import transaction, DatabaseError
 from django.db.models import Sum, Value, DecimalField, Count, Subquery, OuterRef
 from django.db.models.functions import Coalesce
@@ -175,7 +176,16 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
     detail_serializer_class = FactureDetailSerializer
 
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        # Cache: 60s pour la liste des factures (élimine les sous-requêtes répétées)
+        cache_key = f"factures_list:{request.user.id}:{hash(frozenset(request.query_params.items()))}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+        
+        response = super().list(request, *args, **kwargs)
+        if response.status_code == 200:
+            cache.set(cache_key, response.data, 60)
+        return response
 
     @action(detail=False, methods=['get'])
     def page_init(self, request):

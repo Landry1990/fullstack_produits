@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
 import {
   Package, Upload, RefreshCw, Search, X,
-  ChevronLeft, ChevronRight, AlertTriangle
+  ChevronLeft, ChevronRight, AlertTriangle,
+  BarChart3, Tags, Eye, EyeOff, Truck
 } from 'lucide-react'
 
 import api from '../services/api'
@@ -16,7 +17,8 @@ import type { Groupe } from '../types/catalog'
 
 import {
   useProduits, useRayons, useFournisseurs, useFormes, useGroupes,
-  useProduitLots, useProduitStats, useProduitAchats, useProduitHistory
+  useProduitLots, useProduitStats, useProduitAchats, useProduitHistory,
+  useAdjustStock
 } from '../hooks/useProduits'
 import { useTVA } from '../hooks/useTVA'
 
@@ -29,6 +31,7 @@ import SkeletonTable from './ui/SkeletonTable'
 import { ProductTabsContent } from './products/ProductTabsContent'
 import ProduitCreateModal from './ProduitFormModal'
 import PasswordConfirmModal from './PasswordConfirmModal'
+import { StockAdjustmentModal } from './products/modals/StockAdjustmentModal'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -72,12 +75,21 @@ export default function ProduitShadcn() {
   /* ── Modals ── */
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isAdjustOpen, setIsAdjustOpen] = useState(false)
   const [isPasswordOpen, setIsPasswordOpen] = useState(false)
   const [passwordConfig, setPasswordConfig] = useState({ title: '', message: '' })
   const pendingActionRef = useRef<() => Promise<void>>(() => Promise.resolve())
 
   /* ── Forms ── */
   const [editForm, setEditForm] = useState<Record<string, unknown>>({})
+  const [adjustForm, setAdjustForm] = useState({
+    new_quantity: '',
+    new_reserve_quantity: '',
+    reason_type: 'INVENTAIRE',
+    stock_lot_id: ''
+  })
+  const adjustStockMutation = useAdjustStock()
+  const [transferLoading, setTransferLoading] = useState(false)
 
   /* ── Debounce search ── */
   useEffect(() => {
@@ -160,6 +172,87 @@ export default function ProduitShadcn() {
       toast.success(t('products:messages.delete_success'))
     }
     setIsPasswordOpen(true)
+  }
+
+  const handleStockAdjustment = async () => {
+    if (!selectedProduit) return
+    try {
+      const data = await adjustStockMutation.mutateAsync({
+        id: selectedProduit.id,
+        quantity: parseInt(adjustForm.new_quantity),
+        newReserveQuantity: selectedProduit.has_reserve_storage ? parseInt(adjustForm.new_reserve_quantity || '0') : undefined,
+        reason: adjustForm.reason_type,
+        stockLotId: adjustForm.stock_lot_id ? parseInt(adjustForm.stock_lot_id) : undefined
+      })
+      const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : ''
+      toast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
+      setSelectedProduit(prev => prev ? { ...prev, stock: (prev.stock ?? 0) + (data.quantity_change ?? 0), stock_reserve: (prev.stock_reserve ?? 0) + ((data as unknown as Record<string, number>).reserve_change ?? 0) } : null)
+      setIsAdjustOpen(false)
+      refetch()
+    } catch (err) {
+      toast.error(getApiErrorDetail(err, t('products:messages.adjust_error', { defaultValue: 'Erreur lors de l\u00e9ajustement' })))
+    }
+  }
+
+  const handleStockAdjustmentSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedProduit) return
+    if (!user?.is_superuser && !user?.profile?.can_adjust_stock && !user?.can_adjust_stock) {
+      toast.error(t('products:messages.access_denied_adjust', { defaultValue: 'Acc\u00e8s refus\u00e9' })); return
+    }
+    setIsAdjustOpen(false)
+    setPasswordConfig({
+      title: t('products:messages.password_confirm_adjust_title', { defaultValue: 'Confirmation' }),
+      message: t('products:messages.password_confirm_adjust_body', {
+        name: selectedProduit.name,
+        oldStock: selectedProduit.stock,
+        newStock: adjustForm.new_quantity,
+        defaultValue: 'Confirmer ajustement'
+      })
+    })
+    pendingActionRef.current = handleStockAdjustment
+    setIsPasswordOpen(true)
+  }
+
+  const handleToggleActive = async (produit: ProduitModel) => {
+    try {
+      const response = await api.post(`produits/${produit.id}/toggle_active/`)
+      const isActive = response.data.is_active
+      toast.success(isActive ? t('products:messages.status_reactivated', { defaultValue: 'Produit r\u00e9activ\u00e9' }) : t('products:messages.status_hidden', { defaultValue: 'Produit masqu\u00e9' }))
+      setSelectedProduit(prev => prev ? { ...prev, is_active: isActive } : null)
+      refetch()
+    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.status_error', { defaultValue: 'Erreur' }))) }
+  }
+
+  const handleGenerateLabels = async (produit: ProduitModel) => {
+    const qtyStr = prompt(t('products:messages.labels_prompt', { name: produit.name, defaultValue: `Quantit\u00e9 \u00e9tiquettes pour ${produit.name}` }), "1")
+    if (!qtyStr) return
+    const quantity = parseInt(qtyStr, 10)
+    if (isNaN(quantity) || quantity <= 0) { toast.error(t('products:messages.invalid_quantity', { defaultValue: 'Quantit\u00e9 invalide' })); return }
+    try {
+      const resp = await api.post('produits/generate_labels/', { products: [{ id: produit.id, quantity }] }, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([resp.data]))
+      const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${produit.name}.pdf`)
+      document.body.appendChild(link); link.click(); link.remove()
+    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.generation_error', { defaultValue: 'Erreur g\u00e9n\u00e9ration' }))) }
+  }
+
+  const handleTransferToRayon = async (produit: ProduitModel) => {
+    if (!produit.has_reserve_storage || (produit.stock_reserve ?? 0) <= 0) return
+    const needed = Math.max(0, (produit.capacite_rayon ?? 0) - (produit.stock ?? 0))
+    const suggest = Math.min(needed, produit.stock_reserve ?? 0)
+    const qtyStr = prompt(t('products:messages.transfer_prompt', { reserve: produit.stock_reserve, capacity: produit.capacite_rayon, needed, defaultValue: 'Quantit\u00e9 \u00e0 transf\u00e9rer ?' }), String(suggest))
+    if (qtyStr === null) return
+    const qty = parseInt(qtyStr, 10)
+    if (isNaN(qty) || qty <= 0) { toast.error(t('products:messages.invalid_quantity', { defaultValue: 'Quantit\u00e9 invalide' })); return }
+    setTransferLoading(true)
+    try {
+      await api.post(`produits/${produit.id}/transfer_to_shelf/`, { quantity: qty })
+      toast.success(t('products:messages.transfer_success', { count: qty, defaultValue: `${qty} unit\u00e9s transf\u00e9r\u00e9es` }))
+      refetch()
+    } catch (err) {
+      toast.error(getApiErrorDetail(err, t('products:messages.transfer_error', { defaultValue: 'Erreur transfert' })))
+    } finally { setTransferLoading(false) }
   }
 
   const handleMovementClick = async (item: { facture?: number; commande?: number; type?: string }) => {
@@ -457,9 +550,10 @@ export default function ProduitShadcn() {
                           ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'bg-amber-50 text-amber-600' :
                           'bg-emerald-50 text-emerald-600'
                         }`}>
-                          Stock: {selectedProduit.total_stock ?? selectedProduit.stock ?? 0}
-                          {selectedProduit.has_reserve_storage && (
-                            <> / Réserve: {selectedProduit.stock_reserve ?? 0}</>
+                          {selectedProduit.has_reserve_storage ? (
+                            <>Rayon: {selectedProduit.stock ?? 0} / Réserve: {selectedProduit.stock_reserve ?? 0}</>
+                          ) : (
+                            <>Stock: {selectedProduit.stock ?? 0}</>
                           )}
                         </span>
                       </div>
@@ -469,9 +563,27 @@ export default function ProduitShadcn() {
                         {selectedProduit.cip3 && <p className="text-sm text-slate-400 font-mono">• <span className="text-slate-600">{selectedProduit.cip3}</span></p>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button variant="outline" size="sm" onClick={() => handleOpenEdit(selectedProduit)}>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setAdjustForm({
+                          new_quantity: String(selectedProduit?.stock || 0),
+                          new_reserve_quantity: String(selectedProduit?.stock_reserve || 0),
+                          reason_type: 'INVENTAIRE',
+                          stock_lot_id: ''
+                        })
+                        setIsAdjustOpen(true)
+                      }} leftIcon={<BarChart3 className="size-4" />} title={t('products:actions.adjust_stock', { defaultValue: 'Ajuster le stock' })}>
+                        {t('products:actions.adjust_stock', { defaultValue: 'Stock' })}
+                      </Button>
+                      {selectedProduit.has_reserve_storage && (selectedProduit.stock_reserve ?? 0) > 0 && (
+                        <Button variant="outline" size="sm" onClick={() => handleTransferToRayon(selectedProduit)} disabled={transferLoading} leftIcon={<Truck className="size-4" />} title={t('products:actions.refill_rayon', { defaultValue: 'R\u00e9approvisionner rayon' })} />
+                      )}
+                      <Button variant="outline" size="sm" onClick={() => handleGenerateLabels(selectedProduit)} leftIcon={<Tags className="size-4" />} title={t('products:actions.labels', { defaultValue: '\u00c9tiquettes' })} />
+                      <Button variant="outline" size="sm" onClick={() => handleOpenEdit(selectedProduit)} title={t('common:actions.edit', { defaultValue: 'Modifier' })}>
                         {t('common:actions.edit', { defaultValue: 'Modifier' })}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleToggleActive(selectedProduit)} title={selectedProduit.is_active === false ? t('products:actions.reactivate', { defaultValue: 'R\u00e9activer' }) : t('products:actions.deactivate', { defaultValue: 'D\u00e9sactiver' })}>
+                        {selectedProduit.is_active === false ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                       </Button>
                       <Button variant="danger" size="sm" onClick={() => handleDelete(selectedProduit)}>
                         {t('common:actions.delete', { defaultValue: 'Supprimer' })}
@@ -513,6 +625,11 @@ export default function ProduitShadcn() {
         fournisseurs={fournisseurs}
         formes={formes}
         groupes={groupes as unknown as Groupe[]}
+      />
+      <StockAdjustmentModal
+        isOpen={isAdjustOpen} onClose={() => setIsAdjustOpen(false)}
+        selectedProduit={selectedProduit} form={adjustForm} setForm={setAdjustForm}
+        onSubmit={handleStockAdjustmentSubmit}
       />
       <PasswordConfirmModal
         isOpen={isPasswordOpen}

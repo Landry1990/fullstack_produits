@@ -138,11 +138,12 @@ const produitService = {
         await api.delete(`produits/${id}/`);
     },
 
-    adjustStock: async (id: number, quantity?: number, reason?: string, newReserveQuantity?: number): Promise<ProduitModel> => {
+    adjustStock: async (id: number, quantity?: number, reason?: string, newReserveQuantity?: number, stockLotId?: number): Promise<ProduitModel> => {
         const response = await api.post<ProduitModel>(`produits/${id}/adjust_stock/`, {
             new_quantity: quantity,
             new_reserve_quantity: newReserveQuantity,
-            reason_type: reason
+            reason_type: reason,
+            stock_lot_id: stockLotId
         });
         return response.data;
     },
@@ -185,6 +186,11 @@ const produitService = {
 
     getReapproHistory: async (): Promise<any[]> => {
         const response = await api.get('reappro-sessions/');
+        return response.data;
+    },
+
+    getReapproSessionDetails: async (sessionId: number): Promise<any> => {
+        const response = await api.get(`reappro-sessions/${sessionId}/`);
         return response.data;
     },
 

@@ -1,33 +1,76 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import {
+  History,
+  ChevronLeft,
+  Download,
+  Calendar,
+  User,
+  Search,
+  Eye,
+  Package,
+  Loader2,
+} from 'lucide-react';
 import produitService from '../../services/produitService';
 import { formatDate } from '../../utils/dateUtils';
-import { 
-  History, 
-  ChevronLeft, 
-  Download, 
-  Calendar, 
-  User, 
-  Search,
-  Eye
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-import PremiumModal from '../common/PremiumModal';
+import { generateReapproSessionPdfDraft } from '../../utils/print/reapproSessionPdfDraft';
+import { usePharmacySettings } from '../../hooks/usePharmacySettings';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Badge } from '../ui/Badge';
+import { Card } from '../ui/Card';
+import { Skeleton } from '../ui/Skeleton';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '../ui/Table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../ui/Dialog';
+
+interface ReapproAdjustment {
+  id: number;
+  produit_name: string;
+  lot_num: string | null;
+  expiry: string | null;
+  quantity_change: number;
+}
+
+interface ReapproSession {
+  id: number;
+  created_at: string;
+  user_name: string | null;
+  total_products: number;
+  total_units: number;
+  adjustments: ReapproAdjustment[];
+}
 
 export default function ReapproHistory() {
   const { t } = useTranslation(['stock', 'common']);
-  const [history, setHistory] = useState<any>([]);
+  const { settings } = usePharmacySettings();
+  const [history, setHistory] = useState<ReapproSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSession, setSelectedSession] = useState<any | null>(null);
+  const [selectedSession, setSelectedSession] = useState<ReapproSession | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const data = await produitService.getReapproHistory();
-      setHistory(data);
+      const data: any = await produitService.getReapproHistory();
+      const results = Array.isArray(data) ? data : (data?.results ?? []);
+      setHistory(results as ReapproSession[]);
     } catch (error) {
       console.error('Error fetching history:', error);
       toast.error("Erreur lors du chargement de l'historique");
@@ -40,65 +83,61 @@ export default function ReapproHistory() {
     fetchHistory();
   }, []);
 
-  const handleDownloadPdf = async (sessionId: number) => {
-    setDownloadingId(sessionId);
+  const handleDownloadPdf = async (session: ReapproSession) => {
+    setDownloadingId(session.id);
     try {
-      const blob = await produitService.getReapproSessionPdf(sessionId);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `reappro_session_${sessionId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("PDF téléchargé avec succès");
+      generateReapproSessionPdfDraft(session, settings).save(
+        `reappro_session_${session.id}_${new Date(session.created_at).toISOString().slice(0, 10).replace(/-/g, '')}.pdf`
+      );
+      toast.success('PDF téléchargé avec succès');
     } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast.error("Erreur lors de la génération du PDF");
+      console.error('Error generating PDF:', error);
+      toast.error('Erreur lors de la génération du PDF');
     } finally {
       setDownloadingId(null);
     }
   };
 
-  const getHistoryArray = () => {
-    if (Array.isArray(history)) return history;
-    if (history && typeof history === 'object' && 'results' in history && Array.isArray(history.results)) {
-      return history.results;
-    }
-    return [];
-  };
-
-  const filteredHistory = getHistoryArray().filter((h: any) => 
-    h.id.toString().includes(searchQuery) || 
-    (h.user_name && h.user_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredHistory = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return history;
+    return history.filter(
+      (h) =>
+        h.id.toString().includes(query) ||
+        (h.user_name && h.user_name.toLowerCase().includes(query))
+    );
+  }, [history, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
-      
+    <div className="min-h-screen bg-slate-50 p-6 space-y-6 font-sans">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <Link to="/app/reappro-rayon" className="btn btn-ghost btn-circle bg-base-100 shadow-sm border border-base-300">
-            <ChevronLeft className="size-5" />
+          <Link to="/app/reappro-rayon">
+            <Button variant="outline" size="sm" className="rounded-full w-10 h-10 p-0">
+              <ChevronLeft className="size-5" />
+            </Button>
           </Link>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-600 text-white rounded-2xl shadow-lg shadow-purple-600/20">
+            <div className="p-3 bg-slate-900 text-white rounded-xl shadow-sm">
               <History className="size-6" />
             </div>
             <div>
-                <h1 className="text-2xl font-black text-base-content tracking-tight">Historique Réappro</h1>
-                <p className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mt-0.5">Suivi des transferts Réserve &rarr; Rayon</p>
+              <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+                Historique Réappro
+              </h1>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mt-0.5">
+                Suivi des transferts Réserve → Rayon
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="relative max-w-md w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-base-content/30" />
-          <input 
-            type="text" 
-            placeholder="Rechercher par N° ou utilisateur..." 
-            className="input input-sm h-11 w-full pl-11 bg-base-100 border-base-300 focus:border-purple-600 rounded-xl text-sm font-bold transition-all"
+        <div className="w-full max-w-md">
+          <Input
+            type="text"
+            placeholder="Rechercher par N° ou utilisateur..."
+            icon={<Search className="size-4" />}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -106,157 +145,207 @@ export default function ReapproHistory() {
       </div>
 
       {/* Main Content */}
-      <div className="bg-base-100 rounded-3xl shadow-sm border border-base-300 overflow-hidden">
+      <Card variant="default" padding="none" className="rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table w-full">
-            <thead>
-              <tr className="bg-base-200/30 border-b border-base-200">
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40">Session</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40">Date & Heure</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40">Utilisateur</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">Produits</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">Unités</th>
-                <th className="bg-transparent text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-                {loading ? (
-                    <tr>
-                        <td colSpan={6} className="py-24 text-center">
-                            <span className="loading loading-spinner loading-lg text-purple-600"></span>
-                        </td>
-                    </tr>
-                ) : filteredHistory.length === 0 ? (
-                    <tr>
-                        <td colSpan={6} className="py-24 text-center">
-                            <div className="flex flex-col items-center justify-center text-base-content/20">
-                                <History className="size-16 mb-4" />
-                                <h3 className="text-xl font-black uppercase tracking-tight">Aucun historique trouvé</h3>
-                            </div>
-                        </td>
-                    </tr>
-                ) : (
-                    filteredHistory.map((session: any) => (
-                        <tr key={session.id} className="hover:bg-base-200/30 transition-all border-b border-base-200/50 group">
-                            <td>
-                                <span className="bg-secondary/20 text-purple-700 px-3 py-1 rounded-lg text-[10px] font-black">
-                                    #{session.id}
-                                </span>
-                            </td>
-                            <td>
-                                <div className="flex items-center gap-2">
-                                    <Calendar className="size-3.5 text-base-content/30" />
-                                    <span className="text-xs font-bold">{new Date(session.created_at).toLocaleString()}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div className="flex items-center gap-2">
-                                    <div className="size-6 bg-base-200 rounded-full flex items-center justify-center">
-                                        <User className="size-3 opacity-40" />
-                                    </div>
-                                    <span className="text-xs font-bold">{session.user_name || 'Inconnu'}</span>
-                                </div>
-                            </td>
-                            <td className="text-center font-black text-xs">
-                                {session.total_products}
-                            </td>
-                            <td className="text-center font-black text-xs text-purple-600">
-                                {session.total_units}
-                            </td>
-                            <td className="text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                    <button 
-                                        onClick={() => setSelectedSession(session)}
-                                        className="btn btn-sm btn-ghost hover:bg-base-200 text-[10px] font-black uppercase tracking-widest gap-2 rounded-xl"
-                                    >
-                                        <Eye className="size-3.5" />
-                                        Voir
-                                    </button>
-                                    <button 
-                                        onClick={() => handleDownloadPdf(session.id)}
-                                        className={`btn btn-sm btn-primary bg-purple-600 hover:bg-purple-700 border-none text-[10px] font-black uppercase tracking-widest gap-2 rounded-xl shadow-md shadow-purple-600/10 ${downloadingId === session.id ? 'loading' : ''}`}
-                                        disabled={downloadingId === session.id}
-                                    >
-                                        {!downloadingId && <Download className="size-3.5" />}
-                                        PDF
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))
-                )}
-            </tbody>
-          </table>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Session</TableHead>
+                <TableHead>Date & Heure</TableHead>
+                <TableHead>Utilisateur</TableHead>
+                <TableHead className="text-center">Produits</TableHead>
+                <TableHead className="text-center">Unités</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredHistory.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-24 text-center">
+                    <div className="flex flex-col items-center justify-center text-slate-300">
+                      <History className="size-16 mb-4" />
+                      <h3 className="text-lg font-medium text-slate-600">
+                        Aucun historique trouvé
+                      </h3>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredHistory.map((session) => (
+                  <TableRow key={session.id}>
+                    <TableCell>
+                      <Badge variant="outline" size="sm">
+                        #{session.id}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <Calendar className="size-3.5 text-slate-400" />
+                        <span className="text-sm font-medium">
+                          {new Date(session.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="size-6 bg-slate-100 rounded-full flex items-center justify-center">
+                          <User className="size-3 text-slate-500" />
+                        </div>
+                        <span className="text-sm font-medium text-slate-700">
+                          {session.user_name || 'Inconnu'}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="text-sm font-medium text-slate-700">
+                        {session.total_products}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="success" size="sm">
+                        {session.total_units}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          leftIcon={<Eye className="size-3.5" />}
+                          onClick={() => setSelectedSession(session)}
+                        >
+                          Voir
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          leftIcon={
+                            downloadingId === session.id ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Download className="size-3.5" />
+                            )
+                          }
+                          onClick={() => handleDownloadPdf(session)}
+                          disabled={downloadingId === session.id}
+                        >
+                          PDF
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
-      </div>
+      </Card>
 
-      {/* Detail Modal */}
-      <PremiumModal
-        isOpen={!!selectedSession}
-        onClose={() => setSelectedSession(null)}
-        title={`Détails du réappro #${selectedSession?.id}`}
-        maxWidth="max-w-2xl"
-      >
-        <div className="p-6">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-base-200 p-4 rounded-2xl">
-                    <p className="text-[10px] font-black text-base-content/30 uppercase tracking-widest mb-1">Résumé</p>
-                    <p className="text-sm font-black whitespace-pre-wrap">
-                        {selectedSession?.total_products} produits transférés<br/>
-                        {selectedSession?.total_units} unités au total
-                    </p>
+      {/* Detail Dialog */}
+      <Dialog open={!!selectedSession} onOpenChange={(open) => !open && setSelectedSession(null)}>
+        <DialogContent className="max-w-2xl rounded-2xl p-0 overflow-hidden">
+          <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-slate-100 text-slate-700 rounded-lg">
+                  <Package className="size-5" />
                 </div>
-                <div className="bg-base-200 p-4 rounded-2xl">
-                    <p className="text-[10px] font-black text-base-content/30 uppercase tracking-widest mb-1">Effectué le</p>
-                    <p className="text-sm font-black">
-                        {selectedSession && new Date(selectedSession.created_at).toLocaleString()}
-                    </p>
+                <div>
+                  <DialogTitle className="text-lg font-semibold text-slate-900">
+                    Détails du réappro #{selectedSession?.id}
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-slate-500">
+                    Transfert Réserve → Rayon
+                  </DialogDescription>
                 </div>
+              </div>
+            </DialogHeader>
+          </div>
+
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <Card variant="bordered" padding="md" className="rounded-xl">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                  Résumé
+                </p>
+                <p className="text-sm font-semibold text-slate-800">
+                  {selectedSession?.total_products} produits transférés
+                  <br />
+                  {selectedSession?.total_units} unités au total
+                </p>
+              </Card>
+              <Card variant="bordered" padding="md" className="rounded-xl">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                  Effectué le
+                </p>
+                <p className="text-sm font-semibold text-slate-800">
+                  {selectedSession && new Date(selectedSession.created_at).toLocaleString()}
+                </p>
+              </Card>
             </div>
 
-            <div className="bg-base-100 border border-base-200 rounded-2xl overflow-hidden mb-6">
-                <table className="table table-compact w-full">
-                    <thead>
-                        <tr className="bg-base-200 text-[9px] font-black uppercase tracking-widest">
-                            <th>Produit</th>
-                            <th>Lot / Exp</th>
-                            <th className="text-center">Qté</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {selectedSession?.adjustments?.map((adj: any) => (
-                            <tr key={adj.id} className="border-b border-base-100 last:border-none">
-                                <td className="text-xs font-bold">{adj.produit_name}</td>
-                                <td className="text-[10px]">
-                                    <div className="flex flex-col">
-                                        <span className="font-black text-base-content/60">{adj.lot_num}</span>
-                                        <span className="opacity-40">{formatDate(adj.expiry) !== '-' ? formatDate(adj.expiry) : 'N/A'}</span>
-                                    </div>
-                                </td>
-                                <td className="text-center font-black text-xs text-purple-600">+{adj.quantity_change}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <Card variant="bordered" padding="none" className="rounded-xl overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Produit</TableHead>
+                    <TableHead>Lot / Exp</TableHead>
+                    <TableHead className="text-center">Qté</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedSession?.adjustments?.map((adj) => (
+                    <TableRow key={adj.id}>
+                      <TableCell className="text-sm font-medium text-slate-700">
+                        {adj.produit_name}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col text-xs">
+                          <span className="font-medium text-slate-600">{adj.lot_num}</span>
+                          <span className="text-slate-400">
+                            {formatDate(adj.expiry) !== '-' ? formatDate(adj.expiry) : 'N/A'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="success" size="sm">
+                          +{adj.quantity_change}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
 
-            <div className="flex gap-3 mt-4">
-                <button 
-                    className="btn btn-ghost flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest"
-                    onClick={() => setSelectedSession(null)}
+            <DialogFooter className="pt-2">
+              <Button variant="outline" onClick={() => setSelectedSession(null)}>
+                Fermer
+              </Button>
+              {selectedSession && (
+                <Button
+                  leftIcon={<Download className="size-4" />}
+                  onClick={() => handleDownloadPdf(selectedSession)}
+                  disabled={downloadingId === selectedSession.id}
                 >
-                    Fermer
-                </button>
-                <button 
-                    className="btn btn-primary flex-1 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-purple-600/20 bg-purple-600 hover:bg-purple-700 border-none"
-                    onClick={() => handleDownloadPdf(selectedSession.id)}
-                >
-                    Télécharger la confirmation
-                </button>
-            </div>
-        </div>
-      </PremiumModal>
-
+                  Télécharger la confirmation
+                </Button>
+              )}
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

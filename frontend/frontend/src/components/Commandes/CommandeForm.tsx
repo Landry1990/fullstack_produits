@@ -78,6 +78,7 @@ interface CommandeFormProps {
         value: string | number
     ) => void;
     handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
+    handleSellingPriceBlur?: (index: number) => void;
     onRemoveProduct: (index: number) => void;
     onCreateAvoir?: () => void; // Optional handler for creating credit note
     commandeSortBy?: 'chrono' | 'stock' | 'name' | 'qty';
@@ -144,6 +145,7 @@ export default function CommandeForm({
     deleteSelectedRows,
     openTransferModal,
     updateCommandeProduitField,
+    handleSellingPriceBlur,
     handleTableFieldKeyDown,
     onRemoveProduct,
     onCreateAvoir,
@@ -329,6 +331,7 @@ export default function CommandeForm({
                 deleteSelectedRows={deleteSelectedRows}
                 openTransferModal={openTransferModal}
                 updateCommandeProduitField={updateCommandeProduitField}
+                handleSellingPriceBlur={handleSellingPriceBlur}
                 handleTableFieldKeyDown={handleTableFieldKeyDown}
                 onRemoveProduct={onRemoveProduct}
                 onViewProductDetails={onViewProductDetails}

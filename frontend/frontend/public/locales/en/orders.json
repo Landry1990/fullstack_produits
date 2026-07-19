@@ -368,7 +368,10 @@
         "create_new_product": "Do you want to create a new product?",
         "validation_required": "Validation required",
         "no_deletable_orders": "None of the selected orders can be deleted (they may be closed).",
-        "some_orders_closed_warning": "Some closed orders were ignored during deletion."
+        "some_orders_closed_warning": "Some closed orders were ignored during deletion.",
+        "selling_below_cost": "Selling price ({{selling}}) below purchase price ({{cost}}) for {{product}}",
+        "selling_below_cost_title": "Selling Below Cost Detected",
+        "selling_below_cost_confirm": "Force close"
     },
     "history": {
         "title": "Purchase History",

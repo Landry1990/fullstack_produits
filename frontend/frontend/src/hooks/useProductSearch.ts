@@ -8,6 +8,7 @@ interface UseProductSearchOptions {
     minSearchLength?: number
     debounceMs?: number
     autoLoad?: boolean
+    pageSize?: number
     /** Callback when a barcode scan is detected and matches exactly one product */
     onBarcodeMatch?: (product: ProduitModel) => void
     /** Minimum length for barcode detection (default: 7 for CIP codes) */
@@ -41,6 +42,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         minSearchLength = 2,
         debounceMs = 200,
         autoLoad = false,
+        pageSize = 20,
         onBarcodeMatch,
         minBarcodeLength = 7
     } = options
@@ -90,7 +92,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
             return []
         }
 
-        const params = search ? { search } : undefined
+        const params = search ? { search, page_size: pageSize } : { page_size: pageSize }
         const response = await api.get('produits/', { params })
         const produitsData = response.data as ProduitModel[] | PaginatedResponse<ProduitModel>
         return Array.isArray(produitsData) ? produitsData : (produitsData.results || [])
@@ -100,7 +102,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
     const shouldFetch = autoLoad || (!!debouncedSearch && debouncedSearch.length >= minSearchLength)
 
     const { data: produits = [], isLoading: loading, isFetching, error, refetch } = useQuery({
-        queryKey: ['products', 'search', debouncedSearch, autoLoad],
+        queryKey: ['products', 'search', debouncedSearch, autoLoad, pageSize],
         queryFn: () => fetchProducts(debouncedSearch, autoLoad),
         enabled: shouldFetch,
         staleTime: 1000 * 30, // 30 secondes — réduit les requêtes lors de la navigation rapide

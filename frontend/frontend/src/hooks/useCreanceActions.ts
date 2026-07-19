@@ -5,8 +5,8 @@ import type { Creance } from '../types';
 import { useSudo } from './useSudo';
 import creanceService from '../services/creanceService';
 import { usePharmacySettings } from './usePharmacySettings';
-import { generateRelevePdf } from '../utils/print/relevePdf';
-import { generateTicketReglementPdf } from '../utils/print/ticketReglementPdf';
+import { generateRelevePdfDraft } from '../utils/print/relevePdfDraft';
+import { generateTicketReglementPdfDraft } from '../utils/print/ticketReglementPdfDraft';
 
 interface UseCreanceActionsProps {
     refresh: () => void;
@@ -199,7 +199,7 @@ export const useCreanceActions = ({
                         });
                     });
                     
-                    const ticketDoc = generateTicketReglementPdf({
+                    const ticketDoc = generateTicketReglementPdfDraft({
                         reference: data.releve_reference || `REL-${releveId}`,
                         date: new Date().toISOString(),
                         client_name: clientName,
@@ -247,7 +247,7 @@ export const useCreanceActions = ({
                 ...(dateFin ? { date_fin: dateFin } : {}),
             });
 
-            const doc = generateRelevePdf({
+            const doc = generateRelevePdfDraft({
                 client: releveData.client,
                 creances: releveData.creances,
                 totaux: releveData.totaux,

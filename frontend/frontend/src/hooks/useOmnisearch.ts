@@ -45,7 +45,7 @@ export default function useOmnisearch() {
       const isInModal = activeElement?.closest('[role="dialog"]') !== null;
       const isTyping = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
 
-      if (e.code === 'KeyK' && (e.metaKey || e.ctrlKey)) {
+      if (e.code === 'KeyK' && (e.metaKey || e.ctrlKey) && !isTyping) {
         e.preventDefault();
         if (!isInModal || open) {
           setOpen((prev) => !prev);
@@ -151,8 +151,9 @@ export default function useOmnisearch() {
             return newCache;
           });
         }
-      } catch (err: any) {
-        if (err.name !== 'AbortError' && !controller.signal.aborted) {
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        if (error.name !== 'AbortError' && !controller.signal.aborted) {
           console.error('Erreur Omnisearch:', err);
           setError(t('omnisearch.error', 'Erreur de recherche'));
         }
@@ -208,7 +209,7 @@ export default function useOmnisearch() {
       else if (commandes.length > 0) setActiveValue(`commande-${commandes[0].id}`);
       else if (fournisseurs.length > 0) setActiveValue(`fournisseur-${fournisseurs[0].id}`);
     }
-  }, [produits, clients, factures, commandes, fournisseurs, open]);
+  }, [produits, clients, factures, commandes, fournisseurs, open, activeValue]);
 
   const onSelectLink = useCallback(
     (path: string) => {
@@ -233,6 +234,12 @@ export default function useOmnisearch() {
         navigate('/app/clients', { state: { action } });
       } else if (action === 'NEW_ORDER') {
         navigate('/app/commandes', { state: { action } });
+      } else if (action === 'OPEN_POS') {
+        navigate('/app/facturation', { state: { openPosteModal: true } });
+      } else if (action === 'OPEN_PERIMES') {
+        navigate('/app/perimes');
+      } else if (action === 'OPEN_CADENCIER') {
+        navigate('/app/cadencier');
       }
     },
     [navigate]

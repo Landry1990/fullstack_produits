@@ -196,7 +196,8 @@ class ProduitStockMixin:
         
         produit.stock = new_quantity
         produit.stock_reserve = new_reserve_quantity
-        produit.save(update_fields=['stock', 'stock_reserve'])
+        produit.version += 1
+        produit.save(update_fields=['stock', 'stock_reserve', 'version'])
         
         if stock_lot:
             if quantity_change != 0:
@@ -361,7 +362,12 @@ class ProduitStockMixin:
 
                     produit.stock += quantity
                     produit.stock_reserve -= quantity
-                    produit.save(update_fields=['stock', 'stock_reserve'])
+                    oldest_shelf_lot = produit.stock_lots.filter(quantity_remaining__gt=0).order_by('date_reception').first()
+                    if oldest_shelf_lot:
+                        produit.selling_price = oldest_shelf_lot.selling_price
+                        produit.expire_date = oldest_shelf_lot.date_expiration
+                    produit.version += 1
+                    produit.save(update_fields=['stock', 'stock_reserve', 'selling_price', 'expire_date', 'version'])
                     
                     MouvementStock.objects.create(
                         produit=produit, type_mouvement=MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK,
