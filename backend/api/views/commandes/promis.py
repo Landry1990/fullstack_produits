@@ -51,21 +51,33 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             )
             return
 
-        if produit.stock < promis.quantite:
+        total_available = produit.stock + (produit.stock_reserve or 0)
+        if total_available < promis.quantite:
             raise ValueError(
-                f"Stock insuffisant pour réserver {promis.quantite} unité(s) de {produit.name}."
+                f"Stock insuffisant pour réserver {promis.quantite} unité(s) de {produit.name}. "
+                f"Stock total: {total_available} (Rayon: {produit.stock}, Réserve: {produit.stock_reserve or 0})."
             )
 
-        produit.stock -= promis.quantite
-        produit.save(update_fields=['stock'])
+        # Puiser d'abord dans le rayon, puis dans la réserve si nécessaire
+        from_rayon = min(produit.stock, promis.quantite)
+        from_reserve = promis.quantite - from_rayon
 
+        produit.stock -= from_rayon
+        if from_reserve > 0:
+            produit.stock_reserve = (produit.stock_reserve or 0) - from_reserve
+        produit.version += 1
+        produit.save(update_fields=['stock', 'stock_reserve', 'version'])
+
+        desc_parts = [f"Rayon: {-from_rayon:+d}"]
+        if from_reserve > 0:
+            desc_parts.append(f"Réserve: {-from_reserve:+d}")
         MouvementStock.objects.create(
             produit=produit,
             type_mouvement=MouvementStock.TypeMouvement.SORTIE,
             quantite=-promis.quantite,
             stock_apres=produit.total_stock,
             user=promis.created_by,
-            description=f"Réservation stock - Promis #{promis.id} (Client: {promis.client_display})"
+            description=f"Réservation stock - Promis #{promis.id} ({', '.join(desc_parts)}) (Client: {promis.client_display})"
         )
 
     @transaction.atomic
@@ -134,8 +146,19 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
         stock_reintegre = 0
         if produit and not produit.use_lot_management:
-            produit.stock += promis.quantite
-            produit.save(update_fields=['stock'])
+            # Restaurer d'abord dans le rayon jusqu'à capacite_rayon, puis le reste en réserve
+            if produit.has_reserve_storage and produit.capacite_rayon > 0:
+                space_in_rayon = max(0, produit.capacite_rayon - produit.stock)
+                to_rayon = min(promis.quantite, space_in_rayon)
+                to_reserve = promis.quantite - to_rayon
+            else:
+                to_rayon = promis.quantite
+                to_reserve = 0
+            produit.stock += to_rayon
+            if to_reserve > 0:
+                produit.stock_reserve = (produit.stock_reserve or 0) + to_reserve
+            produit.version += 1
+            produit.save(update_fields=['stock', 'stock_reserve', 'version'])
             stock_reintegre = promis.quantite
 
         # 2. Mouvement de traçabilité

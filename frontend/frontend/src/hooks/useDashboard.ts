@@ -64,6 +64,33 @@ export const useDashboardStats = () => {
     });
 };
 
+interface HeavyStats {
+    margin_today?: number;
+    dormant_stock?: {
+        total_value: number;
+        top_products: Array<{
+            id: number;
+            name: string;
+            stock: number;
+            last_sale: string | null;
+            value: number;
+        }>;
+    };
+}
+
+export const useDashboardHeavyStats = () => {
+    return useQuery<HeavyStats>({
+        queryKey: ['dashboard', 'statsHeavy'],
+        queryFn: async () => {
+            const response = await api.get<HeavyStats>('dashboard/stats_heavy/');
+            return response.data;
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
+        refetchIntervalInBackground: false,
+    });
+};
+
 export const useRevenueChart = () => {
     return useQuery<RevenueChartData>({
         queryKey: ['dashboard', 'revenueChart'],
@@ -378,5 +405,33 @@ export const useReapproStats = (enabled: boolean = true) => {
         enabled,
         staleTime: 1000 * 60 * 2, // 2 minutes
         refetchInterval: enabled ? 1000 * 60 * 2 : false,
+    });
+};
+
+export interface TransformationNeededItem {
+    relation_id: number;
+    source_id: number;
+    source_name: string;
+    source_stock: number;
+    destination_id: number;
+    destination_name: string;
+    destination_stock: number;
+    destination_min: number;
+    ratio: number;
+    qty_transformable: number;
+    qty_dest_obtained: number;
+}
+
+export const useTransformationAlerts = (enabled: boolean = true) => {
+    return useQuery<{ count: number; items: TransformationNeededItem[] }>({
+        queryKey: ['dashboard', 'transformation_alerts'],
+        queryFn: async () => {
+            const response = await api.get<{ count: number; items: TransformationNeededItem[] }>('relations-transformation/transformations_needed/');
+            return response.data;
+        },
+        enabled,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchInterval: enabled ? 1000 * 60 * 5 : false,
+        refetchIntervalInBackground: false,
     });
 };

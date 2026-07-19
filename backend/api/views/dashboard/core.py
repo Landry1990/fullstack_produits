@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from ...models import Facture, Commande, Produit, Client, StockLot, Caisse, ObjectifCommercial, FactureProduit, FactureProduitAllocation
+from ...dashboard_cache import DashboardCache
 
 
 class DashboardCoreMixin(viewsets.ViewSet):
@@ -50,6 +51,12 @@ class DashboardCoreMixin(viewsets.ViewSet):
     
         if request.user.is_superuser or request.user.is_staff:
             role = 'PHARMACIEN'
+    
+        # Cache: 30s pour les stats temps réel (CA, ventes, stock)
+        user_id = request.user.id if request.user.is_authenticated else 0
+        cached = DashboardCache.get_stats(user_id, role)
+        if cached is not None:
+            return Response(cached)
     
         # 1. Combined Global & User Metrics (Factures)
         global_stats = {}
@@ -161,47 +168,6 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 for p in top_products
             ]
     
-            # 6. Today's Margin (Centralized calculation with discounts)
-            from ...services.margin_service import MarginService
-            margin_stats = MarginService.calculate_period_margin_with_discounts(
-                date_debut=today,
-                date_fin=today + timedelta(days=1),
-                exclude_is_divers=False  # Dashboard includes is_divers
-            )
-            margin_today = margin_stats['marge_brute']
-    
-            # 7. Dormant Stock (6 months defaults)
-            dormant_threshold = today - timedelta(days=6 * 30)
-    
-            dormant_qs = Produit.objects.filter(stock__gt=0).filter(
-                Q(dernier_vente__lte=dormant_threshold) |
-                (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=dormant_threshold)) |
-                (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=dormant_threshold))
-            ).annotate(
-                dormant_value=ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())
-            )
-    
-            dormant_total = dormant_qs.aggregate(
-                total_val=Coalesce(Sum('dormant_value'), Decimal('0'))
-            )['total_val']
-    
-            top_dormant = dormant_qs.order_by('-dormant_value').values(
-                'id', 'name', 'stock', 'pmp', 'dernier_vente', 'dormant_value'
-            )[:5]
-    
-            dormant_stock_data = {
-                'total_value': float(dormant_total),
-                'top_products': [
-                    {
-                        'id': p['id'],
-                        'name': p['name'],
-                        'stock': p['stock'],
-                        'last_sale': p['dernier_vente'].isoformat() if p['dernier_vente'] else None,
-                        'value': float(p['dormant_value'])
-                    }
-                    for p in top_dormant
-                ]
-            }
         user_avg_basket = (user_ca_today / user_sales_count) if user_sales_count > 0 else Decimal('0')
     
         # Base response
@@ -225,10 +191,74 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 'stock_value': {'value': float(stock_agg['total'] or 0), 'count': stock_agg['count'] or 0},
                 'payment_mix': payment_mix_data,
                 'top_products': top_products_data,
-                'margin_today': float(margin_today),
-                'dormant_stock': dormant_stock_data
             })
+        
+        # Mettre en cache (30s pour les stats temps réel)
+        DashboardCache.set_stats(user_id, role, response_data, ttl=DashboardCache.STATS_FAST_TTL)
     
+        return Response(response_data)
+    
+    @action(detail=False, methods=['get'])
+    def stats_heavy(self, request):
+        """
+        Stats lourdes séparées: dormant_stock + margin_today.
+        Cache: 5 minutes (ces données changent peu).
+        """
+        today = timezone.localtime(timezone.now()).date()
+        user_id = request.user.id if request.user.is_authenticated else 0
+        
+        # Cache: 5 min pour les stats lourdes
+        cached = DashboardCache.get_heavy_stats(user_id)
+        if cached is not None:
+            return Response(cached)
+        
+        # 1. Today's Margin
+        from ...services.margin_service import MarginService
+        margin_stats = MarginService.calculate_period_margin_with_discounts(
+            date_debut=today,
+            date_fin=today + timedelta(days=1),
+            exclude_is_divers=False
+        )
+        margin_today = margin_stats['marge_brute']
+        
+        # 2. Dormant Stock (6 months)
+        dormant_threshold = today - timedelta(days=6 * 30)
+        dormant_qs = Produit.objects.filter(stock__gt=0).filter(
+            Q(dernier_vente__lte=dormant_threshold) |
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__lte=dormant_threshold)) |
+            (Q(dernier_vente__isnull=True) & Q(dernier_achat__isnull=True) & Q(created_at__date__lte=dormant_threshold))
+        ).annotate(
+            dormant_value=ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())
+        )
+        
+        dormant_total = dormant_qs.aggregate(
+            total_val=Coalesce(Sum('dormant_value'), Decimal('0'))
+        )['total_val']
+        
+        top_dormant = dormant_qs.order_by('-dormant_value').values(
+            'id', 'name', 'stock', 'pmp', 'dernier_vente', 'dormant_value'
+        )[:5]
+        
+        dormant_stock_data = {
+            'total_value': float(dormant_total),
+            'top_products': [
+                {
+                    'id': p['id'],
+                    'name': p['name'],
+                    'stock': p['stock'],
+                    'last_sale': p['dernier_vente'].isoformat() if p['dernier_vente'] else None,
+                    'value': float(p['dormant_value'])
+                }
+                for p in top_dormant
+            ]
+        }
+        
+        response_data = {
+            'margin_today': float(margin_today),
+            'dormant_stock': dormant_stock_data
+        }
+        
+        DashboardCache.set_heavy_stats(user_id, response_data)
         return Response(response_data)
     
     @action(detail=False, methods=['get'])

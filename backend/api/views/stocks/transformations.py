@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, F, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from decimal import Decimal
@@ -170,7 +170,8 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 source.refresh_from_db()
             else:
                 source.stock -= quantite
-                source.save()
+                source.version += 1
+                source.save(update_fields=['stock', 'version'])
                 
             # --- 2. CRÉATION DESTINATION ---
             ratio = Decimal(str(relation.ratio))
@@ -185,6 +186,10 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                         if quantite_dest_lot <= 0:
                             continue
 
+                        # Prix de revient dérivé du lot source (prix source / ratio)
+                        # Ex: 1 boîte de 100 à 1000F → 10 boîtes de 10 à 100F chacune
+                        derived_price_cost = (source_lot.price_cost or 0) / ratio if ratio > 0 else (destination.cost_price or 0)
+
                         # Find or create a lot in destination with same lot number
                         dest_lot, created = StockLot.objects.get_or_create(
                             produit=destination,
@@ -194,7 +199,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                                 'quantity_remaining': quantite_dest_lot,
                                 'quantity_paid': quantite_dest_lot,
                                 'quantity_free': 0,
-                                'price_cost': destination.cost_price or 0,
+                                'price_cost': derived_price_cost,
                                 'selling_price': destination.selling_price or 0,
                                 'date_expiration': source_lot.date_expiration,
                                 'date_reception': timezone.now(),
@@ -228,6 +233,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                     quantite_dest = int(Decimal(str(quantite)) * ratio)
                     if quantite_dest > 0:
                         lot_number = f"TR{relation.id}-{int(time.time())}"
+                        derived_price_cost = (source.cost_price or 0) / ratio if ratio > 0 else (destination.cost_price or 0)
                         new_lot_dest = StockLot.objects.create(
                             produit=destination,
                             lot=lot_number,
@@ -235,7 +241,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                             quantity_remaining=quantite_dest,
                             quantity_paid=quantite_dest,
                             quantity_free=0,
-                            price_cost=destination.cost_price or 0,
+                            price_cost=derived_price_cost,
                             selling_price=destination.selling_price or 0,
                             date_expiration=None,
                             date_reception=timezone.now(),
@@ -259,7 +265,8 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 destination.refresh_from_db()
             else:
                 destination.stock += quantite_dest_total
-                destination.save()
+                destination.version += 1
+                destination.save(update_fields=['stock', 'version'])
             
             # --- 3. HISTORIQUE & MOUVEMENTS GLOBAUX ---
             
@@ -268,7 +275,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 produit=source,
                 type_mouvement=MouvementStock.TypeMouvement.TRANSFORMATION_SORTIE,
                 quantite=-quantite,
-                stock_apres=source.stock,
+                stock_apres=source.total_stock,
                 user=request.user,
                 description=f"Transformation vers {destination.name} (par {request.user.username})"
             )
@@ -278,7 +285,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 produit=destination,
                 type_mouvement=MouvementStock.TypeMouvement.TRANSFORMATION_ENTREE,
                 quantite=quantite_dest_total,
-                stock_apres=destination.stock,
+                stock_apres=destination.total_stock,
                 user=request.user,
                 description=f"Transformation depuis {source.name} (par {request.user.username})"
             )
@@ -368,6 +375,8 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
         return Response({
             'stock_source': source.stock,
             'stock_source_after': source.stock - quantite,
+            'stock_destination': destination.stock,
+            'stock_destination_after': destination.stock + quantite_dest_total,
             'quantite_source': quantite,
             'quantite_destination': quantite_dest_total,
             'ratio': relation.ratio,
@@ -375,6 +384,50 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             'lots': lots_preview,
             'manual_lots_enabled': source.use_lot_management
         })
+
+    @action(detail=False, methods=['get'])
+    def transformations_needed(self, request):
+        """
+        Retourne les produits destination en stock bas (<= min_rayon ou 0)
+        qui ont une relation de transformation active avec un produit source
+        ayant suffisamment de stock pour être transformé.
+        """
+        relations = RelationTransformation.objects.filter(
+            actif=True
+        ).select_related('produit_source', 'produit_destination')
+
+        results = []
+        for rel in relations:
+            dest = rel.produit_destination
+            source = rel.produit_source
+
+            # Destination en stock bas : stock <= 1
+            if dest.stock > 1:
+                continue
+
+            # Source a assez de stock pour au moins 1 transformation
+            if source.stock < 1:
+                continue
+
+            # Quantité transformable = floor(source.stock) unités source → source.stock * ratio unités destination
+            qty_transformable = int(source.stock)
+            qty_dest_obtained = int(Decimal(str(qty_transformable)) * Decimal(str(rel.ratio)))
+
+            results.append({
+                'relation_id': rel.id,
+                'source_id': source.id,
+                'source_name': source.name,
+                'source_stock': source.stock,
+                'destination_id': dest.id,
+                'destination_name': dest.name,
+                'destination_stock': dest.stock,
+                'ratio': float(rel.ratio),
+                'qty_transformable': qty_transformable,
+                'qty_dest_obtained': qty_dest_obtained,
+            })
+
+        results.sort(key=lambda x: x['destination_stock'])
+        return Response({'count': len(results), 'items': results})
 
 
 class HistoriqueTransformationViewSet(viewsets.ReadOnlyModelViewSet):

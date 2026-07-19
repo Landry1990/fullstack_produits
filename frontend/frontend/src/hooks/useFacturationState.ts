@@ -117,6 +117,7 @@ export function useFacturationState() {
   const productSearch = useProductSearch({
     minSearchLength: 2,
     debounceMs: 400,
+    pageSize: 1000,
     onBarcodeMatch: handleBarcodeMatch
   })
 

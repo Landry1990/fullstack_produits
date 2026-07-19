@@ -229,7 +229,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     searchQuery: searchProduitQuery,
     setSearchQuery: setSearchProduitQuery,
     refetch: refetchProduits
-  } = useProductSearch({ minSearchLength: 2, debounceMs: 400 })
+  } = useProductSearch({ minSearchLength: 2, debounceMs: 400, pageSize: 1000 })
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
@@ -266,12 +266,20 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
   const filteredProduits = useMemo(() => {
     if (!searchProduitQuery) return [];
-    const q = searchProduitQuery.toLowerCase();
-    return produitsList.filter(p => 
-      p.name.toLowerCase().includes(q) || 
-      (p.cip1 && p.cip1.includes(q)) || 
-      (p.cip2 && p.cip2.includes(q))
-    ).slice(0, 10);
+    const terms = searchProduitQuery.toLowerCase().split(/\s+/).filter(Boolean);
+    if (terms.length === 0) return [];
+    return produitsList.filter(p => {
+      const name = p.name.toLowerCase();
+      const cip1 = p.cip1 || '';
+      const cip2 = p.cip2 || '';
+      const cip3 = p.cip3 || '';
+      return terms.every(term =>
+        name.includes(term) ||
+        cip1.includes(term) ||
+        cip2.includes(term) ||
+        cip3.includes(term)
+      );
+    });
   }, [produitsList, searchProduitQuery]);
 
   const {
@@ -324,7 +332,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       if (!selectedCommande) return;
 
       // Vérifier les produits sans date de péremption
-      const produits = commandeProduits || selectedCommande.produits || [];
+      const produits = (commandeProduits.length > 0 ? commandeProduits : (selectedCommande?.produits || [])) as any[];
       const sansPeremption = produits.filter((p: any) => !p.date_expiration);
 
       if (sansPeremption.length > 0) {
@@ -342,6 +350,31 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
           if (!confirmMissing) return;
       }
 
+      // Vérifier les produits vendus à perte (prix de vente HT < prix d'achat)
+      const produitsEnPerte = produits.filter((p: any) => {
+          const price = Number(p.price || 0);
+          const selling = Number(p.selling_price || 0);
+          const tva = Number(p.tva || 0);
+          return price > 0 && selling > 0 && (selling / (1 + tva / 100)) < price;
+      });
+
+      if (produitsEnPerte.length > 0) {
+          const nomsPerte = produitsEnPerte.map((p: any) => {
+              const nom = typeof p.produit === 'object' ? p.produit?.name : p.produit_nom;
+              const price = Math.round(Number(p.price || 0));
+              const sellingHT = Math.round(Number(p.selling_price || 0) / (1 + Number(p.tva || 0) / 100));
+              return `   • ${nom || 'Produit #' + (p.id || '?')} — Achat: ${price} F / Vente HT: ${sellingHT} F`;
+          });
+          const confirmPerte = await confirm({
+              title: t('orders:messages.selling_below_cost_title', { defaultValue: 'Vente à perte détectée' }),
+              message: `${produitsEnPerte.length} produit(s) vendu(s) en dessous du prix d'achat :\n\n${nomsPerte.join('\n')}\n\nVoulez-vous vraiment continuer la clôture ?`,
+              confirmText: t('orders:messages.selling_below_cost_confirm', { defaultValue: 'Forcer la clôture' }),
+              cancelText: t('common:cancel'),
+              variant: 'warning'
+          });
+          if (!confirmPerte) return;
+      }
+
       const confirmed = await confirm({
           title: t('orders:details.close'),
           message: t('orders:messages.close_confirm', { defaultValue: 'Voulez-vous vraiment clôturer cette commande ?' }),
@@ -351,6 +384,17 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       if (confirmed) {
           requireSudo(
               async (validatorId, password) => {
+                  // En mode EDIT, sauvegarder les produits avant clôture pour ne pas perdre les dates de péremption
+                  if (viewMode === 'EDIT' && commandeProduits.length > 0 && selectedCommande?.id) {
+                      const cleanCommande: Partial<Commande> = {
+                          fournisseur: newCommandeFournisseurId ? normalizeNumberInput(newCommandeFournisseurId) : undefined,
+                          numero_facture: numeroFacture,
+                          type: commandeType,
+                          taux_change: commandeType === 'DIR' ? tauxChange : undefined,
+                          frais_coefficient: commandeType === 'DIR' ? fraisCoefficient : undefined,
+                      };
+                      await handleSaveCommande(cleanCommande, commandeProduits, 'EDIT', selectedCommande, true);
+                  }
                   await handleCloturerCommande(selectedCommande, { 
                       validated_by_id: validatorId, 
                       sudo_password: password 
@@ -1170,6 +1214,25 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     });
   }
 
+  function handleSellingPriceBlur(index: number) {
+    const item = commandeProduits[index];
+    if (!item) return;
+    const price = normalizeNumberInput(String(item.price || 0));
+    const selling = normalizeNumberInput(String(item.selling_price || 0));
+    const tva = normalizeNumberInput(String(item.tva || 0));
+    if (!isNaN(price) && !isNaN(selling) && price > 0 && selling > 0) {
+      const sellingHT = selling / (1 + tva / 100);
+      if (sellingHT < price) {
+        const productName = typeof item.produit === 'object' ? item.produit?.name : '';
+        toast(t('orders:messages.selling_below_cost', {
+          selling: Math.round(selling),
+          cost: Math.round(price),
+          product: productName || `#${item.id || '?'}`
+        }), { icon: '⚠️', duration: 4000 });
+      }
+    }
+  }
+
   const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -1723,6 +1786,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       deleteSelectedRows,
       openTransferModal,
       updateCommandeProduitField,
+      handleSellingPriceBlur,
       handleTableFieldKeyDown,
       onRemoveProduct: removeProductFromCommande,
       onCreateAvoir: handleCreateAvoirFromCommande,
