@@ -182,8 +182,8 @@ export const useDeleteProduit = () => {
 export const useAdjustStock = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, quantity, reason, newReserveQuantity }: { id: number; quantity?: number; reason?: string; newReserveQuantity?: number }) =>
-            produitService.adjustStock(id, quantity, reason, newReserveQuantity),
+        mutationFn: ({ id, quantity, reason, newReserveQuantity, stockLotId }: { id: number; quantity?: number; reason?: string; newReserveQuantity?: number; stockLotId?: number }) =>
+            produitService.adjustStock(id, quantity, reason, newReserveQuantity, stockLotId),
         onMutate: async (vars) => {
             await queryClient.cancelQueries({ queryKey: ['produit', vars.id] });
             await queryClient.cancelQueries({ queryKey: ['produits'] });

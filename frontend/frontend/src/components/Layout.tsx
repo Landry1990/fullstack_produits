@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import UserHeader from './common/UserHeader'
 import Omnisearch from './common/Omnisearch'
+import TransformationAlertListener from './common/TransformationAlertListener'
 import { SidebarProvider } from '../context/SidebarContext'
 import { useSidebar } from '../hooks/useSidebar'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
@@ -86,6 +87,7 @@ function LayoutContent() {
 export default function Layout() {
   return (
     <SidebarProvider>
+      <TransformationAlertListener />
       <LayoutContent />
     </SidebarProvider>
   )

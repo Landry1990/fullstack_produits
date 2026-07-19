@@ -4,6 +4,34 @@
 
 ## 2026-07-19
 
+### ✨ Nouvelles fonctionnalités
+
+- **Historique Réapprovisionnement — modernisation shadcn/ui**
+  - `frontend/src/components/stock/ReapproHistory.tsx` : refonte complète avec composants shadcn/ui (`Button`, `Input`, `Table`, `Badge`, `Card`, `Skeleton`, `Dialog`).
+  - Suppression des composants DaisyUI (`btn`, `table`, `input`, `loading`, modale personnalisée `PremiumModal`).
+  - Ajout de Skeleton loaders, badges pour les sessions/unités, et recherche avec `useMemo`.
+  - Typage strict (`ReapproSession`, `ReapproAdjustment`) et accessibilité du Dialog via `DialogTitle` / `DialogDescription`.
+  - Conservation de la génération PDF côté frontend en mode draft.
+
+### 🖨️ Génération PDF — mode draft / économie d'encre
+
+- Création de générateurs PDF "draft" côté frontend pour réduire les coûts d'impression :
+  - `frontend/src/utils/print/reapproSessionPdfDraft.ts`
+  - `frontend/src/utils/print/reportPdfDraft.ts`
+  - `frontend/src/utils/print/ticketReglementPdfDraft.ts`
+  - `frontend/src/utils/print/relevePdfDraft.ts`
+  - `frontend/src/utils/print/promisPdfDraft.ts`
+- Mise à jour des composants pour utiliser ces générateurs économes en encre :
+  - `ReapproHistory.tsx`
+  - `ReapproRayon.tsx`
+  - `RapportMensuel.tsx`
+  - `useCreanceActions.ts`
+  - `useSaleCompletion.ts`
+
+---
+
+## 2026-07-19
+
 ### 🐛 Corrections
 
 - **Fix timezone global — rapports utilisent l'heure locale du serveur**

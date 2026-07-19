@@ -167,7 +167,8 @@ export default function Produit() {
   const [adjustmentForm, setAdjustmentForm] = useState({
     new_quantity: '',
     new_reserve_quantity: '',
-    reason_type: 'INVENTAIRE'
+    reason_type: 'INVENTAIRE',
+    stock_lot_id: ''
   })
 
   // Sudo actions
@@ -296,7 +297,8 @@ export default function Produit() {
         id: selectedProduit.id,
         quantity: parseInt(adjustmentForm.new_quantity),
         newReserveQuantity: selectedProduit.has_reserve_storage ? parseInt(adjustmentForm.new_reserve_quantity || '0') : undefined,
-        reason: adjustmentForm.reason_type
+        reason: adjustmentForm.reason_type,
+        stockLotId: adjustmentForm.stock_lot_id ? parseInt(adjustmentForm.stock_lot_id) : undefined
       });
       const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : '';
       toast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
@@ -540,7 +542,8 @@ export default function Produit() {
               setAdjustmentForm({
                 new_quantity: String(selectedProduit?.stock || 0),
                 new_reserve_quantity: String(selectedProduit?.stock_reserve || 0),
-                reason_type: 'INVENTAIRE'
+                reason_type: 'INVENTAIRE',
+                stock_lot_id: ''
               });
               setIsAdjustmentModalOpen(true);
             }}
@@ -617,7 +620,8 @@ export default function Produit() {
           setAdjustmentForm({ 
             new_quantity: String(selectedProduit?.stock || 0), 
             new_reserve_quantity: String(selectedProduit?.stock_reserve || 0),
-            reason_type: 'INVENTAIRE' 
+            reason_type: 'INVENTAIRE',
+            stock_lot_id: '' 
           });
           setIsAdjustmentModalOpen(true);
         }}

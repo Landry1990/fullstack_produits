@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import {
   useDashboardStats,
+  useDashboardHeavyStats,
   useRevenueChart,
   useHourlyTraffic,
   useExpiringLots,
@@ -57,6 +58,7 @@ export default function DashboardShadcn() {
   const [sendingInventaire, setSendingInventaire] = useState(false);
 
   const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useDashboardStats();
+  const { data: heavyStats } = useDashboardHeavyStats();
   const { data: revenueChart, isLoading: chartLoading, refetch: refetchChart } = useRevenueChart();
   const { data: hourlyTraffic } = useHourlyTraffic();
 
@@ -77,6 +79,12 @@ export default function DashboardShadcn() {
   const formatCurrencyLocal = (val: number) => formatCurrency(val, currentLocale, currencySymbol);
 
   const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
+
+  const mergedStats = stats ? {
+    ...stats,
+    margin_today: heavyStats?.margin_today ?? stats.margin_today,
+    dormant_stock: heavyStats?.dormant_stock ?? stats.dormant_stock,
+  } : stats;
 
   const loading = statsLoading || chartLoading;
   const error = statsError ? t('messages.error_loading') : null;
@@ -291,7 +299,7 @@ export default function DashboardShadcn() {
         )}
         {!isVendeur && activeTab === 'overview' && (
           <PerformanceOverview
-            stats={stats}
+            stats={mergedStats}
             revenueChart={revenueChart}
             hourlyTraffic={hourlyTraffic}
             reapproStats={reapproStats}
@@ -304,7 +312,7 @@ export default function DashboardShadcn() {
           <div className="space-y-6">
             <ExpirationAlertsWidget />
             <StockIntelligence
-              stats={stats}
+              stats={mergedStats}
               lowStockItems={lowStockItems}
               expiringLots={expiringLots}
               promisDisponibles={promisDisponibles}
@@ -319,7 +327,7 @@ export default function DashboardShadcn() {
         )}
         {!isVendeur && activeTab === 'finance' && (
           <FinancialSummary
-            stats={stats}
+            stats={mergedStats}
             ugStats={ugStats}
             echeances={echeances}
             t={t}

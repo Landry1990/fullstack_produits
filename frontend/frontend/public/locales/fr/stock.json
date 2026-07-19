@@ -132,6 +132,8 @@
         },
         "preview": {
             "stock_remaining": "Stock source restant",
+            "current_stock": "Stock actuel",
+            "stock_after": "Stock après",
             "lots_consumed": "Lots qui seront consommés (FEFO)",
             "selected": "sélectionnés",
             "available": "disponible",

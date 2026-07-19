@@ -55,6 +55,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
   const { produits, loading, searchQuery, setSearchQuery } = useProductSearch({
     minSearchLength: 2,
     debounceMs: 250,
+    pageSize: 1000,
   });
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -200,6 +201,7 @@ const Transformations: React.FC = () => {
   const [relations, setRelations] = useState<RelationTransformation[]>([]);
   const [historique, setHistorique] = useState<HistoriqueTransformation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modals
   const [isRelationModalOpen, setIsRelationModalOpen] = useState(false);
@@ -219,6 +221,8 @@ const Transformations: React.FC = () => {
   const [preview, setPreview] = useState<{
     stock_source: number;
     stock_source_after: number;
+    stock_destination: number;
+    stock_destination_after: number;
     quantite_source: number;
     quantite_destination: number;
     ratio: number;
@@ -394,6 +398,18 @@ const Transformations: React.FC = () => {
   // Calculer le total sélectionné manuellement
   const manualTotal = Object.values(manualLots).reduce((sum, qty) => sum + (qty || 0), 0);
 
+  // Filtrage recherche
+  const filteredRelations = relations.filter(r => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return r.produit_source_nom.toLowerCase().includes(q) || r.produit_destination_nom.toLowerCase().includes(q);
+  });
+  const filteredHistorique = historique.filter(h => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return h.produit_source_nom.toLowerCase().includes(q) || h.produit_destination_nom.toLowerCase().includes(q);
+  });
+
   // Mettre à jour la quantité d'un lot manuellement
   const updateManualLotQty = (lot_id: number, qty: number) => {
     setManualLots(prev => {
@@ -444,8 +460,8 @@ const Transformations: React.FC = () => {
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="px-6 py-2 bg-slate-50 flex gap-1 border-t border-slate-100">
+        {/* Tab Navigation + Search */}
+        <div className="px-6 py-2 bg-slate-50 flex items-center gap-1 border-t border-slate-100">
           <button 
             className={`h-8 px-4 rounded-lg text-xs font-bold transition-all duration-200 ${
               activeTab === 'relations' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200'
@@ -462,6 +478,19 @@ const Transformations: React.FC = () => {
           >
             {t('transformations.tabs.history')}
           </button>
+          <div className="flex-1" />
+          <div className="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              className="h-8 w-56 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-xs text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+              placeholder={t('common:search', { defaultValue: 'Rechercher...' })}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -475,55 +504,55 @@ const Transformations: React.FC = () => {
         ) : (
           <div className="h-full">
             {activeTab === 'relations' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-                {relations.map(relation => (
-                  <div key={relation.id} className="group relative bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-300 transition-all hover:shadow-xl hover:shadow-emerald-500/5 flex flex-col">
-                    <div className="flex items-center justify-between mb-5">
-                       <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 font-black shadow-inner">
-                             {relation.produit_source_nom.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="max-w-[120px]">
-                             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
-                             <div className="font-bold text-xs text-slate-700 truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
-                          </div>
-                       </div>
-                       <div className="text-slate-300 group-hover:text-emerald-500 transition-colors flex flex-col items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                       </div>
-                        <div className="flex items-center gap-3 text-right">
-                          <div className="max-w-[120px]">
-                             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('stock:transformations.labels.dest')}</div>
-                             <div className="font-bold text-xs truncate text-emerald-600" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
-                          </div>
-                        </div>
+              <div className="space-y-3">
+                {filteredRelations.map(relation => (
+                  <div key={relation.id} className="group relative bg-white border border-slate-200 rounded-2xl px-5 py-4 hover:border-emerald-300 transition-all hover:shadow-md flex items-center gap-4">
+                    {/* Source */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="size-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 font-black shadow-inner shrink-0">
+                        {relation.produit_source_nom.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
+                        <div className="font-bold text-sm text-slate-700 truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
+                      </div>
                     </div>
 
-                    <div className="bg-slate-50 rounded-xl p-3 flex justify-between items-center mb-6 border border-slate-200">
-                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('transformations.modal_relation.ratio_label')}</div>
-                       <span className="bg-emerald-600 text-white font-mono font-black text-[11px] h-6 px-2.5 rounded-full inline-flex items-center">1 : {formatNumber(relation.ratio)}</span>
+                    {/* Arrow + Ratio */}
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-300 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                      <span className="bg-emerald-600 text-white font-mono font-black text-[10px] h-5 px-2 rounded-full inline-flex items-center">1:{formatNumber(relation.ratio)}</span>
                     </div>
 
-                    <div className="mt-auto flex gap-2 pt-2 border-t border-slate-100">
-                        <button 
-                          className="flex-1 h-9 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors"
-                          onClick={() => openTransformerModal(relation)}
-                        >
-                          {t('stock:transformations.labels.transformer')}
-                        </button>
-                       <button 
-                         className="size-9 rounded-lg text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors"
-                         onClick={() => handleDeleteRelation(relation.id)}
-                       >
-                         <Trash2 size={16} />
-                       </button>
+                    {/* Destination */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="min-w-0">
+                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('stock:transformations.labels.dest')}</div>
+                        <div className="font-bold text-sm truncate text-emerald-600" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button 
+                        className="h-9 px-5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors"
+                        onClick={() => openTransformerModal(relation)}
+                      >
+                        {t('stock:transformations.labels.transformer')}
+                      </button>
+                      <button 
+                        className="size-9 rounded-lg text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors"
+                        onClick={() => handleDeleteRelation(relation.id)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
                 ))}
-                {relations.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-300 italic">
+                {filteredRelations.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-20 text-slate-300 italic">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                    <p className="font-bold uppercase tracking-widest text-xs">{t('stock:transformations.labels.no_relations')}</p>
+                    <p className="font-bold uppercase tracking-widest text-xs">{searchQuery ? t('common:no_results_found', { defaultValue: 'Aucun résultat' }) : t('stock:transformations.labels.no_relations')}</p>
                   </div>
                 )}
               </div>
@@ -543,7 +572,7 @@ const Transformations: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {historique.map(hist => (
+                      {filteredHistorique.map(hist => (
                         <tr key={hist.id} className="hover:bg-slate-50 transition-colors group">
                           <td className="pl-6 py-4">
                              <div className="font-bold text-xs text-slate-800">{formatDate(hist.date_transformation)}</div>
@@ -569,9 +598,9 @@ const Transformations: React.FC = () => {
                           </td>
                         </tr>
                       ))}
-                      {historique.length === 0 && (
+                      {filteredHistorique.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="text-center py-20 text-slate-300 italic font-bold uppercase tracking-widest text-xs">{t('stock:transformations.table_history.empty')}</td>
+                          <td colSpan={5} className="text-center py-20 text-slate-300 italic font-bold uppercase tracking-widest text-xs">{searchQuery ? t('common:no_results_found', { defaultValue: 'Aucun résultat' }) : t('stock:transformations.table_history.empty')}</td>
                         </tr>
                       )}
                     </tbody>
@@ -763,6 +792,18 @@ const Transformations: React.FC = () => {
                   {formatNumber(quantiteDestinationCalculee)}
                 </div>
                 <div className="text-[10px] uppercase font-black text-emerald-400 mt-3">{t('transformations.modal_transform.qty_obtained')}</div>
+                {preview && (
+                  <div className="mt-3 pt-3 border-t border-emerald-100 space-y-1">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider">{t('stock:transformations.preview.current_stock')}</span>
+                      <span className="font-bold text-slate-600">{formatNumber(preview.stock_destination)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-emerald-400 font-bold uppercase tracking-wider">{t('stock:transformations.preview.stock_after')}</span>
+                      <span className="font-bold text-emerald-600">{formatNumber(preview.stock_destination_after)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

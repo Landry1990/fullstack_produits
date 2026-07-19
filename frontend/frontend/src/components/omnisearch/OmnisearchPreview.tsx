@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { Card, CardContent } from '../shadcn/card';
+import { Badge } from '../shadcn/badge';
 import type { ProduitModel, Client, Facture, Commande, Fournisseur } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
 
@@ -68,8 +70,8 @@ function ProductPreview({ data, t }: { data?: ProduitModel; t: any }) {
         <div>
           <h3 className="text-2xl font-black tracking-tighter text-slate-800 leading-tight">{data.name}</h3>
           <div className="flex flex-wrap gap-2 mt-2">
-            <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 rounded text-xs font-black">{data.forme_name}</span>
-            <span className="inline-flex items-center px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-black">{data.rayon_name}</span>
+            <Badge variant="outline" className="text-xs font-black">{data.forme_name}</Badge>
+            <Badge variant="secondary" className="text-xs font-black">{data.rayon_name}</Badge>
           </div>
         </div>
       </div>
@@ -82,48 +84,54 @@ function ProductPreview({ data, t }: { data?: ProduitModel; t: any }) {
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1">
-          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-            <Layers className="size-3" /> {t('omnisearch.preview.stock_rayon')}
-          </div>
-          <div className={`text-2xl font-black ${isLowStock ? 'text-red-500' : 'text-slate-800'}`}>
-            {stock}
-          </div>
-        </div>
-        <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1">
-          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-            <Layers className="size-3 text-slate-500" /> {t('omnisearch.preview.stock_reserve')}
-          </div>
-          <div className="text-2xl font-black text-slate-500">{data.stock_reserve || 0}</div>
-        </div>
-        <div className="col-span-2 p-4 bg-white border border-slate-200 rounded-2xl flex justify-between items-center">
-          <div className="space-y-1">
+        <Card className="p-4 space-y-1">
+          <CardContent className="p-0">
+            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <Layers className="size-3" /> {t('omnisearch.preview.stock_rayon')}
+            </div>
+            <div className={`text-2xl font-black ${isLowStock ? 'text-red-500' : 'text-slate-800'}`}>
+              {stock}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="p-4 space-y-1">
+          <CardContent className="p-0">
+            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <Layers className="size-3 text-slate-500" /> {t('omnisearch.preview.stock_reserve')}
+            </div>
+            <div className="text-2xl font-black text-slate-500">{data.stock_reserve || 0}</div>
+          </CardContent>
+        </Card>
+        <Card className="col-span-2 p-4 flex justify-between items-center">
+          <CardContent className="p-0 space-y-1">
             <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
               <Calendar className="size-3" /> {t('omnisearch.preview.expiry')}
             </div>
             <div className="text-sm font-black italic">
               {data.next_expiring_date ? formatDate(data.next_expiring_date as string) : t('omnisearch.preview.expiry_none')}
             </div>
-          </div>
+          </CardContent>
           {data.is_perissable && (
             <div className="size-10 rounded-full bg-amber-50 flex items-center justify-center" title={t('omnisearch.preview.perishable')}>
               <Info className="size-5 text-amber-500" />
             </div>
           )}
-        </div>
-        <div className="col-span-2 p-4 bg-indigo-50/50 border border-indigo-200 rounded-2xl space-y-1">
-          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-500/40">
-            <TrendingIcon className="size-3" /> {t('omnisearch.preview.last_purchase')}
-          </div>
-          <div className="flex justify-between items-baseline">
-            <div className="text-lg font-black text-indigo-500">
-              {data.dernier_achat ? formatDate(data.dernier_achat as string) : '-'}
+        </Card>
+        <Card className="col-span-2 p-4 space-y-1 bg-indigo-50/50 border-indigo-200">
+          <CardContent className="p-0">
+            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-500/40">
+              <TrendingIcon className="size-3" /> {t('omnisearch.preview.last_purchase')}
             </div>
-            <div className="text-xs font-mono font-bold opacity-60">
-              {data.last_purchase_price ? `${Number(data.last_purchase_price).toLocaleString()} F` : ''}
+            <div className="flex justify-between items-baseline">
+              <div className="text-lg font-black text-indigo-500">
+                {data.dernier_achat ? formatDate(data.dernier_achat as string) : '-'}
+              </div>
+              <div className="text-xs font-mono font-bold opacity-60">
+                {data.last_purchase_price ? `${Number(data.last_purchase_price).toLocaleString()} F` : ''}
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mt-auto p-4 bg-blue-50/50 rounded-2xl border border-blue-200">
@@ -146,37 +154,37 @@ function ClientPreview({ data, t }: { data?: Client; t: any }) {
         <div>
           <h3 className="text-2xl font-black tracking-tighter text-slate-800 leading-tight">{data.name}</h3>
           <div className="flex gap-2 mt-2">
-            <span className="inline-flex items-center px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[8px] font-black uppercase tracking-widest">{data.client_type}</span>
+            <Badge variant="secondary" className="text-[8px] font-black uppercase tracking-widest">{data.client_type}</Badge>
             {data.is_active ? (
-              <span className="inline-flex items-center px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[8px] font-black">{t('omnisearch.preview.active')}</span>
+              <Badge variant="default" className="text-[8px] font-black">{t('omnisearch.preview.active')}</Badge>
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[8px] font-black">{t('omnisearch.preview.inactive')}</span>
+              <Badge variant="outline" className="text-[8px] font-black">{t('omnisearch.preview.inactive')}</Badge>
             )}
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        <div className="p-5 bg-white border border-slate-200 rounded-3xl flex items-center justify-between">
-          <div className="space-y-1">
+        <Card className="p-5 flex items-center justify-between">
+          <CardContent className="p-0 space-y-1">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.loyalty_points')}</span>
             <div className="text-3xl font-black text-indigo-500">{data.points_fidelite || 0}</div>
-          </div>
+          </CardContent>
           <div className="p-3 bg-indigo-50 text-indigo-500 rounded-2xl">
             <Zap className="size-6" />
           </div>
-        </div>
-        <div className="p-5 bg-white border border-slate-200 rounded-3xl flex items-center justify-between">
-          <div className="space-y-1">
+        </Card>
+        <Card className="p-5 flex items-center justify-between">
+          <CardContent className="p-0 space-y-1">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.deposit_balance')}</span>
             <div className="text-3xl font-black text-blue-600">
               {Number(data.solde_depot || 0).toLocaleString()} F
             </div>
-          </div>
+          </CardContent>
           <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
             <ShoppingBag className="size-6" />
           </div>
-        </div>
+        </Card>
       </div>
 
       <div className="space-y-4 pt-4 border-t border-slate-200">
@@ -212,23 +220,27 @@ function FacturePreview({ data, t }: { data?: Facture; t: any }) {
 
       <div className="flex-1 overflow-y-auto space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2 p-5 bg-blue-50/50 border border-blue-200 rounded-3xl flex items-center justify-between">
-            <div className="space-y-1">
+          <Card className="col-span-2 p-5 bg-blue-50/50 border-blue-200 flex items-center justify-between">
+            <CardContent className="p-0 space-y-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-blue-500/40">{t('omnisearch.preview.total_amount')}</span>
               <div className="text-3xl font-black text-blue-600">{Number(data.total_ttc).toLocaleString()} F</div>
-            </div>
+            </CardContent>
             <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
               <TrendingIcon className="size-6" />
             </div>
-          </div>
-          <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1">
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.status')}</div>
-            <div className="text-sm font-bold uppercase">{data.status_display}</div>
-          </div>
-          <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1">
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.date')}</div>
-            <div className="text-sm font-bold tracking-tight">{formatDate(data.date)}</div>
-          </div>
+          </Card>
+          <Card className="p-4 space-y-1">
+            <CardContent className="p-0">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.status')}</div>
+              <div className="text-sm font-bold uppercase">{data.status_display}</div>
+            </CardContent>
+          </Card>
+          <Card className="p-4 space-y-1">
+            <CardContent className="p-0">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.date')}</div>
+              <div className="text-sm font-bold tracking-tight">{formatDate(data.date)}</div>
+            </CardContent>
+          </Card>
         </div>
 
         {(data as any).produits_details && (data as any).produits_details.length > 0 && (
@@ -277,20 +289,24 @@ function CommandePreview({ data, t }: { data?: Commande; t: any }) {
 
       <div className="flex-1 overflow-y-auto space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2 p-5 bg-amber-50/50 border border-amber-200 rounded-3xl flex items-center justify-between">
-            <div className="space-y-1">
+          <Card className="col-span-2 p-5 bg-amber-50/50 border-amber-200 flex items-center justify-between">
+            <CardContent className="p-0 space-y-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-amber-500/40">{t('omnisearch.preview.total_amount')}</span>
               <div className="text-3xl font-black text-amber-500">{Number(data.total || 0).toLocaleString()} F</div>
-            </div>
-          </div>
-          <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1">
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.status')}</div>
-            <div className="text-xs font-bold uppercase">{data.status_display}</div>
-          </div>
-          <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-1">
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.items')}</div>
-            <div className="text-xl font-black">{data.items_count || 0}</div>
-          </div>
+            </CardContent>
+          </Card>
+          <Card className="p-4 space-y-1">
+            <CardContent className="p-0">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.status')}</div>
+              <div className="text-xs font-bold uppercase">{data.status_display}</div>
+            </CardContent>
+          </Card>
+          <Card className="p-4 space-y-1">
+            <CardContent className="p-0">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.items')}</div>
+              <div className="text-xl font-black">{data.items_count || 0}</div>
+            </CardContent>
+          </Card>
         </div>
 
         {(data as any).produits_details && (data as any).produits_details.length > 0 && (
@@ -333,7 +349,7 @@ function FournisseurPreview({ data, t }: { data?: Fournisseur; t: any }) {
         <div>
           <h3 className="text-2xl font-black tracking-tighter text-slate-800 leading-tight">{data.name}</h3>
           <div className="flex gap-2 mt-2">
-            <span className="inline-flex items-center px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[8px] font-black uppercase tracking-widest">{t('omnisearch.groups.suppliers')}</span>
+            <Badge variant="secondary" className="text-[8px] font-black uppercase tracking-widest">{t('omnisearch.groups.suppliers')}</Badge>
           </div>
         </div>
       </div>

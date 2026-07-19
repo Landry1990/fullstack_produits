@@ -369,7 +369,10 @@
         "create_new_product": "Voulez-vous créer un nouveau produit ?",
         "validation_required": "Validation requise",
         "no_deletable_orders": "Aucune des commandes sélectionnées n'est supprimable (elles sont peut-être clôturées).",
-        "some_orders_closed_warning": "Certaines commandes clôturées ont été ignorées lors de la suppression."
+        "some_orders_closed_warning": "Certaines commandes clôturées ont été ignorées lors de la suppression.",
+        "selling_below_cost": "Prix de vente ({{selling}}) inférieur au prix d'achat ({{cost}}) pour {{product}}",
+        "selling_below_cost_title": "Vente à perte détectée",
+        "selling_below_cost_confirm": "Forcer la clôture"
     },
     "history": {
         "title": "Historique des Achats",

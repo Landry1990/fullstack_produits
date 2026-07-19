@@ -62,9 +62,10 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                   ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'bg-warning/10 text-warning' :
                   'bg-success/10 text-success'
                 }`}>
-                  {t('products:detail.stock_label', { defaultValue: 'Stock' })}: {selectedProduit.total_stock ?? selectedProduit.stock ?? 0}
-                  {selectedProduit.has_reserve_storage && (
-                    <> / {t('products:detail.reserve_label')}: {selectedProduit.stock_reserve ?? 0}</>
+                  {selectedProduit.has_reserve_storage ? (
+                    <>Rayon: {selectedProduit.stock ?? 0} / {t('products:detail.reserve_label')}: {selectedProduit.stock_reserve ?? 0}</>
+                  ) : (
+                    <>{t('products:detail.stock_label', { defaultValue: 'Stock' })}: {selectedProduit.stock ?? 0}</>
                   )}
                 </span>
               </div>

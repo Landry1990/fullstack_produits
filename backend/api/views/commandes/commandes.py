@@ -531,7 +531,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                         
                         # Calculer le nouveau PMP et stock
                         if produit.id not in produits_dict:
-                            old_stock = Decimal(produit.stock)
+                            old_stock = Decimal(produit.stock) + Decimal(produit.stock_reserve or 0)
                             old_pmp = Decimal(produit.pmp)
                             qty_received = Decimal(total_qty)
                             cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
@@ -548,13 +548,13 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                             if produit.has_reserve_storage:
                                 produit.stock_reserve = res_stock + qty_received
                             else:
-                                produit.stock = old_stock + qty_received
+                                produit.stock = Decimal(produit.stock) + qty_received
                             
                             produits_dict[produit.id] = produit
                             produits_to_update.append(produit)
                         else:
                             existing_produit = produits_dict[produit.id]
-                            current_stock = Decimal(existing_produit.stock)
+                            current_stock = Decimal(existing_produit.stock) + Decimal(existing_produit.stock_reserve or 0)
                             current_pmp = Decimal(existing_produit.pmp)
                             qty_received = Decimal(total_qty)
                             cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
@@ -567,7 +567,10 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                                 new_pmp = (current_val + incoming_val) / new_total_qty
                                 existing_produit.pmp = new_pmp
                             
-                            existing_produit.stock += Decimal(total_qty)
+                            if existing_produit.has_reserve_storage:
+                                existing_produit.stock_reserve = Decimal(existing_produit.stock_reserve or 0) + Decimal(total_qty)
+                            else:
+                                existing_produit.stock += Decimal(total_qty)
                     
                     # Capturer le stock APRES réception pour chaque ligne
                     items_to_update_stock = []
@@ -937,14 +940,19 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         
         for item in commande.produits.all():
             produit = item.produit
-            stock_apres = produit.stock
-            stock_avant = stock_apres - item.quantity
+            # Utiliser les données capturées au moment de la clôture (snapshot)
+            # pour garantir que le PDF reflète l'état du stock à la réception
+            total_qty = item.quantity + item.unites_gratuites
+            stock_apres = item.stock_apres_reception if item.stock_apres_reception else produit.stock
+            stock_avant = stock_apres - total_qty
+            # Prix de vente au moment de la commande, pas le prix actuel
+            prix_vente = item.selling_price if item.selling_price else produit.selling_price
             
             data.append([
                 str(produit.id),
                 produit.name,
                 str(item.price),
-                str(produit.selling_price),
+                str(prix_vente),
                 str(stock_avant),
                 str(item.quantity),
                 str(stock_apres)

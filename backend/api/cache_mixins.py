@@ -67,11 +67,18 @@ class CachedSearchMixin:
             page_size_num = 50
         
         if filters:
-            # Désactiver le cache quand il y a des filtres (ex: only_in_stock)
-            # car les filtres changent souvent et le cache devient rapidement invalide
+            # Cache des requêtes filtrées avec TTL court (60s)
+            filter_cache_key = f"product_filters:{hash(frozenset(filters.items()))}:{page}:{page_size}:{ordering}"
+            from django.core.cache import cache
+            cached_filtered = cache.get(filter_cache_key)
+            if cached_filtered is not None:
+                response = Response(cached_filtered)
+                response['X-Cache-Hit'] = 'true'
+                return response
+            
             response = super().list(request, *args, **kwargs)
+            cache.set(filter_cache_key, response.data, 60)  # 60s pour les filtres
             response['X-Cache-Hit'] = 'false'
-            response['X-Cache-Disabled'] = 'filters-present'
             return response
         else:
             # Pas de filtres, utiliser le cache de liste standard
@@ -136,6 +143,7 @@ class CachedSearchMixin:
         instance = serializer.instance
         # Invalider les caches de liste
         SearchCache.invalidate_all_products()
+        self._invalidate_filter_cache()
         return instance
     
     def perform_update(self, serializer):
@@ -150,6 +158,7 @@ class CachedSearchMixin:
             SearchCache.invalidate_product(instance.id)
         # Invalider les caches de liste (utilise invalidate_all_products pour gérer le fallback LocMemCache)
         SearchCache.invalidate_all_products()
+        self._invalidate_filter_cache()
         return instance
     
     def perform_destroy(self, instance):
@@ -163,6 +172,16 @@ class CachedSearchMixin:
         if product_id:
             SearchCache.invalidate_product(product_id)
         SearchCache.invalidate_all_products()
+        self._invalidate_filter_cache()
+    
+    @staticmethod
+    def _invalidate_filter_cache():
+        """Invalide le cache des requêtes filtrées."""
+        from django.core.cache import cache
+        try:
+            cache.delete_pattern('product_filters:*')
+        except AttributeError:
+            pass
 
 
 class LowLevelCacheMixin:

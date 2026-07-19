@@ -5,7 +5,7 @@ import { formatCurrency } from '../utils/formatters';
 import { formatDate, getLocale } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 import { usePharmacySettings } from '../context/PharmacySettingsContext';
-import { generateMonthlyReportPdf } from '../utils/print/reportPdf';
+import { generateMonthlyReportPdfDraft } from '../utils/print/reportPdfDraft';
 
 interface RapportData {
   mois: string;
@@ -224,7 +224,7 @@ export default function RapportMensuel() {
                 if (!rapport) return;
                 setPdfLoading(true);
                 try {
-                  await generateMonthlyReportPdf(rapport, settings, periodeLabel, t);
+                  await generateMonthlyReportPdfDraft(rapport, settings, periodeLabel, t);
                   toast.success(t('messages.pdf_success', { defaultValue: 'PDF généré avec succès' }));
                 } catch (error) {
                   console.error('Erreur génération PDF:', error);

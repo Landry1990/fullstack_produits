@@ -2,6 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
+from django.core.cache import cache
 from datetime import timedelta, datetime
 from django.conf import settings
 
@@ -74,6 +75,12 @@ def generer_suggestions_commande(request):
     budget_max = request.data.get('budget_max')  # Optionnel, en HT
     abc_a_only = request.data.get('abc_a_only', False)
     
+    # Cache: 5 min par combinaison de paramètres
+    cache_key = f"suggestions:{mode}:{periode}:{fournisseur_id}:{budget_max}:{abc_a_only}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return Response(cached)
+    
     # Convertir budget en float si fourni
     if budget_max:
         try:
@@ -131,14 +138,16 @@ def generer_suggestions_commande(request):
             s['promis_count'] = promis_map.get(pid, 0)
             s['en_rupture_fournisseur'] = pid in rupture_ids
     
-    return Response({
+    response_data = {
         'mode': mode,
         'periode': periode,
         'budget_max': budget_max,
         'total_ht': total_ht,
         'suggestions': suggestions,
         'total_produits': len(suggestions)
-    })
+    }
+    cache.set(cache_key, response_data, 300)  # 5 min
+    return Response(response_data)
 
 
 def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max=None):

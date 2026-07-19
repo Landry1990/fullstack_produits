@@ -1,4 +1,6 @@
 import { useEffect, type RefObject } from 'react'
+import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
+import { toast } from 'react-hot-toast'
 
 interface UseFacturationKeyboardShortcutsProps {
   searchInputRef: RefObject<HTMLInputElement | null>;
@@ -65,6 +67,7 @@ export function useFacturationKeyboardShortcuts({
   showPendingSales,
   setShowPendingSales
 }: UseFacturationKeyboardShortcutsProps) {
+  const { isPosMode, closePoste, activePoste } = usePosteCaisseMode()
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignorer si on est dans un input mais que c'est une touche de fonction (F2, F4...)
@@ -157,6 +160,21 @@ export function useFacturationKeyboardShortcuts({
         return
       }
 
+      // F10: Fermer le point de vente actif (POS)
+      if (e.key === 'F10') {
+        e.preventDefault()
+        if (isPosMode && activePoste) {
+          if (lignesFacture.length > 0) {
+            toast.error('Impossible de fermer le POS : le panier n\'est pas vide. Finalisez ou videz la vente.')
+            return
+          }
+          closePoste(false).catch(() => {
+            toast.error('Erreur lors de la fermeture du poste de vente')
+          })
+        }
+        return
+      }
+
       // /: Focus recherche produit (si pas déjà dans un input)
       if (e.key === '/' && !isInput) {
           e.preventDefault()
@@ -200,6 +218,7 @@ export function useFacturationKeyboardShortcuts({
     successInfo, setSuccessInfo,
     setSearchQuery, searchInputRef, clientSearchRef, quantityInputsRef,
     setShowHelp, handleSuspendSale, handleAddAlertMessage,
-    showPendingSales, setShowPendingSales
+    showPendingSales, setShowPendingSales,
+    isPosMode, closePoste, activePoste
   ])
 }

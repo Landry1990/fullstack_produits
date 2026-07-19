@@ -7,6 +7,8 @@ import SudoValidationModal from '../common/SudoValidationModal';
 import { useAuth } from '../../context/AuthContext';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import produitService from '../../services/produitService';
+import { generateReapproSessionPdfDraft } from '../../utils/print/reapproSessionPdfDraft';
+import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharmacySettings';
 import { 
   Package, 
   History, 
@@ -33,31 +35,17 @@ import {
 } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 
-const handleDownloadPdf = async (sessionId: number) => {
-    try {
-      const blob = await produitService.getReapproSessionPdf(sessionId);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `reappro_session_${sessionId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast.error("Erreur lors du téléchargement du PDF");
-    }
-};
-
 export default function ReapproRayon() {
   const { t } = useTranslation(['stock', 'common']);
   const { user } = useAuth();
+  const { settings } = usePharmacySettings();
   const [products, setProducts] = useState<ProduitModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [showConfirmBulk, setShowConfirmBulk] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const lastSessionIdRef = useRef<number | null>(null);
+  const lastSessionSettingsRef = useRef<PharmacySettings | null>(null);
   
   // Sudo Mode States
   const [sudoModalOpen, setSudoModalOpen] = useState(false);
@@ -191,6 +179,7 @@ export default function ReapproRayon() {
         
         if (res.session_id) {
             lastSessionIdRef.current = res.session_id;
+            lastSessionSettingsRef.current = settings;
             setShowSuccessModal(true);
         }
 
@@ -601,7 +590,19 @@ export default function ReapproRayon() {
             <div className="flex flex-col gap-3 mt-6">
               <Button
                 className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25"
-                onClick={() => { if (lastSessionIdRef.current) handleDownloadPdf(lastSessionIdRef.current); setShowSuccessModal(false); }}
+                onClick={async () => { 
+                  if (lastSessionIdRef.current) {
+                    try {
+                      const session = await produitService.getReapproSessionDetails(lastSessionIdRef.current);
+                      generateReapproSessionPdfDraft(session, lastSessionSettingsRef.current || settings).save(
+                        `reappro_session_${session.id}_${new Date(session.created_at).toISOString().slice(0, 10).replace(/-/g, '')}.pdf`
+                      );
+                    } catch {
+                      toast.error("Erreur lors de la génération du PDF");
+                    }
+                  }
+                  setShowSuccessModal(false);
+                }}
               >
                 <Download className="size-3.5 mr-2" />
                 {t('stock:reappro.modal.download_pdf')}

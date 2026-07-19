@@ -3,6 +3,7 @@ Cache spécifique pour les statistiques du Dashboard.
 Optimise les performances des calculs lourds (CA, stock, ventes).
 """
 from django.core.cache import cache
+from rest_framework.response import Response
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 import hashlib
@@ -16,7 +17,9 @@ class DashboardCache:
     """
     
     # TTL par type de donnée
+    STATS_FAST_TTL = 30  # 30 secondes pour les stats temps réel (CA, ventes)
     STATS_TTL = 300  # 5 minutes pour les statistiques
+    HEAVY_STATS_TTL = 300  # 5 minutes pour dormant_stock + margin
     ALERTS_TTL = 60  # 1 minute pour les alertes
     CHARTS_TTL = 300  # 5 minutes pour les graphiques
     
@@ -29,6 +32,7 @@ class DashboardCache:
     PREFIX_PROMIS = "dashboard_promis"
     PREFIX_MANAGER_STATS = "dashboard_manager"
     PREFIX_ALERTS = "dashboard_alerts"
+    PREFIX_HEAVY = "dashboard_heavy"
     
     @classmethod
     def _generate_key(cls, prefix: str, user_id: int = 0, date_str: str = None, **params) -> str:
@@ -140,6 +144,19 @@ class DashboardCache:
         key = cls._generate_key(cls.PREFIX_ALERTS, user_id)
         cache.set(key, data, ttl or cls.ALERTS_TTL)
     
+    # === HEAVY STATS (dormant_stock + margin) ===
+    @classmethod
+    def get_heavy_stats(cls, user_id: int) -> Optional[Dict]:
+        """Récupère les stats lourdes (dormant_stock, margin_today)."""
+        key = cls._generate_key(cls.PREFIX_HEAVY, user_id)
+        return cache.get(key)
+
+    @classmethod
+    def set_heavy_stats(cls, user_id: int, data: Dict, ttl: int = None) -> None:
+        """Stocke les stats lourdes."""
+        key = cls._generate_key(cls.PREFIX_HEAVY, user_id)
+        cache.set(key, data, ttl or cls.HEAVY_STATS_TTL)
+
     # === INVALIDATION ===
     @classmethod
     def invalidate_user(cls, user_id: int) -> None:
@@ -167,6 +184,7 @@ class DashboardCache:
         try:
             # Invalider seulement les stats et graphiques (pas les stocks qui changent moins vite)
             cache.delete_pattern(f"{cls.PREFIX_STATS}:*")
+            cache.delete_pattern(f"{cls.PREFIX_HEAVY}:*")
             cache.delete_pattern(f"{cls.PREFIX_REVENUE_CHART}:*")
             cache.delete_pattern(f"{cls.PREFIX_HOURLY_TRAFFIC}:*")
             cache.delete_pattern(f"{cls.PREFIX_PROMIS}:*")

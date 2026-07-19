@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
 import { cashSessionService, type PosteVente } from '../../services/cashSessionService'
@@ -38,6 +38,10 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
   const [selectedPosteId, setSelectedPosteId] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadingPostes, setLoadingPostes] = useState(false)
+  const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const handleOpenSessionRef = useRef<(posteId?: number) => Promise<void>>(async () => {})
+
+  const selectablePostes = allPostes.filter((p) => !p.est_actif || p.vendeur === user?.id || p.vendeur_name === (user?.username || '') || user?.is_superuser)
 
   const loadPostes = useCallback(async () => {
     setLoadingPostes(true)
@@ -62,7 +66,7 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
       }
 
       if (autoOpen && available.length === 1 && isOpen && !myActivePoste) {
-        handleOpenSession(available[0].id)
+        handleOpenSessionRef.current(available[0].id)
       }
     } catch {
       toast.error(t('messages.error_loading_posts', { defaultValue: 'Erreur chargement points de vente' }))
@@ -78,7 +82,47 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
     }
   }, [isOpen, loadPostes, activePoste])
 
-  const handleOpenSession = async (posteId?: number) => {
+  // Focus la carte sélectionnée quand la sélection ou le chargement change
+  useEffect(() => {
+    if (!isOpen || loadingPostes || !selectedPosteId) return
+    const el = cardRefs.current.get(selectedPosteId)
+    if (el) {
+      el.focus()
+    }
+  }, [isOpen, loadingPostes, selectedPosteId])
+
+  // Navigation clavier dans la liste des postes
+  useEffect(() => {
+    if (!isOpen || loadingPostes) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectablePostes.length === 0) return
+
+      const currentIndex = selectablePostes.findIndex((p) => p.id === selectedPosteId)
+      const startIndex = currentIndex === -1 ? 0 : currentIndex
+
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault()
+        const nextIndex = (startIndex + 1) % selectablePostes.length
+        setSelectedPosteId(selectablePostes[nextIndex].id)
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault()
+        const prevIndex = (startIndex - 1 + selectablePostes.length) % selectablePostes.length
+        setSelectedPosteId(selectablePostes[prevIndex].id)
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        handleOpenSessionRef.current()
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, loadingPostes, selectablePostes, selectedPosteId, onClose])
+
+  const handleOpenSession = useCallback(async (posteId?: number) => {
     const id = posteId ?? selectedPosteId
     if (!id) {
       toast.error(t('messages.select_poste', { defaultValue: 'Veuillez sélectionner un point de vente.' }))
@@ -114,7 +158,12 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [allPostes, onClose, onSessionOpened, openPoste, selectedPosteId, setActivePosteVente, t, user])
+
+  // Met à jour la ref avec la dernière version de handleOpenSession
+  useEffect(() => {
+    handleOpenSessionRef.current = handleOpenSession
+  }, [handleOpenSession])
 
   const selectedPoste = allPostes.find((p) => p.id === selectedPosteId)
   const isSelectedMine = selectedPoste && selectedPoste.est_actif &&
@@ -169,6 +218,10 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
                 return (
                   <Card
                     key={poste.id}
+                    ref={(el) => {
+                      if (el) cardRefs.current.set(poste.id, el)
+                    }}
+                    tabIndex={-1}
                     onClick={() => !isOccupied && setSelectedPosteId(poste.id)}
                     className={`
                       relative p-4 cursor-pointer transition-all duration-200
