@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-07-19
+
+### 🐛 Corrections
+
+- **Fix timezone global — rapports utilisent l'heure locale du serveur**
+  - Problème : Django stockait les dates en UTC (`USE_TZ=True`), causant un décalage d'un jour dans les rapports pour les ventes après minuit (ex: une vente à 00h22 locale apparaissait sur la veille en UTC).
+  - `backend/backend/settings.py` : passage à `USE_TZ=False` + configuration de la session PostgreSQL sur `Africa/Douala` via `OPTIONS` (`-c TimeZone=Africa/Douala`). PostgreSQL convertit automatiquement UTC → heure locale à la lecture.
+  - `backend/api/apps.py` : monkey-patch de `timezone.localtime()` (no-op sur datetimes naïves) et `timezone.make_aware()` (retourne naive) pour compatibilité avec tout le code existant.
+  - `backend/api/views/rapports/tz_utils.py` : `parse_api_datetime()` retourne des datetimes naïfs en heure locale. `local_trunc_date()` simplifié en alias de `TruncDate()`.
+  - `backend/api/views/rapports/inventory.py` : utilisation de `local_trunc_date()` pour les groupements par jour.
+  - **Aucune migration de données nécessaire** — les données restent en UTC en base, la conversion se fait à la lecture.
+  - Impact : tous les rapports, dashboard, factures et endpoints utilisent désormais l'heure locale (`Africa/Douala`, UTC+1) de manière transparente.
+
+---
+
 ## 2026-07-18
 
 ### ✨ Nouvelles fonctionnalités

@@ -174,7 +174,7 @@ DATABASES = {
             # Timeouts pour éviter les deadlocks (en millisecondes)
             # statement_timeout: annule les requêtes qui prennent trop de temps
             # lock_timeout: annule si l'attente de verrou est trop longue
-            'options': '-c client_encoding=UTF8 -c statement_timeout=30000 -c lock_timeout=5000',
+            'options': '-c client_encoding=UTF8 -c statement_timeout=30000 -c lock_timeout=5000 -c TimeZone=Africa/Douala',
             
             # Connection pooling côté client (optionnel, pour pgBouncer)
             # 'server_side_binding': False,  # Décommenter si vous utilisez pgBouncer
@@ -218,8 +218,8 @@ TIME_ZONE = 'Africa/Douala'
 
 USE_I18N = True
 
-USE_TZ = True  # Activé — évite les bugs timezone dans les containers Docker
-# Django stocke UTC en DB et convertit vers TIME_ZONE à la volée
+USE_TZ = False  # Désactivé — Django utilise l'heure locale (Africa/Douala) partout
+# PostgreSQL convertit automatiquement UTC ↔ heure locale via la session timezone
 
 
 # Static files (CSS, JavaScript, Images)
