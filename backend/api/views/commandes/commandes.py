@@ -514,6 +514,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                                 quantity_initial=total_qty,
                                 quantity_paid=quantity_paid,
                                 quantity_free=quantity_free,
+                                quantity_free_remaining=quantity_free,
                                 quantity_remaining=0 if produit.has_reserve_storage else total_qty,
                                 quantity_reserved=total_qty if produit.has_reserve_storage else 0,
                                 price_cost=effective_cost,

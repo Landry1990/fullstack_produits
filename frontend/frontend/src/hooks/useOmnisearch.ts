@@ -223,11 +223,7 @@ export default function useOmnisearch() {
     (action: string) => {
       setOpen(false);
       if (action === 'NEW_SALE') {
-        if (window.location.pathname === '/app/facturation') {
-          window.location.reload();
-        } else {
-          navigate('/app/facturation', { state: { action } });
-        }
+        navigate('/app/facturation', { state: { openPosteModal: true } });
       } else if (action === 'NEW_PRODUCT') {
         navigate('/app/produits', { state: { action } });
       } else if (action === 'NEW_CLIENT') {

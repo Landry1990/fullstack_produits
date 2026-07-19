@@ -43,7 +43,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
 
     const drawTicketCopy = (title: string) => {
         doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
         doc.text(data.pharmacy.pharmacy_name.toUpperCase(), centerX, currentY, { align: 'center' });
         currentY += 4;
@@ -61,7 +61,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
         }
 
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
         doc.text('TICKET PROMIS', centerX, currentY, { align: 'center' });
         currentY += 4;
@@ -74,7 +74,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
         currentY += 4;
 
         doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
         doc.text('CLIENT:', 5, currentY);
         doc.setFont('helvetica', 'normal');
@@ -95,7 +95,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
         drawDashedLine(currentY);
         currentY += 4;
 
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
         doc.text('Produit', 5, currentY);
         doc.text('Qte', width - 12, currentY, { align: 'right' });
@@ -110,7 +110,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
 
             doc.text(splitName, 5, currentY);
 
-            doc.setFont('helvetica', 'bold');
+            doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
             doc.text(item.promisQuantity.toString(), width - 7, currentY, { align: 'right' });
             doc.setFont('helvetica', 'normal');
@@ -132,7 +132,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
         drawDashedLine(currentY);
         currentY += 4;
 
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         doc.setTextColor(0, 0, 0);
         const statusText = data.is_paid ? 'STATUT: PAYE' : 'STATUT: A REGLER';

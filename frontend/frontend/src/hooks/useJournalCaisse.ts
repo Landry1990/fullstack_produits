@@ -444,8 +444,8 @@ export function useJournalCaisse() {
 
       const content = `
         <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black; line-height: 1.2;">
-            <div style="text-align: center; margin-bottom: 10px; border-bottom: 2px solid black; padding-bottom: 5px;">
-                <h2 style="margin: 0; font-size: 1.1em; font-weight: bold;">${escHtml(pharmacySettings?.pharmacy_name || 'Ma Pharmacie')}</h2>
+            <div style="text-align: center; margin-bottom: 10px; border-bottom: 0.5px solid #999; padding-bottom: 5px;">
+                <h2 style="margin: 0; font-size: 1.1em; font-weight: 500;">${escHtml(pharmacySettings?.pharmacy_name || 'Ma Pharmacie')}</h2>
                 <div style="font-size: 0.8em; margin-top: 2px;">${t('print.report_title')}</div>
             </div>
 
@@ -466,8 +466,8 @@ export function useJournalCaisse() {
                 </div>
             </div>
 
-            <div style="margin-bottom: 10px; background: #f9f9f9; padding: 5px; border: 1px solid #eee;">
-                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('print.activity_title')}</div>
+            <div style="margin-bottom: 10px; background: #fff; padding: 5px; border: 0.5px solid #ccc;">
+                <div style="font-weight: 500; margin-bottom: 3px; border-bottom: 0.5px solid #999; font-size: 0.85em;">${t('print.activity_title')}</div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>Ventes Pharmacie</span>
                     <span>${formatCurrencyLocal(data.total_ca_pharmacie ?? (data.details_paiement?.__meta__?.total_ca_pharmacie) ?? data.total_ventes)}</span>
@@ -477,8 +477,8 @@ export function useJournalCaisse() {
                     <span>${formatCurrencyLocal(data.total_ca_divers ?? data.details_paiement?.__meta__?.total_ca_divers ?? 0)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-top: 3px; padding-top: 2px; border-top: 1px dashed #ccc;">
-                    <span style="font-weight: bold;">Total Ventes</span>
-                    <span style="font-weight: bold;">${formatCurrencyLocal(data.total_ventes)}</span>
+                    <span style="font-weight: 500;">Total Ventes</span>
+                    <span style="font-weight: 500;">${formatCurrencyLocal(data.total_ventes)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>${t('print.misc_entries')}</span>
@@ -488,7 +488,7 @@ export function useJournalCaisse() {
                     <span>${t('print.expenses')}</span>
                     <span>-${formatCurrencyLocal(data.total_sorties)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px dashed black; margin-top: 3px; padding-top: 2px;">
+                <div style="display: flex; justify-content: space-between; font-weight: 500; border-top: 0.5px dashed #999; margin-top: 3px; padding-top: 2px;">
                     <span>${t('print.solde_to_justify')}</span>
                     <span>${formatCurrencyLocal(soldeOp)}</span>
                 </div>
@@ -496,18 +496,18 @@ export function useJournalCaisse() {
 
             ${allMovements.length > 0 ? `
             <div style="margin-bottom: 10px;">
-                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('print.expense_details')}</div>
+                <div style="font-weight: 500; margin-bottom: 3px; border-bottom: 0.5px solid #999; font-size: 0.85em;">${t('print.expense_details')}</div>
                 ${allMovements.map((m: any) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.75em; margin-bottom: 2px;">
                         <span style="max-width: 70%;">${escHtml(m.motif)} (${escHtml(m.user_nom)})</span>
-                        <span style="font-weight: bold;">${formatCurrencyLocal(m.montant)}</span>
+                        <span style="font-weight: 500;">${formatCurrencyLocal(m.montant)}</span>
                     </div>
                 `).join('')}
             </div>
             ` : ''}
 
             <div style="margin-bottom: 15px;">
-                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('print.mode_summary')}</div>
+                <div style="font-weight: 500; margin-bottom: 3px; border-bottom: 0.5px solid #999; font-size: 0.85em;">${t('print.mode_summary')}</div>
                 ${displayDetails.map(([mode, montant]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 1px;">
                         <span style="text-transform: capitalize;">${getModeLabel(mode)}</span>
@@ -516,8 +516,8 @@ export function useJournalCaisse() {
                 `).join('')}
             </div>
 
-            <div style="border-top: 2px solid black; padding-top: 5px; margin-top: 5px;">
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05em;">
+            <div style="border-top: 0.5px solid #999; padding-top: 5px; margin-top: 5px;">
+                <div style="display: flex; justify-content: space-between; font-weight: 500; font-size: 1.05em;">
                     <span>${t('print.total_to_justify')}</span>
                     <span>${formatCurrencyLocal(totalTheorique)}</span>
                 </div>
@@ -525,7 +525,7 @@ export function useJournalCaisse() {
                     <span>${t('print.actual_amount')}</span>
                     <span>${formatCurrencyLocal(montantReel)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid black; margin-top: 3px; padding-top: 3px;">
+                <div style="display: flex; justify-content: space-between; font-weight: 500; border-top: 0.5px solid #999; margin-top: 3px; padding-top: 3px;">
                     <span>${t('print.cash_gap')}</span>
                     <span>${formatCurrencyLocal(montantReel - totalTheorique)}</span>
                 </div>

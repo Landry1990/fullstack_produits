@@ -4,6 +4,15 @@
 
 ## 2026-07-19
 
+### 🐛 Corrections
+
+- **Unités gratuites (UG) non prises en compte dans les rapports**
+  - Problème : `StockLot.quantity_free_remaining` n'était pas initialisé lors de la réception d'une commande avec UG, ce qui faisait apparaître `0` UG en stock dans le rapport UG et le dashboard malgré des unités reçues.
+  - `backend/api/views/commandes/commandes.py` : initialisation explicite de `quantity_free_remaining=quantity_free` lors de la création du lot.
+  - `backend/api/stats_ug_view.py` : correction du filtre "UG reçues ce mois" pour utiliser `commande.date_cloture` au lieu de `CommandeProduit.created_at`.
+  - `backend/api/stats_ug_view.py` : ajout des champs `valeur_acquise`, `valeur_vendue`, `valeur_restante` dans `par_fournisseur` pour que le tableau UG du dashboard s'affiche correctement.
+  - `backend/api/migrations/0222_fix_quantity_free_remaining.py` : migration de données recalculant `quantity_free_remaining` pour tous les lots existants (ventes moins retours, capé par le stock total restant).
+
 ### ✨ Nouvelles fonctionnalités
 
 - **Historique Réapprovisionnement — modernisation shadcn/ui**

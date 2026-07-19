@@ -292,7 +292,8 @@
             "date_from": "Début",
             "date_to": "Fin",
             "to": "au",
-            "clear_dates": "Effacer les dates"
+            "clear_dates": "Effacer les dates",
+            "search": "Rechercher fournisseur, produit, lot..."
         },
         "table": {
             "supplier": "Fournisseur",
@@ -301,6 +302,9 @@
             "remaining_stock": "Stock UG Restant",
             "remaining_value": "Valeur Restante (FCFA)",
             "empty": "Aucune unité gratuite trouvée sur cette période",
+            "ug_suffix": "UG",
+            "lots_badge_one": "{{count}} lot",
+            "lots_badge_other": "{{count}} lots",
             "details": {
                 "product": "Produit",
                 "lot": "N° Lot",
@@ -313,10 +317,18 @@
                 "val_rest": "Valeur Rest."
             }
         },
+        "dialog": {
+            "details_description": "{{count}} lot pour ce fournisseur",
+            "details_description_plural": "{{count}} lots pour ce fournisseur"
+        },
         "print_template": {
             "title": "Rapport Unités Gratuites",
             "situation": "Situation du stock promotionnel au {{date}}",
-            "footer": "Fin du rapport de stock promotionnel"
+            "footer": "Fin du rapport de stock promotionnel",
+            "lot_label": "Lot",
+            "invoice_label": "Fact",
+            "lots_count_one": "{{count}} lot",
+            "lots_count_other": "{{count}} lots"
         }
     },
     "inventaire": {
@@ -951,54 +963,6 @@
             "bulk_delete": "Supprimer ces {{count}} avoirs brouillons ?"
         }
     },
-    "reappro": {
-        "title": "Réapprovisionnement Rayon",
-        "subtitle": "Transférez des produits de la réserve vers le rayon",
-        "transfer_all": "Tout Transférer",
-        "print_title": "BESOINS EN RÉAPPROVISIONNEMENT",
-        "print_hint": "Liste des produits à sortir de réserve pour remplir les rayons.",
-        "stats": {
-            "displayed_products": "{{count}} produit(s) affiché(s)",
-            "urgencies": "Urgences",
-            "suggested_volume": "Volume suggéré",
-            "units": "unités"
-        },
-        "table": {
-            "product": "Produit",
-            "level": "Niveau",
-            "min": "Min.",
-            "capacity": "Capac.",
-            "on_shelf": "En Rayon",
-            "in_reserve": "En Réserve",
-            "suggestion": "Sortie Réserve",
-            "actions": "Actions",
-            "need_refill": "Besoin urgent",
-            "stabilized": "Stable",
-            "suggested": "Suggéré",
-            "complete": "Complet",
-            "transfer_btn": "Sortir"
-        },
-        "messages": {
-            "error_loading_products": "Erreur lors du chargement des produits à réapprovisionner",
-            "no_refill_needed": "Aucun réapprovisionnement nécessaire pour ce produit",
-            "transfer_success": "Transfert réussi : {{count}} {{name}} déplacés en rayon",
-            "no_products_to_refill": "Aucun produit à réapprovisionner actuellement",
-            "bulk_success": "Réapprovisionnement terminé : {{success}} produits traités sur {{total}}",
-            "loading_stocks": "Analyse des besoins...",
-            "no_reserve_products": "Aucun produit avec gestion de réserve n'a été trouvé."
-        },
-        "modal_confirm": {
-            "title": "Transfert Global",
-            "question": "Confirmer le transfert ?",
-            "message": "Vous allez sortir les quantités suggérées de la réserve pour {{count}} produits.",
-            "cancel": "Annuler",
-            "confirm": "Confirmer le Transfert"
-        },
-        "modal_sudo": {
-            "title": "Validation Administrative",
-            "message": "Un mot de passe de pharmacien ou d'administrateur est requis pour ajuster les stocks."
-        }
-    },
     "ruptures": {
         "title": "Suivi des Ruptures",
         "subtitle": "Gérez les ruptures internes et signalez les indisponibilités grossistes",
@@ -1098,6 +1062,50 @@
     },
     "reappro": {
         "title": "Réapprovisionnement Rayon",
+        "subtitle": "Transférez des produits de la réserve vers le rayon",
+        "print_title": "BESOINS EN RÉAPPROVISIONNEMENT",
+        "print_hint": "Liste des produits à sortir de réserve pour remplir les rayons.",
+        "stats": {
+            "displayed_products": "{{count}} produit(s) affiché(s)",
+            "urgencies": "Urgences",
+            "suggested_volume": "Volume suggéré",
+            "units": "unités"
+        },
+        "table": {
+            "product": "Produit",
+            "level": "Niveau",
+            "min": "Min.",
+            "capacity": "Capac.",
+            "on_shelf": "En Rayon",
+            "in_reserve": "En Réserve",
+            "suggestion": "Sortie Réserve",
+            "actions": "Actions",
+            "need_refill": "Besoin urgent",
+            "stabilized": "Stable",
+            "suggested": "Suggéré",
+            "complete": "Complet",
+            "transfer_btn": "Sortir"
+        },
+        "messages": {
+            "error_loading_products": "Erreur lors du chargement des produits à réapprovisionner",
+            "no_refill_needed": "Aucun réapprovisionnement nécessaire pour ce produit",
+            "transfer_success": "Transfert réussi : {{count}} {{name}} déplacés en rayon",
+            "no_products_to_refill": "Aucun produit à réapprovisionner actuellement",
+            "bulk_success": "Réapprovisionnement terminé : {{success}} produits traités sur {{total}}",
+            "loading_stocks": "Analyse des besoins...",
+            "no_reserve_products": "Aucun produit avec gestion de réserve n'a été trouvé."
+        },
+        "modal_confirm": {
+            "title": "Transfert Global",
+            "question": "Confirmer le transfert ?",
+            "message": "Vous allez sortir les quantités suggérées de la réserve pour {{count}} produits.",
+            "cancel": "Annuler",
+            "confirm": "Confirmer le Transfert"
+        },
+        "modal_sudo": {
+            "title": "Validation Administrative",
+            "message": "Un mot de passe de pharmacien ou d'administrateur est requis pour ajuster les stocks."
+        },
         "critical_alerts": "Alertes Critiques",
         "suggested_volume": "Volume Suggéré",
         "displayed_products": "Produits Affichés",

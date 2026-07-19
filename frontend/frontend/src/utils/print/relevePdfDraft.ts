@@ -61,7 +61,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     const ref = `REL-${data.client.id ?? '0'}-${refDate.getFullYear()}${String(refDate.getMonth() + 1).padStart(2, '0')}${String(refDate.getDate()).padStart(2, '0')}`;
 
     // Header
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
     doc.text((data.settings.pharmacy_name || 'PHARMACIE').toUpperCase(), margin, 18);
@@ -79,7 +79,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     if (data.settings.niu) { doc.text(`NIU : ${data.settings.niu}`, margin, hy); hy += 4; }
     if (data.settings.registre_commerce) { doc.text(`RCCM : ${data.settings.registre_commerce}`, margin, hy); }
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(15);
     doc.setTextColor(0, 0, 0);
     doc.text('RELEVE DE FACTURES', pageWidth - margin, 18, { align: 'right' });
@@ -104,12 +104,12 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.rect(margin, blockY, colW, blockH, 'S');
 
     doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
     doc.text('CLIENT', margin + 4, blockY + 5);
     doc.line(margin + 4, blockY + 6.5, margin + colW - 4, blockY + 6.5);
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(0, 0, 0);
     const clientLines = doc.splitTextToSize(data.client.name.toUpperCase(), colW - 8);
@@ -128,7 +128,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.rect(col2X, blockY, colW, blockH, 'S');
 
     doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
     doc.text('PERIODE COUVERTE', col2X + 4, blockY + 5);
     doc.line(col2X + 4, blockY + 6.5, col2X + colW - 4, blockY + 6.5);
@@ -155,11 +155,11 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
         startY: tableStartY,
         head: [['Date', 'N Facture', 'Beneficiaire', 'Total TTC', 'Regle', 'Reste']],
         body: rows,
-        theme: 'grid',
+        theme: 'plain',
         headStyles: {
-            fillColor: [245, 245, 245],
+            fillColor: [255, 255, 255],
             textColor: 0,
-            fontStyle: 'bold',
+            fontStyle: 'normal',
             fontSize: 8,
             cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
         },
@@ -175,7 +175,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
             2: { cellWidth: 'auto' },
             3: { cellWidth: 28, halign: 'right' },
             4: { cellWidth: 25, halign: 'right' },
-            5: { cellWidth: 25, halign: 'right', fontStyle: 'bold' },
+            5: { cellWidth: 25, halign: 'right', fontStyle: 'normal' },
         },
         margin: { left: margin, right: margin },
         didDrawPage: (hookData) => {
@@ -205,17 +205,17 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.setTextColor(0, 0, 0);
 
     doc.text('Total Facture :', totX, finalY + 7);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text(`${fmt(data.totaux.total_factures)} F`, pageWidth - margin, finalY + 7, { align: 'right' });
 
     doc.setFont('helvetica', 'normal');
     doc.text('Total Regle :', totX, finalY + 13);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.text(`${fmt(data.totaux.total_paye)} F`, pageWidth - margin, finalY + 13, { align: 'right' });
 
     doc.line(totX, finalY + 16, pageWidth - margin, finalY + 16);
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.text('NET A PAYER :', totX, finalY + 22);
     doc.text(`${fmt(data.totaux.total_reste)} F`, pageWidth - margin, finalY + 22, { align: 'right' });
