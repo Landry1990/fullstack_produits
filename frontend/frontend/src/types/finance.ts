@@ -91,7 +91,7 @@ export interface Facture {
     is_remise_auto?: boolean
     part_client?: string | null
     reste_a_payer?: string
-    paiements?: any[]
+    paiements?: unknown[]
     validated_by_name?: string
     cancelled_by_name?: string
     session_ticket_number?: number

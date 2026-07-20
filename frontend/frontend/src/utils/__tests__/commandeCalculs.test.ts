@@ -27,8 +27,8 @@ describe('Commande Calculations', () => {
         })
 
         it('should return 0 for invalid inputs', () => {
-            expect(normalizeNumberInput(null as any)).toBe(0)
-            expect(normalizeNumberInput(undefined as any)).toBe(0)
+            expect(normalizeNumberInput(null as unknown)).toBe(0)
+            expect(normalizeNumberInput(undefined as unknown)).toBe(0)
             expect(normalizeNumberInput('invalid')).toBe(0)
         })
     })
@@ -83,7 +83,7 @@ describe('Commande Calculations', () => {
             ]
 
             const montantARepartir = 13000
-            const paiements: any[] = []
+            const paiements: unknown[] = []
             let montantRestant = montantARepartir
 
             for (const facture of factures) {

@@ -18,19 +18,19 @@ describe('finance utilities', () => {
     describe('calculateCartStats', () => {
         const mockLignes: LigneFacture[] = [
             {
-                produit: { id: 1, name: 'P1', selling_price: '1000', tva: 18 } as any,
+                produit: { id: 1, name: 'P1', selling_price: '1000', tva: 18 } as unknown,
                 quantite: 1,
                 prix_unitaire: 1000,
                 remise_produit: 0,
                 total_ligne: 1000
-            } as any,
+            } as unknown,
             {
-                produit: { id: 2, name: 'P2', selling_price: '2000', tva: 0 } as any,
+                produit: { id: 2, name: 'P2', selling_price: '2000', tva: 0 } as unknown,
                 quantite: 2,
                 prix_unitaire: 2000,
                 remise_produit: 10,
                 total_ligne: 3600
-            } as any
+            } as unknown
         ];
 
         it('should calculate aggregate stats for multiple items', () => {
@@ -57,7 +57,7 @@ describe('finance utilities', () => {
         });
 
         it('should apply coverage (tiers-payant)', () => {
-            const client: Client = { id: 1, name: 'C1', taux_couverture: '80' } as any;
+            const client: Client = { id: 1, name: 'C1', taux_couverture: '80' } as unknown;
             const totals = calculateFactureTotals(stats, client, '0', 'montant');
 
             expect(totals.totalTtc).toBe(11800);

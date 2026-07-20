@@ -6,14 +6,14 @@ import * as useFinanceStats from '../../hooks/useFinanceStats';
 
 // Mock recharts
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
-  AreaChart: ({ children }: any) => <div data-testid="area-chart">{children}</div>,
+  ResponsiveContainer: ({ children }: unknown) => <div>{children}</div>,
+  AreaChart: ({ children }: unknown) => <div data-testid="area-chart">{children}</div>,
   Area: () => <div />,
-  LineChart: ({ children }: any) => <div data-testid="line-chart">{children}</div>,
+  LineChart: ({ children }: unknown) => <div data-testid="line-chart">{children}</div>,
   Line: () => <div />,
-  BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
+  BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
   Bar: () => <div />,
-  PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
+  PieChart: ({ children }: unknown) => <div data-testid="pie-chart">{children}</div>,
   Pie: () => <div />,
   XAxis: () => <div />,
   YAxis: () => <div />,
@@ -71,19 +71,19 @@ describe('ModuleFinancier Component', () => {
     vi.clearAllMocks();
     
     // Setup default mock returns
-    (useFinanceStats.useKPIs as any).mockReturnValue({ data: mockKPIs, isLoading: false });
-    (useFinanceStats.useCAEvolution as any).mockReturnValue({ data: null, isLoading: false });
-    (useFinanceStats.useMargesEvolution as any).mockReturnValue({ data: null, isLoading: false });
-    (useFinanceStats.usePredictions as any).mockReturnValue({ data: null, isLoading: false });
-    (useFinanceStats.useTopProducts as any).mockReturnValue({ data: { data: [] }, isLoading: false });
-    (useFinanceStats.useRepartitionCA as any).mockReturnValue({ data: { data: [] }, isLoading: false });
-    (useFinanceStats.useAnalyseCategories as any).mockReturnValue({ data: { data: [] }, isLoading: false });
-    (useFinanceStats.useEvolutionCategories as any).mockReturnValue({ data: { series: [] }, isLoading: false });
-    (useFinanceStats.useAnalyseMarges as any).mockReturnValue({ data: null, isLoading: false });
-    (useFinanceStats.useAnalyseFournisseurs as any).mockReturnValue({ data: { results: [], count: 0 }, isLoading: false });
-    (useFinanceStats.useComparaisonPrix as any).mockReturnValue({ data: [], isLoading: false });
-    (useFinanceStats.useRepartitionAchats as any).mockReturnValue({ data: [], isLoading: false });
-    (useFinanceStats.useMarginVarianceAnalysis as any).mockReturnValue({ data: null, isLoading: false });
+    (useFinanceStats.useKPIs as unknown).mockReturnValue({ data: mockKPIs, isLoading: false });
+    (useFinanceStats.useCAEvolution as unknown).mockReturnValue({ data: null, isLoading: false });
+    (useFinanceStats.useMargesEvolution as unknown).mockReturnValue({ data: null, isLoading: false });
+    (useFinanceStats.usePredictions as unknown).mockReturnValue({ data: null, isLoading: false });
+    (useFinanceStats.useTopProducts as unknown).mockReturnValue({ data: { data: [] }, isLoading: false });
+    (useFinanceStats.useRepartitionCA as unknown).mockReturnValue({ data: { data: [] }, isLoading: false });
+    (useFinanceStats.useAnalyseCategories as unknown).mockReturnValue({ data: { data: [] }, isLoading: false });
+    (useFinanceStats.useEvolutionCategories as unknown).mockReturnValue({ data: { series: [] }, isLoading: false });
+    (useFinanceStats.useAnalyseMarges as unknown).mockReturnValue({ data: null, isLoading: false });
+    (useFinanceStats.useAnalyseFournisseurs as unknown).mockReturnValue({ data: { results: [], count: 0 }, isLoading: false });
+    (useFinanceStats.useComparaisonPrix as unknown).mockReturnValue({ data: [], isLoading: false });
+    (useFinanceStats.useRepartitionAchats as unknown).mockReturnValue({ data: [], isLoading: false });
+    (useFinanceStats.useMarginVarianceAnalysis as unknown).mockReturnValue({ data: null, isLoading: false });
   });
 
   it('renders correctly and displays KPI cards', async () => {
@@ -104,7 +104,7 @@ describe('ModuleFinancier Component', () => {
   });
 
   it('displays loading state when data is fetching', () => {
-    (useFinanceStats.useKPIs as any).mockReturnValue({ isLoading: true });
+    (useFinanceStats.useKPIs as unknown).mockReturnValue({ isLoading: true });
     
     render(
       <MemoryRouter>

@@ -101,7 +101,7 @@ const defaultHookValue = {
 describe('StockAnalysis', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        (useStockAnalysis as any).mockReturnValue(defaultHookValue);
+        (useStockAnalysis as unknown).mockReturnValue(defaultHookValue);
     });
 
     it('affiche le titre et charge les données au montage', async () => {
@@ -126,7 +126,7 @@ describe('StockAnalysis', () => {
     });
 
     it('identifie les produits avec stock faible', async () => {
-        (useStockAnalysis as any).mockReturnValue({ ...defaultHookValue, activeTab: 'shortage' });
+        (useStockAnalysis as unknown).mockReturnValue({ ...defaultHookValue, activeTab: 'shortage' });
         renderWithContext(<StockAnalysis />);
         await waitFor(() => {
             expect(screen.getByText('Produit A')).toBeInTheDocument();
@@ -134,7 +134,7 @@ describe('StockAnalysis', () => {
     });
 
     it('gère les erreurs d\'API avec élégance', async () => {
-        (useStockAnalysis as any).mockReturnValue({ ...defaultHookValue, data: null, error: 'Erreur de chargement' });
+        (useStockAnalysis as unknown).mockReturnValue({ ...defaultHookValue, data: null, error: 'Erreur de chargement' });
         renderWithContext(<StockAnalysis />);
         await waitFor(() => {
             expect(screen.getByText(/Erreur de chargement/i)).toBeInTheDocument();

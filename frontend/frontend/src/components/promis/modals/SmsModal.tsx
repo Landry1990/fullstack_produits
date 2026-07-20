@@ -48,7 +48,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
             });
             toast.success(t('stock:promis.messages.sms_success'));
             onClose();
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(t('stock:promis.messages.sms_error'));
             console.error(err);
         } finally {

@@ -25,8 +25,8 @@ const mockClients = [
 describe('Clients Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(clientService.getAll).mockResolvedValue({ results: mockClients, count: 2 } as any);
-    vi.mocked(clientService.getPurchaseHistory).mockResolvedValue({ total_spent: 0, items: [] } as any);
+    vi.mocked(clientService.getAll).mockResolvedValue({ results: mockClients, count: 2 } as unknown);
+    vi.mocked(clientService.getPurchaseHistory).mockResolvedValue({ total_spent: 0, items: [] } as unknown);
   });
 
   it('renders correctly and displays client list', async () => {
@@ -45,13 +45,13 @@ describe('Clients Component', () => {
   });
 
   it('filters clients on search', async () => {
-    vi.mocked(clientService.getAll).mockImplementation((params: any) => {
+    vi.mocked(clientService.getAll).mockImplementation((params: unknown) => {
       const search = params?.search?.toLowerCase() || '';
       const filtered = mockClients.filter(c => 
         c.name.toLowerCase().includes(search) || 
         c.phone.includes(search)
       );
-      return Promise.resolve({ results: filtered, count: filtered.length } as any);
+      return Promise.resolve({ results: filtered, count: filtered.length } as unknown);
     });
 
     render(

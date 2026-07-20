@@ -57,7 +57,7 @@ interface ReapproSession {
 }
 
 export default function ReapproHistory() {
-  const { t } = useTranslation(['stock', 'common']);
+  const {} = useTranslation(['stock', 'common']);
   const { settings } = usePharmacySettings();
   const [history, setHistory] = useState<ReapproSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +68,7 @@ export default function ReapproHistory() {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const data: any = await produitService.getReapproHistory();
+      const data: unknown = await produitService.getReapproHistory();
       const results = Array.isArray(data) ? data : (data?.results ?? []);
       setHistory(results as ReapproSession[]);
     } catch (error) {

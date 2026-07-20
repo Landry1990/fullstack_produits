@@ -154,7 +154,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                         onChange={(e) => setGroupeId(e.target.value ? parseInt(e.target.value) : undefined)}
                                     >
                                         <option value="">{t('inventaire.create.groupe_all')}</option>
-                                        {groupes?.map((g: any) => <option key={g.id} value={g.id}>{g.nom}</option>)}
+                                        {groupes?.map((g: unknown) => <option key={g.id} value={g.id}>{g.nom}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">

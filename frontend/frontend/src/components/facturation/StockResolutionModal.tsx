@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback, type Dispatch, type SetStateAction } from 'react'
+import { useMemo, useCallback, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import PremiumModal from '../common/PremiumModal'
 import { ShieldAlert, Package, ArrowDown, History, Zap } from 'lucide-react'

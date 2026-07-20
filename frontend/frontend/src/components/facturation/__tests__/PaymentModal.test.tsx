@@ -118,7 +118,7 @@ describe('PaymentModal', () => {
     const props = {
         ...defaultProps,
         isNewSale: false,
-        facturePourPaiement: { id: 1, total_ttc: 5000 } as any
+        facturePourPaiement: { id: 1, total_ttc: 5000 } as unknown
     }
     renderWithContext(<PaymentModal {...props} />)
     const submitButton = screen.getByRole('button', { name: /Enregistrer|Payer/i })

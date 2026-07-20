@@ -9,7 +9,7 @@ interface FacturationNotificationsProps {
   onOpenPaymentModal: (facture: Facture) => void;
   onShowTicket: () => void;
   onPrintA4: (facture: Facture) => void;
-  ticketCaisse: any;
+  ticketCaisse: unknown;
 }
 
 /**

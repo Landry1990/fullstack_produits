@@ -7,7 +7,7 @@ import { getPaymentModeWithIcon } from '../../config/paymentModes'
 interface ClosingReportModalProps {
   isOpen: boolean
   onClose: () => void
-  report: any
+  report: unknown
 }
 
 export function ClosingReportModal({

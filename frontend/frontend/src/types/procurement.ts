@@ -44,6 +44,8 @@ export interface CommandeProduit {
     marge?: string | number  // Alias frontend pour taux_marge
     taux_marge?: string | number  // Champ backend
     prix_euro?: string
+    produit_cip?: string
+    produit_stock?: number
 }
 
 export interface Commande {
@@ -67,6 +69,7 @@ export interface Commande {
     montant_paye?: string
     reste_a_payer?: string
     statut_paiement?: 'PAYE' | 'PARTIEL' | 'IMPAYE' | 'NON_CONCERNE'
+    created_by_name?: string
     closed_by_name?: string
     items_count?: number
 }

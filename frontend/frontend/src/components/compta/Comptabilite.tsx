@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAccounting } from '../../hooks/useAccounting';
 import api from '../../services/api';
 import { 
@@ -8,14 +8,14 @@ import {
     TrendingUp, 
     PlusCircle, 
     RefreshCcw,
-    ChevronRight,
+    ChevronRight as _ChevronRight,
     ArrowUpRight,
     ArrowDownRight,
     Search,
     Calendar,
     Settings,
     FileText,
-    Download
+    Download as _Download
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -43,7 +43,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
         setEcrituresPage,
         ecrituresSearch,
         setEcrituresSearch,
-        ecrituresJournal,
+        ecrituresJournal: _ecrituresJournal,
         setEcrituresJournal,
         comptes, 
         journaux,
@@ -210,7 +210,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function DashboardTab({ resultat, actions, t }: any) {
+function DashboardTab({ resultat, actions, t }: unknown) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3 animate-fade-in">
             {/* KPI Card 1 - Revenue */}
@@ -292,7 +292,7 @@ function DashboardTab({ resultat, actions, t }: any) {
     );
 }
 
-function AchatsTab({ ecritures, count, page, setPage, locale, t }: any) {
+function AchatsTab({ ecritures, count, page, setPage, locale, t }: unknown) {
     const itemsPerPage = 50;
     const totalPages = Math.ceil(count / itemsPerPage);
 
@@ -314,7 +314,7 @@ function AchatsTab({ ecritures, count, page, setPage, locale, t }: any) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {ecritures.map((e: any) => (
+                        {ecritures.map((e: unknown) => (
                             <React.Fragment key={e.id}>
                                 <tr className="group hover:bg-slate-50 transition-colors">
                                     <td className="px-4 py-3 text-sm text-slate-400">{format(new Date(e.date), 'dd MMM yyyy', { locale })}</td>
@@ -350,7 +350,7 @@ function AchatsTab({ ecritures, count, page, setPage, locale, t }: any) {
     );
 }
 
-function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, locale, t }: any) {
+function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, locale, t }: unknown) {
     const itemsPerPage = 50;
     const totalPages = Math.ceil(count / itemsPerPage);
 
@@ -385,7 +385,7 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {ecritures.map((e: any) => (
+                        {ecritures.map((e: unknown) => (
                             <React.Fragment key={e.id}>
                                 <tr className="group hover:bg-slate-50 transition-colors">
                                     <td className="px-4 py-3 text-sm text-slate-400">{format(new Date(e.date), 'dd MMM yyyy', { locale })}</td>
@@ -395,7 +395,7 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
                                     <td className="px-4 py-3 text-right text-blue-600 font-medium text-sm">{e.total_debit > 0 ? formatAmount(e.total_debit) : '-'}</td>
                                     <td className="px-4 py-3 text-right text-red-500 font-medium text-sm">{e.total_credit > 0 ? formatAmount(e.total_credit) : '-'}</td>
                                 </tr>
-                                {e.lignes?.map((l: any) => (
+                                {e.lignes?.map((l: unknown) => (
                                     <tr key={l.id} className="text-xs text-slate-400 hover:text-slate-600 transition-colors bg-slate-50">
                                         <td colSpan={3}></td>
                                         <td className="px-4 py-2 pl-8 border-l-2 border-indigo-100 text-slate-600">
@@ -432,7 +432,7 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
     );
 }
 
-function BalanceTab({ balance, t }: any) {
+function BalanceTab({ balance, t }: unknown) {
     return (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
@@ -448,7 +448,7 @@ function BalanceTab({ balance, t }: any) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {balance?.map((b: any) => (
+                        {balance?.map((b: unknown) => (
                             <tr key={b.numero} className="hover:bg-slate-50 transition-colors">
                                 <td className="px-4 py-3 font-mono text-blue-600 font-bold">{b.numero}</td>
                                 <td className="px-4 py-3 text-sm text-slate-700">{b.libelle}</td>
@@ -465,7 +465,7 @@ function BalanceTab({ balance, t }: any) {
     );
 }
 
-function BilanTab({ bilan, t }: any) {
+function BilanTab({ bilan, t }: unknown) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -476,7 +476,7 @@ function BilanTab({ bilan, t }: any) {
                     </h3>
                 </div>
                 <div className="p-5 space-y-3">
-                    {bilan?.details_actif?.map((d: any) => (
+                    {bilan?.details_actif?.map((d: unknown) => (
                         <div key={d.numero} className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div>
                                 <span className="font-mono text-blue-300 text-xs block">{d.numero}</span>
@@ -496,7 +496,7 @@ function BilanTab({ bilan, t }: any) {
                     </h3>
                 </div>
                 <div className="p-5 space-y-3">
-                    {bilan?.details_passif?.map((d: any) => (
+                    {bilan?.details_passif?.map((d: unknown) => (
                         <div key={d.numero} className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div>
                                 <span className="font-mono text-red-300 text-xs block">{d.numero}</span>
@@ -530,16 +530,16 @@ const TYPE_STYLES: Record<string, string> = {
 
 const EMPTY_FORM = { numero: '', libelle: '', type: 'ACTIF' as const, is_active: true };
 
-function PlanTab({ comptes, actions, t }: any) {
+function PlanTab({ comptes, actions, t }: unknown) {
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
-    const [editTarget, setEditTarget] = useState<any>(null);
+    const [editTarget, setEditTarget] = useState<unknown>(null);
     const [form, setForm] = useState({ ...EMPTY_FORM });
-    const [confirmDelete, setConfirmDelete] = useState<any>(null);
+    const [confirmDelete, setConfirmDelete] = useState<unknown>(null);
 
     const openAdd = () => { setForm({ ...EMPTY_FORM }); setEditTarget(null); setModalOpen(true); };
-    const openEdit = (c: any) => { setForm({ numero: c.numero, libelle: c.libelle, type: c.type, is_active: c.is_active }); setEditTarget(c); setModalOpen(true); };
+    const openEdit = (c: unknown) => { setForm({ numero: c.numero, libelle: c.libelle, type: c.type, is_active: c.is_active }); setEditTarget(c); setModalOpen(true); };
     const closeModal = () => { setModalOpen(false); setEditTarget(null); };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -557,15 +557,15 @@ function PlanTab({ comptes, actions, t }: any) {
         setConfirmDelete(null);
     };
 
-    const filtered = (comptes || []).filter((c: any) => {
+    const filtered = (comptes || []).filter((c: unknown) => {
         const q = search.toLowerCase();
         const matchSearch = !q || c.numero.includes(q) || c.libelle.toLowerCase().includes(q);
         const matchType = !filterType || c.type === filterType;
         return matchSearch && matchType;
     });
 
-    const grouped: Record<string, any[]> = {};
-    filtered.forEach((c: any) => {
+    const grouped: Record<string, unknown[]> = {};
+    filtered.forEach((c: unknown) => {
         if (!grouped[c.type]) grouped[c.type] = [];
         grouped[c.type].push(c);
     });
@@ -618,7 +618,7 @@ function PlanTab({ comptes, actions, t }: any) {
                         <span className="ml-auto font-normal opacity-60">{t('plan.group_count', { count: items.length })}</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {items.map((c: any) => (
+                        {items.map((c: unknown) => (
                             <div key={c.id} className={`bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between group hover:shadow-sm transition-all ${!c.is_active ? 'opacity-50' : ''}`}>
                                 <div className="min-w-0">
                                     <p className="font-mono text-base font-bold text-slate-800">{c.numero}</p>
@@ -694,7 +694,7 @@ function PlanTab({ comptes, actions, t }: any) {
                                 <select
                                     className="h-10 w-full px-3 rounded-xl border border-slate-200 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                                     value={form.type}
-                                    onChange={e => setForm({ ...form, type: e.target.value as any })}
+                                    onChange={e => setForm({ ...form, type: e.target.value as unknown })}
                                     required
                                 >
                                     <option value="ACTIF">{t('plan.filter_actif')}</option>
@@ -765,7 +765,7 @@ function PlanTab({ comptes, actions, t }: any) {
     );
 }
 
-function ResultatTab({ resultat, t }: any) {
+function ResultatTab({ resultat, t }: unknown) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden border-t-4 border-t-blue-500 shadow-sm">
@@ -776,7 +776,7 @@ function ResultatTab({ resultat, t }: any) {
                     </h3>
                 </div>
                 <div className="p-5 space-y-3">
-                    {resultat?.details_produits?.map((d: any) => (
+                    {resultat?.details_produits?.map((d: unknown) => (
                         <div key={d.compte__numero} className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div className="flex items-center gap-2">
                                 <span className="font-mono text-blue-300 text-xs">{d.compte__numero}</span>
@@ -796,7 +796,7 @@ function ResultatTab({ resultat, t }: any) {
                     </h3>
                 </div>
                 <div className="p-5 space-y-3">
-                    {resultat?.details_charges?.map((d: any) => (
+                    {resultat?.details_charges?.map((d: unknown) => (
                         <div key={d.compte__numero} className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div className="flex items-center gap-2">
                                 <span className="font-mono text-red-300 text-xs">{d.compte__numero}</span>
@@ -824,7 +824,7 @@ const categoriesOHADA = [
     { id: 'autre', compte: 'autre', label: 'Autre charge...', icon: '⚙️' },
 ];
 
-function ChargesTab({ actions, comptes, journaux, t }: any) {
+function ChargesTab({ actions, comptes, journaux, t }: unknown) {
     const [formData, setFormData] = useState({
         typeCharge: '',
         comptePersonnalise: '',
@@ -841,7 +841,7 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
 
         // Résolution du compte de charge — création automatique si absent
         const catInfo = categoriesOHADA.find(c => c.compte === targetCompteNumero);
-        let chargeCompte = comptes?.find((c: any) => c.numero === targetCompteNumero);
+        let chargeCompte = comptes?.find((c: unknown) => c.numero === targetCompteNumero);
         if (!chargeCompte && catInfo && catInfo.compte !== 'autre') {
             try {
                 const res = await actions.createCompte.mutateAsync({
@@ -862,7 +862,7 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
         const tresoMeta = formData.modePaiement === '571100'
             ? { libelle: t('charges_simple.cash_account'), type: 'ACTIF' as const }
             : { libelle: t('charges_simple.bank_account'), type: 'ACTIF' as const };
-        let tresoCompte = comptes?.find((c: any) => c.numero === formData.modePaiement);
+        let tresoCompte = comptes?.find((c: unknown) => c.numero === formData.modePaiement);
         if (!tresoCompte) {
             try {
                 const res = await actions.createCompte.mutateAsync({
@@ -877,7 +877,7 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
         // Résolution du journal — création automatique si absent
         const journalCode = formData.modePaiement === '571100' ? 'CA' : 'BQ';
         const journalNom  = formData.modePaiement === '571100' ? t('charges_simple.cash_account') : t('charges_simple.bank_account');
-        let targetJournal = journaux?.find((j: any) => j.code === journalCode);
+        let targetJournal = journaux?.find((j: unknown) => j.code === journalCode);
         if (!targetJournal) {
             try {
                 const res = await api.post('compta/journaux/', { code: journalCode, nom: journalNom });
@@ -902,7 +902,7 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
         setFormData({ ...formData, libelle: '', montant: '' });
     };
 
-    const chargeAccounts = comptes?.filter((c: any) => c.numero.startsWith('6'));
+    const chargeAccounts = comptes?.filter((c: unknown) => c.numero.startsWith('6'));
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -949,7 +949,7 @@ function ChargesTab({ actions, comptes, journaux, t }: any) {
                                     required
                                 >
                                     <option value="">{t('charges_simple.select_account_placeholder')}</option>
-                                    {chargeAccounts?.map((c: any) => (
+                                    {chargeAccounts?.map((c: unknown) => (
                                         <option key={c.numero} value={c.numero}>{c.numero} - {c.libelle}</option>
                                     ))}
                                 </select>

@@ -120,7 +120,7 @@ export function useDatamatrixScan({
             } else {
                 toast.success(`${data.produit.name} ajouté (Lot ${data.lot_numero})`);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             setScanStatus('error');
             const detail = err?.response?.data?.detail || 'Lot ou produit introuvable.';
             toast.error(detail);

@@ -21,7 +21,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
     totalCount,
     onPageChange
 }) => {
-    const { t, i18n } = useTranslation(['stock', 'common']);
+    const { t } = useTranslation(['stock', 'common']);
 
     if (loading) {
         return (

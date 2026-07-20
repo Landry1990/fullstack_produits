@@ -190,7 +190,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
         },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 8;
+    const finalY = (doc as unknown).lastAutoTable.finalY + 8;
 
     // Totaux
     const totW = 80;

@@ -1,11 +1,11 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import Fournisseurs from '../Fournisseurs';
 import axios from 'axios';
 
 // Mock axios globally
-const mockedAxios = axios as any;
+const mockedAxios = axios as unknown;
 
 vi.mock('react-hot-toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() }
@@ -131,7 +131,7 @@ describe('Fournisseurs Component', () => {
         // Wait for debounce and effect
         await waitFor(() => {
             const calls = mockedAxios.get.mock.calls;
-            const searchCall = calls.find((c: any) => c[1]?.params?.search === 'Med');
+            const searchCall = calls.find((c: unknown) => c[1]?.params?.search === 'Med');
             expect(searchCall).toBeDefined();
         }, { timeout: 4000 });
     });

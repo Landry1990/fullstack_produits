@@ -27,16 +27,16 @@ export interface BulkPaiementPayload {
 
 const creanceService = {
     getAll: async (params: CreanceFilters = {}): Promise<Creance[]> => {
-        const response = await api.get<any>('creances/', { params });
+        const response = await api.get<unknown>('creances/', { params });
         return Array.isArray(response.data) ? response.data : (response.data.results || []);
     },
 
-    getReleve: async (params: { client_id: string; date_debut?: string; date_fin?: string }): Promise<any> => {
+    getReleve: async (params: { client_id: string; date_debut?: string; date_fin?: string }): Promise<unknown> => {
         const response = await api.get('creances/releve/', { params });
         return response.data;
     },
 
-    ajouterPaiement: async (id: number, payload: AjouterPaiementPayload): Promise<{ detail: string; paiement_id: number; creance?: any }> => {
+    ajouterPaiement: async (id: number, payload: AjouterPaiementPayload): Promise<{ detail: string; paiement_id: number; creance?: unknown }> => {
         const response = await api.post(`creances/${id}/ajouter_paiement/`, payload);
         return response.data;
     },
@@ -76,7 +76,7 @@ const creanceService = {
         return response.data;
     },
 
-    getSynthese: async (params: { date_debut?: string; date_fin?: string } = {}): Promise<any[]> => {
+    getSynthese: async (params: { date_debut?: string; date_fin?: string } = {}): Promise<unknown[]> => {
         const response = await api.get('creances/synthese_clients/', { params });
         return Array.isArray(response.data) ? response.data : [];
     },

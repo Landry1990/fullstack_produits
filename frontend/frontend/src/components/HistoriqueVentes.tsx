@@ -8,7 +8,6 @@ import { getApiErrorDetail } from '../utils/errorHandling';
 import { formatCurrency } from '../utils/formatters';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
-import { cn } from '../lib/utils';
 import {
   FileSpreadsheet,
   CalendarDays,
@@ -55,7 +54,7 @@ const HistoriqueVentes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(31);
   const [totalItems, setTotalItems] = useState(0);
-  const [globalTotals, setGlobalTotals] = useState<any>(null);
+  const [globalTotals, setGlobalTotals] = useState<unknown>(null);
 
   const fetchHistory = useCallback(async () => {
     if (!user?.token) return;
@@ -230,7 +229,7 @@ const HistoriqueVentes = () => {
                       <td className="font-semibold text-slate-700 whitespace-nowrap py-3 px-2">
                         <div className="flex flex-col">
                           <span className="text-sm">{format(new Date(row.date), 'dd/MM/yyyy')}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">{format(new Date(row.date), 'EEEE', { locale: (window as any).dateLocale })}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">{format(new Date(row.date), 'EEEE', { locale: (window as unknown).dateLocale })}</span>
                         </div>
                       </td>
                       <td className="text-right py-3 px-2">

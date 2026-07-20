@@ -81,7 +81,7 @@ export default function CatalogDCIAddModal({
           substance_active: substance.nom,
         });
         return null;
-      } catch (err: any) {
+      } catch (err: unknown) {
         const msg = err.response?.data?.detail || err.message;
         return `${prod.name}: ${msg}`;
       }

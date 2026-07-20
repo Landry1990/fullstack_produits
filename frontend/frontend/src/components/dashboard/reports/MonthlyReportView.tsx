@@ -16,7 +16,7 @@ import { formatCurrency } from '../../../utils/formatters';
 import { Badge } from '../../shadcn/badge';
 
 interface MonthlyReportViewProps {
-    data: any;
+    data: unknown;
 }
 
 const formatMoney = (v: number) => formatCurrency(Math.round(v || 0));
@@ -80,7 +80,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                         </h3>
                     </div>
                     <div className="p-4 space-y-3">
-                        {(data.encaissements || []).map((enc: any, idx: number) => (
+                        {(data.encaissements || []).map((enc: unknown, _idx: number) => (
                             <div key={enc.id ?? enc.mode_label ?? enc.mode} className="flex justify-between items-center p-2 rounded-xl border border-slate-200">
                                 <span className="text-xs font-bold text-slate-500 uppercase">{enc.mode_label || enc.mode}</span>
                                 <span className="text-sm font-black text-slate-800">{formatMoney(enc.montant)}</span>
@@ -103,7 +103,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                         </h3>
                     </div>
                     <div className="p-4 space-y-3">
-                        {(data.ca_par_tva || []).map((tva: any, idx: number) => (
+                        {(data.ca_par_tva || []).map((tva: unknown, _idx: number) => (
                             <div key={`tva-${tva.taux}`} className="flex justify-between items-center p-2 rounded-xl border border-slate-200">
                                 <span className="text-xs font-bold text-slate-500 uppercase">TVA {tva.taux}%</span>
                                 <span className="text-sm font-black text-slate-800">{formatMoney(tva.montant_tva)}</span>
@@ -154,7 +154,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                             </h3>
                         </div>
                         <div className="p-4 space-y-2">
-                            {data.achats_par_fournisseur.slice(0, 5).map((f: any, idx: number) => (
+                            {data.achats_par_fournisseur.slice(0, 5).map((f: unknown, _idx: number) => (
                                 <div key={f.fournisseur_id ?? f.fournisseur_nom} className="flex justify-between items-center text-xs">
                                     <span className="font-bold text-slate-500 truncate max-w-[150px] uppercase">{f.fournisseur_nom}</span>
                                     <span className="font-black text-slate-800">{formatMoney(f.montant_total)}</span>

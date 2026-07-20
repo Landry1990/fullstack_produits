@@ -8,7 +8,7 @@ declare module 'bwip-js' {
         includetext?: boolean;
         textxalign?: string;
         parsefnc?: boolean;
-        [key: string]: any;
+        [key: string]: unknown;
     }
     function toCanvas(canvas: HTMLCanvasElement, options: BwipOptions): HTMLCanvasElement;
     function toSVG(options: BwipOptions): string;

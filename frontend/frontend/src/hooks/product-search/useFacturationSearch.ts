@@ -20,7 +20,7 @@ export const useFacturationSearch = () => {
   const [dciProducts, setDciProducts] = useState<ProduitModel[]>([])
   
   // Loading states
-  const [loading, setLoading] = useState(false)
+  const [loading, _setLoading] = useState(false)
   const [packLoading, setPackLoading] = useState(false)
   const [dciLoading, setDciLoading] = useState(false)
   const [dciProductsLoading, setDciProductsLoading] = useState(false)

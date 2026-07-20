@@ -437,7 +437,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         try {
             await avoirService.updateLigne(ligneId, { est_cloture: newStatus });
             toast.success(newStatus ? t('avoirs.toasts.line_closed') : t('avoirs.toasts.line_reopened'));
-        } catch (err) {
+        } catch {
             toast.error(t('avoirs.toasts.update_line_error'));
             updateState(!newStatus);
         }
@@ -478,7 +478,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 .map(p => avoirService.updateLigne(p.id, { est_cloture: targetStatus }));
             await Promise.all(promises);
             toast.success(targetStatus ? t('avoirs.toasts.bulk_lines_closed') : t('avoirs.toasts.bulk_lines_reopened'));
-        } catch (err) {
+        } catch {
             toast.error(t('avoirs.toasts.bulk_update_error'));
             // Rollback
             setSelectedAvoir(prev => prev ? { ...prev, produits: originalProduits } : null);
@@ -537,7 +537,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         try {
             const lots = await produitService.getLots(produitId);
             setAvailableLots(lots.filter((l: StockLot) => l.quantity_remaining > 0));
-        } catch (err) {
+        } catch {
             toast.error(t('avoirs.toasts.load_lots_error'));
         } finally {
             setLoadingLots(false);
@@ -595,7 +595,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             toast.success(t('avoirs.toasts.bulk_delete_success', { count }));
             setAvoirs(avoirs.filter(a => !selectedIds.has(a.id)));
             setSelectedIds(new Set());
-        } catch (err) {
+        } catch {
             toast.error(t('avoirs.toasts.bulk_delete_error'));
         } finally {
             setBulkLoading(false);
@@ -613,7 +613,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             toast.success(t('avoirs.toasts.bulk_validate_success', { count }));
             setSelectedIds(new Set());
             fetchAvoirs();
-        } catch (err) {
+        } catch {
             toast.error(t('avoirs.toasts.bulk_validate_error'));
         } finally {
             setBulkLoading(false);

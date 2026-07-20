@@ -30,7 +30,7 @@ const GS = '\u001d';
  */
 export function parseGS1Datamatrix(raw: string): GS1ParseResult {
     // Nettoyer les marqueurs de début de format (]d2, ]C1, etc.)
-    let s = raw.replace(/^\][a-zA-Z][0-9]/, '').replace(/^\]d[0-9]/, '');
+    const s = raw.replace(/^\][a-zA-Z][0-9]/, '').replace(/^\]d[0-9]/, '');
 
     const result: GS1ParseResult = {
         gtin: null,

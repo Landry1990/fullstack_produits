@@ -211,7 +211,7 @@ export function generateRelevePdf(data: RelevePdfData): jsPDF {
         },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 8;
+    const finalY = (doc as unknown).lastAutoTable.finalY + 8;
 
     // ── TOTAUX ────────────────────────────────────────────────────────────────
     const totW = 80;

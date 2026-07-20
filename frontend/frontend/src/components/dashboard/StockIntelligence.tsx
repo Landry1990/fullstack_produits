@@ -20,15 +20,15 @@ const formatExpiryDuration = (days: number) => {
 };
 
 interface StockIntelligenceProps {
-  stats: any;
-  lowStockItems: any[];
-  expiringLots: any[];
-  promisDisponibles: any[];
+  stats: unknown;
+  lowStockItems: unknown[];
+  expiringLots: unknown[];
+  promisDisponibles: unknown[];
   expirationMonths: number;
   setExpirationMonths: (val: number) => void;
   getServerDate: () => Date;
   reapproStats?: { product_count: number; total_units_suggested: number };
-  t: any;
+  t: unknown;
   formatCurrencyLocal: (val: number) => string;
 }
 
@@ -47,17 +47,17 @@ export default function StockIntelligence({
   const navigate = useNavigate();
 
   const DORMANT_DAYS = 90;
-  const [dormantItems, setDormantItems] = useState<any[]>([]);
+  const [dormantItems, setDormantItems] = useState<unknown[]>([]);
   const [dormantTotal, setDormantTotal] = useState(0);
 
-  const [overstockItems, setOverstockItems] = useState<any[]>([]);
+  const [overstockItems, setOverstockItems] = useState<unknown[]>([]);
   const [overstockTotal, setOverstockTotal] = useState(0);
 
   useEffect(() => {
     api.get('stock-analysis/unsold/', {
       params: { days: DORMANT_DAYS, page: 1, page_size: 50 }
     }).then(res => {
-      const items = (res.data?.items ?? []) as any[];
+      const items = (res.data?.items ?? []) as unknown[];
       const sorted = items.slice().sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0)).slice(0, 5);
       setDormantItems(sorted);
       setDormantTotal(res.data?.total_value ?? 0);
@@ -68,7 +68,7 @@ export default function StockIntelligence({
     api.get('stock-analysis/overstock/', {
       params: { page: 1, page_size: 50 }
     }).then(res => {
-      const items = (res.data?.items ?? []) as any[];
+      const items = (res.data?.items ?? []) as unknown[];
       const sorted = items.slice().sort((a, b) => (b.excess_value ?? 0) - (a.excess_value ?? 0)).slice(0, 5);
       setOverstockItems(sorted);
       setOverstockTotal(res.data?.total_value ?? 0);
@@ -116,7 +116,7 @@ export default function StockIntelligence({
                   {t('alerts.no_expiry_alerts')}
                 </div>
               ) : (
-                expiringLots.slice(0, 10).map((lot: any) => {
+                expiringLots.slice(0, 10).map((lot: unknown) => {
                   const today = getServerDate();
                   const daysUntilExpiry = lot.date_expiration 
                     ? Math.floor((new Date(lot.date_expiration).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
@@ -188,7 +188,7 @@ export default function StockIntelligence({
 
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
               {dormantItems.length > 0 ? (
-                dormantItems.map((p: any) => (
+                dormantItems.map((p: unknown) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-100 border border-slate-100 hover:border-slate-300 transition-all group">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-bold text-slate-700 truncate">{p.name}</span>
@@ -242,7 +242,7 @@ export default function StockIntelligence({
 
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
               {overstockItems.length > 0 ? (
-                overstockItems.map((p: any, i: number) => (
+                overstockItems.map((p: unknown, i: number) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-amber-50/60 border border-orange-100 hover:border-orange-300 transition-all group">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-black text-orange-500 bg-amber-100 size-6 flex items-center justify-center rounded-lg border border-orange-200 shrink-0">{i + 1}</span>
@@ -294,7 +294,7 @@ export default function StockIntelligence({
                 <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold">{promisDisponibles.length}</span>
               </div>
               <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
-                {promisDisponibles.slice(0, 5).map((p: any) => (
+                {promisDisponibles.slice(0, 5).map((p: unknown) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-white border border-emerald-100 shadow-sm transition-all hover:border-emerald-300">
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-bold text-slate-700 block truncate">{p.produit_nom}</span>
@@ -457,7 +457,7 @@ export default function StockIntelligence({
             </div>
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
               {stats?.top_products && stats.top_products.length > 0 ? (
-                stats.top_products.map((p: any, i: number) => (
+                stats.top_products.map((p: unknown, i: number) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-100 border border-slate-100 hover:border-amber-200 transition-all group">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-bold text-amber-500 bg-amber-50 size-6 flex items-center justify-center rounded-lg border border-amber-100">{i + 1}</span>

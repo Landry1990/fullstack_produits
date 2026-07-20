@@ -259,7 +259,7 @@ export default function ModuleFinancier() {
 
                 <div className="space-y-3">
                   <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">{isEnglish ? 'Key Insights' : 'Analyses Clés'}</h3>
-                  {varianceReport.insights.map((insight: any) => {
+                  {varianceReport.insights.map((insight: unknown) => {
                     const text = isEnglish ? insight?.en : insight?.fr;
                     const safeText = typeof text === 'string' ? text : JSON.stringify(text);
                     return (
@@ -289,7 +289,7 @@ export default function ModuleFinancier() {
                         </tr>
                       </thead>
                       <tbody>
-                        {varianceReport.suspicious_products.map((p: any, idx: number) => {
+                        {varianceReport.suspicious_products.map((p: unknown, idx: number) => {
                           const productId = p?.produit__id || p?.id || `prod-${idx}`;
                           const productName = typeof p?.produit__name === 'string' ? p.produit__name : 
                                             typeof p?.nom === 'string' ? p.nom : 'Produit inconnu';
@@ -762,7 +762,7 @@ export default function ModuleFinancier() {
                       </thead>
                       <tbody>
                         {marginAnalysis.opportunites_nego.length > 0 ? (
-                          marginAnalysis.opportunites_nego.map((item: any, idx: number) => {
+                          marginAnalysis.opportunites_nego.map((item: unknown, idx: number) => {
                             const itemId = item?.id || `opportunity-${idx}`;
                             const itemName = typeof item?.nom === 'string' ? item.nom : 'Produit inconnu';
                             const tauxMarge = typeof item?.taux_marge === 'number' ? item.taux_marge : 
@@ -814,7 +814,7 @@ export default function ModuleFinancier() {
                       </thead>
                       <tbody>
                         {marginAnalysis.stock_dormant.length > 0 ? (
-                          marginAnalysis.stock_dormant.map((item: any, idx: number) => {
+                          marginAnalysis.stock_dormant.map((item: unknown, idx: number) => {
                             const itemId = item?.id || `dormant-${idx}`;
                             const itemName = typeof item?.nom === 'string' ? item.nom : 'Produit inconnu';
                             const tauxMarge = typeof item?.taux_marge === 'number' ? item.taux_marge : 
@@ -866,7 +866,7 @@ export default function ModuleFinancier() {
                       </thead>
                       <tbody>
                         {marginAnalysis.suggestions_prix.length > 0 ? (
-                          marginAnalysis.suggestions_prix.map((item: any, idx: number) => {
+                          marginAnalysis.suggestions_prix.map((item: unknown, idx: number) => {
                             const itemId = item?.id || `suggestion-${idx}`;
                             const itemName = typeof item?.nom === 'string' ? item.nom : 'Produit inconnu';
                             const tauxActuel = typeof item?.taux_actuel === 'number' ? item.taux_actuel : 
@@ -932,7 +932,7 @@ export default function ModuleFinancier() {
                   </tr>
                 </thead>
                 <tbody>
-                  {supplierAnalysis.slice(0, 10).map((item: any, index: number) => {
+                  {supplierAnalysis.slice(0, 10).map((item: unknown, index: number) => {
                     const volumeValeur = item?.details?.volume?.valeur || 0;
                     const volumeScore = item?.details?.volume?.score || 0;
                     const qualiteIncidents = item?.details?.qualite?.incidents || 0;

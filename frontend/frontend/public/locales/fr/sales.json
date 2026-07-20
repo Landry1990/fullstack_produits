@@ -40,7 +40,7 @@
         "delete_drafts": "Vider Brouillons"
     },
     "filters": {
-        "search_placeholder": "Rechercher une vente...",
+        "search_placeholder": "Client, facture, produit ou montant...",
         "status_all": "Tous les statuts",
         "start_date": "Début",
         "end_date": "Fin",

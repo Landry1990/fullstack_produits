@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Eye, Trash2, Printer, GitMerge, Sparkles, Plus, ArrowUpDown, Search, X, Package } from 'lucide-react';
+import { Eye, Trash2, Printer, GitMerge, Sparkles, Plus, Search, X, Package } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';

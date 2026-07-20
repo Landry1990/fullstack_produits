@@ -20,9 +20,9 @@ const PrintPage: React.FC = () => {
     const clientNameOverride = searchParams.get('client_name');
     const type = searchParams.get('type');
 
-    const [inventoryData, setInventoryData] = useState<any>(null);
+    const [inventoryData, setInventoryData] = useState<unknown>(null);
     const [stockValuationData, setStockValuationData] = useState<StockValuationData | null>(null);
-    const [avoirData, setAvoirData] = useState<any | null>(null);
+    const [avoirData, setAvoirData] = useState<unknown | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -143,15 +143,14 @@ const PrintPage: React.FC = () => {
                 {`
                     @media print {
                         @page { margin: 10mm; size: A4; }
-                        body { margin: 0; background: white; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
+                        html, body, #root { margin: 0; width: 100%; height: auto; overflow: visible; background: white; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
                         .no-print { display: none !important; }
-                        .print-page { background: white !important; }
+                        .print-page { display: block !important; min-height: 0 !important; overflow: visible !important; padding: 0 !important; background: white !important; }
 
                         /* Alléger les documents : moins de gras, de couleur et de bordures */
                         .font-black, .font-bold, .font-semibold, .font-extrabold { font-weight: 500 !important; }
                         .uppercase, .tracking-widest, .tracking-wider, .tracking-tighter, .tracking-tight { text-transform: none !important; letter-spacing: 0 !important; }
-                        .text-white, [class*="text-success"], [class*="text-error"], [class*="text-info"], [class*="text-primary"], [class*="text-emerald"], [class*="text-amber"], [class*="text-indigo"], [class*="text-blue"] { color: #000 !important; }
-                        [class*="bg-slate-900"], [class*="bg-slate-800"], [class*="bg-success"], [class*="bg-primary"], [class*="bg-error"], [class*="bg-info"], [class*="bg-warning"], [class*="bg-emerald"], [class*="bg-base-200"], [class*="bg-base-300"], [class*="bg-gray-50"], [class*="bg-gray-100"], [class*="bg-red"], [class*="bg-blue"] { background: white !important; color: #000 !important; }
+                        .print-page, .print-page * { background-color: transparent !important; background-image: none !important; color: #000 !important; }
                         [class*="border-2"] { border-width: 0.5px !important; }
                         [class*="border-b-2"] { border-bottom-width: 0.5px !important; }
                         [class*="border-t-2"] { border-top-width: 0.5px !important; }

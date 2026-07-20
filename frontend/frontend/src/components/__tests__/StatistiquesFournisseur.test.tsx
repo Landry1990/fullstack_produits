@@ -10,8 +10,8 @@ import { MemoryRouter } from 'react-router-dom';
 
 // Mock Recharts
 vi.mock('recharts', () => ({
-    ResponsiveContainer: ({ children }: any) => <div className="recharts-responsive-container">{children}</div>,
-    BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
+    ResponsiveContainer: ({ children }: unknown) => <div className="recharts-responsive-container">{children}</div>,
+    BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
     Bar: () => <div data-testid="bar" />,
     XAxis: () => <div data-testid="x-axis" />,
     YAxis: () => <div data-testid="y-axis" />,
@@ -58,7 +58,7 @@ describe('StatistiquesFournisseur', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (axios.get as any).mockResolvedValue({ data: mockStats });
+        (axios.get as unknown).mockResolvedValue({ data: mockStats });
     });
 
     it('renders the title and initial components', async () => {
@@ -95,7 +95,7 @@ describe('StatistiquesFournisseur', () => {
     });
 
     it('renders empty state correctly', async () => {
-        (axios.get as any).mockResolvedValueOnce({ data: [] });
+        (axios.get as unknown).mockResolvedValueOnce({ data: [] });
         renderWithContext(<StatistiquesFournisseur />);
         
         await waitFor(() => {

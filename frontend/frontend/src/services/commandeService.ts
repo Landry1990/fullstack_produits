@@ -44,7 +44,7 @@ const commandeService = {
                 acc[key] = value;
             }
             return acc;
-        }, {} as any);
+        }, {} as unknown);
 
         const response = await api.get<PaginatedResponse<Commande>>('commandes/', { params: sanitizedFilters });
         return response.data;

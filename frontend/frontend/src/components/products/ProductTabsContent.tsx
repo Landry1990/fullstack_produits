@@ -15,18 +15,18 @@ import { Loader2, Check, X, Pencil } from 'lucide-react';
 interface ProductTabsContentProps {
   selectedProduit: ProduitModel;
   activeTab: string;
-  setActiveTab: (tab: any) => void;
+  setActiveTab: (tab: unknown) => void;
   lots: StockLot[];
-  monthlyStats: any[];
-  achats: any[];
-  stockHistory: any[];
+  monthlyStats: unknown[];
+  achats: unknown[];
+  stockHistory: unknown[];
   loadingHistory: boolean;
-  onMovementClick: (item: any) => void;
+  onMovementClick: (item: unknown) => void;
 }
 
 // Helper components - Defined first to avoid hoisting issues
 
-const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
+const PriceEvolutionChart = ({ achats, t }: { achats: unknown[]; t: unknown }) => {
     const [selectedFournisseur, setSelectedFournisseur] = useState<string>('all');
 
     const fournisseurs = useMemo(() => {
@@ -120,7 +120,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
                     />
                     <Tooltip
                         formatter={(value: number) => [formatCurrency(value), t('products:detail.purchases.price_label')]}
-                        labelFormatter={(label: string, payload: readonly any[]) => {
+                        labelFormatter={(label: string, payload: readonly unknown[]) => {
                             const item = payload?.[0]?.payload;
                             return item ? `${item.fullDate}${item.fournisseur ? ` — ${item.fournisseur}` : ''}` : label;
                         }}
@@ -142,7 +142,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: any[]; t: any }) => {
     );
 };
 
-const PurchasesTabContent = ({ achats, t }: { achats: any[]; t: any }) => {
+const PurchasesTabContent = ({ achats, t }: { achats: unknown[]; t: unknown }) => {
     if (!achats || achats.length === 0) return <p className="text-center text-slate-400 py-8">{t('products:detail.purchases.empty')}</p>;
 
     return (
@@ -184,7 +184,7 @@ const PurchasesTabContent = ({ achats, t }: { achats: any[]; t: any }) => {
     );
 };
 
-const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: number; t: any }) => {
+const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: number; t: unknown }) => {
     const queryClient = useQueryClient();
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editValues, setEditValues] = useState<{ lot: string; date_expiration: string }>({ lot: '', date_expiration: '' });
@@ -323,7 +323,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
     );
 };
 
-const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: any[]; t: any }) => {
+const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: unknown[]; t: unknown }) => {
     if (!monthlyStats || monthlyStats.length === 0) return <p className="text-center text-slate-400 py-4">{t('products:detail.stats.empty')}</p>;
 
     let currentYear: number | null = null;
@@ -366,7 +366,7 @@ const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: any[]; t: any }) =
     );
 };
 
-const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t }: { stockHistory: any[]; loadingHistory: boolean; onMovementClick: (item: any) => void; t: any }) => {
+const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t }: { stockHistory: unknown[]; loadingHistory: boolean; onMovementClick: (item: unknown) => void; t: unknown }) => {
     if (loadingHistory) return (
         <div className="flex justify-center py-12">
             <Loader2 className="size-8 animate-spin text-indigo-600" />

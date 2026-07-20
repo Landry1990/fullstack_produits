@@ -35,7 +35,7 @@ export const safeStorage = {
         try {
             const storage = type === 'session' ? window.sessionStorage : window.localStorage;
             return storage.getItem(key);
-        } catch (e) {
+        } catch {
             console.warn(`SafeStorage: Accès refusé à ${type}Storage pour ${key}. Repli mémoire utilisé.`);
             return memStorage.getItem(`${type}_${key}`);
         }
@@ -48,7 +48,7 @@ export const safeStorage = {
         try {
             const storage = type === 'session' ? window.sessionStorage : window.localStorage;
             storage.setItem(key, value);
-        } catch (e) {
+        } catch {
             console.warn(`SafeStorage: Impossible d'écrire dans ${type}Storage pour ${key}.`);
             memStorage.setItem(`${type}_${key}`, value);
         }
@@ -61,7 +61,7 @@ export const safeStorage = {
         try {
             const storage = type === 'session' ? window.sessionStorage : window.localStorage;
             storage.removeItem(key);
-        } catch (e) {
+        } catch {
             memStorage.removeItem(`${type}_${key}`);
         }
     },
@@ -73,7 +73,7 @@ export const safeStorage = {
         try {
             const storage = type === 'session' ? window.sessionStorage : window.localStorage;
             storage.clear();
-        } catch (e) {
+        } catch {
             // no-op pour le cache réel si inaccessible
         }
         memStorage.clear();

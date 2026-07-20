@@ -35,7 +35,7 @@ import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import api from '../services/api';
 
 import { Button } from './shadcn/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './shadcn/card';
+import { Card, CardContent } from './shadcn/card';
 import { Badge } from './shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 import { cn } from '../lib/utils';

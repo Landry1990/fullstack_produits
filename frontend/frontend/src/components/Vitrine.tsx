@@ -7,7 +7,6 @@ import {
   Search,
   Globe,
   DollarSign,
-  Cloud,
   ShoppingCart,
   CheckCircle,
   XCircle,
@@ -54,7 +53,7 @@ function GestionVitrine({
   toggleVisibility,
   updatePrice,
   bulkToggle,
-}: any) {
+}: unknown) {
   const { t } = useTranslation(['vitrine', 'common']);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
@@ -289,7 +288,7 @@ function SimulateurClient() {
   const { data: results = [], isLoading } = useQuery({
     queryKey: ['vitrine-simulation', debouncedSearch],
     queryFn: async () => {
-      const params: any = { is_public: 'true' };
+      const params: unknown = { is_public: 'true' };
       if (debouncedSearch) {
         params.search = debouncedSearch;
       } else {
@@ -499,7 +498,7 @@ export default function Vitrine() {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['vitrine-products', debouncedSearch, showPublicOnly],
     queryFn: async () => {
-      const params: any = { search: debouncedSearch };
+      const params: unknown = { search: debouncedSearch };
       if (showPublicOnly) params.is_public = 'true';
       const response = await api.get('produits/', { params });
       return response.data.results || response.data;
@@ -516,7 +515,7 @@ export default function Vitrine() {
       const previousProducts = queryClient.getQueryData(['vitrine-products']);
       queryClient.setQueryData(
         ['vitrine-products', debouncedSearch, showPublicOnly],
-        (old: any) => {
+        (old: unknown) => {
           if (!old) return old;
           const list = Array.isArray(old) ? old : old.results;
           const updatedList = list.map((p: Product) =>

@@ -7,8 +7,8 @@ describe('validation utilities', () => {
         const baseParams: Partial<SaleCompletionParams> = {
             selectedClient: 1,
             useManualClient: false,
-            lignesFacture: [{ id: 1 }] as any,
-            totals: { totalTtc: 1000, partPatient: 1000, tauxCouverture: 0 } as any,
+            lignesFacture: [{ id: 1 }] as unknown,
+            totals: { totalTtc: 1000, partPatient: 1000, tauxCouverture: 0 } as unknown,
             montantPaye: '1000',
             paiements: []
         };
@@ -43,14 +43,14 @@ describe('validation utilities', () => {
             client_type: 'PROFESSIONNEL',
             plafond: '5000',
             current_debt: '4500'
-        } as any;
+        } as unknown;
 
         const params: Partial<SaleCompletionParams> = {
             useManualClient: false,
             showNewAyantDroit: false,
-            ayantsDroitList: [{ id: 1, matricule: '123' }] as any,
+            ayantsDroitList: [{ id: 1, matricule: '123' }] as unknown,
             selectedAyantDroit: 1,
-            totals: { totalTtc: 1000 } as any,
+            totals: { totalTtc: 1000 } as unknown,
             montantPaye: '0',
             paiements: []
         };

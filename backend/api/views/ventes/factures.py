@@ -4,23 +4,14 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.core.cache import cache
 from django.db import transaction, DatabaseError
-from django.db.models import Sum, Value, DecimalField, Count, Subquery, OuterRef
+from django.db.models import Sum, Value, DecimalField, Count, Subquery, OuterRef, Q
 from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.http import HttpResponse
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-import io
 import logging
-
-# ReportLab imports
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.lib.units import inch, cm
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.colors import HexColor
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
 
 from api.models import (
     Facture, FactureProduit, InvoiceSettings, AuditLog, Caisse
@@ -38,61 +29,33 @@ from api.centralized_configs import (
 )
 from api.security_utils import build_safe_content_disposition
 from api.idempotency import idempotent_action
+from api.services.invoice_pdf import generate_invoice_pdf
+from api.services.sales_statistics import build_sales_statistics
 
 logger = logging.getLogger(__name__)
 
 
-def header_footer_facture(canvas, doc, company_info, facture_info, facture):
-    canvas.saveState()
-    styles = getSampleStyleSheet()
-    
-    page_width, page_height = letter
-    margin = doc.leftMargin
-    content_width = doc.width
+class FactureSearchFilter(filters.SearchFilter):
+    def filter_queryset(self, request, queryset, view):
+        search_terms = self.get_search_terms(request)
+        if not search_terms:
+            return queryset
 
-    # Header
-    header_data = [
-        [
-            Paragraph(f"<b>{company_info['name']}</b><br/>{company_info['address']}<br/>Tel: {company_info['tel']}", styles['Normal']),
-            Paragraph("<b>FACTURE</b>", styles['h1'])
-        ]
-    ]
-    header_table = Table(header_data, colWidths=[content_width / 2, content_width / 2])
-    header_table.setStyle(TableStyle([
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-    ]))
-    w_header, h_header = header_table.wrapOn(canvas, content_width, doc.topMargin)
-    header_table.drawOn(canvas, margin, page_height - doc.topMargin - h_header)
+        for term in search_terms:
+            criteria = (
+                Q(numero_facture__icontains=term)
+                | Q(client__name__icontains=term)
+                | Q(produits__produit__name__icontains=term)
+            )
+            normalized_amount = term.replace(' ', '').replace('\u00a0', '').replace('F', '').replace('f', '').replace(',', '.')
+            try:
+                criteria |= Q(total_ttc=Decimal(normalized_amount))
+            except InvalidOperation:
+                pass
 
-    # Separator line after header
-    canvas.line(margin, page_height - doc.topMargin - h_header - 0.1*inch, margin + content_width, page_height - doc.topMargin - h_header - 0.1*inch)
+            queryset = queryset.filter(criteria)
 
-    # Info box
-    info_data = [
-        [
-            Paragraph(f"<b>Client:</b><br/>{facture_info['client_name']}<br/>{facture_info['client_address']}<br/>Tel: {facture_info['client_phone']}", styles['Normal']),
-            Paragraph(f"<b>Facture N°:</b> {facture_info['facture_id']}<br/><b>Date:</b> {facture_info['date_facture']}<br/><b>Statut:</b> {facture.get_status_display()}", styles['Normal'])
-        ]
-    ]
-    info_table = Table(info_data, colWidths=[content_width / 2, content_width / 2])
-    info_table.setStyle(TableStyle([
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-        ('TOPPADDING', (0,0), (-1,-1), 12)
-    ]))
-    w_info, h_info = info_table.wrapOn(canvas, content_width, doc.topMargin)
-    info_table.drawOn(canvas, margin, page_height - doc.topMargin - h_header - 0.1*inch - h_info - 0.1*inch)
-
-    # Footer
-    footer_texts = [
-        f"Page {doc.page}",
-        f"Total TTC: {facture.total_ttc} F"
-    ]
-    canvas.drawString(margin, 0.75 * inch, footer_texts[0])
-    canvas.drawRightString(margin + content_width, 0.75 * inch, footer_texts[1])
-    
-    canvas.restoreState()
+        return queryset.distinct()
 
 
 class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.ModelViewSet):
@@ -152,7 +115,7 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
             
         return queryset
     serializer_class = FactureSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, FactureSearchFilter, filters.OrderingFilter]
     filterset_fields = {
         **CommonFilterFields.status_filters(),
         'client': ['exact'],
@@ -770,252 +733,12 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
 
     @action(detail=False, methods=['get'])
     def stats_jour(self, request):
-        """
-        Retourne les statistiques de vente. Par défaut du jour, ou selon les dates filtrées.
-        """
-        # Read date limits
-        date_gte = request.query_params.get('date__gte')
-        date_lte = request.query_params.get('date__lte')
-
-        # Fallback to today if no dates provided
-        today = timezone.localtime(timezone.now()).date()
-        
-        # Build base queryset for filtering
-        # On exclut les factures VALIDEE qui n'ont AUCUN paiement (ce sont celles juste 'envoyées à la caisse')
-        base_qs = self.get_queryset().filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
-        base_qs = base_qs.annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0)
-        
-        if date_gte:
-            base_qs = base_qs.filter(date__gte=date_gte)
-        elif not date_lte:
-            base_qs = base_qs.filter(date__date=today)
-            
-        if date_lte:
-            base_qs = base_qs.filter(date__lte=date_lte)
-
-        # Base filters for related models - use get_queryset() to inherit montant_regle annotation
-        vendeur_qs = self.get_queryset().filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('paiements')).exclude(status=Facture.Status.VALIDEE, num_paiements=0).select_related('created_by')
-        produit_qs = FactureProduit.objects.filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(num_paiements=Count('facture__paiements')).exclude(facture__status=Facture.Status.VALIDEE, num_paiements=0).select_related('produit')
-
-        if date_gte:
-            vendeur_qs = vendeur_qs.filter(date__gte=date_gte)
-            produit_qs = produit_qs.filter(facture__date__gte=date_gte)
-        elif not date_lte:
-            vendeur_qs = vendeur_qs.filter(date__date=today)
-            produit_qs = produit_qs.filter(facture__date__date=today)
-            
-        if date_lte:
-            vendeur_qs = vendeur_qs.filter(date__lte=date_lte)
-            produit_qs = produit_qs.filter(facture__date__lte=date_lte)
-
-        # 1. Top Vendeur (Chiffre d'Affaires encaissé - aligné avec les totaux globaux)
-        # L'annotation montant_regle provient déjà de get_queryset()
-        top_vendeur = vendeur_qs.values('created_by__username', 'created_by__first_name', 'created_by__last_name').annotate(
-            total_vente=Sum('montant_regle'),
-            count=Count('id')
-        ).order_by('-total_vente').first()
-        
-        vendeur_data = None
-        if top_vendeur:
-            name = f"{top_vendeur['created_by__first_name']} {top_vendeur['created_by__last_name']}".strip()
-            if not name:
-                name = top_vendeur['created_by__username']
-            vendeur_data = {
-                'name': name,
-                'amount': top_vendeur['total_vente'],
-                'count': top_vendeur['count']
-            }
-
-        # 2. Top Produit (Quantité vendue)
-        top_produit = produit_qs.values('produit__name').annotate(
-            total_qty=Sum('quantity')
-        ).order_by('-total_qty').first()
-        
-        produit_data = None
-        if top_produit:
-            produit_data = {
-                'name': top_produit['produit__name'],
-                'quantity': top_produit['total_qty']
-            }
-
-        # 3. Totaux globaux (utiliser les annotations déjà présentes dans get_queryset)
-        totaux = base_qs.aggregate(
-            total_ttc=Sum('total_ttc'),
-            total_regle=Sum('montant_regle'),
-            total_en_compte=Sum('montant_en_compte')
+        result = build_sales_statistics(
+            self.get_queryset(),
+            request.query_params.get('date__gte'),
+            request.query_params.get('date__lte'),
         )
-
-        result = {
-            'top_vendeur': vendeur_data,
-            'top_produit': produit_data,
-            'total_ttc': str(totaux['total_ttc'] or 0),
-            'total_regle': str(totaux['total_regle'] or 0),
-            'total_en_compte': str(totaux['total_en_compte'] or 0),
-        }
-
         return Response(result)
-
-    def _generate_pdf(self, facture, settings, is_proforma=False):
-        """Helper to generate PDF buffer for a invoice."""
-        buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
-        story = []
-        styles = getSampleStyleSheet()
-        
-        style_company = ParagraphStyle('Company', parent=styles['Heading2'], fontSize=16, spaceAfter=6, textColor=HexColor(settings.primary_color))
-        style_normal = styles['Normal']
-        style_title = ParagraphStyle('Title', parent=styles['Heading3'], fontSize=12, alignment=1)
-        style_right = ParagraphStyle('Right', parent=styles['Normal'], alignment=2)
-        style_center = ParagraphStyle('Center', parent=styles['Normal'], alignment=1)
-        style_left = ParagraphStyle('Left', parent=styles['Normal'], alignment=0)
-
-        from api.utils_licence import valider_licence_systeme
-        valide, msg, payload = valider_licence_systeme()
-        company_name = settings.company_name
-        if valide and payload and payload.get('pharmacie_nom'):
-            company_name = payload.get('pharmacie_nom')
-
-        company_address_fmt = settings.company_address.replace('\n', '<br/>')
-        
-        company_block = [
-            Paragraph(f"<b>{company_name}</b>", style_company),
-            Paragraph(company_address_fmt, style_normal)
-        ]
-        
-        invoice_date = (facture.date_document or facture.date).strftime('%d/%m/%Y à %H:%M')
-        client_name = facture.client_name_override or (facture.client.name if facture.client else "Client de passage")
-        
-        invoice_details_text = f"""
-        <b>N° Facture: {facture.numero_facture or facture.id}</b><br/>
-        Date: {invoice_date}<br/>
-        Client: {client_name}
-        """
-        if facture.client:
-            if facture.client.phone:
-                invoice_details_text += f"<br/>Tel: {facture.client.phone}"
-            if getattr(facture.client, 'niu', None):
-                invoice_details_text += f"<br/>NIU: {facture.client.niu}"
-            if getattr(facture.client, 'registre_commerce', None):
-                invoice_details_text += f"<br/>RC: {facture.client.registre_commerce}"
-            
-        doc_title = "FACTURE"
-        if is_proforma:
-            doc_title = "PROFORMA"
-            if not facture.numero_facture:
-                facture.numero_facture = f"PROFORMA-{facture.id}"
-
-        layout = settings.header_layout
-        
-        style_doc_title = ParagraphStyle(
-            'DocTitle', 
-            parent=styles['Heading1'], 
-            fontSize=24, 
-            alignment=2 if layout in ['split', 'right'] else (0 if layout == 'left' else 1),
-            textColor=HexColor(settings.primary_color),
-            spaceAfter=12
-        )
-        
-        doc_title_flowable = Paragraph(f"<b>{doc_title}</b>", style_doc_title)
-        
-        if layout == 'split':
-            invoice_block = [
-                doc_title_flowable,
-                Paragraph(invoice_details_text, style_right)
-            ]
-            header_data = [[company_block, invoice_block]]
-            header_table = Table(header_data, colWidths=[9*cm, 8*cm])
-            header_table.setStyle(TableStyle([
-                ('VALIGN', (0,0), (-1,-1), 'TOP'),
-                ('LEFTPADDING', (0,0), (-1,-1), 0),
-                ('RIGHTPADDING', (0,0), (-1,-1), 0),
-            ]))
-            story.append(header_table)
-            
-        elif layout == 'left':
-            story.extend(company_block)
-            story.append(Spacer(1, 0.5*cm))
-            story.append(doc_title_flowable)
-            story.append(Paragraph(invoice_details_text, style_left))
-            
-        elif layout == 'center':
-            style_company_center = ParagraphStyle('CompanyCenter', parent=style_company, alignment=1)
-            story.append(Paragraph(f"<b>{settings.company_name}</b>", style_company_center))
-            story.append(Paragraph(company_address_fmt, style_center))
-            story.append(Spacer(1, 0.5*cm))
-            story.append(doc_title_flowable)
-            story.append(Paragraph(invoice_details_text, style_center))
-            
-        elif layout == 'right':
-            style_company_right = ParagraphStyle('CompanyRight', parent=style_company, alignment=2)
-            style_normal_right = ParagraphStyle('NormalRight', parent=style_normal, alignment=2)
-            story.append(Paragraph(f"<b>{settings.company_name}</b>", style_company_right))
-            story.append(Paragraph(company_address_fmt, style_normal_right))
-            story.append(Spacer(1, 0.5*cm))
-            story.append(doc_title_flowable)
-            story.append(Paragraph(invoice_details_text, style_right))
-
-        story.append(Spacer(1, 1.0*cm))
-        
-        table_header = [
-            Paragraph('<b>Désignation</b>', style_normal),
-            Paragraph('<b>Qté</b>', style_center),
-            Paragraph('<b>P.U</b>', style_right),
-            Paragraph('<b>Total</b>', style_right)
-        ]
-        data = [table_header]
-        
-        for item in facture.produits.all():
-            total_line = item.quantity * item.selling_price
-            row = [
-                Paragraph(item.produit.name, style_normal),
-                Paragraph(str(item.quantity), style_center),
-                Paragraph(f"{item.selling_price:,.0f}", style_right),
-                Paragraph(f"{total_line:,.0f}", style_right)
-            ]
-            data.append(row)
-            
-        table = Table(data, colWidths=[9*cm, 2.5*cm, 2.5*cm, 3*cm])
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), HexColor(settings.primary_color)),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ]))
-        story.append(table)
-        story.append(Spacer(1, 1*cm))
-        
-        totals_data = [
-            ['Sous-total :', f"{facture.total_ht:,.0f} F"],
-            ['TVA :', f"{facture.total_tva:,.0f} F"],
-            ['Remise :', f"{facture.remise:,.0f} F"],
-            ['TOTAL À PAYER :', f"{facture.total_ttc:,.0f} F"]
-        ]
-        
-        totals_table = Table(totals_data, colWidths=[4*cm, 4*cm])
-        totals_table.setStyle(TableStyle([
-            ('ALIGN', (0,0), (-1,-1), 'RIGHT'),
-            ('FONTNAME', (0,0), (-1,-1), 'Helvetica-Bold'),
-            ('LINEABOVE', (0,-1), (-1,-1), 1, colors.black),
-        ]))
-        story.append(totals_table)
-        
-        doc.build(story, onFirstPage=lambda c, d: header_footer_facture(c, d, {
-            'name': company_name,
-            'address': company_address_fmt.replace('<br/>', '\n'),
-            'tel': 'N/A'
-        }, {
-            'facture_id': facture.numero_facture or f"#{facture.id}",
-            'date_facture': invoice_date,
-            'client_name': client_name,
-            'client_address': facture.client.address if facture.client and facture.client.address else "",
-            'client_phone': facture.client.phone if facture.client and facture.client.phone else ""
-        }, facture))
-        
-        buffer.seek(0)
-        return buffer
 
     @action(detail=True, methods=['get'])
     def imprimer_facture(self, request, pk=None):
@@ -1026,7 +749,7 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
         settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
         is_proforma = request.query_params.get('type') == 'proforma' or facture.status == Facture.Status.PROFORMA
         
-        buffer = self._generate_pdf(facture, settings, is_proforma)
+        buffer = generate_invoice_pdf(facture, settings, is_proforma)
         
         response = HttpResponse(content_type='application/pdf')
         filename = f"facture_{facture.numero_facture or facture.id}.pdf"
@@ -1056,7 +779,7 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
             return Response({'detail': 'L\'intégration WhatsApp n\'est pas activée dans les paramètres.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            buffer = self._generate_pdf(facture, settings)
+            buffer = generate_invoice_pdf(facture, settings)
             success, message = WhatsAppService.send_invoice_pdf(
                 facture, recipient_number, buffer, client.name if client else "Client"
             )

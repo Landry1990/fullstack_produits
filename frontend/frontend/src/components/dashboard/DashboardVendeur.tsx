@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    Trophy, TrendingUp, TrendingDown, ShoppingCart,
-    Target, Clock, Star, Package, BarChart2, Zap,
-    Medal, RefreshCw
+    Trophy, TrendingUp, ShoppingCart,
+    Target, Clock, Star, BarChart2, Zap,
+    RefreshCw
 } from 'lucide-react';
 import { useRecharts } from '../../hooks/useRecharts';
 import { useVendeurStats } from '../../hooks/useDashboard';
@@ -39,7 +39,6 @@ function ProgressBar({ value, color = 'bg-indigo-500' }: { value: number; color?
     );
 }
 
-const SPARKLINE_COLORS = ['#818cf8', '#818cf8', '#818cf8', '#818cf8', '#818cf8', '#818cf8', '#6366f1'];
 
 export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurrencyLocal: (v: number) => string }) {
   const { t, i18n } = useTranslation(['dashboard', 'common']);
@@ -71,7 +70,6 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
             ? 'bg-amber-400'
             : 'bg-indigo-500';
 
-    const maxSparkCA = Math.max(...data.sparkline.map(d => d.ca), 1);
 
     return (
         <div className="space-y-5">
@@ -168,7 +166,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         bg: 'bg-amber-50',
                         custom: <RangBadge rang={data.rang} total={data.total_vendeurs} />,
                     },
-                ].map((kpi, i) => (
+                ].map((kpi, _i) => (
                     <div key={kpi.label} className="bg-white border border-slate-200 rounded-2xl p-4">
                         <div className={`inline-flex p-1.5 rounded-lg ${kpi.bg} mb-2`}>
                             <kpi.icon className={`size-3.5 ${kpi.color}`} />
@@ -206,7 +204,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                             contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
                         />
                         <Bar dataKey="ca" radius={[4, 4, 0, 0]}>
-                            {data.sparkline.map((entry, i) => (
+                            {data.sparkline.map((entry, _i) => (
                                 <Cell
                                     key={entry.label}
                                     fill={entry.is_today ? '#6366f1' : entry.ca === 0 ? '#f1f5f9' : '#c7d2fe'}
@@ -217,7 +215,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                 </ResponsiveContainer>
                 {/* Labels nb ventes sous le graphe */}
                 <div className="flex justify-around mt-1">
-                    {data.sparkline.map((d, i) => (
+                    {data.sparkline.map((d, _i) => (
                         <div key={d.label} className="flex flex-col items-center">
                             <span className={`text-[9px] font-black ${d.is_today ? 'text-indigo-600' : 'text-slate-300'}`}>
                                 {d.nb > 0 ? d.nb : ''}

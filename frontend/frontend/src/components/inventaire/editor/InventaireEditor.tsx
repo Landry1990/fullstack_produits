@@ -43,7 +43,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         try {
             await api.post('telegram/rapport-inventaire/', activeInventaire?.id ? { inventaire_id: activeInventaire.id } : {});
             toast.success('Rapport inventaire envoyé sur Telegram !', { icon: '📨' });
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(err?.response?.data?.message || 'Erreur envoi Telegram');
         } finally {
             setSendingTelegram(false);
@@ -154,7 +154,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                   <div className="flex items-center gap-1">
                     <select
                       value={printGroupBy}
-                      onChange={(e) => setPrintGroupBy(e.target.value as any)}
+                      onChange={(e) => setPrintGroupBy(e.target.value as unknown)}
                       className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-[10px] font-bold uppercase text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
                       title={t('inventaire.detail.print_group_by', 'Regrouper par')}
                     >

@@ -31,7 +31,7 @@ export interface MessageTemplate {
 
 const communicationService = {
   // Messages Internes
-  getMessages: (params?: any) => api.get('/internal-messages/', { params }),
+  getMessages: (params?: unknown) => api.get('/internal-messages/', { params }),
   sendMessage: (data: { recipient?: number | null; content: string; parent?: number | null; attachment?: File | null }) => {
     if (data.attachment) {
       const formData = new FormData();
@@ -49,7 +49,7 @@ const communicationService = {
   deleteMessage: (id: number) => api.delete(`/internal-messages/${id}/`),
 
   // Modèles de Messages
-  getTemplates: (params?: any) => api.get('/message-templates/', { params }),
+  getTemplates: (params?: unknown) => api.get('/message-templates/', { params }),
   createTemplate: (data: Partial<MessageTemplate>) => api.post('/message-templates/', data),
   updateTemplate: (id: number, data: Partial<MessageTemplate>) => api.put(`/message-templates/${id}/`, data),
   deleteTemplate: (id: number) => api.delete(`/message-templates/${id}/`),

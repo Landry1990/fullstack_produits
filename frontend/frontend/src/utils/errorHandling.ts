@@ -3,7 +3,7 @@
  * Handles diverse formats (Django REST Framework, standard HTTP errors, etc.)
  */
 
-interface StartErrorExtraction {
+interface _StartErrorExtraction {
     title?: string;
     message: string;
 }
@@ -44,7 +44,7 @@ export function getApiErrorDetail(err: unknown, fallback: string): string {
 export function extractErrorMessage(err: unknown): string {
     if (!err) return "Une erreur inconnue est survenue.";
 
-    const errObj = err as Record<string, any>;
+    const errObj = err as Record<string, unknown>;
 
     // 1. Gestion de la réponse API (Axios)
     if (errObj.response) {

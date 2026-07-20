@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
-import { cn } from '../../lib/utils'
 import { Badge } from '../shadcn/badge'
 
 interface TotalsSectionProps {
@@ -19,7 +18,7 @@ interface TotalsSectionProps {
   partAssurance?: number
   partPatient?: number
   onOpenOrdonnanceModal?: () => void
-  ordonnanceData?: any 
+  ordonnanceData?: unknown 
   isSidebarStyle?: boolean
 }
 

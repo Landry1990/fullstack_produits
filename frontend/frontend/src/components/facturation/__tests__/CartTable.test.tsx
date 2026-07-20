@@ -72,7 +72,7 @@ vi.mock('../../../context/AuthContext', () => ({
         },
         isAuthenticated: true
     }),
-    AuthProvider: ({ children }: any) => <>{children}</>
+    AuthProvider: ({ children }: unknown) => <>{children}</>
 }));
 
 describe('CartTable', () => {

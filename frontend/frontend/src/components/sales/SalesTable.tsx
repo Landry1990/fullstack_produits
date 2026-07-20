@@ -6,7 +6,6 @@ import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import ActionIcon from '../ui/ActionIcon';
 import SelectionHeader from '../ui/SelectionHeader';
-import { Checkbox } from '../ui/Checkbox';
 import { cn } from '../../lib/utils';
 
 // Composant séparé pour éviter les re-renders inutiles

@@ -131,7 +131,7 @@ export const useInventaireEditor = (
             toast.success(t('inventaire.detail.header_saved'));
             // Optionally update the active inventaire object
             setActiveInventaire(prev => prev ? { ...prev, date: dateInventaire, description } : null);
-        } catch (err) {
+        } catch {
             toast.error(t('inventaire.detail.save_error'));
         }
     };
@@ -530,7 +530,7 @@ export const useInventaireEditor = (
         // Helper de normalisation CIP (identique à Commandes.tsx)
         const normalizeCip = (cip: string | null | undefined): string => {
             if (!cip) return '';
-            let normalized = cip.trim().replace(/[\s\-\.]/g, '');
+            const normalized = cip.trim().replace(/[\s\-\.]/g, '');
             return normalized.toUpperCase();
         };
 

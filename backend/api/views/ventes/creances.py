@@ -347,18 +347,20 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 c.alignment = Alignment(horizontal='right')
                 c.border = thin_border
 
-        # Ajustement auto largeur colonnes texte
+        # Ajustement auto largeur colonnes texte (skip header block before table)
         for col in ws.columns:
             max_length = 0
             col_idx = None
             for cell in col:
                 if cell.column:
                     col_idx = cell.column
+                if cell.row <= header_row:
+                    continue
                 if cell.value:
                     max_length = max(max_length, len(str(cell.value)))
             if col_idx:
                 current = ws.column_dimensions[get_column_letter(col_idx)].width or 0
-                ws.column_dimensions[get_column_letter(col_idx)].width = max(current, min(40, max_length + 2))
+                ws.column_dimensions[get_column_letter(col_idx)].width = max(current, min(30, max_length + 2))
 
         # ── Réponse HTTP ──
         output = io.BytesIO()

@@ -7,13 +7,13 @@ import { formatDate, formatDateTime } from '../utils/dateUtils';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
 import { cn } from '../lib/utils';
-import { FileText, RefreshCw, Search, CalendarDays, Pill, User, Stethoscope, ClipboardList, FileDown, ShieldAlert } from 'lucide-react';
+import { FileText, RefreshCw, CalendarDays, Pill, User, Stethoscope, ClipboardList, FileDown, ShieldAlert } from 'lucide-react';
 
 const OrdonnancierPage: React.FC = () => {
     const { t } = useTranslation(['prescriptions', 'common']);
     
     const [ordonnancier, setOrdonnancier] = useState<Ordonnancier[]>([]);
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<unknown>(null);
     const [loading, setLoading] = useState(true);
     
     // Filtres
@@ -52,7 +52,7 @@ const OrdonnancierPage: React.FC = () => {
             const response = await api.get(`ordonnancier/?${params.toString()}`);
             const data = response.data.results || response.data;
             setOrdonnancier(Array.isArray(data) ? data : []);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Erreur chargement ordonnancier:', error);
             toast.error(t('common:messages.error_loading'));
         } finally {

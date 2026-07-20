@@ -10,7 +10,7 @@ vi.mock('react-hot-toast', () => ({
 }))
 // axios is mocked globally in setup.ts
 vi.mock('use-debounce', () => ({
-  useDebounce: (val: any) => [val]
+  useDebounce: (val: unknown) => [val]
 }))
 
 // Mock hooks

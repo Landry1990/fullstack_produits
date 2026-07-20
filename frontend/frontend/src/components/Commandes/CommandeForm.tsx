@@ -2,12 +2,11 @@ import React, { type FormEvent, type RefObject, useState, useCallback } from 're
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save, Package } from 'lucide-react';
+import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save } from 'lucide-react';
 import CommandeProductTable from './CommandeProductTable';
 import { formatCurrency } from '../../utils/formatters';
 import ExportCommandeModal from './ExportCommandeModal';
 import { Button } from '../shadcn/button';
-import { Badge } from '../shadcn/badge';
 import { Input } from '../shadcn/input';
 import { Select } from '../ui/Select';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
@@ -120,12 +119,12 @@ export default function CommandeForm({
     setFraisCoefficient,
     handleBackToList,
     handleSaveCommande,
-    handleCsvExport,
+    handleCsvExport: _handleCsvExport,
     handleCsvImport,
     fileInputRef,
     setIsCreateProduitModalOpen,
     searchInputRef,
-    fournisseurSelectRef,
+    fournisseurSelectRef: _fournisseurSelectRef,
     searchProduitQuery,
     setSearchProduitQuery,
     handleSearchKeyDown,

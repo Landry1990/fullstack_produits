@@ -8,7 +8,7 @@ import PromotionForm from './PromotionForm';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { cn } from '../../lib/utils';
-import { Plus, Pencil, Trash2, Loader2, Tag, CalendarDays } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tag, CalendarDays } from 'lucide-react';
 
 
 const PromotionList: React.FC = () => {
@@ -25,7 +25,7 @@ const PromotionList: React.FC = () => {
             const response = await api.get('promotions/');
             const data = response.data;
             setPromotions(Array.isArray(data) ? data : data.results || []);
-        } catch (err) {
+        } catch {
             setError(t('promotions:error_loading'));
         } finally {
             setLoading(false);
@@ -54,7 +54,7 @@ const PromotionList: React.FC = () => {
         try {
             await api.delete(`promotions/${id}/`);
             setPromotions(promotions.filter(p => p.id !== id));
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Delete failed", error);
             alert(t('promotions:delete_error', { message: error.message || error }));
         }

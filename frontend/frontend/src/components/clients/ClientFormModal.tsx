@@ -11,7 +11,7 @@ interface ClientFormModalProps {
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   data: Partial<Client>;
-  setData: (data: any) => void;
+  setData: (data: unknown) => void;
   isSubmitting: boolean;
   isEdit?: boolean;
 }
@@ -162,7 +162,7 @@ export default function ClientFormModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field label="NIU" icon={ShieldCheck}>
                   <input
-                    value={(data as any).niu || ''}
+                    value={(data as unknown).niu || ''}
                     onChange={(e) => setData({ ...data, niu: e.target.value })}
                     className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder="N° Identifiant Unique"
@@ -170,7 +170,7 @@ export default function ClientFormModal({
                 </Field>
                 <Field label="RCCM" icon={FileText}>
                   <input
-                    value={(data as any).registre_commerce || ''}
+                    value={(data as unknown).registre_commerce || ''}
                     onChange={(e) => setData({ ...data, registre_commerce: e.target.value })}
                     className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder="Registre du Commerce"
@@ -379,7 +379,7 @@ export default function ClientFormModal({
           </button>
           <button
             type="submit"
-            onClick={(e) => { e.preventDefault(); onSubmit(e as any); }}
+            onClick={(e) => { e.preventDefault(); onSubmit(e as unknown); }}
             disabled={isSubmitting}
             className="inline-flex items-center px-6 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-60 transition-colors gap-2"
           >

@@ -220,13 +220,13 @@ export function useCommandeActions({
             const totalQty = produits.reduce((sum, p) => sum + p.quantity, 0);
 
             const productsHtml = produits.map(p => {
-                const produitName = p.produit_nom || (typeof p.produit === 'object' ? (p.produit as any).name : `Produit #${p.produit}`);
+                const produitName = p.produit_nom || (typeof p.produit === 'object' ? p.produit.name : `Produit #${p.produit}`);
                 const lineTotal = parseFloat(p.price) * p.quantity;
-                const cip = (p as any).produit_cip || (typeof p.produit === 'object' ? (p.produit as any).cip1 : '-');
+                const cip = p.produit_cip || (typeof p.produit === 'object' ? (p.produit.cip1 || '-') : '-');
                 
                 // Calcul de l'audit de stock
                 const qtyTotal = (p.quantity || 0) + (p.unites_gratuites || 0);
-                const currentStock = (p as any).produit_stock ?? 0;
+                const currentStock = p.produit_stock ?? 0;
                 // Formule: stAnt + qtyTotal = currentStock
                 const stAnt = currentStock - qtyTotal;
 
@@ -335,7 +335,7 @@ export function useCommandeActions({
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             font-size: 9px;
         }
         thead {
@@ -359,29 +359,18 @@ export function useCommandeActions({
         .footer-grid {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
             gap: 15px;
             border-top: 0.5px solid #999;
-            padding-top: 10px;
+            padding-top: 6px;
             page-break-inside: avoid;
         }
         .totals-card {
             color: #000;
-            padding: 8px 10px;
+            padding: 5px 8px;
             border-radius: 2px;
             border: 0.5px solid #999;
             width: 240px;
-        }
-        .signature-box {
-            width: 200px;
-            height: 60px;
-            border: 0.5px solid #999;
-            border-radius: 2px;
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #777;
-            font-size: 9px;
         }
     </style>
 </head>
@@ -420,7 +409,7 @@ export function useCommandeActions({
             </div>
             <div class="detail-row" style="border-top: 1px solid #e2e8f0; margin-top: 5px; padding-top: 5px;">
                 <span>${t('orders.details.created_by', { defaultValue: 'Saisie par' })}:</span>
-                <span class="detail-value">${escHtml((commande as any).created_by_name || 'N/A')}</span>
+                <span class="detail-value">${escHtml(commande.created_by_name || 'N/A')}</span>
             </div>
             <div class="detail-row">
                 <span>${t('orders.details.closed_by', { defaultValue: 'Clôturée par' })}:</span>
@@ -449,7 +438,7 @@ export function useCommandeActions({
 
     <div class="footer-grid">
         <div style="flex: 1;">
-            <div class="info-card" style="margin-bottom: 10px;">
+            <div class="info-card" style="margin-bottom: 4px;">
                 <div class="card-label">Récapitulatif Articles</div>
                 <div style="display: flex; gap: 20px; font-size: 9px;">
                     <div>Lignes: ${produits.length}</div>
@@ -477,14 +466,10 @@ export function useCommandeActions({
                     <span style="font-size: 9px; margin-left: 5px;">FCFA</span>
                 </div>
             </div>
-            <div style="text-align: center; margin-top: 16px;">
-                <div style="font-size: 9px; color: #555;">Cachet & Signature</div>
-                <div class="signature-box">Responsable Stocks</div>
-            </div>
         </div>
     </div>
 
-    <div style="margin-top: 40px; padding-top: 10px; border-top: 0.5px solid #ccc; text-align: center; font-size: 8px; color: #999;">
+    <div style="margin-top: 8px; padding-top: 4px; border-top: 0.5px solid #ccc; text-align: center; font-size: 7px; color: #999;">
         Logiciel de Gestion Antigravity POS - Document Interne
     </div>
 
@@ -501,7 +486,7 @@ export function useCommandeActions({
             `);
             win.document.close();
 
-        } catch (err) {
+        } catch {
             toast.error(t('messages.print_error'));
         } finally {
             setExecutingAction(false);

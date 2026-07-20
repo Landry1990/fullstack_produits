@@ -78,7 +78,7 @@ export default function MergeCommandesModal({
             onMergeSuccess(orderIdsToMerge.length, mergeTargetOrderId);
             onClose();
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Erreur lors de la fusion:', err);
             const msg = err.response?.data?.error || t('orders:merge_modal.merge_error');
             toast.error(msg);

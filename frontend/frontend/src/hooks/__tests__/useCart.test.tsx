@@ -56,7 +56,7 @@ describe('useCart Hook - Persistance Multi-Utilisateur', () => {
     })
 
     it('devrait être vide initialement sans utilisateur', () => {
-        vi.mocked(useAuth).mockReturnValue({ user: null } as any)
+        vi.mocked(useAuth).mockReturnValue({ user: null } as unknown)
         const { result } = renderHook(() => useCart())
         expect(result.current.lignesFacture).toEqual([])
     })
@@ -71,7 +71,7 @@ describe('useCart Hook - Persistance Multi-Utilisateur', () => {
             return null
         })
         
-        vi.mocked(useAuth).mockReturnValue({ user: { id: userId } } as any)
+        vi.mocked(useAuth).mockReturnValue({ user: { id: userId } } as unknown)
         
         const { result } = renderHook(() => useCart())
         
@@ -97,12 +97,12 @@ describe('useCart Hook - Persistance Multi-Utilisateur', () => {
         vi.mocked(safeStorage.getItem).mockImplementation((key) => store[key] || null)
 
         // Test avec User 1
-        vi.mocked(useAuth).mockReturnValue({ user: { id: userId1 } } as any)
+        vi.mocked(useAuth).mockReturnValue({ user: { id: userId1 } } as unknown)
         const { result: res1 } = renderHook(() => useCart())
         expect(res1.current.lignesFacture).toEqual(cart1)
 
         // Test avec User 2
-        vi.mocked(useAuth).mockReturnValue({ user: { id: userId2 } } as any)
+        vi.mocked(useAuth).mockReturnValue({ user: { id: userId2 } } as unknown)
         const { result: res2 } = renderHook(() => useCart())
         expect(res2.current.lignesFacture).toEqual(cart2)
         
@@ -110,7 +110,7 @@ describe('useCart Hook - Persistance Multi-Utilisateur', () => {
     })
 
     it('devrait nettoyer l\'ancienne clé globale lors de la première connexion', () => {
-        vi.mocked(useAuth).mockReturnValue({ user: { id: 99 } } as any)
+        vi.mocked(useAuth).mockReturnValue({ user: { id: 99 } } as unknown)
         
         renderHook(() => useCart())
         
@@ -119,13 +119,13 @@ describe('useCart Hook - Persistance Multi-Utilisateur', () => {
 
     it('devrait sauvegarder les changements dans la clé spécifique utilisateur', () => {
         const userId = 456
-        vi.mocked(useAuth).mockReturnValue({ user: { id: userId } } as any)
+        vi.mocked(useAuth).mockReturnValue({ user: { id: userId } } as unknown)
         
         const { result } = renderHook(() => useCart())
 
         // Simuler l'ajout d'un produit (on utilise setLignesFacture directement pour simplifier le test unitaire du hook)
         act(() => {
-            result.current.setLignesFacture([{ produit: { id: 1 } } as any])
+            result.current.setLignesFacture([{ produit: { id: 1 } } as unknown])
         })
 
         expect(safeStorage.setItem).toHaveBeenCalledWith(

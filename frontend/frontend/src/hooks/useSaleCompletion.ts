@@ -40,7 +40,7 @@ export interface UseSaleCompletionReturn {
     loading: boolean;
     error: string | null;
     lastResult: SaleCompletionResult | null;
-    completeExistingInvoicePayment: (params: any) => Promise<SaleCompletionResult>;
+    completeExistingInvoicePayment: (params: unknown) => Promise<SaleCompletionResult>;
 }
 
 // ============== MAIN HOOK ==============

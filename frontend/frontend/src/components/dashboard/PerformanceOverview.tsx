@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import { 
   TrendingUp, 
   Wallet, 
@@ -17,12 +16,12 @@ import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
 
 interface PerformanceOverviewProps {
-  stats: any;
-  revenueChart: any;
-  hourlyTraffic: any;
+  stats: unknown;
+  revenueChart: unknown;
+  hourlyTraffic: unknown;
   reapproStats?: { product_count: number; total_units_suggested: number };
-  supplierDebts?: { total_debt: number; suppliers: any[] };
-  t: any;
+  supplierDebts?: { total_debt: number; suppliers: unknown[] };
+  t: unknown;
   formatCurrencyLocal: (val: number) => string;
 }
 
@@ -117,7 +116,7 @@ export default function PerformanceOverview({
           ? 'grid-cols-1 sm:grid-cols-2'
           : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'
       }`}>
-        {kpiCards.map((card: any, i: number) => {
+        {kpiCards.map((card: unknown, _i: number) => {
           const Icon = card.icon;
           const inner = (
             <div className="relative p-2 sm:p-3 xl:p-3.5 flex flex-col gap-1 sm:gap-1.5 h-full overflow-hidden">

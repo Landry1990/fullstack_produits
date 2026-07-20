@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import {
   Server, Database, RefreshCw, Play, ShieldCheck, ShieldAlert,
-  HardDrive, Clock, CheckCircle2, XCircle, AlertTriangle, Download,
-  RotateCcw, Wifi, WifiOff, Upload, Trash2
+  HardDrive, Clock, CheckCircle2, XCircle, AlertTriangle,
+  RotateCcw, Wifi, WifiOff, Upload
 } from 'lucide-react';
 
 type TabId = 'sante' | 'sauvegardes';
@@ -170,7 +170,7 @@ export default function SystemAdmin() {
       });
       setBackupOutput(t('settings_saved'));
       fetchStatus();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setBackupError(e?.response?.data?.detail || t('settings_save_error'));
     } finally {
       setSavingBackupSettings(false);
@@ -187,7 +187,7 @@ export default function SystemAdmin() {
       if (!res.data.success) setBackupError(res.data.error || t('unknown_error'));
       fetchStatus();
       fetchBackups();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setBackupError(e?.response?.data?.detail || t('backup_error'));
     } finally {
       setRunningBackup(false);
@@ -211,7 +211,7 @@ export default function SystemAdmin() {
       setRestoreProgress(p => [...p, t('restore_progress.safety_ok')]);
       await new Promise(r => setTimeout(r, 1000));
       await handleRestore();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setRestoreProgress(p => [...p, t('restore_progress.safety_failed')]);
       setRestoreError(e?.response?.data?.detail || t('security_backup_error'));
       setRestoring(false);
@@ -246,7 +246,7 @@ export default function SystemAdmin() {
         setRestoreFile(null);
         setRestoreTarget(null);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setRestoreProgress(p => [...p, t('restore_progress.failed')]);
       setRestoreError(e?.response?.data?.detail || t('restore_error'));
     } finally {

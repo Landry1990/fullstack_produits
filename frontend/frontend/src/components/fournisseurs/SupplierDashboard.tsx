@@ -3,8 +3,7 @@ import {
   TrendingDown, 
   AlertCircle, 
   Calendar, 
-  ArrowUpRight, 
-  ArrowDownRight,
+  ArrowUpRight,
   TrendingUp,
   PieChart as PieChartIcon,
   ChevronRight,
@@ -38,7 +37,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
   const Recharts = useRecharts();
   if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
-  const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } = Recharts;
+  const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } = Recharts;
 
 
   if (loading) {
@@ -284,7 +283,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                  <tr>
                     <td colSpan={6} className="text-center py-8 text-base-content/30 font-bold uppercase text-xs tracking-widest">{t('providers:dashboard.deadlines.no_deadlines')}</td>
                  </tr>
-              ) : (stats?.prochaines_echeances ?? []).map((ech, i) => (
+              ) : (stats?.prochaines_echeances ?? []).map((ech, _i) => (
                 <tr key={ech.numero_facture} className="hover:bg-base-200/50 transition-colors group">
                   <td className="pl-6 py-4">
                     <span className="font-black text-base-content text-sm">{ech.fournisseur_nom}</span>

@@ -108,19 +108,19 @@ export const cashSessionService = {
     return data.results || data
   },
 
-  async forcerFermeturePosteVente(posteVenteId: number): Promise<any> {
+  async forcerFermeturePosteVente(posteVenteId: number): Promise<unknown> {
     const { data } = await api.post(`postes-ventes/${posteVenteId}/forcer-fermeture/`)
     return data
   },
 
-  async closePosteVente(posteVenteId: number, hideAmounts: boolean = false): Promise<any> {
+  async closePosteVente(posteVenteId: number, hideAmounts: boolean = false): Promise<unknown> {
     const { data } = await api.post(`postes-ventes/${posteVenteId}/fermer/`, {
       hide_amounts: hideAmounts
     })
     return data
   },
 
-  async getRecapSession(): Promise<any> {
+  async getRecapSession(): Promise<unknown> {
     const { data } = await api.get('postes-ventes/recap_session/')
     return data
   },

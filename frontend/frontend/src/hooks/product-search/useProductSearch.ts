@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import type { SearchMode, SearchResult, UseProductSearchOptions } from '../../components/common/ProductSearch/types'
+import type { SearchMode, UseProductSearchOptions } from '../../components/common/ProductSearch/types'
 
 export const useProductSearch = (options: UseProductSearchOptions = {}) => {
   const { modes = ['products'], enableQuantityShortcut = false, onQuantityShortcut } = options

@@ -9,7 +9,7 @@ export interface SearchResult {
   selling_price?: number | string
   isPromis?: boolean
   active_promis_count?: number
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface PackResult {
@@ -17,7 +17,7 @@ export interface PackResult {
   name: string
   value: number | string
   products_count?: number
-  pack_items?: any[]
+  pack_items?: unknown[]
 }
 
 export interface DciResult {

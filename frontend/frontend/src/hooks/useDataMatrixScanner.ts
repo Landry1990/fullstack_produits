@@ -55,8 +55,8 @@ export function useDataMatrixScanner({
             // Si le parsing n'a rien donné (chaîne inconnue), tenter un fallback :
             // certaines douchettes envoient juste le CIP13 brut (13 chiffres)
             let cip = parsed.cip;
-            let lot = parsed.lot;
-            let dateExpiration = parsed.dateExpiration;
+            const lot = parsed.lot;
+            const dateExpiration = parsed.dateExpiration;
 
             if (!cip && /^\d{13}$/.test(rawScan.trim())) {
                 cip = rawScan.trim();

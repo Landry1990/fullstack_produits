@@ -1,5 +1,4 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 import type { ProduitModel, User } from '../../types'
 import { ProductSearch, type SearchResult, type PackResult, type DciResult } from '../common/ProductSearch'
 import { useFacturationSearch } from '../../hooks/product-search/useFacturationSearch'
@@ -12,7 +11,7 @@ interface ProductSearchSectionProps {
   searchLoading: boolean
   filteredProduits: ProduitModel[]
   addProduitToFacture: (product: ProduitModel) => void
-  addPackToFacture?: (pack: any) => void
+  addPackToFacture?: (pack: unknown) => void
   searchInputRef: React.RefObject<HTMLInputElement | null>
   placeholder?: string
   onQuantityShortcut?: (qty: number) => void
@@ -46,8 +45,8 @@ const ProductSearchSection = React.memo(({
   onScanKeyDown,
 }: ProductSearchSectionProps) => {
   const {
-    searchMode,
-    setSearchMode,
+    searchMode: _searchMode,
+    setSearchMode: _setSearchMode,
     packResults,
     dciResults,
     selectedDci,
