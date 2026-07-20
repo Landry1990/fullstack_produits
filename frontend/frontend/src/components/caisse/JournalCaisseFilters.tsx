@@ -72,7 +72,7 @@ export default function JournalCaisseFilters({ state }: Props) {
               className="w-full sm:w-auto h-9 px-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
             >
               <option value="">👤 {t('all_cashiers')}</option>
-              {users.map((u: any) => (
+              {users.map((u: unknown) => (
                 <option key={u.id} value={u.id}>
                   {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username}
                 </option>

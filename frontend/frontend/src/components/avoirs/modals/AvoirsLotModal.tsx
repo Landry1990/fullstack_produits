@@ -1,13 +1,22 @@
 import React from 'react';
-import { X, Package } from 'lucide-react';
+import { Package, Loader2 } from 'lucide-react';
+import type { StockLot } from '../../../types';
 import { formatCurrency } from '../../../utils/formatters';
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle,
+    DialogDescription, DialogFooter
+} from '../../shadcn/dialog';
+import { Button } from '../../shadcn/button';
+import {
+    Table, TableHeader, TableBody, TableRow, TableHead, TableCell
+} from '../../ui/Table';
 
 interface LotModalProps {
     isOpen: boolean;
     onClose: () => void;
-    availableLots: any[];
+    availableLots: StockLot[];
     loadingLots: boolean;
-    onSelectLot: (lot: any) => void;
+    onSelectLot: (lot: StockLot) => void;
 }
 
 const formatExpiry = (dateStr: string | null) => {
@@ -25,106 +34,101 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
     loadingLots,
     onSelectLot
 }) => {
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-
-                {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="max-w-lg p-0 overflow-hidden" aria-describedby="lot-modal-desc">
+                <DialogHeader className="px-5 py-4 border-b border-slate-100">
                     <div className="flex items-center gap-3">
                         <div className="size-9 rounded-xl bg-indigo-50 flex items-center justify-center">
                             <Package className="size-4 text-indigo-600" />
                         </div>
                         <div>
-                            <h2 className="font-bold text-gray-900 text-sm">Sélectionner un lot</h2>
-                            <p className="text-xs text-gray-400">Lots disponibles en stock</p>
+                            <DialogTitle className="text-sm font-bold text-slate-900">
+                                Sélectionner un lot
+                            </DialogTitle>
+                            <DialogDescription id="lot-modal-desc" className="text-xs">
+                                Lots disponibles en stock
+                            </DialogDescription>
                         </div>
                     </div>
-                    <button onClick={onClose} className="size-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                        <X className="size-4" />
-                    </button>
-                </div>
+                </DialogHeader>
 
-                {/* Body */}
                 <div className="p-5">
                     {loadingLots ? (
                         <div className="flex justify-center py-10">
-                            <span className="size-6 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin" />
+                            <Loader2 className="size-6 animate-spin text-indigo-600" />
                         </div>
                     ) : availableLots.length === 0 ? (
-                        <div className="text-center py-10 text-gray-400 text-sm">
+                        <div className="text-center py-10 text-slate-400 text-sm">
                             Aucun lot disponible en stock pour ce produit.
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-xl border border-gray-100">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-100">
-                                        <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Lot</th>
-                                        <th className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">Expiration</th>
-                                        <th className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">Stock</th>
-                                        <th className="px-4 py-2.5 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Prix achat</th>
-                                        <th className="px-4 py-2.5"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
+                        <div className="overflow-x-auto rounded-xl border border-slate-100">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="text-xs">Lot</TableHead>
+                                        <TableHead className="text-center text-xs">Expiration</TableHead>
+                                        <TableHead className="text-center text-xs">Stock</TableHead>
+                                        <TableHead className="text-right text-xs">Prix achat</TableHead>
+                                        <TableHead></TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                     {availableLots.map(lot => {
                                         const expire = lot.date_expiration ? new Date(lot.date_expiration) : null;
                                         const daysLeft = expire ? Math.ceil((expire.getTime() - Date.now()) / 86400000) : null;
-                                        const expiryClass = daysLeft === null ? 'text-gray-500'
+                                        const expiryClass = daysLeft === null ? 'text-slate-500'
                                             : daysLeft < 0 ? 'text-red-600 font-bold'
                                             : daysLeft < 30 ? 'text-amber-500 font-bold'
-                                            : 'text-gray-700';
+                                            : 'text-slate-700';
                                         return (
-                                            <tr key={lot.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-4 py-3">
-                                                    <span className="font-mono font-bold text-xs text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
+                                            <TableRow key={lot.id}>
+                                                <TableCell>
+                                                    <span className="font-mono font-bold text-xs text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
                                                         {lot.lot || 'N/A'}
                                                     </span>
-                                                </td>
-                                                <td className={`px-4 py-3 text-center text-xs ${expiryClass}`}>
+                                                </TableCell>
+                                                <TableCell className={`text-center text-xs ${expiryClass}`}>
                                                     {formatExpiry(lot.date_expiration)}
                                                     {daysLeft !== null && daysLeft >= 0 && daysLeft < 30 && (
                                                         <div className="text-[10px] text-amber-400">({daysLeft}j)</div>
                                                     )}
-                                                </td>
-                                                <td className="px-4 py-3 text-center">
+                                                </TableCell>
+                                                <TableCell className="text-center">
                                                     <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
                                                         {lot.quantity_remaining}
                                                     </span>
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-mono text-xs text-gray-700">
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono text-xs text-slate-700">
                                                     {formatCurrency(Number(lot.price_cost) || 0)}
-                                                </td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <button
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
                                                         type="button"
-                                                        className="inline-flex items-center h-7 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors"
+                                                        size="sm"
+                                                        className="h-7 text-xs"
                                                         onClick={() => onSelectLot(lot)}
                                                     >
                                                         Choisir
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
                                         );
                                     })}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         </div>
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="px-5 py-3 border-t border-gray-100 flex justify-end">
-                    <button onClick={onClose} className="h-8 px-4 text-sm text-gray-500 hover:text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors">
+                <DialogFooter className="px-5 py-3 border-t border-slate-100">
+                    <Button type="button" variant="ghost" size="sm" onClick={onClose}>
                         Annuler
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 };
 

@@ -38,7 +38,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
     if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
     const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = Recharts;
 
-    const renderList = (title: string, data: any[], type: 'negative' | 'positive') => {
+const _renderList = (title: string, data: unknown[], type: 'negative' | 'positive') => {
         const Icon = type === 'negative' ? AlertTriangle : TrendingUp;
         const colorClass = type === 'negative' ? 'text-red-500' : 'text-emerald-600';
         const bgColorClass = type === 'negative' ? 'bg-red-50' : 'bg-emerald-50';
@@ -288,7 +288,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                     tickFormatter={(val: string) => val || 'N/A'}
                                 />
                                 <Tooltip 
-                                    formatter={(value: any) => [
+                                    formatter={(value: unknown) => [
                                         metric === 'VALEUR' ? `${formatPrice(Math.abs(value))} F` : `${value} fois`, 
                                         metric === 'VALEUR' ? t('inventaire.detail.col_gap') : t('inventaire.audit.table.col_occurrences')
                                     ]}
@@ -299,7 +299,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                     radius={[0, 4, 4, 0]}
                                     animationDuration={1500}
                                 >
-                                    {(groupBy === 'RAYON' ? data?.par_rayon : data?.par_groupe)?.map((entry: any, index: number) => (
+                                    {(groupBy === 'RAYON' ? data?.par_rayon : data?.par_groupe)?.map((entry: unknown, _index: number) => (
                                         <Cell 
                                             key={`cell-${entry.label || entry.name}`} 
                                             fill={metric === 'VALEUR' 
@@ -337,7 +337,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                 </tr>
                             </thead>
                             <tbody className="font-medium">
-                                {sortedProducts.slice(0, 10).map((p, idx) => (
+                                {sortedProducts.slice(0, 10).map((p, _idx) => (
                                     <tr key={p.produit__cip1 || p.produit__name} className="hover:bg-slate-50 border-b border-slate-50 transition-colors">
                                         <td className="max-w-[150px] truncate font-bold py-2">
                                             <div className="flex flex-col">

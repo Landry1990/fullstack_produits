@@ -48,13 +48,13 @@ const Ventes: React.FC = () => {
     });
 
     const [showQuickStats, setShowQuickStats] = React.useState(false);
-    const [trancheStats, setTrancheStats] = React.useState<any>(null);
+    const [trancheStats, setTrancheStats] = React.useState<unknown>(null);
 
     // Handle incoming redirect from Omnisearch
     useEffect(() => {
         if (location.state?.selectedFactureId && filteredFactures.length > 0) {
             const fid = location.state.selectedFactureId;
-            const found = filteredFactures.find((f: any) => f.id === fid);
+            const found = filteredFactures.find((f: unknown) => f.id === fid);
             if (found) {
                 actions.handleViewProducts(found);
                 navigate(location.pathname, { replace: true, state: {} });

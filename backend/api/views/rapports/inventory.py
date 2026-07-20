@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, time
 from decimal import Decimal
 import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl.utils import get_column_letter
 from io import BytesIO
 from django.http import HttpResponse
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
@@ -151,6 +152,22 @@ class RapportInventoryMixin:
             sf = si + sum(pm.values())
             if not(exclude_zero and si==0 and ac==0 and vt==0 and aj==0 and sf==0):
                 ws.append([p.cip1 or "", p.name, si, ac, -vt, aj, sf])
+
+        # Auto-width (skip merged title row)
+        merged_ranges = set()
+        for mr in ws.merged_cells.ranges:
+            for row in range(mr.min_row, mr.max_row + 1):
+                for col in range(mr.min_col, mr.max_col + 1):
+                    merged_ranges.add((row, col))
+        for col in ws.columns:
+            length = 0
+            for cell in col:
+                if (cell.row, cell.column) in merged_ranges:
+                    continue
+                val = str(cell.value or "")
+                if len(val) > length:
+                    length = len(val)
+            ws.column_dimensions[get_column_letter(col[0].column)].width = min(30, max(10, length + 2))
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename="Balance_Stocks.xlsx"'; wb.save(response)

@@ -23,8 +23,8 @@ export default function Creances() {
         selectedIds: data.selectedIds,
         setSelectedIds: data.setSelectedIds,
         filteredCreances: data.filteredCreances,
-        updateLocalCreance: (data as any).updateLocalCreance,
-        updateLocalSynthese: (data as any).updateLocalSynthese
+        updateLocalCreance: (data as unknown).updateLocalCreance,
+        updateLocalSynthese: (data as unknown).updateLocalSynthese
     });
 
     const bulkTotalAmount = useMemo(() => {

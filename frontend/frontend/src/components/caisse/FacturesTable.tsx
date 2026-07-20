@@ -35,8 +35,8 @@ interface FacturesTableProps {
   onUpdateProductQuantity: (factureId: number, produitId: number, newQty: number) => void
   onRemoveProduct: (factureId: number, produitId: number) => void
   couponsParFacture: Record<number, CouponMonnaie>
-  user: any // Replace with proper User type if available
-  myActivePoste?: any | null // Poste de caisse actif de l'utilisateur courant
+  user: unknown // Replace with proper User type if available
+  myActivePoste?: unknown | null // Poste de caisse actif de l'utilisateur courant
   selectedIds?: Set<number>
   onToggleSelect?: (id: number) => void
   onSelectAll?: () => void
@@ -67,10 +67,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   const [previewFacture, setPreviewFacture] = useState<Facture | null>(null)
   const [page, setPage] = useState(1)
 
-  const canModify = user?.is_superuser || (user as any)?.can_modify_invoice || user?.profile?.can_modify_invoice
-  const canCancel = user?.is_superuser || (user as any)?.can_cancel_invoice || user?.profile?.can_cancel_invoice
+  const canModify = user?.is_superuser || (user as unknown)?.can_modify_invoice || user?.profile?.can_modify_invoice
+  const canCancel = user?.is_superuser || (user as unknown)?.can_cancel_invoice || user?.profile?.can_cancel_invoice
   // Pour encaisser : il faut la permission ET avoir une caisse ouverte (sauf superuser)
-  const hasCashOutPermission = user?.is_superuser || (user as any)?.can_cash_out || user?.profile?.can_cash_out
+  const hasCashOutPermission = user?.is_superuser || (user as unknown)?.can_cash_out || user?.profile?.can_cash_out
   const hasActiveCashSession = !!myActivePoste
   const canCashOut = hasCashOutPermission && (user?.is_superuser || hasActiveCashSession)
 
@@ -114,7 +114,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   }
 
   // Helper to get product display name
-  const getProductName = (p: any): string => {
+  const getProductName = (p: unknown): string => {
     if (typeof p.produit === 'object' && p.produit !== null) {
       return p.produit.name || `#${p.produit.id}`
     }
@@ -184,7 +184,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   }`}
                   onClick={() => onSelectRow(index)}
                   onDoubleClick={() => {
-                    if ((user as any)?.can_cash_out || user?.is_superuser) {
+                    if ((user as unknown)?.can_cash_out || user?.is_superuser) {
                       onEncaisser(facture)
                     }
                   }}
@@ -390,11 +390,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {previewFacture.produits.map((p: any, idx: number) => {
+                    {previewFacture.produits.map((p: unknown, idx: number) => {
                       const name = getProductName(p)
                       const qty = p.quantity || p.quantite || 1
                       const price = Number(p.selling_price || p.prix_vente || 0)
-                      const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || (user as any)?.can_modify_invoice
+                      const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || (user as unknown)?.can_modify_invoice
 
                       return (
                         <TableRow key={p.id ?? p.produit_id ?? p.produit ?? idx} className="group">

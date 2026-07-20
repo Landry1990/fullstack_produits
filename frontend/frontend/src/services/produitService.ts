@@ -175,7 +175,7 @@ const produitService = {
         return response.data;
     },
 
-    bulkTransferToShelf: async (productIds: number[], sudoCreds?: { validated_by_id: number; sudo_password: string }): Promise<any> => {
+    bulkTransferToShelf: async (productIds: number[], sudoCreds?: { validated_by_id: number; sudo_password: string }): Promise<unknown> => {
         const payload = {
             product_ids: productIds,
             ...(sudoCreds || {})
@@ -184,12 +184,12 @@ const produitService = {
         return response.data;
     },
 
-    getReapproHistory: async (): Promise<any[]> => {
+    getReapproHistory: async (): Promise<unknown[]> => {
         const response = await api.get('reappro-sessions/');
         return response.data;
     },
 
-    getReapproSessionDetails: async (sessionId: number): Promise<any> => {
+    getReapproSessionDetails: async (sessionId: number): Promise<unknown> => {
         const response = await api.get(`reappro-sessions/${sessionId}/`);
         return response.data;
     },

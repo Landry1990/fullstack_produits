@@ -57,7 +57,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       navigate(pathname, { replace: true, state: {} });
     } else if (location.state?.selectedCommandeId && listProps.sortedCommandes.length > 0) {
       const cid = location.state.selectedCommandeId;
-      const found = listProps.sortedCommandes.find((c: any) => c.id === cid);
+      const found = listProps.sortedCommandes.find((c: unknown) => c.id === cid);
       if (found) {
         listProps.onViewDetails(found);
         navigate(pathname, { replace: true, state: {} });
@@ -65,7 +65,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
     } else if (location.state?.selectedFournisseurId && listProps.sortedCommandes.length > 0) {
       const fid = location.state.selectedFournisseurId;
       // Filtrer les commandes par fournisseur
-      const supplierOrders = listProps.sortedCommandes.filter((c: any) => c.fournisseur === fid || c.fournisseur_id === fid);
+      const supplierOrders = listProps.sortedCommandes.filter((c: unknown) => c.fournisseur === fid || c.fournisseur_id === fid);
       if (supplierOrders.length > 0) {
         listProps.onViewDetails(supplierOrders[0]);
         navigate(pathname, { replace: true, state: {} });
@@ -139,13 +139,13 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
       {state.viewMode === 'DETAILS' && state.selectedCommande && (
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <CommandeDetails {...(detailsProps as any)} />
+          <CommandeDetails {...(detailsProps as unknown)} />
         </div>
       )}
 
       {(state.viewMode === 'CREATE' || state.viewMode === 'EDIT') && (
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <CommandeForm {...(formProps as any)} onViewProductDetails={handleViewProductDetails} />
+          <CommandeForm {...(formProps as unknown)} onViewProductDetails={handleViewProductDetails} />
         </div>
       )}
 

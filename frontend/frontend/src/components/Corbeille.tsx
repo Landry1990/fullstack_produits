@@ -10,16 +10,16 @@ import { Checkbox } from './ui/Checkbox';
 import { Select } from './ui/Select';
 import { Card } from './ui/Card';
 import {
-  Trash2, RotateCcw, AlertTriangle, Package, Users, Truck, Search, X,
+  Trash2, RotateCcw, Package, Users, Truck, Search, X,
   ShoppingCart, CreditCard, Clock, ClipboardList, Receipt, ChevronDown,
-  ChevronUp, Filter, Archive, ArrowUpFromLine
+  ChevronUp, Archive, ArrowUpFromLine
 } from 'lucide-react';
 
 interface TrashedItem {
   id: number;
   name: string;
   type: 'produit' | 'client' | 'fournisseur' | 'commande' | 'avoir' | 'promis' | 'inventaire' | 'facture' | 'user';
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   deleted_at: string | null;
 }
 
@@ -167,7 +167,7 @@ export default function Corbeille() {
       deleted = res_all.reduce((acc, r) => acc + r, 0);
       toast.success(t('messages.purge_success', { count: deleted }));
       fetchData();
-    } catch (err: any) { toast.error(err.response?.data?.detail || t('messages.purge_error')); }
+    } catch (err: unknown) { toast.error(err.response?.data?.detail || t('messages.purge_error')); }
     finally { setActionLoading(false); }
   };
 
@@ -198,7 +198,6 @@ export default function Corbeille() {
     return result;
   }, [selectedIds]);
 
-  const typeInfo = TYPE_CONFIG.find(c => c.key === typeFilter) || TYPE_CONFIG[0];
 
   return (
     <div className="h-full bg-base-200 flex flex-col">
@@ -257,7 +256,7 @@ export default function Corbeille() {
         {/* Select all */}
         {allItems.length > 0 && (
           <Button variant="ghost" size="sm" onClick={selectAll} className="text-xs font-medium">
-            <Checkbox checked={selectedIds.size === allItems.length && allItems.length > 0} className="size-4 mr-1.5" />
+            <Checkbox checked={selectedIds.size === allItems.length && allItems.length > 0} onChange={selectAll} className="size-4 mr-1.5" />
             {selectedIds.size > 0 ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? 's' : ''}` : 'Tout sélectionner'}
           </Button>
         )}
@@ -300,7 +299,7 @@ export default function Corbeille() {
                     onClick={() => toggleSelect(key)}>
                     <div className="flex items-start gap-3">
                       <div className="pt-0.5">
-                        <Checkbox checked={isSel} />
+                        <Checkbox checked={isSel} onChange={() => toggleSelect(key)} />
                       </div>
                       <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${cfg.bg}`}>
                         <span className={cfg.color}>{cfg.icon}</span>
@@ -315,14 +314,14 @@ export default function Corbeille() {
                             <Clock className="size-3" />{formatTime(item.deleted_at)}
                           </span>
                           {item.type === 'produit' && (
-                            <span className="text-[10px] text-muted-foreground">Stock: {item.details.stock ?? 0}</span>
+                            <span className="text-[10px] text-muted-foreground">Stock: {Number(item.details.stock ?? 0)}</span>
                           )}
                           {item.type === 'facture' && (
                             <span className="text-[10px] text-muted-foreground">{item.details.total?.toLocaleString('fr-FR')} FCFA</span>
                           )}
-                          {item.type === 'client' && item.details.phone && (
-                            <span className="text-[10px] text-muted-foreground">{item.details.phone}</span>
-                          )}
+                          {item.type === 'client' && item.details.phone ? (
+                            <span className="text-[10px] text-muted-foreground">{String(item.details.phone)}</span>
+                          ) : null}
                         </div>
                       </div>
                       {/* Actions */}

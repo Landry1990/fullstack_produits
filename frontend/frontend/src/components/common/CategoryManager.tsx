@@ -168,7 +168,7 @@ export default function CategoryManager({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload: any = {};
+    const payload: unknown = {};
     if (type === 'rayon') {
       payload.name = formData.name;
       payload.parent = formData.parent ? parseInt(formData.parent) : null;
@@ -193,7 +193,7 @@ export default function CategoryManager({
         toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       }
       setIsModalOpen(false);
-    } catch (err) {
+    } catch {
       toast.error(t('common:messages.error_saving'));
     }
   };
@@ -212,7 +212,7 @@ export default function CategoryManager({
       toast.success(`« ${name} » déplacé en corbeille.`);
       if (selectedCategory?.id === id) setSelectedCategory(null);
       fetchCategories();
-    } catch (err) {
+    } catch {
       toast.error(t('common:messages.error_deleting'));
     }
   };
@@ -257,7 +257,7 @@ export default function CategoryManager({
   const handleAddProduct = async (product: Product) => {
     if (!selectedCategory) return;
     try {
-      const payload: any = {};
+      const payload: unknown = {};
       payload[type] = selectedCategory.id;
 
       const { data: updatedProduct } = await api.patch(`produits/${product.id}/`, payload);
@@ -269,7 +269,7 @@ export default function CategoryManager({
       
       // Remove from search results to avoid double add
       setSearchResults(prev => prev.filter(p => p.id !== product.id));
-    } catch (err) {
+    } catch {
       toast.error(t('common:messages.error_update'));
     }
   };
@@ -282,14 +282,14 @@ export default function CategoryManager({
     if (!confirmed) return;
 
     try {
-      const payload: any = {};
+      const payload: unknown = {};
       payload[type] = null;
 
       await api.patch(`produits/${product.id}/`, payload);
       toast.success(t('stock:organisation.category_manager.product_removed'));
       setProducts(prev => prev.filter(p => p.id !== product.id));
       setTotalCount(prev => Math.max(0, prev - 1));
-    } catch (err) {
+    } catch {
       toast.error(t('common:messages.error_deleting'));
     }
   };
@@ -360,7 +360,7 @@ export default function CategoryManager({
            ) : hierarchy.length === 0 ? (
               <div className="text-center p-8 text-slate-400 italic text-sm">{t('stock:organisation.category_manager.no_items', { type })}</div>
            ) : (
-              hierarchy.map((cat: any) => (
+              hierarchy.map((cat: unknown) => (
                 <div key={cat.id} className="space-y-1">
                   <div
                     role="button"
@@ -421,7 +421,7 @@ export default function CategoryManager({
 
                   {cat.children && cat.children.length > 0 && (
                     <div className="pl-6 space-y-1 border-l-2 border-slate-100 ml-5 mt-1">
-                      {cat.children.map((child: any) => (
+                      {cat.children.map((child: unknown) => (
                         <div
                           key={child.id}
                           role="button"

@@ -84,7 +84,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
       onSessionOpened(poste)
       onClose()
       setFondCaisse('')
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err.response?.data?.detail || t('messages.error_opening', { defaultValue: 'Erreur ouverture.' }))
     } finally {
       setIsLoading(false)

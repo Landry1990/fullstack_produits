@@ -227,7 +227,7 @@ export interface ManagerStats {
         type: 'danger' | 'warning' | 'info';
         title_key: string;
         message_key: string;
-        params?: Record<string, any>;
+        params?: Record<string, unknown>;
     }>;
 }
 

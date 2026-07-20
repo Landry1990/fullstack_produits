@@ -54,7 +54,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
       setResult(response.data)
       toast.success(t('products:import.success_toast'))
       onSuccess()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Import error:', error)
       const message = error.response?.data?.error || t('products:import.error_toast')
       toast.error(message)
@@ -172,7 +172,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
                 <div>
                   <h3 className="font-semibold text-base-content">{t('products:import.success_title')}</h3>
                   <div className="text-sm text-base-content/70 mt-1">
-                    <p>{t('products:import.created', { count: result.imported !== undefined ? result.imported : (result as any).created || 0 })}</p>
+                    <p>{t('products:import.created', { count: result.imported !== undefined ? result.imported : (result as unknown).created || 0 })}</p>
                     <p>{t('products:import.updated', { count: result.updated })}</p>
                   </div>
                 </div>

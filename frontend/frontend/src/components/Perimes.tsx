@@ -97,7 +97,7 @@ const getExpiryEndOfMonthISO = (dateString: string) => {
   return `${yStr}-${mStr}-${String(lastDay).padStart(2, '0')}`
 }
 
-const formatDateShort = (dateString: string) => {
+const _formatDateShort = (dateString: string) => {
   if (!dateString) return '-'
   const [datePart] = dateString.split('T')
   const [, m, y] = datePart.split('-')
@@ -183,7 +183,7 @@ export default function Perimes() {
           limit: 100
         }
       })
-      const data: any = response.data
+      const data: unknown = response.data
       setAdjustments(Array.isArray(data) ? data : (data.results || []))
     } catch (err) {
       console.error('Erreur chargement historiques:', err)
@@ -211,7 +211,7 @@ export default function Perimes() {
         }
       })
       
-      const data: any = response.data
+      const data: unknown = response.data
       let fetchedLots: StockLot[] = Array.isArray(data) ? data : (data.results || [])
       
       if (showExpiredOnly) {

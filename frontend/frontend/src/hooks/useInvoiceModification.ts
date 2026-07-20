@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
@@ -8,7 +8,7 @@ import { getApiErrorDetail } from '../utils/errorHandling'
 interface ModificationState {
   setLoading: (loading: boolean) => void
   fetchFacturesEnAttente: () => Promise<void>
-  t: (key: string, options?: any) => string
+  t: (key: string, options?: unknown) => string
 }
 
 export const useInvoiceModification = ({
@@ -38,7 +38,7 @@ export const useInvoiceModification = ({
       }
 
       // 2. Récupérer les détails complets de tous les produits
-      const productPromises = fullFacture.produits.map(async (p: any) => {
+      const productPromises = fullFacture.produits.map(async (p: unknown) => {
         try {
           const response = await api.get(`produits/${p.produit}/`)
           return {
@@ -102,14 +102,14 @@ export const useInvoiceModification = ({
       const facture = facturesEnAttente.find(f => f.id === factureId)
       if (!facture) return
 
-      const updatedProducts = (facture.produits || []).map((p: any) => {
+      const updatedProducts = (facture.produits || []).map((p: unknown) => {
         if (p.produit === produitId) {
           return { ...p, quantity: newQty }
         }
         return p
       })
 
-      const response = await api.post(`factures/${factureId}/modifier/`, {
+const _response = await api.post(`factures/${factureId}/modifier/`, {
         produits: updatedProducts,
         remise: facture.remise,
         client: facture.client,
@@ -141,7 +141,7 @@ export const useInvoiceModification = ({
       const facture = facturesEnAttente.find(f => f.id === factureId)
       if (!facture) return
 
-      const updatedProducts = (facture.produits || []).filter((p: any) => p.produit !== produitId)
+      const updatedProducts = (facture.produits || []).filter((p: unknown) => p.produit !== produitId)
 
       // Si plus de produits, proposer d'annuler la facture
       if (updatedProducts.length === 0) {
@@ -152,7 +152,7 @@ export const useInvoiceModification = ({
         return
       }
 
-      const response = await api.post(`factures/${factureId}/modifier/`, {
+const _response = await api.post(`factures/${factureId}/modifier/`, {
         produits: updatedProducts,
         remise: facture.remise,
         client: facture.client,

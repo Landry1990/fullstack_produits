@@ -155,7 +155,7 @@ export function generateReapproSessionPdfDraft(
     },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 8;
+  const finalY = (doc as unknown).lastAutoTable.finalY + 8;
   if (finalY < pageHeight - 30) {
     const summaryW = 70;
     const summaryX = pageWidth - margin - summaryW;

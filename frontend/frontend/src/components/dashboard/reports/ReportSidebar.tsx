@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileText, ChevronRight, X } from 'lucide-react';
-import { Button } from '../../shadcn/button';
 import { QUERIES } from '../../../hooks/useCentreRapports';
 import type { QueryDefinition } from '../../../hooks/useCentreRapports';
 

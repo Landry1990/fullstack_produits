@@ -38,7 +38,7 @@ export default function AlertMessageModal({ isOpen, onClose, target, onSuccess }
             toast.success(t('facturation:alert_message.save_success', { name: target.name }));
             onSuccess({ ...target, currentMessage: message.trim() });
             onClose();
-        } catch (error) {
+        } catch {
             toast.error(t('facturation:alert_message.save_error'));
         } finally {
             setLoading(false);

@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useCaisseCoupons } from '../useCaisseCoupons'
 import type { Facture, CouponMonnaie } from '../../types'
@@ -47,7 +47,7 @@ describe('useCaisseCoupons Hook', () => {
   const mockSetCouponTrouve = vi.fn()
   const mockOnSuccess = vi.fn()
 
-  const mockT = vi.fn((key: string, options?: any) => key)
+  const mockT = vi.fn((key: string, _options?: unknown) => key)
 
   const defaultProps = {
     coupons: [],

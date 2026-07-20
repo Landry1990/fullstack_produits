@@ -295,7 +295,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       fetchCommandes: async () => { await refetchCommandes(); },
       setSelectedCommande,
       setViewMode,
-      confirm: confirm as any, 
+      confirm: confirm as unknown, 
       user
   });
 
@@ -332,11 +332,11 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       if (!selectedCommande) return;
 
       // Vérifier les produits sans date de péremption
-      const produits = (commandeProduits.length > 0 ? commandeProduits : (selectedCommande?.produits || [])) as any[];
-      const sansPeremption = produits.filter((p: any) => !p.date_expiration);
+      const produits = (commandeProduits.length > 0 ? commandeProduits : (selectedCommande?.produits || [])) as unknown[];
+      const sansPeremption = produits.filter((p: unknown) => !p.date_expiration);
 
       if (sansPeremption.length > 0) {
-          const noms = sansPeremption.map((p: any) => {
+          const noms = sansPeremption.map((p: unknown) => {
               const nom = typeof p.produit === 'object' ? p.produit?.name : p.produit_nom;
               return `   • ${nom || 'Produit #' + (p.id || '?')}`;
           });
@@ -351,7 +351,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       }
 
       // Vérifier les produits vendus à perte (prix de vente HT < prix d'achat)
-      const produitsEnPerte = produits.filter((p: any) => {
+      const produitsEnPerte = produits.filter((p: unknown) => {
           const price = Number(p.price || 0);
           const selling = Number(p.selling_price || 0);
           const tva = Number(p.tva || 0);
@@ -359,7 +359,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       });
 
       if (produitsEnPerte.length > 0) {
-          const nomsPerte = produitsEnPerte.map((p: any) => {
+          const nomsPerte = produitsEnPerte.map((p: unknown) => {
               const nom = typeof p.produit === 'object' ? p.produit?.name : p.produit_nom;
               const price = Math.round(Number(p.price || 0));
               const sellingHT = Math.round(Number(p.selling_price || 0) / (1 + Number(p.tva || 0) / 100));
@@ -553,9 +553,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         ? produitsSource.filter((_, idx) => selectedRows.has(idx))
         : produitsSource
     ).map(p => ({
-            id: typeof p.produit === 'object' ? (p.produit as any).id : p.produit,
-            name: (p as any).produit_nom,
-            cip: (typeof p.produit === 'object' ? (p.produit as any).cip1 : (p as any).produit_cip) || '',
+            id: typeof p.produit === 'object' ? (p.produit as unknown).id : p.produit,
+            name: (p as unknown).produit_nom,
+            cip: (typeof p.produit === 'object' ? (p.produit as unknown).cip1 : (p as unknown).produit_cip) || '',
             purchase_price: p.price, 
             quantity: 0, 
             received_qty: p.quantity,
@@ -680,7 +680,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   }, [tauxChange, fraisCoefficient, commandeType, viewMode]);
 
   useEffect(() => {
-    const state = location.state as any;
+    const state = location.state as unknown;
     if (state && (state.createFromStockAlert || state.createFromCadencier)) {
       const isCadencier = !!state.createFromCadencier;
       const data = state.createFromCadencier || state.createFromStockAlert;
@@ -717,7 +717,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
               if (isCadencier && p.quantity !== undefined && p.quantity > 0) {
                 suggestedQty = p.quantity;
               } else {
-                const avgSales = (p as any).avg_daily_sales;
+                const avgSales = (p as unknown).avg_daily_sales;
                 const coverageDays = 30;
                 suggestedQty = avgSales && avgSales > 0
                   ? Math.max(1, Math.ceil(avgSales * coverageDays) - (fullProduct.stock || 0))
@@ -742,7 +742,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
               console.error(`Failed to fetch product ${p.id}:`, err);
               return {
                 id: Date.now() + p.id,
-                produit: { id: p.id, name: p.name, stock: p.stock } as any,
+                produit: { id: p.id, name: p.name, stock: p.stock } as unknown,
                 quantity: p.quantity || 10,
                 unites_gratuites: 0,
                 prix_euro: orderType === 'DIR' ? '0' : undefined,
@@ -761,10 +761,10 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
         // Pré-sélectionner le fournisseur du premier produit qui en a un
         const firstWithFournisseur = newLines.find(
-          l => l.produit && typeof l.produit === 'object' && (l.produit as any).fournisseur
+          l => l.produit && typeof l.produit === 'object' && (l.produit as unknown).fournisseur
         );
         if (firstWithFournisseur) {
-          const fId = (firstWithFournisseur.produit as any).fournisseur;
+          const fId = (firstWithFournisseur.produit as unknown).fournisseur;
           setNewCommandeFournisseurId(String(fId));
         }
 
@@ -1252,7 +1252,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
     const normalizeCip = (cip: string | null | undefined): string => {
       if (!cip) return '';
-      let normalized = cip.trim().replace(/[\s\-\.]/g, '');
+      const normalized = cip.trim().replace(/[\s\-\.]/g, '');
       return normalized.toUpperCase();
     };
 
@@ -1265,7 +1265,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       }
 
       const lines = text.split(/\r\n|\n/);
-      let currentList = [...commandeProduits];
+      const currentList = [...commandeProduits];
       let productsFound = 0;
       let productsNotFound = 0;
       const notFoundItems: { cip: string; qty: number }[] = [];
@@ -1554,20 +1554,20 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const handleSortProduits = useCallback((sortBy: 'chrono' | 'stock' | 'name' | 'qty') => {
     setCommandeSortBy(sortBy);
     setCommandeProduits(prev => {
-      const sorted = prev.slice().sort((a: any, b: any) => {
+      const sorted = prev.slice().sort((a: unknown, b: unknown) => {
         if (sortBy === 'chrono') return (a.id || 0) - (b.id || 0);
 
         const prodA = typeof a.produit === 'object' ? a.produit : produitsList.find(p => p.id === a.produit);
         const prodB = typeof b.produit === 'object' ? b.produit : produitsList.find(p => p.id === b.produit);
 
         if (sortBy === 'name') {
-          const nameA = prodA?.name || (a as any).produit_nom || '';
-          const nameB = prodB?.name || (b as any).produit_nom || '';
+          const nameA = prodA?.name || (a as unknown).produit_nom || '';
+          const nameB = prodB?.name || (b as unknown).produit_nom || '';
           return nameA.localeCompare(nameB);
         }
         if (sortBy === 'stock') {
-          const stockA = prodA?.stock ?? (a as any).produit_stock ?? 0;
-          const stockB = prodB?.stock ?? (b as any).produit_stock ?? 0;
+          const stockA = prodA?.stock ?? (a as unknown).produit_stock ?? 0;
+          const stockB = prodB?.stock ?? (b as unknown).produit_stock ?? 0;
           return stockB - stockA;
         }
         if (sortBy === 'qty') return (Number(b.quantity) || 0) - (Number(a.quantity) || 0);
@@ -1667,7 +1667,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       const data = await commandeService.getById(commande.id);
       setSelectedCommande(data);
       setViewMode('DETAILS');
-    } catch (err) {
+    } catch {
       toast.error(t('orders:messages.details_load_error'));
     }
   }
@@ -1744,7 +1744,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       orderTotals,
     },
     formProps: {
-      viewMode: viewMode as any, // Typed internally, let compiler infer or force
+      viewMode: viewMode as unknown, // Typed internally, let compiler infer or force
       selectedCommande,
       fournisseurs: filteredFournisseurs,
       newCommandeFournisseurId,

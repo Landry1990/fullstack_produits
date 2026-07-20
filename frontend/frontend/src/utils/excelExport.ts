@@ -90,11 +90,11 @@ export function exportToExcel(
             fitToWidth: 1,
             fitToHeight: 0,      // 0 = illimité en hauteur
             scale: 100,
-        } as any;
+        } as unknown;
         ws['!printOptions'] = {
             gridLines: false,
             headings: false,
-        } as any;
+        } as unknown;
         // Marges en pouces : haut/bas 1.5cm, gauche/droite 1cm
         ws['!margins'] = {
             top: 0.59,
@@ -103,18 +103,18 @@ export function exportToExcel(
             right: 0.39,
             header: 0.2,
             footer: 0.2,
-        } as any;
+        } as unknown;
         // Répétition des lignes d'en-tête à l'impression (ligne de labels = dataStartRow + 1)
         wb.Workbook = wb.Workbook ?? { Views: [], Sheets: [] };
         const sheetIdx = wb.SheetNames.length; // sera 0 après append
         const repeatRow = dataStartRow; // ligne 0-based de l'en-tête des colonnes
-        ws['!print'] = { area: undefined } as any;
-        (ws as any)['!sheetPr'] = { pageSetUpPr: { fitToPage: true } };
+        ws['!print'] = { area: undefined } as unknown;
+        (ws as unknown)['!sheetPr'] = { pageSetUpPr: { fitToPage: true } };
         wb.Workbook.Sheets = wb.Workbook.Sheets ?? [];
-        wb.Workbook.Sheets[sheetIdx] = { sheetId: sheetIdx + 1 } as any;
+        wb.Workbook.Sheets[sheetIdx] = { sheetId: sheetIdx + 1 } as unknown;
         // rowBreaks : répéter la ligne d'en-tête (via Named range dans le workbook)
         if (!wb.Workbook.Names) wb.Workbook.Names = [];
-        (wb.Workbook.Names as any[]).push({
+        (wb.Workbook.Names as unknown[]).push({
             Name: `_xlnm.Print_Titles`,
             Ref: `'${sheetName}'!$${repeatRow + 1}:$${repeatRow + 1}`,
         });

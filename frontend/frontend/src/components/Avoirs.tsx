@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAvoirsData } from '../hooks/useAvoirsData';
+import { Card, CardHeader, CardTitle, CardDescription } from './shadcn/card';
 
 // Components
 import { AvoirsQuickStats } from './avoirs/AvoirsQuickStats';
@@ -68,23 +69,20 @@ export default function Avoirs() {
 
     // Default 'LIST' view
     return (
-        <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
-            
+        <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-6 font-sans">
             {/* Header Section */}
             <div className="flex flex-col gap-6">
-                
-                {/* Title & Filters */}
                 <div className="w-full space-y-4">
-                    <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
-                        <div className="p-6 border-b border-base-200">
-                            <h1 className="text-2xl font-bold text-base-content tracking-tight">
+                    <Card className="flex flex-col overflow-hidden">
+                        <CardHeader className="border-b border-slate-100">
+                            <CardTitle className="text-2xl text-slate-900 tracking-tight">
                                 {t('avoirs.title')}
-                            </h1>
-                            <p className="text-base-content/60 text-sm mt-1">
+                            </CardTitle>
+                            <CardDescription>
                                 {t('avoirs.subtitle')}
-                            </p>
-                        </div>
-                        
+                            </CardDescription>
+                        </CardHeader>
+
                         <AvoirsFilters
                             searchQuery={avoirsData.listSearchQuery}
                             setSearchQuery={avoirsData.setListSearchQuery}
@@ -95,15 +93,13 @@ export default function Avoirs() {
                             onRefresh={() => avoirsData.fetchAvoirs(avoirsData.listSearchQuery)}
                             onNew={avoirsData.handleCreateNew}
                         />
-                    </div>
-                    
-                    {/* Quick Stats Dashboard */}
+                    </Card>
+
                     <AvoirsQuickStats avoirs={avoirsData.avoirs} />
                 </div>
             </div>
 
-            {/* Main Content: Table */}
-            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
+            <Card className="overflow-hidden">
                 <AvoirsTable
                     avoirs={filteredAvoirs}
                     loading={avoirsData.loading}
@@ -122,9 +118,8 @@ export default function Avoirs() {
                     onClearSelection={avoirsData.onClearSelection}
                     bulkLoading={avoirsData.bulkLoading}
                 />
-            </div>
+            </Card>
 
-            {/* Validate Modal accessible from list view */}
             <SudoValidationModal
                 isOpen={sudoState.isOpen}
                 onClose={closeSudo}
@@ -133,7 +128,6 @@ export default function Avoirs() {
                 title={sudoState.title || t('stock:avoirs.modals.sudo_validate_title')}
                 message={sudoState.message || t('stock:avoirs.modals.sudo_validate_message')}
             />
-
         </div>
     );
 }

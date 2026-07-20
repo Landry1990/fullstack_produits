@@ -8,23 +8,23 @@ export interface UseFacturationImportOptions {
         bulkAddProduits: (items: { product: ProduitModel; quantity: number; discountPercent: string }[]) => void
     }
     apiBaseUrl: string
-    t: (key: string, options?: any) => string
+    t: (key: string, options?: unknown) => string
 }
 
 export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
     // Pack Addition
-    const addPackToFacture = useCallback(async (pack: any) => {
+    const addPackToFacture = useCallback(async (pack: unknown) => {
         if (!pack.pack_items || pack.pack_items.length === 0) {
             toast.error(t('facturation:messages.pack_empty'))
             return
         }
         const toastId = toast.loading(t('facturation:messages.adding_pack'))
         try {
-            const itemPromises = pack.pack_items.map(async (item: any) => {
+            const itemPromises = pack.pack_items.map(async (item: unknown) => {
                 try {
                     const { data: product } = await api.get<ProduitModel>(`produits/${item.product}/`)
                     return { product, quantity: item.quantity }
-                } catch (e) {
+                } catch {
                     return null
                 }
             })
@@ -48,7 +48,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
             })
             cart.bulkAddProduits(itemsToBulkAdd)
             toast.success(t('facturation.messages.pack_added', { name: pack.name }), { id: toastId })
-        } catch (e) {
+        } catch {
             toast.error(t('facturation.messages.pack_error'), { id: toastId })
         }
     }, [cart.bulkAddProduits, t])
@@ -87,22 +87,22 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
             try {
                 const res = await api.post('produits/bulk_search/', { identifiers: params.identifiers });
                 fetchedProducts = res.data;
-            } catch (e) {
+            } catch {
                 const productPromises = params.identifiers.map(async (ident) => {
                     try {
                         const res = await api.get('produits/', { params: { search: ident } });
                         const results = res.data.results || res.data;
                         if (results && results.length > 0) {
-                            const match = results.find((p: any) => p.cip1 === ident || String(p.id) === ident) || results[0];
+                            const match = results.find((p: unknown) => p.cip1 === ident || String(p.id) === ident) || results[0];
                             return { identifier: ident, product: match };
                         }
-                    } catch (err) { return null; }
+                    } catch { return null; }
                     return null;
                 });
                 const results = await Promise.all(productPromises);
                 const items = results.filter(i => i !== null) as { identifier: string; product: ProduitModel }[];
                 fetchedProducts = items.map(i => {
-                    (i.product as any)._matched_identifier = i.identifier;
+                    (i.product as unknown)._matched_identifier = i.identifier;
                     return i.product;
                 });
             }
@@ -111,7 +111,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 return;
             }
             const itemsToBulkAdd = fetchedProducts.map(product => {
-                const identifier = (product as any)._matched_identifier || product.cip1 || String(product.id);
+                const identifier = (product as unknown)._matched_identifier || product.cip1 || String(product.id);
                 const qty = params.quantities[identifier] || 1;
                 return {
                     product,
@@ -121,7 +121,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
             });
             cart.bulkAddProduits(itemsToBulkAdd);
             toast.success(`${itemsToBulkAdd.length} produit(s) importé(s).`, { id: toastId });
-        } catch (err) {
+        } catch {
             toast.error("Erreur lecture CSV.", { id: toastId });
         }
     }, [cart.bulkAddProduits])

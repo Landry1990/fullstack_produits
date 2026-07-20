@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     
     // Support either id or user_id from backend
-    const userId = userData.id || (userData as any).user_id;
+    const userId = userData.id || (userData as unknown).user_id;
     if (userId) {
       safeStorage.setItem('userId', String(userId));
       userData.id = userId;

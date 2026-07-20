@@ -4,8 +4,8 @@ import { TicketTemplate } from '../printing/TicketTemplate'
 interface TicketPreviewModalProps {
   isOpen: boolean
   onClose: () => void
-  ticket: any
-  settings: any
+  ticket: unknown
+  settings: unknown
   onSendWhatsApp?: () => void
 }
 
@@ -32,7 +32,6 @@ export default function TicketPreviewModal({
       .join('\n');
 
     // Get the current theme from the parent document
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     
     const win = window.open('', '', 'height=800,width=600');
     if (win) {

@@ -16,7 +16,7 @@ import { Input } from './shadcn/input';
 import { Select } from './ui/Select';
 import { Checkbox } from './shadcn/checkbox';
 
-const EMPTY_ARRAY: any[] = [];
+const EMPTY_ARRAY: unknown[] = [];
 
 interface ProduitFormModalProps {
   open: boolean;
@@ -46,7 +46,7 @@ export default function ProduitFormModal({
   groupes = EMPTY_ARRAY,
 }: ProduitFormModalProps) {
   const { t } = useTranslation(['products', 'common']);
-  const productId = (initialData as any)?.id;
+  const productId = (initialData as unknown)?.id;
   const isEditMode = Boolean(productId);
   const titleText = title || (isEditMode ? t('products:edit_title') : t('products:create_title'));
   const { tvaList, loading: loadingTVA } = useTVA();
@@ -119,8 +119,8 @@ export default function ProduitFormModal({
     // Coefficient multiplicateur = PV HT / PR HT
     coefMultiplicateur = prixVenteHT / costPrice;
 
-    // % Marge = (Marge HT / PR HT) × 100
-    pourcMarge = (margeHT / costPrice) * 100;
+    // % Marge = (Marge HT / PV HT) × 100  — harmonisé avec MarginService backend
+    pourcMarge = prixVenteHT > 0 ? (margeHT / prixVenteHT) * 100 : 0;
   }
 
   function formatBackendErrors(data: unknown): string {
@@ -202,7 +202,7 @@ export default function ProduitFormModal({
       }
       onClose();
     } catch (err: unknown) {
-      const anyErr = err as any;
+      const anyErr = err as unknown;
       if (anyErr.response) {
         const detail = anyErr.response?.data ?? anyErr.message;
         const errorText = typeof detail === 'string' ? detail : formatBackendErrors(detail);

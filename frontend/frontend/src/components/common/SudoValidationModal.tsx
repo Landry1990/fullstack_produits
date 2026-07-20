@@ -59,7 +59,7 @@ export default function SudoValidationModal({
                 return;
             }
             verifiedUser = checkRes.data.user;
-        } catch (error: any) {
+        } catch (error: unknown) {
             setPassword('');
             const msg = error?.response?.data?.detail || t('common:sudo.invalid_password');
             setPasswordError(msg);
@@ -69,7 +69,7 @@ export default function SudoValidationModal({
         if (!verifiedUser) return;
         try {
             await onValidate(verifiedUser.id, password);
-        } catch (error: any) {
+        } catch (error: unknown) {
             setPassword('');
             const msg = error?.response?.data?.detail || error?.response?.data?.error || error?.message || t('common:sudo.invalid_password');
             setPasswordError(msg);

@@ -31,7 +31,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
     const fetchSettings = async () => {
         setLoading(true)
         try {
-            let res = await api.get('loyalty-settings/')
+            const res = await api.get('loyalty-settings/')
             
             // Handle paginated, array, or single object response
             let data = res.data

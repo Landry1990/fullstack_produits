@@ -10,7 +10,7 @@ interface OrganisationProps {
 
 export default function Organisation({ defaultTab = 'rayons' }: OrganisationProps) {
   const { t } = useTranslation('stock');
-  const [activeTab, setActiveTab] = useState<'rayons' | 'formes' | 'groupes' | 'motifs'>(defaultTab as any);
+  const [activeTab, setActiveTab] = useState<'rayons' | 'formes' | 'groupes' | 'motifs'>(defaultTab as unknown);
 
   const tabs = [
     { 
@@ -85,7 +85,7 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
               {tabs.map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as unknown)}
                   className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold text-sm transition-all ${
                     activeTab === tab.id
                     ? 'bg-white text-slate-800 shadow-sm'
@@ -101,17 +101,17 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
       </div>
 
       <div className="max-w-full mx-auto">
-         {(currentTab.config as any).isConfigOption ? (
+         {(currentTab.config as unknown).isConfigOption ? (
             <ConfigOptionManager 
                key={activeTab}
-               type={(currentTab.config as any).type}
-               title={(currentTab.config as any).title}
-               icon={(currentTab.config as any).icon}
+               type={(currentTab.config as unknown).type}
+               title={(currentTab.config as unknown).title}
+               icon={(currentTab.config as unknown).icon}
             />
          ) : (
             <CategoryManager 
               key={activeTab} // Force remount on tab change to reset states
-              {...(currentTab.config as any)}
+              {...(currentTab.config as unknown)}
             />
          )}
       </div>

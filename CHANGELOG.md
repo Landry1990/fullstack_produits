@@ -12,6 +12,10 @@
   - `backend/api/stats_ug_view.py` : correction du filtre "UG reçues ce mois" pour utiliser `commande.date_cloture` au lieu de `CommandeProduit.created_at`.
   - `backend/api/stats_ug_view.py` : ajout des champs `valeur_acquise`, `valeur_vendue`, `valeur_restante` dans `par_fournisseur` pour que le tableau UG du dashboard s'affiche correctement.
   - `backend/api/migrations/0222_fix_quantity_free_remaining.py` : migration de données recalculant `quantity_free_remaining` pour tous les lots existants (ventes moins retours, capé par le stock total restant).
+- **Omnisearch “Nouvelle vente” n'ouvre plus le modal point de vente**
+  - Problème : sélectionner “Nouvelle vente” dans l'Omnisearch naviguait vers `/app/facturation` sans ouvrir le modal “Ouvrir un point de vente”.
+  - `frontend/frontend/src/hooks/useOmnisearch.ts` : l'action `NEW_SALE` transmet désormais `state: { openPosteModal: true }` au lieu d'un rechargement/page ou d'un state `action` non exploité.
+  - `frontend/frontend/src/components/Facturation.tsx` : ouvre automatiquement `OpenPointDeVenteModal` dès réception de `openPosteModal` dans le state de navigation.
 
 ### ✨ Nouvelles fonctionnalités
 
@@ -36,6 +40,15 @@
   - `RapportMensuel.tsx`
   - `useCreanceActions.ts`
   - `useSaleCompletion.ts`
+
+### 🖨️ Économie d'encre — impressions navigateur, PDF et journal de caisse
+
+- **Optimisation de l'encre pour tous les documents imprimés**
+  - `frontend/frontend/src/components/printing/PrintPage.tsx` : ajout d'une feuille de styles `@media print` globale qui allège les impressions navigateur (moins de gras, couleurs noires, fonds blancs, bordures fines, ombres supprimées).
+  - `frontend/frontend/src/utils/print/reportPdf.ts` et variants `*Draft.ts` : thèmes de table `plain`, textes noirs, lignes fines, `fontStyle` normal.
+  - `frontend/frontend/src/utils/print/relevePdf.ts`, `ticketReglementPdf.ts`, `reapproSessionPdf.ts`, `promisPdf.ts` et leurs drafts : même allègement jsPDF.
+  - `frontend/frontend/src/hooks/useJournalCaisse.ts` : impression du journal de caisse allégée (bordures fines, texte moins gras, fond blanc).
+  - `frontend/frontend/src/hooks/useCommandeActions.ts` : bon de réception d'entrée en stock allégé.
 
 ---
 

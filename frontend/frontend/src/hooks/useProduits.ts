@@ -125,19 +125,19 @@ export const useUpdateProduit = () => {
 
             const previousProduit = queryClient.getQueryData(['produit', newProduit.id]);
 
-            queryClient.setQueryData(['produit', newProduit.id], (old: any) => ({ ...old, ...newProduit.data }));
+            queryClient.setQueryData(['produit', newProduit.id], (old: unknown) => ({ ...old, ...newProduit.data }));
             
-            queryClient.setQueriesData({ queryKey: ['produits'] }, (old: any) => {
+            queryClient.setQueriesData({ queryKey: ['produits'] }, (old: unknown) => {
                 if (!old) return old;
                 return {
                     ...old,
-                    results: old.results?.map((p: any) => p.id === newProduit.id ? { ...p, ...newProduit.data } : p)
+                    results: old.results?.map((p: unknown) => p.id === newProduit.id ? { ...p, ...newProduit.data } : p)
                 };
             });
 
             return { previousProduit };
         },
-        onError: (err, newProduit, context: any) => {
+        onError: (err, newProduit, context: unknown) => {
             queryClient.setQueryData(['produit', newProduit.id], context.previousProduit);
         },
         onSettled: (updatedProduit) => {
@@ -164,11 +164,11 @@ export const useDeleteProduit = () => {
         mutationFn: (id: number) => produitService.delete(id).then(() => id),
         onMutate: async (id) => {
             await queryClient.cancelQueries({ queryKey: ['produits'] });
-            queryClient.setQueriesData({ queryKey: ['produits'] }, (old: any) => {
+            queryClient.setQueriesData({ queryKey: ['produits'] }, (old: unknown) => {
                 if (!old) return old;
                 return {
                     ...old,
-                    results: old.results?.filter((p: any) => p.id !== id),
+                    results: old.results?.filter((p: unknown) => p.id !== id),
                     count: Math.max(0, (old.count || 0) - 1)
                 };
             });
@@ -191,19 +191,19 @@ export const useAdjustStock = () => {
             const previousProduit = queryClient.getQueryData(['produit', vars.id]);
 
             if (vars.quantity !== undefined) {
-                queryClient.setQueryData(['produit', vars.id], (old: any) => ({ ...old, stock: (old?.stock || 0) + vars.quantity! }));
-                queryClient.setQueriesData({ queryKey: ['produits'] }, (old: any) => {
+                queryClient.setQueryData(['produit', vars.id], (old: unknown) => ({ ...old, stock: (old?.stock || 0) + vars.quantity! }));
+                queryClient.setQueriesData({ queryKey: ['produits'] }, (old: unknown) => {
                     if (!old) return old;
                     return {
                         ...old,
-                        results: old.results?.map((p: any) => p.id === vars.id ? { ...p, stock: (p.stock || 0) + vars.quantity! } : p)
+                        results: old.results?.map((p: unknown) => p.id === vars.id ? { ...p, stock: (p.stock || 0) + vars.quantity! } : p)
                     };
                 });
             }
 
             return { previousProduit };
         },
-        onError: (err, vars, context: any) => {
+        onError: (err, vars, context: unknown) => {
             queryClient.setQueryData(['produit', vars.id], context.previousProduit);
         },
         onSettled: (_, __, vars) => {

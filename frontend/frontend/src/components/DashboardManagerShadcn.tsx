@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   PlusCircle, Settings, Calendar, BarChart3, TrendingUp,
   Trophy, Zap, AlertCircle, Target, RefreshCw, Download,
-  ArrowUpRight, Activity, FileSpreadsheet,
+  ArrowUpRight, _Activity, FileSpreadsheet,
   TrendingDown, PackageX, CreditCard, Archive, Clock, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +18,7 @@ import { Progress } from './shadcn/progress';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle, DialogTrigger,
+  DialogHeader, DialogTitle, _DialogTrigger,
 } from './shadcn/dialog';
 
 import { formatCurrency } from '../utils/formatters';
@@ -192,7 +192,7 @@ const iconMap: Record<string, React.ReactNode> = {
   trophy: <Trophy className="size-4" />,
 };
 
-function AlertsShadcn({ alerts }: { alerts?: any[] }) {
+function AlertsShadcn({ alerts }: { alerts?: unknown[] }) {
   const { t } = useTranslation(['dashboard', 'common']);
   const navigate = useNavigate();
 
@@ -228,7 +228,7 @@ function AlertsShadcn({ alerts }: { alerts?: any[] }) {
       </CardHeader>
       <CardContent className="flex-1 space-y-2.5">
         {sorted.length > 0 ? (
-          sorted.map((alert, idx) => {
+          sorted.map((alert, _idx) => {
             const style = alertStyles[alert.type] || alertStyles.info;
             const icon = iconMap[alert.icon] || <AlertCircle className="size-4" />;
             return (
@@ -270,7 +270,7 @@ function AlertsShadcn({ alerts }: { alerts?: any[] }) {
 }
 
 /* ─── Objectives ─── */
-function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: any; onEdit: any; onRefresh: () => void }) {
+function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: unknown; onEdit: unknown; onRefresh: () => void }) {
   const { t } = useTranslation(['dashboard', 'common']);
   const fmt = (n: number) => formatCurrency(n, getLocale(), t('common:currency_symbol', 'F'));
 

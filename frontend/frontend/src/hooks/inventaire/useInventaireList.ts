@@ -60,7 +60,7 @@ export const useInventaireList = () => {
                         const urlObj = new URL(pageUrl);
                         const pageParam = urlObj.searchParams.get('page');
                         setCurrentPage(pageParam ? parseInt(pageParam) : 1);
-                    } catch (e) {
+                    } catch {
                         setCurrentPage(1);
                     }
                 } else if (!pageUrl) {

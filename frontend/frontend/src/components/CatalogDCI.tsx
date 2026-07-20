@@ -228,7 +228,7 @@ export default function CatalogDCI() {
                       <div className="space-y-3">
                         {[1, 2, 3].map(i => <div key={i} className="h-24 w-full bg-base-200 animate-pulse rounded-2xl" />)}
                       </div>
-                    ) : refMedsData?.results.map((ref: any) => (
+                    ) : refMedsData?.results.map((ref: unknown) => (
                       <div key={ref.cis} className="p-4 rounded-2xl border border-base-200 hover:border-secondary/30 transition-all bg-base-200/5 group">
                         <div className="flex justify-between items-start mb-1">
                           <h4 className="font-bold text-[11px] uppercase group-hover:text-secondary transition-colors leading-tight">{ref.nom}</h4>

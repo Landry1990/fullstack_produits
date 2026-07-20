@@ -39,8 +39,8 @@ export interface UseCreancesDataReturn {
     refresh: () => void;
     selectedIds: number[];
     setSelectedIds: (ids: number[] | ((prev: number[]) => number[])) => void;
-    updateLocalCreance: (id: number, data: any) => void;
-    updateLocalSynthese: (clientId: number, data: any) => void;
+    updateLocalCreance: (id: number, data: unknown) => void;
+    updateLocalSynthese: (clientId: number, data: unknown) => void;
 }
 
 export const useCreancesData = (): UseCreancesDataReturn => {
@@ -48,7 +48,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
     
     // States
     const [creances, setCreances] = useState<Creance[]>([]);
-    const [synthese, setSynthese] = useState<any[]>([]);
+    const [synthese, setSynthese] = useState<unknown[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -279,10 +279,10 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         refresh: fetchCreances,
         selectedIds,
         setSelectedIds,
-        updateLocalCreance: (id: number, data: any) => {
+        updateLocalCreance: (id: number, data: unknown) => {
             setCreances(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
         },
-        updateLocalSynthese: (clientId: number, data: any) => {
+        updateLocalSynthese: (clientId: number, data: unknown) => {
             setSynthese(prev => prev.map(s => s.id === clientId ? { ...s, ...data } : s));
         }
     };

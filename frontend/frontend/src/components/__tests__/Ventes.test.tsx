@@ -22,7 +22,7 @@ vi.mock('axios', () => ({
 }));
 
 // Helper to access mocks
-const mockedAxios = axios as any;
+const mockedAxios = axios as unknown;
 
 // Mock hook
 vi.mock('../hooks/usePharmacySettings', () => ({

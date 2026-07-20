@@ -1,14 +1,16 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import PremiumModal from '../common/PremiumModal'
 import { TicketTemplate } from '../printing/TicketTemplate'
-import type { TicketCaisse } from '../../types'
+import { ClientNameModal } from '../sales/modals/ClientNameModal'
+import api from '../../services/api'
+import type { TicketCaisse, Facture } from '../../types'
 
 interface CaisseTicketPreviewModalProps {
   isOpen: boolean
   onClose: () => void
   ticket: TicketCaisse | null
-  settings: any
+  settings: unknown
   onSendWhatsApp: () => void
   loading?: boolean
 }
@@ -29,17 +31,55 @@ export function CaisseTicketPreviewModal({
   const printButtonRef = useRef<HTMLButtonElement>(null)
   const invoiceButtonRef = useRef<HTMLButtonElement>(null)
 
+  const [showClientNameModal, setShowClientNameModal] = useState(false)
+  const [pendingFacture, setPendingFacture] = useState<Facture | null>(null)
+
+  const isGenericClientName = (name: string): boolean => {
+    const lower = (name || '').toLowerCase().trim()
+    return !lower || lower.includes('divers') || lower.includes('passage')
+  }
+
   const handlePrintInvoice = useCallback(() => {
     if (!ticket) return
-    const factureId = typeof ticket.facture === 'object' ? ticket.facture.id : ticket.facture
+    const factureObj = typeof ticket.facture === 'object' ? ticket.facture : null
+    const factureId = factureObj?.id ?? ticket.facture
     if (!factureId) return
-    let url = `/app/print-invoice/${factureId}`
-    const clientName = ticket.client_name
-    if (clientName && !clientName.includes('passage') && !clientName.includes('divers')) {
-      url += `?client_name=${encodeURIComponent(clientName)}`
+
+    const hasOverride = !!(factureObj?.client_name_override)
+    const clientName = hasOverride ? factureObj!.client_name_override : ticket.client_name
+
+    if (!hasOverride && isGenericClientName(ticket.client_name || '')) {
+      setPendingFacture({
+        id: factureId,
+        numero_facture: factureObj?.numero_facture,
+        client_name: ticket.client_name,
+        client_name_override: undefined,
+      } as Facture)
+      setShowClientNameModal(true)
+      return
     }
+
+    let url = `/app/print-invoice/${factureId}`
+    if (clientName) url += `?client_name=${encodeURIComponent(clientName)}`
     window.open(url, '_blank')
   }, [ticket])
+
+  const handleConfirmPrintClientName = useCallback(async (clientNameInput: string) => {
+    if (!pendingFacture) return
+    try {
+      await api.patch(`factures/${pendingFacture.id}/`,
+        { client_name_override: clientNameInput }
+      )
+    } catch {
+      // fallback: print anyway
+    } finally {
+      let url = `/app/print-invoice/${pendingFacture.id}`
+      if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`
+      window.open(url, '_blank')
+      setShowClientNameModal(false)
+      setPendingFacture(null)
+    }
+  }, [pendingFacture])
 
   // Focus automatique sur le bouton d'impression à l'ouverture
   useEffect(() => {
@@ -179,6 +219,7 @@ export function CaisseTicketPreviewModal({
   }, [settings])
 
   return (
+    <>
     <PremiumModal
       isOpen={isOpen && !!ticket}
       onClose={onClose}
@@ -232,5 +273,16 @@ export function CaisseTicketPreviewModal({
         )}
       </div>
     </PremiumModal>
+
+    <ClientNameModal
+      isOpen={showClientNameModal}
+      onClose={() => {
+        setShowClientNameModal(false)
+        setPendingFacture(null)
+      }}
+      onConfirm={handleConfirmPrintClientName}
+      facture={pendingFacture}
+    />
+    </>
   )
 }

@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '../ui/Table'
-import { Tag, X, Package, Trash2, ShoppingCart } from 'lucide-react'
+import { Tag, X, Trash2, ShoppingCart } from 'lucide-react'
 
 function getFEFOPreview(lots: StockLot[] | undefined, quantity: number): { lot: string; qty: number; expiration?: string }[] {
   if (!lots || lots.length === 0 || quantity <= 0) return []
@@ -78,7 +78,7 @@ interface CartRowProps {
   onReturnFocus: () => void
   canModifyPrice: boolean
   maxDiscount: number
-  t: (key: string, options?: any) => string
+  t: (key: string, options?: unknown) => string
   refreshTrigger?: number
   isSidebarStyle?: boolean
 }

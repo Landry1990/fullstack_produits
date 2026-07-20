@@ -73,7 +73,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
             setNotes('')
             if (onSuccess) onSuccess()
             setActiveTab('history')
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err)
             toast.error(err.response?.data?.error || t('common:messages.error_saving'))
         } finally {

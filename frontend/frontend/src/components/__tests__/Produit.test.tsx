@@ -15,7 +15,7 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('../../context/AuthContext', () => ({
     useAuth: () => ({ user: { id: 1, role: 'PHARMACIEN', is_superuser: true }, isAuthenticated: true }),
-    AuthProvider: ({ children }: any) => <>{children}</>
+    AuthProvider: ({ children }: unknown) => <>{children}</>
 }));
 
 // Mock costly sub-components

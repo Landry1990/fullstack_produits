@@ -40,7 +40,7 @@
         "delete_drafts": "Empty Drafts"
     },
     "filters": {
-        "search_placeholder": "Search a sale...",
+        "search_placeholder": "Client, invoice, product, or amount...",
         "status_all": "All statuses",
         "start_date": "Start",
         "end_date": "End",

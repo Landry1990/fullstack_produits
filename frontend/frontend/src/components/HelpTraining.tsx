@@ -21,7 +21,7 @@ interface Category {
   videos: Video[];
 }
 
-const getCategories = (t: any): Category[] => [
+const getCategories = (t: unknown): Category[] => [
   {
     id: 'ventes',
     label: t('help:training.categories.ventes'),
@@ -92,7 +92,7 @@ const getCategories = (t: any): Category[] => [
   },
 ];
 
-const getShortcuts = (t: any) => [
+const getShortcuts = (t: unknown) => [
   { key: 'F2', label: t('help:training.shortcuts.f2') },
   { key: '/', label: t('help:training.shortcuts.slash') },
   { key: 'F4', label: t('help:training.shortcuts.f4') },
@@ -183,7 +183,7 @@ const HelpTraining = () => {
                   <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('help:training.shortcuts.title')}</span>
                 </div>
                 <div className="space-y-1.5">
-                  {SHORTCUTS.map((s: any) => (
+                  {SHORTCUTS.map((s: unknown) => (
                     <div key={s.key} className="flex items-center justify-between px-2 py-1">
                       <span className="text-xs text-base-content/50">{s.label}</span>
                       <kbd className={`kbd kbd-xs text-[10px] ${s.highlight ? 'bg-primary text-white border-primary' : ''}`}>{s.key}</kbd>

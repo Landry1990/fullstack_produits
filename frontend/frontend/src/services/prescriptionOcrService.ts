@@ -12,7 +12,7 @@ export interface ScannedPrescription {
 }
 
 class PrescriptionOcrService {
-  private worker: any | null = null;
+  private worker: unknown | null = null;
   private isInitializing = false;
 
   async initialize(onProgress?: (progress: number) => void) {
@@ -86,7 +86,7 @@ class PrescriptionOcrService {
             const [_, day, month, year] = dateMatch;
             const fullYear = year.length === 2 ? `20${year}` : year;
             result.date_prescription = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        } catch(e) {}
+        } catch {}
       }
 
       // Détection de noms propres potentiels (Dr. X, Patient Y)

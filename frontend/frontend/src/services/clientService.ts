@@ -8,8 +8,8 @@ export interface ClientFilters {
 }
 
 const clientService = {
-    getAll: async (filters: ClientFilters = {}, skipCache: boolean = false): Promise<any> => {
-        const params: any = { ...filters };
+    getAll: async (filters: ClientFilters = {}, skipCache: boolean = false): Promise<unknown> => {
+        const params: unknown = { ...filters };
         if (skipCache) {
             params._t = Date.now(); // Timestamp pour éviter le cache
         }
@@ -56,7 +56,7 @@ const clientService = {
         return response.data;
     },
 
-    getPurchaseHistory: async (id: number): Promise<any> => {
+    getPurchaseHistory: async (id: number): Promise<unknown> => {
         const response = await api.get(`clients/${id}/purchase_history/`);
         return response.data;
     },
@@ -103,17 +103,17 @@ const clientService = {
         return response.data;
     },
     
-    getDepotHistory: async (id: number): Promise<any> => {
+    getDepotHistory: async (id: number): Promise<unknown> => {
         const response = await api.get(`clients/${id}/depot_history/`);
         return response.data;
     },
 
-    addDepot: async (id: number, data: { type: string, montant: number, mode_paiement?: string, notes?: string }): Promise<any> => {
+    addDepot: async (id: number, data: { type: string, montant: number, mode_paiement?: string, notes?: string }): Promise<unknown> => {
         const response = await api.post(`clients/${id}/add_depot/`, data);
         return response.data;
     },
 
-    updateAlerte: async (id: number, data: { message_alerte: string; blocking_alerte: boolean }): Promise<any> => {
+    updateAlerte: async (id: number, data: { message_alerte: string; blocking_alerte: boolean }): Promise<unknown> => {
         const response = await api.patch(`clients/${id}/update_alerte/`, data);
         return response.data;
     },

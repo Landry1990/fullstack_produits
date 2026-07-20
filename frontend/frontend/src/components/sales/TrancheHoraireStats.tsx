@@ -7,7 +7,7 @@ import { getApiErrorDetail } from '../../utils/errorHandling';
 
 
 interface TrancheHoraireStatsProps {
-    onVerify?: (data: any) => void;
+    onVerify?: (data: unknown) => void;
     startDate: string;
     endDate: string;
 }

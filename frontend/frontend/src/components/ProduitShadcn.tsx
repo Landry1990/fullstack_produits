@@ -656,7 +656,7 @@ export default function ProduitShadcn() {
 /*  Sub-components                                                    */
 /* ------------------------------------------------------------------ */
 
-function PriceRow({ label, value }: { label: string; value: string }) {
+function _PriceRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
       <span className="text-sm text-slate-500">{label}</span>

@@ -11,9 +11,9 @@ const EMPTY_ARRAY: never[] = [];
 // Composant séparé pour éviter les re-renders
 interface StatsListProps {
     title: string;
-    data: any[];
+    data: unknown[];
     type: 'negative' | 'positive';
-    t: any;
+    t: unknown;
 }
 
 const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
@@ -83,7 +83,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
         try {
             await api.post('telegram/rapport-inventaire/', inventaireId ? { inventaire_id: inventaireId } : {});
             toast.success(t('common:telegram.send_success'), { icon: '📨' });
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(err?.response?.data?.message || t('common:telegram.send_error'));
         } finally {
             setSendingTelegram(false);

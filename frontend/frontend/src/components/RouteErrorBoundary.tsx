@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useRouteError, useNavigate, isRouteErrorResponse } from 'react-router-dom';
 
 export default function RouteErrorBoundary() {
-  const error = useRouteError() as any;
+  const error = useRouteError() as unknown;
   const navigate = useNavigate();
 
   const errorMessage = error?.message || error?.error?.message || error?.data || '';

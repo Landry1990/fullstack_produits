@@ -207,7 +207,7 @@ export function generateReapproSessionPdf(
   });
 
   // ── SUMMARY FOOTER ──
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  const finalY = (doc as unknown).lastAutoTable.finalY + 10;
   if (finalY < pageHeight - 35) {
     const summaryW = 75;
     const summaryX = pageWidth - margin - summaryW;

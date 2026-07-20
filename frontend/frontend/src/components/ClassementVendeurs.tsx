@@ -109,7 +109,7 @@ export default function ClassementVendeurs() {
 
   // Format data for Recharts (merge series by month)
   const chartData = evolutionData.length > 0 ? evolutionData[0].data.map((point, index) => {
-    const mergedPoint: any = { label: point.label };
+    const mergedPoint: unknown = { label: point.label };
     evolutionData.forEach(series => {
         mergedPoint[series.vendeur] = series.data[index]?.chiffre_affaires || 0;
     });

@@ -86,7 +86,7 @@ export async function generateMonthlyReportPdfDraft(
   data: RapportData,
   settings: PharmacySettings,
   periodeLabel: string,
-  t: (key: string, options?: any) => string
+  t: (key: string, options?: unknown) => string
 ) {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -160,7 +160,7 @@ export async function generateMonthlyReportPdfDraft(
   let currentY = kpiY + 24;
 
   // TVA
-  const tvaTableBody: any[][] = data.ca_par_tva.map(tva => [
+  const tvaTableBody: unknown[][] = data.ca_par_tva.map(tva => [
     `${tva.taux}%`,
     fmt(tva.ca_ht),
     fmt(tva.montant_tva),
@@ -185,10 +185,10 @@ export async function generateMonthlyReportPdfDraft(
     margin: { left: margin, right: margin },
     styles: { fontSize: 8 }
   });
-  currentY = (doc as any).lastAutoTable.finalY + 8;
+  currentY = (doc as unknown).lastAutoTable.finalY + 8;
 
   // Encaissements
-  const encTableBody: any[][] = data.encaissements.map(e => [e.mode_label, fmt(e.montant)]);
+  const encTableBody: unknown[][] = data.encaissements.map(e => [e.mode_label, fmt(e.montant)]);
   encTableBody.push([
     { content: 'TOTAL ENCAISSEMENTS', styles: { fontStyle: 'normal' } },
     { content: fmt(data.encaissements.reduce((sum, e) => sum + e.montant, 0) + data.depots_total), styles: { fontStyle: 'normal' } }
@@ -203,13 +203,13 @@ export async function generateMonthlyReportPdfDraft(
     margin: { left: margin, right: margin, bottom: 20 },
     styles: { fontSize: 8 }
   });
-  currentY = (doc as any).lastAutoTable.finalY + 8;
+  currentY = (doc as unknown).lastAutoTable.finalY + 8;
 
   // Fournisseurs
   if (data.achats_par_fournisseur.length > 0) {
     if (currentY > 250) { doc.addPage(); currentY = 20; }
 
-    const supplierBody: any[][] = data.achats_par_fournisseur.map(f => [f.fournisseur_nom, f.nb_commandes, fmt(f.montant_total)]);
+    const supplierBody: unknown[][] = data.achats_par_fournisseur.map(f => [f.fournisseur_nom, f.nb_commandes, fmt(f.montant_total)]);
     supplierBody.push([
         { content: 'TOTAL ACHATS', styles: { fontStyle: 'normal' } },
         { content: data.achats_par_fournisseur.reduce((sum, f) => sum + f.nb_commandes, 0).toString(), styles: { fontStyle: 'normal' } },
@@ -225,14 +225,14 @@ export async function generateMonthlyReportPdfDraft(
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 8 }
     });
-    currentY = (doc as any).lastAutoTable.finalY + 8;
+    currentY = (doc as unknown).lastAutoTable.finalY + 8;
   }
 
   // Clients Pro
   if (data.clients_professionnels.top_clients.length > 0) {
     if (currentY > 250) { doc.addPage(); currentY = 20; }
 
-    const proBody: any[][] = data.clients_professionnels.top_clients.map(c => [c.client_nom, fmt(c.ca_total), fmt(c.montant_paye), fmt(c.reste_a_payer)]);
+    const proBody: unknown[][] = data.clients_professionnels.top_clients.map(c => [c.client_nom, fmt(c.ca_total), fmt(c.montant_paye), fmt(c.reste_a_payer)]);
     proBody.push([
         { content: 'TOTAL CLIENTS PRO', styles: { fontStyle: 'normal' } },
         { content: fmt(data.clients_professionnels.top_clients.reduce((sum, c) => sum + c.ca_total, 0)), styles: { fontStyle: 'normal' } },
@@ -249,14 +249,14 @@ export async function generateMonthlyReportPdfDraft(
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 8 }
     });
-    currentY = (doc as any).lastAutoTable.finalY + 8;
+    currentY = (doc as unknown).lastAutoTable.finalY + 8;
   }
 
   // Unites Gratuites
   if (data.unites_gratuites.top_produits.length > 0) {
     if (currentY > 250) { doc.addPage(); currentY = 20; }
 
-    const freeBody: any[][] = data.unites_gratuites.top_produits.map(p => [p.produit_nom, p.quantite_gratuite, fmt(p.valeur_totale)]);
+    const freeBody: unknown[][] = data.unites_gratuites.top_produits.map(p => [p.produit_nom, p.quantite_gratuite, fmt(p.valeur_totale)]);
     freeBody.push([
         { content: 'TOTAL UNITES GRATUITES', styles: { fontStyle: 'normal' } },
         { content: data.unites_gratuites.top_produits.reduce((sum, p) => sum + p.quantite_gratuite, 0).toString(), styles: { fontStyle: 'normal' } },
@@ -272,7 +272,7 @@ export async function generateMonthlyReportPdfDraft(
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 8 }
     });
-    currentY = (doc as any).lastAutoTable.finalY + 8;
+    currentY = (doc as unknown).lastAutoTable.finalY + 8;
   }
 
   // Mouvements Caisse
@@ -295,7 +295,7 @@ export async function generateMonthlyReportPdfDraft(
   }
 
   // Footers
-  const pageCount = (doc as any).internal.getNumberOfPages();
+  const pageCount = (doc as unknown).internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(7);

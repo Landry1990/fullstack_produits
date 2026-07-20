@@ -17,14 +17,14 @@ interface CouponsState {
 }
 
 export const useCaisseCoupons = ({
-  coupons,
+  coupons: _coupons,
   setCoupons,
   couponsParFacture,
   setCouponsParFacture,
   setIsGenererCouponModalOpen,
   setIsDetailsCouponModalOpen,
   setCouponTrouve,
-  selectedFacture,
+  selectedFacture: _selectedFacture,
   onSuccess
 }: CouponsState) => {
   const [loading, setLoading] = useState(false)
@@ -43,7 +43,7 @@ export const useCaisseCoupons = ({
     montant: string,
     notes: string,
     factureId: number | null,
-    t: (key: string, options?: any) => string
+    t: (key: string, options?: unknown) => string
   ) => {
     if (!montant || Number(montant) <= 0) {
       toast.error(t('messages.invalid_amount'))
@@ -76,7 +76,7 @@ export const useCaisseCoupons = ({
 
   const handleRechercherCoupon = useCallback(async (
     numero: string,
-    t: (key: string, options?: any) => string
+    t: (key: string, options?: unknown) => string
   ) => {
     if (!numero) return
 
@@ -102,7 +102,7 @@ export const useCaisseCoupons = ({
   const handleAppliquerCouponAFacture = useCallback((
     coupon: CouponMonnaie,
     facture: Facture,
-    t: (key: string, options?: any) => string
+    t: (key: string, options?: unknown) => string
   ) => {
     if (coupon.status !== 'ACTIF') {
       toast.error(t('messages.coupon_not_active'))

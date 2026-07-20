@@ -39,7 +39,7 @@ export function formatDateFr(dateString: string): string {
 /**
  * Génère une ligne de détail pour impression HTML
  */
-function printRow(label: string, value: string): string {
+function _printRow(label: string, value: string): string {
   return `
     <div class="print-row">
       <span>${label}</span>
@@ -51,14 +51,14 @@ function printRow(label: string, value: string): string {
 /**
  * Génère un séparateur horizontal pour impression HTML
  */
-function printDivider(): string {
+function _printDivider(): string {
   return '<div class="print-divider"></div>';
 }
 
 /**
  * Génère une ligne de total pour impression HTML
  */
-function printTotal(label: string, value: string): string {
+function _printTotal(label: string, value: string): string {
   return `
     <div class="print-row print-total">
       <span>${label}</span>

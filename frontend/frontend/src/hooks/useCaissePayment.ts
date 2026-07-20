@@ -43,7 +43,7 @@ const processRegularPayments = async (
 
     const montantReel = Math.min(paiement.montant, resteAEnregistrer)
 
-    const paiementPayload: any = {
+    const paiementPayload: unknown = {
       facture: factureId,
       mode_paiement: paiement.mode,
       montant: montantReel,
@@ -66,14 +66,14 @@ const createTicketData = (
   paiements: { mode: string; montant: number }[],
   montantTotal: number,
   montantAEncaisser: number,
-  user: any
+  user: unknown
 ): TicketCaisse => {
   const rendu = montantTotal - montantAEncaisser
   const clientName = facture.client_name_override || facture.client_name || 'Client de passage'
 
   return {
     id: facture.id,
-    facture: facture as any,
+    facture: facture as unknown,
     mode_paiement: paiements.length > 1 ? 'Mixte' : (paiements[0]?.mode || 'especes'),
     montant: facture.total_ttc,
     montant_verse: (facture.montant_verse ? Number(facture.montant_verse) : montantTotal).toString(),
@@ -83,7 +83,7 @@ const createTicketData = (
     statut: 'completee',
     date_paiement: new Date().toISOString(),
     client_name: clientName,
-    paiements_details: (facture as any).paiements || [],
+    paiements_details: (facture as unknown).paiements || [],
     user_details: user,
     reference: null
   } as TicketCaisse
@@ -107,8 +107,8 @@ export const useCaissePayment = ({
 
   const enregistrerPaiement = useCallback(async (
     paiementsValides: { mode: string; montant: number }[],
-    t: (key: string, options?: any) => string,
-    user: any,
+    t: (key: string, options?: unknown) => string,
+    user: unknown,
     successMessage: string = 'Paiement enregistré'
   ) => {
     if (!selectedFacture) return

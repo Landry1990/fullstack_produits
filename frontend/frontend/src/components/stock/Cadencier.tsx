@@ -2,12 +2,10 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
-  Package, TrendingUp, Calendar, Search, Filter, ShoppingCart, Truck, Boxes,
-  ChevronLeft, ChevronRight, ArrowRight, RotateCcw, AlertTriangle
+  Package, TrendingUp, Calendar, Search, ShoppingCart, Truck, Boxes,
+  ChevronLeft, ChevronRight, RotateCcw
 } from 'lucide-react';
 import api from '../../services/api';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import { cn } from '../../lib/utils';
 
@@ -19,7 +17,6 @@ import { Badge } from '../ui/Badge';
 import { Checkbox } from '../ui/Checkbox';
 import SkeletonTable from '../ui/SkeletonTable';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 
 interface CadencierItem {
   produit_id: number;
@@ -182,7 +179,7 @@ const Cadencier: React.FC = () => {
     }
   };
 
-  const handleFilterChange = (key: keyof FiltreCadencier, value: any) => {
+  const handleFilterChange = (key: keyof FiltreCadencier, value: unknown) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setSelectedIds(new Set());
     setPage(1);

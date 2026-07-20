@@ -49,7 +49,7 @@ const TelegramHistory: React.FC = () => {
     const fetchLogs = async () => {
         setLoading(true);
         try {
-            const params: any = {};
+            const params: unknown = {};
             if (filterType !== 'ALL') params.type = filterType;
             
             const response = await api.get('telegram-logs/', { params });

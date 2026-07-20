@@ -51,7 +51,7 @@ export function SessionRecapBar({ sessionRecap }: SessionRecapBarProps) {
           .filter(([, v]) => v > 0)
           .sort(([, a], [, b]) => b - a)
           .map(([mode, montant]) => {
-            const modeConfig = getPaymentMode(mode)
+const _modeConfig = getPaymentMode(mode)
             const label = mode === 'coupon'
               ? `🎫 ${t('recap.coupons', { defaultValue: 'Coupons' })}`
               : getPaymentModeWithIcon(mode, t)

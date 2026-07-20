@@ -85,7 +85,7 @@ export interface PrintLabelResponse {
 }
 
 // Champs dynamiques disponibles
-const AVAILABLE_FIELDS = [
+const _AVAILABLE_FIELDS = [
     { value: 'product.name', label: 'Nom du produit' },
     { value: 'product.code', label: 'Code produit' },
     { value: 'product.cip1', label: 'Code CIP1' },
@@ -102,7 +102,7 @@ const AVAILABLE_FIELDS = [
 ] as const;
 
 // Tailles d'étiquettes standard
-const STANDARD_LABEL_SIZES = [
+const _STANDARD_LABEL_SIZES = [
     { name: 'Petite (30×20mm)', width: 30, height: 20 },
     { name: 'Standard (50×25mm)', width: 50, height: 25 },
     { name: 'Moyenne (70×30mm)', width: 70, height: 30 },

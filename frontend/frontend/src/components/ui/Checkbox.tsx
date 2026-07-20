@@ -34,7 +34,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   color = 'primary',
   size = 'md'
 }) => {
-  const handleChange = (e: React.MouseEvent | React.KeyboardEvent) => {
+  const handleChange = (_e: React.MouseEvent | React.KeyboardEvent) => {
     if (!disabled && onChange) {
       onChange(!checked);
     }

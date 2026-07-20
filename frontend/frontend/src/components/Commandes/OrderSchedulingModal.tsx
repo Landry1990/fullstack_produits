@@ -114,7 +114,7 @@ export default function OrderSchedulingModal({
         dateDebut: new Date().toISOString().split('T')[0],
         dateFin: new Date().toISOString().split('T')[0],
     });
-    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [suggestions, setSuggestions] = useState<unknown[]>([]);
     const [totalHt, setTotalHt] = useState<number>(0);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -203,7 +203,7 @@ export default function OrderSchedulingModal({
             }
 
             onSave(cleanedSchedule);
-        } catch (err: any) {
+        } catch (err: unknown) {
             // Gestion d'erreur détaillée
             const errorMsg = err.response?.data?.fournisseur?.[0] 
                 || err.response?.data?.active_days?.[0]
@@ -273,7 +273,7 @@ export default function OrderSchedulingModal({
         
         setLoadingSuggestions(true);
         try {
-            const payload: any = {
+            const payload: unknown = {
                 mode: suggestionParams.mode,
                 fournisseur_id: schedule.fournisseur,
             };
@@ -291,10 +291,10 @@ export default function OrderSchedulingModal({
             setSuggestions(response.data.suggestions || []);
             setTotalHt(response.data.total_ht || 0);
             
-            const allIndices = new Set(response.data.suggestions.map((_: any, i: number) => i));
+            const allIndices = new Set(response.data.suggestions.map((_: unknown, i: number) => i));
             setSelectedSuggestions(allIndices as Set<number>);
             setStepGen(2);
-        } catch (err: any) {
+        } catch (err: unknown) {
             const errorMsg = err.response?.data?.error 
                 || err.response?.data?.detail 
                 || err.response?.data?.message 
@@ -312,7 +312,7 @@ export default function OrderSchedulingModal({
             return;
         }
 
-        const newLines: CommandeProduit[] = selectedItems.map((item: any, index) => {
+        const newLines: CommandeProduit[] = selectedItems.map((item: unknown, index) => {
              const realProduct = produitsList.find(p => p.id === item.produit_id);
              let productStub: ProduitModel;
              if (realProduct) productStub = realProduct;
@@ -326,7 +326,7 @@ export default function OrderSchedulingModal({
                     selling_price: String(item.prix_vente || item.prix_achat * 1.3),
                     tva: item.tva || '0',
                     taux_marge: item.taux_marge || '1.3'
-                } as any;
+                } as unknown;
              }
 
             return {
@@ -337,7 +337,7 @@ export default function OrderSchedulingModal({
                 tva: item.tva || productStub.tva || '0',
                 marge: item.taux_marge || productStub.taux_marge || '1.3',
                 selling_price: String(item.prix_vente || productStub.selling_price || 0),
-            } as any;
+            } as unknown;
         });
 
         onApplySuggestions(newLines, String(schedule.fournisseur));

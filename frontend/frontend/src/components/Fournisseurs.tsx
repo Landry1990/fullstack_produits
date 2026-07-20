@@ -10,7 +10,6 @@ import PointageReleveModal from './PointageReleveModal';
 import SudoValidationModal from './common/SudoValidationModal';
 import SupplierDashboard from './fournisseurs/SupplierDashboard';
 import { Button } from './shadcn/button';
-import { Badge } from './shadcn/badge';
 import { cn } from '../lib/utils';
 
 export default function Fournisseurs() {

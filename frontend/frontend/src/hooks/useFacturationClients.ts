@@ -216,7 +216,7 @@ export function useFacturationClients() {
             toast.success(`Client "${createdClient.name}" créé et sélectionné`)
         } catch (err) {
             console.error('Erreur création client:', err)
-            const errorData = (err as any)?.response?.data
+            const errorData = (err as unknown)?.response?.data
             if (errorData && typeof errorData === 'object') {
                 const messages = Object.entries(errorData).map(([k, v]) => `${k}: ${v}`).join(', ')
                 toast.error(`Erreur: ${messages}`)

@@ -40,7 +40,7 @@ export default function ImportDCIPage() {
 
   // Auto-match
   const [matching, setMatching] = useState(false);
-  const [matchResult, setMatchResult] = useState<any>(null);
+  const [matchResult, setMatchResult] = useState<unknown>(null);
 
   // Unlinked products
   const [unlinkedData, setUnlinkedData] = useState<UnlinkedResponse | null>(null);

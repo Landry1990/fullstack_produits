@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Package, Clock, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Package, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import type { StockAnalysisItem } from '../../hooks/useStockAnalysis';
 import { Checkbox } from '../shadcn/checkbox';

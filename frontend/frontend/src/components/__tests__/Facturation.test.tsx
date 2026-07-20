@@ -32,7 +32,7 @@ vi.mock('./printing/TicketTemplate', () => ({ TicketTemplate: () => <div data-te
 vi.mock('react-barcode', () => ({ default: () => <div data-testid="barcode" /> }))
 
 vi.mock('../facturation/PaymentModal', () => ({
-  default: ({ isOpen, onCompleteSale }: any) => isOpen ? (
+  default: ({ isOpen, onCompleteSale }: unknown) => isOpen ? (
     <div data-testid="payment-modal">
       <button onClick={onCompleteSale}>Confirmer Paiement</button>
     </div>
@@ -40,9 +40,9 @@ vi.mock('../facturation/PaymentModal', () => ({
 }))
 
 vi.mock('../facturation/CartTable', () => ({
-    default: ({ lignesFacture }: any) => (
+    default: ({ lignesFacture }: unknown) => (
         <div data-testid="cart-table">
-            {lignesFacture?.map((l: any) => (
+            {lignesFacture?.map((l: unknown) => (
                 <div key={l.produit.id}>{l.produit.name} - {l.quantite} - {l.total_ligne}</div>
             ))}
         </div>
@@ -54,7 +54,7 @@ vi.mock('../facturation/TotalsSection', () => ({
 }))
 
 vi.mock('../facturation/ActionButtons', () => ({
-  default: ({ onPayment, isValid }: any) => (
+  default: ({ onPayment, isValid }: unknown) => (
     <div data-testid="action-buttons">
       <button 
         data-testid="encaisser-btn" 

@@ -50,7 +50,7 @@ export function LicenceNotifications() {
       dismissedIdsRef.current.add(notification.id);
       setTick(t => t + 1);
       toast.success(t('licence.notification_dismissed'));
-    } catch (error) {
+    } catch {
       toast.error(t('licence.notification_dismiss_error'));
     }
   }, [t]);
@@ -185,7 +185,7 @@ function LicenceToastContent({ notification, onDismiss }: LicenceToastContentPro
 /**
  * Hook pour vérifier le statut de la licence
  */
-function useLicenceStatus() {
+function _useLicenceStatus() {
   const { isAuthenticated, loading } = useAuth();
   const [status, setStatus] = useState<{
     isValid: boolean;

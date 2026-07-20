@@ -42,7 +42,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                         <select
                             className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all min-w-[140px]"
                             value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value as any)}
+                            onChange={(e) => setFilterStatus(e.target.value as unknown)}
                         >
                             <option value="ALL">{t('stock:promis.status_all')}</option>
                             <option value="ATT">{t('stock:promis.status_att')}</option>

@@ -107,7 +107,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setFormData({ ...formData, category: option.value as any })}
+                    onClick={() => setFormData({ ...formData, category: option.value as unknown })}
                     className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
                       formData.category === option.value
                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
@@ -132,7 +132,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setFormData({ ...formData, priority: option.value as any })}
+                  onClick={() => setFormData({ ...formData, priority: option.value as unknown })}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     formData.priority === option.value
                       ? option.color

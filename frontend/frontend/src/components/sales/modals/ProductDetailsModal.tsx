@@ -31,7 +31,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         try {
             const response = await api.post(`facture-produits/${lineId}/envoi_rappel_renouvellement/`, {});
             toast.success(response.data.detail || `Rappel envoyé pour ${productName}`);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error sending renewal reminder:', error);
             const msg = error.response?.data?.detail || "Erreur lors de l'envoi du rappel";
             toast.error(msg);

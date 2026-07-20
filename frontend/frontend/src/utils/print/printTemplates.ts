@@ -20,7 +20,7 @@ interface ClotureData {
   total_ca_divers?: string | number;
   total_entrees: string | number;
   total_sorties: string | number;
-  details_paiement: Record<string, any>;
+  details_paiement: Record<string, unknown>;
   date_debut?: string | null;
   date_fin?: string | null;
   user_name?: string;
@@ -338,7 +338,7 @@ function generateInventaireTemplate(
   `;
 }
 
-const printTemplates = {
+const _printTemplates = {
   generateClotureTemplate,
   generatePromisTemplate,
   generateStockRayonTemplate,

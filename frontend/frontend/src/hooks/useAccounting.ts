@@ -163,7 +163,7 @@ export const useAccounting = () => {
             queryClient.invalidateQueries({ queryKey: ['accounting'] });
             toast.success('Écriture enregistrée avec succès');
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
             const data = error.response?.data;
             if (data && typeof data === 'object') {
                 // Si c'est une erreur de validation DRF (dictionnaire de champs)
@@ -190,7 +190,7 @@ export const useAccounting = () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
             toast.success('Compte créé avec succès');
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
             const msg = error.response?.data?.numero?.[0] || error.response?.data?.detail || 'Erreur lors de la création';
             toast.error(msg);
         }
@@ -202,7 +202,7 @@ export const useAccounting = () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
             toast.success('Compte modifié avec succès');
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
             const msg = error.response?.data?.numero?.[0] || error.response?.data?.detail || 'Erreur lors de la modification';
             toast.error(msg);
         }
@@ -214,7 +214,7 @@ export const useAccounting = () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
             toast.success('Compte supprimé');
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
             const msg = error.response?.data?.detail || 'Impossible de supprimer ce compte (des écritures y sont liées)';
             toast.error(msg);
         }

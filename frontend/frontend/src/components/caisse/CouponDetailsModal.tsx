@@ -10,7 +10,7 @@ interface CouponDetailsModalProps {
   coupon: CouponMonnaie | null
   factureForCoupon: Facture | null
   onAppliquer: (coupon: CouponMonnaie, facture: Facture) => void
-  settings: any
+  settings: unknown
 }
 
 export function CouponDetailsModal({

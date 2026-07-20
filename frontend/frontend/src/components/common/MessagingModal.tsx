@@ -58,7 +58,7 @@ function composerReducer(state: ComposerState, action: ComposerAction): Composer
 interface MessagingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentUser: any;
+  currentUser: unknown;
   onMessageRead?: () => void;
 }
 
@@ -82,7 +82,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
 
   const loadData = async () => {
     try {
-      const requests: Promise<any>[] = [
+      const requests: Promise<unknown>[] = [
         communicationService.getMessages(),
         communicationService.getTemplates(),
         userService.getAll()
@@ -113,7 +113,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
   };
 
   useEffect(() => {
-    let interval: any;
+    let interval: unknown;
     if (isOpen) {
       loadData(); // Initial load
       interval = setInterval(() => {
@@ -159,7 +159,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       dispatchComposer({ type: 'RESET' });
       setActiveTab('sent');
       loadData();
-    } catch (error) {
+    } catch {
       toast.error(t('new.error_sent'));
     }
   };
@@ -169,7 +169,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       await communicationService.markAsRead(id);
       setMessages((prev: InternalMessage[]) => prev.map((m: InternalMessage) => m.id === id ? { ...m, is_read: true } : m));
       if (onMessageRead) onMessageRead();
-    } catch (error) {
+    } catch {
       toast.error(t('common:error'));
     }
   };
@@ -180,7 +180,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       await communicationService.archiveMessage(id);
       setMessages((prev: InternalMessage[]) => prev.map((m: InternalMessage) => m.id === id ? { ...m, is_archived: true } : m));
       toast.success('Message archivé');
-    } catch (error) {
+    } catch {
       toast.error(t('common:error'));
     }
   };
@@ -197,7 +197,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       await communicationService.deleteTemplate(id);
       toast.success(t('templates.success_deleted'));
       loadData();
-    } catch (error) {
+    } catch {
       toast.error(t('common:error'));
     }
   };
@@ -215,7 +215,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       setEditingTemplate(null);
       setTemplateForm({ title: '', content: '' });
       loadData();
-    } catch (error) {
+    } catch {
       toast.error(t('common:error'));
     }
   };
@@ -607,7 +607,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                       onChange={(e) => dispatchComposer({ type: 'SET_RECIPIENT', payload: e.target.value === '' ? '' : Number(e.target.value) })}
                     >
                       <option value="">{t('new.all')}</option>
-                      {users.map((u: any) => (
+                      {users.map((u: unknown) => (
                         <option key={u.id} value={u.id}>{u.username}</option>
                       ))}
                     </select>

@@ -75,7 +75,7 @@ export const COLUMN_LABELS: Record<string, string> = {
     montant: 'Montant (F)'
 };
 
-export const formatColumnHeader = (col: string, t?: any): string => {
+export const formatColumnHeader = (col: string, t?: unknown): string => {
     // First check COLUMN_LABELS directly
     if (COLUMN_LABELS[col]) return COLUMN_LABELS[col];
     
@@ -144,7 +144,7 @@ export const isPercentageColumn = (col: string): boolean => {
     return c.includes('pct') || c.includes('taux') || c.includes('ratio');
 };
 
-export const formatValue = (key: string, value: unknown, t?: any): string => {
+export const formatValue = (key: string, value: unknown, t?: unknown): string => {
     if (value === null || value === undefined) return '-';
     
     if (key === 'Mois' && t) {

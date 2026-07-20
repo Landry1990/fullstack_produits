@@ -14,8 +14,8 @@ interface UseCreanceActionsProps {
     setSelectedIds: (ids: number[]) => void;
     filteredCreances: Creance[];
     creancesEndpoint?: string;
-    updateLocalCreance?: (id: number, data: any) => void;
-    updateLocalSynthese?: (clientId: number, data: any) => void;
+    updateLocalCreance?: (id: number, data: unknown) => void;
+    updateLocalSynthese?: (clientId: number, data: unknown) => void;
 }
 
 export const useCreanceActions = ({
@@ -23,9 +23,9 @@ export const useCreanceActions = ({
     selectedIds,
     setSelectedIds,
     filteredCreances,
-    creancesEndpoint,
+    creancesEndpoint: _creancesEndpoint,
     updateLocalCreance,
-    updateLocalSynthese
+    updateLocalSynthese: _updateLocalSynthese
 }: UseCreanceActionsProps) => {
     const { t } = useTranslation(['creances', 'common']);
     const { sudoState, requireSudo, closeSudo } = useSudo();
@@ -155,7 +155,7 @@ export const useCreanceActions = ({
 
     const performBulkPayment = useCallback(async (validatorId: number, password: string) => {
         try {
-            const payload: any = {
+            const payload: unknown = {
                 facture_ids: selectedIds,
                 mode_paiement: modePaiement,
                 reference: referencePaiement,
@@ -189,7 +189,7 @@ export const useCreanceActions = ({
                     console.log('Montant réglé:', data.total_amount);
                     console.log('Reste à payer global:', data.reste_a_payer);
                     console.log('=== PAIEMENTS DÉTAIL ===');
-                    data.paiements?.forEach((p: any, i: number) => {
+                    data.paiements?.forEach((p: unknown, i: number) => {
                         console.log(`  ${i+1}. Facture ${p.numero_facture}:`, {
                             montant_paye: p.montant_paye,
                             reste_avant: p.reste_avant,
@@ -260,7 +260,7 @@ export const useCreanceActions = ({
                 : selectedClient;
             doc.save(`releve_${clientSlug}_${new Date().toISOString().slice(0, 10)}.pdf`);
             toast.success('Relevé généré avec succès.', { id: loadingToast });
-        } catch (err) {
+        } catch {
             toast.error(t('creances:toasts.error_print_statement'), { id: loadingToast });
         }
     }, [t, pharmacySettings]);

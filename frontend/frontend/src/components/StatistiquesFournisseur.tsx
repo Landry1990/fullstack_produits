@@ -283,7 +283,7 @@ export default function StatistiquesFournisseur() {
                                      <div className={`radial-progress font-bold text-lg ${
                                         item.score_global >= 80 ? 'text-success' : 
                                         item.score_global >= 50 ? 'text-warning' : 'text-error'
-                                    }`} style={{ "--value": item.score_global, "--size": "4rem" } as any}>
+                                    }`} style={{ "--value": item.score_global, "--size": "4rem" } as unknown}>
                                         {item.score_global}
                                     </div>
                                  </div>

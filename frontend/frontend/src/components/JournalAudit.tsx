@@ -4,13 +4,13 @@ import api from '../services/api';
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuditLogs, useAuditStats, useUsers } from '../hooks/useAudit';
-import { formatCurrency, formatNumber } from '../utils/formatters';
+import { formatNumber } from '../utils/formatters';
 import {
   ClipboardList, Search, Download, RotateCcw, ChevronDown, ChevronUp,
-  TrendingUp, Clock, Calendar, User2, Shield, PackagePlus, PackageMinus,
-  ReceiptText, XCircle, Trash2, CheckCircle2, Boxes, ArrowDownToLine,
+  TrendingUp, Clock, Calendar, Shield, PackagePlus, PackageMinus,
+  XCircle, Trash2, CheckCircle2, Boxes, ArrowDownToLine,
   BadgeAlert, Edit, LogIn, FileOutput, Settings, AlertTriangle,
-  Activity, Filter, Users
+  Activity, Filter
 } from 'lucide-react';
 
 // ── Config par type d'action ────────────────────────────────────────────────
@@ -56,7 +56,7 @@ const QUICK_FILTERS = [
 ];
 
 // ── Formatage lisible des détails ────────────────────────────────────────────
-function buildDetailChips(log: any): { label: string; value: string; highlight?: boolean }[] {
+function buildDetailChips(log: unknown): { label: string; value: string; highlight?: boolean }[] {
   const d = log.details;
   if (!d || Object.keys(d).length === 0) return [];
   const chips: { label: string; value: string; highlight?: boolean }[] = [];
@@ -74,7 +74,7 @@ function buildDetailChips(log: any): { label: string; value: string; highlight?:
     chips.push({ label: 'Validé par', value: d.sudo_user || '—', highlight: true });
     if (d.sudo_permission) chips.push({ label: 'Permission', value: d.sudo_permission });
   } else if (d.changes && typeof d.changes === 'object') {
-    Object.entries(d.changes).slice(0, 3).forEach(([key, val]: [string, any]) => {
+    Object.entries(d.changes).slice(0, 3).forEach(([key, val]: [string, unknown]) => {
       chips.push({ label: key, value: `${val?.old ?? '—'} → ${val?.new ?? '—'}`, highlight: true });
     });
   } else {
@@ -90,9 +90,9 @@ function buildDetailChips(log: any): { label: string; value: string; highlight?:
 }
 
 // ── Groupage par date ────────────────────────────────────────────────────────
-function groupByDay(logs: any[]) {
-  const groups: { label: string; dateKey: string; logs: any[] }[] = [];
-  const map = new Map<string, any[]>();
+function groupByDay(logs: unknown[]) {
+  const groups: { label: string; dateKey: string; logs: unknown[] }[] = [];
+  const map = new Map<string, unknown[]>();
   logs.forEach(log => {
     const d = parseISO(log.timestamp);
     const key = format(d, 'yyyy-MM-dd');

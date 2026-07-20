@@ -122,7 +122,7 @@ function getPresetDates(preset: RangePreset): { debut: string; fin: string } {
 
 
 export default function RapportMensuel() {
-  const { t, i18n } = useTranslation(['monthly_report', 'common', 'caisse']);
+  const { t } = useTranslation(['monthly_report', 'common', 'caisse']);
 
   // Mode de filtre
   const [filterMode, setFilterMode] = useState<FilterMode>('month');
@@ -256,7 +256,7 @@ export default function RapportMensuel() {
                     periode: periodeLabel,
                   });
                   toast.success(t('common:telegram.send_success'), { icon: '📨' });
-                } catch (err: any) {
+                } catch (err: unknown) {
                   const msg = err?.response?.data?.message || t('common:telegram.send_error');
                   toast.error(msg);
                 }

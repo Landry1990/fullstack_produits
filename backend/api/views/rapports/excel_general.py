@@ -155,9 +155,18 @@ def _write_col_headers(ws, row: int, headers: list[str]):
         cell.border = _border()
 
 
-def _auto_width(ws, min_w=10, max_w=40):
+def _auto_width(ws, min_w=10, max_w=30):
+    merged_ranges = set()
+    for mr in ws.merged_cells.ranges:
+        for row in range(mr.min_row, mr.max_row + 1):
+            for col in range(mr.min_col, mr.max_col + 1):
+                merged_ranges.add((row, col))
     for col in ws.columns:
-        length = max(len(str(cell.value or "")) for cell in col)
+        length = 0
+        for cell in col:
+            if (cell.row, cell.column) in merged_ranges:
+                continue
+            length = max(length, len(str(cell.value or "")))
         ws.column_dimensions[get_column_letter(col[0].column)].width = min(max_w, max(min_w, length + 2))
 
 

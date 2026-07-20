@@ -8,7 +8,7 @@ import { setRouter } from './services/navigationService';
 const MAX_RETRIES = 3;
 const LOAD_TIMEOUT = 10000; // 10 secondes
 
-function lazyWithRetry<T extends ComponentType<any>>(
+function lazyWithRetry<T extends ComponentType<unknown>>(
   factory: () => Promise<{ default: T }>,
   retries = MAX_RETRIES
 ): React.LazyExoticComponent<T> {
@@ -41,7 +41,7 @@ function lazyWithRetry<T extends ComponentType<any>>(
 }
 
 // Prefetch helper - charge en arrière-plan au survol
-function prefetchRoute(factory: () => Promise<any>) {
+function _prefetchRoute(factory: () => Promise<unknown>) {
   if ('requestIdleCallback' in window) {
     requestIdleCallback(() => {
       factory().catch(() => {}); // Silencieux si erreur
@@ -116,7 +116,7 @@ const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilit
 const SystemAdmin = lazyWithRetry(() => import('./components/SystemAdmin'));
 
 // ── Helper to reduce boilerplate ──
-const perm = (permission: string | string[], Component: React.ComponentType<any>, props?: Record<string, any>) => ({
+const perm = (permission: string | string[], Component: React.ComponentType<unknown>, props?: Record<string, unknown>) => ({
   element: (
     <PermissionRoute permission={permission}>
       <Component {...props} />
@@ -124,7 +124,7 @@ const perm = (permission: string | string[], Component: React.ComponentType<any>
   ),
 });
 
-const admin = (Component: React.ComponentType<any>) => ({
+const admin = (Component: React.ComponentType<unknown>) => ({
   element: (
     <AdminRoute>
       <Component />

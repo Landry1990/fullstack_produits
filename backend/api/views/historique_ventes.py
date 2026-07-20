@@ -328,17 +328,19 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 cell.border = border
             row_idx += 1
             
-        # Ajuster largeur colonnes
+        # Ajuster largeur colonnes (uniquement sur les données, pas l'en-tête)
         for col in ws.columns:
             max_length = 0
             column = get_column_letter(col[0].column)
             for cell in col:
+                if cell.row == 1:
+                    continue
                 try:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
                 except:
                     pass
-            ws.column_dimensions[column].width = max_length + 2
+            ws.column_dimensions[column].width = min(25, max(10, max_length + 2))
             
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename=Historique_Ventes_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'

@@ -119,7 +119,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
         }
       });
       setData(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.response?.data?.error || err.message || t('providers:pointage_modal.load_error'));
     } finally {
       setLoading(false);

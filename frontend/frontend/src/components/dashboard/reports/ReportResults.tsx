@@ -14,16 +14,16 @@ import { ChevronLeft, ChevronRight, Inbox, Eye, Download, AlertTriangle } from '
 import { Button } from '../../shadcn/button';
 
 // Constante de module pour éviter la recréation à chaque render
-const EMPTY_PARAMS: Record<string, any> = {};
+const EMPTY_PARAMS: Record<string, unknown> = {};
 
 interface ReportResultsProps {
     selectedQuery: QueryDefinition;
-    results: any;
+    results: unknown;
     pagination: PaginationData | null;
     loading: boolean;
     onPageChange: (url: string | null) => void;
     onFilterChange?: (key: string, value: string) => void;
-    currentParams?: Record<string, any>;
+    currentParams?: Record<string, unknown>;
 }
 
 export const ReportResults: React.FC<ReportResultsProps> = ({
@@ -67,8 +67,8 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                 <div className="flex flex-col items-center justify-center py-20 text-emerald-600 animate-in zoom-in duration-500">
                     <Download className="size-16 mb-4" />
                     <p className="text-lg font-black uppercase tracking-widest">{t('results.export_success_short', { defaultValue: 'Rapport Généré' })}</p>
-                    {results && typeof results === 'object' && (results as any).filename && (
-                         <p className="text-xs opacity-60 mt-2">{(results as any).filename}</p>
+                    {results && typeof results === 'object' && (results as unknown).filename && (
+                         <p className="text-xs opacity-60 mt-2">{(results as unknown).filename}</p>
                     )}
                 </div>
             );
@@ -121,7 +121,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
 
             // Filtrer les lignes TOTAL du backend pour éviter le double total (backend + frontend footer)
             // Certains rapports retournent déjà une ligne total qu'il ne faut pas compter dans le calcul frontend
-            const isTotalRow = (r: any): boolean => {
+            const isTotalRow = (r: unknown): boolean => {
                 if (!r || typeof r !== 'object') return false;
                 // Déjà géré pour le rapport multi-annuel
                 if (isMultiYearCAReport && r.Mois === 'total_general') return true;
@@ -133,7 +133,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             
             // S'assurer que results est bien un tableau avant de filtrer
             const filteredResults = Array.isArray(results) 
-                ? results.filter((r: any) => !isTotalRow(r))
+                ? results.filter((r: unknown) => !isTotalRow(r))
                 : results;
 
             // Utiliser filteredResults (et non results) pour obtenir les colonnes
@@ -187,7 +187,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: any, idx: number) => (
+                                {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: unknown, idx: number) => (
                                     <tr key={row.id ?? row.produit_id ?? row.code ?? idx} className={`hover:bg-emerald-50 transition-all group ${
                                         isMargesReport && Number(row['taux_marge'] ?? 0) < 0 ? 'bg-red-50' :
                                         isMargesReport && Number(row['taux_marge'] ?? 0) < 25 ? 'bg-amber-50' : ''
@@ -226,7 +226,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                             if (idx === 0) return <td key={col} className="py-4 px-6 text-[10px] tracking-widest">{t('common:total', 'TOTAL / MOYENNE')}</td>;
                                             
                                             if (isAverageColumn(col)) {
-                                                const total = filteredResults.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                                                const total = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
                                                 const avg = filteredResults.length > 0 ? total / filteredResults.length : 0;
                                                 return (
                                                     <td key={col} className="py-4 px-4 text-right text-sm">
@@ -239,15 +239,15 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                             }
 
                                             if (isSummableColumn(col)) {
-                                                const total = filteredResults.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                                                const total = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
                                                 return <td key={col} className="py-4 px-4 text-right text-sm">{formatValue(col, total, t)}</td>;
                                             }
                                             
                                             if (isPercentageColumn(col)) {
                                                 // Pour taux_marge : calculer le taux global à partir de mt_vente et marge agrégés
                                                 if (col === 'taux_marge') {
-                                                    const totalMtVente = filteredResults.reduce((sum: number, r: any) => sum + (Number(r['mt_vente']) || 0), 0);
-                                                    const totalMarge   = filteredResults.reduce((sum: number, r: any) => sum + (Number(r['marge']) || 0), 0);
+                                                    const totalMtVente = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r['mt_vente']) || 0), 0);
+                                                    const totalMarge   = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r['marge']) || 0), 0);
                                                     const tauxGlobal   = totalMtVente > 0 ? (totalMarge / totalMtVente) * 100 : 0;
                                                     return (
                                                         <td key={col} className="py-4 px-4 text-right text-sm">
@@ -258,7 +258,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                         </td>
                                                     );
                                                 }
-                                                const total = filteredResults.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                                                const total = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
                                                 const avg = filteredResults.length > 0 ? (total / filteredResults.length) : 0;
                                                 return <td key={col} className="py-4 px-4 text-right text-sm">{avg.toFixed(1)} %</td>;
                                             }

@@ -1,6 +1,6 @@
 import { getLocale } from './dateUtils';
 
-export const generateInventorySummaryText = (inventory: any, pharmacyName: string): string => {
+export const generateInventorySummaryText = (inventory: unknown, pharmacyName: string): string => {
   const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   
   let text = `📦 *RAPPORT INVENTAIRE ${pharmacyName.toUpperCase()}*\n`;
@@ -16,7 +16,7 @@ export const generateInventorySummaryText = (inventory: any, pharmacyName: strin
     text += `⚠️ *Principaux écarts*\n`;
     // Afficher les 3 plus gros écarts
     const topDiscrepancies = (inventory.discrepancies || []).slice(0, 3);
-    topDiscrepancies.forEach((item: any) => {
+    topDiscrepancies.forEach((item: unknown) => {
       text += `• ${item.name}: ${item.quantity} (${item.value.toLocaleString('fr-FR')} F)\n`;
     });
   }
@@ -26,7 +26,7 @@ export const generateInventorySummaryText = (inventory: any, pharmacyName: strin
   return text;
 };
 
-const generateDashboardFlashText = (stats: any, pharmacyName: string): string => {
+const _generateDashboardFlashText = (stats: unknown, pharmacyName: string): string => {
   const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   
   let text = `📊 *RAPPORT FLASH ${pharmacyName.toUpperCase()}*\n`;

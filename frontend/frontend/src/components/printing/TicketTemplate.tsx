@@ -17,7 +17,7 @@ const formatDate = (dateStr: string) => {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
-    } catch (e) {
+    } catch {
         return dateStr;
     }
 };
@@ -27,7 +27,7 @@ const formatM = (val: number | string) => formatNumber(Math.round(Number(val)));
 export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) => {
   const { t } = useTranslation('printing');
 
-  const getProductName = (p: any) => {
+  const getProductName = (p: unknown) => {
     if (!p) return t('ticket.unknown_article');
     if (typeof p.produit === 'object') return p.produit.name;
     return p.produit_nom || `${t('ticket.product')} #${p.produit || '?'}`;
@@ -48,7 +48,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
   const clientName = ticket.client_name 
       || facture?.client_name_override 
       || facture?.client_name 
-      || (facture?.client && typeof facture.client === 'object' && 'name' in facture.client ? (facture.client as any).name : null)
+      || (facture?.client && typeof facture.client === 'object' && 'name' in facture.client ? (facture.client as unknown).name : null)
       || t('invoice.walk_in_customer');
 
   return (
@@ -143,7 +143,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
               </tr>
             </thead>
             <tbody className="text-[10px]">
-              {produits.map((p: any, idx: number) => {
+              {produits.map((p: unknown, idx: number) => {
                 const qty = Math.abs(p.quantity);
                 const price = Number(p.selling_price || 0);
                 const lineTotal = qty * price;
@@ -200,8 +200,8 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
             <tbody>
               {ticket.paiements_details && ticket.paiements_details.length > 0 ? (
                   ticket.paiements_details.map((paiement, idx) => (
-                      <tr key={(paiement as any).mode_paiement ?? paiement.mode ?? idx}>
-                          <td className="uppercase font-bold">[{getModeLabel((paiement as any).mode_paiement || paiement.mode)}]</td>
+                      <tr key={(paiement as unknown).mode_paiement ?? paiement.mode ?? idx}>
+                          <td className="uppercase font-bold">[{getModeLabel((paiement as unknown).mode_paiement || paiement.mode)}]</td>
                           <td className="text-right font-mono font-black">{formatM(paiement.montant)}</td>
                       </tr>
                   ))

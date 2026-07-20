@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import React, { createContext } from 'react';
 
 // Global mock for axios to prevent crashes during module initialization
-const mockAxios: any = {
+const mockAxios: unknown = {
   get: vi.fn(() => Promise.resolve({ data: {} })),
   post: vi.fn(() => Promise.resolve({ data: {} })),
   put: vi.fn(() => Promise.resolve({ data: {} })),
@@ -16,7 +16,7 @@ const mockAxios: any = {
     request: { use: vi.fn(), eject: vi.fn() },
     response: { use: vi.fn(), eject: vi.fn() },
   },
-  isAxiosError: vi.fn((err: any) => !!err?.isAxiosError),
+  isAxiosError: vi.fn((err: unknown) => !!err?.isAxiosError),
   Spread: vi.fn(),
   Cancel: vi.fn(),
   CancelToken: {
@@ -118,7 +118,7 @@ const MockAuthContext = createContext(mockAuthValue);
 vi.mock('../../context/AuthContext', () => ({
     AuthContext: MockAuthContext,
     useAuth: () => mockAuthValue,
-    AuthProvider: ({ children }: any) => (
+    AuthProvider: ({ children }: unknown) => (
         React.createElement(MockAuthContext.Provider, { value: mockAuthValue }, children)
     )
 }));
@@ -128,7 +128,7 @@ vi.mock('react-i18next', () => {
         useTranslation: (ns?: string | string[]) => {
             const defaultNs = Array.isArray(ns) ? ns[0] : ns;
             
-            const resolve = (obj: any, path: any): any => {
+            const resolve = (obj: unknown, path: unknown): unknown => {
                 if (!obj || typeof path !== 'string') return null;
                 const parts = path.split('.');
                 let current = obj;
@@ -143,21 +143,21 @@ vi.mock('react-i18next', () => {
             };
 
             return {
-                t: (key: string, options?: any) => {
-                    let result: any = null;
+                t: (key: string, options?: unknown) => {
+                    let result: unknown = null;
                     const defaultValue = typeof options === 'string' ? options : options?.defaultValue;
 
                     // 1. Check if key has explicit namespace
                     if (key.includes(':')) {
                         const [namespace, rest] = key.split(':');
-                        result = resolve((allTranslations as any)[namespace], rest);
+                        result = resolve((allTranslations as unknown)[namespace], rest);
                     } 
                     
                     // 2. Try default namespace if provided
                     if (!result && defaultNs) {
                         const namespaces = Array.isArray(defaultNs) ? defaultNs : [defaultNs];
                         for (const ns of namespaces) {
-                            result = resolve((allTranslations as any)[ns], key);
+                            result = resolve((allTranslations as unknown)[ns], key);
                             if (result) break;
                         }
                     }
@@ -170,7 +170,7 @@ vi.mock('react-i18next', () => {
                     // 4. Final broad search across all registered namespaces
                     if (!result) {
                         for (const nsKey of Object.keys(allTranslations)) {
-                            result = resolve((allTranslations as any)[nsKey], key);
+                            result = resolve((allTranslations as unknown)[nsKey], key);
                             if (result) break;
                         }
                     }
@@ -206,11 +206,11 @@ vi.mock('react-i18next', () => {
 // Mock for Recharts
 vi.mock('recharts', () => {
   return {
-    ResponsiveContainer: ({ children }: any) => React.createElement('div', { className: 'recharts-responsive-container-mock' }, children),
-    BarChart: ({ children }: any) => React.createElement('div', { className: 'bar-chart-mock' }, children),
-    LineChart: ({ children }: any) => React.createElement('div', { className: 'line-chart-mock' }, children),
-    PieChart: ({ children }: any) => React.createElement('div', { className: 'pie-chart-mock' }, children),
-    AreaChart: ({ children }: any) => React.createElement('div', { className: 'area-chart-mock' }, children),
+    ResponsiveContainer: ({ children }: unknown) => React.createElement('div', { className: 'recharts-responsive-container-mock' }, children),
+    BarChart: ({ children }: unknown) => React.createElement('div', { className: 'bar-chart-mock' }, children),
+    LineChart: ({ children }: unknown) => React.createElement('div', { className: 'line-chart-mock' }, children),
+    PieChart: ({ children }: unknown) => React.createElement('div', { className: 'pie-chart-mock' }, children),
+    AreaChart: ({ children }: unknown) => React.createElement('div', { className: 'area-chart-mock' }, children),
     XAxis: () => null,
     YAxis: () => null,
     CartesianGrid: () => null,
@@ -285,19 +285,19 @@ vi.mock('../context/LicenceContext', () => {
   const MockLicenceContext = React.createContext(mockLicenceValue);
   return {
     LicenceContext: MockLicenceContext,
-    LicenceProvider: ({ children }: any) => React.createElement(MockLicenceContext.Provider, { value: mockLicenceValue }, children),
+    LicenceProvider: ({ children }: unknown) => React.createElement(MockLicenceContext.Provider, { value: mockLicenceValue }, children),
     useLicence: () => mockLicenceValue,
   };
 });
 
 vi.mock('react-datepicker', () => {
   return {
-    default: ({ selected, onChange, placeholderText }: any) => (
+    default: ({ selected, onChange, placeholderText }: unknown) => (
       React.createElement('input', {
         'data-testid': 'date-picker',
         placeholder: placeholderText,
         value: selected ? (selected instanceof Date ? selected.toISOString() : selected) : '',
-        onChange: (e: any) => onChange(new Date(e.target.value)),
+        onChange: (e: unknown) => onChange(new Date(e.target.value)),
       })
     ),
     registerLocale: vi.fn(),
