@@ -16,7 +16,7 @@ interface StockAdjustmentModalProps {
   onSubmit: (e: React.FormEvent) => void;
   selectedProduit: ProduitModel | null;
   form: { new_quantity: string; new_reserve_quantity: string; reason_type: string; stock_lot_id?: string };
-  setForm: (form: (prev: any) => any) => void;
+  setForm: (form: (prev: unknown) => any) => void;
 }
 
 export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
@@ -30,7 +30,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   const { t } = useTranslation(['products', 'common']);
   const [dynamicReasons, setDynamicReasons] = useState<{ value: string; label: string }[]>([]);
   const [lots, setLots] = useState<StockLot[]>([]);
-  const [loadingLots, setLoadingLots] = useState(false);
+  const [_loadingLots, setLoadingLots] = useState(false);
 
   useEffect(() => {
     const fetchReasons = async () => {
@@ -38,7 +38,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
         const res = await api.get('configuration-options/?type=STOCK_ADJ&is_active=true');
         const data = res.data.results || res.data;
         if (Array.isArray(data)) {
-          const custom = data.map((opt: any) => ({
+          const custom = data.map((opt: unknown) => ({
             value: opt.code,
             label: opt.label
           }));
@@ -116,7 +116,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             <Select
               label="Lot concerné"
               value={form.stock_lot_id || ''}
-              onChange={(e) => setForm((prev: any) => ({ ...prev, stock_lot_id: e.target.value }))}
+              onChange={(e) => setForm((prev: unknown) => ({ ...prev, stock_lot_id: e.target.value }))}
             >
               <option value="">Tous les lots (global)</option>
               {lots.map(lot => (
@@ -144,7 +144,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             type="number"
             label={selectedProduit?.has_reserve_storage ? t('products:adjustment.new_shelf_stock') : t('products:adjustment.new_quantity')}
             value={form.new_quantity}
-            onChange={(e) => setForm((prev: any) => ({ ...prev, new_quantity: e.target.value }))}
+            onChange={(e) => setForm((prev: unknown) => ({ ...prev, new_quantity: e.target.value }))}
             required
             min={0}
             size="lg"
@@ -170,7 +170,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                 type="number"
                 label={t('products:adjustment.new_reserve_stock')}
                 value={form.new_reserve_quantity}
-                onChange={(e) => setForm((prev: any) => ({ ...prev, new_reserve_quantity: e.target.value }))}
+                onChange={(e) => setForm((prev: unknown) => ({ ...prev, new_reserve_quantity: e.target.value }))}
                 required
                 min={0}
                 size="lg"
@@ -195,7 +195,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           <Select
             label={t('products:adjustment.reason_type')}
             value={form.reason_type}
-            onChange={(e) => setForm((prev: any) => ({ ...prev, reason_type: e.target.value }))}
+            onChange={(e) => setForm((prev: unknown) => ({ ...prev, reason_type: e.target.value }))}
             required
           >
             {allReasons.map(reason => (

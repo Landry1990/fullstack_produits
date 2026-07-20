@@ -5,7 +5,7 @@ import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
-import type { Facture, TicketCaisse, CouponMonnaie, PosteCaisse, PosteVente } from '../types'
+import type { Facture, TicketCaisse, CouponMonnaie, PosteVente } from '../types'
 import PasswordConfirmModal from './PasswordConfirmModal'
 import { PaymentModal } from './caisse/PaymentModal'
 import { FacturesTable } from './caisse/FacturesTable'
@@ -32,9 +32,9 @@ import { CaisseStatsCards } from './caisse/CaisseStatsCards'
 import { SessionRecapBar } from './caisse/SessionRecapBar'
 
 export default function CaisseCentralisee() {
-  const queryClient = useQueryClient()
+const _queryClient = useQueryClient()
   const { t } = useTranslation('caisse')
-  const navigate = useNavigate()
+const _navigate = useNavigate()
   const { user } = useAuth()
   const { settings: pharmacySettings } = usePharmacySettings()
   const [facturesEnAttente, setFacturesEnAttente] = useState<Facture[]>([])
@@ -63,12 +63,12 @@ export default function CaisseCentralisee() {
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0)
   
   // États pour le multi-caisse et sessions
-  const [postesCaisses, setPostesCaisses] = useState<any[]>([])
+  const [postesCaisses, setPostesCaisses] = useState<unknown[]>([])
   const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<string>('all')
   const [isMultiCaisse, setIsMultiCaisse] = useState(false)
   const [myActivePoste, setMyActivePoste] = useState<PosteVente | null>(null)
   const [showOpenSessionModal, setShowOpenSessionModal] = useState(false)
-  const [closingReport, setClosingReport] = useState<any>(null)
+  const [closingReport, setClosingReport] = useState<unknown>(null)
   const [showClosingReport, setShowClosingReport] = useState(false)
   const [hideAmounts, setHideAmounts] = useState(false) // Mode sécurité: masquer les montants aux caissiers
   const [selectedFactureIds, setSelectedFactureIds] = useState<Set<number>>(new Set())
@@ -90,7 +90,7 @@ export default function CaisseCentralisee() {
   // Fonction pour récupérer les factures en attente
   const fetchFacturesEnAttente = useCallback(async () => {
     try {
-      const params: Record<string, any> = { 
+      const params: Record<string, unknown> = { 
         status__in: 'BROU,VAL,PROF', 
         include_pending: true,
         include_details: true 
@@ -109,7 +109,7 @@ export default function CaisseCentralisee() {
 
   // Hook pour la logique des coupons
   const {
-    loading: couponLoading,
+    loading: _couponLoading,
     searchCouponNumero,
     setSearchCouponNumero,
     fetchCoupons,
@@ -252,7 +252,7 @@ export default function CaisseCentralisee() {
       setShowClosingReport(true)
       setMyActivePoste(null)
       setSessionRecap(null)
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err.response?.data?.detail || t('cash_session.close_error', { defaultValue: 'Erreur fermeture' }))
     }
   }
@@ -282,7 +282,7 @@ export default function CaisseCentralisee() {
         setIsDetailsCouponModalOpen(false)
         setShowTicketPreview(false)
       },
-      canCashOut: (user as any)?.can_cash_out || user?.is_superuser || false
+      canCashOut: (user as unknown)?.can_cash_out || user?.is_superuser || false
     },
     {
       sortedFactures,
@@ -327,7 +327,7 @@ export default function CaisseCentralisee() {
   const handleSendWhatsApp = async () => {
     if (!ticketCaisse || !ticketCaisse.facture || typeof ticketCaisse.facture === 'number') return
     
-    const facture = ticketCaisse.facture as any
+    const facture = ticketCaisse.facture as unknown
     // Déterminer le numéro (priorité au numéro du client si présent)
     const clientPhone = (typeof facture.client === 'object' ? facture.client?.phone : '') || facture.client_phone
     const phone = window.prompt(t('messages.enter_whatsapp_number') || t('messages.enter_whatsapp_number_desc'), clientPhone || '')
@@ -381,7 +381,7 @@ export default function CaisseCentralisee() {
     })
   }, [facturesEnAttente])
 
-  const canBulkCancel = user?.is_superuser || (user as any)?.can_cancel_invoice || (user as any)?.profile?.can_cancel_invoice
+  const canBulkCancel = user?.is_superuser || (user as unknown)?.can_cancel_invoice || (user as unknown)?.profile?.can_cancel_invoice
 
   // Ouvrir le modal de confirmation
   const handleBulkCancelClick = () => {
@@ -410,7 +410,7 @@ export default function CaisseCentralisee() {
           let hasMore = true
 
           while (hasMore) {
-            const payload: Record<string, any> = {
+            const payload: Record<string, unknown> = {
               motif: 'Vidange caisse centrale',
               sudo_user: validatorId,
               sudo_password: password,
@@ -446,7 +446,7 @@ export default function CaisseCentralisee() {
           setSelectedFactureIds(new Set())
           setShowBulkCancelModal(false)
           fetchFacturesEnAttente()
-        } catch (err: any) {
+        } catch (err: unknown) {
           toast.error(getApiErrorDetail(err, t('messages.bulk_cancel_error')))
           throw err
         } finally {

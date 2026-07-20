@@ -9,14 +9,13 @@ import { InventaireQuickStats } from '../InventaireQuickStats';
 import { InventaireListTable } from '../InventaireListTable';
 import { useInventaireList } from '../../../hooks/inventaire/useInventaireList';
 import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
-import communicationService from '../../../services/communicationService';
 import { toast } from 'react-hot-toast';
 import { usePharmacySettings } from '../../../hooks/usePharmacySettings';
 import { generateInventorySummaryText, openWhatsApp } from '../../../utils/whatsapp';
 
 interface InventaireListProps {
     listLogic: ReturnType<typeof useInventaireList>;
-    onEdit: (inventaire: any) => void;
+    onEdit: (inventaire: unknown) => void;
     onCreate: () => void;
     onOpenMergeModal: () => void;
     canMerge: { canMerge: boolean; reason: string | null };
@@ -67,7 +66,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
             if (success) {
                 toast.success(t('inventaire.whatsapp_prepared', { defaultValue: 'Rapport préparé pour WhatsApp !' }), { icon: '📱' });
             }
-        } catch (err: any) {
+        } catch {
             toast.error('Erreur lors de la préparation du partage');
         } finally {
             setSharingId(null);

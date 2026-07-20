@@ -92,7 +92,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm">
-                                    {paiements.map((p: any) => (
+                                    {paiements.map((p: unknown) => (
                                         <tr key={p.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-none">
                                             <td className="px-4 py-3 font-mono text-slate-500">{formatDateTime(p.date_paiement || p.created_at)}</td>
                                             <td className="px-4 py-3 font-bold text-slate-700">

@@ -5,10 +5,10 @@ import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './shadcn/card';
 import {
-  FileSpreadsheet, Printer, RefreshCw, ChevronDown, Layers,
+  FileSpreadsheet, Printer, ChevronDown, Layers,
   Package, TrendingUp, AlertCircle, CheckCircle2, BarChart3,
-  SlidersHorizontal, Eye, EyeOff, Building2, Tag, FlaskConical,
-  Grid3X3, Info, Download
+  SlidersHorizontal, Eye, Building2, Tag, FlaskConical,
+  Grid3X3, Info
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { downloadBlob } from '../utils/excelExport';
@@ -130,7 +130,7 @@ export default function EtatsInventaire() {
       try {
         const res = await api.get(endpointMap[groupBy], { params: { page_size: 300 } });
         const data = res.data.results || res.data;
-        setEntities(data.map((i: any) => ({ id: i.id, name: i.name || i.nom })));
+        setEntities(data.map((i: unknown) => ({ id: i.id, name: i.name || i.nom })));
       } catch { setEntities([]); }
       finally { setLoadingEntities(false); }
     };
@@ -145,7 +145,7 @@ export default function EtatsInventaire() {
       try {
         const res = await api.get('inventaires/', { params: { page_size: 100, ordering: '-date' } });
         const data = res.data.results || res.data;
-        setInventaires(data.map((inv: any) => ({
+        setInventaires(data.map((inv: unknown) => ({
           id: inv.id,
           reference: inv.reference || `#${inv.id}`,
           description: inv.description || '',

@@ -33,7 +33,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
         ordering, setOrdering
     } = filters;
 
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<unknown[]>([]);
 
     useEffect(() => {
         const fetchUsers = async () => {

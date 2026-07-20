@@ -3,8 +3,8 @@ import { safeStorage } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 
 export interface UseFacturationSessionProps {
-    clientsHook: any; 
-    ui: any;
+    clientsHook: unknown; 
+    ui: unknown;
     isRetrocession: boolean;
     setIsRetrocession: (v: boolean) => void;
     isFactureA4: boolean;
@@ -70,7 +70,7 @@ export function useFacturationSession({
             ayantDroitSociete: clientsHook.ayantDroitSociete
         };
         
-        const isDefaultClient = !clientsHook.selectedClient || (clientsHook.clients.find((c: any) => c.id === clientsHook.selectedClient)?.name.toLowerCase().includes('divers'));
+        const isDefaultClient = !clientsHook.selectedClient || (clientsHook.clients.find((c: unknown) => c.id === clientsHook.selectedClient)?.name.toLowerCase().includes('divers'));
         
         if (cartLength > 0 || !isDefaultClient || clientsHook.useManualClient) {
             safeStorage.setItem(contextStorageKey, JSON.stringify(sessionData), 'local');

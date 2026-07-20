@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import JsBarcode from 'jsbarcode'
 import bwipjs from 'bwip-js'
 import PremiumModal from './common/PremiumModal'
 import { useTranslation } from 'react-i18next'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
-import type { Commande, CommandeProduit, ProduitModel } from '../types'
+import type { Commande, ProduitModel } from '../types'
 
 /* ═══════════════════════════════════════════
    TYPES
@@ -184,7 +184,7 @@ function LabelPreview({
   fields: LabelField[]
   format: '40x20' | '30x15'
   barcodeType: 'CODE128' | 'DATAMATRIX'
-  t: any
+  t: unknown
 }) {
   const isEnabled = (key: string) => fields.find(f => f.key === key)?.enabled ?? false
   const isCompact = format === '30x15'
@@ -352,7 +352,7 @@ function PreviewLabelWrapper({
   fields: LabelField[]
   format: '40x20' | '30x15'
   barcodeType: 'CODE128' | 'DATAMATRIX'
-  t: any
+  t: unknown
   scale?: number
 }) {
   const isCompact = format === '30x15'
@@ -507,12 +507,12 @@ export default function SimplePrintLabelsModal({
       const resolved = produitObj || produitsMap.get(produitId)
 
       const productName =
-        (item as any).produit_nom ||
+        (item as unknown).produit_nom ||
         resolved?.name ||
         `Produit #${produitId}`
 
       const cip =
-        (item as any).produit_cip ||
+        (item as unknown).produit_cip ||
         resolved?.cip1 ||
         resolved?.cip2 ||
         resolved?.cip3 ||
@@ -552,7 +552,7 @@ export default function SimplePrintLabelsModal({
       const pharmacyName = pharmacySettings?.pharmacy_name || 'PHARMACIE'
 
       // Date d'entrée = date de clôture de la commande (réception effective) ou date du jour
-      const refDate = (commande as any).date_cloture || commande.date || new Date().toISOString()
+      const refDate = (commande as unknown).date_cloture || commande.date || new Date().toISOString()
       const dateEntree = (() => {
         try {
           const d = new Date(refDate)
@@ -564,7 +564,7 @@ export default function SimplePrintLabelsModal({
 
       // Fournisseur
       const fournisseur =
-        (commande as any).fournisseur_nom ||
+        (commande as unknown).fournisseur_nom ||
         resolved?.fournisseur_name ||
         ''
 
@@ -812,8 +812,8 @@ ${labelsHTML}
     }
 
     // Wait for fonts to be ready
-    if ((printWindow.document as any).fonts) {
-      (printWindow.document as any).fonts.ready.then(() => {
+    if ((printWindow.document as unknown).fonts) {
+      (printWindow.document as unknown).fonts.ready.then(() => {
         // Small delay to ensure browser layout engine catch up
         setTimeout(triggerPrint, 500)
       })

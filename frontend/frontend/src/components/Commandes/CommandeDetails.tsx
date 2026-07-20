@@ -144,7 +144,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
   const [savingLot, setSavingLot] = useState(false);
   const [localProduits, setLocalProduits] = useState<typeof selectedCommande.produits>(selectedCommande.produits);
 
-  const startLotEdit = useCallback((p: any) => {
+  const startLotEdit = useCallback((p: unknown) => {
     setEditingLotId(p.id);
     const produitId = typeof p.produit === 'object' ? p.produit?.id : p.produit;
     setEditLotValues({
@@ -485,9 +485,9 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
                     const produitData = (typeof p.produit === 'object') ? p.produit : produitsList.find(prod => prod.id === p.produit);
 
-                    const produitName = (p as any).produit_nom || (produitData?.name || `Produit #${p.produit}`);
+                    const produitName = (p as unknown).produit_nom || (produitData?.name || `Produit #${p.produit}`);
 
-                    const cip = (p as any).produit_cip || produitData?.cip1 || '-';
+                    const cip = (p as unknown).produit_cip || produitData?.cip1 || '-';
 
                     const enriched = { ...p, produitName, cip, originalIndex };
 
@@ -517,11 +517,11 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
                     const produitData = (typeof p.produit === 'object') ? p.produit : produitsList.find(prod => prod.id === p.produit);
 
-                    const stock = produitData?.stock ?? ((p as any).produit_stock ?? '-');
+                    const stock = produitData?.stock ?? ((p as unknown).produit_stock ?? '-');
 
                     const stockNum = typeof stock === 'number' ? stock : 0;
 
-                    const rotation = produitData?.rotation_moyenne ?? (p as any).produit_rotation_moyenne;
+                    const rotation = produitData?.rotation_moyenne ?? (p as unknown).produit_rotation_moyenne;
 
                     const rotationDisplay = rotation ? normalizeNumberInput(String(rotation)).toFixed(1) : '-';
 

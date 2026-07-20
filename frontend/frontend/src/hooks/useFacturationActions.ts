@@ -3,7 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { safeStorage } from '../utils/storage';
-import type { Facture, LigneFacture, TotalsData, User, StockLot, Client, LotAllocation } from '../types';
+import type { Facture, LigneFacture, TotalsData, User, Client, LotAllocation } from '../types';
 import type { PosteVente } from '../services/cashSessionService';
 import type { OrdonnanceData } from '../components/OrdonnanceModal';
 import type { useFacturationClients } from './useFacturationClients';
@@ -54,7 +54,7 @@ export function useFacturationActions({
     secureUpdateQuantite,
     user,
     myActivePoste,
-    postesCaisses
+    postesCaisses: _postesCaisses
 }: UseFacturationActionsProps) {
 
     const handleProforma = useCallback(async () => {
@@ -100,7 +100,7 @@ export function useFacturationActions({
             try {
                 window.open(`/app/print-invoice/${createdFacture.id}`, '_blank')
                 toast.success("Proforma généré avec succès")
-            } catch (err) {}
+            } catch {}
 
             cart.setLignesFacture([])
             ui.setMontantPaye('')
@@ -109,7 +109,7 @@ export function useFacturationActions({
             clientsHook.setSelectedClient(null)
             clientsHook.setManualClientName('')
             ui.setTicketCaisse(null)
-        } catch (error) {
+        } catch {
             toast.error("Erreur lors de la création du proforma")
         } finally {
             setLoading(false)
@@ -207,7 +207,7 @@ export function useFacturationActions({
             let url = `/app/print-invoice/${pendingPrintFacture.id}`;
             if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
             window.open(url, '_blank');
-        } catch (error) {
+        } catch {
             let url = `/app/print-invoice/${pendingPrintFacture.id}`;
             if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
             window.open(url, '_blank');
@@ -251,7 +251,7 @@ export function useFacturationActions({
 
     const handleSendWhatsApp = useCallback(async () => {
         if (!ui.ticketCaisse || !ui.ticketCaisse.facture || typeof ui.ticketCaisse.facture === 'number') return
-        const facture = ui.ticketCaisse.facture as any
+        const facture = ui.ticketCaisse.facture as unknown
         const clientPhone = (typeof facture.client === 'object' ? facture.client?.phone : '') || facture.client_phone
         const phone = window.prompt(t('facturation.messages.enter_whatsapp_number') || 'Entrez le numéro WhatsApp', clientPhone || '')
         if (!phone) return

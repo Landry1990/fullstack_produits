@@ -32,7 +32,7 @@ export default function InventaireComponent() {
         listLogic.fetchInventaires();
     }, []);
 
-    const handleConfirmCreate = async (options: any) => {
+    const handleConfirmCreate = async (options: unknown) => {
         const newInv = await editorLogic.handleCreateWithOptions(options);
         if (newInv) {
             setShowCreateModal(false);

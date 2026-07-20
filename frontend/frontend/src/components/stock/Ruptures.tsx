@@ -14,29 +14,29 @@ export default function Ruptures() {
   const [activeTab, setActiveTab] = useState<'pharmacie' | 'fournisseur' | 'stats'>('pharmacie');
 
   // Pharmacie State
-  const [pharmacieData, setPharmacieData] = useState<any[]>([]);
+  const [pharmacieData, setPharmacieData] = useState<unknown[]>([]);
   const [pharmacieLoading, setPharmacieLoading] = useState(false);
   const [pharmaciePage, setPharmaciePage] = useState(1);
   const [pharmacieTotalPages, setPharmacieTotalPages] = useState(1);
   
   // Filters for Pharmacie
-  const [rayons, setRayons] = useState<any[]>([]);
-  const [fournisseurs, setFournisseurs] = useState<any[]>([]);
+  const [rayons, setRayons] = useState<unknown[]>([]);
+  const [fournisseurs, setFournisseurs] = useState<unknown[]>([]);
   const [selectedRayon, setSelectedRayon] = useState<string>('');
   const [selectedFournisseur, setSelectedFournisseur] = useState<string>('');
 
   // Fournisseur State
-  const [fournisseurData, setFournisseurData] = useState<any[]>([]);
+  const [fournisseurData, setFournisseurData] = useState<unknown[]>([]);
   const [fournisseurLoading, setFournisseurLoading] = useState(false);
   
   // Stats State
-  const [statsData, setStatsData] = useState<any[]>([]);
+  const [statsData, setStatsData] = useState<unknown[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsDays, setStatsDays] = useState<string>('30');
 
   // Search Products for Supplier Shortage
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<unknown[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   // Selection State
@@ -131,7 +131,7 @@ export default function Ruptures() {
       const res = await api.get(url);
       setPharmacieData(res.data.results || []);
       setPharmacieTotalPages(Math.ceil((res.data.count || 0) / 50));
-    } catch (error) {
+    } catch {
       toast.error(t('common:error_loading_data', 'Erreur de chargement'));
     } finally {
       setPharmacieLoading(false);
@@ -143,7 +143,7 @@ export default function Ruptures() {
     try {
       const res = await api.get('ruptures-fournisseurs/?est_resolu=false');
       setFournisseurData(res.data.results || res.data || []);
-    } catch (error) {
+    } catch {
       toast.error(t('common:error_loading_data', 'Erreur de chargement'));
     } finally {
       setFournisseurLoading(false);
@@ -158,7 +158,7 @@ export default function Ruptures() {
         : `ruptures-fournisseurs/statistiques_frequence/?days=${statsDays}`;
       const res = await api.get(url);
       setStatsData(res.data || []);
-    } catch (error) {
+    } catch {
       toast.error(t('common:error_loading_data', 'Erreur de chargement'));
     } finally {
       setStatsLoading(false);
@@ -207,7 +207,7 @@ export default function Ruptures() {
     }
   };
 
-  const ajouterACommande = async (produitId: number) => {
+const _ajouterACommande = async (produitId: number) => {
     try {
       const res = await api.post(
         'commandes/ajouter_produit_auto/',
@@ -233,7 +233,7 @@ export default function Ruptures() {
       link.download = `frequence_ruptures_${statsDays}j.csv`;
       link.click();
       toast.success(t('common:export_success', 'Export réussi'));
-    } catch (error) {
+    } catch {
       toast.error(t('common:export_error', 'Erreur lors de l\'export'));
     }
   };
@@ -243,7 +243,7 @@ export default function Ruptures() {
       await api.post(`ruptures-fournisseurs/${id}/resoudre/`);
       toast.success(t('ruptures.fournisseur.resolve_success', 'Résolu avec succès'));
       fetchFournisseurRuptures();
-    } catch (error) {
+    } catch {
       toast.error(t('ruptures.fournisseur.resolve_error', 'Erreur lors de la résolution'));
     }
   };

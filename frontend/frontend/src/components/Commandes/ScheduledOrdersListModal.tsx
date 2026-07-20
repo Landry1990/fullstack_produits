@@ -8,10 +8,7 @@ import {
     Edit, 
     Trash2, 
     Clock, 
-    Bell,
-    Settings2,
-    Package,
-    ArrowRight,
+    Package, 
     Zap
 } from 'lucide-react'
 import type { Fournisseur, OrderSchedule } from '../../types'
@@ -39,7 +36,7 @@ export default function ScheduledOrdersListModal({
     fournisseurs,
     refreshTrigger
 }: ScheduledOrdersListModalProps) {
-    const { t } = useTranslation(['orders', 'common'])
+    useTranslation(['orders', 'common'])
     const [schedules, setSchedules] = useState<OrderSchedule[]>([])
     const [loading, setLoading] = useState(false)
     const [triggeringId, setTriggeringId] = useState<number | null>(null)
@@ -53,7 +50,7 @@ export default function ScheduledOrdersListModal({
         try {
             const data = await procurementService.getSchedules()
             setSchedules(data.results || data)
-        } catch (err) {
+        } catch {
             toast.error("Erreur lors du chargement des plannings")
         } finally {
             setLoading(false)
@@ -71,7 +68,7 @@ export default function ScheduledOrdersListModal({
             } else {
                 toast(result.detail || 'Aucune suggestion générée.', { icon: '⚠️' })
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(err.response?.data?.error || 'Erreur lors de la génération')
         } finally {
             setTriggeringId(null)
@@ -84,7 +81,7 @@ export default function ScheduledOrdersListModal({
             await procurementService.deleteSchedule(id)
             toast.success("Planning supprimé")
             fetchSchedules()
-        } catch (err) {
+        } catch {
             toast.error("Erreur lors de la suppression")
         }
     }

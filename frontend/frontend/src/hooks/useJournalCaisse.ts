@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { escHtml } from '../utils/print/printHelpers';
-import { formatDate, formatDateTime, toApiDateTime, toApiDateStart, toApiDateEnd } from '../utils/dateUtils';
+import { formatDate, formatDateTime, toApiDateTime, toApiDateEnd } from '../utils/dateUtils';
 import { getPaymentModeLabel } from '../config/paymentModes';
 
 export function useJournalCaisse() {
@@ -82,7 +82,7 @@ export function useJournalCaisse() {
     total_sorties: number,
     total_ca_pharmacie?: number,
     total_ca_divers?: number,
-    details: Record<string, number | Record<string, any>>,
+    details: Record<string, number | Record<string, unknown>>,
     user?: string
   } | null>(null);
   const [actualAmount, setActualAmount] = useState<string>('');
@@ -376,7 +376,7 @@ export function useJournalCaisse() {
   }, [serverTotals]);
 
   const openClosingModal = () => {
-      const currentTotals = (serverTotals || totauxParMode) as any;
+      const currentTotals = (serverTotals || totauxParMode) as unknown;
       
       const modalTotals = {
           start_date: dateDebut ? toApiDateTime(dateDebut) : currentTotals?.start_date || null,
@@ -406,7 +406,7 @@ export function useJournalCaisse() {
       setIsClosingModalOpen(true);
   };
 
-  const handleImprimerCloture = (dataToPrint?: any) => {
+  const handleImprimerCloture = (dataToPrint?: unknown) => {
     const data = dataToPrint || closingTotals;
     if (!data) return;
 
@@ -426,14 +426,14 @@ export function useJournalCaisse() {
         ([key]) => !key.startsWith('__') && key !== 'mouvements_audit' && key !== 'mouvements'
       );
 
-      const manualMovements = (data.mouvements_manuels || []).map((m: any) => ({
+      const manualMovements = (data.mouvements_manuels || []).map((m: unknown) => ({
         type: m.type,
         montant: m.montant,
         motif: m.motif,
         user_nom: data.user || 'Caissier',
         date: data.date_fin || data.end_date
       }));
-      const existingMovements = (data.mouvements_audit || (data.details?.mouvements_audit) || []).map((m: any) => ({
+      const existingMovements = (data.mouvements_audit || (data.details?.mouvements_audit) || []).map((m: unknown) => ({
         type: m.type,
         montant: m.montant,
         motif: m.motif,
@@ -497,7 +497,7 @@ export function useJournalCaisse() {
             ${allMovements.length > 0 ? `
             <div style="margin-bottom: 10px;">
                 <div style="font-weight: 500; margin-bottom: 3px; border-bottom: 0.5px solid #999; font-size: 0.85em;">${t('print.expense_details')}</div>
-                ${allMovements.map((m: any) => `
+                ${allMovements.map((m: unknown) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.75em; margin-bottom: 2px;">
                         <span style="max-width: 70%;">${escHtml(m.motif)} (${escHtml(m.user_nom)})</span>
                         <span style="font-weight: 500;">${formatCurrencyLocal(m.montant)}</span>
@@ -511,7 +511,7 @@ export function useJournalCaisse() {
                 ${displayDetails.map(([mode, montant]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 1px;">
                         <span style="text-transform: capitalize;">${getModeLabel(mode)}</span>
-                        <span>${formatCurrencyLocal(normalizeNumberInput(montant as any))}</span>
+                        <span>${formatCurrencyLocal(normalizeNumberInput(montant as unknown))}</span>
                     </div>
                 `).join('')}
             </div>

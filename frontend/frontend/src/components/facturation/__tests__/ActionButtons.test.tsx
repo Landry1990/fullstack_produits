@@ -8,7 +8,7 @@ const mockOnProforma = vi.fn()
 const mockOnBonDeLivraison = vi.fn()
 const mockOnSuspend = vi.fn()
 const mockOnCancel = vi.fn()
-const mockOnViewPending = vi.fn()
+const _mockOnViewPending = vi.fn()
 
 const defaultProps = {
   onPayment: mockOnPayment,

@@ -3,81 +3,81 @@ import type { PaiementFournisseur } from '../types';
 
 const financeService = {
     // Financial Stats
-    getCAEvolution: async (): Promise<any> => {
+    getCAEvolution: async (): Promise<unknown> => {
         const response = await api.get('finance-stats/ca_evolution/');
         return response.data;
     },
 
-    getMargesEvolution: async (): Promise<any> => {
+    getMargesEvolution: async (): Promise<unknown> => {
         const response = await api.get('finance-stats/marges_evolution/');
         return response.data;
     },
 
-    getPredictions: async (): Promise<any> => {
+    getPredictions: async (): Promise<unknown> => {
         const response = await api.get('finance-stats/predictions/');
         return response.data;
     },
 
-    getKPIs: async (): Promise<any> => {
+    getKPIs: async (): Promise<unknown> => {
         const response = await api.get('finance-stats/kpis/');
         return response.data;
     },
 
-    getTopProducts: async (periode: string, critere: string): Promise<any> => {
+    getTopProducts: async (periode: string, critere: string): Promise<unknown> => {
         const response = await api.get('finance-stats/top_products/', {
             params: { periode, critere }
         });
         return response.data;
     },
 
-    getRepartitionCA: async (by: string, periode: string): Promise<any> => {
+    getRepartitionCA: async (by: string, periode: string): Promise<unknown> => {
         const response = await api.get('finance-stats/repartition_ca/', {
             params: { by, periode }
         });
         return response.data;
     },
 
-    getAnalyseCategories: async (type: string, periode: string): Promise<any> => {
+    getAnalyseCategories: async (type: string, periode: string): Promise<unknown> => {
         const response = await api.get('finance-stats/analyse_categories/', {
             params: { type, periode }
         });
         return response.data;
     },
 
-    getEvolutionCategories: async (type: string, top: number): Promise<any> => {
+    getEvolutionCategories: async (type: string, top: number): Promise<unknown> => {
         const response = await api.get('finance-stats/evolution_categories/', {
             params: { type, top }
         });
         return response.data;
     },
 
-    getAnalyseMarges: async (): Promise<any> => {
+    getAnalyseMarges: async (): Promise<unknown> => {
         const response = await api.get('finance-stats/analyse_marges/');
         return response.data;
     },
 
-    getAnalyseFournisseurs: async (): Promise<any> => {
+    getAnalyseFournisseurs: async (): Promise<unknown> => {
         const response = await api.get('finance-stats/analyse_fournisseurs/');
         return response.data;
     },
 
-    getComparaisonPrix: async (): Promise<any> => {
+    getComparaisonPrix: async (): Promise<unknown> => {
         const response = await api.get('finance-stats/comparaison_prix_achat/');
         return response.data;
     },
 
-    getRepartitionAchats: async (): Promise<any> => {
+    getRepartitionAchats: async (): Promise<unknown> => {
         const response = await api.get('finance-stats/repartition_achats/');
         return response.data;
     },
 
-    getMarginVarianceAnalysis: async (params?: any): Promise<any> => {
+    getMarginVarianceAnalysis: async (params?: unknown): Promise<unknown> => {
         const response = await api.get('finance-stats/margin_variance_analysis/', { params });
         return response.data;
     },
 
     // Supplier Payments
-    getPaiements: async (fournisseurId?: number): Promise<any> => {
+    getPaiements: async (fournisseurId?: number): Promise<unknown> => {
         const params = fournisseurId ? { fournisseur: fournisseurId } : {};
         const response = await api.get('paiements-fournisseurs/', { params });
         return response.data;

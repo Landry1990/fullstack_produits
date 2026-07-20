@@ -15,7 +15,7 @@ export interface UseSecureCartOperationsOptions {
     ) => void
     setActiveSudoCreds: (creds: { validatorId: number; password: string } | null) => void
     activeSudoCreds: { validatorId: number; password: string } | null
-    t: (key: string, options?: any) => string
+    t: (key: string, options?: unknown) => string
     triggerUiRefresh: () => void
     maxDiscountRate: number
 }

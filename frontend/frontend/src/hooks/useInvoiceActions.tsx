@@ -32,15 +32,10 @@ const printInvoicePDF = (factureId: number, clientName?: string | null, type?: s
     );
 };
 
-// --- PRINTING HELPERS (module-scope: close over no hook state) ---
-const handlePrintInvoice = (facture: Facture): void => {
-    const nameToUse = facture.client_name_override || facture.client_name;
-    printInvoicePDF(facture.id, nameToUse);
-};
-
-const handlePrintBL = (facture: Facture): void => {
-    const nameToUse = facture.client_name_override || facture.client_name;
-    printInvoicePDF(facture.id, nameToUse, 'BL');
+const isGenericClient = (facture: Facture): boolean => {
+    if (facture.client_name_override) return false;
+    const name = (facture.client_name || '').toLowerCase().trim();
+    return !name || name.includes('divers') || name.includes('passage');
 };
 
 export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) => {
@@ -77,7 +72,26 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         }
     };
 
-    // --- PRINTING --- (handlePrintInvoice & handlePrintBL hoisted to module scope below)
+    // --- PRINTING ---
+    const handlePrintInvoice = (facture: Facture): void => {
+        if (isGenericClient(facture)) {
+            setPendingPrintFacture(facture);
+            setShowClientNameModal(true);
+        } else {
+            const nameToUse = facture.client_name_override || facture.client_name;
+            printInvoicePDF(facture.id, nameToUse);
+        }
+    };
+
+    const handlePrintBL = (facture: Facture): void => {
+        if (isGenericClient(facture)) {
+            setPendingPrintFacture(facture);
+            setShowClientNameModal(true);
+        } else {
+            const nameToUse = facture.client_name_override || facture.client_name;
+            printInvoicePDF(facture.id, nameToUse, 'BL');
+        }
+    };
 
     const handleConfirmPrintClientName = async (clientNameInput: string) => {
         if (!pendingPrintFacture) return;

@@ -15,9 +15,9 @@ registerLocale('fr', fr);
 
 interface ReportFiltersProps {
     selectedQuery: QueryDefinition;
-    params: Record<string, any>;
-    onParamsChange: (params: Record<string, any>) => void;
-    safeDate: (dateStr: any) => Date | null;
+    params: Record<string, unknown>;
+    onParamsChange: (params: Record<string, unknown>) => void;
+    safeDate: (dateStr: unknown) => Date | null;
     clientSearch: {
         query: string;
         filtered: Client[];
@@ -31,7 +31,7 @@ interface ReportFiltersProps {
     };
     supplierSearch: {
         query: string;
-        filtered: any[];
+        filtered: unknown[];
         showDropdown: boolean;
         selectedName: string;
     };
@@ -42,7 +42,7 @@ interface ReportFiltersProps {
     };
     userSearch: {
         query: string;
-        filtered: any[];
+        filtered: unknown[];
         showDropdown: boolean;
         selectedName: string;
     };
@@ -53,7 +53,7 @@ interface ReportFiltersProps {
     };
     familleSearch: {
         query: string;
-        filtered: any[];
+        filtered: unknown[];
         showDropdown: boolean;
         selectedName: string;
     };
@@ -65,9 +65,9 @@ interface ReportFiltersProps {
     presets: {
         save: (name: string) => void;
         delete: (id: string) => void;
-        apply: (preset: any) => void;
+        apply: (preset: unknown) => void;
     };
-    presetList: any[];
+    presetList: unknown[];
 }
 
 export const ReportFilters: React.FC<ReportFiltersProps> = ({
@@ -105,7 +105,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
     if (selectedQuery.params.length === 0) return null;
 
-    const setParam = (key: string, value: any) => {
+    const setParam = (key: string, value: unknown) => {
         onParamsChange({ ...params, [key]: value });
     };
 
@@ -524,7 +524,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         </div>
 
                                         <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                                            {currentConditions.map((cond: any, idx: number) => {
+                                            {currentConditions.map((cond: unknown, idx: number) => {
                                                 const showValueInput = !['isnull', 'notnull'].includes(cond.operator);
                                                 
                                                 return (
@@ -588,7 +588,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         <button 
                                                             className="size-7 p-0 rounded-full text-red-600 hover:bg-red-50 ml-auto flex items-center justify-center transition-colors"
                                                             onClick={() => {
-                                                                const newConds = currentConditions.filter((_: any, i: number) => i !== idx);
+                                                                const newConds = currentConditions.filter((_: unknown, i: number) => i !== idx);
                                                                 setParam('conditions', JSON.stringify(newConds));
                                                             }}
                                                         >

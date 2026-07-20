@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
-import { getApiErrorDetail, getErrorMessage } from '../utils/errorHandling';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
 import PasswordConfirmModal from './PasswordConfirmModal';
@@ -127,7 +127,7 @@ export default function Produit() {
   const { data: fournisseurs = [] } = useFournisseurs();
   const { data: formes = [] } = useFormes();
   const { data: groupes = [] } = useGroupes();
-  const { tvaList, loading: loadingTVA } = useTVA();
+  const { loading: _loadingTVA } = useTVA();
 
 
 
@@ -156,7 +156,7 @@ export default function Produit() {
 
   // Constants
   // -- FORMS --
-  const [editForm, setEditForm] = useState<any>({
+  const [editForm, setEditForm] = useState<unknown>({
     name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '',
     expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
     rayon: '', fournisseur: '', forme: '', use_lot_management: true, requires_prescription: false,
@@ -205,7 +205,7 @@ export default function Produit() {
     } finally { setTransferLoading(false); }
   };
 
-  const handleMovementClick = async (item: any) => {
+  const handleMovementClick = async (item: unknown) => {
     if (!item) return;
     if (item.facture) {
       try {
@@ -302,13 +302,12 @@ export default function Produit() {
       });
       const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : '';
       toast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
-      const qtyChange = data.quantity_change ?? 0;
       setSelectedProduit(prev => {
         if (!prev) return null;
         return {
           ...prev,
           stock: (prev.stock ?? 0) + (data.quantity_change ?? 0),
-          stock_reserve: (prev.stock_reserve ?? 0) + ((data as any).reserve_change ?? 0)
+          stock_reserve: (prev.stock_reserve ?? 0) + ((data as unknown).reserve_change ?? 0)
         };
       });
       setIsAdjustmentModalOpen(false)
@@ -378,7 +377,7 @@ export default function Produit() {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         if (produits.length === 0) return
         const currentIndex = selectedProduit ? produits.findIndex(p => p.id === selectedProduit.id) : -1
-        let newIndex = e.key === 'ArrowDown' ? (currentIndex < produits.length - 1 ? currentIndex + 1 : 0) : (currentIndex > 0 ? currentIndex - 1 : produits.length - 1)
+        const newIndex = e.key === 'ArrowDown' ? (currentIndex < produits.length - 1 ? currentIndex + 1 : 0) : (currentIndex > 0 ? currentIndex - 1 : produits.length - 1)
         const newProduit = produits[newIndex]
         if (newProduit) {
           setSelectedProduit(newProduit)
@@ -571,7 +570,7 @@ export default function Produit() {
         rayons={rayons}
         fournisseurs={fournisseurs}
         formes={formes}
-        groupes={groupes as any}
+        groupes={groupes as unknown}
       />
       <StockAdjustmentModal 
         isOpen={isAdjustmentModalOpen} onClose={() => setIsAdjustmentModalOpen(false)}
@@ -595,7 +594,7 @@ export default function Produit() {
         rayons={rayons}
         fournisseurs={fournisseurs}
         formes={formes}
-        groupes={groupes as any}
+        groupes={groupes as unknown}
       />
       {isImportModalOpen && (
         <ImportProductsModal 

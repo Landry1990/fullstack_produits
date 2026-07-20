@@ -30,7 +30,7 @@ interface StockResolutionHandlerProps {
     
     // Completion Callback
     onComplete: (updatedLignes?: LigneFacture[], sudoCredentials?: { validatorId: number, password: string }) => void
-    requireSudo: (onSuccess: (validatorId: number, password: string) => void | Promise<void>, options?: any) => void
+    requireSudo: (onSuccess: (validatorId: number, password: string) => void | Promise<void>, options?: unknown) => void
 }
 
 export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({

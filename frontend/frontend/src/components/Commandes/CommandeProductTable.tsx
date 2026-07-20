@@ -265,7 +265,7 @@ export default function CommandeProductTable({
 
                             value={commandeSortBy || 'chrono'}
 
-                            onChange={(e) => onSortProduits(e.target.value as any)}
+                            onChange={(e) => onSortProduits(e.target.value as unknown)}
 
                         >
 
@@ -423,19 +423,19 @@ export default function CommandeProductTable({
 
                         const isObjectProduit = p.produit && typeof p.produit === 'object';
 
-                        const produitId = isObjectProduit ? (p.produit as any).id : p.produit;
+                        const produitId = isObjectProduit ? (p.produit as unknown).id : p.produit;
 
 
 
-                        if (isObjectProduit && (p.produit as any).name) {
+                        if (isObjectProduit && (p.produit as unknown).name) {
 
-                            produitName = (p.produit as any).name;
+                            produitName = (p.produit as unknown).name;
 
-                            cip = (p.produit as any).cip1 || '';
+                            cip = (p.produit as unknown).cip1 || '';
 
-                            isExclusive = (p.produit as any).is_supplier_exclusive || false;
+                            isExclusive = (p.produit as unknown).is_supplier_exclusive || false;
 
-                            supplierName = (p.produit as any).fournisseur_name || '';
+                            supplierName = (p.produit as unknown).fournisseur_name || '';
 
                         } else {
 
@@ -453,13 +453,13 @@ export default function CommandeProductTable({
 
                                 supplierName = found.fournisseur_name || '';
 
-                            } else if ((p as any).produit_nom) {
+                            } else if ((p as unknown).produit_nom) {
 
                                  // Fallback to flattened fields from API
 
-                                 produitName = (p as any).produit_nom;
+                                 produitName = (p as unknown).produit_nom;
 
-                                 cip = (p as any).produit_cip || (p as any).produit_ref || '';
+                                 cip = (p as unknown).produit_cip || (p as unknown).produit_ref || '';
 
                             } else if (p.produit === null) {
 
@@ -575,9 +575,9 @@ export default function CommandeProductTable({
 
                                     if (found && found.cip1) return found.cip1;
 
-                                    const flatCip = (p as any).cip || (p as any).produit_cip || (p as any).produit_ref;
+                                    const flatCip = (p as unknown).cip || (p as unknown).produit_cip || (p as unknown).produit_ref;
 
-                                    if (flatCip && flatCip !== (p as any).produit_nom) return flatCip;
+                                    if (flatCip && flatCip !== (p as unknown).produit_nom) return flatCip;
 
                                     return '-';
 
@@ -597,7 +597,7 @@ export default function CommandeProductTable({
 
                                     ? p.produit.stock 
 
-                                    : (p as any).produit_stock ?? 0;
+                                    : (p as unknown).produit_stock ?? 0;
 
                                 return (
 
@@ -988,7 +988,7 @@ export default function CommandeProductTable({
 
                                     const pObj = (p.produit && typeof p.produit === 'object') ? p.produit : null;
 
-                                    const pAny = p as any;
+                                    const pAny = p as unknown;
 
                                     
 
@@ -996,19 +996,19 @@ export default function CommandeProductTable({
 
                                     const s = {
 
-                                        dernier_achat: (pObj as any)?.dernier_achat || pAny.produit_dernier_achat,
+                                        dernier_achat: (pObj as unknown)?.dernier_achat || pAny.produit_dernier_achat,
 
-                                        dernier_vente: (pObj as any)?.dernier_vente || pAny.produit_dernier_vente,
+                                        dernier_vente: (pObj as unknown)?.dernier_vente || pAny.produit_dernier_vente,
 
                                         rotation_moyenne: pObj?.rotation_moyenne || pAny.produit_rotation_moyenne,
 
                                         stock_minimum: pObj?.stock_minimum || pAny.produit_stock_minimum || 0,
 
-                                        stock_maximum: (pObj as any)?.stock_maximum || pAny.produit_stock_maximum || 0,
+                                        stock_maximum: (pObj as unknown)?.stock_maximum || pAny.produit_stock_maximum || 0,
 
                                         stock_alert: pObj?.stock_alert || pAny.produit_stock_alert || 0,
 
-                                        cost_price: (pObj as any)?.cost_price || pAny.produit_cost_price || p.price,
+                                        cost_price: (pObj as unknown)?.cost_price || pAny.produit_cost_price || p.price,
 
                                         stock: pObj?.stock ?? pAny.produit_stock ?? 0,
 

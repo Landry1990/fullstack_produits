@@ -1,10 +1,10 @@
-let router: any = null;
+let router: unknown = null;
 
-export const setRouter = (r: any) => {
+export const setRouter = (r: unknown) => {
   router = r;
 };
 
-export const navigate = (path: string, options?: any) => {
+export const navigate = (path: string, options?: unknown) => {
   if (router) {
     router.navigate(path, options);
   } else {

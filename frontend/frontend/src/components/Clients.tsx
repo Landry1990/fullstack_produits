@@ -103,7 +103,7 @@ export default function Clients() {
   const [loyaltyThreshold, setLoyaltyThreshold] = useState<number>(0);
 
   // Purchase History State
-  const [purchaseHistory, setPurchaseHistory] = useState<any | null>(null);
+  const [purchaseHistory, setPurchaseHistory] = useState<unknown | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   // Debounce search
@@ -133,7 +133,7 @@ export default function Clients() {
         setClients(data);
         setTotalCount(data.length);
       }
-    } catch (err) {
+    } catch {
       toast.error(t('clients:messages.error_fetch'));
     } finally {
       setLoading(false);
@@ -222,15 +222,15 @@ export default function Clients() {
         // Validation avec Zod
         const validation = clientSchema.safeParse(formData);
         if (!validation.success) {
-            const errorMsg = (validation.error as any).errors
-                .map((err: any) => `${t(`clients:fields.${err.path[0]}`)}: ${err.message}`)
+            const errorMsg = (validation.error as unknown).errors
+                .map((err: unknown) => `${t(`clients:fields.${err.path[0]}`)}: ${err.message}`)
                 .join('\n');
             toast.error(errorMsg, { duration: 5000 });
             setIsSubmitting(false);
             return;
         }
 
-        const cleanData = validation.data as any;
+        const cleanData = validation.data as unknown;
 
         if (formMode === 'create') {
             const created = await clientService.create(cleanData);
@@ -245,7 +245,7 @@ export default function Clients() {
             toast.success(t('clients:messages.update_success'));
         }
         setIsFormModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
         toast.error(err.response?.data?.message || t('clients:messages.error_save'));
     } finally {
         setIsSubmitting(false);
@@ -286,7 +286,7 @@ export default function Clients() {
             await clientService.delete(deletedId);
             toast.success(t('clients:messages.delete_success'));
             setTimeout(() => fetchClients(true), 500);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[Clients] Delete error:', err);
             toast.error(err.response?.data?.detail || t('clients:messages.error_delete'));
             fetchClients(true);
@@ -301,7 +301,7 @@ export default function Clients() {
         toast.success(res.is_active ? t('clients:messages.status_active') : t('clients:messages.status_inactive'));
         setSelectedClient({...selectedClient, is_active: res.is_active});
         setTimeout(() => fetchClients(true), 500);
-    } catch (err) {
+    } catch {
         toast.error(t('clients:messages.error_status'));
     }
   };
@@ -340,7 +340,7 @@ export default function Clients() {
             toast.success(t('clients:messages.bulk_delete_success', { count: selectedIds.length }));
             setSelectedIds([]);
             setTimeout(() => fetchClients(true), 500);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[Clients] Bulk delete error:', err);
             toast.error(err.response?.data?.detail || t('clients:messages.error_bulk_delete'));
             fetchClients(true);
@@ -441,10 +441,10 @@ export default function Clients() {
                           </div>
                           <div className="flex items-center justify-between gap-1.5 text-xs text-slate-500">
                              <span className="flex items-center gap-1"><Phone className="size-3" /> {client.phone || '—'}</span>
-                             {client.client_type === 'PROFESSIONNEL' && (client as any).ayants_droit_count > 0 && (
+                             {client.client_type === 'PROFESSIONNEL' && (client as unknown).ayants_droit_count > 0 && (
                                <span className="flex items-center gap-0.5 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] font-medium">
                                  <Users className="size-3" />
-                                 {(client as any).ayants_droit_count}
+                                 {(client as unknown).ayants_droit_count}
                                </span>
                              )}
                           </div>
@@ -661,7 +661,7 @@ export default function Clients() {
                              </TableHeader>
                              <TableBody>
                                 {selectedClient.ayants_droit && selectedClient.ayants_droit.length > 0 ? (
-                                  selectedClient.ayants_droit.map((ad: AyantDroit, idx: number) => (
+                                  selectedClient.ayants_droit.map((ad: AyantDroit, _idx: number) => (
                                     <TableRow key={ad.matricule || ad.nom} className="hover:bg-slate-50 transition-colors">
                                        <TableCell className="px-6 py-3 text-sm font-medium text-slate-700">{ad.nom}</TableCell>
                                        <TableCell className="px-6 py-3 text-sm text-slate-500">{ad.societe || '—'}</TableCell>

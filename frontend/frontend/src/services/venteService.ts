@@ -1,5 +1,5 @@
 import api from './api';
-import type { Facture, PaginatedResponse, SaleCompletionParams } from '../types';
+import type { Facture, PaginatedResponse } from '../types';
 import { generateUUID } from '../utils/uuid';
 
 export interface SalesStats {
@@ -79,7 +79,7 @@ const venteService = {
         return response.data;
     },
 
-    finaliser: async (data: any, idempotencyKey?: string): Promise<Facture> => {
+    finaliser: async (data: unknown, idempotencyKey?: string): Promise<Facture> => {
         const key = idempotencyKey || data.idempotency_key || generateUUID();
         const headers = { 'Idempotency-Key': key };
 
@@ -97,7 +97,7 @@ const venteService = {
         return response.data;
     },
 
-    modifier: async (id: number, data: any): Promise<{ facture: Facture, difference: number }> => {
+    modifier: async (id: number, data: unknown): Promise<{ facture: Facture, difference: number }> => {
         const response = await api.post<{ facture: Facture, difference: number }>(`factures/${id}/modifier/`, data);
         return response.data;
     }

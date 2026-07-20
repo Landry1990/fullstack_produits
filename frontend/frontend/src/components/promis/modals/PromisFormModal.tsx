@@ -75,7 +75,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
             toast.success(t('common:messages.created'));
             onSuccess();
             handleClose();
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(err.response?.data?.detail || t('stock:promis.validation.create_error'));
             console.error(err);
         } finally {

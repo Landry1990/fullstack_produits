@@ -186,13 +186,13 @@ export default function TransferCommandeModal({
                 <div className="bg-base-200 rounded-lg p-4 mb-4 max-h-60 overflow-y-auto">
                     <h4 className="font-semibold text-sm mb-2">{t('orders:transfer_modal.products_title', { count: selectedProducts.length })}</h4>
                     <div className="space-y-2">
-                        {selectedProducts.map((p, i) => {
+                        {selectedProducts.map((p, _i) => {
                             const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
                             let produitName = '';
                             if (p.produit && typeof p.produit === 'object' && p.produit.name) {
                                 produitName = p.produit.name;
-                            } else if ((p as any).produit_nom) {
-                                produitName = (p as any).produit_nom;
+                            } else if ((p as unknown).produit_nom) {
+                                produitName = (p as unknown).produit_nom;
                             } else {
                                 const found = produitsList.find(prod => prod.id === produitId);
                                 produitName = found?.name || `Produit #${produitId}`;

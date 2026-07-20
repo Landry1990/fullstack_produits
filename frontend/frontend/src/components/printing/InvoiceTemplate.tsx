@@ -21,7 +21,7 @@ export interface InvoiceItem {
   tva: number;
   total_ligne?: number;
   cip?: string; // Code13Ref
-  stock_lot?: any;
+  stock_lot?: unknown;
   lot?: string;
   date_expiration?: string;
 }

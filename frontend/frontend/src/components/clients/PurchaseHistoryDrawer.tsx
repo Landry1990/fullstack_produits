@@ -273,7 +273,7 @@ export default function PurchaseHistoryDrawer({
                     </h4>
                   </div>
                   <div className="flex items-end gap-1 h-20 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                    {data.ca_12_mois.map((m, i) => (
+                    {data.ca_12_mois.map((m, _i) => (
                       <div key={m.mois} className="flex-1 flex flex-col items-center gap-0.5 group relative">
                         <div
                           className="w-full rounded-sm bg-indigo-400 hover:bg-indigo-600 transition-colors cursor-default"

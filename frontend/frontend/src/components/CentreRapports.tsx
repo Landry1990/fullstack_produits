@@ -263,7 +263,7 @@ export default function CentreRapports() {
                                             onPageChange={actions.handlePageChange}
                                             currentParams={params}
                                             onFilterChange={(key, value) => {
-                                                const extra: Record<string, any> = { [key]: value || undefined, page: undefined };
+                                                const extra: Record<string, unknown> = { [key]: value || undefined, page: undefined };
                                                 actions.setParams({ ...params, ...extra });
                                                 actions.executeQuery(undefined, extra);
                                             }}

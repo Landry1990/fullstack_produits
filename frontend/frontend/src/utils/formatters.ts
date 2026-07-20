@@ -72,7 +72,7 @@ export const formatNumber = (value: number, decimals: number = 0, locale: string
     }).format(value);
 }
 
-export const safeFormatNumber = (value: any) => {
+export const safeFormatNumber = (value: unknown) => {
     if (value === undefined || value === null) return formatCurrency(0);
     const num = Number(value);
     return isNaN(num) ? formatCurrency(0) : formatCurrency(num);

@@ -9,7 +9,7 @@ import { formatCurrency } from '../utils/formatters';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
 
-interface DailyPurchase {
+interface _DailyPurchase {
   date: string;
   nb_commandes: number;
   total_achat: number;
@@ -35,7 +35,7 @@ interface HistoriqueAchatsProps {
 
 const formatMoney = (amount: number) => formatCurrency(amount);
 
-function normalizeNumber(val: any) {
+function normalizeNumber(val: unknown) {
     if (typeof val === 'string') return parseFloat(val);
     return val;
 }
@@ -48,7 +48,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const { t, i18n } = useTranslation('orders');
   const { user } = useAuth();
   const { settings: pharmacySettings } = usePharmacySettings();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<unknown[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -151,15 +151,15 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         const exportData = response.data;
         if (!exportData || exportData.length === 0) return;
 
-        let dataToExport: any[] = [];
+        let dataToExport: unknown[] = [];
         if (activeTab === 'summary') {
-            dataToExport = exportData.map((row: any) => ({
+            dataToExport = exportData.map((row: unknown) => ({
                 [t('history.columns.date')]: format(new Date(row.date), 'dd/MM/yyyy'),
                 [t('history.columns.nb_orders')]: row.nb_commandes,
                 [t('history.columns.total_purchase')]: normalizeNumber(row.total_achat)
             }));
         } else {
-            dataToExport = exportData.map((row: any) => ({
+            dataToExport = exportData.map((row: unknown) => ({
                 [t('history.columns.product')]: row.produit__name,
                 [t('history.columns.cip')]: row.produit__cip1,
                 [t('history.columns.quantity')]: row.total_quantite,

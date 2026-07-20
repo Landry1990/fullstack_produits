@@ -104,7 +104,7 @@ export default function FinanceFournisseurModal({
   const { montant, modePaiement, reference, notes } = paymentForm;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [justPaid, setJustPaid] = useState(false);
-  const [echeances, setEcheances] = useState<any[]>([]);
+  const [echeances, setEcheances] = useState<unknown[]>([]);
   const [echeancesLoading, setEcheancesLoading] = useState(false);
 
   useEffect(() => {
@@ -133,10 +133,10 @@ export default function FinanceFournisseurModal({
 
     setIsSubmitting(true);
     try {
-      const payload: any = {
+      const payload: unknown = {
         fournisseur: fournisseur.id,
         montant: normalizeNumberInput(montant).toFixed(0),
-        mode_paiement: modePaiement as any,
+        mode_paiement: modePaiement as unknown,
         reference: reference,
         notes: notes,
       };
@@ -149,7 +149,7 @@ export default function FinanceFournisseurModal({
       dispatchPaymentForm({ type: 'RESET' });
       setJustPaid(true);
       if (onSuccess) onSuccess();
-    } catch (error) {
+    } catch {
       // Error handling is done in hook
     } finally {
       setIsSubmitting(false);
@@ -169,7 +169,7 @@ export default function FinanceFournisseurModal({
     if (!amount || amount <= 0 || echeances.length === 0) return [];
 
     let remaining = amount;
-    return echeances.map((ech: any) => {
+    return echeances.map((ech: unknown) => {
       const reste = ech.montant_reste || 0;
       if (remaining <= 0 || reste <= 0) {
         return { ...ech, montant_alloue: 0, montant_apres: reste };
@@ -380,7 +380,7 @@ export default function FinanceFournisseurModal({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {computeDistribution().map((ech: any) => (
+                      {computeDistribution().map((ech: unknown) => (
                         <TableRow key={ech.id || ech.numero_facture} className={ech.montant_alloue > 0 ? 'bg-emerald-50/50' : ''}>
                           <TableCell className="py-1.5">
                             <div className="font-medium text-xs truncate max-w-[140px]" title={ech.numero_facture}>
@@ -478,7 +478,7 @@ export default function FinanceFournisseurModal({
                             {paiement.commandes_liees &&
                               paiement.commandes_liees.length > 0 && (
                                 <div className="mt-1 flex flex-wrap gap-1">
-                                  {paiement.commandes_liees.map((cmd: any) => (
+                                  {paiement.commandes_liees.map((cmd: unknown) => (
                                     <Badge
                                       key={cmd}
                                       variant="ghost"

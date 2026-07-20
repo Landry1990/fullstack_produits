@@ -113,7 +113,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
             toast.success(t('stock:organisation.smart_organizer.success_message', { count: res.data.updated_count, name: targetCategory.name }));
             onSuccess();
             onClose();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error bulk categorizing:", err);
             toast.error(err.response?.data?.detail || t('stock:organisation.smart_organizer.bulk_error'));
         } finally {

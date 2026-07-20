@@ -308,7 +308,7 @@ const Transformations: React.FC = () => {
       await api.delete(`relations-transformation/${id}/`);
       toast.success(t('transformations.messages.delete_success'));
       fetchData();
-    } catch (error) {
+    } catch {
       toast.error(t('transformations.messages.delete_error'));
     }
   };
@@ -373,7 +373,7 @@ const Transformations: React.FC = () => {
       setPreview(res.data);
       // Initialiser les lots manuels depuis la sélection FEFO
       const initialManual: Record<number, number> = {};
-      res.data.lots?.forEach((lot: any) => {
+      res.data.lots?.forEach((lot: unknown) => {
         if (lot.quantity_consumed > 0) {
           initialManual[lot.lot_id] = lot.quantity_consumed;
         }

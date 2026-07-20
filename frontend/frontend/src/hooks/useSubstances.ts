@@ -27,7 +27,7 @@ export function useSubstances(params: { search?: string; page?: number } = {}) {
 }
 
 export function useSubstanceProduits(substanceId: number | null) {
-  return useQuery<any>({
+  return useQuery<unknown>({
     queryKey: ['substance-produits', substanceId],
     queryFn: async () => {
       if (!substanceId) return { results: [] };

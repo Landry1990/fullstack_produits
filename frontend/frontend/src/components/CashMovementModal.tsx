@@ -49,7 +49,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
       
       onSuccess()
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur creation mouvement:', err)
       setError(err.response?.data?.detail || err.message || t('movement_modal.save_error'))
     } finally {

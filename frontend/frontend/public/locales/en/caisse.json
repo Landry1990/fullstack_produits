@@ -113,7 +113,14 @@
         "cancel_invoice_error": "Error cancelling invoice",
         "empty_invoice_error": "This invoice contains no products",
         "load_invoice_error": "Could not load invoice for modification",
-        "enter_whatsapp_number_desc": "Enter WhatsApp number (international format e.g: 237...)"
+        "enter_whatsapp_number_desc": "Enter WhatsApp number (international format e.g: 237...)",
+        "poste_occupied": "This point of sale is already open by another user.",
+        "caisse_already_open": "This cash register is already open.",
+        "select_poste": "Please select a point of sale.",
+        "session_reactivated": "Point of sale reactivated.",
+        "session_opened": "Point of sale opened.",
+        "error_opening": "Error opening.",
+        "error_loading_posts": "Error loading points of sale."
     },
     "confirm_cancel_invoice": "Do you really want to cancel invoice #{{numero}}?",
     "confirm_modify_invoice": "Modify this invoice?\nIt will be removed from the list and reloaded in the sales screen.",
@@ -437,6 +444,31 @@
         "transactions": "Transactions",
         "security_mode_title": "🔒 Security Mode",
         "amounts_hidden": "Amounts are hidden for security reasons. See the pharmacist for financial details."
+    },
+    "open_point_vente": {
+        "title": "Open a point of sale",
+        "subtitle": "Select a point of sale to start billing.",
+        "loading": "Loading points of sale...",
+        "select": "Select a point of sale",
+        "available": "Available",
+        "open": "Open",
+        "no_points": "No point of sale available.",
+        "create_hint": "Create one in Settings > Points of sale.",
+        "cancel": "Cancel",
+        "opened_by": "Opened by {{name}}",
+        "your_post": "Your active post",
+        "active_title": "Point of sale active",
+        "required_title": "Point of sale required",
+        "active_message": "You already have a point of sale open. You can reactivate it to resume billing.",
+        "required_message": "Billing is locked until a point of sale is opened.",
+        "activate_long": "Reactivate my point of sale",
+        "open_long": "Open a point of sale",
+        "banner": {
+            "active_message": "You have a point of sale open on another session. Click to reactivate it.",
+            "required_message": "No point of sale open. Open one to lock this workstation on billing.",
+            "activate": "Reactivate",
+            "open": "Open a point of sale"
+        }
     },
     "common": {
         "unknown": "Unknown",

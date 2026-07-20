@@ -4,7 +4,7 @@ import { formatCurrency, normalizeNumberInput } from '../../utils/formatters'
 interface PendingSalesDrawerProps {
   isOpen: boolean
   onClose: () => void
-  ventesEnAttente: any[]
+  ventesEnAttente: unknown[]
   onRestore: (id: number) => void
   onDelete: (id: number) => void
 }
@@ -35,7 +35,7 @@ export default function PendingSalesDrawer({
         ) : (
           <div className="space-y-3">
             {ventesEnAttente.map((vente, idx) => {
-              const total = vente.lignes.reduce((sum: number, ligne: any) => sum + (normalizeNumberInput(ligne.total_ligne) || 0), 0)
+              const total = vente.lignes.reduce((sum: number, ligne: unknown) => sum + (normalizeNumberInput(ligne.total_ligne) || 0), 0)
               const remiseMontant = vente.remiseMode === 'montant'
                 ? normalizeNumberInput(vente.remise)
                 : total * (normalizeNumberInput(vente.remise) / 100)

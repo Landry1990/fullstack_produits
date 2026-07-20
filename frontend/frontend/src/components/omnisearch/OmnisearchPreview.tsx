@@ -22,7 +22,7 @@ import { formatDate } from '../../utils/dateUtils';
 
 interface SelectedItem {
   type: string;
-  data?: any;
+  data?: unknown;
   id?: string;
 }
 
@@ -54,7 +54,7 @@ export default function OmnisearchPreview({ selectedItem }: Props) {
 }
 
 /* ==================== PRODUCT PREVIEW ==================== */
-function ProductPreview({ data, t }: { data?: ProduitModel; t: any }) {
+function ProductPreview({ data, t }: { data?: ProduitModel; t: unknown }) {
   if (!data || !data.name) return <EmptyPreview t={t} />;
 
   const stock = data.stock || 0;
@@ -142,7 +142,7 @@ function ProductPreview({ data, t }: { data?: ProduitModel; t: any }) {
 }
 
 /* ==================== CLIENT PREVIEW ==================== */
-function ClientPreview({ data, t }: { data?: Client; t: any }) {
+function ClientPreview({ data, t }: { data?: Client; t: unknown }) {
   if (!data || !data.name) return <EmptyPreview t={t} />;
 
   return (
@@ -203,7 +203,7 @@ function ClientPreview({ data, t }: { data?: Client; t: any }) {
 }
 
 /* ==================== FACTURE PREVIEW ==================== */
-function FacturePreview({ data, t }: { data?: Facture; t: any }) {
+function FacturePreview({ data, t }: { data?: Facture; t: unknown }) {
   if (!data) return <EmptyPreview t={t} />;
 
   return (
@@ -243,13 +243,13 @@ function FacturePreview({ data, t }: { data?: Facture; t: any }) {
           </Card>
         </div>
 
-        {(data as any).produits_details && (data as any).produits_details.length > 0 && (
+        {(data as unknown).produits_details && (data as unknown).produits_details.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
-              Produits ({(data as any).produits_details.length})
+              Produits ({(data as unknown).produits_details.length})
             </h4>
             <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
-              {(data as any).produits_details.map((p: any) => (
+              {(data as unknown).produits_details.map((p: unknown) => (
                 <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
@@ -272,7 +272,7 @@ function FacturePreview({ data, t }: { data?: Facture; t: any }) {
 }
 
 /* ==================== COMMANDE PREVIEW ==================== */
-function CommandePreview({ data, t }: { data?: Commande; t: any }) {
+function CommandePreview({ data, t }: { data?: Commande; t: unknown }) {
   if (!data) return <EmptyPreview t={t} />;
 
   return (
@@ -309,13 +309,13 @@ function CommandePreview({ data, t }: { data?: Commande; t: any }) {
           </Card>
         </div>
 
-        {(data as any).produits_details && (data as any).produits_details.length > 0 && (
+        {(data as unknown).produits_details && (data as unknown).produits_details.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
-              Articles ({(data as any).produits_details.length})
+              Articles ({(data as unknown).produits_details.length})
             </h4>
             <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
-              {(data as any).produits_details.map((p: any) => (
+              {(data as unknown).produits_details.map((p: unknown) => (
                 <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
@@ -337,7 +337,7 @@ function CommandePreview({ data, t }: { data?: Commande; t: any }) {
 }
 
 /* ==================== FOURNISSEUR PREVIEW ==================== */
-function FournisseurPreview({ data, t }: { data?: Fournisseur; t: any }) {
+function FournisseurPreview({ data, t }: { data?: Fournisseur; t: unknown }) {
   if (!data) return <EmptyPreview t={t} />;
 
   return (
@@ -370,7 +370,7 @@ function FournisseurPreview({ data, t }: { data?: Fournisseur; t: any }) {
 }
 
 /* ==================== EMPTY PREVIEW ==================== */
-function EmptyPreview({ t }: { t: any }) {
+function EmptyPreview({ t }: { t: unknown }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-300 grayscale scale-95 transition-all">
       <div className="size-24 rounded-full border-4 border-dashed border-slate-500/30 flex items-center justify-center mb-4">

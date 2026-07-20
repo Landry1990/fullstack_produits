@@ -96,7 +96,7 @@ export const getLocalDateTimeString = (date: Date = new Date()): string => {
 /**
  * Parse une chaîne de date en objet Date (gère ISO et format local)
  */
-const parseDate = (dateString: string | Date | null | undefined): Date | null => {
+const _parseDate = (dateString: string | Date | null | undefined): Date | null => {
     if (!dateString) return null;
     if (dateString instanceof Date) return isNaN(dateString.getTime()) ? null : dateString;
     
@@ -150,7 +150,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 /**
  * Formate une date en format long locale
  */
-function formatDateLong(date: string | Date | null | undefined): string {
+function _formatDateLong(date: string | Date | null | undefined): string {
     if (!date) return '-';
     try {
         const d = typeof date === 'string' ? new Date(date) : date;
@@ -183,7 +183,7 @@ export function formatDateShort(date: string | Date | null | undefined): string 
 /**
  * Formate une date d'expiration au format mm/yy
  */
-function formatExpirationDate(date: string | Date | null | undefined): string {
+function _formatExpirationDate(date: string | Date | null | undefined): string {
     if (!date) return '-';
     try {
         const d = typeof date === 'string' ? new Date(date) : date;

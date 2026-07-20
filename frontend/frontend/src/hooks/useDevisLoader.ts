@@ -47,7 +47,7 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                 }
 
                 if (devis.produits && devis.produits.length > 0) {
-                    const lignes: LigneFacture[] = await Promise.all(devis.produits.map(async (p: any) => {
+                    const lignes: LigneFacture[] = await Promise.all(devis.produits.map(async (p: unknown) => {
                         let produitData: ProduitModel
                         if (typeof p.produit === 'object' && p.produit.stock !== undefined) {
                             produitData = p.produit
@@ -99,7 +99,7 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                     toast.success(`Panier pré-rempli à partir de la copie`)
                 }
                 safeStorage.removeItem('devis_to_load', 'local')
-            } catch (err) {
+            } catch {
                 toast.error('Impossible de charger le devis')
                 safeStorage.removeItem('devis_to_load', 'local')
             }

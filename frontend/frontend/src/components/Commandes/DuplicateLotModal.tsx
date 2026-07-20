@@ -10,7 +10,7 @@ interface DuplicateLotModalProps {
     onCancel: () => void;
 }
 
-function getProductName(cp: CommandeProduit): string {
+function _getProductName(cp: CommandeProduit): string {
     if (typeof cp.produit === 'object' && cp.produit !== null) return cp.produit.name;
     return cp.produit_nom || `Produit #${cp.produit}`;
 }

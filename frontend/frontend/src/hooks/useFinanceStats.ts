@@ -216,15 +216,15 @@ export const useAnalyseMarges = () => {
 };
 
 export interface MarginVarianceData {
-    period1: { label: string; stats: any };
-    period2: { label: string; stats: any };
+    period1: { label: string; stats: unknown };
+    period2: { label: string; stats: unknown };
     variance_pct: number;
-    suspicious_products: any[];
+    suspicious_products: unknown[];
     insights: { fr: string; en: string }[];
-    labels: any;
+    labels: unknown;
 }
 
-export const useMarginVarianceAnalysis = (params?: any) => {
+export const useMarginVarianceAnalysis = (params?: unknown) => {
     return useQuery<MarginVarianceData>({
         queryKey: ['finance', 'margin-variance', params],
         queryFn: () => financeService.getMarginVarianceAnalysis(params),

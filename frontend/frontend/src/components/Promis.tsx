@@ -15,7 +15,7 @@ const Promis: React.FC = () => {
     
     // UI State for Modals
     const [showForm, setShowForm] = useState(false);
-    const [smsModalState, setSmsModalState] = useState<{isOpen: boolean, promis: any | null}>({ isOpen: false, promis: null });
+    const [smsModalState, setSmsModalState] = useState<{isOpen: boolean, promis: unknown | null}>({ isOpen: false, promis: null });
 
     // Business Logic Hook
     const {

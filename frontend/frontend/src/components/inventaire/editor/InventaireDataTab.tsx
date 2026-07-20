@@ -74,8 +74,8 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             let comparison = 0;
             switch (sortBy) {
                 case 'nom': {
-                    const nameA = a.produit_nom || (a.produit as any).name || '';
-                    const nameB = b.produit_nom || (b.produit as any).name || '';
+                    const nameA = a.produit_nom || (a.produit as unknown).name || '';
+                    const nameB = b.produit_nom || (b.produit as unknown).name || '';
                     comparison = nameA.localeCompare(nameB);
                     break;
                 }
@@ -102,7 +102,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
     const totalEcartValeur = useMemo(() => {
         return sortedLines.reduce((acc, l) => {
-            const pmp = normalizeNumberInput((l as any).produit_pmp || '0')
+            const pmp = normalizeNumberInput((l as unknown).produit_pmp || '0')
                 || normalizeNumberInput(l.produit_cost_price || '0');
             const ecart = (l.quantite_physique || 0) - (l.stock_theorique || 0);
             return acc + (ecart * pmp);
@@ -159,7 +159,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                 <select
                     className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
+                    onChange={(e) => setSortBy(e.target.value as unknown)}
                 >
                     <option value="chronologie">{t('inventaire.detail.sort.chronologie')}</option>
                     <option value="nom">{t('inventaire.detail.sort.nom')}</option>
@@ -205,7 +205,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                             const ecartClass = currentEcart > 0 ? "text-emerald-600 bg-emerald-50 border-emerald-100"
                                             : currentEcart < 0 ? "text-red-500 bg-red-50 border-red-100"
                                             : "text-slate-300 bg-white border-transparent";
-                            const rayonName = l.produit_rayon || (l.produit as any).rayon_name || '-';
+                            const rayonName = l.produit_rayon || (l.produit as unknown).rayon_name || '-';
 
                             const isDirty = dirtyLineIds?.has(l.id);
                             return (
@@ -223,16 +223,16 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
                                     {/* Product Info */}
                                     <div className={!isReadOnly ? "col-span-4 md:col-span-3" : "col-span-5 md:col-span-4"}>
-                                        <div className="font-bold text-xs md:text-sm text-slate-800 truncate pr-1 flex items-center gap-1" title={l.produit_nom || (l.produit as any).name}>
-                                            {l.produit_nom || (l.produit as any).name}
+                                        <div className="font-bold text-xs md:text-sm text-slate-800 truncate pr-1 flex items-center gap-1" title={l.produit_nom || (l.produit as unknown).name}>
+                                            {l.produit_nom || (l.produit as unknown).name}
                                             {isDirty && (
                                                 <span className="w-2 h-2 rounded-full bg-blue-400 ml-1" title={t('common:unsaved', 'Modifié')} />
                                             )}
                                         </div>
                                         <div className="text-[10px] md:text-xs font-mono text-slate-400 flex gap-1 md:gap-2 items-center leading-none mt-0.5">
-                                            <span>{l.produit_cip || (l.produit as any).cip1}</span>
-                                            {(l as any).lot_numero && (
-                                                <span className="text-emerald-600 font-bold">{t('inventaire.detail.lot_label')} {(l as any).lot_numero}</span>
+                                            <span>{l.produit_cip || (l.produit as unknown).cip1}</span>
+                                            {(l as unknown).lot_numero && (
+                                                <span className="text-emerald-600 font-bold">{t('inventaire.detail.lot_label')} {(l as unknown).lot_numero}</span>
                                             )}
                                         </div>
                                     </div>

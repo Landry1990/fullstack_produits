@@ -64,7 +64,7 @@ export function useCentreRapports() {
     const [showFamilleDropdown, setShowFamilleDropdown] = useState(false);
     const [selectedFamilleName, setSelectedFamilleName] = useState('');
 
-    const [presets, setPresets] = useState<Record<string, any>[]>([]);
+    const [presets, setPresets] = useState<Record<string, unknown>[]>([]);
 
     const getCurrentMonth = useCallback(() => {
         const now = new Date();
@@ -219,7 +219,7 @@ export function useCentreRapports() {
         localStorage.setItem('report_presets:v1', JSON.stringify(updated));
     }, [presets]);
 
-    const applyPreset = useCallback((preset: any) => {
+    const applyPreset = useCallback((preset: unknown) => {
         const query = QUERIES.find(q => q.id === preset.queryId);
         if (query) {
             setSelectedQuery(query);
@@ -253,7 +253,7 @@ export function useCentreRapports() {
         setParams(defaultParams);
     }, [getCurrentMonth, getCurrentDateTime, getTodayDate]);
 
-    const executeQuery = useCallback(async (urlOverride?: string, extraParams?: Record<string, any>) => {
+    const executeQuery = useCallback(async (urlOverride?: string, extraParams?: Record<string, unknown>) => {
         if (!selectedQuery) return;
 
         setLoading(true);
@@ -309,7 +309,7 @@ export function useCentreRapports() {
                 ? await api.get(urlOverride)
                 : await api.get(endpoint, { params: mergedParams });
 
-            let data = response.data;
+            const data = response.data;
             if (data.results && Array.isArray(data.results)) {
                 setResults(data.results);
                 setPagination({
@@ -396,23 +396,23 @@ export function useCentreRapports() {
                 if (idx === 0) {
                     footerRow[header] = t('reports.footer_total_avg', { defaultValue: 'TOTAL / MOYENNE' });
                 } else if (isAverageColumn(col)) {
-                    const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                    const total = results.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
                     const avg = results.length > 0 ? total / results.length : 0;
                     footerRow[header] = `${Math.round(avg)} ${t('reports.footer_avg_suffix', { defaultValue: '(Moy)' })}`;
                 } else if (isSummableColumn(col)) {
-                    const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                    const total = results.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
                     footerRow[header] = Math.round(total);
                 } else if (isPercentageColumn(col)) {
                     let finalVal: string | number = '';
                     if (col === 'taux_marge') {
-                        const totalMtVente = results.reduce((sum: number, r: any) => sum + (Number(r['mt_vente']) || 0), 0);
-                        const totalMarge   = results.reduce((sum: number, r: any) => sum + (Number(r['marge']) || 0), 0);
+                        const totalMtVente = results.reduce((sum: number, r: unknown) => sum + (Number(r['mt_vente']) || 0), 0);
+                        const totalMarge   = results.reduce((sum: number, r: unknown) => sum + (Number(r['marge']) || 0), 0);
                         if (totalMtVente > 0) {
                             finalVal = ((totalMarge / totalMtVente) * 100).toFixed(1) + t('reports.footer_pct_global', { defaultValue: ' % (Global)' });
                         }
                     }
                     if (!finalVal) {
-                        const total = results.reduce((sum: number, r: any) => sum + (Number(r[col]) || 0), 0);
+                        const total = results.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
                         const avg = results.length > 0 ? (total / results.length) : 0;
                         finalVal = avg.toFixed(1) + t('reports.footer_pct_avg', { defaultValue: ' % (Moy)' });
                     }

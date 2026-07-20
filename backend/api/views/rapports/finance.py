@@ -12,6 +12,7 @@ from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.utils import timezone
 from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -48,6 +49,24 @@ def _write_pharma_header(ws, PharmacySettings, title: str) -> None:
     for line in [pharma_name, pharma_address, pharma_phone, f"Édité le : {now_str}", "", title]:
         ws.append([line])
     ws.append([])
+
+
+def _apply_auto_width(ws, min_w=10, max_w=30) -> None:
+    """Ajuste la largeur des colonnes en ignorant les cellules fusionnées et l'en-tête."""
+    merged_ranges = set()
+    for mr in ws.merged_cells.ranges:
+        for row in range(mr.min_row, mr.max_row + 1):
+            for col in range(mr.min_col, mr.max_col + 1):
+                merged_ranges.add((row, col))
+    for col in ws.columns:
+        length = 0
+        for cell in col:
+            if (cell.row, cell.column) in merged_ranges:
+                continue
+            val = str(cell.value or "")
+            if len(val) > length:
+                length = len(val)
+        ws.column_dimensions[get_column_letter(col[0].column)].width = min(max_w, max(min_w, length + 2))
 
 
 def _parse_day_range(request):
@@ -491,6 +510,7 @@ class RapportFinanceMixin:
                 item['remise_fidelite'], item['total_remise'],
                 f"{item['ratio_remise_pct']:.2f}%", item['vendeur'],
             ])
+        _apply_auto_width(ws)
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
@@ -517,6 +537,7 @@ class RapportFinanceMixin:
                 item['remise_globale'], item['remise_lignes'], item['remise_fidelite'],
                 item['total_remise'], f"{item['ratio_remise_pct']:.2f}%",
             ])
+        _apply_auto_width(ws)
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )

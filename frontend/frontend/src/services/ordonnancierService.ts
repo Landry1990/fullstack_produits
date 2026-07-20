@@ -1,7 +1,7 @@
 import api from './api';
 
 const ordonnancierService = {
-    create: async (data: any): Promise<any> => {
+    create: async (data: unknown): Promise<unknown> => {
         // If data contains an image, use FormData
         if (data.image_ordonnance instanceof File) {
             const formData = new FormData();

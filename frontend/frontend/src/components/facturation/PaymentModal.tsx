@@ -29,7 +29,7 @@ type PaymentModalProps = {
     montantPaye: string
     setMontantPaye: (val: string) => void
     modePaiement: string
-    setModePaiement: (val: any) => void
+    setModePaiement: (val: unknown) => void
     paiements: PaymentItem[]
     setPaiements: (items: PaymentItem[] | ((prev: PaymentItem[]) => PaymentItem[])) => void
     onCompleteSale: (sudoCredentials?: { validatorId: number, password: string }) => void
@@ -55,13 +55,13 @@ export default function PaymentModal({
     totals,
     montantPaye,
     setMontantPaye,
-    modePaiement,
+    modePaiement: _modePaiement,
     setModePaiement: _setModePaiement, // Keeping it if parent requires it but it's not used here
     paiements,
     setPaiements,
     onCompleteSale,
     onRegisterPayment,
-    selectedClient,
+    selectedClient: _selectedClient,
     useManualClient: _useManualClient, // Keeping it if parent requires it but it's not used here
     paymentInputRef,
     clientSoldeDepot,

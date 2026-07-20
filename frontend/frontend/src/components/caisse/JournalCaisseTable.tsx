@@ -68,7 +68,7 @@ export default function JournalCaisseTable({ state }: Props) {
           <>
             {/* Vue Mobile */}
             <div className="md:hidden divide-y divide-slate-200 overflow-y-auto max-h-[60vh]">
-              {groupedItems.map((item: any) => {
+              {groupedItems.map((item: unknown) => {
                 const isMouvement = item._kind === 'mouvement';
                 const transaction = item as CaisseTransaction & { isReleveGroup?: boolean, items?: CaisseTransaction[] };
                 const info = isMouvement ? {
@@ -125,7 +125,7 @@ export default function JournalCaisseTable({ state }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {groupedItems.map((item: any) => {
+                {groupedItems.map((item: unknown) => {
                   if (item._kind === 'mouvement') {
                     const mouv = item as MouvementCaisse;
                     return (
@@ -238,7 +238,7 @@ export default function JournalCaisseTable({ state }: Props) {
                         </td>
                         <td className="py-4">
                           {(() => {
-                            const mode = transaction.mode_paiement as any;
+                            const mode = transaction.mode_paiement as unknown;
                             const isRecouvrement = mode === 'recouvrement' ||
                               transaction.is_creance_settlement ||
                               (transaction.reference && transaction.reference.includes('[RECOUV]'));

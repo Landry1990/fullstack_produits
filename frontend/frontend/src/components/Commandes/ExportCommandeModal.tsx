@@ -81,7 +81,7 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
         `commandes/${commande.id}/export-preview/?cip_field=${selectedCip}`
       );
       setPreview(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(err.response?.data?.error || t('errors.load_failed'));
     } finally {
       setLoading(false);
@@ -111,7 +111,7 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
       );
       downloadBlob(response.data, `commande_${commande.id}.csv`, response.headers['content-disposition']);
       toast.success(t('messages.export_success'));
-    } catch (err: any) {
+    } catch {
       toast.error(t('errors.export_failed'));
     } finally {
       setExporting(false);
@@ -129,7 +129,7 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
       );
       downloadBlob(response.data, `commande_${commande.id}_sans_cip.txt`, response.headers['content-disposition']);
       toast.success(t('messages.txt_export_success'));
-    } catch (err: any) {
+    } catch {
       toast.error(t('errors.export_failed'));
     } finally {
       setExporting(false);

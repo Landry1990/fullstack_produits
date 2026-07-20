@@ -8,7 +8,7 @@ import { useProductSearch as useProductSearchBase } from '../../hooks/product-se
 import { useKeyboardNavigation } from '../../hooks/useKeyboardNavigation';
 import { ShoppingBag, X, Plus, Minus, Calendar, Tag, Package, Trash2, Search } from 'lucide-react';
 import api from '../../services/api';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { cn } from '../../lib/utils';
@@ -33,13 +33,13 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
     const [loading, setLoading] = useState(false);
 
 
-    const [selectedProducts, setSelectedProducts] = useState<any[]>(() => {
+    const [selectedProducts, setSelectedProducts] = useState<unknown[]>(() => {
         if (!initialData) return [];
         if (initialData.products) {
             return initialData.products.map(id => ({ id, name: t('promotions:form.products.loading_names'), quantity: 1 }));
         }
         if (initialData.pack_items) {
-            return initialData.pack_items.map((item: any) => ({
+            return initialData.pack_items.map((item: unknown) => ({
                 id: item.product,
                 name: t('promotions:form.products.loading_names'),
                 quantity: item.quantity
@@ -124,7 +124,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                     try {
                         const { data } = await api.get(`produits/${p.id}/`);
                         return { ...p, name: data.name, selling_price: data.selling_price, stock: data.stock };
-                    } catch (e) {
+                    } catch {
                         return { ...p, name: t('promotions:form.products.error_id', { id: p.id }) };
                     }
                 }));
@@ -141,7 +141,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
         e.preventDefault();
         setLoading(true);
 
-        const payload: any = {
+        const payload: unknown = {
             name,
             description,
             discount_type: discountType,
@@ -339,7 +339,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                             </td>
                                         </tr>
                                     ) : (
-                                        selectedProducts.map((p: any, idx: number) => (
+                                        selectedProducts.map((p: unknown, idx: number) => (
                                             <tr
                                                 key={p.id}
                                                 className={cn(

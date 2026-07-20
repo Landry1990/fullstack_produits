@@ -28,7 +28,7 @@ interface CreancesTableProps {
     onViewDetails: (creance: Creance) => void;
     onPay: (creance: Creance) => void;
     sortConfig: { key: string, direction: 'asc' | 'desc' };
-    onSort: (key: any) => void;
+    onSort: (key: unknown) => void;
 }
 
 export const CreancesTable: React.FC<CreancesTableProps> = ({

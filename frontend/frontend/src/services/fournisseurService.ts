@@ -8,7 +8,7 @@ export interface SupplierFilters {
 }
 
 const fournisseurService = {
-    getAll: async (filters: SupplierFilters = {}): Promise<any> => {
+    getAll: async (filters: SupplierFilters = {}): Promise<unknown> => {
         const response = await api.get('fournisseurs/', { params: filters });
         return response.data;
     },
@@ -32,12 +32,12 @@ const fournisseurService = {
         await api.delete(`fournisseurs/${id}/`);
     },
 
-    getStats: async (id: number): Promise<any> => {
+    getStats: async (id: number): Promise<unknown> => {
         const response = await api.get(`fournisseurs/${id}/stats/`);
         return response.data;
     },
 
-    getEcheancesDetaillees: async (id: number): Promise<any> => {
+    getEcheancesDetaillees: async (id: number): Promise<unknown> => {
         const response = await api.get(`fournisseurs/${id}/echeances_detaillees/`);
         return response.data;
     }

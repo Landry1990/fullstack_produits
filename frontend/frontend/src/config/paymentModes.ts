@@ -65,7 +65,7 @@ export function getCaissePaymentModes(disabledModes?: string[], customModes?: { 
 }
 
 /** Modes visibles dans la facturation */
-function getFacturationPaymentModes(disabledModes?: string[], customModes?: { value: string; label: string }[]): PaymentMode[] {
+function _getFacturationPaymentModes(disabledModes?: string[], customModes?: { value: string; label: string }[]): PaymentMode[] {
   const allModes = [...PAYMENT_MODES, ...customModesToPaymentModes(customModes)]
   return allModes.filter(m => m.showInFacturation && !disabledModes?.includes(m.value))
 }

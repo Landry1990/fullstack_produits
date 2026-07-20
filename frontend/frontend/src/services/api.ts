@@ -37,11 +37,11 @@ const api = axios.create({
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const isNetworkError = (error: any): boolean => {
+const isNetworkError = (error: unknown): boolean => {
     return !error.response && (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.message === 'Network Error');
 };
 
-const isRetryableRequest = (error: any): boolean => {
+const isRetryableRequest = (error: unknown): boolean => {
     // Retry sur erreurs réseau (connexion perdue, timeout) et erreurs serveur temporaires
     const status = error.response?.status;
     const isServerTempUnavailable = status === 502 || status === 503 || status === 504;

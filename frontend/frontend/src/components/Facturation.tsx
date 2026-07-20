@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle, Monitor, Store } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
@@ -33,6 +34,7 @@ import { useFacturationState } from '../hooks/useFacturationState'
 import { useDatamatrixScan } from '../hooks/useDatamatrixScan'
 
 function PosteRequisOverlay({ hasMyActivePoste, onOpenExisting }: { postesCaisses: { id: number; nom: string }[], hasMyActivePoste: boolean, onOpenExisting: () => void }) {
+  const { t } = useTranslation('caisse')
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-100/95 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4">
@@ -40,12 +42,12 @@ function PosteRequisOverlay({ hasMyActivePoste, onOpenExisting }: { postesCaisse
           <Store className="size-7" />
         </div>
         <h2 className="text-lg font-bold text-slate-900">
-          {hasMyActivePoste ? 'Point de vente actif' : 'Point de vente requis'}
+          {hasMyActivePoste ? t('open_point_vente.active_title', { defaultValue: 'Point de vente actif' }) : t('open_point_vente.required_title', { defaultValue: 'Point de vente requis' })}
         </h2>
         <p className="text-sm text-slate-600">
           {hasMyActivePoste
-            ? 'Vous avez déjà un point de vente ouvert. Vous pouvez le réactiver pour reprendre la facturation.'
-            : 'La facturation est verrouillée tant qu\'aucun point de vente n\'est ouvert.'}
+            ? t('open_point_vente.active_message', { defaultValue: 'Vous avez déjà un point de vente ouvert. Vous pouvez le réactiver pour reprendre la facturation.' })
+            : t('open_point_vente.required_message', { defaultValue: 'La facturation est verrouillée tant qu\'aucun point de vente n\'est ouvert.' })}
         </p>
         <Button
           type="button"
@@ -53,7 +55,7 @@ function PosteRequisOverlay({ hasMyActivePoste, onOpenExisting }: { postesCaisse
           onClick={onOpenExisting}
           className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg w-full"
         >
-          {hasMyActivePoste ? 'Réactiver mon point de vente' : 'Ouvrir un point de vente'}
+          {hasMyActivePoste ? t('open_point_vente.activate_long', { defaultValue: 'Réactiver mon point de vente' }) : t('open_point_vente.open_long', { defaultValue: 'Ouvrir un point de vente' })}
         </Button>
       </div>
     </div>
@@ -62,6 +64,7 @@ function PosteRequisOverlay({ hasMyActivePoste, onOpenExisting }: { postesCaisse
 
 export default function Facturation() {
   const hook = useFacturationState()
+  const { t: tCaisse } = useTranslation('caisse')
   const location = useLocation()
   const navigate = useNavigate()
   const forceStockModalRef = useRef<HTMLDivElement>(null)
@@ -158,8 +161,8 @@ export default function Facturation() {
           <div className="flex items-center gap-2 text-sm text-amber-800">
             <Monitor className="size-4" />
             <span>{hook.hasMyActivePoste
-              ? 'Vous avez un point de vente ouvert sur une autre session. Cliquez pour le réactiver.'
-              : 'Aucun point de vente ouvert. Ouvrez un point pour verrouiller ce poste sur la facturation.'}</span>
+              ? tCaisse('open_point_vente.banner.active_message', { defaultValue: 'Vous avez un point de vente ouvert sur une autre session. Cliquez pour le réactiver.' })
+              : tCaisse('open_point_vente.banner.required_message', { defaultValue: 'Aucun point de vente ouvert. Ouvrez un point pour verrouiller ce poste sur la facturation.' })}</span>
           </div>
           <Button
             type="button"
@@ -167,7 +170,7 @@ export default function Facturation() {
             onClick={() => setShowOpenPosteModal(true)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg"
           >
-            {hook.hasMyActivePoste ? 'Réactiver' : 'Ouvrir un point de vente'}
+            {hook.hasMyActivePoste ? tCaisse('open_point_vente.banner.activate', { defaultValue: 'Réactiver' }) : tCaisse('open_point_vente.banner.open', { defaultValue: 'Ouvrir un point de vente' })}
           </Button>
         </div>
       )}
@@ -278,7 +281,7 @@ export default function Facturation() {
                 setSearchQuery={hook.productSearch.setSearchQuery}
                 searchLoading={hook.productSearch.loading}
                 filteredProduits={hook.productSearch.produits}
-                addProduitToFacture={(p) => hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession, markupPercentage: (hook as any).currentMarkup })}
+                addProduitToFacture={(p) => hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession, markupPercentage: (hook as unknown).currentMarkup })}
                 addPackToFacture={hook.addPackToFacture}
                 searchInputRef={hook.searchInputRef}
                 placeholder={hook.t('facturation:search.placeholder')}
@@ -293,7 +296,7 @@ export default function Facturation() {
                 onSelectOutOfStock={(p) => {
                   hook.requireSudo(
                     async () => {
-                      hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession, markupPercentage: (hook as any).currentMarkup })
+                      hook.cart.addProduit(p, { isRetrocession: hook.isRetrocession, markupPercentage: (hook as unknown).currentMarkup })
                       hook.productSearch.setSearchQuery('')
                     },
                     {
@@ -476,7 +479,7 @@ export default function Facturation() {
         promisClientName={hook.ui.promisClientName}
         setPromisClientName={hook.ui.setPromisClientName}
         lignesFacture={hook.lignesFacture}
-        setLignesFacture={hook.setLignesFacture as any}
+        setLignesFacture={hook.setLignesFacture as unknown}
         clients={hook.clientsHook.clients}
         selectedClient={hook.clientsHook.selectedClient}
         setSelectedClient={hook.clientsHook.setSelectedClient}
@@ -656,7 +659,7 @@ export default function Facturation() {
              hook.ui.setAlertTarget(newTarget);
              // Update the current state objects so it reflects immediately
              if (newTarget?.type === 'product') {
-                const refreshedLignes = hook.cart.lignesFacture.map((l: any) => {
+                const refreshedLignes = hook.cart.lignesFacture.map((l: unknown) => {
                    if (l.produit.id === newTarget.id) {
                       return { ...l, produit: { ...l.produit, message_alerte: newTarget.currentMessage }};
                    }

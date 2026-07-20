@@ -84,7 +84,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
     try {
       const { data } = await api.get('fournisseurs/echeancier/');
       setEcheances(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.response?.data?.message || err.message || 'Erreur de chargement');
     } finally {
       setLoading(false);

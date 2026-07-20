@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast'
 interface UseFacturationKeyboardShortcutsProps {
   searchInputRef: RefObject<HTMLInputElement | null>;
   clientSearchRef: RefObject<HTMLInputElement | null>;
-  lignesFacture: any[];
+  lignesFacture: unknown[];
   quantityInputsRef: RefObject<Map<number, HTMLInputElement> | null>;
   handlePaymentClick: () => void;
   toggleZenithMode: () => void;
@@ -21,11 +21,11 @@ interface UseFacturationKeyboardShortcutsProps {
   setShowClientCreateModal: (val: boolean) => void;
   showStockResolution: boolean;
   setShowStockResolution: (val: boolean) => void;
-  confirmModal: any;
-  setConfirmModal: (val: any) => void;
+  confirmModal: unknown;
+  setConfirmModal: (val: unknown) => void;
   setSearchQuery: (val: string) => void;
-  successInfo?: any;
-  setSuccessInfo: (val: any) => void;
+  successInfo?: unknown;
+  setSuccessInfo: (val: unknown) => void;
   setShowHelp: (val: boolean) => void;
   handleSuspendSale: () => void;
   handleAddAlertMessage: () => void;

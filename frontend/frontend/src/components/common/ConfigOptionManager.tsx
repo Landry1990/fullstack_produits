@@ -87,7 +87,7 @@ export default function ConfigOptionManager({
         toast.success(t('common:messages.success_save'));
       }
       setIsModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMsg = err.response?.data?.non_field_errors?.[0] || err.response?.data?.detail || t('common:messages.error_saving');
       toast.error(errorMsg);
     }
@@ -105,7 +105,7 @@ export default function ConfigOptionManager({
       await api.delete(`configuration-options/${id}/`);
       toast.success(t('common:messages.success_delete'));
       setOptions(prev => prev.filter(o => o.id !== id));
-    } catch (err) {
+    } catch {
       toast.error(t('common:messages.error_deleting'));
     }
   };

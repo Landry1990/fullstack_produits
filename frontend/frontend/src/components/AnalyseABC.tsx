@@ -221,7 +221,7 @@ export default function AnalyseABC() {
 
         const response = await api.get(`produits/analyse_abc/?${params}`)
         setData(response.data)
-      } catch (err: any) {
+      } catch (err: unknown) {
         setError(err.response?.data?.detail || t('stock:abc.error_loading'))
         console.error('Erreur analyse ABC:', err)
       } finally {
