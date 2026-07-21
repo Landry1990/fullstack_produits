@@ -14,14 +14,27 @@ import { useNavigate } from 'react-router-dom';
 import { useRecharts } from '../../hooks/useRecharts';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
+import type { TFunction } from 'i18next';
+import type { DashboardStats, RevenueChartData, HourlyTrafficData, SupplierDebtsResponse } from '../../hooks/useDashboard';
+
+interface KpiCard {
+  title: string;
+  value: string;
+  sub: string;
+  icon: typeof TrendingUp;
+  accent: string;
+  isPositive: boolean;
+  highlight?: boolean;
+  link?: string;
+}
 
 interface PerformanceOverviewProps {
-  stats: unknown;
-  revenueChart: unknown;
-  hourlyTraffic: unknown;
+  stats: DashboardStats | undefined;
+  revenueChart: RevenueChartData | undefined;
+  hourlyTraffic: HourlyTrafficData[] | undefined;
   reapproStats?: { product_count: number; total_units_suggested: number };
-  supplierDebts?: { total_debt: number; suppliers: unknown[] };
-  t: unknown;
+  supplierDebts?: SupplierDebtsResponse | undefined;
+  t: TFunction;
   formatCurrencyLocal: (val: number) => string;
 }
 
@@ -42,7 +55,7 @@ export default function PerformanceOverview({
   const chartData = revenueChart && revenueChart.labels ? revenueChart.labels.map((label: string, index: number) => ({
     jour: label,
     montant: revenueChart.data[index],
-    nb_ventes: revenueChart.nb_ventes?.[index] ?? 0,
+    nb_ventes: (revenueChart as RevenueChartData & { nb_ventes?: number[] }).nb_ventes?.[index] ?? 0,
   })) : [];
 
   const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
@@ -116,7 +129,7 @@ export default function PerformanceOverview({
           ? 'grid-cols-1 sm:grid-cols-2'
           : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'
       }`}>
-        {kpiCards.map((card: unknown, _i: number) => {
+        {kpiCards.map((card: KpiCard, _i: number) => {
           const Icon = card.icon;
           const inner = (
             <div className="relative p-2 sm:p-3 xl:p-3.5 flex flex-col gap-1 sm:gap-1.5 h-full overflow-hidden">

@@ -1,8 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import produitService, { type ProduitFilters, type ProduitsResponse } from '../services/produitService';
+import produitService, { type ProduitFilters, type ProduitsResponse, type MonthlyStat } from '../services/produitService';
 import type {
     ProduitModel,
-    Rayon
+    Rayon,
+    AchatProduit,
+    StockLot,
+    StockAdjustment
 } from '../types';
 
 // Queries
@@ -60,10 +63,25 @@ export function useGroupes() {
     })
 }
 
+export interface StockMovement {
+    id?: number;
+    date: string;
+    type: string;
+    libelle: string;
+    user?: string;
+    user_nom?: string;
+    stock_avant: number;
+    quantity: number;
+    stock_apres: number;
+    facture?: number | null;
+    commande?: number | null;
+    commande_numero?: string;
+}
+
 // Sub-resources requiring product ID
 
 export const useProduitAchats = (produitId: number | null) => {
-    return useQuery({
+    return useQuery<AchatProduit[]>({
         queryKey: ['produit-achats', produitId],
         queryFn: () => produitId ? produitService.getAchats(produitId) : Promise.resolve([]),
         enabled: !!produitId,
@@ -93,7 +111,7 @@ export const useProduitAdjustments = (produitId: number | null) => {
 };
 
 export const useProduitStats = (produitId: number | null) => {
-    return useQuery({
+    return useQuery<MonthlyStat[]>({
         queryKey: ['produit-stats', produitId],
         queryFn: () => produitId ? produitService.getStats(produitId) : Promise.resolve([]),
         enabled: !!produitId,
@@ -103,9 +121,9 @@ export const useProduitStats = (produitId: number | null) => {
 };
 
 export const useProduitHistory = (produitId: number | null, activeTab: string) => {
-    return useQuery({
+    return useQuery<StockMovement[]>({
         queryKey: ['produit-history', produitId, activeTab],
-        queryFn: () => produitId ? produitService.getHistory(produitId) : Promise.resolve([]),
+        queryFn: () => produitId ? produitService.getHistory(produitId) as Promise<StockMovement[]> : Promise.resolve([]),
         enabled: !!produitId && activeTab === 'mvmts',
         staleTime: 1000 * 60 * 5,
         gcTime: 1000 * 60 * 10,

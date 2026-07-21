@@ -2,7 +2,9 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useRecharts } from '../../hooks/useRecharts';
-import type { ProduitModel, StockLot } from '../../types';
+import type { ProduitModel, StockLot, AchatProduit } from '../../types';
+import type { MonthlyStat } from '../../services/produitService';
+import type { StockMovement } from '../../hooks/useProduits';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
 import api from '../../services/api';
@@ -11,27 +13,28 @@ import { Button } from '../ui/Button';
 import { Input } from '../shadcn/input';
 import { Select } from '../ui/Select';
 import { Loader2, Check, X, Pencil } from 'lucide-react';
+import type { TFunction } from 'i18next';
 
 interface ProductTabsContentProps {
   selectedProduit: ProduitModel;
   activeTab: string;
-  setActiveTab: (tab: unknown) => void;
+  setActiveTab: (tab: string) => void;
   lots: StockLot[];
-  monthlyStats: unknown[];
-  achats: unknown[];
-  stockHistory: unknown[];
+  monthlyStats: MonthlyStat[];
+  achats: AchatProduit[];
+  stockHistory: StockMovement[];
   loadingHistory: boolean;
-  onMovementClick: (item: unknown) => void;
+  onMovementClick: (item: StockMovement) => void;
 }
 
 // Helper components - Defined first to avoid hoisting issues
 
-const PriceEvolutionChart = ({ achats, t }: { achats: unknown[]; t: unknown }) => {
+const PriceEvolutionChart = ({ achats, t }: { achats: AchatProduit[]; t: TFunction }) => {
     const [selectedFournisseur, setSelectedFournisseur] = useState<string>('all');
 
     const fournisseurs = useMemo(() => {
         const names = Array.from(new Set(achats.flatMap((a) => a.fournisseur_name ? [a.fournisseur_name] : [])));
-        return names as string[];
+        return names;
     }, [achats]);
 
     const chartData = useMemo(() => {
@@ -120,7 +123,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: unknown[]; t: unknown }) =
                     />
                     <Tooltip
                         formatter={(value: number) => [formatCurrency(value), t('products:detail.purchases.price_label')]}
-                        labelFormatter={(label: string, payload: readonly unknown[]) => {
+                        labelFormatter={(label: string, payload: readonly { payload?: { fullDate?: string; fournisseur?: string } }[]) => {
                             const item = payload?.[0]?.payload;
                             return item ? `${item.fullDate}${item.fournisseur ? ` — ${item.fournisseur}` : ''}` : label;
                         }}
@@ -142,7 +145,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: unknown[]; t: unknown }) =
     );
 };
 
-const PurchasesTabContent = ({ achats, t }: { achats: unknown[]; t: unknown }) => {
+const PurchasesTabContent = ({ achats, t }: { achats: AchatProduit[]; t: TFunction }) => {
     if (!achats || achats.length === 0) return <p className="text-center text-slate-400 py-8">{t('products:detail.purchases.empty')}</p>;
 
     return (
@@ -184,7 +187,7 @@ const PurchasesTabContent = ({ achats, t }: { achats: unknown[]; t: unknown }) =
     );
 };
 
-const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: number; t: unknown }) => {
+const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: number; t: TFunction }) => {
     const queryClient = useQueryClient();
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editValues, setEditValues] = useState<{ lot: string; date_expiration: string }>({ lot: '', date_expiration: '' });
@@ -323,7 +326,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
     );
 };
 
-const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: unknown[]; t: unknown }) => {
+const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: MonthlyStat[]; t: TFunction }) => {
     if (!monthlyStats || monthlyStats.length === 0) return <p className="text-center text-slate-400 py-4">{t('products:detail.stats.empty')}</p>;
 
     let currentYear: number | null = null;
@@ -366,7 +369,7 @@ const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: unknown[]; t: unkn
     );
 };
 
-const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t }: { stockHistory: unknown[]; loadingHistory: boolean; onMovementClick: (item: unknown) => void; t: unknown }) => {
+const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t }: { stockHistory: StockMovement[]; loadingHistory: boolean; onMovementClick: (item: StockMovement) => void; t: TFunction }) => {
     if (loadingHistory) return (
         <div className="flex justify-center py-12">
             <Loader2 className="size-8 animate-spin text-indigo-600" />

@@ -7,15 +7,16 @@ import {
   CheckCircle2,
   AlertTriangle
 } from 'lucide-react';
-import type { Echeance } from '../../hooks/useDashboard';
+import type { Echeance, DashboardStats, UgStatsResponse, UgStatItem } from '../../hooks/useDashboard';
 import { formatDate } from '../../utils/dateUtils';
 import { useRecharts } from '../../hooks/useRecharts';
+import type { TFunction } from 'i18next';
 
 interface FinancialSummaryProps {
-  stats: unknown;
-  ugStats: unknown;
+  stats: DashboardStats | undefined;
+  ugStats: UgStatsResponse | null | undefined;
   echeances: Echeance[];
-  t: unknown;
+  t: TFunction;
   formatCurrencyLocal: (val: number) => string;
 }
 
@@ -66,7 +67,7 @@ export default function FinancialSummary({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-base-200">
-                  {ugStats.results.map((stat: unknown, _index: number) => (
+                  {ugStats.results.map((stat: UgStatItem, _index: number) => (
                     <tr key={stat.fournisseur_id || stat.fournisseur_nom} className="hover:bg-base-200 transition-all group">
                       <td className="py-2 pl-4 font-bold text-sm text-base-content group-hover:text-primary transition-colors">{stat.fournisseur_nom}</td>
                       <td className="text-right py-2 font-mono font-bold text-sm text-purple-600">
@@ -86,13 +87,13 @@ export default function FinancialSummary({
                     <tr className="bg-base-200 font-bold border-t border-base-200">
                       <td className="py-2 pl-4 uppercase tracking-wider text-[10px] text-base-content/50">{t('ug.total')}</td>
                       <td className="text-right py-2 text-purple-700 font-mono text-sm pr-2">
-                        {formatCurrency(ugStats.results.reduce((sum: number, r: unknown) => sum + r.valeur_acquise, 0))}
+                        {formatCurrency(ugStats.results.reduce((sum: number, r: UgStatItem) => sum + r.valeur_acquise, 0))}
                       </td>
                       <td className="text-right py-2 text-success font-mono text-sm pr-2">
-                        {formatCurrency(ugStats.results.reduce((sum: number, r: unknown) => sum + r.valeur_vendue, 0))}
+                        {formatCurrency(ugStats.results.reduce((sum: number, r: UgStatItem) => sum + r.valeur_vendue, 0))}
                       </td>
                       <td className="text-right py-2 text-info font-mono text-sm pr-4">
-                        {formatCurrency(ugStats.results.reduce((sum: number, r: unknown) => sum + r.valeur_restante, 0))}
+                        {formatCurrency(ugStats.results.reduce((sum: number, r: UgStatItem) => sum + r.valeur_restante, 0))}
                       </td>
                     </tr>
                   )}
@@ -203,7 +204,7 @@ export default function FinancialSummary({
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={stats.payment_mix.map((item: unknown) => ({ ...item, value: Math.abs(item.value) }))}
+                    data={stats.payment_mix.map((item) => ({ ...item, value: Math.abs(item.value) }))}
                     cx="50%"
                     cy="50%"
                     innerRadius={55}
@@ -212,7 +213,7 @@ export default function FinancialSummary({
                     dataKey="value"
                     nameKey="label"
                   >
-                    {stats.payment_mix.map((entry: unknown, index: number) => (
+                    {stats.payment_mix.map((entry, index: number) => (
                       <Cell key={`cell-${entry.label}`} fill={['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444'][index % 6]} />
                     ))}
                   </Pie>
@@ -234,7 +235,7 @@ export default function FinancialSummary({
           {stats?.payment_mix && stats.payment_mix.length > 0 && (
             <div className="mt-4 space-y-2 border-t border-base-200 pt-4 shrink-0">
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                {stats.payment_mix.map((item: unknown, index: number) => (
+                {stats.payment_mix.map((item, index: number) => (
                   <div key={item.label} className="flex items-center justify-between group p-2 bg-base-200 rounded-xl border border-base-200/50">
                     <div className="flex items-center gap-2">
                        <div 

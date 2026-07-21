@@ -11,6 +11,58 @@ import { escHtml } from '../utils/print/printHelpers';
 import { formatDate, formatDateTime, toApiDateTime, toApiDateEnd } from '../utils/dateUtils';
 import { getPaymentModeLabel } from '../config/paymentModes';
 
+interface ClosingTotalsSource {
+  start_date?: string | null;
+  total_theorique?: number;
+  total_ventes?: number;
+  total_ca_pharmacie?: number;
+  total_ca_divers?: number;
+  total_recouvrement?: number;
+  total_entrees?: number;
+  total_sorties?: number;
+  total?: number;
+  ventes?: number;
+  recouvrement?: number;
+  entrees?: number;
+  sorties?: number;
+  especes?: number;
+  cheque?: number;
+  carte?: number;
+  virement?: number;
+  om?: number;
+  momo?: number;
+  details?: Record<string, number | Record<string, unknown>>;
+  mouvements_audit?: Array<{ type: string; montant: number; motif: string; user_nom?: string; date?: string }>;
+}
+
+interface ClosingPrintData {
+  date_debut?: string | null;
+  start_date?: string | null;
+  date_fin?: string | null;
+  end_date?: string | null;
+  montant_theorique?: number;
+  total_theorique?: number;
+  montant_reel?: string | number;
+  details?: Record<string, unknown>;
+  mouvements_manuels?: Array<{ type: string; montant: number; motif: string }>;
+  mouvements_audit?: Array<{ type: string; montant: number; motif: string; user_nom?: string; date?: string }>;
+  user?: string;
+  total_ca_pharmacie?: number;
+  total_ca_divers?: number;
+  details_paiement?: { __meta__?: { total_ca_pharmacie?: number; total_ca_divers?: number } };
+  total_ventes?: number;
+  total_entrees?: number;
+  total_sorties?: number;
+}
+
+interface MovementPrintItem {
+  type: string;
+  montant: number;
+  motif: string;
+  user_nom?: string;
+  date?: string | null;
+}
+
 export function useJournalCaisse() {
   const { t } = useTranslation(['cash_journal', 'common']);
   const PAGE_SIZE = 50;
@@ -376,25 +428,25 @@ export function useJournalCaisse() {
   }, [serverTotals]);
 
   const openClosingModal = () => {
-      const currentTotals = (serverTotals || totauxParMode) as unknown;
+      const currentTotals = (serverTotals || totauxParMode) as ClosingTotalsSource;
       
       const modalTotals = {
           start_date: dateDebut ? toApiDateTime(dateDebut) : currentTotals?.start_date || null,
           end_date: dateFin ? toApiDateEnd(dateFin) : null,
-          total_theorique: currentTotals.total_theorique ?? currentTotals.total,
-          total_ventes: currentTotals.total_ventes ?? currentTotals.ventes,
+          total_theorique: currentTotals.total_theorique ?? currentTotals.total ?? 0,
+          total_ventes: currentTotals.total_ventes ?? currentTotals.ventes ?? 0,
           total_ca_pharmacie: currentTotals.total_ca_pharmacie,
           total_ca_divers: currentTotals.total_ca_divers,
-          total_recouvrement: currentTotals.total_recouvrement ?? currentTotals.recouvrement,
-          total_entrees: currentTotals.total_entrees ?? currentTotals.entrees,
-          total_sorties: currentTotals.total_sorties ?? currentTotals.sorties,
+          total_recouvrement: currentTotals.total_recouvrement ?? currentTotals.recouvrement ?? 0,
+          total_entrees: currentTotals.total_entrees ?? currentTotals.entrees ?? 0,
+          total_sorties: currentTotals.total_sorties ?? currentTotals.sorties ?? 0,
           details: currentTotals.details || {
-              especes: currentTotals.especes,
-              cheque: currentTotals.cheque,
-              carte: currentTotals.carte,
-              virement: currentTotals.virement,
-              om: currentTotals.om,
-              momo: currentTotals.momo
+              especes: currentTotals.especes ?? 0,
+              cheque: currentTotals.cheque ?? 0,
+              carte: currentTotals.carte ?? 0,
+              virement: currentTotals.virement ?? 0,
+              om: currentTotals.om ?? 0,
+              momo: currentTotals.momo ?? 0
           },
           user: selectedUser ? users.find(u => u.id.toString() === selectedUser)?.full_name : 'Admin'
       };
@@ -402,21 +454,20 @@ export function useJournalCaisse() {
       setClosingTotals(modalTotals);
       setActualAmount('');
       setManualMovements([]);
-      setFondDeCaisse((currentTotals.details?.__meta__?.fond_de_caisse as number) || 0);
+      setFondDeCaisse(((currentTotals.details as Record<string, Record<string, unknown>> | undefined)?.__meta__?.fond_de_caisse as number) || 0);
       setIsClosingModalOpen(true);
   };
 
-  const handleImprimerCloture = (dataToPrint?: unknown) => {
-    const data = dataToPrint || closingTotals;
-    if (!data) return;
+  const handleImprimerCloture = (dataToPrint?: ClosingPrintData) => {
+    const data: ClosingPrintData = dataToPrint || closingTotals || {};
 
     const win = window.open('', '_blank', 'width=800,height=600');
     if (win) {
-      const startStr = (data.date_debut || data.start_date) ? new Date(data.date_debut || data.start_date).toLocaleString(currentLocale) : '--';
-      const endStr = (data.date_fin || data.end_date) ? new Date(data.date_fin || data.end_date).toLocaleString(currentLocale) : '--';
+      const startStr = (data.date_debut || data.start_date) ? new Date((data.date_debut || data.start_date) as string).toLocaleString(currentLocale) : '--';
+      const endStr = (data.date_fin || data.end_date) ? new Date((data.date_fin || data.end_date) as string).toLocaleString(currentLocale) : '--';
       
       const totalTheorique = data.montant_theorique ?? data.total_theorique ?? 0;
-      const montantReel = data.montant_reel ?? normalizeNumberInput(actualAmount);
+      const montantReel = data.montant_reel != null ? Number(data.montant_reel) : normalizeNumberInput(actualAmount);
       // Solde à justifier = théorique backend (inclut recouvrements + fond + entrées - sorties)
       const soldeOp = totalTheorique;
       
@@ -426,14 +477,14 @@ export function useJournalCaisse() {
         ([key]) => !key.startsWith('__') && key !== 'mouvements_audit' && key !== 'mouvements'
       );
 
-      const manualMovements = (data.mouvements_manuels || []).map((m: unknown) => ({
+      const manualMovements = (data.mouvements_manuels || []).map((m) => ({
         type: m.type,
         montant: m.montant,
         motif: m.motif,
         user_nom: data.user || 'Caissier',
         date: data.date_fin || data.end_date
       }));
-      const existingMovements = (data.mouvements_audit || (data.details?.mouvements_audit) || []).map((m: unknown) => ({
+      const existingMovements = (data.mouvements_audit || ((data.details as Record<string, unknown>)?.mouvements_audit as Array<{ type: string; montant: number; motif: string; user_nom?: string; date?: string }>) || []).map((m) => ({
         type: m.type,
         montant: m.montant,
         motif: m.motif,
@@ -470,7 +521,7 @@ export function useJournalCaisse() {
                 <div style="font-weight: 500; margin-bottom: 3px; border-bottom: 0.5px solid #999; font-size: 0.85em;">${t('print.activity_title')}</div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>Ventes Pharmacie</span>
-                    <span>${formatCurrencyLocal(data.total_ca_pharmacie ?? (data.details_paiement?.__meta__?.total_ca_pharmacie) ?? data.total_ventes)}</span>
+                    <span>${formatCurrencyLocal(data.total_ca_pharmacie ?? (data.details_paiement?.__meta__?.total_ca_pharmacie) ?? data.total_ventes ?? 0)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>Ventes Diverses</span>
@@ -478,15 +529,15 @@ export function useJournalCaisse() {
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-top: 3px; padding-top: 2px; border-top: 1px dashed #ccc;">
                     <span style="font-weight: 500;">Total Ventes</span>
-                    <span style="font-weight: 500;">${formatCurrencyLocal(data.total_ventes)}</span>
+                    <span style="font-weight: 500;">${formatCurrencyLocal(data.total_ventes ?? 0)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>${t('print.misc_entries')}</span>
-                    <span>${formatCurrencyLocal(data.total_entrees)}</span>
+                    <span>${formatCurrencyLocal(data.total_entrees ?? 0)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>${t('print.expenses')}</span>
-                    <span>-${formatCurrencyLocal(data.total_sorties)}</span>
+                    <span>-${formatCurrencyLocal(data.total_sorties ?? 0)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-weight: 500; border-top: 0.5px dashed #999; margin-top: 3px; padding-top: 2px;">
                     <span>${t('print.solde_to_justify')}</span>
@@ -497,7 +548,7 @@ export function useJournalCaisse() {
             ${allMovements.length > 0 ? `
             <div style="margin-bottom: 10px;">
                 <div style="font-weight: 500; margin-bottom: 3px; border-bottom: 0.5px solid #999; font-size: 0.85em;">${t('print.expense_details')}</div>
-                ${allMovements.map((m: unknown) => `
+                ${allMovements.map((m: MovementPrintItem) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.75em; margin-bottom: 2px;">
                         <span style="max-width: 70%;">${escHtml(m.motif)} (${escHtml(m.user_nom)})</span>
                         <span style="font-weight: 500;">${formatCurrencyLocal(m.montant)}</span>
@@ -511,7 +562,7 @@ export function useJournalCaisse() {
                 ${displayDetails.map(([mode, montant]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 1px;">
                         <span style="text-transform: capitalize;">${getModeLabel(mode)}</span>
-                        <span>${formatCurrencyLocal(normalizeNumberInput(montant as unknown))}</span>
+                        <span>${formatCurrencyLocal(normalizeNumberInput(montant as string | number | null | undefined))}</span>
                     </div>
                 `).join('')}
             </div>
