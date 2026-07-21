@@ -41,6 +41,12 @@ export interface LigneEcriture {
     credit: number;
 }
 
+export interface Journal {
+    id: number;
+    code: string;
+    nom: string;
+}
+
 export interface PaginatedResponse<T> {
     count: number;
     next: string | null;
@@ -81,7 +87,7 @@ export const useAccounting = () => {
         gcTime: 1000 * 60 * 30,
     });
 
-    const { data: journaux } = useQuery({
+    const { data: journaux } = useQuery<Journal[]>({
         queryKey: ['accounting', 'journaux'],
         queryFn: async () => (await api.get('compta/journaux/')).data.results || (await api.get('compta/journaux/')).data,
         staleTime: 1000 * 60 * 10,

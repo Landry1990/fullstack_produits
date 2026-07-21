@@ -9,34 +9,73 @@ import { getApiErrorDetail } from '../../utils/errorHandling';
 import { generateUUID } from '../../utils/uuid';
 import SkeletonTable from '../ui/SkeletonTable';
 
+interface RupturePharmacieItem {
+  id: number;
+  cip1?: string;
+  name: string;
+  rayon_name?: string;
+  rotation_moyenne: number | string;
+  fournisseur_name?: string;
+  latest_fournisseur_name?: string;
+  dernier_achat?: string;
+  cost_price: number;
+}
+
+interface RuptureFournisseurItem {
+  id: number;
+  produit: number;
+  produit_nom: string;
+  fournisseur_nom?: string;
+  date_debut?: string;
+  remarques?: string;
+}
+
+interface RuptureStatsItem {
+  produit_id: number;
+  produit_name: string;
+  total_ruptures: number;
+}
+
+interface FilterOption {
+  id: number;
+  name: string;
+}
+
+interface SearchResultItem {
+  id: number;
+  name: string;
+  stock: number;
+  fournisseur_name?: string;
+}
+
 export default function Ruptures() {
   const { t } = useTranslation(['stock', 'common']);
   const [activeTab, setActiveTab] = useState<'pharmacie' | 'fournisseur' | 'stats'>('pharmacie');
 
   // Pharmacie State
-  const [pharmacieData, setPharmacieData] = useState<unknown[]>([]);
+  const [pharmacieData, setPharmacieData] = useState<RupturePharmacieItem[]>([]);
   const [pharmacieLoading, setPharmacieLoading] = useState(false);
   const [pharmaciePage, setPharmaciePage] = useState(1);
   const [pharmacieTotalPages, setPharmacieTotalPages] = useState(1);
   
   // Filters for Pharmacie
-  const [rayons, setRayons] = useState<unknown[]>([]);
-  const [fournisseurs, setFournisseurs] = useState<unknown[]>([]);
+  const [rayons, setRayons] = useState<FilterOption[]>([]);
+  const [fournisseurs, setFournisseurs] = useState<FilterOption[]>([]);
   const [selectedRayon, setSelectedRayon] = useState<string>('');
   const [selectedFournisseur, setSelectedFournisseur] = useState<string>('');
 
   // Fournisseur State
-  const [fournisseurData, setFournisseurData] = useState<unknown[]>([]);
+  const [fournisseurData, setFournisseurData] = useState<RuptureFournisseurItem[]>([]);
   const [fournisseurLoading, setFournisseurLoading] = useState(false);
   
   // Stats State
-  const [statsData, setStatsData] = useState<unknown[]>([]);
+  const [statsData, setStatsData] = useState<RuptureStatsItem[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsDays, setStatsDays] = useState<string>('30');
 
   // Search Products for Supplier Shortage
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<unknown[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   // Selection State
@@ -60,19 +99,21 @@ export default function Ruptures() {
   const toggleSelectAll = (type: 'pharmacie' | 'fournisseur') => {
     const currentData = type === 'pharmacie' ? pharmacieData : fournisseurData;
     const currentSelected = type === 'pharmacie' ? selectedPharmacyIds : selectedProviderIds;
+    const getId = (item: RupturePharmacieItem | RuptureFournisseurItem) =>
+      type === 'fournisseur' ? (item as RuptureFournisseurItem).produit : item.id;
     
     // Check if all visible are already selected
     const allSelected = currentData.length > 0 && currentData.every(item => 
-      currentSelected.has(type === 'fournisseur' ? item.produit : item.id)
+      currentSelected.has(getId(item))
     );
     
     const newSelected = new Set(currentSelected);
     if (allSelected) {
       // Unselect all visible
-      currentData.forEach(item => newSelected.delete(type === 'fournisseur' ? item.produit : item.id));
+      currentData.forEach(item => newSelected.delete(getId(item)));
     } else {
       // Select all visible
-      currentData.forEach(item => newSelected.add(type === 'fournisseur' ? item.produit : item.id));
+      currentData.forEach(item => newSelected.add(getId(item)));
     }
     
     if (type === 'pharmacie') setSelectedPharmacyIds(newSelected);

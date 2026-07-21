@@ -3,7 +3,7 @@ import api from '../services/api';
 import type { StockLot } from '../types';
 import { getLocalDateString } from '../utils/dateUtils';
 
-interface DashboardStats {
+export interface DashboardStats {
     role?: 'PHARMACIEN' | 'VENDEUR' | 'CAISSIER';
     revenue?: { value: number; change: number };
     sales?: { value: number; change: number };
@@ -32,7 +32,7 @@ interface DashboardStats {
     };
 }
 
-interface RevenueChartData {
+export interface RevenueChartData {
     labels: string[];
     data: number[];
 }
@@ -118,12 +118,24 @@ export const useLowStock = (enabled: boolean = true) => {
     });
 };
 
+export interface UgStatItem {
+    fournisseur_id: number;
+    fournisseur_nom: string;
+    valeur_acquise: number;
+    valeur_vendue: number;
+    valeur_restante: number;
+}
+
+export interface UgStatsResponse {
+    results: UgStatItem[];
+}
+
 export const useUgStats = (enabled: boolean = true) => {
-    return useQuery({
+    return useQuery<UgStatsResponse | null>({
         queryKey: ['dashboard', 'ugStats'],
         queryFn: async () => {
             try {
-                const response = await api.get('stats-ug/par_fournisseur/');
+                const response = await api.get<UgStatsResponse>('stats-ug/par_fournisseur/');
                 return response.data;
             } catch (err) {
                 console.warn('Failed to fetch UG stats', err);
@@ -136,7 +148,7 @@ export const useUgStats = (enabled: boolean = true) => {
 };
 
 export const usePromisDisponibles = (enabled: boolean = true) => {
-    return useQuery({
+    return useQuery<PromisItem[]>({
         queryKey: ['dashboard', 'promis'],
         queryFn: async () => {
             try {
@@ -193,7 +205,7 @@ export interface HourlyTrafficData {
 }
 
 export const useHourlyTraffic = () => {
-    return useQuery({
+    return useQuery<HourlyTrafficData[]>({
         queryKey: ['dashboard', 'hourlyTraffic'],
         queryFn: async () => {
             const response = await api.get<HourlyTrafficData[]>('dashboard/hourly_traffic/');

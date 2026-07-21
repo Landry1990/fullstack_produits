@@ -295,7 +295,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       fetchCommandes: async () => { await refetchCommandes(); },
       setSelectedCommande,
       setViewMode,
-      confirm: confirm as unknown, 
+      confirm,
       user
   });
 
@@ -332,12 +332,12 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       if (!selectedCommande) return;
 
       // Vérifier les produits sans date de péremption
-      const produits = (commandeProduits.length > 0 ? commandeProduits : (selectedCommande?.produits || [])) as unknown[];
-      const sansPeremption = produits.filter((p: unknown) => !p.date_expiration);
+      const produits = (commandeProduits.length > 0 ? commandeProduits : (selectedCommande?.produits || [])) as CommandeProduit[];
+      const sansPeremption = produits.filter((p) => !p.date_expiration);
 
       if (sansPeremption.length > 0) {
-          const noms = sansPeremption.map((p: unknown) => {
-              const nom = typeof p.produit === 'object' ? p.produit?.name : p.produit_nom;
+          const noms = sansPeremption.map((p) => {
+              const nom = typeof p.produit === 'object' ? (p.produit as ProduitModel).name : p.produit_nom;
               return `   • ${nom || 'Produit #' + (p.id || '?')}`;
           });
           const confirmMissing = await confirm({
@@ -351,7 +351,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       }
 
       // Vérifier les produits vendus à perte (prix de vente HT < prix d'achat)
-      const produitsEnPerte = produits.filter((p: unknown) => {
+      const produitsEnPerte = produits.filter((p) => {
           const price = Number(p.price || 0);
           const selling = Number(p.selling_price || 0);
           const tva = Number(p.tva || 0);
@@ -359,8 +359,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       });
 
       if (produitsEnPerte.length > 0) {
-          const nomsPerte = produitsEnPerte.map((p: unknown) => {
-              const nom = typeof p.produit === 'object' ? p.produit?.name : p.produit_nom;
+          const nomsPerte = produitsEnPerte.map((p) => {
+              const nom = typeof p.produit === 'object' ? (p.produit as ProduitModel).name : p.produit_nom;
               const price = Math.round(Number(p.price || 0));
               const sellingHT = Math.round(Number(p.selling_price || 0) / (1 + Number(p.tva || 0) / 100));
               return `   • ${nom || 'Produit #' + (p.id || '?')} — Achat: ${price} F / Vente HT: ${sellingHT} F`;
@@ -553,9 +553,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         ? produitsSource.filter((_, idx) => selectedRows.has(idx))
         : produitsSource
     ).map(p => ({
-            id: typeof p.produit === 'object' ? (p.produit as unknown).id : p.produit,
-            name: (p as unknown).produit_nom,
-            cip: (typeof p.produit === 'object' ? (p.produit as unknown).cip1 : (p as unknown).produit_cip) || '',
+            id: typeof p.produit === 'object' ? (p.produit as ProduitModel).id : p.produit,
+            name: p.produit_nom,
+            cip: (typeof p.produit === 'object' ? (p.produit as ProduitModel).cip1 : p.produit_cip) || '',
             purchase_price: p.price, 
             quantity: 0, 
             received_qty: p.quantity,
@@ -680,10 +680,25 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   }, [tauxChange, fraisCoefficient, commandeType, viewMode]);
 
   useEffect(() => {
-    const state = location.state as unknown;
+    interface CadencierProduct {
+      id: number;
+      name: string;
+      stock: number;
+      avg_daily_sales?: number;
+      quantity?: number;
+      price?: number;
+      fournisseur_id?: number | null;
+      tva?: string;
+      taux_marge?: string;
+    }
+    interface CreateFromState {
+      createFromStockAlert?: { products: CadencierProduct[] };
+      createFromCadencier?: { products: CadencierProduct[]; orderType?: string };
+    }
+    const state = location.state as CreateFromState | null;
     if (state && (state.createFromStockAlert || state.createFromCadencier)) {
       const isCadencier = !!state.createFromCadencier;
-      const data = state.createFromCadencier || state.createFromStockAlert;
+      const data = state.createFromCadencier || state.createFromStockAlert!;
       const orderType = state.createFromCadencier?.orderType;
       
       setViewMode('CREATE');
@@ -691,8 +706,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       setCommandeProduits([]);
       
       if (orderType) {
-        setCommandeType(orderType);
-        setActiveTab(orderType);
+        const ot = orderType as 'LOC' | 'DIR' | 'DIV';
+        setCommandeType(ot);
+        setActiveTab(ot);
       }
       
       const loadProducts = async () => {
@@ -717,7 +733,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
               if (isCadencier && p.quantity !== undefined && p.quantity > 0) {
                 suggestedQty = p.quantity;
               } else {
-                const avgSales = (p as unknown).avg_daily_sales;
+                const avgSales = p.avg_daily_sales;
                 const coverageDays = 30;
                 suggestedQty = avgSales && avgSales > 0
                   ? Math.max(1, Math.ceil(avgSales * coverageDays) - (fullProduct.stock || 0))
@@ -742,7 +758,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
               console.error(`Failed to fetch product ${p.id}:`, err);
               return {
                 id: Date.now() + p.id,
-                produit: { id: p.id, name: p.name, stock: p.stock } as unknown,
+                produit: { id: p.id, name: p.name, stock: p.stock } as ProduitModel,
                 quantity: p.quantity || 10,
                 unites_gratuites: 0,
                 prix_euro: orderType === 'DIR' ? '0' : undefined,
@@ -761,10 +777,10 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
         // Pré-sélectionner le fournisseur du premier produit qui en a un
         const firstWithFournisseur = newLines.find(
-          l => l.produit && typeof l.produit === 'object' && (l.produit as unknown).fournisseur
+          l => l.produit && typeof l.produit === 'object' && (l.produit as ProduitModel).fournisseur
         );
         if (firstWithFournisseur) {
-          const fId = (firstWithFournisseur.produit as unknown).fournisseur;
+          const fId = (firstWithFournisseur.produit as ProduitModel).fournisseur;
           setNewCommandeFournisseurId(String(fId));
         }
 
@@ -1554,20 +1570,20 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const handleSortProduits = useCallback((sortBy: 'chrono' | 'stock' | 'name' | 'qty') => {
     setCommandeSortBy(sortBy);
     setCommandeProduits(prev => {
-      const sorted = prev.slice().sort((a: unknown, b: unknown) => {
+      const sorted = prev.slice().sort((a, b) => {
         if (sortBy === 'chrono') return (a.id || 0) - (b.id || 0);
 
         const prodA = typeof a.produit === 'object' ? a.produit : produitsList.find(p => p.id === a.produit);
         const prodB = typeof b.produit === 'object' ? b.produit : produitsList.find(p => p.id === b.produit);
 
         if (sortBy === 'name') {
-          const nameA = prodA?.name || (a as unknown).produit_nom || '';
-          const nameB = prodB?.name || (b as unknown).produit_nom || '';
+          const nameA = prodA?.name || a.produit_nom || '';
+          const nameB = prodB?.name || b.produit_nom || '';
           return nameA.localeCompare(nameB);
         }
         if (sortBy === 'stock') {
-          const stockA = prodA?.stock ?? (a as unknown).produit_stock ?? 0;
-          const stockB = prodB?.stock ?? (b as unknown).produit_stock ?? 0;
+          const stockA = prodA?.stock ?? a.produit_stock ?? 0;
+          const stockB = prodB?.stock ?? b.produit_stock ?? 0;
           return stockB - stockA;
         }
         if (sortBy === 'qty') return (Number(b.quantity) || 0) - (Number(a.quantity) || 0);
