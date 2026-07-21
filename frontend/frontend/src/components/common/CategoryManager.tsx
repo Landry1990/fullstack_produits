@@ -20,6 +20,7 @@ interface Category {
   description?: string;
   parent?: number | null;
   parent_name?: string | null;
+  children?: Category[];
 }
 
 interface Product {
@@ -168,7 +169,7 @@ export default function CategoryManager({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload: unknown = {};
+    const payload: Record<string, unknown> = {};
     if (type === 'rayon') {
       payload.name = formData.name;
       payload.parent = formData.parent ? parseInt(formData.parent) : null;
@@ -257,7 +258,7 @@ export default function CategoryManager({
   const handleAddProduct = async (product: Product) => {
     if (!selectedCategory) return;
     try {
-      const payload: unknown = {};
+      const payload: Record<string, unknown> = {};
       payload[type] = selectedCategory.id;
 
       const { data: updatedProduct } = await api.patch(`produits/${product.id}/`, payload);
@@ -282,7 +283,7 @@ export default function CategoryManager({
     if (!confirmed) return;
 
     try {
-      const payload: unknown = {};
+      const payload: Record<string, unknown> = {};
       payload[type] = null;
 
       await api.patch(`produits/${product.id}/`, payload);
@@ -360,7 +361,7 @@ export default function CategoryManager({
            ) : hierarchy.length === 0 ? (
               <div className="text-center p-8 text-slate-400 italic text-sm">{t('stock:organisation.category_manager.no_items', { type })}</div>
            ) : (
-              hierarchy.map((cat: unknown) => (
+              hierarchy.map((cat) => (
                 <div key={cat.id} className="space-y-1">
                   <div
                     role="button"
@@ -421,7 +422,7 @@ export default function CategoryManager({
 
                   {cat.children && cat.children.length > 0 && (
                     <div className="pl-6 space-y-1 border-l-2 border-slate-100 ml-5 mt-1">
-                      {cat.children.map((child: unknown) => (
+                      {cat.children.map((child) => (
                         <div
                           key={child.id}
                           role="button"

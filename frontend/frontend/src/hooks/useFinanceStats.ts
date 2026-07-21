@@ -215,13 +215,29 @@ export const useAnalyseMarges = () => {
     });
 };
 
+export interface MarginVarianceStats {
+    margin_pct: number;
+    margin: number;
+    ca: number;
+    cost: number;
+}
+
+export interface SuspiciousProduct {
+    produit__id?: number;
+    id?: number;
+    produit__name?: string;
+    nom?: string;
+    unit_margin_pct?: number | string;
+    produit__pmp?: number | string;
+}
+
 export interface MarginVarianceData {
-    period1: { label: string; stats: unknown };
-    period2: { label: string; stats: unknown };
+    period1: { label: string; stats: MarginVarianceStats };
+    period2: { label: string; stats: MarginVarianceStats };
     variance_pct: number;
-    suspicious_products: unknown[];
+    suspicious_products: SuspiciousProduct[];
     insights: { fr: string; en: string }[];
-    labels: unknown;
+    labels: string[];
 }
 
 export const useMarginVarianceAnalysis = (params?: unknown) => {

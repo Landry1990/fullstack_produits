@@ -259,12 +259,11 @@ export default function ModuleFinancier() {
 
                 <div className="space-y-3">
                   <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">{isEnglish ? 'Key Insights' : 'Analyses Clés'}</h3>
-                  {varianceReport.insights.map((insight: unknown) => {
-                    const text = isEnglish ? insight?.en : insight?.fr;
-                    const safeText = typeof text === 'string' ? text : JSON.stringify(text);
+                  {varianceReport.insights.map((insight) => {
+                    const text = isEnglish ? insight.en : insight.fr;
                     return (
                       <div key={insight.en ?? insight.fr} className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-slate-700">
-                        <span>{safeText}</span>
+                        <span>{text}</span>
                       </div>
                     );
                   })}
@@ -289,7 +288,7 @@ export default function ModuleFinancier() {
                         </tr>
                       </thead>
                       <tbody>
-                        {varianceReport.suspicious_products.map((p: unknown, idx: number) => {
+                        {varianceReport.suspicious_products.map((p, idx) => {
                           const productId = p?.produit__id || p?.id || `prod-${idx}`;
                           const productName = typeof p?.produit__name === 'string' ? p.produit__name : 
                                             typeof p?.nom === 'string' ? p.nom : 'Produit inconnu';
@@ -762,13 +761,13 @@ export default function ModuleFinancier() {
                       </thead>
                       <tbody>
                         {marginAnalysis.opportunites_nego.length > 0 ? (
-                          marginAnalysis.opportunites_nego.map((item: unknown, idx: number) => {
-                            const itemId = item?.id || `opportunity-${idx}`;
-                            const itemName = typeof item?.nom === 'string' ? item.nom : 'Produit inconnu';
-                            const tauxMarge = typeof item?.taux_marge === 'number' ? item.taux_marge : 
-                                            typeof item?.taux_marge === 'string' ? parseFloat(item.taux_marge) : 0;
-                            const margePerdue = typeof item?.marge_perdue === 'number' ? item.marge_perdue :
-                                              typeof item?.marge_perdue === 'string' ? parseFloat(item.marge_perdue) : 0;
+                          marginAnalysis.opportunites_nego.map((item, idx) => {
+                            const itemId = item.id || `opportunity-${idx}`;
+                            const itemName = item.nom;
+                            const tauxMarge = typeof item.taux_marge === 'number' ? item.taux_marge : 
+                                            typeof item.taux_marge === 'string' ? parseFloat(item.taux_marge) : 0;
+                            const margePerdue = typeof item.marge_perdue === 'number' ? item.marge_perdue :
+                                              typeof item.marge_perdue === 'string' ? parseFloat(item.marge_perdue) : 0;
                             return (
                               <tr key={itemId} className="border-b border-slate-200">
                                 <td className="max-w-[120px] truncate py-1" title={itemName}>
@@ -814,13 +813,13 @@ export default function ModuleFinancier() {
                       </thead>
                       <tbody>
                         {marginAnalysis.stock_dormant.length > 0 ? (
-                          marginAnalysis.stock_dormant.map((item: unknown, idx: number) => {
-                            const itemId = item?.id || `dormant-${idx}`;
-                            const itemName = typeof item?.nom === 'string' ? item.nom : 'Produit inconnu';
-                            const tauxMarge = typeof item?.taux_marge === 'number' ? item.taux_marge : 
-                                            typeof item?.taux_marge === 'string' ? parseFloat(item.taux_marge) : 0;
-                            const prixActuel = typeof item?.prix_actuel === 'number' ? item.prix_actuel :
-                                             typeof item?.prix_actuel === 'string' ? parseFloat(item.prix_actuel) : 0;
+                          marginAnalysis.stock_dormant.map((item, idx) => {
+                            const itemId = item.id || `dormant-${idx}`;
+                            const itemName = item.nom;
+                            const tauxMarge = typeof item.taux_marge === 'number' ? item.taux_marge : 
+                                            typeof item.taux_marge === 'string' ? parseFloat(item.taux_marge) : 0;
+                            const prixActuel = typeof item.prix_actuel === 'number' ? item.prix_actuel :
+                                             typeof item.prix_actuel === 'string' ? parseFloat(item.prix_actuel) : 0;
                             return (
                               <tr key={itemId} className="border-b border-slate-200">
                                 <td className="max-w-[120px] truncate py-1" title={itemName}>
@@ -866,13 +865,13 @@ export default function ModuleFinancier() {
                       </thead>
                       <tbody>
                         {marginAnalysis.suggestions_prix.length > 0 ? (
-                          marginAnalysis.suggestions_prix.map((item: unknown, idx: number) => {
-                            const itemId = item?.id || `suggestion-${idx}`;
-                            const itemName = typeof item?.nom === 'string' ? item.nom : 'Produit inconnu';
-                            const tauxActuel = typeof item?.taux_actuel === 'number' ? item.taux_actuel : 
-                                             typeof item?.taux_actuel === 'string' ? parseFloat(item.taux_actuel) : 0;
-                            const prixSuggere = typeof item?.prix_suggere === 'number' ? item.prix_suggere :
-                                              typeof item?.prix_suggere === 'string' ? parseFloat(item.prix_suggere) : 0;
+                          marginAnalysis.suggestions_prix.map((item, idx) => {
+                            const itemId = item.id || `suggestion-${idx}`;
+                            const itemName = item.nom;
+                            const tauxActuel = typeof item.taux_actuel === 'number' ? item.taux_actuel : 
+                                             typeof item.taux_actuel === 'string' ? parseFloat(item.taux_actuel) : 0;
+                            const prixSuggere = typeof item.prix_suggere === 'number' ? item.prix_suggere :
+                                              typeof item.prix_suggere === 'string' ? parseFloat(item.prix_suggere) : 0;
                             return (
                               <tr key={itemId} className="border-b border-slate-200">
                                 <td className="max-w-[120px] truncate py-1" title={itemName}>
@@ -932,16 +931,16 @@ export default function ModuleFinancier() {
                   </tr>
                 </thead>
                 <tbody>
-                  {supplierAnalysis.slice(0, 10).map((item: unknown, index: number) => {
-                    const volumeValeur = item?.details?.volume?.valeur || 0;
-                    const volumeScore = item?.details?.volume?.score || 0;
-                    const qualiteIncidents = item?.details?.qualite?.incidents || 0;
-                    const qualiteScore = item?.details?.qualite?.score || 0;
-                    const regulariteLivraisons = item?.details?.regularite?.nb_livraisons || 0;
-                    const regulariteScore = item?.details?.regularite?.score || 0;
-                    const scoreGlobal = item?.score_global || 0;
-                    const supplierName = typeof item?.nom === 'string' ? item.nom : 'Fournisseur inconnu';
-                    const supplierId = item?.id || `supplier-${index}`;
+                  {supplierAnalysis.slice(0, 10).map((item, index) => {
+                    const volumeValeur = item.details?.volume?.valeur || 0;
+                    const volumeScore = item.details?.volume?.score || 0;
+                    const qualiteIncidents = item.details?.qualite?.incidents || 0;
+                    const qualiteScore = item.details?.qualite?.score || 0;
+                    const regulariteLivraisons = item.details?.regularite?.nb_livraisons || 0;
+                    const regulariteScore = item.details?.regularite?.score || 0;
+                    const scoreGlobal = item.score_global || 0;
+                    const supplierName = item.nom;
+                    const supplierId = item.id || `supplier-${index}`;
                     return (
                       <tr key={supplierId} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="font-bold py-2">{index + 1}</td>

@@ -1,21 +1,23 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ProduitModel, StockLot } from '../../types';
+import type { ProduitModel, StockLot, AchatProduit } from '../../types';
+import type { MonthlyStat } from '../../services/produitService';
+import type { StockMovement } from '../../hooks/useProduits';
 import { ProductTabsContent } from './ProductTabsContent';
 
 interface ProductDetailPanelProps {
   selectedProduit: ProduitModel | null;
   detailsLoading: boolean;
-  activeTab: unknown;
-  setActiveTab: (tab: unknown) => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
   lots: StockLot[];
-  monthlyStats: unknown[];
-  achats: unknown[];
-  stockHistory: unknown[];
+  monthlyStats: MonthlyStat[];
+  achats: AchatProduit[];
+  stockHistory: StockMovement[];
   loadingHistory: boolean;
   loadingAchats: boolean;
   transferLoading: boolean;
-  onMovementClick: (item: unknown) => void;
+  onMovementClick: (item: StockMovement) => void;
   onOpenAdjustment: () => void;
   onOpenEdit: (produit: ProduitModel) => void;
   onGenerateLabels: (produit: ProduitModel) => void;
