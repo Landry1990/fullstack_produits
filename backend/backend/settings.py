@@ -477,18 +477,6 @@ if SENTRY_DSN:
 # ASGI application
 ASGI_APPLICATION = 'backend.asgi.application'
 
-# Cache API avec Redis
-if REDIS_URL:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': REDIS_URL,
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            }
-        }
-    }
-
 # Channel Layer - Utilise Redis si disponible, sinon mémoire (dév)
 if REDIS_URL:
     CHANNEL_LAYERS = {

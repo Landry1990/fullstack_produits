@@ -195,11 +195,14 @@ class ProduitViewSet(
         SearchCache.invalidate_all_products()
 
     def perform_destroy(self, instance):
+        from django.utils import timezone
         instance.is_active = False
+        instance.deleted_by = self.request.user
+        instance.deleted_at = timezone.now()
         suffix = " (Produit Supprimé)"
         if suffix not in instance.name:
             instance.name = f"{instance.name}{suffix}"
-        instance.save(update_fields=['is_active', 'name'])
+        instance.save(update_fields=['is_active', 'name', 'deleted_by', 'deleted_at'])
         SearchCache.invalidate_all_products()
 
     @action(detail=True, methods=['get'])

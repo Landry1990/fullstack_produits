@@ -31,11 +31,14 @@ class AvoirViewSet(viewsets.ModelViewSet):
         serializer.save(created_by=self.request.user)
     
     def perform_destroy(self, instance):
+        from django.utils import timezone
         if instance.status == 'VALIDEE':
             from rest_framework.exceptions import ValidationError
             raise ValidationError("Impossible de supprimer un avoir validé.")
         instance.is_active = False
-        instance.save(update_fields=['is_active'])
+        instance.deleted_by = self.request.user
+        instance.deleted_at = timezone.now()
+        instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
     
     @action(detail=True, methods=['post'])
     def valider(self, request, pk=None):

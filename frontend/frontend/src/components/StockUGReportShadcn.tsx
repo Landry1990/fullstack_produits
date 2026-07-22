@@ -105,7 +105,7 @@ export default function StockUGReportShadcn() {
 
   const handlePrint = useCallback(() => {
     if (!data) return;
-    const win = window.open('', '', 'height=600,width=800');
+    const win = window.open('about:blank', '', 'height=600,width=800');
     if (win) {
       win.document.write(`
         <html>

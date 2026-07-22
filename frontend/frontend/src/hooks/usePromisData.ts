@@ -181,7 +181,8 @@ export function usePromisData(): UsePromisDataReturn {
         try {
             const blob = await promisService.imprimerTicket(id);
             const url = window.URL.createObjectURL(blob);
-            window.open(url, '_blank');
+            const w = window.open(url, '_blank');
+            if (!w) toast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
             setTimeout(() => window.URL.revokeObjectURL(url), 10000);
         } catch (err) {
             console.error('Erreur impression ticket:', err);

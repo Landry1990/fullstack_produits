@@ -27,6 +27,7 @@ from ...serializers import CommandeSerializer, CommandeProduitSerializer
 from ...serializers_optimized import CommandeListSerializer, CommandeDetailSerializer, CommandeOmnisearchSerializer
 from ...serializer_mixins import OptimizedSerializerMixin
 from ...search_mixins import MultiTermSearchMixin
+from ...cache_mixins import SimpleListCacheMixin
 from ...audit_helpers import log_audit
 from ...sudo_utils import validate_sudo_mode
 from ...pagination import StandardResultsSetPagination
@@ -89,12 +90,15 @@ def header_footer(canvas, doc, company_info, commande_info, total_achat):
     
     canvas.restoreState()
 
-class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
+class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
     API endpoint for commands with optimized serializers.
     - List view: Lightweight serializer (no products loaded)
     - Detail view: Complete serializer with all products
+    - List cached for 120s — commands change less frequently than invoices
     """
+    cache_prefix = 'commandes'
+    cache_ttl = 120  # 2 minutes
     from django.db.models.functions import Coalesce
     from django.db.models import Value, OuterRef, Subquery
 
@@ -181,7 +185,17 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
     def list(self, request, *args, **kwargs):
         """
         Retourne la liste paginée avec des compteurs par statut indépendants de la pagination.
+        Cache de 120s via SimpleListCacheMixin.
         """
+        from django.core.cache import cache as django_cache
+
+        cache_key = self._build_cache_key(request)
+        cached = django_cache.get(cache_key)
+        if cached is not None:
+            response = Response(cached)
+            response['X-Cache-Hit'] = 'true'
+            return response
+
         queryset = self.filter_queryset(self.get_queryset())
         status_counts = dict(
             queryset.values('status').annotate(count=Count('id')).values_list('status', 'count')
@@ -195,13 +209,16 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             serializer = self.get_serializer(page, many=True)
             response = self.get_paginated_response(serializer.data)
             response.data['status_counts'] = status_counts
-            return response
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+            response = Response({
+                'results': serializer.data,
+                'status_counts': status_counts,
+            })
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response({
-            'results': serializer.data,
-            'status_counts': status_counts,
-        })
+        django_cache.set(cache_key, response.data, self.cache_ttl)
+        response['X-Cache-Hit'] = 'false'
+        return response
 
     @action(detail=False, methods=['post'])
     @transaction.atomic
@@ -416,6 +433,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         })
 
     def perform_destroy(self, instance):
+        from django.utils import timezone
         # Vérification manuelle avant soft delete
         lots = StockLot.objects.filter(commande_produit__commande=instance)
         if FactureProduitAllocation.objects.filter(stock_lot__in=lots).exists():
@@ -423,7 +441,10 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
              raise ValidationError("Impossible de supprimer : Des lots de cette commande ont déjà été vendus ou utilisés.")
         
         instance.is_active = False
-        instance.save(update_fields=['is_active'])
+        instance.deleted_by = self.request.user
+        instance.deleted_at = timezone.now()
+        instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
+        self._invalidate_cache()
 
     @action(detail=True, methods=['post'])
     @idempotent_action

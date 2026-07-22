@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { toast } from 'react-hot-toast';
 import { escHtml } from '../utils/print/printHelpers';
 import { usePharmacySettings } from './usePharmacySettings';
 import { formatDateTime } from '../utils/dateUtils';
@@ -198,7 +199,7 @@ function usePrint(): UsePrintReturn {
       printDelay = 500
     } = options;
 
-    const printWindow = window.open('', '', `height=${height},width=${width}`);
+    const printWindow = window.open('about:blank', '', `height=${height},width=${width}`);
 
     if (!printWindow) {
       console.error('Impossible d\'ouvrir la fenêtre d\'impression. Vérifiez les paramètres du navigateur.');
@@ -274,7 +275,8 @@ function usePrint(): UsePrintReturn {
    * Ouvrir une page d'impression dédiée
    */
   const openPrintPage = useCallback((url: string) => {
-    window.open(url, '_blank');
+    const w = window.open(url, '_blank');
+    if (!w) toast.error('Popup bloqué. Autorisez les popups pour imprimer.');
   }, []);
 
   /**

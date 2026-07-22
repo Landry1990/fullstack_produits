@@ -461,7 +461,7 @@ export function useJournalCaisse() {
   const handleImprimerCloture = (dataToPrint?: ClosingPrintData) => {
     const data: ClosingPrintData = dataToPrint || closingTotals || {};
 
-    const win = window.open('', '_blank', 'width=800,height=600');
+    const win = window.open('about:blank', '_blank', 'width=800,height=600');
     if (win) {
       const startStr = (data.date_debut || data.start_date) ? new Date((data.date_debut || data.start_date) as string).toLocaleString(currentLocale) : '--';
       const endStr = (data.date_fin || data.end_date) ? new Date((data.date_fin || data.end_date) as string).toLocaleString(currentLocale) : '--';
