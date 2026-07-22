@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
-from django.db.models import F, Sum, Value, DecimalField, OuterRef, Subquery, ProtectedError, Count
+from django.db.models import F, Sum, Value, DecimalField, OuterRef, Subquery, ProtectedError, Count, Max
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import timedelta
@@ -15,15 +15,19 @@ from ..models import Client, Facture, Caisse, AyantDroit, DepotClient
 from ..serializers import ClientSerializer, AyantDroitSerializer, DepotClientSerializer
 from ..serializers_optimized import ClientListSerializer, ClientDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
+from ..cache_mixins import SimpleListCacheMixin
 from ..pagination import StandardResultsSetPagination
 from ..cache_utils import ClientDebtCache
 
-class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
+class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
     API endpoint for clients with optimized serializers.
     - List view: Lightweight serializer (8 fields)
     - Detail view: Complete serializer with ayants droit
+    - List cached for 300s — clients change rarely
     """
+    cache_prefix = 'clients'
+    cache_ttl = 300  # 5 minutes
     # Subquery pour sommer les paiements valides par facture (évite l'error 'aggregate of aggregate')
     # On importe Caisse dynamiquement ou on suppose qu'il est disponible via le modèle
     # Pour éviter les imports circulaires ou complexes, on utilise le string reference si possible ou import local?
@@ -101,73 +105,105 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         import logging
+        from django.utils import timezone
         logger = logging.getLogger(__name__)
         logger.info(f'[ClientViewSet] Soft deleting client {instance.id} - {instance.name}')
         instance.is_active = False
-        instance.save(update_fields=['is_active'])
+        instance.deleted_by = self.request.user
+        instance.deleted_at = timezone.now()
+        instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
+        self._invalidate_cache()
         logger.info(f'[ClientViewSet] Client {instance.id} soft deleted successfully, is_active={instance.is_active}')
 
     @action(detail=True, methods=['get'])
     def purchase_history(self, request, pk=None):
-        """Retourne l'historique enrichi des achats d'un client."""
+        """Retourne l'historique enrichi des achats d'un client — optimisé SQL."""
         client = self.get_object()
 
-        # Toutes les factures valides (sans limite pour les stats)
-        all_factures = Facture.objects.filter(
+        from django.db.models import Q, Count, Sum, F as F_orm
+        from django.db.models.functions import TruncMonth
+
+        # ── Stats globales en une seule requête ─────────────────
+        stats = Facture.objects.filter(
             client=client,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).prefetch_related('produits__produit').order_by('-date')
+        ).aggregate(
+            total_ca=Sum('total_ttc'),
+            nb_factures=Count('id'),
+            last_visit=Max('date'),
+        )
 
-        # ── Stats globales ──────────────────────────────────────
-        total_ca = Decimal('0.00')
-        product_counter: dict = defaultdict(lambda: {'nom': '', 'quantite': 0, 'total': Decimal('0.00')})
-        dates = []
-
-        for facture in all_factures:
-            total_ca += facture.total_ttc
-            dates.append(facture.date)
-            for fp in facture.produits.all():
-                pid = fp.produit.id if fp.produit else f"_{fp.produit_nom}"
-                nom = fp.produit.name if fp.produit else (fp.produit_nom or 'Produit inconnu')
-                product_counter[pid]['nom'] = nom
-                product_counter[pid]['quantite'] += fp.quantity
-                product_counter[pid]['total'] += fp.quantity * fp.selling_price
-
-        nb_factures = len(dates)
-        last_visit = dates[0].isoformat() if dates else None
+        total_ca = stats['total_ca'] or Decimal('0.00')
+        nb_factures = stats['nb_factures'] or 0
+        last_visit = stats['last_visit']
         avg_basket = float(total_ca / nb_factures) if nb_factures > 0 else 0.0
 
-        # Fréquence moyenne entre visites (en jours)
-        visit_frequency = None
-        if len(dates) >= 2:
-            spans = [(dates[i] - dates[i + 1]).days for i in range(len(dates) - 1)]
-            visit_frequency = round(sum(spans) / len(spans), 1)
+        # ── Top 5 produits par quantité (SQL) ───────────────────
+        from api.models import FactureProduit
+        top_products_qs = FactureProduit.objects.filter(
+            facture__client=client,
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).values(
+            'produit__id', 'produit__name', 'produit_nom'
+        ).annotate(
+            total_qty=Sum('quantity'),
+            total_ca=Sum(F_orm('quantity') * F_orm('selling_price'), output_field=DecimalField()),
+        ).order_by('-total_qty')[:5]
 
-        # Top 5 produits par quantité
-        top_products = sorted(
-            [{'id': k, 'nom': v['nom'], 'quantite': v['quantite'], 'total': float(v['total'])}
-             for k, v in product_counter.items()],
-            key=lambda x: x['quantite'], reverse=True
-        )[:5]
+        top_products = [
+            {
+                'id': p['produit__id'] or f"_{p['produit_nom']}",
+                'nom': p['produit__name'] or p['produit_nom'] or 'Produit inconnu',
+                'quantite': p['total_qty'],
+                'total': float(p['total_ca'] or 0),
+            }
+            for p in top_products_qs
+        ]
 
-        # CA des 12 derniers mois par mois
+        # ── CA 12 derniers mois (SQL TruncMonth) ────────────────
         now = timezone.now()
+        twelve_months_ago = now - timedelta(days=365)
+        ca_monthly_qs = Facture.objects.filter(
+            client=client,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            date__gte=twelve_months_ago,
+        ).annotate(
+            month=TruncMonth('date')
+        ).values('month').annotate(
+            ca=Sum('total_ttc')
+        ).order_by('month')
+
+        ca_map = {entry['month'].strftime('%b %Y'): float(entry['ca'] or 0) for entry in ca_monthly_qs}
+
         ca_12_mois = []
         for i in range(11, -1, -1):
-            start = (now.replace(day=1) - timedelta(days=i * 30)).replace(day=1)
-            end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
-            ca_mois = sum(
-                float(f.total_ttc) for f in all_factures
-                if start <= f.date < end
-            )
+            month_start = (now.replace(day=1) - timedelta(days=i * 30)).replace(day=1)
+            label = month_start.strftime('%b %Y')
             ca_12_mois.append({
-                'mois': start.strftime('%b %Y'),
-                'ca': ca_mois
+                'mois': label,
+                'ca': ca_map.get(label, 0),
             })
 
-        # ── 50 dernières factures pour la liste ────────────────
+        # ── Fréquence de visite (SQL) ───────────────────────────
+        visit_frequency = None
+        if nb_factures >= 2:
+            dates_list = list(
+                Facture.objects.filter(
+                    client=client,
+                    status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+                ).values_list('date', flat=True).order_by('-date')
+            )
+            spans = [(dates_list[i] - dates_list[i + 1]).days for i in range(len(dates_list) - 1)]
+            visit_frequency = round(sum(spans) / len(spans), 1)
+
+        # ── 50 dernières factures avec produits ─────────────────
+        recent_factures = Facture.objects.filter(
+            client=client,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).prefetch_related('produits__produit').order_by('-date')[:50]
+
         result = []
-        for facture in list(all_factures)[:50]:
+        for facture in recent_factures:
             produits_list = []
             for fp in facture.produits.all():
                 produits_list.append({
@@ -195,7 +231,7 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'total_factures': nb_factures,
             'total_ca': float(total_ca),
             'avg_basket': round(avg_basket, 2),
-            'last_visit': last_visit,
+            'last_visit': last_visit.isoformat() if last_visit else None,
             'visit_frequency': visit_frequency,
             'top_products': top_products,
             'ca_12_mois': ca_12_mois,

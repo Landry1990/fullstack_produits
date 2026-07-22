@@ -14,8 +14,8 @@ class SearchCache:
     Utilise Redis (ou LocMemCache en dev) avec un TTL configurable.
     """
     
-    # TTL par défaut: 5 minutes pour les recherches
-    DEFAULT_TTL = 300  # secondes
+    # TTL par défaut: 60 secondes — stock doit rester frais pour la facturation
+    DEFAULT_TTL = 60  # secondes
     
     # Préfixes pour différents types de cache
     PREFIX_PRODUCT_SEARCH = "prod_search"

@@ -32,8 +32,8 @@ export default function useOmnisearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cache avec TTL
-  const [searchCache, setSearchCache] = useState<Map<string, CacheEntry>>(new Map());
+  // Cache avec TTL (useRef pour éviter les re-renders inutiles)
+  const searchCacheRef = useRef<Map<string, CacheEntry>>(new Map());
 
   // Ref pour suivre le dernier debouncedSearch traité et éviter les race conditions
   const lastProcessedRef = useRef<string>('');
@@ -108,6 +108,7 @@ export default function useOmnisearch() {
       const now = Date.now();
 
       // Vérifier le cache (avec TTL)
+      const searchCache = searchCacheRef.current;
       if (searchCache.has(cacheKey)) {
         const cached = searchCache.get(cacheKey)!;
         if (now - cached.timestamp < CACHE_TTL_MS) {
@@ -138,18 +139,15 @@ export default function useOmnisearch() {
           lastProcessedRef.current = term;
 
           // Mettre en cache avec timestamp
-          setSearchCache((prev) => {
-            const newCache = new Map(prev);
-            newCache.set(cacheKey, { data: results, timestamp: Date.now() });
-            // Garder seulement les MAX_CACHE_SIZE entrées les plus récentes
-            if (newCache.size > MAX_CACHE_SIZE) {
-              const entries = Array.from(newCache.entries());
-              entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
-              const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
-              toDelete.forEach(([key]) => newCache.delete(key));
-            }
-            return newCache;
-          });
+          const cache = searchCacheRef.current;
+          cache.set(cacheKey, { data: results, timestamp: Date.now() });
+          // Garder seulement les MAX_CACHE_SIZE entrées les plus récentes
+          if (cache.size > MAX_CACHE_SIZE) {
+            const entries = Array.from(cache.entries());
+            entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+            const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
+            toDelete.forEach(([key]) => cache.delete(key));
+          }
         }
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -166,7 +164,7 @@ export default function useOmnisearch() {
 
     fetchData();
     return () => controller.abort();
-  }, [debouncedSearch, open, t, searchCache]);
+  }, [debouncedSearch, open, t]);
 
   // Synchronisation auto de la sélection
   useEffect(() => {

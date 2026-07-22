@@ -62,7 +62,7 @@ class CorbeilleViewSet(ViewSet):
         }
 
         # Produits inactifs
-        for p in Produit.objects.filter(is_active=False).order_by('-updated_at')[:200]:
+        for p in Produit.objects.filter(is_active=False).select_related('deleted_by').order_by('-deleted_at')[:200]:
             items['produits'].append({
                 'id': p.id,
                 'name': p.name,
@@ -73,11 +73,12 @@ class CorbeilleViewSet(ViewSet):
                     'selling_price': float(p.selling_price or 0),
                     'cip1': p.cip1,
                 },
-                'deleted_at': p.updated_at.isoformat() if p.updated_at else None,
+                'deleted_at': p.deleted_at.isoformat() if p.deleted_at else (p.updated_at.isoformat() if p.updated_at else None),
+                'deleted_by': p.deleted_by.get_username() if p.deleted_by else None,
             })
 
         # Clients inactifs
-        for c in Client.objects.filter(is_active=False).order_by('-created_at')[:200]:
+        for c in Client.objects.filter(is_active=False).select_related('deleted_by').order_by('-deleted_at')[:200]:
             items['clients'].append({
                 'id': c.id,
                 'name': c.name,
@@ -87,11 +88,12 @@ class CorbeilleViewSet(ViewSet):
                     'email': c.email,
                     'client_type': c.client_type,
                 },
-                'deleted_at': c.created_at.isoformat() if c.created_at else None,
+                'deleted_at': c.deleted_at.isoformat() if c.deleted_at else (c.created_at.isoformat() if c.created_at else None),
+                'deleted_by': c.deleted_by.get_username() if c.deleted_by else None,
             })
 
         # Fournisseurs inactifs
-        for f in Fournisseur.objects.filter(is_active=False):
+        for f in Fournisseur.objects.filter(is_active=False).select_related('deleted_by'):
             items['fournisseurs'].append({
                 'id': f.id,
                 'name': f.name,
@@ -100,11 +102,12 @@ class CorbeilleViewSet(ViewSet):
                     'phone': f.phone,
                     'email': f.email,
                 },
-                'deleted_at': None,
+                'deleted_at': f.deleted_at.isoformat() if f.deleted_at else None,
+                'deleted_by': f.deleted_by.get_username() if f.deleted_by else None,
             })
 
         # Commandes inactives
-        for c in Commande.objects.filter(is_active=False).select_related('fournisseur').order_by('-date')[:100]:
+        for c in Commande.objects.filter(is_active=False).select_related('fournisseur', 'deleted_by').order_by('-deleted_at')[:100]:
             items['commandes'].append({
                 'id': c.id,
                 'name': f"Commande {c.id} ({c.numero_facture or 'Sans N°'})",
@@ -113,11 +116,12 @@ class CorbeilleViewSet(ViewSet):
                     'fournisseur': c.fournisseur.name if c.fournisseur else c.fournisseur_nom,
                     'status': c.get_status_display(),  # type: ignore[attr-defined]
                 },
-                'deleted_at': c.date.isoformat() if c.date else None,
+                'deleted_at': c.deleted_at.isoformat() if c.deleted_at else (c.date.isoformat() if c.date else None),
+                'deleted_by': c.deleted_by.get_username() if c.deleted_by else None,
             })
 
         # Avoirs inactifs
-        for a in Avoir.objects.filter(is_active=False).select_related('fournisseur').order_by('-created_at')[:100]:
+        for a in Avoir.objects.filter(is_active=False).select_related('fournisseur', 'deleted_by').order_by('-deleted_at')[:100]:
             items['avoirs'].append({
                 'id': a.id,
                 'name': f"Avoir {a.numero}",
@@ -126,11 +130,12 @@ class CorbeilleViewSet(ViewSet):
                     'fournisseur': a.fournisseur.name if a.fournisseur else a.fournisseur_nom,
                     'status': a.get_status_display(),  # type: ignore[attr-defined]
                 },
-                'deleted_at': a.updated_at.isoformat() if a.updated_at else None,
+                'deleted_at': a.deleted_at.isoformat() if a.deleted_at else (a.updated_at.isoformat() if a.updated_at else None),
+                'deleted_by': a.deleted_by.get_username() if a.deleted_by else None,
             })
 
         # Promis inactifs
-        for p in Promis.objects.filter(is_active=False).select_related('client', 'produit').order_by('-date_promis')[:100]:
+        for p in Promis.objects.filter(is_active=False).select_related('client', 'produit', 'deleted_by').order_by('-deleted_at')[:100]:
             items['promis'].append({
                 'id': p.id,
                 'name': f"Promis {p.produit.name if p.produit else p.produit_nom}",
@@ -140,11 +145,12 @@ class CorbeilleViewSet(ViewSet):
                     'status': p.get_status_display(),  # type: ignore[attr-defined]
                     'quantite': p.quantite,
                 },
-                'deleted_at': p.date_promis.isoformat() if p.date_promis else None,
+                'deleted_at': p.deleted_at.isoformat() if p.deleted_at else (p.date_promis.isoformat() if p.date_promis else None),
+                'deleted_by': p.deleted_by.get_username() if p.deleted_by else None,
             })
 
         # Inventaires inactifs
-        for i in Inventaire.objects.filter(is_active=False).order_by('-date')[:100]:
+        for i in Inventaire.objects.filter(is_active=False).select_related('deleted_by').order_by('-deleted_at')[:100]:
             items['inventaires'].append({
                 'id': i.id,  # type: ignore[attr-defined]
                 'name': f"Inventaire {i.reference or i.id}",  # type: ignore[attr-defined]
@@ -153,11 +159,12 @@ class CorbeilleViewSet(ViewSet):
                     'status': i.get_status_display(),  # type: ignore[attr-defined]
                     'type': i.get_inventory_type_display(),  # type: ignore[attr-defined]
                 },
-                'deleted_at': i.date.isoformat() if i.date else None,
+                'deleted_at': i.deleted_at.isoformat() if i.deleted_at else (i.date.isoformat() if i.date else None),
+                'deleted_by': i.deleted_by.get_username() if i.deleted_by else None,
             })
 
         # Factures inactives
-        for f in Facture.objects.filter(is_active=False).select_related('client').order_by('-date')[:100]:
+        for f in Facture.objects.filter(is_active=False).select_related('client', 'deleted_by').order_by('-deleted_at')[:100]:
             items['factures'].append({
                 'id': f.id,
                 'name': f"Facture {f.numero_facture or f.id}",
@@ -167,7 +174,8 @@ class CorbeilleViewSet(ViewSet):
                     'status': f.get_status_display(),  # type: ignore[attr-defined]
                     'total': float(f.total_ttc),
                 },
-                'deleted_at': f.date.isoformat() if f.date else None,
+                'deleted_at': f.deleted_at.isoformat() if f.deleted_at else (f.date.isoformat() if f.date else None),
+                'deleted_by': f.deleted_by.get_username() if f.deleted_by else None,
             })
 
         # Utilisateurs inactifs
@@ -182,6 +190,7 @@ class CorbeilleViewSet(ViewSet):
                     'last_name': u.last_name,
                 },
                 'deleted_at': u.date_joined.isoformat() if u.date_joined else None,
+                'deleted_by': None,
             })
 
         total = sum(len(v) for v in items.values())

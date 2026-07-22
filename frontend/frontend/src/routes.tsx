@@ -41,7 +41,7 @@ function lazyWithRetry<T extends ComponentType<unknown>>(
 }
 
 // Prefetch helper - charge en arrière-plan au survol
-function _prefetchRoute(factory: () => Promise<unknown>) {
+export function prefetchRoute(factory: () => Promise<unknown>) {
   if ('requestIdleCallback' in window) {
     requestIdleCallback(() => {
       factory().catch(() => {}); // Silencieux si erreur

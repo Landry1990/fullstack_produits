@@ -33,6 +33,11 @@ class Inventaire(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True, help_text="Inventaire actif (non supprimé dans la corbeille)")
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_inventaires', help_text="Utilisateur ayant supprimé cet inventaire"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
     version = models.IntegerField(
         default=1,
         help_text="Version pour optimistic locking — incrémentée à chaque modification de lignes"

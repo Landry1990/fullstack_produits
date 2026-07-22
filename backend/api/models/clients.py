@@ -6,6 +6,7 @@ from django.db import models
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from django.contrib.postgres.indexes import GinIndex
+from django.contrib.auth.models import User
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from decimal import Decimal
@@ -23,9 +24,14 @@ class Fournisseur(models.Model):
     phone = models.CharField(validators=[phone_regex], max_length=17, unique=True)
     email = models.EmailField(unique=True, blank=True, null=True)
     is_active = models.BooleanField(
-        default=True, 
+        default=True,
         help_text="Fournisseur actif (visible dans les recherches)"
     )
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_fournisseurs', help_text="Utilisateur ayant supprimé ce fournisseur"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
     is_divers = models.BooleanField(
         default=False,
         help_text="Fournisseur utilisé pour les achats divers (produits sans lien avec le stock normal)"
@@ -207,9 +213,14 @@ class Client(models.Model):
 
     created_at = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(
-        default=True, 
+        default=True,
         help_text="Client actif (visible dans les recherches)"
     )
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_clients', help_text="Utilisateur ayant supprimé ce client"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
 
     def __str__(self):
         return self.name

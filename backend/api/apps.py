@@ -36,6 +36,7 @@ class ApiConfig(AppConfig):
         import api.signals_depot
         import api.signals_comptabilite
         import api.cache_invalidation
+        import api.cache_signals  # Signaux StockLot, CommandeProduit, FactureProduit
         import api.signals_rotation  # Rotation auto après chaque vente
         import api.signals_stock_levels  # Seuils min/max auto
 

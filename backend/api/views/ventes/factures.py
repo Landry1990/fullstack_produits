@@ -27,6 +27,7 @@ from api.centralized_configs import (
     BaseViewSetConfig,
     CommonFilterFields
 )
+from api.cache_mixins import SimpleListCacheMixin
 from api.security_utils import build_safe_content_disposition
 from api.idempotency import idempotent_action
 from api.services.invoice_pdf import generate_invoice_pdf
@@ -58,12 +59,15 @@ class FactureSearchFilter(filters.SearchFilter):
         return queryset.distinct()
 
 
-class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.ModelViewSet):
+class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
     API endpoint for factures with optimized serializers.
     - List view: Lightweight serializer (7 fields) - excludes products and payments
     - Detail view: Complete serializer with all products and payments
+    - List cached for 60s to reduce DB load on heavy join queries
     """
+    cache_prefix = 'factures'
+    cache_ttl = 60  # 60 secondes
     
     def get_queryset(self):
         # Base optimization for all views: select related foreign keys
@@ -138,18 +142,6 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
     list_serializer_class = FactureListSerializer
     detail_serializer_class = FactureDetailSerializer
 
-    def list(self, request, *args, **kwargs):
-        # Cache: 60s pour la liste des factures (élimine les sous-requêtes répétées)
-        cache_key = f"factures_list:{request.user.id}:{hash(frozenset(request.query_params.items()))}"
-        cached = cache.get(cache_key)
-        if cached is not None:
-            return Response(cached)
-        
-        response = super().list(request, *args, **kwargs)
-        if response.status_code == 200:
-            cache.set(cache_key, response.data, 60)
-        return response
-
     @action(detail=False, methods=['get'])
     def page_init(self, request):
         """
@@ -188,6 +180,7 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+        self._invalidate_cache()
 
     @action(detail=False, methods=['post'])
     @transaction.atomic
@@ -377,8 +370,12 @@ class FactureViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Model
             return Response({'detail': 'Impossible de supprimer cette facture car elle est liée à d\'autres éléments.'}, status=status.HTTP_400_BAD_REQUEST)
 
     def perform_destroy(self, instance):
+        from django.utils import timezone
         instance.is_active = False
-        instance.save(update_fields=['is_active'])
+        instance.deleted_by = self.request.user
+        instance.deleted_at = timezone.now()
+        instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
+        self._invalidate_cache()
 
     @action(detail=True, methods=['post'])
     @transaction.atomic

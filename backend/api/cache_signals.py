@@ -1,20 +1,15 @@
 """
 Signaux Django pour invalider automatiquement le cache lors des modifications.
 """
-from django.db.models.signals import post_save, post_delete, pre_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from .models import Produit, StockLot, CommandeProduit, FactureProduit
-from .cache_utils import SearchCache, CacheInvalidator
+from .models import StockLot, CommandeProduit, FactureProduit, Caisse
+from .cache_utils import SearchCache, CacheInvalidator, ClientDebtCache
 
-
-# Invalidation du cache produit lors de modifications
-@receiver(post_save, sender=Produit)
-@receiver(post_delete, sender=Produit)
-def invalidate_product_cache_on_change(sender, instance, **kwargs):
-    """
-    Invalide le cache quand un produit est créé, modifié ou supprimé.
-    """
-    CacheInvalidator.invalidate_on_product_change(sender, instance, **kwargs)
+# Note: Les signaux pour Produit, Commande, Facture, StockAdjustment
+# sont gérés dans cache_invalidation.py (importé dans apps.py).
+# Ce fichier gère uniquement les signaux sur les modèles "enfants"
+# qui affectent le stock indirectement.
 
 
 # Invalidation du cache lors de changements de stock
@@ -47,6 +42,17 @@ def invalidate_cache_on_invoice_product_change(sender, instance, **kwargs):
     """
     if hasattr(instance, 'produit') and instance.produit:
         SearchCache.invalidate_product(instance.produit.id)
+
+
+# Invalidation du cache de dette client lors d'un paiement
+@receiver(post_save, sender=Caisse)
+@receiver(post_delete, sender=Caisse)
+def invalidate_client_debt_on_payment(sender, instance, **kwargs):
+    """
+    Invalide le cache de dette client quand un paiement est enregistré.
+    """
+    if instance.facture and instance.facture.client_id:
+        ClientDebtCache.invalidate_client(instance.facture.client_id)
 
 
 # Signal pour logger les hits/miss de cache (optionnel, pour monitoring)

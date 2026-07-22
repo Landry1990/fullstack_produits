@@ -41,12 +41,15 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         })
 
     def destroy(self, request, *args, **kwargs):
+        from django.utils import timezone
         validation_user, error_response = validate_sudo_mode(request)
         if error_response:
             return error_response
         instance = self.get_object()
         instance.is_active = False
-        instance.save(update_fields=['is_active'])
+        instance.deleted_by = validation_user
+        instance.deleted_at = timezone.now()
+        instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
         log_audit(
             user=validation_user,
             action=AuditLog.Action.DELETE,

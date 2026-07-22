@@ -9,11 +9,11 @@ from .models import Facture, Caisse, Client, Produit, EcritureComptable, LigneEc
 @receiver([post_save, post_delete], sender=Produit)
 @receiver([post_save, post_delete], sender=EcritureComptable)
 @receiver([post_save, post_delete], sender=LigneEcriture)
-def invalidate_dashboard_stats(sender, instance, **kwargs):
+def invalidate_secondary_caches(sender, instance, **kwargs):
     """
-    Invalidate dashboard stats cache when data changes.
+    Invalide les caches secondaires (listes de factures, suggestions, dettes fournisseurs, compta).
+    Le cache dashboard est géré séparément par DashboardCache dans cache_invalidation.py.
     """
-    cache.delete('dashboard_stats')
     # Invalider le cache de la liste des factures
     try:
         cache.delete_pattern('factures_list:*')

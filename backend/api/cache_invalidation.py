@@ -14,6 +14,7 @@ from django.dispatch import receiver
 from .models import Commande, Facture, StockAdjustment, Produit
 import logging
 from .cache_utils import SearchCache
+from .dashboard_cache import DashboardCache
 
 logger = logging.getLogger('api.cache')
 
@@ -37,6 +38,7 @@ def invalidate_cache_on_commande_save(sender, instance, created, **kwargs):
     """
     if instance.status == Commande.Status.CLOTUREE:
         invalidate_produit_cache()
+        DashboardCache.invalidate_on_stock_change()
         logger.debug(f"Cache invalidated after order {instance.id} closure")
 
 
@@ -49,6 +51,7 @@ def invalidate_cache_on_facture_save(sender, instance, created, **kwargs):
     """
     if instance.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]:
         invalidate_produit_cache()
+        DashboardCache.invalidate_on_sale()
         logger.debug(f"Cache invalidated after invoice {instance.id} validation/payment")
 
 
@@ -60,6 +63,7 @@ def invalidate_cache_on_adjustment(sender, instance, created, **kwargs):
     Ensures manual corrections are immediately visible in the product list.
     """
     invalidate_produit_cache()
+    DashboardCache.invalidate_on_stock_change()
     logger.debug(f"Cache invalidated after stock adjustment for product {instance.produit_id}")
 
 

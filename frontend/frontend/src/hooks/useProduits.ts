@@ -26,8 +26,8 @@ export const useProduit = (id: number | null) => {
             return produitService.getById(id);
         },
         enabled: !!id,
-        staleTime: 1000 * 60 * 5, // 5 min — évite de recharger à chaque ouverture du modal
-        gcTime: 1000 * 60 * 10,
+        staleTime: 0, // Stock temps réel — toujours refetch au montage
+        gcTime: 1000 * 60 * 5,
     });
 };
 

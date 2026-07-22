@@ -20,8 +20,8 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: true, // Rafraîchit quand l'utilisateur revient sur la fenêtre
       refetchOnMount: true,       // S'assure que les données sont fraîches au montage
       refetchOnReconnect: true,   // Rafraîchit si la connexion réseau coupe puis revient
-      staleTime: 1000 * 5,        // 5 secondes de cache avant de considérer les données comme périmées (évite le spam de requêtes)
-      refetchInterval: 1000 * 30, // Sondage (polling) toutes les 30 secondes pour mettre à jour les pages inactives
+      staleTime: 1000 * 30,       // 30 secondes de cache avant de considérer les données comme périmées
+      refetchInterval: false,     // Pas de polling global — les hooks spécifiques peuvent l'activer
     },
   },
 })

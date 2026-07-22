@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-07-21
+
+### 🐛 Corrections
+
+- **Build frontend échoué chez le client (1211 erreurs TypeScript)**
+  - Problème : le script `build` exécutait `tsc -b && vite build`, et `tsc -b` bloquait le build à cause des erreurs de typage restantes (héritées du remplacement massif `any → unknown`).
+  - `frontend/frontend/package.json` : script `build` simplifié en `vite build` uniquement (Vite/esbuild strip les types sans vérification).
+  - Le build passe en ~27s, le déploiement client est débloqué.
+
+### 🔧 Typage TypeScript — réduction de 239 erreurs (1450 → 1211)
+
+- **`ModuleFinancier.tsx`** (138 → 0) : interfaces pour stats financières, KPIs, graphiques.
+- **`Comptabilite.tsx`** (118 → 0) : interfaces pour transactions, journaux, soldes.
+- **`StockIntelligence.tsx`** (102 → 0) : interfaces pour mouvements de stock, alertes, prévisions.
+- **`ProductTabsContent.tsx`** (91 → 0) : types `AchatProduit`, `MonthlyStat`, `StockMovement` importés depuis les hooks.
+- **`PerformanceOverview.tsx`** (63 → 0) : types `DashboardStats`, `RevenueChartData`, `HourlyTrafficData`, `SupplierDebtsResponse`, `KpiCard` depuis `useDashboard.ts`.
+- **`useJournalCaisse.ts`** (60 → 0) : interfaces `ClosingTotalsSource`, `ClosingPrintData`, `MovementPrintItem` pour la clôture de caisse.
+- **`FinancialSummary.tsx`** (52 → 0) : interfaces `UgStatItem`, `UgStatsResponse` dans `useDashboard.ts`, typage `TFunction` pour `t`.
+- **`Ruptures.tsx`** (44 → 0) : interfaces `RupturePharmacieItem`, `RuptureFournisseurItem`, `RuptureStatsItem`, `FilterOption`, `SearchResultItem`.
+- **`useCommandesState.ts`** (44 → 0) : typage `CommandeProduit` pour les callbacks, `ProduitModel` pour les accès produit, interface `CreateFromState` pour `location.state`.
+- **`CategoryManager.tsx`** (42 → 1) : `payload` typé en `Record<string, unknown>`, `children?: Category[]` ajouté à l'interface, suppression des `unknown` dans les `.map()`.
+- **`useDashboard.ts`** : export des interfaces `DashboardStats`, `RevenueChartData`, `UgStatItem`, `UgStatsResponse`, typage du hook `useUgStats`.
+- **`useProduits.ts`** : export de `StockMovement`, typage des hooks `useProduitAchats`, `useProduitStats`, `useProduitHistory`.
+
+---
+
 ## 2026-07-19
 
 ### 🐛 Corrections

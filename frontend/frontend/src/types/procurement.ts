@@ -45,7 +45,15 @@ export interface CommandeProduit {
     taux_marge?: string | number  // Champ backend
     prix_euro?: string
     produit_cip?: string
+    produit_ref?: string
     produit_stock?: number
+    produit_dernier_achat?: string | null
+    produit_dernier_vente?: string | null
+    produit_rotation_moyenne?: number | string
+    produit_stock_minimum?: number
+    produit_stock_maximum?: number
+    produit_stock_alert?: number
+    produit_cost_price?: string
 }
 
 export interface Commande {

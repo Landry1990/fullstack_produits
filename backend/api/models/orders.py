@@ -63,6 +63,11 @@ class Commande(models.Model):
         help_text="Origine de la commande (manuelle ou auto-générée)"
     )
     is_active = models.BooleanField(default=True, help_text="Commande active (non supprimée dans la corbeille)")
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_commandes', help_text="Utilisateur ayant supprimé cette commande"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
 
     # Optimistic Locking - évite les verrous pessimistes (select_for_update)
     version = models.IntegerField(
@@ -260,6 +265,11 @@ class Avoir(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True, help_text="Avoir actif (non supprimé dans la corbeille)")
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_avoirs', help_text="Utilisateur ayant supprimé cet avoir"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
     stock_decharge = models.BooleanField(default=False, help_text="True si le stock a été déchargé (retiré) pour cet avoir")
     stock_decharge_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure du déchargement du stock")
     stock_decharge_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='avoirs_decharges', help_text="Utilisateur ayant effectué le déchargement")

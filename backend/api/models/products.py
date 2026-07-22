@@ -5,6 +5,7 @@ Product-related models: Rayon, Forme, Groupe, FamilleRisque, Substance, DrugInte
 from django.db import models
 from django.contrib.postgres.indexes import GinIndex  # Recherche textuelle performante
 from django.utils import timezone
+from django.contrib.auth.models import User
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -264,6 +265,11 @@ class Produit(models.Model):
         default=True,
         help_text="Produit actif (visible dans les recherches)"
     )
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_produits', help_text="Utilisateur ayant supprimé ce produit"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
 
     # --- Paramètres Stock Réservé & Réapprovisionnement ---
     has_reserve_storage = models.BooleanField(
