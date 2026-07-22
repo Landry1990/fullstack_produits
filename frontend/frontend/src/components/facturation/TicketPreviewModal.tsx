@@ -33,7 +33,7 @@ export default function TicketPreviewModal({
 
     // Get the current theme from the parent document
     
-    const win = window.open('', '', 'height=800,width=600');
+    const win = window.open('about:blank', '', 'height=800,width=600');
     if (win) {
       win.document.write(`<!DOCTYPE html>
 <html data-theme="light" lang="fr">

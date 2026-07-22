@@ -25,7 +25,7 @@ export function CouponDetailsModal({
 
   const handlePrintCoupon = () => {
     if (!coupon) return
-    const win = window.open('', '', 'height=600,width=400')
+    const win = window.open('about:blank', '', 'height=600,width=400')
     if (win) {
       const dateStr = new Date(coupon.date_creation).toLocaleString('fr-FR', {
         day: '2-digit', month: '2-digit', year: 'numeric',

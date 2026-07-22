@@ -17,7 +17,7 @@ class CachedSearchMixin:
             ...
     """
     
-    cache_ttl = SearchCache.DEFAULT_TTL  # 5 minutes par défaut
+    cache_ttl = 60  # 60 secondes — stock doit rester frais pour la facturation
     
     def list(self, request, *args, **kwargs):
         """
@@ -101,39 +101,10 @@ class CachedSearchMixin:
     
     def retrieve(self, request, *args, **kwargs):
         """
-        Override de la méthode retrieve pour ajouter le cache aux détails.
+        Pas de cache sur retrieve : le stock doit être en temps réel
+        pour la facturation (ajout au panier, vérification disponibilité).
         """
-        product_id = kwargs.get('pk')
-        
-        if product_id:
-            try:
-                product_id_int = int(product_id)
-                cached_product = SearchCache.get_product_detail(product_id_int)
-                
-                if cached_product is not None:
-                    response = Response(cached_product)
-                    response['X-Cache-Hit'] = 'true'
-                    return response
-            except (ValueError, TypeError):
-                pass
-        
-        # Pas en cache, exécuter la requête normale
-        response = super().retrieve(request, *args, **kwargs)
-        
-        # Mettre en cache
-        if product_id:
-            try:
-                product_id_int = int(product_id)
-                SearchCache.set_product_detail(
-                    product_id_int,
-                    response.data,
-                    ttl=self.cache_ttl
-                )
-            except (ValueError, TypeError):
-                pass
-        
-        response['X-Cache-Hit'] = 'false'
-        return response
+        return super().retrieve(request, *args, **kwargs)
     
     def perform_create(self, serializer):
         """
@@ -211,3 +182,59 @@ class LowLevelCacheMixin:
         Détails avec cache automatique de Django.
         """
         return super().retrieve(request, *args, **kwargs)
+
+
+class SimpleListCacheMixin:
+    """
+    Mixin générique pour cacher les réponses de liste avec un TTL configurable.
+    Invalide automatiquement le cache lors des opérations create/update/destroy.
+    
+    Usage:
+        class MyViewSet(SimpleListCacheMixin, viewsets.ModelViewSet):
+            cache_prefix = 'my_model'
+            cache_ttl = 120  # 2 minutes
+    """
+    
+    cache_prefix = 'default'
+    cache_ttl = 120  # 2 minutes par défaut
+    
+    def _build_cache_key(self, request):
+        """Génère une clé de cache basée sur l'URL + query params."""
+        query_string = request.GET.urlencode()
+        return f"{self.cache_prefix}_list:{request.path}:{query_string}"
+    
+    def list(self, request, *args, **kwargs):
+        from django.core.cache import cache
+        
+        cache_key = self._build_cache_key(request)
+        cached = cache.get(cache_key)
+        
+        if cached is not None:
+            response = Response(cached)
+            response['X-Cache-Hit'] = 'true'
+            return response
+        
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, self.cache_ttl)
+        response['X-Cache-Hit'] = 'false'
+        return response
+    
+    def _invalidate_cache(self):
+        """Invalide toutes les entrées de cache pour ce prefix."""
+        from django.core.cache import cache
+        try:
+            cache.delete_pattern(f"{self.cache_prefix}_list:*")
+        except AttributeError:
+            pass
+    
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        self._invalidate_cache()
+    
+    def perform_update(self, serializer):
+        super().perform_update(serializer)
+        self._invalidate_cache()
+    
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+        self._invalidate_cache()

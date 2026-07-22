@@ -98,7 +98,8 @@ export function useFacturationActions({
             await Promise.all(produitsPayload.map((payload) => api.post('facture-produits/', payload)))
 
             try {
-                window.open(`/app/print-invoice/${createdFacture.id}`, '_blank')
+                const w = window.open(`/app/print-invoice/${createdFacture.id}`, '_blank')
+                if (!w) toast.error("Popup bloqué. Autorisez les popups pour imprimer.")
                 toast.success("Proforma généré avec succès")
             } catch {}
 
@@ -122,7 +123,8 @@ export function useFacturationActions({
             return
         }
         if (ui.isModificationMode && ui.modificationInvoiceId) {
-            window.open(`/app/print-invoice/${ui.modificationInvoiceId}?type=BL`, '_blank')
+            const w = window.open(`/app/print-invoice/${ui.modificationInvoiceId}?type=BL`, '_blank')
+            if (!w) toast.error("Popup bloqué. Autorisez les popups pour imprimer.")
             return
         }
 
@@ -170,7 +172,8 @@ export function useFacturationActions({
                 await api.post('facture-produits/', payload)
             }
 
-            window.open(`/app/print-invoice/${createdFacture.id}?type=BL`, '_blank')
+            const blWin = window.open(`/app/print-invoice/${createdFacture.id}?type=BL`, '_blank')
+            if (!blWin) toast.error("Popup bloqué. Autorisez les popups pour imprimer.")
 
             ui.setModificationInvoiceId(createdFacture.id)
             ui.setModificationInvoiceStatus('PROF')
@@ -191,7 +194,8 @@ export function useFacturationActions({
         }
         try {
             if (facture.id) {
-                window.open(`/app/print-invoice/${facture.id}`, '_blank')
+                const w = window.open(`/app/print-invoice/${facture.id}`, '_blank')
+                if (!w) setError("Popup bloqué. Autorisez les popups pour imprimer.")
             }
         } catch (err) {
             setError(getApiErrorDetail(err, "Erreur lors de l'impression de la facture"))
@@ -206,11 +210,13 @@ export function useFacturationActions({
             );
             let url = `/app/print-invoice/${pendingPrintFacture.id}`;
             if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
-            window.open(url, '_blank');
+            const w1 = window.open(url, '_blank');
+            if (!w1) toast.error("Popup bloqué. Autorisez les popups pour imprimer.");
         } catch {
             let url = `/app/print-invoice/${pendingPrintFacture.id}`;
             if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
-            window.open(url, '_blank');
+            const w2 = window.open(url, '_blank');
+            if (!w2) toast.error("Popup bloqué. Autorisez les popups pour imprimer.");
         } finally {
             setShowClientNameModal(false);
             setPendingPrintFacture(null);

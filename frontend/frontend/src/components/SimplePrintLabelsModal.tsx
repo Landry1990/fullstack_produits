@@ -601,7 +601,7 @@ export default function SimplePrintLabelsModal({
     const h = isCompact ? '15mm' : '20mm'
 
     // Build print-ready HTML
-    const printWindow = window.open('', '_blank', 'width=600,height=800')
+    const printWindow = window.open('about:blank', '_blank', 'width=600,height=800')
     if (!printWindow) {
       setPrinting(false)
       return

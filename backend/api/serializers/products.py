@@ -6,13 +6,23 @@ from rest_framework import serializers
 from django.db.models import Q
 from ..models import (
     Substance, MedicamentReference, Rayon, Forme, FamilleRisque,
-    Groupe, Produit, StockLot, Promotion,
+    Groupe, Produit, StockLot, Promotion, DrugInteraction,
 )
 
 
 class SubstanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Substance
+        fields = '__all__'
+
+
+class DrugInteractionSerializer(serializers.ModelSerializer):
+    substance_a_nom = serializers.CharField(source='substance_a.nom', read_only=True)
+    substance_b_nom = serializers.CharField(source='substance_b.nom', read_only=True)
+    gravity_display = serializers.CharField(source='get_gravity_display', read_only=True)
+
+    class Meta:
+        model = DrugInteraction
         fields = '__all__'
 
 

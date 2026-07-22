@@ -12,7 +12,7 @@ import { Card } from './ui/Card';
 import {
   Trash2, RotateCcw, Package, Users, Truck, Search, X,
   ShoppingCart, CreditCard, Clock, ClipboardList, Receipt, ChevronDown,
-  ChevronUp, Archive, ArrowUpFromLine
+  ChevronUp, Archive, ArrowUpFromLine, User as UserIcon
 } from 'lucide-react';
 
 interface TrashedItem {
@@ -21,6 +21,7 @@ interface TrashedItem {
   type: 'produit' | 'client' | 'fournisseur' | 'commande' | 'avoir' | 'promis' | 'inventaire' | 'facture' | 'user';
   details: Record<string, unknown>;
   deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 interface CorbeilleData {
@@ -76,6 +77,13 @@ function formatTime(dateStr: string | null) {
   if (!dateStr) return '';
   try {
     return new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  } catch { return ''; }
+}
+
+function formatDateTime(dateStr: string | null) {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   } catch { return ''; }
 }
 
@@ -167,7 +175,12 @@ export default function Corbeille() {
       deleted = res_all.reduce((acc, r) => acc + r, 0);
       toast.success(t('messages.purge_success', { count: deleted }));
       fetchData();
-    } catch (err: unknown) { toast.error(err.response?.data?.detail || t('messages.purge_error')); }
+    } catch (err: unknown) {
+      const detail = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+        : undefined;
+      toast.error(detail || t('messages.purge_error'));
+    }
     finally { setActionLoading(false); }
   };
 
@@ -255,10 +268,17 @@ export default function Corbeille() {
 
         {/* Select all */}
         {allItems.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={selectAll} className="text-xs font-medium">
-            <Checkbox checked={selectedIds.size === allItems.length && allItems.length > 0} onChange={selectAll} className="size-4 mr-1.5" />
-            {selectedIds.size > 0 ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? 's' : ''}` : 'Tout sélectionner'}
-          </Button>
+          <div className="flex items-center gap-1.5 cursor-pointer select-none" onClick={selectAll}>
+            <Checkbox 
+              checked={selectedIds.size === allItems.length && allItems.length > 0}
+              indeterminate={selectedIds.size > 0 && selectedIds.size < allItems.length}
+              onChange={selectAll} 
+              size="sm"
+            />
+            <span className="text-xs font-medium text-base-content/70">
+              {selectedIds.size > 0 ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? 's' : ''}` : 'Tout sélectionner'}
+            </span>
+          </div>
         )}
       </div>
 
@@ -295,10 +315,9 @@ export default function Corbeille() {
                 const cfg = TYPE_CONFIG.find(c => c.key === item.type) || TYPE_CONFIG[0];
                 return (
                   <Card key={key} padding="sm" variant={isSel ? 'elevated' : 'default'}
-                    className={`group cursor-pointer transition-all ${isSel ? 'ring-1 ring-primary/20 border-primary/30' : 'hover:border-base-300 hover:shadow-md'}`}
-                    onClick={() => toggleSelect(key)}>
+                    className={`group transition-all ${isSel ? 'ring-1 ring-primary/20 border-primary/30' : 'hover:border-base-300 hover:shadow-md'}`}>
                     <div className="flex items-start gap-3">
-                      <div className="pt-0.5">
+                      <div className="pt-0.5" onClick={(e) => { e.stopPropagation(); toggleSelect(key); }}>
                         <Checkbox checked={isSel} onChange={() => toggleSelect(key)} />
                       </div>
                       <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${cfg.bg}`}>
@@ -310,14 +329,19 @@ export default function Corbeille() {
                           <Badge variant="outline" size="sm" className={cfg.color}>{cfg.label}</Badge>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                            <Clock className="size-3" />{formatTime(item.deleted_at)}
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1" title={formatDateTime(item.deleted_at)}>
+                            <Clock className="size-3" />{formatDateTime(item.deleted_at)}
                           </span>
+                          {item.deleted_by && (
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                              <UserIcon className="size-3" />{item.deleted_by}
+                            </span>
+                          )}
                           {item.type === 'produit' && (
                             <span className="text-[10px] text-muted-foreground">Stock: {Number(item.details.stock ?? 0)}</span>
                           )}
                           {item.type === 'facture' && (
-                            <span className="text-[10px] text-muted-foreground">{item.details.total?.toLocaleString('fr-FR')} FCFA</span>
+                            <span className="text-[10px] text-muted-foreground">{Number(item.details.total ?? 0).toLocaleString('fr-FR')} FCFA</span>
                           )}
                           {item.type === 'client' && item.details.phone ? (
                             <span className="text-[10px] text-muted-foreground">{String(item.details.phone)}</span>

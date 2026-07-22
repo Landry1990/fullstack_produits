@@ -315,7 +315,7 @@ export default function HistoriqueClotures() {
   }
 
   const handlePrint = (cloture: ClotureCaisse) => {
-    const win = window.open('', '', 'height=600,width=400')
+    const win = window.open('about:blank', '', 'height=600,width=400')
     if (win) {
       const htmlContent = generateClotureTemplate({
         ...cloture,

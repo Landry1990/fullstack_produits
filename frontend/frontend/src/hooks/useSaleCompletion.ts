@@ -339,7 +339,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                     || 'Client de passage';
 
                 if (params.isFactureA4) {
-                    window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
+                    const w = window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
+                    if (!w) toast.error('Popup bloqué. Autorisez les popups pour imprimer.');
                 }
 
                 const ticketCaisse: TicketCaisse = {
@@ -367,7 +368,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             } else {
                 // Envoi à la caisse centralisée — générer la facture A4 si demandé
                 if (params.isFactureA4) {
-                    window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
+                    const w = window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
+                    if (!w) toast.error('Popup bloqué. Autorisez les popups pour imprimer.');
                 }
                 toast.success(t('messages.sent_to_caisse', { id: finalFacture.numero_facture || finalFacture.id }));
                 const result: SaleCompletionResult = { success: true, facture: finalFacture };
@@ -525,7 +527,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             }
 
             // 6. Impression Facture A4
-            window.open(`/app/print-invoice/${updatedFacture.id}`, '_blank');
+            const printWin = window.open(`/app/print-invoice/${updatedFacture.id}`, '_blank');
+            if (!printWin) toast.error('Popup bloqué. Autorisez les popups pour imprimer.');
 
             // 7. Ticket UI
             // Priorité: client_name_override > client_name > nom du client > 'Client de passage'

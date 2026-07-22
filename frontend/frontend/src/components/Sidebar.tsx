@@ -9,6 +9,71 @@ import { useReapproStats } from '../hooks/useDashboard';
 import { ChevronLeft, ChevronRight, ChevronDown, Menu, X } from 'lucide-react';
 import { formatVersion } from '../version';
 import { cn } from '../lib/utils';
+import { prefetchRoute } from '../routes';
+
+const routePrefetchMap: Record<string, () => Promise<unknown>> = {
+  '/app/fournisseurs': () => import('./Fournisseurs'),
+  '/app/clients': () => import('./Clients'),
+  '/app/outils/imc': () => import('./clinical/BMICalculator'),
+  '/app/caisse-centralisee': () => import('./CaisseCentralisee'),
+  '/app/inventaire': () => import('./Inventaire'),
+  '/app/etats-inventaire': () => import('./EtatsInventaire'),
+  '/app/organisation': () => import('./Organisation'),
+  '/app/vitrine': () => import('./Vitrine'),
+  '/app/statistiques-fournisseurs': () => import('./StatistiquesFournisseur'),
+  '/app/journal-caisse': () => import('./JournalCaisse'),
+  '/app/perimes': () => import('./Perimes'),
+  '/app/creances': () => import('./Creances'),
+  '/app/avoirs': () => import('./Avoirs'),
+  '/app/rapports-mensuels': () => import('./RapportMensuel'),
+  '/app/transformations': () => import('./Transformations'),
+  '/app/reappro-rayon': () => import('./stock/ReapproRayon'),
+  '/app/reappro-history': () => import('./stock/ReapproHistory'),
+  '/app/cadencier': () => import('./stock/Cadencier'),
+  '/app/journal-audit': () => import('./JournalAudit'),
+  '/app/journal-ajustements': () => import('./JournalAjustements'),
+  '/app/promis': () => import('./Promis'),
+  '/app/stock-analysis': () => import('./StockAnalysis'),
+  '/app/historique-clotures': () => import('./HistoriqueClotures'),
+  '/app/historique-ventes': () => import('./HistoriqueVentes'),
+  '/app/historique-achats': () => import('./HistoriqueAchats'),
+  '/app/telegram-history': () => import('./TelegramHistory'),
+  '/app/ordonnancier': () => import('./Ordonnancier'),
+  '/app/centre-rapports': () => import('./CentreRapports'),
+  '/app/analyse-abc': () => import('./AnalyseABC'),
+  '/app/promotions': () => import('./Promotions/PromotionList'),
+  '/app/module-financier': () => import('./ModuleFinancier'),
+  '/app/divers/ca': () => import('./divers/GestionDivers'),
+  '/app/divers/commandes': () => import('./divers/GestionDivers'),
+  '/app/classement-vendeurs': () => import('./ClassementVendeurs'),
+  '/app/analyse-temporelle': () => import('./AnalyseTemporelle'),
+  '/app/rapport-ug': () => import('./StockUGReportShadcn'),
+  '/app/user-sessions': () => import('./UserSessionsShadcn'),
+  '/app/guide-financier': () => import('./GuideFinancier'),
+  '/app/aide-formation': () => import('./HelpTraining'),
+  '/app/utilisateurs': () => import('./GestionUtilisateurs'),
+  '/app/pharmacy-settings': () => import('./settings/PharmacySettingsForm'),
+  '/app/maintenance': () => import('./Maintenance'),
+  '/app/corbeille': () => import('./Corbeille'),
+  '/app/import-dci': () => import('./ImportDCIPage'),
+  '/app/compta/dashboard': () => import('./compta/Comptabilite'),
+  '/app/compta/grand-livre': () => import('./compta/Comptabilite'),
+  '/app/compta/balance': () => import('./compta/Comptabilite'),
+  '/app/compta/resultat': () => import('./compta/Comptabilite'),
+  '/app/compta/charges': () => import('./compta/Comptabilite'),
+  '/app/compta/plan-comptable': () => import('./compta/Comptabilite'),
+  '/app/systeme': () => import('./SystemAdmin'),
+};
+
+const prefetchedRoutes = new Set<string>();
+function handleRoutePrefetch(path: string) {
+  if (prefetchedRoutes.has(path)) return;
+  const factory = routePrefetchMap[path];
+  if (factory) {
+    prefetchedRoutes.add(path);
+    prefetchRoute(factory);
+  }
+}
 
 
 export default function Sidebar() {
@@ -383,6 +448,7 @@ export default function Sidebar() {
                           {item.submenus?.map((sub) => (
                             <li key={sub.path}>
                               <NavLink to={sub.path} onClick={closeSidebar}
+                                onMouseEnter={() => handleRoutePrefetch(sub.path)}
                                 className={({ isActive }) => cn(
                                   "block rounded-lg text-sm py-2 px-3 transition-all",
                                   isActive
@@ -432,6 +498,7 @@ export default function Sidebar() {
                                 <NavLink
                                   to={sub.path}
                                   onClick={closeSidebar}
+                                  onMouseEnter={() => handleRoutePrefetch(sub.path)}
                                   className={({ isActive }) => cn(
                                     "flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-all",
                                     isActive
@@ -462,6 +529,7 @@ export default function Sidebar() {
                     to={item.path!}
                     end={item.path === '/app'}
                     onClick={closeSidebar}
+                    onMouseEnter={() => item.path && handleRoutePrefetch(item.path)}
                     title={isCollapsed ? item.label : undefined}
                     className={({ isActive }) => cn(
                       "flex items-center rounded-xl transition-all duration-200",

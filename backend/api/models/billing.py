@@ -144,6 +144,11 @@ class Facture(models.Model):
         default=Status.BROUILLON,
     )
     is_active = models.BooleanField(default=True)
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_factures', help_text="Utilisateur ayant supprimé cette facture"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
     remise = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.25)
     notes = models.TextField(blank=True, null=True)
@@ -655,6 +660,11 @@ class Promis(models.Model):
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     is_active = models.BooleanField(default=True, help_text="Promis actif (non supprimé dans la corbeille)")
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_promis', help_text="Utilisateur ayant supprimé ce promis"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
     
     def get_status_display(self) -> str: ...
 

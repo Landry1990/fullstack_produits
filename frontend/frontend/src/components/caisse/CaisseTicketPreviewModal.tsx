@@ -122,7 +122,7 @@ export function CaisseTicketPreviewModal({
       .map(node => node.outerHTML)
       .join('\n')
 
-    const win = window.open('', '', 'height=800,width=600')
+    const win = window.open('about:blank', '', 'height=800,width=600')
     if (win && content) {
       win.document.write(`<!DOCTYPE html>
 <html data-theme="light" lang="fr">

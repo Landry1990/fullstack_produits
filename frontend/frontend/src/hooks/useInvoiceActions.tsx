@@ -25,11 +25,12 @@ const printInvoicePDF = (factureId: number, clientName?: string | null, type?: s
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
 
-    window.open(
+    const w = window.open(
         url,
         'PrintInvoice',
         `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
     );
+    if (!w) toast.error('Popup bloqué. Autorisez les popups pour imprimer.');
 };
 
 const isGenericClient = (facture: Facture): boolean => {

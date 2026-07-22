@@ -204,7 +204,8 @@ export function useFacturationState() {
               const nameToUse = result.facture.client_name_override || result.facture.client_name
               let url = `/app/print-invoice/${result.facture.id}`
               if (nameToUse) url += `?client_name=${encodeURIComponent(nameToUse)}`
-              window.open(url, '_blank')
+              const w = window.open(url, '_blank')
+              if (!w) toast.error('Popup bloqué. Autorisez les popups pour imprimer.')
             }
             setIsFactureA4(false)
           } else {

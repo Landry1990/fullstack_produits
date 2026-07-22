@@ -250,8 +250,11 @@ export function useCommandeActions({
                 `;
             }).join('');
 
-            const win = window.open('', '', 'height=800,width=1000');
-            if (!win) return;
+            const win = window.open('about:blank', '', 'height=800,width=1000');
+            if (!win) {
+                toast.error(t('messages.popup_blocked', { defaultValue: 'Le popup d\'impression a été bloqué par le navigateur. Autorisez les popups pour ce site.' }));
+                return;
+            }
 
             win.document.write(`
 <!DOCTYPE html>
