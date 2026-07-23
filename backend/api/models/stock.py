@@ -157,6 +157,8 @@ class StockLot(models.Model):
         indexes = [
             models.Index(fields=['produit', 'date_reception']),
             models.Index(fields=['produit', 'quantity_remaining']),
+            models.Index(fields=['produit', 'quantity_remaining', 'date_expiration']),
+            models.Index(fields=['date_expiration']),
         ]
         constraints = [
             models.UniqueConstraint(

@@ -361,6 +361,7 @@ class Facture(models.Model):
             models.Index(fields=['status']),
             models.Index(fields=['client', 'status']),
             models.Index(fields=['-date']),
+            models.Index(fields=['is_active', 'status', '-date']),
             GinIndex(fields=['numero_facture'], name='facture_num_trgm_idx', opclasses=['gin_trgm_ops']),
         ]
 
@@ -404,6 +405,7 @@ class FactureProduit(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['produit']),
+            models.Index(fields=['facture']),
             models.Index(fields=['facture', 'produit']),
         ]
 
@@ -520,6 +522,8 @@ class Caisse(models.Model):
             models.Index(fields=['statut']),
             models.Index(fields=['facture', 'statut']),
             models.Index(fields=['-date_paiement']),
+            models.Index(fields=['mode_paiement', 'statut']),
+            models.Index(fields=['-date_paiement', 'statut']),
         ]
 
 

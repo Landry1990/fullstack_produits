@@ -8,7 +8,7 @@ import { setRouter } from './services/navigationService';
 const MAX_RETRIES = 3;
 const LOAD_TIMEOUT = 10000; // 10 secondes
 
-function lazyWithRetry<T extends ComponentType<unknown>>(
+function lazyWithRetry<T extends ComponentType>(
   factory: () => Promise<{ default: T }>,
   retries = MAX_RETRIES
 ): React.LazyExoticComponent<T> {
@@ -59,16 +59,16 @@ import Layout from './components/Layout';
 import PrintPage from './components/printing/PrintPage';
 import LicenceScreen from './components/LicenceScreen';
 
-// Routes principales - eager loaded pour performance
+// Routes principales - eager loaded pour performance (premier écran)
 import Dashboard from './components/DashboardShadcn';
 import DashboardManager from './components/DashboardManagerShadcn';
 import Produit from './components/ProduitShadcn';
 import Ventes from './components/Ventes';
 import Facturation from './components/Facturation';
-import Commandes from './components/Commandes';
-import CatalogDCI from './components/CatalogDCI';
 
 // ── Lazy-loaded pages (routes secondaires) ──
+const Commandes = lazyWithRetry(() => import('./components/Commandes'));
+const CatalogDCI = lazyWithRetry(() => import('./components/CatalogDCI'));
 const Fournisseurs = lazyWithRetry(() => import('./components/Fournisseurs'));
 const Clients = lazyWithRetry(() => import('./components/Clients'));
 const BMICalculator = lazyWithRetry(() => import('./components/clinical/BMICalculator'));
@@ -116,7 +116,8 @@ const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilit
 const SystemAdmin = lazyWithRetry(() => import('./components/SystemAdmin'));
 
 // ── Helper to reduce boilerplate ──
-const perm = (permission: string | string[], Component: React.ComponentType<unknown>, props?: Record<string, unknown>) => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const perm = (permission: string | string[], Component: React.ComponentType<any>, props?: Record<string, unknown>) => ({
   element: (
     <PermissionRoute permission={permission}>
       <Component {...props} />
@@ -124,7 +125,8 @@ const perm = (permission: string | string[], Component: React.ComponentType<unkn
   ),
 });
 
-const admin = (Component: React.ComponentType<unknown>) => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const admin = (Component: React.ComponentType<any>) => ({
   element: (
     <AdminRoute>
       <Component />
