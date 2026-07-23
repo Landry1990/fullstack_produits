@@ -123,8 +123,9 @@ class ProduitService {
         try {
             const response = await api.get<Produit>(`/api/produits/by-cip/${cip}/`);
             return response.data;
-        } catch (error: any) {
-            if (error.response?.status === 404) {
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { status?: number } };
+            if (axiosError.response?.status === 404) {
                 return null;
             }
             throw error;

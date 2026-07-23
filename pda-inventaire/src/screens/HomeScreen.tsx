@@ -99,9 +99,10 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
       setNewReference('');
       // Aller directement au scanner
       onSelectInventaire(newInv);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur création:', error);
-      Alert.alert('Erreur', error.response?.data?.detail || 'Impossible de créer l\'inventaire');
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      Alert.alert('Erreur', axiosError.response?.data?.detail || 'Impossible de créer l\'inventaire');
     } finally {
       setCreating(false);
     }
@@ -120,16 +121,11 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     >
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{item.reference}</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{item.lignes_count} lignes</Text>
-        </View>
+        <Text style={styles.badgeText}>{item.lignes_count} lignes</Text>
       </View>
       <Text style={styles.cardDate}>
-        Démarré le {new Date(item.date_debut).toLocaleDateString('fr-FR')}
+        {new Date(item.date_debut).toLocaleDateString('fr-FR')}
       </Text>
-      {item.created_by !== user?.id && (
-         <Text style={styles.cardAuthor}>Par: {item.created_by}</Text>
-      )}
     </TouchableOpacity>
   );
 
@@ -180,17 +176,16 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
 
       {filteredInventaires.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>📋</Text>
           <Text style={styles.emptyText}>
             {filter === 'MINE' ? 'Aucun inventaire trouvé' : 'Aucun inventaire en cours'}
           </Text>
           <TouchableOpacity style={styles.createBtn} onPress={openCreateModal}>
-            <Text style={styles.createBtnText}>➕ Créer un inventaire</Text>
+            <Text style={styles.createBtnText}>Créer un inventaire</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <FlatList
-          data={inventaires}
+          data={filteredInventaires}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
@@ -206,7 +201,6 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
-
       {/* Modal création */}
       <Modal
         visible={showCreateModal}
@@ -266,83 +260,70 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f0f1a',
   },
   loadingText: {
-    color: '#888',
+    color: '#666',
     marginTop: 16,
-    fontSize: 16,
+    fontSize: 15,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
+    paddingHorizontal: 20,
     paddingTop: 48,
+    paddingBottom: 20,
     backgroundColor: '#1a1a2e',
   },
   greeting: {
-    color: '#888',
-    fontSize: 16,
+    color: '#666',
+    fontSize: 14,
   },
   username: {
     color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
   },
   logoutBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#2d2d44',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1e1e35',
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoutText: {
-    fontSize: 24,
+    fontSize: 22,
     color: '#ef4444',
-  },
-  sectionTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    padding: 24,
-    paddingBottom: 12,
   },
   list: {
     padding: 16,
-    gap: 12,
+    gap: 10,
   },
   card: {
     backgroundColor: '#1a1a2e',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 18,
     borderWidth: 1,
     borderColor: '#2d2d44',
-    marginBottom: 12,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   cardTitle: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-  },
-  badge: {
-    backgroundColor: '#4f46e5',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
   },
   badgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#818cf8',
+    fontSize: 13,
+    fontWeight: '500',
   },
   cardDate: {
-    color: '#888',
-    fontSize: 14,
+    color: '#666',
+    fontSize: 13,
   },
   empty: {
     flex: 1,
@@ -350,125 +331,114 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 48,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
   emptyText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  emptySubtext: {
     color: '#888',
-    fontSize: 14,
-    textAlign: 'center',
+    fontSize: 16,
+    marginBottom: 20,
   },
   createBtn: {
     backgroundColor: '#4f46e5',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    marginTop: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 10,
   },
   createBtnText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '600',
   },
   fab: {
     position: 'absolute',
-    right: 24,
-    bottom: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#4f46e5',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
+    elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   fabText: {
     color: '#fff',
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '300',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   modalContent: {
     backgroundColor: '#1a1a2e',
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 24,
     width: '100%',
     maxWidth: 400,
   },
   modalTitle: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 24,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 20,
     textAlign: 'center',
   },
   modalInput: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#0f0f1a',
+    borderRadius: 10,
+    padding: 14,
     color: '#fff',
-    fontSize: 16,
-    marginBottom: 24,
+    fontSize: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#2d2d44',
   },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 16,
+    gap: 12,
   },
   modalCancelBtn: {
     flex: 1,
-    padding: 16,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 10,
     backgroundColor: '#2d2d44',
     alignItems: 'center',
   },
   modalCancelText: {
     color: '#888',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   modalCreateBtn: {
     flex: 1,
-    padding: 16,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 10,
     backgroundColor: '#4f46e5',
     alignItems: 'center',
   },
   modalCreateText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   btnDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
-  // Tabs styles
   tabContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    marginBottom: 24, // Espace augmenté
-    gap: 12,
+    marginBottom: 16,
+    gap: 10,
   },
   tab: {
     flex: 1,
-    paddingVertical: 16, // Augmenté pour cible tactile > 48dp
+    paddingVertical: 14,
     alignItems: 'center',
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
@@ -477,17 +447,11 @@ const styles = StyleSheet.create({
     borderBottomColor: '#4f46e5',
   },
   tabText: {
-    color: '#ccc', // Contraste amélioré
-    fontSize: 18, // Police augmentée
+    color: '#666',
+    fontSize: 15,
     fontWeight: '600',
   },
   tabTextActive: {
     color: '#fff',
-  },
-  cardAuthor: {
-    color: '#818cf8', // Contraste amélioré
-    fontSize: 14, // Police augmentée
-    marginTop: 8,
-    fontStyle: 'italic',
   },
 });

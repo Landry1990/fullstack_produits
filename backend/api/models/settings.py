@@ -182,6 +182,24 @@ class PharmacySettings(models.Model):
         default="",
         help_text="Chemin secondaire (ex: E:\\Backups_Pharmacie) pour double sauvegarde"
     )
+    external_backup_path_1 = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Destination externe 1 (ex: USB: D:\\Backups, disque dur: E:\\Backups, réseau: \\\\NAS\\backups)"
+    )
+    external_backup_path_2 = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Destination externe 2 (ex: autre USB, disque dur, dossier partagé réseau)"
+    )
+    external_backup_path_3 = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Destination externe 3 (ex: dossier partagé d'une autre machine \\\\192.168.1.50\\backups)"
+    )
     google_drive_backup_path = models.CharField(
         max_length=500,
         blank=True,

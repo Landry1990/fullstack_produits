@@ -15,8 +15,13 @@ services:
       -c wal_buffers=16MB
       -c checkpoint_completion_target=0.9
       -c default_statistics_target=100
+      -c archive_mode=on
+      -c archive_command='test ! -f /wal_archive/%f && cp %p /wal_archive/%f'
+      -c archive_timeout=60
+      -c wal_level=replica
     volumes:
       - fullstack_postgres_data_protected:/var/lib/postgresql/data
+      - wal_archive:/wal_archive
     env_file:
       - .env
     environment:
@@ -71,6 +76,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./backup-db.sh:/backup-db.sh
       - ./backups:/backups
+      - wal_archive:/wal_archive
     env_file:
       - .env
     environment:
@@ -115,3 +121,4 @@ volumes:
   redis_data:
   static_volume:
   media_volume:
+  wal_archive:

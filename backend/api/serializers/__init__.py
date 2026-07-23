@@ -33,6 +33,7 @@ from .clients import (
 # Products & Catalog
 from .products import (
     SubstanceSerializer,
+    DrugInteractionSerializer,
     MedicamentReferenceSerializer,
     RayonSerializer,
     FormeSerializer,
@@ -142,6 +143,7 @@ __all__ = [
     'ClientSerializer',
     # Products
     'SubstanceSerializer',
+    'DrugInteractionSerializer',
     'MedicamentReferenceSerializer',
     'RayonSerializer',
     'FormeSerializer',

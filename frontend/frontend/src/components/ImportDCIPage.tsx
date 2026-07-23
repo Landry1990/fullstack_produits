@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import type { Substance } from '../hooks/useSubstances';
+import InteractionsManager from './InteractionsManager';
 
 interface StatsData {
   substances: number;
@@ -30,6 +31,7 @@ interface UnlinkedResponse {
 
 export default function ImportDCIPage() {
   const { t } = useTranslation(['products', 'common']);
+  const [activeTab, setActiveTab] = useState<'dci' | 'interactions'>('dci');
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -40,7 +42,7 @@ export default function ImportDCIPage() {
 
   // Auto-match
   const [matching, setMatching] = useState(false);
-  const [matchResult, setMatchResult] = useState<unknown>(null);
+  const [matchResult, setMatchResult] = useState<{ newly_linked: number; total_linked: number; total_produits: number; link_rate: number } | null>(null);
 
   // Unlinked products
   const [unlinkedData, setUnlinkedData] = useState<UnlinkedResponse | null>(null);
@@ -99,7 +101,7 @@ export default function ImportDCIPage() {
     setMatching(true);
     api.post('dci-admin/auto_match/')
       .then(r => {
-        setMatchResult(r.data);
+        setMatchResult(r.data as { newly_linked: number; total_linked: number; total_produits: number; link_rate: number });
         fetchStats();
         fetchUnlinked();
       })
@@ -135,6 +137,21 @@ export default function ImportDCIPage() {
           {t('common:refresh', 'Actualiser')}
         </button>
       </div>
+
+      {/* Tabs */}
+      <div role="tablist" className="tabs tabs-bordered">
+        <a role="tab" className={`tab ${activeTab === 'dci' ? 'tab-active' : ''}`} onClick={() => setActiveTab('dci')}>
+          DCI & Substances
+        </a>
+        <a role="tab" className={`tab ${activeTab === 'interactions' ? 'tab-active' : ''}`} onClick={() => setActiveTab('interactions')}>
+          Interactions médicamenteuses
+        </a>
+      </div>
+
+      {activeTab === 'interactions' && <InteractionsManager />}
+
+      {activeTab === 'dci' && (
+        <>
 
       {/* Stats — blocs légers sans ombre, bordure subtile */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -320,6 +337,8 @@ export default function ImportDCIPage() {
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }
