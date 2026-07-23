@@ -4,7 +4,7 @@ import api from '../services/api';
 import {
   Server, Database, RefreshCw, Play, ShieldCheck, ShieldAlert,
   HardDrive, Clock, CheckCircle2, XCircle, AlertTriangle,
-  RotateCcw, Wifi, WifiOff, Upload
+  RotateCcw, Wifi, WifiOff, Upload, Archive, Zap
 } from 'lucide-react';
 
 type TabId = 'sante' | 'sauvegardes';
@@ -74,6 +74,24 @@ export default function SystemAdmin() {
   const [restoreTarget, setRestoreTarget] = useState<string | null>(null);
   const [restoreProgress, setRestoreProgress] = useState<string[]>([]);
 
+  // WAL / PITR state
+  const [walStatus, setWalStatus] = useState<{
+    archive_active: boolean;
+    wal_count: number;
+    wal_size_mb: number;
+    oldest_wal: string | null;
+    newest_wal: string | null;
+    wal_directory: string;
+    base_backups: { name: string; size_mb: number; created_at: string }[];
+    base_backups_count: number;
+  } | null>(null);
+  const [loadingWal, setLoadingWal] = useState(false);
+  const [runningBaseBackup, setRunningBaseBackup] = useState(false);
+  const [pitrTargetTime, setPitrTargetTime] = useState('');
+  const [pitrOutput, setPitrOutput] = useState<string | null>(null);
+  const [pitrError, setPitrError] = useState<string | null>(null);
+  const [runningPitr, setRunningPitr] = useState(false);
+
   // Backup settings configuration
   const [backupSettings, setBackupSettings] = useState<{
     backup_enabled: boolean;
@@ -81,6 +99,9 @@ export default function SystemAdmin() {
     backup_interval_minutes: number;
     backup_retention_count: number;
     secondary_backup_path: string;
+    external_backup_path_1: string;
+    external_backup_path_2: string;
+    external_backup_path_3: string;
     cloud_backup_enabled: boolean;
     cloud_backup_endpoint: string;
     cloud_backup_bucket: string;
@@ -126,6 +147,9 @@ export default function SystemAdmin() {
         backup_interval_minutes: res.data.backup_interval_minutes ?? 1440,
         backup_retention_count: res.data.backup_retention_count ?? 30,
         secondary_backup_path: res.data.secondary_backup_path || '',
+        external_backup_path_1: res.data.external_backup_path_1 || '',
+        external_backup_path_2: res.data.external_backup_path_2 || '',
+        external_backup_path_3: res.data.external_backup_path_3 || '',
         cloud_backup_enabled: res.data.cloud_backup_enabled ?? false,
         cloud_backup_endpoint: res.data.cloud_backup_endpoint || '',
         cloud_backup_bucket: res.data.cloud_backup_bucket || '',
@@ -141,14 +165,27 @@ export default function SystemAdmin() {
     }
   }, []);
 
+  const fetchWalStatus = useCallback(async () => {
+    setLoadingWal(true);
+    try {
+      const res = await api.get('/system-admin/wal_status/');
+      setWalStatus(res.data);
+    } catch {
+      setWalStatus(null);
+    } finally {
+      setLoadingWal(false);
+    }
+  }, []);
+
   useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
   useEffect(() => {
     if (activeTab === 'sauvegardes') {
       fetchBackups();
       fetchBackupSettings();
+      fetchWalStatus();
     }
-  }, [activeTab, fetchBackups, fetchBackupSettings]);
+  }, [activeTab, fetchBackups, fetchBackupSettings, fetchWalStatus]);
 
   const saveBackupSettings = async () => {
     if (!backupSettings) return;
@@ -160,6 +197,9 @@ export default function SystemAdmin() {
         backup_interval_minutes: backupSettings.backup_interval_minutes,
         backup_retention_count: backupSettings.backup_retention_count,
         secondary_backup_path: backupSettings.secondary_backup_path,
+        external_backup_path_1: backupSettings.external_backup_path_1,
+        external_backup_path_2: backupSettings.external_backup_path_2,
+        external_backup_path_3: backupSettings.external_backup_path_3,
         cloud_backup_enabled: backupSettings.cloud_backup_enabled,
         cloud_backup_endpoint: backupSettings.cloud_backup_endpoint,
         cloud_backup_bucket: backupSettings.cloud_backup_bucket,
@@ -174,6 +214,39 @@ export default function SystemAdmin() {
       setBackupError(e?.response?.data?.detail || t('settings_save_error'));
     } finally {
       setSavingBackupSettings(false);
+    }
+  };
+
+  const handleBaseBackup = async () => {
+    setRunningBaseBackup(true);
+    setPitrOutput(null);
+    setPitrError(null);
+    try {
+      const res = await api.post('/system-admin/base_backup/');
+      setPitrOutput(res.data.output || res.data.message);
+      if (!res.data.success) setPitrError(res.data.error || 'Erreur');
+      fetchWalStatus();
+    } catch (e: unknown) {
+      setPitrError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erreur lors du base backup');
+    } finally {
+      setRunningBaseBackup(false);
+    }
+  };
+
+  const handlePitrRestore = async () => {
+    setRunningPitr(true);
+    setPitrOutput(null);
+    setPitrError(null);
+    try {
+      const res = await api.post('/system-admin/pitr_restore/', {
+        target_time: pitrTargetTime || undefined,
+      }, { timeout: 180000 });
+      setPitrOutput(res.data.output || res.data.message);
+      if (!res.data.success) setPitrError(res.data.error || 'Erreur');
+    } catch (e: unknown) {
+      setPitrError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erreur lors de la restauration PITR');
+    } finally {
+      setRunningPitr(false);
     }
   };
 
@@ -593,6 +666,7 @@ export default function SystemAdmin() {
                         onChange={(e) => setBackupSettings({ ...backupSettings, backup_interval_minutes: Number(e.target.value) })}
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
                       >
+                        <option value={30}>Toutes les 30 min</option>
                         <option value={60}>{t('interval_options.hourly')}</option>
                         <option value={360}>{t('interval_options.6h')}</option>
                         <option value={720}>{t('interval_options.12h')}</option>
@@ -625,6 +699,44 @@ export default function SystemAdmin() {
                       onChange={(e) => setBackupSettings({ ...backupSettings, secondary_backup_path: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
+                  </div>
+
+                  {/* Destinations externes (USB, disque dur, réseau) */}
+                  <div className="border-t border-gray-100 pt-4 mt-2">
+                    <p className="text-sm font-semibold text-gray-700 mb-1">Destinations externes</p>
+                    <p className="text-xs text-gray-400 mb-3">Clés USB, disques durs, dossiers partagés réseau (SMB/NFS). Le backup sera copié vers chaque destination accessible.</p>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 1 (ex: D:\Backups ou \\NAS\backups)</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: D:\Backups_Pharmacie"
+                          value={backupSettings.external_backup_path_1}
+                          onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_1: e.target.value })}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 2 (ex: E:\Backups ou \\192.168.1.50\backups)</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: E:\Backups_Pharmacie"
+                          value={backupSettings.external_backup_path_2}
+                          onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_2: e.target.value })}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 3 (ex: autre machine réseau)</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: \\192.168.1.50\backups"
+                          value={backupSettings.external_backup_path_3}
+                          onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_3: e.target.value })}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   {/* --- Cloud Backup S3 --- */}
@@ -940,6 +1052,148 @@ export default function SystemAdmin() {
                 </div>
               </div>
             )}
+
+            {/* ── Section WAL / PITR ── */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                  <Archive className="w-4 h-4" />
+                  Journal WAL & Récupération Point-in-Time (PITR)
+                </h3>
+                <button
+                  onClick={fetchWalStatus}
+                  disabled={loadingWal}
+                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
+                >
+                  <RefreshCw className={`w-3 h-3 ${loadingWal ? 'animate-spin' : ''}`} />
+                  Actualiser
+                </button>
+              </div>
+
+              {walStatus ? (
+                <div className="space-y-4">
+                  {/* Statut archivage */}
+                  <div className="flex items-center gap-3">
+                    {walStatus.archive_active ? (
+                      <span className="flex items-center gap-2 text-sm font-semibold text-emerald-600">
+                        <CheckCircle2 className="w-4 h-4" /> Archivage WAL actif
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2 text-sm font-semibold text-red-600">
+                        <XCircle className="w-4 h-4" /> Archivage WAL inactif
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Stats WAL */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-400">Fichiers WAL</p>
+                      <p className="text-lg font-bold text-gray-700">{walStatus.wal_count}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-400">Taille</p>
+                      <p className="text-lg font-bold text-gray-700">{walStatus.wal_size_mb} MB</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-400">Plus ancien</p>
+                      <p className="text-xs font-semibold text-gray-700">{walStatus.oldest_wal || '—'}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-400">Plus récent</p>
+                      <p className="text-xs font-semibold text-gray-700">{walStatus.newest_wal || '—'}</p>
+                    </div>
+                  </div>
+
+                  {/* Base backups */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-semibold text-gray-700">
+                        Backups de base: {walStatus.base_backups_count}
+                      </p>
+                      <button
+                        onClick={handleBaseBackup}
+                        disabled={runningBaseBackup}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-60"
+                      >
+                        <Zap className={`w-3.5 h-3.5 ${runningBaseBackup ? 'animate-pulse' : ''}`} />
+                        {runningBaseBackup ? 'En cours...' : 'Créer un base backup'}
+                      </button>
+                    </div>
+                    {walStatus.base_backups.length > 0 && (
+                      <div className="space-y-1">
+                        {walStatus.base_backups.map((bb) => (
+                          <div key={bb.name} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <Archive className="w-3.5 h-3.5 text-indigo-500" />
+                              <span className="text-xs font-mono text-gray-700">{bb.name}</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-gray-400">
+                              <span>{bb.size_mb} MB</span>
+                              <span>{bb.created_at}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PITR Restore */}
+                  <div className="border-t border-gray-100 pt-4">
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                      <p className="text-xs text-amber-700">
+                        <AlertTriangle className="w-3.5 h-3.5 inline mr-1" />
+                        La restauration PITR rejoue le journal WAL jusqu'au timestamp choisi.
+                        Si crash à 14h30 avec backup à 14h00, les transactions jusqu'à 14h29 seront récupérées.
+                        Laisser vide pour récupérer toutes les transactions disponibles.
+                      </p>
+                    </div>
+                    <div className="flex items-end gap-3">
+                      <div className="flex-1">
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">
+                          Timestamp cible (optionnel)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="ex: 2026-07-23 14:29:00"
+                          value={pitrTargetTime}
+                          onChange={(e) => setPitrTargetTime(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                        />
+                      </div>
+                      <button
+                        onClick={handlePitrRestore}
+                        disabled={runningPitr || walStatus.base_backups_count === 0}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all disabled:opacity-60"
+                      >
+                        <RotateCcw className={`w-3.5 h-3.5 ${runningPitr ? 'animate-spin' : ''}`} />
+                        {runningPitr ? 'Restauration...' : 'Restaurer PITR'}
+                      </button>
+                    </div>
+                    {pitrOutput && (
+                      <pre className="mt-3 p-3 bg-gray-50 border border-gray-100 rounded-lg text-xs text-gray-600 overflow-auto max-h-40 whitespace-pre-wrap">
+                        {pitrOutput}
+                      </pre>
+                    )}
+                    {pitrError && (
+                      <p className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                        <XCircle className="w-3.5 h-3.5" /> {pitrError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : loadingWal ? (
+                <div className="text-center py-4 text-gray-400">
+                  <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
+                  Chargement du statut WAL...
+                </div>
+              ) : (
+                <div className="text-center py-4 text-red-500">
+                  <XCircle className="w-5 h-5 mx-auto mb-2" />
+                  Impossible de charger le statut WAL
+                </div>
+              )}
+            </div>
 
             {/* Info cron */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4">

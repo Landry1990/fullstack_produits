@@ -31,10 +31,11 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     try {
       await authService.login(username.trim(), password);
       onLoginSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      const message = error.response?.data?.detail || 
-                      error.response?.data?.non_field_errors?.[0] ||
+      const axiosError = error as { response?: { data?: { detail?: string; non_field_errors?: string[] } } };
+      const message = axiosError.response?.data?.detail || 
+                      axiosError.response?.data?.non_field_errors?.[0] ||
                       'Identifiants incorrects';
       Alert.alert('Erreur de connexion', message);
     } finally {
@@ -48,7 +49,6 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>📦</Text>
         <Text style={styles.title}>PDA Inventaire</Text>
         <Text style={styles.subtitle}>Gestion de stock mobile</Text>
       </View>
@@ -57,7 +57,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         <TextInput
           style={styles.input}
           placeholder="Nom d'utilisateur"
-          placeholderTextColor="#888"
+          placeholderTextColor="#666"
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
@@ -68,7 +68,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         <TextInput
           style={styles.input}
           placeholder="Mot de passe"
-          placeholderTextColor="#888"
+          placeholderTextColor="#666"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -87,8 +87,6 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           )}
         </TouchableOpacity>
       </View>
-
-      <Text style={styles.footer}>v1.0.0 - Pharmacie</Text>
     </KeyboardAvoidingView>
   );
 }
@@ -96,59 +94,49 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#0f0f1a',
     justifyContent: 'center',
-    padding: 24,
+    padding: 28,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 48,
-  },
-  logoText: {
-    fontSize: 64,
-    marginBottom: 16,
+    marginBottom: 56,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '700',
     color: '#fff',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#888',
+    fontSize: 15,
+    color: '#666',
   },
   form: {
-    gap: 16,
+    gap: 14,
   },
   input: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 12,
+    backgroundColor: '#1a1a2e',
+    borderRadius: 10,
     padding: 16,
-    fontSize: 18,
+    fontSize: 17,
     color: '#fff',
     borderWidth: 1,
-    borderColor: '#3d3d5c',
+    borderColor: '#2d2d44',
   },
   button: {
     backgroundColor: '#4f46e5',
-    borderRadius: 12,
-    padding: 18,
+    borderRadius: 10,
+    padding: 17,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
   buttonDisabled: {
-    backgroundColor: '#6b6b8d',
+    opacity: 0.5,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-  },
-  footer: {
-    textAlign: 'center',
-    color: '#555',
-    marginTop: 48,
-    fontSize: 14,
   },
 });

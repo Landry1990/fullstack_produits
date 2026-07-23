@@ -22,7 +22,8 @@ import {
   usePromisDisponibles,
   useUgStats,
   useEcheances,
-  useSupplierDebts
+  useSupplierDebts,
+  useFrequentStockouts
 } from '../hooks/useDashboard';
 
 import { useTranslation } from 'react-i18next';
@@ -79,6 +80,7 @@ export default function DashboardShadcn() {
   const formatCurrencyLocal = (val: number) => formatCurrency(val, currentLocale, currencySymbol);
 
   const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
+  const { data: frequentStockouts } = useFrequentStockouts(!isVendeur);
 
   const mergedStats = stats ? {
     ...stats,
@@ -304,6 +306,7 @@ export default function DashboardShadcn() {
             hourlyTraffic={hourlyTraffic}
             reapproStats={reapproStats}
             supplierDebts={supplierDebts}
+            frequentStockouts={frequentStockouts}
             t={t}
             formatCurrencyLocal={formatCurrencyLocal}
           />

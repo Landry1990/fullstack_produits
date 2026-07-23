@@ -114,6 +114,7 @@ from .views.licence import LicenceStatusView, LicenceNotificationsView
 from .views.margin_views import MarginViewSet
 from .views.meds_reference import MedicamentReferenceViewSet
 from .views.dci_admin import DCIAdminViewSet
+from .views.interactions import DrugInteractionViewSet
 from .views.debug_score import DebugStockScoreView
 from .views.commandes.export import ExportCommandeView, ExportCommandePreviewView
 from .views.backup_views import BackupListView, CreateBackupView, RestoreBackupView, DeleteBackupView
@@ -188,6 +189,7 @@ router.register(r'margins', MarginViewSet, basename='margin')
 router.register(r'cadencier', CadencierViewSet, basename='cadencier')
 router.register(r'med-ref', MedicamentReferenceViewSet, basename='medreference')
 router.register(r'dci-admin', DCIAdminViewSet, basename='dci-admin')
+router.register(r'interactions', DrugInteractionViewSet, basename='interaction')
 
 # Comptabilité
 router.register(r'compta/comptes', CompteComptableViewSet, basename='compta-compte')

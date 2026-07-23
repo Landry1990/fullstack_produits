@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-07-23
+
+### ✨ Nouveautés
+
+- **Sauvegarde WAL PostgreSQL + Récupération Point-in-Time (PITR)**
+  - **Docker** : activation de `archive_mode=on`, `archive_command` (copie WAL vers `/wal_archive`), `archive_timeout=60s`, `wal_level=replica` sur le container PostgreSQL. Volume Docker `wal_archive` partagé entre `db` et `backend`.
+  - **Backend** :
+    - Commande `base_backup` : utilise `pg_basebackup` pour créer un backup de base complet compatible WAL (garde les 5 derniers, crée aussi une archive `.tar`).
+    - Commande `pitr_restore` : restaure un base backup + rejoue les WAL jusqu'au timestamp choisi. Sauvegarde les données actuelles avant restauration (safety). Configure `recovery.signal` + `restore_command` + `recovery_target_time`.
+    - Endpoints API : `GET /system-admin/wal_status/` (statut archivage, nb WAL, taille, base backups), `POST /system-admin/base_backup/` (déclenche pg_basebackup), `POST /system-admin/pitr_restore/` (restauration PITR avec timestamp cible optionnel).
+    - `backup_scheduler.py` : base backup PITR automatique toutes les 6h en plus des backups pg_dump réguliers.
+  - **Frontend** (`SystemAdmin.tsx`) :
+    - Section "Journal WAL & PITR" complète : statut archivage (actif/inactif), stats WAL (nb fichiers, taille, plus ancien/récent), liste des base backups, bouton créer base backup, restauration PITR avec champ timestamp.
+    - Option "Toutes les 30 min" ajoutée au dropdown d'intervalle de sauvegarde.
+  - **Fonctionnement** : le WAL archive chaque transaction en continu. Si crash à 14h30 avec backup à 14h00, la restauration PITR rejoue les WAL jusqu'à 14h29 — zéro perte de données (stocks, ventes, modifications).
+
+- **Sauvegarde externe multi-destinations (USB, disque dur, réseau)**
+  - **Modèle** : 3 nouveaux champs `external_backup_path_1/2/3` sur `PharmacySettings` (migration `0224_add_external_backup_paths`).
+  - **Backend** (`backup_database.py`) : méthode `copy_to_external()` copie le backup + checksum MD5 vers chaque destination configurée. Si une destination est inaccessible (USB débranché), log un warning et continue vers les autres.
+  - **Frontend** : section "Destinations externes" avec 3 champs configurables (ex: `D:\Backups`, `E:\Backups`, `\\192.168.1.50\backups`).
+  - Flux complet : local → disque secondaire → 3 destinations externes → Cloud S3 → Google Drive.
+
+- **PDA Inventaire : scan groupé et envoi bulk**
+  - `useOfflineSync.ts` : `syncAll` utilise `inventaireService.bulkImport` pour envoyer toutes les lignes scannées en une seule requête au lieu d'une requête par scan.
+  - `ScannerScreen.tsx` : bouton "Terminer" qui propose la synchronisation groupée avant de quitter. Bannière de synchronisation mise à jour. Gestion hors ligne (conservation locale si pas de réseau).
+  - `config/index.ts` : `API_BASE_URL` dynamique (localhost pour web, IP locale pour device physique).
+
+- **Corbeille : date et auteur de suppression**
+  - Ajout des champs `deleted_by` (FK vers User) et `deleted_at` (DateTimeField) sur les 8 modèles concernés : Produit, Client, Fournisseur, Commande, Avoir, Promis, Inventaire, Facture.
+  - Migration `0223_add_deleted_by_deleted_at` créée et appliquée.
+  - Tous les `perform_destroy` / `destroy` des ViewSets mettent à jour `deleted_by = request.user` et `deleted_at = timezone.now()` lors du soft delete.
+  - L'endpoint `/api/corbeille/` retourne maintenant `deleted_by` (username) et `deleted_at` pour chaque item, avec `select_related('deleted_by')` pour éviter les N+1.
+  - Frontend `Corbeille.tsx` : affichage de la date complète de suppression (format `DD/MM/YYYY HH:MM`) avec icône horloge + affichage du nom d'utilisateur qui a supprimé l'item avec icône utilisateur.
+
+- **Module interactions médicamenteuses**
+  - **Backend** :
+    - `DrugInteractionViewSet` (`/api/interactions/`) : CRUD complet avec recherche, filtre par gravité/substance, pagination, statistiques (`/stats/`), et import CSV (`/upload_csv/`).
+    - `DrugInteractionSerializer` : expose `substance_a_nom`, `substance_b_nom`, `gravity_display`.
+    - Commande `import_interactions` : importe 32 interactions courantes par défaut (Warfarine/Aspirine, statines/azolés, AINS/IEC, etc.) ou depuis un fichier CSV externe. Normalisation automatique des paires de substances.
+    - `ClinicalService.check_interactions()` amélioré : détection d'interactions + **nouvelle détection de redondance** (alerte quand 2+ produits du panier contiennent la même substance, risque de surdosage).
+  - **Frontend** :
+    - `InteractionsManager.tsx` : page complète de gestion des interactions (tableau paginé, recherche, filtre par gravité, statistiques, modal add/edit, suppression, import CSV).
+    - `ImportDCIPage.tsx` : ajout d'un système d'onglets — "DCI & Substances" (contenu existant) et "Interactions médicamenteuses" (nouveau composant).
+  - **Données** : 32 interactions en base (0 avant), 511 produits liés à une substance sur 4 939.
+
+---
+
 ## 2026-07-21
 
 ### 🐛 Corrections

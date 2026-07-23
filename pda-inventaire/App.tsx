@@ -40,8 +40,13 @@ export default function App() {
   }, []);
 
   const checkAuth = async () => {
-    const { isAuthenticated } = await authService.checkAuth();
-    setCurrentScreen(isAuthenticated ? 'home' : 'login');
+    try {
+      const { isAuthenticated } = await authService.checkAuth();
+      setCurrentScreen(isAuthenticated ? 'home' : 'login');
+    } catch (error) {
+      console.error('Erreur vérification auth:', error);
+      setCurrentScreen('login');
+    }
   };
 
   const handleLoginSuccess = () => {

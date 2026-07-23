@@ -35,6 +35,10 @@ export interface DashboardStats {
 export interface RevenueChartData {
     labels: string[];
     data: number[];
+    nb_ventes?: number[];
+    couts?: number[];
+    marges?: number[];
+    marges_pct?: number[];
 }
 
 interface LowStockItem {
@@ -252,6 +256,31 @@ export const useManagerStats = () => {
         },
         staleTime: 1000 * 60, // 1 minute
         refetchInterval: 1000 * 60 * 2, // Auto-update every 2 minutes
+    });
+};
+
+export interface FrequentStockoutItem {
+    id: number;
+    name: string;
+    cip: string;
+    stock: number;
+    stock_minimum: number;
+    rotation: number;
+    rupture_count: number;
+    last_rupture: string | null;
+}
+
+export const useFrequentStockouts = (enabled: boolean = true) => {
+    return useQuery<FrequentStockoutItem[]>({
+        queryKey: ['dashboard', 'frequentStockouts'],
+        queryFn: async () => {
+            const response = await api.get<FrequentStockoutItem[]>('dashboard/frequent_stockouts/');
+            return response.data;
+        },
+        enabled,
+        staleTime: 1000 * 60 * 10, // 10 minutes
+        refetchInterval: enabled ? 1000 * 60 * 10 : false,
+        refetchIntervalInBackground: false,
     });
 };
 

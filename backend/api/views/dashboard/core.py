@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, ExpressionWrapper, Case, When, Exists, OuterRef
+from django.db.models import Sum, Count, Avg, Max, F, Q, DecimalField, Value, ExpressionWrapper, Case, When, Exists, OuterRef
 from django.db.models.functions import TruncDay, TruncMonth, Coalesce, TruncDate
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -688,27 +688,55 @@ class DashboardCoreMixin(viewsets.ViewSet):
             total=Coalesce(Sum('total_ttc'), Decimal('0')),
             nb_ventes=Count('id')
         ).order_by('day')
-    
+
+        # Daily cost and margin via FactureProduit allocations
+        daily_costs = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__date__date__gte=start_date.date(),
+            facture_produit__facture__date__date__lte=end_date.date(),
+            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).annotate(
+            day=TruncDay('facture_produit__facture__date')
+        ).values('day').annotate(
+            cout_achat=Coalesce(Sum(F('cost_price') * F('quantity')), Decimal('0')),
+            ca_ht=Coalesce(Sum(F('selling_price') * F('quantity')), Decimal('0')),
+        ).order_by('day')
+
         # Build the data structure expected by frontend
         labels = []
         data = []
         nb_ventes_data = []
+        couts_data = []
+        marges_data = []
+        marges_pct_data = []
         current_date = start_date.date()
         revenue_map = {item['day'].date(): float(item['total']) for item in daily_revenue}
         ventes_map = {item['day'].date(): item['nb_ventes'] for item in daily_revenue}
+        cost_map = {item['day'].date(): float(item['cout_achat']) for item in daily_costs}
+        caht_map = {item['day'].date(): float(item['ca_ht']) for item in daily_costs}
     
         DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
         while current_date <= end_date.date():
             day_label = DAY_NAMES[current_date.weekday()]
             labels.append(day_label)
-            data.append(revenue_map.get(current_date, 0))
+            day_ca = revenue_map.get(current_date, 0)
+            day_cout = cost_map.get(current_date, 0)
+            day_caht = caht_map.get(current_date, 0)
+            day_marge = day_caht - day_cout
+            day_marge_pct = round((day_marge / day_caht * 100), 1) if day_caht > 0 else 0
+            data.append(day_ca)
             nb_ventes_data.append(ventes_map.get(current_date, 0))
+            couts_data.append(round(day_cout, 0))
+            marges_data.append(round(day_marge, 0))
+            marges_pct_data.append(day_marge_pct)
             current_date += timedelta(days=1)
     
         return Response({
             'labels': labels,
             'data': data,
-            'nb_ventes': nb_ventes_data
+            'nb_ventes': nb_ventes_data,
+            'couts': couts_data,
+            'marges': marges_data,
+            'marges_pct': marges_pct_data,
         })
     
     @action(detail=False, methods=['get'])
@@ -767,5 +795,44 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 'status': status
             })
     
+        return Response(data)
+    
+    @action(detail=False, methods=['get'])
+    def frequent_stockouts(self, request):
+        """
+        Top 10 produits qui tombent en rupture le plus souvent.
+        Compte les mouvements où stock_apres = 0 (sorties ventes) sur les 30 derniers jours.
+        """
+        from ...models import MouvementStock
+        
+        today = timezone.localtime(timezone.now()).date()
+        date_ago = today - timedelta(days=30)
+
+        stockouts = MouvementStock.objects.filter(
+            type_mouvement='SORTIE',
+            stock_apres=0,
+            date__date__gte=date_ago,
+            produit__isnull=False
+        ).values(
+            'produit_id', 'produit__name', 'produit__stock', 'produit__stock_minimum',
+            'produit__rotation_moyenne', 'produit__cip1'
+        ).annotate(
+            rupture_count=Count('id'),
+            last_rupture=Max('date')
+        ).order_by('-rupture_count')[:10]
+
+        data = []
+        for item in stockouts:
+            data.append({
+                'id': item['produit_id'],
+                'name': item['produit__name'] or 'Inconnu',
+                'cip': item['produit__cip1'] or '',
+                'stock': item['produit__stock'],
+                'stock_minimum': item['produit__stock_minimum'],
+                'rotation': float(item['produit__rotation_moyenne'] or 0),
+                'rupture_count': item['rupture_count'],
+                'last_rupture': item['last_rupture'].isoformat() if item['last_rupture'] else None,
+            })
+
         return Response(data)
     
