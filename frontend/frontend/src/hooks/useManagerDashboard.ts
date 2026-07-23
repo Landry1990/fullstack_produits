@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import { useManagerStats, useCurrentObjectifs } from './useDashboard';
 import { usePharmacySettings } from './usePharmacySettings';
-import { exportToExcel } from '../utils/excelExport';
 import { getLocalDateString } from '../utils/dateUtils';
 
 export interface EditingObjectif {
@@ -82,6 +81,7 @@ export const useManagerDashboard = () => {
                     }));
 
                     const filename = `stocks_morts_${now.toISOString().split('T')[0]}.xlsx`;
+                    const { exportToExcel } = await import('../utils/excelExport');
                     exportToExcel(excelData, pharmacySettings, {
                         sheetName: 'Stocks Morts',
                         filename,
@@ -114,7 +114,7 @@ export const useManagerDashboard = () => {
         } finally {
             setExporting(false);
         }
-    }, [t]);
+    }, [t, pharmacySettings]);
 
     const handleSaveObjectif = async () => {
         try {

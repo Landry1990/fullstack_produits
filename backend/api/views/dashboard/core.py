@@ -271,6 +271,12 @@ class DashboardCoreMixin(viewsets.ViewSet):
         role = profile.role if profile else None
         if role in ['VENDEUR', 'CAISSIER'] and not request.user.is_superuser:
             return Response({"error": "Accès non autorisé"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Cache: 60s pour les stats manager (KPIs changent peu dans la minute)
+        user_id = request.user.id if request.user.is_authenticated else 0
+        cached = DashboardCache.get_manager_stats(user_id)
+        if cached is not None:
+            return Response(cached)
     
         # 1. Basic dates
         now = timezone.localtime(timezone.now())
@@ -569,7 +575,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 'action_route': '/app/manager-dashboard'
             })
     
-        return Response({
+        response_data = {
             'kpis': {
                 'jour': {'actual': float(ca_jour), 'margin': float(margin_jour), 'target': float(obj_jour), 'rate': taux_jour,
                          'marge_target': float(marge_obj_jour), 'marge_rate': taux_marge_jour},
@@ -579,7 +585,9 @@ class DashboardCoreMixin(viewsets.ViewSet):
                          'marge_target': float(marge_obj_mois), 'marge_rate': taux_marge_mois},
             },
             'alerts': alerts
-        })
+        }
+        DashboardCache.set_manager_stats(user_id, response_data, ttl=DashboardCache.ALERTS_TTL)
+        return Response(response_data)
     
     @action(detail=False, methods=['get'])
     def recent_transactions(self, request):
@@ -616,7 +624,13 @@ class DashboardCoreMixin(viewsets.ViewSet):
         """Returns average hourly traffic (number of sales) over the last 30 days."""
         from django.db.models.functions import ExtractHour
         from ...models import PharmacySettings
-    
+
+        # Cache: 5 min pour le trafic horaire
+        user_id = request.user.id if request.user.is_authenticated else 0
+        cached = DashboardCache.get_hourly_traffic(user_id)
+        if cached is not None:
+            return Response(cached)
+
         settings = PharmacySettings.objects.first()
         days_count = settings.traffic_analysis_days if (settings and settings.traffic_analysis_days) else 30
     
@@ -670,11 +684,18 @@ class DashboardCoreMixin(viewsets.ViewSet):
             for h in range(24)
         ]
     
+        DashboardCache.set_hourly_traffic(user_id, response_data)
         return Response(response_data)
     
     @action(detail=False, methods=['get'])
     def revenue_chart(self, request):
         """Returns daily revenue for the last 7 days in format expected by frontend."""
+        # Cache: 5 min pour le graphique de CA
+        user_id = request.user.id if request.user.is_authenticated else 0
+        cached = DashboardCache.get_revenue_chart(user_id)
+        if cached is not None:
+            return Response(cached)
+
         end_date = timezone.localtime(timezone.now())
         start_date = end_date - timedelta(days=6)  # 7 days including today
     
@@ -730,14 +751,16 @@ class DashboardCoreMixin(viewsets.ViewSet):
             marges_pct_data.append(day_marge_pct)
             current_date += timedelta(days=1)
     
-        return Response({
+        response_data = {
             'labels': labels,
             'data': data,
             'nb_ventes': nb_ventes_data,
             'couts': couts_data,
             'marges': marges_data,
             'marges_pct': marges_pct_data,
-        })
+        }
+        DashboardCache.set_revenue_chart(user_id, '7d', response_data)
+        return Response(response_data)
     
     @action(detail=False, methods=['get'])
     def low_stock(self, request):

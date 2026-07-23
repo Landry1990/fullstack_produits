@@ -16,7 +16,7 @@ import type {
     SaleCompletionResult
 } from '../types';
 import { normalizeNumberInput, formatNumber } from '../utils/formatters';
-import { generatePromisTicketDraft, type PromisItem } from '../utils/print/promisPdfDraft';
+import type { PromisItem } from '../utils/print/promisPdfDraft';
 import { buildPaymentsList } from '../utils/finance';
 import { validateSaleData, validateClientCreditLimit } from '../utils/validation';
 import { usePharmacySettings } from './usePharmacySettings';
@@ -307,6 +307,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             const promisLines = params.lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0);
             if (promisLines.length > 0) {
                 try {
+                    const { generatePromisTicketDraft } = await import('../utils/print/promisPdfDraft');
                     generatePromisTicketDraft({
                         client_name: finalFacture.client_name || params.manualClientName || 'Client',
                         client_phone: params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
@@ -478,7 +479,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                             })
                         ));
                         
-                        generatePromisTicketDraft({
+                        const { generatePromisTicketDraft: genPromis } = await import('../utils/print/promisPdfDraft');
+                        genPromis({
                             client_name: updatedFacture.client_name || params.manualClientName || 'Client',
                             client_phone: params.promisPhone || params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
                             items: promisLines.map(l => ({
