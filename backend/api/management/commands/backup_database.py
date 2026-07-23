@@ -139,6 +139,7 @@ class Command(BaseCommand):
             self.stdout.write(f'   MD5: {hasher.hexdigest()}')
 
             self.copy_to_secondary(str(backup_file), str(checksum_file))
+            self.copy_to_external(str(backup_file), str(checksum_file))
 
             # Upload to cloud (S3-compatible)
             self.upload_to_cloud(str(backup_file))
@@ -197,6 +198,41 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'[SUPPORT] Copie secondaire OK: {destination}'))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'[SUPPORT] Erreur copie: {str(e)}'))
+
+    def copy_to_external(self, backup_file_path, checksum_file_path):
+        """Copie le backup vers toutes les destinations externes configurées (USB, disque dur, réseau)."""
+        try:
+            from api.models.settings import PharmacySettings
+            conf, _ = PharmacySettings.objects.get_or_create(pk=1)
+
+            external_paths = [
+                ('EXT1', (conf.external_backup_path_1 or '').strip()),
+                ('EXT2', (conf.external_backup_path_2 or '').strip()),
+                ('EXT3', (conf.external_backup_path_3 or '').strip()),
+            ]
+
+            for label, dest in external_paths:
+                if not dest:
+                    continue
+                if not os.path.isdir(dest):
+                    self.stdout.write(self.style.WARNING(
+                        f'[{label}] Destination inaccessible: {dest}'
+                    ))
+                    continue
+
+                try:
+                    shutil.copy2(backup_file_path, os.path.join(dest, os.path.basename(backup_file_path)))
+                    shutil.copy2(checksum_file_path, os.path.join(dest, os.path.basename(checksum_file_path)))
+                    self.stdout.write(self.style.SUCCESS(
+                        f'[{label}] Copie externe OK: {dest}'
+                    ))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(
+                        f'[{label}] Erreur copie vers {dest}: {str(e)}'
+                    ))
+
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'[EXT] Erreur générale: {str(e)}'))
 
     def copy_to_google_drive(self, backup_file_path):
         """Copy backup file to a locally mounted Google Drive folder"""

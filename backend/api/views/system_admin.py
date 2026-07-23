@@ -267,3 +267,141 @@ class SystemAdminViewSet(ViewSet):
         finally:
             if temp_path and os.path.exists(temp_path):
                 os.unlink(temp_path)
+
+    @action(detail=False, methods=['get'])
+    def wal_status(self, request):
+        """Retourne le statut de l'archivage WAL (PITR)."""
+        wal_dir = Path('/wal_archive')
+        if not wal_dir.exists():
+            wal_dir = Path(settings.BASE_DIR).parent / 'wal_archive'
+
+        wal_files = []
+        wal_count = 0
+        wal_size_mb = 0
+        oldest_wal = None
+        newest_wal = None
+
+        if wal_dir.exists():
+            wal_files = sorted(wal_dir.glob('*'), key=lambda f: f.stat().st_mtime)
+            wal_count = len(wal_files)
+            wal_size_mb = round(sum(f.stat().st_size for f in wal_files) / (1024 * 1024), 2)
+            if wal_files:
+                oldest_wal = datetime.fromtimestamp(wal_files[0].stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                newest_wal = datetime.fromtimestamp(wal_files[-1].stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+
+        # Vérifier si l'archivage est actif via SQL
+        archive_active = False
+        try:
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute("SHOW archive_mode;")
+                row = cursor.fetchone()
+                archive_active = row and row[0] == 'on'
+        except Exception:
+            pass
+
+        # Lister les base backups disponibles
+        base_dir = _get_backup_dir() / 'base'
+        base_backups = []
+        if base_dir.exists():
+            for d in sorted(base_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+                if d.is_dir() and d.name.startswith('base-'):
+                    stat = d.stat()
+                    base_backups.append({
+                        'name': d.name,
+                        'size_mb': round(stat.st_size / (1024 * 1024), 2),
+                        'created_at': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
+                    })
+
+        return Response({
+            'archive_active': archive_active,
+            'wal_count': wal_count,
+            'wal_size_mb': wal_size_mb,
+            'oldest_wal': oldest_wal,
+            'newest_wal': newest_wal,
+            'wal_directory': str(wal_dir),
+            'base_backups': base_backups[:10],
+            'base_backups_count': len(base_backups),
+        })
+
+    @action(detail=False, methods=['post'])
+    def base_backup(self, request):
+        """Lance un pg_basebackup pour créer un backup de base compatible WAL."""
+        from django.core.management import call_command
+        from io import StringIO
+
+        out = StringIO()
+        err = StringIO()
+
+        try:
+            call_command('base_backup', stdout=out, stderr=err)
+            output = out.getvalue()
+            errors = err.getvalue()
+            success = '[OK]' in output
+
+            return Response({
+                'success': success,
+                'output': output,
+                'error': errors if not success else '',
+                'message': 'Base backup créé avec succès' if success else 'Erreur lors du base backup',
+            }, status=status.HTTP_200_OK if success else status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response(
+                {'detail': f'Erreur: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'])
+    def pitr_restore(self, request):
+        """Restauration PITR: base backup + replay WAL jusqu'au timestamp."""
+        from django.core.management import call_command
+        from io import StringIO
+
+        base_backup_dir = request.data.get('base_backup_dir', '')
+        target_time = request.data.get('target_time', '')
+
+        if not base_backup_dir:
+            # Utiliser le plus récent base backup
+            base_dir = _get_backup_dir() / 'base'
+            if base_dir.exists():
+                bases = sorted(base_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+                for b in bases:
+                    if b.is_dir() and b.name.startswith('base-'):
+                        base_backup_dir = str(b)
+                        break
+            if not base_backup_dir:
+                return Response(
+                    {'detail': 'Aucun base backup trouvé. Lancez d\'abord un base backup.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        out = StringIO()
+        err = StringIO()
+
+        try:
+            cmd_args = [base_backup_dir]
+            if target_time:
+                cmd_args.append(f'--target-time={target_time}')
+            cmd_args.append('--no-confirm')
+
+            call_command(
+                'pitr_restore',
+                *cmd_args,
+                stdout=out,
+                stderr=err
+            )
+            output = out.getvalue()
+            errors = err.getvalue()
+            success = 'TERMINÉE' in output
+
+            return Response({
+                'success': success,
+                'output': output,
+                'error': errors if not success else '',
+                'message': 'Restauration PITR terminée' if success else 'Erreur lors de la restauration PITR',
+            }, status=status.HTTP_200_OK if success else status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response(
+                {'detail': f'Erreur: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

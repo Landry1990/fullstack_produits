@@ -26,8 +26,8 @@ class ClinicalService:
         for product in products:
             for substance in product.substances.all():
                 if substance.id not in substance_map:
-                    substance_map[substance.id] = []
-                substance_map[substance.id].append(product)
+                    substance_map[substance.id] = {'substance': substance, 'products': []}
+                substance_map[substance.id]['products'].append(product)
 
         substance_ids = list(substance_map.keys())
 
@@ -36,9 +36,9 @@ class ClinicalService:
         interactions = DrugInteraction.objects.filter(
             substance_a__id__in=substance_ids,
             substance_b__id__in=substance_ids
-        )
+        ).select_related('substance_a', 'substance_b')
 
-        # 3. Construire les alertes
+        # 3. Construire les alertes d'interaction
         processed_pairs = set()
 
         for interaction in interactions:
@@ -52,17 +52,20 @@ class ClinicalService:
             processed_pairs.add(pair_key)
 
             # Identifier les produits concernés
-            products_a = substance_map.get(s_a.id, [])
-            products_b = substance_map.get(s_b.id, [])
+            info_a = substance_map.get(s_a.id)
+            info_b = substance_map.get(s_b.id)
 
-            # Si c'est la MEME substance (redondance thérapeutique ?)
-            # Pour l'instant on ne traite que les interactions explicites A != B définies dans la table
-            
+            if not info_a or not info_b:
+                continue
+
+            products_a = info_a['products']
+            products_b = info_b['products']
+
             # Créer une alerte pour chaque combinaison de produits touchés
             for p_a in products_a:
                 for p_b in products_b:
                     if p_a.id == p_b.id:
-                        continue # Interaction avec soi-même via substances multiples ? Possible mais rare.
+                        continue
 
                     alerts.append({
                         'type': 'INTERACTION',
@@ -78,5 +81,25 @@ class ClinicalService:
                             'name': p_b.name
                         }
                     })
+
+        # 4. Détecter les redondances (même substance dans 2+ produits différents)
+        for sub_id, info in substance_map.items():
+            if len(info['products']) >= 2:
+                substance = info['substance']
+                product_names = [p.name for p in info['products']]
+                alerts.append({
+                    'type': 'REDUNDANCY',
+                    'gravity': 'A_PRENDRE_EN_COMPTE',
+                    'title': f"Redondance : {substance.nom}",
+                    'description': f"Plusieurs produits contiennent la même substance ({substance.nom}): {', '.join(product_names)}. Risque de surdosage.",
+                    'product_a': {
+                        'id': info['products'][0].id,
+                        'name': info['products'][0].name
+                    },
+                    'product_b': {
+                        'id': info['products'][1].id,
+                        'name': info['products'][1].name
+                    }
+                })
 
         return alerts

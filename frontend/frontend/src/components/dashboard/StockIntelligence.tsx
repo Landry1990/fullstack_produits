@@ -33,9 +33,9 @@ interface LowStockItem {
 
 interface ExpiringLot {
   id: number;
-  date_expiration?: string;
+  date_expiration?: string | null;
   produit_nom: string;
-  lot?: string;
+  lot?: string | null;
 }
 
 interface PromisDisponible {

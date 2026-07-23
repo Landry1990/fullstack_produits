@@ -40,6 +40,26 @@ def run_backup():
         print(f"ERREUR lors du backup: {e}")
 
 
+def run_base_backup():
+    """Exécute pg_basebackup pour créer un backup de base compatible WAL."""
+    print(f"[{timezone.localtime().strftime('%H:%M:%S')}] Déclenchement base backup (PITR)...")
+    try:
+        result = subprocess.run(
+            [sys.executable, 'manage.py', 'base_backup'],
+            cwd='/app',
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        output = result.stdout.strip()
+        if output:
+            print(output)
+        if result.returncode != 0 and result.stderr:
+            print(f"ERREUR base backup: {result.stderr.strip()}")
+    except Exception as e:
+        print(f"ERREUR lors du base backup: {e}")
+
+
 def main():
     print("══════════════════════════════════════════════")
     print("  Backup Scheduler démarré")
@@ -102,6 +122,21 @@ def main():
                     run_backup()
                 else:
                     print(f"[{now.strftime('%H:%M')}] Pas encore l'heure (intervalle: {interval} min)")
+
+            # Base backup PITR toutes les 6 heures
+            from pathlib import Path
+            base_dir = Path('/app').parent / 'backups' / 'base'
+            if base_dir.exists():
+                base_backups = [d for d in base_dir.iterdir() if d.is_dir() and d.name.startswith('base-')]
+                if base_backups:
+                    latest_base = max(base_backups, key=lambda p: p.stat().st_mtime)
+                    base_age_hours = (now.timestamp() - latest_base.stat().st_mtime) / 3600
+                    if base_age_hours >= 6:
+                        print(f"[{now.strftime('%H:%M')}] Base backup PITR requis (dernier il y a {base_age_hours:.0f}h)")
+                        run_base_backup()
+                else:
+                    print(f"[{now.strftime('%H:%M')}] Aucun base backup PITR — création du premier...")
+                    run_base_backup()
 
         except Exception as e:
             print(f"ERREUR scheduler: {e}")

@@ -5,6 +5,7 @@ import {
     localStorageService,
     OfflineLigne
 } from '../services';
+import type { Inventaire } from '../services/inventaire';
 
 interface UseOfflineSyncOptions {
     inventaireId: number;
@@ -54,7 +55,7 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
     ) => {
         try {
             const ligne = await localStorageService.saveLigneLocally(
-                inventaire as any,
+                { id: inventaire.id, reference: inventaire.reference || '', date_debut: '', date_fin: null, statut: 'EN_COURS', created_by: 0, lignes_count: 0 } as Inventaire,
                 produit,
                 quantite,
                 lotNumero,
@@ -68,7 +69,7 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
         }
     }, []);
 
-    // Synchroniser toutes les lignes en attente
+    // Synchroniser toutes les lignes en attente (envoi groupé)
     const syncAll = useCallback(async () => {
         if (!isOnline || offlineLignes.length === 0) return;
 
@@ -76,20 +77,20 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
         let syncedCount = 0;
 
         try {
+            // Préparer toutes les lignes pour un seul envoi groupé
+            const lignesPayload = offlineLignes.map(l => ({
+                produit: l.produitId,
+                quantite_comptee: l.quantiteComptee,
+                lot_numero: l.lotNumero,
+                lot_expiration: l.lotExpiration,
+            }));
+
+            const result = await inventaireService.bulkImport(inventaireId, lignesPayload);
+            syncedCount = result.imported;
+
+            // Marquer toutes les lignes comme synchronisées
             for (const ligne of offlineLignes) {
-                try {
-                    await inventaireService.addLigne(ligne.inventaireId, {
-                        produit: ligne.produitId,
-                        quantite_comptee: ligne.quantiteComptee,
-                        lot_numero: ligne.lotNumero,
-                        lot_expiration: ligne.lotExpiration,
-                    });
-                    await localStorageService.markAsSynced(ligne.tempId);
-                    syncedCount++;
-                } catch (error) {
-                    console.error(`Erreur sync ligne ${ligne.tempId}:`, error);
-                    // Continue avec les autres lignes
-                }
+                await localStorageService.markAsSynced(ligne.tempId);
             }
 
             // Nettoyer les lignes synchronisées
@@ -99,12 +100,17 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
             if (onSyncComplete) {
                 onSyncComplete(syncedCount);
             }
+        } catch (error) {
+            console.error('Erreur sync groupée:', error);
+            if (onSyncComplete) {
+                onSyncComplete(0);
+            }
         } finally {
             setSyncing(false);
         }
 
         return syncedCount;
-    }, [isOnline, offlineLignes, onSyncComplete]);
+    }, [isOnline, offlineLignes, onSyncComplete, inventaireId]);
 
     // Supprimer une ligne offline
     const removeOffline = useCallback(async (tempId: string) => {

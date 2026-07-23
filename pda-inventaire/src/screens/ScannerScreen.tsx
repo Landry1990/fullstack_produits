@@ -1,20 +1,6 @@
 /**
  * ScannerScreen - Écran de scan pour l'inventaire PDA
- *
- * NOUVELLES FONCTIONNALITÉS UX:
- * - ♾️ Scan continu: Auto-sauvegarde après scan (sans bouton)
- * - ⚡ Mode rapide: Incrémente +1 automatiquement
- * - 🔊 Sons: Feedback audio (succès/erreur/warning)
- * - 📳 Vibrations: Patterns différenciés
- * - ✅ Feedback visuel: Dernier produit sauvegardé
- *
- * INSTALLATION REQUISE:
- *   npm install expo-av
- *
- * ASSETS AUDIO REQUIS (dossier src/assets/):
- *   - beep_success.wav  (court, ~100ms)
- *   - beep_error.wav    (plus long, 2 beeps)
- *   - beep_warning.wav  (moyen, 1 beep)
+ * Scan continu, mode rapide, feedback audio/vibration
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -29,8 +15,9 @@ import {
   FlatList,
   ActivityIndicator,
   Keyboard,
+  Platform,
 } from 'react-native';
-import { Audio } from 'expo-av'; // npm install expo-av
+import { Audio } from 'expo-av';
 import type { Inventaire, LigneInventaire, Produit } from '../services/inventaire';
 import { inventaireService, produitService } from '../services/inventaire';
 import { exportService } from '../services/export';
@@ -41,10 +28,14 @@ interface ScannerScreenProps {
   onBack: () => void;
 }
 
+interface DisplayLigne extends LigneInventaire {
+  details?: { isOffline: boolean };
+}
+
 export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps) {
   const [scannedProduct, setScannedProduct] = useState<Produit | null>(null);
   const [quantity, setQuantity] = useState('1');
-  const [lignes, setLignes] = useState<LigneInventaire[]>([]);
+  const [lignes, setLignes] = useState<DisplayLigne[]>([]);
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   
@@ -56,13 +47,12 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     offlineCount, 
     syncing, 
     offlineLignes,
-    updateOffline, // Ajouté
-    removeOffline  // Ajouté
+    updateOffline,
   } = useOfflineSync({ 
     inventaireId: inventaire.id,
     onSyncComplete: (count) => {
-      Alert.alert('Synchronisation', `${count} ligne(s) synchronisée(s) !`);
-      loadLignes(); // Recharger les données serveur
+      Alert.alert('Synchronisation', `${count} ligne(s) synchronisée(s)`);
+      loadLignes();
     }
   });
 
@@ -72,7 +62,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
   const quantityInputRef = useRef<TextInput>(null);
   
   // Mode édition d'une ligne existante
-  const [editingLine, setEditingLine] = useState<LigneInventaire | null>(null);
+  const [editingLine, setEditingLine] = useState<DisplayLigne | null>(null);
   const [editQuantity, setEditQuantity] = useState('');
 
   // Saisie Multi-Lots
@@ -81,14 +71,14 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
   const [newLotExpiration, setNewLotExpiration] = useState('');
 
   // UX Modes
-  const [continuousScanMode, setContinuousScanMode] = useState(false); // Scan continu auto-save
-  const [rapidCountMode, setRapidCountMode] = useState(false); // Mode +1 rapide
-  const [lastSavedProduct, setLastSavedProduct] = useState<string | null>(null); // Feedback dernier produit
+  const [continuousScanMode, setContinuousScanMode] = useState(false);
+  const [rapidCountMode, setRapidCountMode] = useState(false);
+  const [lastSavedProduct, setLastSavedProduct] = useState<string | null>(null);
 
   // Charger les lignes (Serveur + Local)
   useEffect(() => {
     loadLignes();
-  }, [offlineLignes.length]); // Recharger quand le local change
+  }, [offlineLignes.length]);
 
   // Masquer le feedback du dernier produit après 3 secondes
   useEffect(() => {
@@ -129,37 +119,77 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
         }
       }
 
-      // 2. Convertir lignes offline en format LigneInventaire pour affichage
-      const localDisplayLignes = offlineLignes.map(l => ({
-        id: -1 * parseInt(l.tempId.split('_')[1] || '0'), // ID temporaire négatif
+      // 2. Convertir lignes offline en DisplayLigne
+      const localDisplayLignes: DisplayLigne[] = offlineLignes.map(l => ({
+        id: -1 * parseInt(l.tempId.split('_')[1] || '0'),
         inventaire: l.inventaireId,
         produit: l.produitId,
         produit_nom: l.produitNom,
         produit_cip: l.produitCip,
+        quantite_theorique: 0,
         quantite_comptee: l.quantiteComptee,
+        ecart: 0,
         scanned_at: l.scannedAt,
-        details: { isOffline: true } // Marqueur visuel
-      } as unknown as LigneInventaire));
+        details: { isOffline: true }
+      }));
 
-      // 3. Fusionner (Local en premier pour visibilité)
+      // 3. Fusionner
       setLignes([...localDisplayLignes, ...serverLignes]);
     } catch (error) {
       console.error('Erreur chargement lignes:', error);
     }
   };
 
-  // Sons de feedback
+  // Sons de feedback - générés programmatiquement (pas de fichiers externes requis)
   const playSound = useCallback(async (type: 'success' | 'error' | 'warning') => {
     try {
-      const soundFiles = {
-        success: require('../assets/beep_success.wav'),
-        error: require('../assets/beep_error.wav'),
-        warning: require('../assets/beep_warning.wav'),
+      const soundConfigs = {
+        success: { frequency: 1000, duration: 100 },
+        error: { frequency: 300, duration: 300 },
+        warning: { frequency: 600, duration: 200 },
       };
-      const { sound } = await Audio.Sound.createAsync(soundFiles[type]);
+      const config = soundConfigs[type];
+
+      // Générer un beep WAV en mémoire
+      const sampleRate = 44100;
+      const numSamples = Math.floor(sampleRate * config.duration / 1000);
+      const buffer = new ArrayBuffer(44 + numSamples * 2);
+      const view = new DataView(buffer);
+
+      // WAV header
+      const writeString = (offset: number, str: string) => {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      };
+      writeString(0, 'RIFF');
+      view.setUint32(4, 36 + numSamples * 2, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeString(36, 'data');
+      view.setUint32(40, numSamples * 2, true);
+
+      // Générer l'onde sinusoïdale avec fade in/out
+      for (let i = 0; i < numSamples; i++) {
+        const fadeSamples = Math.min(numSamples * 0.1, 500);
+        let amplitude = 0.5;
+        if (i < fadeSamples) amplitude *= i / fadeSamples;
+        if (i > numSamples - fadeSamples) amplitude *= (numSamples - i) / fadeSamples;
+        const sample = Math.sin(2 * Math.PI * config.frequency * i / sampleRate) * amplitude * 32767;
+        view.setInt16(44 + i * 2, sample, true);
+      }
+
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      const uri = `data:audio/wav;base64,${base64}`;
+
+      const { sound } = await Audio.Sound.createAsync({ uri });
       await sound.playAsync();
-      // Libérer la mémoire après lecture
-      setTimeout(() => sound.unloadAsync(), 1000);
+      setTimeout(() => sound.unloadAsync(), 500);
     } catch (e) {
       // Fallback: vibration si son échoue
       if (type === 'success') Vibration.vibrate(50);
@@ -188,8 +218,6 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       setScannedProduct(null);
       setQuantity('1');
       setScanInput('');
-      
-      // Focus retour sur scan après 200ms
       setTimeout(() => scanInputRef.current?.focus(), 200);
     } catch (error) {
       await playSound('error');
@@ -209,7 +237,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     try {
       const product = await produitService.getByCip(code);
       if (product) {
-        // Mode scan continu: auto-save immédiat (sans gestion de lots)
+        // Mode scan continu: auto-save immédiat
         if (continuousScanMode && !product.use_lot_management) {
           await handleContinuousSave(product);
           return;
@@ -234,7 +262,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
 
         // Mode normal: afficher le produit
         setScannedProduct(product);
-        setQuantity(rapidCountMode ? '1' : ''); // 1 par défaut en mode rapide
+        setQuantity(rapidCountMode ? '1' : '');
         setScanInput('');
         await playSound('success');
         Vibration.vibrate(50);
@@ -276,7 +304,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     try {
       let savedCount = 0;
 
-      // 1. Enregistrer les lots existants qui ont une quantité saisie
+      // 1. Enregistrer les lots existants
       const existingLotEntries = Object.entries(lotQuantities).filter(([_, qty]) => {
         const q = parseInt(qty, 10);
         return !isNaN(q) && q > 0;
@@ -303,7 +331,6 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       // 2. Enregistrer le nouveau lot si renseigné
       const newQty = parseInt(quantity, 10);
       if (!scannedProduct.use_lot_management && !isNaN(newQty) && newQty > 0) {
-          // Produit sans gestion de lot
           await saveOffline(
             { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || undefined },
             newQty,
@@ -311,7 +338,6 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
           );
           savedCount++;
       } else if (scannedProduct.use_lot_management && !isNaN(newQty) && newQty > 0) {
-          // Nouveau lot pour produit avec gestion de lot
           
           // --- VALIDATION DATE ---
           if (newLotExpiration && !/^\d{4}-\d{2}-\d{2}$/.test(newLotExpiration)) {
@@ -343,15 +369,15 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       
       // Reset UI
       setScannedProduct(null);
-      setQuantity(rapidCountMode ? '1' : '1');
+      setQuantity('1');
       setLotQuantities({});
       setNewLotNumber('');
       setNewLotExpiration('');
       setScanInput('');
-      Vibration.vibrate([0, 30, 30, 30, 30, 30]); // Pattern: succès long
+      Vibration.vibrate([0, 30, 30, 30, 30, 30]);
       setTimeout(() => scanInputRef.current?.focus(), rapidCountMode ? 100 : 200);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur ajout ligne:', error);
       await playSound('error');
       Alert.alert('Erreur', 'Impossible de sauvegarder localement');
@@ -373,7 +399,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     setTimeout(() => scanInputRef.current?.focus(), 100);
   };
 
-  const handleEditLine = (ligne: LigneInventaire) => {
+  const handleEditLine = (ligne: DisplayLigne) => {
     setEditingLine(ligne);
     setEditQuantity(String(ligne.quantite_comptee));
     Vibration.vibrate(50);
@@ -389,12 +415,9 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     
     setLoading(true);
     try {
-      const isOffline = (editingLine as any).id < 0 || (editingLine as any).details?.isOffline;
+      const isOffline = editingLine.id < 0 || editingLine.details?.isOffline;
       
       if (isOffline) {
-        // En mode offline-first, les ID locaux sont négatifs (marqués l.99 loadLignes)
-        // Mais useOfflineSync utilise tempId. On doit retrouver le tempId si possible ou modifier par ID.
-        // AMELIORATION: On va chercher dans offlineLignes celle qui correspond à cet index/id négatif.
         const offLine = offlineLignes.find(l => {
              const derivedId = -1 * parseInt(l.tempId.split('_')[1] || '0');
              return derivedId === editingLine.id;
@@ -403,7 +426,6 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
         if (offLine) {
             await updateOffline(offLine.tempId, qty);
         } else {
-            // Fallback si on ne retrouve pas via ID négatif
             Alert.alert('Erreur', 'Ligne locale non trouvée');
         }
       } else {
@@ -431,8 +453,9 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     try {
       setLoading(true);
       await exportService.exportInventaireToCsv(inventaire);
-    } catch (error: any) {
-      Alert.alert("Erreur Export", error.message || "Impossible d'exporter le fichier");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Impossible d'exporter le fichier";
+      Alert.alert("Erreur Export", message);
     } finally {
       setLoading(false);
       setTimeout(() => scanInputRef.current?.focus(), 500);
@@ -448,16 +471,66 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     Keyboard.dismiss();
   };
 
+  // Terminer & Envoyer: synchroniser puis quitter
+  const handleFinishAndSync = async () => {
+    if (offlineCount === 0) {
+      onBack();
+      return;
+    }
+    if (!isOnline) {
+      Alert.alert(
+        'Hors ligne',
+        'Vous êtes hors ligne. Les scans seront conservés localement et synchronisés ultérieurement.',
+        [{ text: 'OK', onPress: onBack }]
+      );
+      return;
+    }
+    Alert.alert(
+      'Terminer la session',
+      `Envoyer ${offlineCount} ligne(s) vers le serveur ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Envoyer',
+          onPress: async () => {
+            const count = await syncAll();
+            if (count !== undefined && count > 0) {
+              Alert.alert('Succès', `${count} ligne(s) envoyée(s)`, [
+                { text: 'OK', onPress: onBack }
+              ]);
+            } else {
+              onBack();
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Retour: proposer sync si lignes en attente
+  const handleBack = () => {
+    if (offlineCount > 0) {
+      Alert.alert(
+        'Lignes non envoyées',
+        `Vous avez ${offlineCount} ligne(s) non synchronisée(s). Que voulez-vous faire ?`,
+        [
+          { text: 'Tout envoyer', onPress: handleFinishAndSync },
+          { text: 'Garder et quitter', style: 'default', onPress: onBack },
+        ]
+      );
+    } else {
+      onBack();
+    }
+  };
+
   // Toggle Modes
   const toggleContinuousMode = () => {
     setContinuousScanMode(prev => !prev);
-    // Feedback
     Vibration.vibrate(50);
   };
 
   const toggleRapidMode = () => {
     setRapidCountMode(prev => !prev);
-    // Feedback
     Vibration.vibrate(50);
   };
 
@@ -465,8 +538,8 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backBtnText}> Quitter</Text>
+        <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
+          <Text style={styles.backBtnText}>Terminer</Text>
         </TouchableOpacity>
         
         <View style={styles.headerTitles}>
@@ -482,7 +555,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
             onPress={toggleContinuousMode} 
             style={[styles.modeBtn, continuousScanMode && styles.modeBtnActive]}
           >
-            <Text style={styles.modeBtnText}>{continuousScanMode ? '♾️' : '⊘'}</Text>
+            <Text style={styles.modeBtnText}>CONT</Text>
           </TouchableOpacity>
 
           {/* Mode Rapide (+1) */}
@@ -490,16 +563,16 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
             onPress={toggleRapidMode} 
             style={[styles.modeBtn, rapidCountMode && styles.modeBtnActive]}
           >
-            <Text style={styles.modeBtnText}>{rapidCountMode ? '+1⚡' : '+1'}</Text>
+            <Text style={styles.modeBtnText}>+1</Text>
           </TouchableOpacity>
 
           {/* Keyboard Toggle */}
            <TouchableOpacity onPress={toggleKeyboard} style={[styles.exportBtn, { marginRight: 8, backgroundColor: isKeyboardEnabled ? '#4f46e5' : '#2d2d44' }]}>
-            <Text style={styles.exportBtnText}>{isKeyboardEnabled ? '⌨️' : '⌨️⃠'}</Text>
+            <Text style={styles.exportBtnText}>KBD</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleExport} style={styles.exportBtn}>
-            <Text style={styles.exportBtnText}>📤</Text>
+            <Text style={styles.exportBtnText}>CSV</Text>
           </TouchableOpacity>
           <View style={styles.counter}>
             <Text style={styles.counterText}>{lignes.length}</Text>
@@ -510,15 +583,15 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       {/* Feedback dernier produit sauvegardé */}
       {lastSavedProduct && (
         <View style={styles.savedFeedbackBanner}>
-          <Text style={styles.savedFeedbackText}>✅ {lastSavedProduct}</Text>
+          <Text style={styles.savedFeedbackText}>{lastSavedProduct}</Text>
         </View>
       )}
 
       {/* Légende des modes actifs */}
       {(continuousScanMode || rapidCountMode) && (
         <View style={styles.modesIndicator}>
-          {continuousScanMode && <Text style={styles.modeIndicatorText}>♾️ Scan continu</Text>}
-          {rapidCountMode && <Text style={styles.modeIndicatorText}>⚡ Mode +1 rapide</Text>}
+          {continuousScanMode && <Text style={styles.modeIndicatorText}>Scan continu</Text>}
+          {rapidCountMode && <Text style={styles.modeIndicatorText}>Mode +1 rapide</Text>}
         </View>
       )}
 
@@ -526,14 +599,14 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       {offlineCount > 0 && (
         <TouchableOpacity 
           style={[styles.syncBanner, isOnline ? styles.syncBannerActive : styles.syncBannerDisabled]}
-          onPress={syncAll}
+          onPress={handleFinishAndSync}
           disabled={!isOnline || syncing}
         >
            {syncing ? (
              <ActivityIndicator color="#fff" size="small" />
            ) : (
              <Text style={styles.syncBannerText}>
-               ⚠️ {offlineCount} ligne(s) non synchronisée(s) - Tap pour envoyer
+               {offlineCount} ligne(s) en attente — Terminer pour envoyer
              </Text>
            )}
         </TouchableOpacity>
@@ -576,7 +649,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
             )}
             ListFooterComponent={
               <View style={styles.newLotSection}>
-                <Text style={styles.newLotTitle}>➕ Nouveau Lot / Sans Lot</Text>
+                <Text style={styles.newLotTitle}>Nouveau Lot / Sans Lot</Text>
                 <View style={styles.newLotRow}>
                     <TextInput
                       style={[styles.lotInput, { flex: 2 }]}
@@ -619,7 +692,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.validateBtnText}>
-                  💾 Sauver (Local)
+                  Sauvegarder
                 </Text>
               )}
             </TouchableOpacity>
@@ -628,7 +701,6 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       ) : (
         // Mode scan laser
         <View style={styles.scannerContainer}>
-          <Text style={styles.scanIcon}>📡</Text>
           <Text style={styles.scanTitle}>Prêt à scanner</Text>
           <Text style={styles.scanSubtitle}>
             Scannez un code-barres avec le laser
@@ -664,7 +736,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
             onPress={handleScanSubmit}
             disabled={!scanInput.trim() || searching}
           >
-            <Text style={styles.searchBtnText}>🔍 Rechercher</Text>
+            <Text style={styles.searchBtnText}>Rechercher</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -672,17 +744,12 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       {/* Mode édition d'une ligne */}
       {editingLine && (
         <View style={styles.editCard}>
-          <Text style={styles.editTitle}>✏️ Modifier la quantité</Text>
+          <Text style={styles.editTitle}>Modifier la quantité</Text>
           <Text style={styles.editProductName}>
             {editingLine.produit_nom || editingLine.produit_name || `Produit #${editingLine.produit}`}
           </Text>
           
           <View style={styles.quantityRow}>
-             {/* ... (même que original) ... */}
-             {/* Pour économiser espace tokens, j'utilise une version simplifiée ou je reprends le code existant si possible, 
-                 mais `replace_file_content` demande le contenu complet si je remplace un gros bloc.
-                 Je vais remettre les inputs quantité
-             */}
             <TouchableOpacity 
               style={styles.qtyBtn}
               onPress={() => setEditQuantity(String(Math.max(0, parseInt(editQuantity) - 1)))}
@@ -715,8 +782,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
               onPress={handleUpdateLine}
               disabled={loading}
             >
-               {/* ... */}
-               <Text style={styles.validateBtnText}>💾 Enregistrer</Text>
+               <Text style={styles.validateBtnText}>Enregistrer</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -726,19 +792,19 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       <View style={styles.recentContainer}>
         <Text style={styles.recentTitle}>Derniers scans</Text>
         <FlatList
-          data={lignes.slice(-10).reverse()} // Attention, lignes contient offline (id négatif) et online
+          data={lignes.slice(-10).reverse()}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity 
               style={[
                  styles.recentItem, 
                  editingLine?.id === item.id && styles.recentItemActive,
-                 (item as any).details?.isOffline && styles.recentItemOffline
+                 item.details?.isOffline && styles.recentItemOffline
               ]}
               onPress={() => handleEditLine(item)}
             >
               <Text style={styles.recentName} numberOfLines={1}>
-                {(item as any).details?.isOffline ? '⏳ ' : ''}
+                {item.details?.isOffline ? '* ' : ''}
                 {item.produit_nom || item.produit_name || `Produit #${item.produit}`}
               </Text>
               <Text style={styles.recentQty}>{item.quantite_comptee}</Text>
@@ -764,8 +830,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#1a1a2e',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 48,
+    paddingVertical: Platform.OS === 'web' ? 10 : 14,
+    paddingTop: Platform.OS === 'web' ? 0 : 48,
+    minHeight: 56,
   },
   backBtn: {
     padding: 8,
@@ -786,10 +853,13 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
     alignSelf: 'flex-start',
-    marginTop: 2,
+    marginTop: 4,
+    minWidth: 70,
+    maxWidth: 90,
+    alignItems: 'center',
   },
   statusOnline: {
     backgroundColor: 'rgba(34, 197, 94, 0.2)',
@@ -800,14 +870,15 @@ const styles = StyleSheet.create({
     borderColor: '#ef4444',
   },
   statusText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
     color: '#fff',
+    textAlign: 'center',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    marginLeft: 8,
   },
   counter: {
     backgroundColor: '#4f46e5',
@@ -824,9 +895,14 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: '#2d2d44',
     borderRadius: 8,
+    marginRight: 8,
+    minWidth: 44,
+    alignItems: 'center',
   },
   exportBtnText: {
-    fontSize: 20,
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '600',
   },
   syncBanner: {
     backgroundColor: '#f59e0b',
@@ -849,23 +925,20 @@ const styles = StyleSheet.create({
   },
   scannerContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    padding: 24,
-  },
-  scanIcon: {
-    fontSize: 80,
-    marginBottom: 16,
+    paddingTop: Platform.OS === 'web' ? 24 : 80,
+    paddingHorizontal: 24,
   },
   scanTitle: {
     color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 6,
   },
   scanSubtitle: {
-    color: '#888',
-    fontSize: 16,
+    color: '#666',
+    fontSize: 15,
     marginBottom: 32,
     textAlign: 'center',
   },
@@ -905,13 +978,15 @@ const styles = StyleSheet.create({
   },
   productCard: {
     backgroundColor: '#1e1e35',
-    margin: 15,
-    padding: 20,
-    borderRadius: 15,
-    elevation: 5,
-    maxHeight: '65%', // Limiter la hauteur pour garder l'historique visible
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 0,
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#4f46e5',
+    flex: 1,
+    minHeight: 0,
   },
   productName: {
     color: '#fff',
@@ -1077,7 +1152,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#2d2d44',
-    maxHeight: 250, // Plus d'espace
+    height: 220,
   },
   recentTitle: {
     color: '#ccc', // Contraste
@@ -1108,7 +1183,7 @@ const styles = StyleSheet.create({
   },
   recentName: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     flex: 1,
     marginRight: 12,
   },
@@ -1183,16 +1258,18 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: '#2d2d44',
     borderRadius: 8,
-    marginRight: 6,
+    marginRight: 8,
     borderWidth: 1,
     borderColor: '#4b4b6a',
+    minWidth: 44,
+    alignItems: 'center',
   },
   modeBtnActive: {
     backgroundColor: '#22c55e',
     borderColor: '#22c55e',
   },
   modeBtnText: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#fff',
   },
