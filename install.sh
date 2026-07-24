@@ -137,7 +137,7 @@ fi
 
 # ── 6. Permissions ────────────────────────────────────
 step "6. Permissions des scripts"
-chmod +x auto-deploy.sh deploy.sh rollback.sh backup-db.sh watchdog.sh start-watchdog.sh setup-cron.sh 2>/dev/null || true
+chmod +x auto-deploy.sh deploy.sh rollback.sh backup-db.sh watchdog.sh start-watchdog.sh setup-cron.sh init-db.sh 2>/dev/null || true
 chmod +x webhook-deploy.py 2>/dev/null || true
 mkdir -p logs backups
 ok "Scripts prêts"
