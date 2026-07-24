@@ -139,37 +139,49 @@ class SystemAdminViewSet(ViewSet):
 
     @action(detail=False, methods=['post'])
     def run_backup(self, request):
-        """Lance un backup manuel immédiat."""
-        script = _get_backup_script()
-        if not script.exists():
-            return Response(
-                {'detail': f'Script de backup introuvable: {script}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        """Lance un backup manuel immédiat via la commande Django backup_database."""
+        from django.core.management import call_command
+        from io import StringIO
+
+        out = StringIO()
+        err = StringIO()
 
         try:
-            result = subprocess.run(
-                ['bash', str(script), '--retention-days', str(settings.BACKUP_RETENTION_DAYS)],
-                capture_output=True, text=True, timeout=120,
-                cwd=str(script.parent)
-            )
-            success = result.returncode == 0
+            call_command('backup_database', stdout=out, stderr=err)
+            output = out.getvalue()
+            error = err.getvalue()
+
+            # La commande backup_database retourne une erreur si pg_dump est introuvable
+            if 'pg_dump not found' in output:
+                return Response({
+                    'success': False,
+                    'output': output[-2000:],
+                    'error': 'pg_dump non trouvé. Installez postgresql-client dans le conteneur.',
+                    'message': 'Erreur: pg_dump introuvable',
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            if 'Backup failed' in output:
+                return Response({
+                    'success': False,
+                    'output': output[-2000:],
+                    'error': output[-500:],
+                    'message': 'Erreur lors du backup',
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
             return Response({
-                'success': success,
-                'output': result.stdout[-2000:] if result.stdout else '',
-                'error': result.stderr[-500:] if result.stderr and not success else '',
-                'message': 'Backup effectué avec succès' if success else 'Erreur lors du backup',
-            }, status=status.HTTP_200_OK if success else status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except subprocess.TimeoutExpired:
-            return Response(
-                {'detail': 'Le backup a dépassé le délai de 120 secondes.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+                'success': True,
+                'output': output[-2000:],
+                'error': '',
+                'message': 'Backup effectué avec succès',
+            }, status=status.HTTP_200_OK)
+
         except Exception as e:
-            return Response(
-                {'detail': f'Erreur: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({
+                'success': False,
+                'output': out.getvalue()[-2000:],
+                'error': str(e),
+                'message': 'Erreur lors du backup',
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'])
     def fix_restart_policy(self, request):
@@ -341,15 +353,18 @@ class SystemAdminViewSet(ViewSet):
 
             return Response({
                 'success': success,
-                'output': output,
+                'output': output[-3000:],
                 'error': errors if not success else '',
                 'message': 'Base backup créé avec succès' if success else 'Erreur lors du base backup',
-            }, status=status.HTTP_200_OK if success else status.HTTP_500_INTERNAL_SERVER_ERROR)
+            }, status=status.HTTP_200_OK)
+
         except Exception as e:
-            return Response(
-                {'detail': f'Erreur: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({
+                'success': False,
+                'output': out.getvalue()[-3000:],
+                'error': str(e),
+                'message': 'Erreur lors du base backup',
+            }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def pitr_restore(self, request):

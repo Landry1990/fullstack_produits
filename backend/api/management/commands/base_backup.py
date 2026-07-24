@@ -62,14 +62,18 @@ class Command(BaseCommand):
                 '-p', str(db['PORT']),
                 '-U', db['USER'],
                 '-D', str(base_dir),
-                '-F', 'directory',
-                '-X', 'fetch',
+                '-F', 'plain',
+                '-X', 'stream',
                 '-P',
                 '-v',
-            ], env=env, capture_output=True, text=True)
+                '--no-password',
+            ], env=env, capture_output=True, text=True, timeout=300)
 
             if result.returncode != 0:
-                self.stdout.write(self.style.ERROR(f'pg_basebackup échoué: {result.stderr}'))
+                self.stdout.write(self.style.ERROR(
+                    f'pg_basebackup échoué (code {result.returncode}): {result.stderr}\n'
+                    f'stdout: {result.stdout}'
+                ))
                 return
 
             # Créer un fichier de métadonnées

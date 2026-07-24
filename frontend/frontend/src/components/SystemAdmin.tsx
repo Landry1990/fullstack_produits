@@ -211,7 +211,8 @@ export default function SystemAdmin() {
       setBackupOutput(t('settings_saved'));
       fetchStatus();
     } catch (e: unknown) {
-      setBackupError(e?.response?.data?.detail || t('settings_save_error'));
+      const err = e as { response?: { data?: { detail?: string } } };
+      setBackupError(err?.response?.data?.detail || t('settings_save_error'));
     } finally {
       setSavingBackupSettings(false);
     }
@@ -227,7 +228,8 @@ export default function SystemAdmin() {
       if (!res.data.success) setPitrError(res.data.error || 'Erreur');
       fetchWalStatus();
     } catch (e: unknown) {
-      setPitrError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erreur lors du base backup');
+      const err = e as { response?: { data?: { detail?: string; error?: string; message?: string } } };
+      setPitrError(err?.response?.data?.error || err?.response?.data?.detail || err?.response?.data?.message || 'Erreur lors du base backup');
     } finally {
       setRunningBaseBackup(false);
     }
@@ -261,7 +263,8 @@ export default function SystemAdmin() {
       fetchStatus();
       fetchBackups();
     } catch (e: unknown) {
-      setBackupError(e?.response?.data?.detail || t('backup_error'));
+      const err = e as { response?: { data?: { detail?: string; error?: string; message?: string } } };
+      setBackupError(err?.response?.data?.detail || err?.response?.data?.error || err?.response?.data?.message || t('backup_error'));
     } finally {
       setRunningBackup(false);
     }
@@ -286,7 +289,8 @@ export default function SystemAdmin() {
       await handleRestore();
     } catch (e: unknown) {
       setRestoreProgress(p => [...p, t('restore_progress.safety_failed')]);
-      setRestoreError(e?.response?.data?.detail || t('security_backup_error'));
+      const err = e as { response?: { data?: { detail?: string } } };
+      setRestoreError(err?.response?.data?.detail || t('security_backup_error'));
       setRestoring(false);
     }
   };
@@ -321,7 +325,8 @@ export default function SystemAdmin() {
       }
     } catch (e: unknown) {
       setRestoreProgress(p => [...p, t('restore_progress.failed')]);
-      setRestoreError(e?.response?.data?.detail || t('restore_error'));
+      const err = e as { response?: { data?: { detail?: string } } };
+      setRestoreError(err?.response?.data?.detail || t('restore_error'));
     } finally {
       setRestoring(false);
     }
