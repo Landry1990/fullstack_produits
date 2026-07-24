@@ -2,6 +2,7 @@ services:
   # Base de données PostgreSQL
   db:
     image: postgres:15-alpine
+    entrypoint: ["/init-db.sh"]
     command: >-
       postgres
       -c max_connections=300
@@ -14,8 +15,14 @@ services:
       -c wal_buffers=16MB
       -c checkpoint_completion_target=0.9
       -c default_statistics_target=100
+      -c archive_mode=on
+      -c archive_command='test ! -f /wal_archive/%f && cp %p /wal_archive/%f'
+      -c archive_timeout=60
+      -c wal_level=replica
     volumes:
       - fullstack_postgres_data_protected:/var/lib/postgresql/data
+      - wal_archive:/wal_archive
+      - ./init-db.sh:/init-db.sh:ro
     environment:
       - POSTGRES_DB=${DB_NAME:-fullstack_db}
       - POSTGRES_USER=${DB_USER:-fullstack_user}
@@ -59,6 +66,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./backup-db.sh:/backup-db.sh
       - ./backups:/backups
+      - wal_archive:/wal_archive
     environment:
       - DJANGO_SETTINGS_MODULE=backend.settings
       - DJANGO_DEBUG=False
@@ -188,3 +196,4 @@ volumes:
   redis_data:
   portainer_data:
   tailscale_data:
+  wal_archive:
