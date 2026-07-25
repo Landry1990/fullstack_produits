@@ -337,8 +337,7 @@ export default function SystemAdmin() {
     try {
       await api.post('/system-admin/fix_restart_policy/');
       fetchStatus();
-    } catch {
-    } finally {
+    } catch { /* ignore */ } finally {
       setFixingRestart(false);
     }
   };

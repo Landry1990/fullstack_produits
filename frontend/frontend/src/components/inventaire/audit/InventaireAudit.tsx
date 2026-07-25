@@ -34,6 +34,26 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
     const [groupBy, setGroupBy] = React.useState<'RAYON' | 'GROUPE'>('RAYON');
     const [metric, setMetric] = React.useState<'VALEUR' | 'OCCURRENCE'>('VALEUR');
 
+    // Logic for dynamic sorting (must be before any early return to respect hooks rules)
+    const sortedProducts = React.useMemo(() => {
+        if (!data?.top_pertes) return [];
+
+        const products = [...data.top_pertes];
+        return products.sort((a, b) => {
+            const key = sortConfig.key as keyof typeof a;
+            const aValue = Number(a[key] || 0);
+            const bValue = Number(b[key] || 0);
+
+            if (aValue < bValue) {
+                return sortConfig.direction === 'asc' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+                return sortConfig.direction === 'asc' ? 1 : -1;
+            }
+            return 0;
+        });
+    }, [data?.top_pertes, sortConfig]);
+
     const Recharts = useRecharts();
     if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
     const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = Recharts;
@@ -53,7 +73,7 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                         {title}
                     </h3>
                 </div>
-                <div className="p-0 flex-1 overflow-y-auto max-h-[500px]">
+                <div className="p-0 flex-1 overflow-y-auto max-h-[60vh]">
                     {!data || data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full py-12 gap-3 text-slate-200">
                             <Package className="h-10 w-10" />
@@ -85,26 +105,6 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
             </div>
         );
     };
-
-    // Logic for dynamic sorting
-    const sortedProducts = React.useMemo(() => {
-        if (!data?.top_pertes) return [];
-
-        const products = [...data.top_pertes];
-        return products.sort((a, b) => {
-            const key = sortConfig.key as keyof typeof a;
-            const aValue = Number(a[key] || 0);
-            const bValue = Number(b[key] || 0);
-
-            if (aValue < bValue) {
-                return sortConfig.direction === 'asc' ? -1 : 1;
-            }
-            if (aValue > bValue) {
-                return sortConfig.direction === 'asc' ? 1 : -1;
-            }
-            return 0;
-        });
-    }, [data?.top_pertes, sortConfig]);
 
     const handleSort = (key: string) => {
         setSortConfig(prev => ({

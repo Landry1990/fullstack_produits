@@ -147,7 +147,7 @@ export function generateTicketReglementPdf(data: TicketReglementData): jsPDF {
         },
     });
 
-    // @ts-ignore
+    // @ts-expect-error - jspdf-autotable extends doc with finalY
     y = doc.lastAutoTable.finalY + 10;
 
     // ── RÉCAPITULATIF ──

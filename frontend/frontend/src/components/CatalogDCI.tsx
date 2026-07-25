@@ -54,7 +54,7 @@ export default function CatalogDCI() {
   });
 
   return (
-    <div className="flex h-[calc(100vh-120px)] gap-6 overflow-hidden">
+    <div className="flex h-full gap-6 overflow-hidden">
       {/* Sidebar - Liste des DCI */}
       <div className="w-96 flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
         <div className="p-6 bg-primary/5 border-b border-base-200">

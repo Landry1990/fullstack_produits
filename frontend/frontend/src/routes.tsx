@@ -114,6 +114,7 @@ const Corbeille = lazyWithRetry(() => import('./components/Corbeille'));
 const ImportDCIPage = lazyWithRetry(() => import('./components/ImportDCIPage'));
 const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilite'));
 const SystemAdmin = lazyWithRetry(() => import('./components/SystemAdmin'));
+const PlanningOperateurs = lazyWithRetry(() => import('./components/PlanningOperateurs'));
 
 // ── Helper to reduce boilerplate ──
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -234,6 +235,7 @@ export const router = createBrowserRouter([
 
           // ── Admin only ──
           { path: 'utilisateurs', ...admin(GestionUtilisateurs) },
+          { path: 'planning-operateurs', ...perm('utilisateurs', PlanningOperateurs) },
           { path: 'user-sessions', ...admin(UserSessions) },
           { path: 'journal-audit', ...admin(JournalAudit) },
           { path: 'import-dci', ...admin(ImportDCIPage) },

@@ -1,0 +1,95 @@
+{
+    "title": "Staff Scheduling",
+    "subtitle": "Manage shifts, guards, rest days and leave",
+    "tabs": {
+        "planning": "Schedule",
+        "leaves": "Leave",
+        "config": "Settings"
+    },
+    "shift_types": {
+        "MORNING": "Morning",
+        "NIGHT": "Night",
+        "GUARD": "On-call",
+        "REST": "Rest",
+        "LEAVE": "Leave"
+    },
+    "planning": {
+        "create": "Create schedule",
+        "generate": "Generate (today → end)",
+        "generate_full": "Regenerate full month",
+        "publish": "Publish",
+        "published": "Published",
+        "no_schedule": "No schedule for this month",
+        "no_schedule_admin": "No schedule for this month. Click \"Create schedule\" to start.",
+        "operator": "Operator",
+        "edit_assignment": "Edit assignment",
+        "date_label": "Date",
+        "send_to_operators": "Send to operators",
+        "month_view": "Month",
+        "week_view": "Week",
+        "print": "Print"
+    },
+    "config": {
+        "title": "Rotation rules",
+        "subtitle": "Configure shifts, rest and on-call duty",
+        "work_days_before_rest": "Work days before rest",
+        "rest_days": "Rest days",
+        "guard_frequency": "On-call frequency (days)",
+        "annual_leave_days": "Annual leave days",
+        "shift_hours": "Shift hours",
+        "morning_start": "Morning — start",
+        "morning_end": "Morning — end",
+        "night_start": "Night — start",
+        "night_end": "Night — end",
+        "rotate_shifts": "Auto-rotate morning / night between weeks",
+        "save": "Save configuration"
+    },
+    "leaves": {
+        "annual_days": "Annual leave",
+        "used_days": "Used",
+        "pending_days": "Pending",
+        "remaining_days": "Remaining",
+        "new_request": "New request",
+        "new_request_title": "New leave request",
+        "new_request_desc": "Enter your dates and leave type",
+        "start_date": "From",
+        "end_date": "To",
+        "type": "Type",
+        "notes": "Notes (optional)",
+        "submit": "Submit",
+        "cancel": "Cancel",
+        "no_leaves": "No leave requests",
+        "days_count": "d",
+        "leave_types": {
+            "CONGE": "Paid leave",
+            "MALADIE": "Sick leave",
+            "SANS_SOLDE": "Unpaid leave",
+            "AUTRE": "Other"
+        },
+        "status": {
+            "PENDING": "Pending",
+            "APPROVED": "Approved",
+            "REJECTED": "Rejected"
+        }
+    },
+    "sidebar": "Staff Scheduling",
+    "toast": {
+        "config_saved": "Configuration saved",
+        "config_error": "Error saving configuration",
+        "schedule_created": "Schedule created",
+        "schedule_error": "Error creating schedule",
+        "generated": "Schedule regenerated (today → end of month)",
+        "generated_full": "Schedule regenerated for full month",
+        "generate_error": "Error generating schedule",
+        "published": "Schedule published — visible to staff",
+        "publish_error": "Error publishing schedule",
+        "assignment_updated": "Assignment updated",
+        "assignment_error": "Error updating assignment",
+        "leave_created": "Leave request created",
+        "leave_error": "Error creating leave request",
+        "leave_approved": "Leave approved",
+        "leave_rejected": "Leave rejected",
+        "schedule_sent": "Schedule sent to {{count}} operator(s) for {{month}}",
+        "schedule_send_error": "Error sending schedule"
+    }
+}

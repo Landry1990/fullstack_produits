@@ -36,6 +36,7 @@ from .configuration_objectifs import ConfigurationObjectifsViewSet
 from .temporal_analysis import TemporalAnalysisViewSet
 from .purge import PurgeViewSet
 from .system_admin import SystemAdminViewSet
+from .planning import ShiftConfigViewSet, ShiftScheduleViewSet, LeaveRequestViewSet
 
 # Import from modular rapports
 from .rapports import RapportViewSet
@@ -63,4 +64,5 @@ __all__ = [
     'RapportViewSet', 'OrdonnancierViewSet', 'FormeViewSet', 'CouponMonnaieViewSet',
     'PromotionViewSet', 'TemporalAnalysisViewSet', 'TVAViewSet',
     'PurgeViewSet', 'UserDailySessionViewSet', 'SystemAdminViewSet',
+    'ShiftConfigViewSet', 'ShiftScheduleViewSet', 'LeaveRequestViewSet',
 ]

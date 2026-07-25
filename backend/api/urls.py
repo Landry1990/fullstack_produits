@@ -118,6 +118,7 @@ from .views.interactions import DrugInteractionViewSet
 from .views.debug_score import DebugStockScoreView
 from .views.commandes.export import ExportCommandeView, ExportCommandePreviewView
 from .views.backup_views import BackupListView, CreateBackupView, RestoreBackupView, DeleteBackupView
+from .views.planning import ShiftConfigViewSet, ShiftScheduleViewSet, LeaveRequestViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -196,6 +197,11 @@ router.register(r'compta/comptes', CompteComptableViewSet, basename='compta-comp
 router.register(r'compta/journaux', JournalComptableViewSet, basename='compta-journal')
 router.register(r'compta/exercices', ExerciceComptableViewSet, basename='compta-exercice')
 router.register(r'compta/ecritures', EcritureComptableViewSet, basename='compta-ecriture')
+
+# Planning
+router.register(r'shift-config', ShiftConfigViewSet, basename='shift-config')
+router.register(r'shift-schedules', ShiftScheduleViewSet, basename='shift-schedule')
+router.register(r'leave-requests', LeaveRequestViewSet, basename='leave-request')
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [

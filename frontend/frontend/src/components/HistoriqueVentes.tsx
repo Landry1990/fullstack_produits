@@ -129,7 +129,7 @@ const HistoriqueVentes = () => {
   const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 font-sans">
+    <div className="h-full flex flex-col bg-slate-50 p-3 sm:p-6 gap-4 sm:gap-6 font-sans">
 
       {/* Header Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col p-4 sm:p-6">
@@ -195,7 +195,7 @@ const HistoriqueVentes = () => {
       </div>
 
       {/* Main Content: Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-auto min-h-[450px] lg:h-[calc(100vh-28rem)]">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 gap-4">
             <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-600"></div>

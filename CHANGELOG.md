@@ -2,6 +2,57 @@
 
 ---
 
+## 2026-07-25
+
+### 🚀 Déploiement & Installation
+
+- **Limites CPU Docker paramétrables**
+  - `docker-compose.prod.yml` : les limites CPU des services `db`, `backend` et `redis` utilisent maintenant des variables d'environnement (`DB_CPUS`, `BACKEND_CPUS`, `REDIS_CPUS`) avec des valeurs par défaut adaptées aux machines 2 CPUs.
+  - Permet d'installer l'application sur n'importe quelle machine sans erreur "range of CPUs is from 0.01 to 2.00".
+
+- **Détection CPU automatique dans `install.sh`**
+  - Nouvelle étape 6 : détecte le nombre de CPUs (`nproc`) et configure automatiquement les limites dans le `.env`.
+  - Paliers : 8+ CPUs (db:2.0, backend:4.0, redis:1.0) | 4-7 CPUs (db:2.0, backend:3.0, redis:0.5) | 2-3 CPUs (db:1.0, backend:1.5, redis:0.5) | 1 CPU (db:0.5, backend:0.5, redis:0.25).
+
+- **Spinners de progression dans `install.sh`**
+  - Ajout de spinners animés (`⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏`) sur toutes les étapes longues (apt update/upgrade, installation Docker, build des conteneurs, pull d'images).
+  - Compteur de progression sur l'attente du backend (ex: `⏳ Attente backend... (5/40)`).
+  - L'utilisateur sait désormais en temps réel si l'installation progresse ou si elle est figée.
+
+---
+
+## 2026-07-24
+
+### 🐛 Corrections
+
+- **Recherche DCI à la facturation (cassée)**
+  - `useFacturationSearch` gardait son propre `searchQuery` (toujours `''`) et `searchMode` (toujours `'products'`) en state interne, ignorant la query et le mode réels saisis par l'utilisateur. L'effet de debounce ne se déclenchait jamais en mode DCI → aucun résultat.
+  - **Fix** : `useFacturationSearch` accepte maintenant `searchQuery` et `searchMode` en paramètres au lieu d'un state interne. `ProductSearchSection` trace le mode en state local et le passe à la fois au hook et au composant `ProductSearch` (via `controlledMode` / `onModeChange`).
+  - Fichiers : `useFacturationSearch.ts`, `ProductSearch/types.ts`, `ProductSearch/index.tsx`, `ProductSearchSection.tsx`.
+
+- **Recherche produit dans Catalog DCI (Import DCI)**
+  - `CatalogDCIAddModal` utilisait un `useQuery` brut sans debounce, sans longueur minimale, et sans cache — une requête API à chaque frappe clavier.
+  - **Fix** : remplacement par `useProductSearch` (même hook que la facturation) avec debounce 200ms, longueur minimale 2 caractères, cache React Query (30s stale, 5min GC), et détection code-barres CIP.
+  - Suppression de l'interface `ProduitSearchItem` (redondante avec `ProduitModel`). Correction `forme_nom` → `forme_name`.
+  - Fichier : `CatalogDCIAddModal.tsx`.
+
+### 🔧 Refactoring
+
+- **Refactoring `sales_service.py` en facade + services spécialisés**
+  - Extraction des 4 méthodes monolithiques de `SalesService` dans des services dédiés :
+    - `lot_allocation_service.py` : allocation FIFO/FEFO, restauration, synchronisation stock depuis lots.
+    - `sale_finalizer.py` : finalisation de vente (création facture, produits, promis, ordonnancier).
+    - `sale_validator.py` : validation de facture (stock, allocation lots, fidélité, dette pro).
+    - `sale_canceller.py` : annulation de facture (restauration stock conditionnelle, mouvements, promis liés).
+    - `sale_modifier.py` : modification de vente validée (restauration stock, recalcul, mouvements, audit log).
+  - `sales_service.py` est maintenant une facade mince qui délègue aux services spécialisés.
+  - `services/__init__.py` mis à jour pour exporter `LotAllocationService`.
+  - **Bug fix** : `sale_modifier.py` — l'audit log utilisait `facture.total_ttc` au lieu de la variable `old_total` capturée avant modification.
+  - **Bug fix** : `sale_canceller.py` — la restauration de stock ne se fait plus que pour les factures `VALIDEE` ou `PAYEE` (pas les `BROUILLON`), conformément au comportement original.
+  - Imports inutilisés nettoyés dans tous les nouveaux fichiers.
+
+---
+
 ## 2026-07-23
 
 ### ✨ Nouveautés

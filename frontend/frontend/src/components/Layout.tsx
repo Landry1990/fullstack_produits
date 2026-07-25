@@ -64,11 +64,11 @@ function LayoutContent() {
         
         <main className={`flex-1 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
           {!isZenithMode && (
-            <div className="sticky top-0 z-40 flex items-center justify-end bg-base-200/80 backdrop-blur-md border-b border-base-300/50 px-3 py-1">
+            <div className="sticky top-0 z-40 flex items-center justify-end bg-base-200/80 backdrop-blur-md border-b border-base-300/50 px-2 py-1">
               <UserHeader />
             </div>
           )}
-        <div className={`flex-1 flex flex-col max-size-full overflow-x-hidden overflow-y-auto ${!isZenithMode ? 'px-2 py-2 sm:px-3 sm:py-3 lg:px-4 lg:py-4 xl:px-6 xl:py-5' : ''}`}>
+        <div className={`flex-1 flex flex-col max-size-full overflow-x-hidden overflow-y-auto ${!isZenithMode ? 'px-1 py-1 sm:px-2 sm:py-2 lg:px-3 lg:py-3 xl:px-4 xl:py-4' : ''}`}>
           {/* Outlet render direct - Suspense pour les composants lazy-loaded */}
           <Suspense fallback={
             <div className="flex-1 flex items-center justify-center">

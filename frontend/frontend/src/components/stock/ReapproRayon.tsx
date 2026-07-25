@@ -206,7 +206,7 @@ export default function ReapproRayon() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 space-y-6 font-sans">
+    <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 gap-4 sm:gap-6 font-sans">
       
       {/* Header & Stats Section */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 no-print">
@@ -362,7 +362,7 @@ export default function ReapproRayon() {
         )}
 
         {/* Table Content */}
-        <div className="overflow-x-auto min-h-[400px]">
+        <div className="overflow-x-auto flex-1 min-h-0">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">

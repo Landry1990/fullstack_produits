@@ -1,6 +1,6 @@
 export const playNotificationSound = () => {
     try {
-        // @ts-ignore
+        // @ts-expect-error - webkitAudioContext is Safari-specific
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();

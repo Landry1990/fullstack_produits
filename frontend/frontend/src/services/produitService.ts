@@ -138,12 +138,14 @@ const produitService = {
         await api.delete(`produits/${id}/`);
     },
 
-    adjustStock: async (id: number, quantity?: number, reason?: string, newReserveQuantity?: number, stockLotId?: number): Promise<ProduitModel> => {
+    adjustStock: async (id: number, quantity?: number, reason?: string, newReserveQuantity?: number, stockLotId?: number, newLotNumber?: string, newLotExpiration?: string): Promise<ProduitModel> => {
         const response = await api.post<ProduitModel>(`produits/${id}/adjust_stock/`, {
             new_quantity: quantity,
             new_reserve_quantity: newReserveQuantity,
             reason_type: reason,
-            stock_lot_id: stockLotId
+            stock_lot_id: stockLotId,
+            new_lot_number: newLotNumber,
+            new_lot_expiration: newLotExpiration
         });
         return response.data;
     },

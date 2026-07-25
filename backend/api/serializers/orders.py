@@ -17,6 +17,17 @@ class FournisseurSerializer(serializers.ModelSerializer):
         model = Fournisseur
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+        extra_kwargs = {
+            'phone': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'email': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'address': {'required': False, 'allow_blank': True, 'allow_null': True},
+        }
+
+    def validate_email(self, value):
+        return value.strip() if value else None
+
+    def validate_phone(self, value):
+        return value.strip() if value else None
 
     def get_solde_dette(self, obj):
         solde = getattr(obj, 'solde_dette_annotated', None)

@@ -914,7 +914,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
           }
         }
         break;
-      case 'Delete':
+      case 'Delete': {
         const input = e.target as HTMLInputElement;
         const isFullySelected = input.selectionStart === 0 && input.selectionEnd === input.value.length;
         const isEmpty = input.value === '';
@@ -937,6 +937,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
             }, 50);
         }
         break;
+      }
       case 'ArrowRight': if (e.ctrlKey) { e.preventDefault(); moveToNextField(); } break;
       case 'ArrowLeft': if (e.ctrlKey) { e.preventDefault(); moveToPreviousField(); } break;
     }
@@ -1268,7 +1269,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
     const normalizeCip = (cip: string | null | undefined): string => {
       if (!cip) return '';
-      const normalized = cip.trim().replace(/[\s\-\.]/g, '');
+      const normalized = cip.trim().replace(/[\s\-.]/g, '');
       return normalized.toUpperCase();
     };
 

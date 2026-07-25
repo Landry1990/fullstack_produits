@@ -123,6 +123,14 @@ from .reappro import (
     ReapproSessionSerializer,
 )
 
+# Planning
+from .planning import (
+    ShiftConfigSerializer,
+    ShiftScheduleSerializer,
+    ShiftAssignmentSerializer,
+    LeaveRequestSerializer,
+)
+
 __all__ = [
     # Config
     'TVASerializer',
@@ -204,4 +212,9 @@ __all__ = [
     # Reappro
     'ReapproAdjustmentSerializer',
     'ReapproSessionSerializer',
+    # Planning
+    'ShiftConfigSerializer',
+    'ShiftScheduleSerializer',
+    'ShiftAssignmentSerializer',
+    'LeaveRequestSerializer',
 ]

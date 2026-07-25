@@ -109,7 +109,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
 
     if (loading) {
         return (
-            <div className="overflow-x-auto overflow-y-auto max-h-[55vh]">
+            <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
                 <Table className="w-full table-fixed text-sm">
                     <TableHeader className="sticky top-0 z-10">
                         <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
@@ -161,7 +161,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
     }
 
     return (
-        <div className="overflow-auto max-h-[55vh]">
+        <div className="overflow-auto flex-1 min-h-0">
             <Table className="w-full table-fixed text-sm">
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">

@@ -39,16 +39,23 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   searchInputRef,
   handleKeyDown,
   getItemProps,
+  // Controlled mode
+  controlledMode,
+  onModeChange,
   // Permissions
   user,
   compact = false
 }) => {
   const { t } = useTranslation(['facturation', 'common'])
   const [internalMode, setInternalMode] = React.useState<SearchMode>(modes[0])
-  const searchMode = selectedDci ? 'dci' : internalMode
+  const searchMode = selectedDci ? 'dci' : (controlledMode ?? internalMode)
   
   const handleModeChange = (mode: SearchMode) => {
-    setInternalMode(mode)
+    if (onModeChange) {
+      onModeChange(mode)
+    } else {
+      setInternalMode(mode)
+    }
     setSearchQuery('')
     if (setSelectedDci) setSelectedDci(null)
     searchInputRef.current?.focus()

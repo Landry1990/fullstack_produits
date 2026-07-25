@@ -75,6 +75,10 @@ export interface ProductSearchProps {
   // Ref
   searchInputRef: React.RefObject<HTMLInputElement | null>
 
+  // Controlled mode (optional — if provided, mode is managed externally)
+  controlledMode?: SearchMode
+  onModeChange?: (mode: SearchMode) => void
+
   // Permissions
   user?: User | null
 }

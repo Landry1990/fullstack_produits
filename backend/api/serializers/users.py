@@ -3,6 +3,8 @@
 Serializers pour les utilisateurs, profils et caisse.
 """
 from rest_framework import serializers
+from django.contrib.auth import password_validation
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib.auth.models import User
 from django.db.models import Sum
 from decimal import Decimal
@@ -31,8 +33,16 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['is_superuser']
 
     def validate_password(self, value):
-        """Valide le mot de passe lors de is_valid() — vérifie l'unicité."""
+        """Valide le mot de passe lors de is_valid() — longueur et unicité."""
         if value:
+            # 1. Applique les AUTH_PASSWORD_VALIDATORS (longueur mini, etc.)
+            user = self.instance or User()
+            try:
+                password_validation.validate_password(value, user=user)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError(exc.messages)
+
+            # 2. Vérifie que le mot de passe n'est pas déjà utilisé
             instance = self.instance
             for existing in User.objects.exclude(id=instance.id) if instance else User.objects.all():
                 if existing.check_password(value):

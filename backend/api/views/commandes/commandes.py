@@ -4,7 +4,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
 from django.db import transaction
-from django.db.models import ProtectedError, F, Sum, DecimalField, Value, Count
+from django.db.models import (
+    ProtectedError, F, Sum, DecimalField, Value, Count,
+    Subquery, OuterRef
+)
+from django.db.models.functions import Coalesce
 from django.core.cache import cache
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
@@ -21,7 +25,8 @@ from reportlab.graphics.barcode import code128
 
 from ...models import (
     Commande, CommandeProduit, Produit, StockLot, StockAdjustment, AuditLog,
-    Facture, MouvementStock, FactureProduitAllocation, PaiementFournisseur
+    Facture, FactureProduit, MouvementStock, FactureProduitAllocation,
+    PaiementFournisseur, Promis
 )
 from ...serializers import CommandeSerializer, CommandeProduitSerializer
 from ...serializers_optimized import CommandeListSerializer, CommandeDetailSerializer, CommandeOmnisearchSerializer
@@ -99,8 +104,6 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
     """
     cache_prefix = 'commandes'
     cache_ttl = 120  # 2 minutes
-    from django.db.models.functions import Coalesce
-    from django.db.models import Value, OuterRef, Subquery
 
     # Base queryset — each aggregate uses an isolated Subquery to avoid the
     # cartesian product that occurs when annotating across multiple FK relations
@@ -605,18 +608,171 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
                     # Phase 2: Écritures en base avec optimistic locking
                     
                     # 2.1 Créer tous les lots et mettre à jour stock_apres_reception
+                    promis_allocations_to_create = []
+                    promis_to_update = []
+                    promis_mouvements_to_create = []
                     if lots_to_create:
                         StockLot.objects.bulk_create(lots_to_create, batch_size=100)
                         items_with_lot = [item for item in items if item.lot]
                         if items_with_lot:
                             CommandeProduit.objects.bulk_update(items_with_lot, ['lot'], batch_size=100)
-                    
+
+                        # 2.1b Satisfaire les promis en attente avec les lots nouvellement créés
+                        created_lots_by_produit = {}
+                        for lot in lots_to_create:
+                            created_lots_by_produit.setdefault(lot.produit_id, []).append(lot)
+
+                        # Récupérer les lots fraîchement créés (ils ont maintenant un ID)
+                        new_lot_ids = [lot.id for lot in lots_to_create]
+                        fresh_lots = {lot.id: lot for lot in StockLot.objects.filter(id__in=new_lot_ids)}
+                        for lot in lots_to_create:
+                            fresh = fresh_lots.get(lot.id)
+                            if fresh:
+                                lot.id = fresh.id
+
+                        for produit_id, prod_lots in created_lots_by_produit.items():
+                            pending_promis = list(Promis.objects.filter(
+                                produit_id=produit_id,
+                                status=Promis.Status.EN_ATTENTE,
+                                is_active=True
+                            ).select_related('facture'))
+
+                            for promis in pending_promis:
+                                qty_to_satisfy = promis.quantite
+                                if qty_to_satisfy <= 0:
+                                    continue
+
+                                # Trouver les FactureProduit de la facture du promis pour ce produit
+                                fp_items = list(FactureProduit.objects.filter(
+                                    facture=promis.facture,
+                                    produit_id=produit_id
+                                ))
+
+                                for lot in prod_lots:
+                                    if qty_to_satisfy <= 0:
+                                        break
+                                    # Pour les produits avec réserve, le stock est en quantity_reserved
+                                    # Pour les autres, il est en quantity_remaining
+                                    prod = product_map.get(produit_id)
+                                    if prod and prod.has_reserve_storage:
+                                        available = lot.quantity_reserved
+                                    else:
+                                        available = lot.quantity_remaining
+                                    if available <= 0:
+                                        continue
+                                    qty_from_lot = min(available, qty_to_satisfy)
+
+                                    if prod and prod.has_reserve_storage:
+                                        lot.quantity_reserved -= qty_from_lot
+                                    else:
+                                        lot.quantity_remaining -= qty_from_lot
+                                        if lot.quantity_free_remaining > 0:
+                                            lot.quantity_free_remaining -= min(qty_from_lot, lot.quantity_free_remaining)
+
+                                    # Créer une allocation pour tracer le lien promis → lot
+                                    for fp in fp_items:
+                                        promis_allocations_to_create.append(FactureProduitAllocation(
+                                            facture_produit=fp,
+                                            stock_lot=lot,
+                                            quantity=qty_from_lot,
+                                            cost_price=lot.price_cost,
+                                            selling_price=fp.selling_price
+                                        ))
+
+                                    qty_to_satisfy -= qty_from_lot
+
+                                if qty_to_satisfy <= 0:
+                                    promis.status = Promis.Status.DELIVRE
+                                    promis.date_livraison = timezone.now()
+                                    promis_to_update.append(promis)
+
+                                    produit = product_map.get(produit_id)
+                                    promis_mouvements_to_create.append(MouvementStock(
+                                        produit=produit,
+                                        type_mouvement=MouvementStock.TypeMouvement.SORTIE,
+                                        quantite=-promis.quantite,
+                                        stock_apres=None,
+                                        user=request.user,
+                                        description=f"Satisfaction Promis #{promis.id} lors réception commande #{commande.id}"
+                                    ))
+
+                        # Appliquer les mises à jour de lots
+                        lots_with_promis = [lot for lot in lots_to_create if lot.quantity_remaining < lot.quantity_initial or lot.quantity_reserved < lot.quantity_initial]
+                        if lots_with_promis:
+                            StockLot.objects.bulk_update(lots_with_promis, ['quantity_remaining', 'quantity_free_remaining', 'quantity_reserved'], batch_size=100)
+
+                        if promis_allocations_to_create:
+                            FactureProduitAllocation.objects.bulk_create(promis_allocations_to_create, batch_size=100)
+
+                        if promis_to_update:
+                            Promis.objects.bulk_update(promis_to_update, ['status', 'date_livraison'], batch_size=100)
+
+                        # promis_mouvements_to_create seront créés après resync (stock_apres correct)
+
+                    # Resync stock depuis la somme des lots pour les produits gérés par lots
+                    # (important après décrémentation promis pour cohérence stock général ↔ lots)
+                    prods_to_resync = set()
+                    prods_to_resync_reserve = set()
+                    for lot in lots_to_create:
+                        if lot.produit_id:
+                            prod = product_map.get(lot.produit_id)
+                            if prod and prod.use_lot_management:
+                                if prod.has_reserve_storage:
+                                    prods_to_resync_reserve.add(lot.produit_id)
+                                else:
+                                    prods_to_resync.add(lot.produit_id)
+                    if prods_to_resync:
+                        total_lots_sum = StockLot.objects.filter(
+                            produit=OuterRef('pk')
+                        ).order_by().values('produit').annotate(
+                            total=Sum('quantity_remaining')
+                        ).values('total')
+                        Produit.objects.filter(id__in=prods_to_resync).update(
+                            stock=Coalesce(Subquery(total_lots_sum), Value(0))
+                        )
+                        for pid in prods_to_resync:
+                            prod = product_map.get(pid)
+                            if prod:
+                                prod.stock = Produit.objects.get(id=pid).stock
+                    if prods_to_resync_reserve:
+                        total_reserved_sum = StockLot.objects.filter(
+                            produit=OuterRef('pk')
+                        ).order_by().values('produit').annotate(
+                            total=Sum('quantity_reserved')
+                        ).values('total')
+                        Produit.objects.filter(id__in=prods_to_resync_reserve).update(
+                            stock_reserve=Coalesce(Subquery(total_reserved_sum), Value(0))
+                        )
+                        for pid in prods_to_resync_reserve:
+                            prod = product_map.get(pid)
+                            if prod:
+                                prod.stock_reserve = Produit.objects.get(id=pid).stock_reserve
+
+                    # Créer les mouvements de stock des promis après resync (stock_apres correct)
+                    if promis_mouvements_to_create:
+                        for mvt in promis_mouvements_to_create:
+                            if mvt.produit_id:
+                                prod = product_map.get(mvt.produit_id)
+                                if prod:
+                                    mvt.stock_apres = prod.total_stock
+                        MouvementStock.objects.bulk_create(promis_mouvements_to_create, batch_size=100)
+
                     if items_to_update_stock:
+                        # Recalculer stock_apres_reception après resync
+                        for item in items_to_update_stock:
+                            produit = product_map.get(item.produit_id)
+                            if produit:
+                                item.stock_apres_reception = int(produit.stock) if not produit.has_reserve_storage else int(produit.stock_reserve or 0)
                         CommandeProduit.objects.bulk_update(items_to_update_stock, ['stock_apres_reception'], batch_size=100)
                     
                     # 2.2 Mettre à jour les produits avec incrémentation de version
                     if produits_to_update:
+                        # Synchroniser les valeurs resyncées dans les objets en mémoire
                         for p in produits_to_update:
+                            if p.id in prods_to_resync:
+                                p.stock = Produit.objects.get(id=p.id).stock
+                            if p.id in prods_to_resync_reserve:
+                                p.stock_reserve = Produit.objects.get(id=p.id).stock_reserve
                             p.version += 1
                         
                         update_fields = ['pmp', 'stock', 'stock_reserve', 'version']
