@@ -191,6 +191,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                     else:
                         produit.stock = F('stock') - ligne.quantity
                         produit.save()
+                        produit.refresh_from_db()
 
                     # Mouvement de stock (AVOIR = sortie négative)
                     motif_info = f" - {ligne.motif}" if ligne.motif else ""

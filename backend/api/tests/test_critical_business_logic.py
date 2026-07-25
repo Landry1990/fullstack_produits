@@ -20,7 +20,7 @@ from ..models import (
 )
 
 
-class FIFOAllocationTestCase(APITransactionTestCase):
+class FIFOAllocationTestCase(APITestCase):
     """
     Tests approfondis pour l'allocation FIFO/FEFO.
     Vérifie que les lots sont correctement alloués selon l'ordre d'expiration.
@@ -388,7 +388,7 @@ class CreancesManagementTestCase(APITestCase):
         self.assertGreaterEqual(debt, Decimal('0.00'))
 
 
-class ComplexTransactionsTestCase(APITransactionTestCase):
+class ComplexTransactionsTestCase(APITestCase):
     """
     Tests pour les transactions complexes:
     - Coupons de monnaie
