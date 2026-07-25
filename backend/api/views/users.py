@@ -16,8 +16,8 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
-from ..models import Profile as UserProfile, Client, AuditLog, UserDailySession
-from ..serializers import UserSerializer, ProfileSerializer as UserProfileSerializer
+from ..models import Profile as UserProfile, Team, Client, AuditLog, UserDailySession
+from ..serializers import UserSerializer, ProfileSerializer as UserProfileSerializer, TeamSerializer
 from ..audit_helpers import log_audit
 from ..centralized_configs import BaseViewSetConfig, StandardResultsSetPagination
 
@@ -447,5 +447,17 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
                     'total_duration_display': f"{hours}h {minutes}min",
                     'avg_duration_display': f"{avg_hours}h {avg_minutes}min" if days_count > 0 else "0min"
                 })
-        
+
         return Response(users_stats)
+
+
+class TeamViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
+    """API endpoint pour les équipes d'opérateurs."""
+    queryset = Team.objects.prefetch_related('members').order_by('ordering', 'name')
+    serializer_class = TeamSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in {'list', 'retrieve'}:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]

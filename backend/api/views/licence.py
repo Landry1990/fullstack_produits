@@ -3,9 +3,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from django.utils import timezone
+from django.core.cache import cache
 import jwt
 from api.models.licence import Licence, LicenceNotification
-from api.utils_licence import valider_licence_systeme, get_hardware_id, get_licence_details
+from api.utils_licence import valider_licence_systeme, get_hardware_id, get_licence_details, CLE_PUBLIQUE
 
 class LicenceStatusView(APIView):
     # L'utilisateur n'a pas besoin d'être connecté pour voir le statut de la licence
@@ -30,7 +31,6 @@ class LicenceStatusView(APIView):
             return Response({"detail": "La clé de licence est requise."}, status=400)
             
         if preview_mode:
-            from api.utils_licence import CLE_PUBLIQUE, get_hardware_id
             try:
                 payload = jwt.decode(nouvelle_cle, CLE_PUBLIQUE, algorithms=["RS256"])
                 hw_id = get_hardware_id()
@@ -45,15 +45,31 @@ class LicenceStatusView(APIView):
             except Exception as e:
                 return Response({"detail": f"Clé invalide : {str(e)}"}, status=400)
 
-        # On sauvegarde la clé temporairement
+        # Validation en mémoire AVANT d'écraser l'ancienne licence
+        try:
+            payload = jwt.decode(nouvelle_cle, CLE_PUBLIQUE, algorithms=["RS256"])
+        except jwt.ExpiredSignatureError:
+            return Response({"detail": "Clé rejetée : Licence expirée."}, status=400)
+        except Exception as e:
+            return Response({"detail": f"Clé invalide : {str(e)}"}, status=400)
+
+        hw_id = get_hardware_id()
+        if payload.get('hardware_id') != "ANY" and payload.get('hardware_id') != hw_id:
+            return Response({"detail": "Clé rejetée : Matériel non reconnu."}, status=400)
+
+        # On écrase l'ancienne licence et on installe la nouvelle
+        Licence.objects.all().delete()
         Licence.objects.create(cle=nouvelle_cle)
-        
+
+        # On invalide le cache pour forcer la relecture immédiate
+        cache.delete('system_licence_validation')
+
         # On teste immédiatement si elle est valide
         est_valide, message, payload = valider_licence_systeme()
-        
+
         if not est_valide:
             return Response({"detail": f"Clé rejetée : {message}"}, status=400)
-            
+
         return Response({"detail": "Licence activée avec succès ! Bienvenue."})
 
     def delete(self, request):

@@ -2,10 +2,16 @@
     "title": "User Management",
     "subtitle": "Manage access and permissions for your team",
     "new_user": "New User",
+    "tabs": {
+        "active": "Active",
+        "trash": "Trash"
+    },
     "actions": {
         "create": "New User",
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "restore": "Restore",
+        "deactivate": "Trash"
     },
     "table": {
         "user": "User",
@@ -24,12 +30,14 @@
         "CASHIER": "Cashier",
         "cashier": "Cashier (Billing + Payout)",
         "SELLER": "Seller",
-        "seller": "Seller (Sales only)"
+        "seller": "Seller (Sales only)",
+        "accountant": "Accountant"
     },
     "badges": {
         "pharmacist": "Pharmacist",
         "full_access": "Full Access",
-        "inactive": "Inactive"
+        "inactive": "Inactive",
+        "no_access": "No access"
     },
     "status": {
         "active": "Active",
@@ -47,7 +55,11 @@
         "last_name": "Last Name",
         "email": "Email",
         "is_active": "Active Account",
-        "max_discount": "Max Discount Rate (%)"
+        "max_discount": "Max Discount Rate (%)",
+        "copy_permissions": "Copy permissions from a user",
+        "select_user": "Select a user...",
+        "copy_btn": "Copy",
+        "copy_help": "Copy all rights, allowed menus and special permissions from the selected user."
     },
     "modal": {
         "new_title": "New User",
@@ -75,7 +87,8 @@
         "close_commande": "Close Order",
         "manage_perimes": "Manage Expired",
         "manage_avoirs": "Manage Credits",
-        "validate_zero_amount": "Allow 0F sales"
+        "validate_zero_amount": "Allow 0F sales",
+        "view_cash_sessions": "View cash sessions"
     },
     "messages": {
         "load_error": "Error loading users",
@@ -89,6 +102,14 @@
         "protected_message": "This user has archives (invoices, etc.) and cannot be deleted. Would you like to deactivate their account instead?",
         "deactivate_btn": "Deactivate",
         "save_error": "Error saving user",
+        "permissions_copied": "Permissions copied from {{username}}",
+        "deactivate_confirm_title": "Move to trash?",
+        "deactivate_confirm": "Do you want to deactivate {{username}} and move them to trash?",
+        "restored": "{{username}} has been restored successfully.",
+        "restore_error": "Error restoring.",
+        "restore_confirm_title": "Restore user?",
+        "restore_confirm": "Do you want to restore {{username}}?",
+        "restore_btn": "Restore",
         "delete_confirm_title": "Delete user?",
         "delete_confirm": "Are you sure you want to delete {{username}}? This action is irreversible.",
         "delete_btn": "Delete User",

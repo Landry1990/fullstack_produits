@@ -79,7 +79,7 @@ from .views import (
     CadencierViewSet,
     PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet, WhatsAppTestView,
     TelegramTestView, TelegramGetChatIdView, TelegramRapportFlashView, TelegramRapportFlashDateView, TelegramRapportInventaireView, TelegramRapportMensuelView,
-    AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
+    AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken, TeamViewSet,
     CategoriesListView, CategoriesDetailView, PromisViewSet,
     PromotionViewSet, TVAViewSet, UserDailySessionViewSet,
     DepotClientViewSet, PosteCaisseViewSet, PosteVenteViewSet, SessionCaisseViewSet, OrderScheduleViewSet
@@ -124,6 +124,7 @@ from .views.planning import ShiftConfigViewSet, ShiftScheduleViewSet, LeaveReque
 router = DefaultRouter()
 
 router.register(r'users', UserViewSet, basename='user')
+router.register(r'teams', TeamViewSet, basename='team')
 router.register(r'produits', ProduitViewSet, basename='produit')
 router.register(r'rayons', CategorieViewSet, basename='rayon')
 router.register(r'categories-raw', CategorieViewSet, basename='categorie')

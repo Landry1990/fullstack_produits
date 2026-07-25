@@ -36,6 +36,19 @@ class ShiftConfig(models.Model):
         default=26, verbose_name="Jours de congé annuel"
     )
 
+    TEAM_MODE_CHOICES = [
+        ('INDIVIDUAL', 'Par individu'),
+        ('FIXED', 'Équipes fixes'),
+        ('ROTATING', 'Équipes tournantes'),
+    ]
+    team_mode = models.CharField(
+        max_length=20, choices=TEAM_MODE_CHOICES, default='INDIVIDUAL',
+        verbose_name="Mode d'affectation par équipe"
+    )
+    team_rotation_days = models.PositiveIntegerField(
+        default=3, verbose_name="Durée d'un bloc équipe (jours)"
+    )
+
     class Meta:
         verbose_name = "Configuration des quarts"
         verbose_name_plural = "Configurations des quarts"

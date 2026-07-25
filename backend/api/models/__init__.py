@@ -7,7 +7,7 @@ Usage: from api.models import Produit, Facture, etc.
 """
 
 # Users
-from .users import Profile, create_user_profile, save_user_profile
+from .users import Profile, Team, create_user_profile, save_user_profile
 from .user_sessions import UserDailySession
 
 # Settings
@@ -81,7 +81,7 @@ from .licence import Licence
 
 __all__ = [
     # Users
-    'Profile',
+    'Profile', 'Team',
     # Settings
     'LoyaltySetting', 'PharmacySettings', 'InvoiceSettings', 'ConfigurationOption',
     # Products

@@ -4,6 +4,7 @@
     "tabs": {
         "planning": "Schedule",
         "leaves": "Leave",
+        "teams": "Teams",
         "config": "Settings"
     },
     "shift_types": {
@@ -42,7 +43,32 @@
         "night_start": "Night — start",
         "night_end": "Night — end",
         "rotate_shifts": "Auto-rotate morning / night between weeks",
-        "save": "Save configuration"
+        "save": "Save configuration",
+        "team_section": "Team assignment mode",
+        "team_mode": "Mode",
+        "team_modes": {
+            "INDIVIDUAL": "Per individual",
+            "FIXED": "Fixed teams",
+            "ROTATING": "Rotating teams"
+        },
+        "team_rotation_days": "Block duration (days)",
+        "team_rotation_hint": "Teams rotate between Morning / Night / Rest every N days.",
+        "team_manage_hint": "Create and manage your teams in the Teams tab."
+    },
+    "teams": {
+        "title": "Operator teams",
+        "subtitle": "Create teams and assign a default shift",
+        "add": "New team",
+        "edit": "Edit team",
+        "form_desc": "Name the team, choose a default shift and select members",
+        "name": "Team name",
+        "name_placeholder": "e.g. Morning Team, Team A...",
+        "default_shift": "Default shift",
+        "color": "Color",
+        "members": "Members",
+        "no_members": "No members",
+        "empty": "No teams created. Click 'New team' to get started.",
+        "save": "Save"
     },
     "leaves": {
         "annual_days": "Annual leave",
@@ -90,6 +116,10 @@
         "leave_approved": "Leave approved",
         "leave_rejected": "Leave rejected",
         "schedule_sent": "Schedule sent to {{count}} operator(s) for {{month}}",
-        "schedule_send_error": "Error sending schedule"
+        "schedule_send_error": "Error sending schedule",
+        "team_created": "Team created",
+        "team_updated": "Team updated",
+        "team_deleted": "Team deleted",
+        "team_error": "Error during team operation"
     }
 }

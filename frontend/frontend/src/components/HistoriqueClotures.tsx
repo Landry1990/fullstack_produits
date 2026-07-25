@@ -188,7 +188,7 @@ export default function HistoriqueClotures() {
       setGlobalTotals(totals || null)
     } catch (err) {
       console.error('Erreur chargement clôtures:', err)
-      toast.error(t('table.loading_error') || 'Erreur lors du chargement des clôtures')
+      toast.error(t('messages.loading_closures'))
     } finally {
       setLoading(false)
     }
@@ -226,7 +226,7 @@ export default function HistoriqueClotures() {
       setSessions(data)
     } catch (err) {
       console.error('Erreur chargement sessions:', err)
-      toast.error('Erreur lors du chargement des sessions de caisse')
+      toast.error(t('messages.loading_sessions'))
     } finally {
       setSessionsLoading(false)
     }
@@ -332,7 +332,7 @@ export default function HistoriqueClotures() {
       win.document.write(`
         <html>
           <head>
-            <title>Clôture Caisse #${cloture.id}</title>
+            <title>{t('modal.print_title', { id: cloture.id })}</title>
             <style>
               @media print {
                 body { margin: 0; padding: 0; }
@@ -387,7 +387,7 @@ export default function HistoriqueClotures() {
                   className={cn("flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all", activeTab === 'clotures' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700')}
                 >
                   <Banknote className="size-4" />
-                  Clôtures de caisse
+                  {t('tabs.closings')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -396,10 +396,10 @@ export default function HistoriqueClotures() {
                   className={cn("flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all", activeTab === 'sessions' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700')}
                 >
                   <Clock className="size-4" />
-                  Sessions de caisse
+                  {t('tabs.sessions')}
                   {sessions.filter(s => s.est_active).length > 0 && (
                     <Badge variant="outline" className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-600 border-emerald-200 animate-pulse">
-                      {sessions.filter(s => s.est_active).length} active{sessions.filter(s => s.est_active).length > 1 ? 's' : ''}
+                      {t('sessions.active_badge', { count: sessions.filter(s => s.est_active).length })}
                     </Badge>
                   )}
                 </Button>
@@ -471,7 +471,7 @@ export default function HistoriqueClotures() {
             {isMultiCaisse && (
                 <div className="flex-1 lg:w-48">
                     <label className="block py-1">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Poste de Caisse</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-600">{t('filters.post')}</span>
                     </label>
                     <select
                         value={selectedPosteCaisse}
@@ -481,7 +481,7 @@ export default function HistoriqueClotures() {
                         }}
                         className="w-full h-9 px-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all font-medium"
                     >
-                        <option value="">🖥️ Tous les postes</option>
+                        <option value="">🖥️ {t('filters.all_posts')}</option>
                         {postesCaisses.map((p) => (
                             <option key={p.id} value={p.id}>{p.nom}</option>
                         ))}
@@ -533,7 +533,7 @@ export default function HistoriqueClotures() {
             <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
               <h3 className="font-bold text-emerald-600 text-sm uppercase tracking-wider flex items-center gap-2 mb-3">
                 <PlayCircle className="size-4 animate-pulse" />
-                Sessions actives en cours
+                {t('sessions.active_title')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {activeSessions.map(session => (
@@ -542,13 +542,13 @@ export default function HistoriqueClotures() {
                       <span className="font-bold text-sm">{session.poste_nom}</span>
                       <Badge className="bg-emerald-500 text-white gap-1 font-bold">
                         <span className="size-1.5 rounded-full bg-white animate-pulse"></span>
-                        En cours
+                        {t('sessions.status.open')}
                       </Badge>
                     </div>
                     <div className="text-xs text-slate-500 space-y-1">
                       <div>👤 {session.ouvert_par_name}</div>
-                      <div>🕐 Ouvert le {formatDate(session.date_ouverture)}</div>
-                      {session.fond_de_caisse && <div>💰 Fond: {formatMoney(session.fond_de_caisse)}</div>}
+                      <div>🕐 {t('sessions.opened_on', { date: formatDate(session.date_ouverture) })}</div>
+                      {session.fond_de_caisse && <div>💰 {t('sessions.fund_label', { amount: formatMoney(session.fond_de_caisse) })}</div>}
                     </div>
                     <Button
                       variant="ghost"
@@ -556,7 +556,7 @@ export default function HistoriqueClotures() {
                       onClick={() => setSelectedSession(session)}
                       className="w-full text-emerald-600 mt-2"
                     >
-                      <Eye className="size-3" /> Voir détails
+                      <Eye className="size-3" /> {t('sessions.view_details')}
                     </Button>
                   </div>
                 ))}
@@ -570,14 +570,14 @@ export default function HistoriqueClotures() {
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-100 sticky top-0 z-10">
                   <tr>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Statut</th>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Poste</th>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Caissier</th>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Ouverture</th>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Fermeture</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Fond de caisse</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Total encaissé</th>
-                    <th className="text-center py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Actions</th>
+                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.status')}</th>
+                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.post')}</th>
+                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.cashier')}</th>
+                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.opening')}</th>
+                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.closing')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.fund')}</th>
+                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.total_collected')}</th>
+                    <th className="text-center py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -592,8 +592,8 @@ export default function HistoriqueClotures() {
                       <td colSpan={8} className="h-64 text-center text-slate-500">
                         <div className="flex flex-col items-center justify-center gap-3">
                           <Clock className="size-12 text-slate-300" />
-                          <p className="text-lg">Aucune session de caisse</p>
-                          <p className="text-sm">Les sessions apparaîtront ici après l'ouverture d'un poste de caisse.</p>
+                          <p className="text-lg">{t('sessions.empty.title')}</p>
+                          <p className="text-sm">{t('sessions.empty.description')}</p>
                         </div>
                       </td>
                     </tr>
@@ -606,12 +606,12 @@ export default function HistoriqueClotures() {
                             {session.est_active ? (
                               <Badge className="bg-emerald-500 text-white gap-1 font-bold text-[10px]">
                                 <PlayCircle className="size-3" />
-                                Active
+                                {t('sessions.status.active')}
                               </Badge>
                             ) : (
                               <Badge variant="outline" className="gap-1 font-bold text-slate-600 border-slate-200 text-[10px]">
                                 <StopCircle className="size-3" />
-                                Fermée
+                                {t('sessions.status.closed')}
                               </Badge>
                             )}
                           </td>
@@ -629,7 +629,7 @@ export default function HistoriqueClotures() {
                             {session.date_fermeture ? (
                               <div className="font-semibold text-sm">{formatDate(session.date_fermeture)}</div>
                             ) : (
-                              <span className="text-emerald-600 font-bold text-xs animate-pulse">— En cours —</span>
+                              <span className="text-emerald-600 font-bold text-xs animate-pulse">{t('sessions.status.in_progress')}</span>
                             )}
                           </td>
                           <td className="text-right py-3 px-2 font-medium text-slate-700 text-sm">
@@ -644,7 +644,7 @@ export default function HistoriqueClotures() {
                               size="sm"
                               onClick={() => setSelectedSession(session)}
                               className="text-emerald-600 h-8 w-8 p-0"
-                              title="Voir le détail"
+                              title={t('sessions.view_detail')}
                             >
                               <Eye className="size-4" />
                             </Button>
@@ -660,12 +660,12 @@ export default function HistoriqueClotures() {
             {sessions.length > SESSION_PAGE_SIZE && (
               <div className="bg-white border-t border-slate-200 p-3 flex items-center justify-between shrink-0">
                 <span className="text-sm text-slate-500">
-                  {(sessionPage - 1) * SESSION_PAGE_SIZE + 1}–{Math.min(sessionPage * SESSION_PAGE_SIZE, sessions.length)} sur {sessions.length} sessions
+                  {t('sessions.pagination.showing', { start: (sessionPage - 1) * SESSION_PAGE_SIZE + 1, end: Math.min(sessionPage * SESSION_PAGE_SIZE, sessions.length), total: sessions.length })}
                 </span>
                 <div className="flex gap-1.5">
-                  <Button variant="outline" size="sm" onClick={() => setSessionPage(p => Math.max(1, p - 1))} disabled={sessionPage === 1}>Précédent</Button>
-                  <span className="px-3 py-1.5 text-xs font-bold bg-slate-100 rounded-md flex items-center">Page {sessionPage}/{sessionsTotalPages}</span>
-                  <Button variant="outline" size="sm" onClick={() => setSessionPage(p => Math.min(sessionsTotalPages, p + 1))} disabled={sessionPage === sessionsTotalPages}>Suivant</Button>
+                  <Button variant="outline" size="sm" onClick={() => setSessionPage(p => Math.max(1, p - 1))} disabled={sessionPage === 1}>{t('pagination.prev')}</Button>
+                  <span className="px-3 py-1.5 text-xs font-bold bg-slate-100 rounded-md flex items-center">{t('pagination.page', { current: sessionPage, total: sessionsTotalPages })}</span>
+                  <Button variant="outline" size="sm" onClick={() => setSessionPage(p => Math.min(sessionsTotalPages, p + 1))} disabled={sessionPage === sessionsTotalPages}>{t('pagination.next')}</Button>
                 </div>
               </div>
             )}
@@ -821,7 +821,7 @@ export default function HistoriqueClotures() {
                 <thead className="bg-slate-100 sticky top-0 z-10 opacity-100">
                   <tr>
                     <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_date')}</th>
-                    {isMultiCaisse && <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Poste</th>}
+                    {isMultiCaisse && <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_post')}</th>}
                     <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_cashier')}</th>
                     <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_done_by')}</th>
                     <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_theoretical')}</th>
@@ -867,7 +867,7 @@ export default function HistoriqueClotures() {
                            </td>
                         )}
                         <td className="py-3 px-4 align-middle">
-                           <span className="font-medium text-sm text-slate-800">{cloture.user_name || cloture.username || 'N/A'}</span>
+                           <span className="font-medium text-sm text-slate-800">{cloture.user_name || cloture.username || t('common:not_available')}</span>
                         </td>
                         <td className="py-3 px-4 align-middle">
                            <span className="text-sm font-medium text-slate-500">{cloture.cloture_par_name || '-'}</span>
@@ -1097,9 +1097,9 @@ export default function HistoriqueClotures() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-white border border-slate-200 p-3 rounded-lg text-center flex flex-col justify-center relative">
                     <div className="text-xs opacity-60 font-bold">{t('modal.ventes')} : {formatMoney(selectedCloture.total_ventes)}</div>
-                    <div className="text-[10px] mt-1 text-slate-500">Pharmacie: {formatMoney((selectedCloture.details_paiement?.__meta__ as DetailsMeta | undefined)?.total_ca_pharmacie ?? selectedCloture.total_ventes)}</div>
+                    <div className="text-[10px] mt-1 text-slate-500">{t('modal.pharmacy', { amount: formatMoney((selectedCloture.details_paiement?.__meta__ as DetailsMeta | undefined)?.total_ca_pharmacie ?? selectedCloture.total_ventes) })}</div>
                     {((selectedCloture.details_paiement?.__meta__ as DetailsMeta | undefined)?.total_ca_divers ?? 0) > 0 && (
-                      <div className="text-[10px] text-slate-500">Diverses: {formatMoney((selectedCloture.details_paiement?.__meta__ as DetailsMeta | undefined)?.total_ca_divers || 0)}</div>
+                      <div className="text-[10px] text-slate-500">{t('modal.misc', { amount: formatMoney((selectedCloture.details_paiement?.__meta__ as DetailsMeta | undefined)?.total_ca_divers || 0) })}</div>
                     )}
                   </div>
                   <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-center">
@@ -1169,7 +1169,7 @@ export default function HistoriqueClotures() {
             <div className={cn("p-6 shrink-0", selectedSession.est_active ? 'bg-emerald-600 text-white' : 'bg-emerald-600 text-white')}>
               <h3 id="session-detail-title" className="font-bold text-xl flex items-center gap-3">
                 <Clock className="size-6" />
-                Détail de la session
+                {t('sessions.modal.title')}
               </h3>
               <p className="opacity-80 text-sm mt-1">
                 {selectedSession.poste_nom} — {selectedSession.ouvert_par_name}
@@ -1180,22 +1180,22 @@ export default function HistoriqueClotures() {
               {/* Infos session */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white p-4 rounded-xl border border-slate-200">
-                  <div className="text-xs uppercase font-bold text-slate-500 mb-1">Ouverture</div>
+                  <div className="text-xs uppercase font-bold text-slate-500 mb-1">{t('sessions.modal.opening')}</div>
                   <div className="font-mono text-sm font-bold">{formatDate(selectedSession.date_ouverture)}</div>
                 </div>
                 <div className={cn("p-4 rounded-xl border", selectedSession.est_active ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200')}>
-                  <div className="text-xs uppercase font-bold text-slate-500 mb-1">Fermeture</div>
+                  <div className="text-xs uppercase font-bold text-slate-500 mb-1">{t('sessions.modal.closing')}</div>
                   {selectedSession.date_fermeture ? (
                     <div className="font-mono text-sm font-bold">{formatDate(selectedSession.date_fermeture)}</div>
                   ) : (
-                    <div className="text-emerald-600 font-bold text-sm animate-pulse">En cours...</div>
+                    <div className="text-emerald-600 font-bold text-sm animate-pulse">{t('sessions.modal.in_progress')}</div>
                   )}
                 </div>
               </div>
 
               {selectedSession.fond_de_caisse && (
                 <div className="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center">
-                  <span className="text-xs uppercase font-bold text-slate-500">Fond de caisse</span>
+                  <span className="text-xs uppercase font-bold text-slate-500">{t('sessions.modal.fund')}</span>
                   <span className="font-bold text-lg">{formatMoney(selectedSession.fond_de_caisse)}</span>
                 </div>
               )}
@@ -1203,7 +1203,7 @@ export default function HistoriqueClotures() {
               {/* Ventilation paiements */}
               <div className="space-y-3">
                 <h4 className="font-bold uppercase tracking-wider text-xs text-slate-500 border-b border-slate-200 pb-2">
-                  Ventilation des paiements
+                  {t('sessions.modal.payment_breakdown')}
                 </h4>
                 {Object.keys(selectedSession.ventilation_paiements || {}).length > 0 ? (
                   <div className="space-y-2">
@@ -1222,7 +1222,7 @@ export default function HistoriqueClotures() {
                       </div>
                     ))}
                     <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg border border-emerald-200 mt-2">
-                      <span className="font-bold text-sm uppercase tracking-wider">Total encaissé</span>
+                      <span className="font-bold text-sm uppercase tracking-wider">{t('sessions.modal.total_collected')}</span>
                       <span className="font-bold text-xl text-emerald-600">
                         {formatMoney(Object.values(selectedSession.ventilation_paiements).reduce((s, v) => s + v, 0))}
                       </span>
@@ -1231,7 +1231,7 @@ export default function HistoriqueClotures() {
                 ) : (
                   <div className="text-center py-8 text-slate-400">
                     <Banknote className="size-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Aucun paiement enregistré pour cette session</p>
+                    <p className="text-sm">{t('sessions.modal.no_payments')}</p>
                   </div>
                 )}
               </div>
@@ -1242,7 +1242,7 @@ export default function HistoriqueClotures() {
                 variant="ghost"
                 onClick={() => setSelectedSession(null)}
               >
-                Fermer
+                {t('modal.close')}
               </Button>
             </div>
           </div>

@@ -1,4 +1,68 @@
 {
+    "matrix": {
+        "quadrants": {
+            "MOTEUR": { "label": "Moteur", "description": "Se vend bien · bien en stock", "impact": "Positif" },
+            "HEMORRAGIE": { "label": "Hémorragie", "description": "Très demandé · en rupture", "impact": "Critique" },
+            "SOMNIFERE": { "label": "Somnifère", "description": "Surstock · aucune vente +90j", "impact": "Pénalisant" },
+            "NEUTRE": { "label": "Neutre", "description": "Flux tendu · à la demande", "impact": "Neutre" }
+        },
+        "diagnostic": {
+            "excellent": "Excellent ! Votre stock est sain, bien équilibré et tourne efficacement.",
+            "dead_stock": "Votre score est freiné par {{count}} produit{{plural}} somnifère{{plural}} qui immobilisent votre trésorerie.",
+            "shortage": "{{count}} produit{{plural}} moteur{{plural}} en rupture font chuter votre score. Agissez maintenant.",
+            "unbalanced": "Plusieurs déséquilibres détectés. Consultez les quadrants pour identifier les actions prioritaires."
+        },
+        "score_card": {
+            "title": "Score de Santé",
+            "tooltip_title": "5 composantes (100 pts)",
+            "tooltip_items": {
+                "disponibilite": "Disponibilité — 30 pts",
+                "fluidite": "Fluidité — 25 pts",
+                "couverture": "Couverture — 20 pts",
+                "activite": "Activité récente — 15 pts",
+                "immobilisation": "Immobilisation — 10 pts"
+            },
+            "labels": {
+                "disponibilite": "Dispo",
+                "fluidite": "Fluidité",
+                "couverture": "Couvert.",
+                "activite": "Activité",
+                "immobilisation": "Immo"
+            },
+            "status": {
+                "healthy": "Stock Sain",
+                "warning": "À Surveiller",
+                "critical": "Critique"
+            },
+            "out_of": "100"
+        },
+        "grid": {
+            "title": "Matrice Performance",
+            "high_rotation": "Rot. forte",
+            "low_rotation": "Rot. faible",
+            "low_availability": "← Dispo. Basse",
+            "high_availability": "Dispo. Haute →",
+            "value_labels": {
+                "missed_sales": "Manque à gagner / 7j",
+                "blocked_cash": "Trésorerie bloquée"
+            },
+            "product_one": "prod",
+            "product_other": "prods"
+        },
+        "penalties": {
+            "title": "Top 5 — Pénalités de score",
+            "empty": "Aucune pénalité significative détectée. Votre stock est équilibré.",
+            "headers": {
+                "designation": "Désignation",
+                "type": "Type",
+                "days": "Jours",
+                "value": "Valeur",
+                "impact": "Impact"
+            },
+            "rupture": "Rupture",
+            "impact_pts": "{{pts}} pts"
+        }
+    },
     "perimes": {
         "title": "Gestion des Périmés",
         "subtitle": "Analyse des pertes et prévisions",

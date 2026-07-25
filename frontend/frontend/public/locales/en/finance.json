@@ -70,6 +70,23 @@
         "optimized": "Optimized prices"
     },
     "supplier_analysis": "Supplier Analysis",
+    "predictions": {
+        "confidence": "Confidence: {{value}}"
+    },
+    "variance": {
+        "title": "Margin Variance Report",
+        "subtitle": "Analysis of profit fluctuations and data integrity",
+        "current_period": "Current Period",
+        "baseline": "Baseline (Yesterday)",
+        "profit": "Profit",
+        "key_insights": "Key Insights",
+        "atypical_margins": "Atypical Margins Detected",
+        "product": "Product",
+        "margin": "Margin",
+        "cost_pmp": "Cost (PMP)",
+        "high_margin_note": "* High margins (>80%) often indicate missing cost prices (PMP = 0).",
+        "no_abnormal": "No abnormal margins detected today."
+    },
     "supplier": {
         "name": "Supplier",
         "score": "Global Score",

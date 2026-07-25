@@ -4,6 +4,7 @@
     "tabs": {
         "planning": "Planning",
         "leaves": "Congés",
+        "teams": "Équipes",
         "config": "Configuration"
     },
     "shift_types": {
@@ -42,7 +43,32 @@
         "night_start": "Nuit — début",
         "night_end": "Nuit — fin",
         "rotate_shifts": "Rotation automatique matin / nuit entre les semaines",
-        "save": "Enregistrer la configuration"
+        "save": "Enregistrer la configuration",
+        "team_section": "Mode d'affectation par équipe",
+        "team_mode": "Mode",
+        "team_modes": {
+            "INDIVIDUAL": "Par individu",
+            "FIXED": "Équipes fixes",
+            "ROTATING": "Équipes tournantes"
+        },
+        "team_rotation_days": "Durée d'un bloc (jours)",
+        "team_rotation_hint": "Les équipes tournent entre Matin / Nuit / Repos tous les N jours.",
+        "team_manage_hint": "Créez et gérez vos équipes dans l'onglet « Équipes »."
+    },
+    "teams": {
+        "title": "Équipes d'opérateurs",
+        "subtitle": "Créez des équipes et assignez-leur un poste par défaut",
+        "add": "Nouvelle équipe",
+        "edit": "Modifier l'équipe",
+        "form_desc": "Nommez l'équipe, choisissez un poste par défaut et sélectionnez les membres",
+        "name": "Nom de l'équipe",
+        "name_placeholder": "Ex: Équipe Matin, Équipe A...",
+        "default_shift": "Poste par défaut",
+        "color": "Couleur",
+        "members": "Membres",
+        "no_members": "Aucun membre",
+        "empty": "Aucune équipe créée. Cliquez sur « Nouvelle équipe » pour commencer.",
+        "save": "Enregistrer"
     },
     "leaves": {
         "annual_days": "Congés annuels",
@@ -90,6 +116,10 @@
         "leave_approved": "Congé approuvé",
         "leave_rejected": "Congé refusé",
         "schedule_sent": "Planning envoyé à {{count}} opérateur(s) pour {{month}}",
-        "schedule_send_error": "Erreur lors de l'envoi du planning"
+        "schedule_send_error": "Erreur lors de l'envoi du planning",
+        "team_created": "Équipe créée",
+        "team_updated": "Équipe mise à jour",
+        "team_deleted": "Équipe supprimée",
+        "team_error": "Erreur lors de l'opération sur l'équipe"
     }
 }

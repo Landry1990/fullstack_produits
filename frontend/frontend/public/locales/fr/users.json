@@ -2,10 +2,16 @@
     "title": "Gestion des Utilisateurs",
     "subtitle": "Gérez les accès et les permissions de votre équipe",
     "new_user": "Nouvel Utilisateur",
+    "tabs": {
+        "active": "Actifs",
+        "trash": "Corbeille"
+    },
     "actions": {
         "create": "Nouvel Utilisateur",
         "edit": "Modifier",
-        "delete": "Supprimer"
+        "delete": "Supprimer",
+        "restore": "Restaurer",
+        "deactivate": "Corbeille"
     },
     "table": {
         "user": "Utilisateur",
@@ -24,12 +30,14 @@
         "CASHIER": "Caissier",
         "cashier": "Caissier (Facturation + Encaissement)",
         "SELLER": "Vendeur",
-        "seller": "Vendeur (Vente uniquement)"
+        "seller": "Vendeur (Vente uniquement)",
+        "accountant": "Comptable"
     },
     "badges": {
         "pharmacist": "Pharmacien",
         "full_access": "Accès Total",
-        "inactive": "Inactif"
+        "inactive": "Inactif",
+        "no_access": "Aucun accès"
     },
     "status": {
         "active": "Actif",
@@ -47,7 +55,11 @@
         "last_name": "Nom",
         "email": "Email",
         "is_active": "Compte Actif",
-        "max_discount": "Taux de remise max (%)"
+        "max_discount": "Taux de remise max (%)",
+        "copy_permissions": "Copier les droits d'un utilisateur",
+        "select_user": "Sélectionner un utilisateur...",
+        "copy_btn": "Copier",
+        "copy_help": "Copie tous les droits, menus autorisés et permissions spéciales de l'utilisateur sélectionné."
     },
     "modal": {
         "new_title": "Nouvel Utilisateur",
@@ -75,7 +87,8 @@
         "close_commande": "Clôturer Commande",
         "manage_perimes": "Gérer Périmés",
         "manage_avoirs": "Gérer Avoirs",
-        "validate_zero_amount": "Autoriser ventes à 0F"
+        "validate_zero_amount": "Autoriser ventes à 0F",
+        "view_cash_sessions": "Voir les sessions de caisse"
     },
     "messages": {
         "load_error": "Erreur lors du chargement des utilisateurs",
@@ -89,6 +102,14 @@
         "protected_message": "Cet utilisateur possède des archives (factures, etc.) et ne peut être supprimé. Souhaitez-vous désactiver son compte à la place ?",
         "deactivate_btn": "Désactiver",
         "save_error": "Erreur lors de l'enregistrement de l'utilisateur",
+        "permissions_copied": "Droits copiés de {{username}}",
+        "deactivate_confirm_title": "Mettre à la corbeille ?",
+        "deactivate_confirm": "Voulez-vous désactiver l'utilisateur {{username}} et le placer dans la corbeille ?",
+        "restored": "{{username}} a été restauré avec succès.",
+        "restore_error": "Erreur lors de la restauration.",
+        "restore_confirm_title": "Restaurer l'utilisateur ?",
+        "restore_confirm": "Voulez-vous restaurer l'utilisateur {{username}} ?",
+        "restore_btn": "Restaurer",
         "delete_confirm_title": "Supprimer l'utilisateur ?",
         "delete_confirm": "Êtes-vous sûr de vouloir supprimer {{username}} ? Cette action est irréversible.",
         "delete_btn": "Supprimer l'utilisateur",

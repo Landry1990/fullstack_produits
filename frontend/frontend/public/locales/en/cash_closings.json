@@ -1,6 +1,14 @@
 {
   "title": "Closing History",
   "description": "Tracking and audits of daily cash register closings",
+  "tabs": {
+    "closings": "Cash Closings",
+    "sessions": "Cash Sessions"
+  },
+  "messages": {
+    "loading_closures": "Error loading closings",
+    "loading_sessions": "Error loading cash sessions"
+  },
   "filters": {
     "date_start": "Start Date",
     "date_end": "End Date",
@@ -9,7 +17,9 @@
     "reset_btn": "Reset",
     "reset_title": "Reset filters",
     "cashier": "Cashier",
-    "all_cashiers": "All cashiers"
+    "all_cashiers": "All cashiers",
+    "post": "Cash Post",
+    "all_posts": "All posts"
   },
   "performance": {
     "title": "Cashier Performance",
@@ -49,6 +59,7 @@
     "header_date": "Date & Time",
     "header_cashier": "Cashier",
     "header_done_by": "Closed by",
+    "header_post": "Post",
     "header_theoretical": "Theoretical",
     "header_real": "Real",
     "header_gap": "Gap",
@@ -90,6 +101,48 @@
     "page": "Page {{current}} of {{total}}",
     "next": "Next"
   },
+  "sessions": {
+    "active_title": "Active sessions in progress",
+    "active_badge_one": "{{count}} active",
+    "active_badge_other": "{{count}} active",
+    "opened_on": "Opened on {{date}}",
+    "fund_label": "Fund: {{amount}}",
+    "view_details": "View details",
+    "view_detail": "View detail",
+    "status": {
+      "active": "Active",
+      "closed": "Closed",
+      "open": "In progress",
+      "in_progress": "— In progress —"
+    },
+    "table": {
+      "status": "Status",
+      "post": "Post",
+      "cashier": "Cashier",
+      "opening": "Opening",
+      "closing": "Closing",
+      "fund": "Cash fund",
+      "total_collected": "Total collected",
+      "actions": "Actions"
+    },
+    "empty": {
+      "title": "No cash session",
+      "description": "Sessions will appear here after opening a cash post."
+    },
+    "pagination": {
+      "showing": "{{start}}–{{end}} of {{total}} sessions"
+    },
+    "modal": {
+      "title": "Session details",
+      "opening": "Opening",
+      "closing": "Closing",
+      "in_progress": "In progress...",
+      "fund": "Cash fund",
+      "payment_breakdown": "Payment breakdown",
+      "total_collected": "Total collected",
+      "no_payments": "No payment recorded for this session"
+    }
+  },
   "modal": {
     "title": "Closing Details",
     "cash_of": "{{name}}'s cash register",
@@ -107,7 +160,10 @@
     "exits": "Exits (Mov.)",
     "mode_details": "Details by payment mode",
     "observations": "Observations / Notes",
+    "pharmacy": "Pharmacy: {{amount}}",
+    "misc": "Misc: {{amount}}",
     "print": "Reprint ticket",
+    "print_title": "Cash Closing #{{id}}",
     "close": "Close"
   }
 }

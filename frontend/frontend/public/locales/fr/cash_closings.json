@@ -1,6 +1,14 @@
 {
   "title": "Historique des Clôtures",
   "description": "Suivi et audits des clôtures de caisse journalières",
+  "tabs": {
+    "closings": "Clôtures de caisse",
+    "sessions": "Sessions de caisse"
+  },
+  "messages": {
+    "loading_closures": "Erreur lors du chargement des clôtures",
+    "loading_sessions": "Erreur lors du chargement des sessions de caisse"
+  },
   "filters": {
     "date_start": "Date début",
     "date_end": "Date fin",
@@ -9,7 +17,9 @@
     "reset_btn": "Réinitialiser",
     "reset_title": "Réinitialiser les filtres",
     "cashier": "Caissier",
-    "all_cashiers": "Tous les caissiers"
+    "all_cashiers": "Tous les caissiers",
+    "post": "Poste de Caisse",
+    "all_posts": "Tous les postes"
   },
   "performance": {
     "title": "Performance par Caissier",
@@ -49,6 +59,7 @@
     "header_date": "Date & Heure",
     "header_cashier": "Caissier",
     "header_done_by": "Clôturé par",
+    "header_post": "Poste",
     "header_theoretical": "Théorique",
     "header_real": "Réel",
     "header_gap": "Écart",
@@ -90,6 +101,48 @@
     "page": "Page {{current}} sur {{total}}",
     "next": "Suivant"
   },
+  "sessions": {
+    "active_title": "Sessions actives en cours",
+    "active_badge_one": "{{count}} active",
+    "active_badge_other": "{{count}} actives",
+    "opened_on": "Ouvert le {{date}}",
+    "fund_label": "Fond : {{amount}}",
+    "view_details": "Voir détails",
+    "view_detail": "Voir le détail",
+    "status": {
+      "active": "Active",
+      "closed": "Fermée",
+      "open": "En cours",
+      "in_progress": "— En cours —"
+    },
+    "table": {
+      "status": "Statut",
+      "post": "Poste",
+      "cashier": "Caissier",
+      "opening": "Ouverture",
+      "closing": "Fermeture",
+      "fund": "Fond de caisse",
+      "total_collected": "Total encaissé",
+      "actions": "Actions"
+    },
+    "empty": {
+      "title": "Aucune session de caisse",
+      "description": "Les sessions apparaîtront ici après l'ouverture d'un poste de caisse."
+    },
+    "pagination": {
+      "showing": "{{start}}–{{end}} sur {{total}} sessions"
+    },
+    "modal": {
+      "title": "Détail de la session",
+      "opening": "Ouverture",
+      "closing": "Fermeture",
+      "in_progress": "En cours...",
+      "fund": "Fond de caisse",
+      "payment_breakdown": "Ventilation des paiements",
+      "total_collected": "Total encaissé",
+      "no_payments": "Aucun paiement enregistré pour cette session"
+    }
+  },
   "modal": {
     "title": "Détails de la Clôture",
     "cash_of": "Caisse de {{name}}",
@@ -107,7 +160,10 @@
     "exits": "Sorties (Mouv.)",
     "mode_details": "Détails par mode de paiement",
     "observations": "Observations / Notes",
+    "pharmacy": "Pharmacie : {{amount}}",
+    "misc": "Diverses : {{amount}}",
     "print": "Réimprimer le ticket",
+    "print_title": "Clôture Caisse #{{id}}",
     "close": "Fermer"
   }
 }
