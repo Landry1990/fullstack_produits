@@ -86,7 +86,7 @@ class PrescriptionOcrService {
             const [_, day, month, year] = dateMatch;
             const fullYear = year.length === 2 ? `20${year}` : year;
             result.date_prescription = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        } catch {}
+        } catch { /* ignore */ }
       }
 
       // Détection de noms propres potentiels (Dr. X, Patient Y)

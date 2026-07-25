@@ -1,0 +1,95 @@
+{
+    "title": "Planning des Opérateurs",
+    "subtitle": "Gestion des quarts, gardes, repos et congés",
+    "tabs": {
+        "planning": "Planning",
+        "leaves": "Congés",
+        "config": "Configuration"
+    },
+    "shift_types": {
+        "MORNING": "Matin",
+        "NIGHT": "Nuit",
+        "GUARD": "Garde",
+        "REST": "Repos",
+        "LEAVE": "Congé"
+    },
+    "planning": {
+        "create": "Créer le planning",
+        "generate": "Générer (aujourd'hui → fin)",
+        "generate_full": "Régénérer tout le mois",
+        "publish": "Publier",
+        "published": "Publié",
+        "no_schedule": "Aucun planning pour ce mois",
+        "no_schedule_admin": "Aucun planning pour ce mois. Cliquez sur \"Créer le planning\" pour commencer.",
+        "operator": "Opérateur",
+        "edit_assignment": "Modifier l'affectation",
+        "date_label": "Date",
+        "send_to_operators": "Envoyer aux opérateurs",
+        "month_view": "Mois",
+        "week_view": "Semaine",
+        "print": "Imprimer"
+    },
+    "config": {
+        "title": "Règles de rotation",
+        "subtitle": "Configurez les quarts, repos et gardes",
+        "work_days_before_rest": "Jours de travail avant repos",
+        "rest_days": "Jours de repos",
+        "guard_frequency": "Fréquence des gardes (jours)",
+        "annual_leave_days": "Jours de congé annuel",
+        "shift_hours": "Horaires des quarts",
+        "morning_start": "Matin — début",
+        "morning_end": "Matin — fin",
+        "night_start": "Nuit — début",
+        "night_end": "Nuit — fin",
+        "rotate_shifts": "Rotation automatique matin / nuit entre les semaines",
+        "save": "Enregistrer la configuration"
+    },
+    "leaves": {
+        "annual_days": "Congés annuels",
+        "used_days": "Utilisés",
+        "pending_days": "En attente",
+        "remaining_days": "Restants",
+        "new_request": "Nouvelle demande",
+        "new_request_title": "Nouvelle demande de congé",
+        "new_request_desc": "Indiquez vos dates et le type de congé",
+        "start_date": "Du",
+        "end_date": "Au",
+        "type": "Type",
+        "notes": "Notes (optionnel)",
+        "submit": "Soumettre",
+        "cancel": "Annuler",
+        "no_leaves": "Aucune demande de congé",
+        "days_count": "j",
+        "leave_types": {
+            "CONGE": "Congé payé",
+            "MALADIE": "Maladie",
+            "SANS_SOLDE": "Sans solde",
+            "AUTRE": "Autre"
+        },
+        "status": {
+            "PENDING": "En attente",
+            "APPROVED": "Approuvé",
+            "REJECTED": "Refusé"
+        }
+    },
+    "sidebar": "Planning Opérateurs",
+    "toast": {
+        "config_saved": "Configuration enregistrée",
+        "config_error": "Erreur lors de l'enregistrement",
+        "schedule_created": "Planning créé",
+        "schedule_error": "Erreur lors de la création du planning",
+        "generated": "Planning régénéré (aujourd'hui → fin du mois)",
+        "generated_full": "Planning régénéré sur tout le mois",
+        "generate_error": "Erreur lors de la génération",
+        "published": "Planning publié — visible par les opérateurs",
+        "publish_error": "Erreur lors de la publication",
+        "assignment_updated": "Affectation mise à jour",
+        "assignment_error": "Erreur lors de la mise à jour",
+        "leave_created": "Demande de congé créée",
+        "leave_error": "Erreur lors de la création",
+        "leave_approved": "Congé approuvé",
+        "leave_rejected": "Congé refusé",
+        "schedule_sent": "Planning envoyé à {{count}} opérateur(s) pour {{month}}",
+        "schedule_send_error": "Erreur lors de l'envoi du planning"
+    }
+}

@@ -101,7 +101,7 @@ export function useFacturationActions({
                 const w = window.open(`/app/print-invoice/${createdFacture.id}`, '_blank')
                 if (!w) toast.error("Popup bloqué. Autorisez les popups pour imprimer.")
                 toast.success("Proforma généré avec succès")
-            } catch {}
+            } catch { /* ignore */ }
 
             cart.setLignesFacture([])
             ui.setMontantPaye('')

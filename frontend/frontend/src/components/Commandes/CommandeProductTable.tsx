@@ -106,7 +106,7 @@ export default function CommandeProductTable({
                 onSearchChange={setSearchQuery}
             />
 
-            <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[60vh]">
+            <div className="flex-1 overflow-x-auto overflow-y-auto min-h-0">
                 {commandeProduits.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 py-12">
                         <Package className="h-16 w-16 text-slate-200" />

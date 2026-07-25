@@ -36,7 +36,7 @@ const GRAVITY_LABELS: Record<string, string> = {
 };
 
 export default function InteractionsManager() {
-  const { t } = useTranslation(['products', 'common']);
+  const [_t] = useTranslation(['products', 'common']);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [stats, setStats] = useState<InteractionStats | null>(null);
   const [loading, setLoading] = useState(true);

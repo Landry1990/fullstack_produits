@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
-import { getApiErrorDetail } from '../utils/errorHandling';
+import { getApiErrorDetail, extractErrorMessage } from '../utils/errorHandling';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
 import PasswordConfirmModal from './PasswordConfirmModal';
@@ -616,7 +616,7 @@ export default function GestionUtilisateurs() {
       setModalOpen(false);
     } catch (error) {
       console.error('Error saving user:', error);
-      toast.error(getApiErrorDetail(error, t('messages.save_error')));
+      toast.error(extractErrorMessage(error) || t('messages.save_error'));
     }
   };
 

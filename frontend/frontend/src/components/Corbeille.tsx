@@ -73,12 +73,6 @@ function groupByDate(items: TrashedItem[]) {
   return Object.entries(groups).filter(([, v]) => v.length > 0);
 }
 
-function formatTime(dateStr: string | null) {
-  if (!dateStr) return '';
-  try {
-    return new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  } catch { return ''; }
-}
 
 function formatDateTime(dateStr: string | null) {
   if (!dateStr) return '';
@@ -128,7 +122,7 @@ export default function Corbeille() {
   const toggleSelect = (key: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) { next.delete(key); } else { next.add(key); }
       return next;
     });
   };

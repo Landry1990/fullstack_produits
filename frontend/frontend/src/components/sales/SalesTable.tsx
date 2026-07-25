@@ -162,7 +162,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     }
 
     return (
-        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)] min-h-[450px]">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
             <table className="w-full border-separate border-spacing-0">
                 <thead className="sticky top-0 z-30">
                     <tr className="bg-slate-100 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">

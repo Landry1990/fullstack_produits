@@ -57,7 +57,7 @@ interface ReapproSession {
 }
 
 export default function ReapproHistory() {
-  const {} = useTranslation(['stock', 'common']);
+  useTranslation(['stock', 'common']);
   const { settings } = usePharmacySettings();
   const [history, setHistory] = useState<ReapproSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,7 +109,7 @@ export default function ReapproHistory() {
   }, [history, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 space-y-6 font-sans">
+    <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 gap-4 sm:gap-6 font-sans">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">

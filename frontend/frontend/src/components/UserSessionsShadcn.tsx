@@ -169,7 +169,7 @@ const UserSessionsShadcn: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 p-4 lg:p-6 space-y-6">
+    <div className="h-full flex flex-col bg-base-200 p-4 lg:p-6 gap-4 sm:gap-6">
       {/* Header + Tabs */}
       <Card className="overflow-hidden">
         <CardHeader className="p-5 lg:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">

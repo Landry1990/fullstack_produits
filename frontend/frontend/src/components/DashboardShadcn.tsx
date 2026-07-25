@@ -189,9 +189,9 @@ export default function DashboardShadcn() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="h-full flex flex-col bg-slate-50 font-sans overflow-hidden">
       {/* ── HEADER ── */}
-      <div className="sticky top-0 z-30 bg-white/70 backdrop-blur-md border-b border-slate-200/60 px-6 py-4">
+      <div className="shrink-0 z-30 bg-white/70 backdrop-blur-md border-b border-slate-200/60 px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between gap-4">
           {/* Left: title + info */}
           <div className="flex items-center gap-4 min-w-0">
@@ -295,7 +295,7 @@ export default function DashboardShadcn() {
       </div>
 
       {/* ── TAB CONTENT ── */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6 flex-1 overflow-y-auto">
         {isVendeur && (
           <DashboardVendeur formatCurrencyLocal={formatCurrencyLocal} />
         )}

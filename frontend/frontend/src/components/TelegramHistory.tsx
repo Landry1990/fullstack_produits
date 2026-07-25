@@ -40,7 +40,7 @@ const getStatusClass = (status: string) => {
 };
 
 const TelegramHistory: React.FC = () => {
-    const { } = useTranslation();
+    useTranslation();
     const [logs, setLogs] = useState<TelegramLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -73,7 +73,7 @@ const TelegramHistory: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-base-200 p-4 md:p-8 space-y-6">
+        <div className="h-full flex flex-col bg-base-200 p-4 md:p-6 lg:p-8 gap-4 sm:gap-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-base-100 p-6 rounded-2xl shadow-sm border border-base-200">
                 <div>
                     <h1 className="text-2xl font-black text-base-content flex items-center gap-3">

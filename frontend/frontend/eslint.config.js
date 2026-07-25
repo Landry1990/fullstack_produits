@@ -29,6 +29,7 @@ export default tseslint.config([
           destructuredArrayIgnorePattern: '^_',
         },
       ],
+      'react-refresh/only-export-components': 'warn',
     },
   },
 ])

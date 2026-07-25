@@ -2,7 +2,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react';
 import type { CommandeProduit, ProduitModel } from '../../types';
-import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../ui/Button';
 import { Input } from '../shadcn/input';
 import { Checkbox } from '../shadcn/checkbox';
@@ -46,7 +45,7 @@ export function CommandeProductRow({
     focusedField,
     selectedRows,
     highlightedIndex = null,
-    isExpanded,
+    isExpanded: _isExpanded,
     marginThreshold,
     searchQuery,
     toggleRowSelection,
@@ -71,7 +70,7 @@ export function CommandeProductRow({
 
     const cip = resolveCip(p, produitsList);
     const currentStock = resolveStock(p);
-    const isDirty = false; // placeholder - dirty state handled by parent
+    // dirty state handled by parent
 
     const _price = Number(p.price || 0);
     const _selling = Number(p.selling_price || 0);

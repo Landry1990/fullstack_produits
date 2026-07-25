@@ -122,7 +122,7 @@ export default function Clients() {
         search: debouncedSearch,
         page: currentPage,
         page_size: itemsPerPage,
-        // @ts-ignore - Backend supports include_inactive
+        // @ts-expect-error - Backend supports include_inactive
         include_inactive: showInactive
       }, skipCache);
       
@@ -349,9 +349,9 @@ export default function Clients() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full lg:h-[calc(100vh-64px)] bg-slate-50">
+    <div className="flex flex-col lg:flex-row h-full bg-slate-50">
       {/* LEFT PANEL */}
-      <div className={cn("w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col bg-white h-[calc(100vh-140px)] lg:h-full", selectedClient ? 'hidden lg:flex' : 'flex')}>
+      <div className={cn("w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col bg-white h-full lg:h-full", selectedClient ? 'hidden lg:flex' : 'flex')}>
         <div className="p-4 border-b border-slate-200 space-y-4">
            {selectedIds.length > 0 ? (
              <SelectionHeader
@@ -468,7 +468,7 @@ export default function Clients() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className={cn("flex-1 bg-slate-50 flex flex-col overflow-hidden max-w-full h-[calc(100vh-80px)] lg:h-full", !selectedClient ? 'hidden lg:flex' : 'flex')}>
+      <div className={cn("flex-1 bg-slate-50 flex flex-col overflow-hidden max-w-full h-full", !selectedClient ? 'hidden lg:flex' : 'flex')}>
         {selectedClient ? (
           <>
             <div className="p-4 lg:p-6 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4">

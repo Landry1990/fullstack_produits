@@ -5,11 +5,15 @@ import { toast } from 'react-hot-toast'
 import type { ProduitModel } from '../../types'
 import type { SearchMode, PackResult, DciResult, SearchResult } from '../../components/common/ProductSearch/types'
 
-export const useFacturationSearch = () => {
+interface UseFacturationSearchParams {
+  searchQuery: string
+  searchMode: SearchMode
+}
+
+export const useFacturationSearch = (params: UseFacturationSearchParams) => {
   const { t } = useTranslation(['facturation', 'common'])
+  const { searchQuery, searchMode } = params
   
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchMode, setSearchMode] = useState<SearchMode>('products')
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const searchInputRef = useRef<HTMLInputElement>(null)
   
@@ -111,7 +115,6 @@ export const useFacturationSearch = () => {
   }, [searchQuery, searchMode, searchPacks, searchDci])
   
   const resetSearch = useCallback(() => {
-    setSearchQuery('')
     setSelectedIndex(-1)
     setSelectedDci(null)
     setProductResults([])
@@ -200,10 +203,6 @@ export const useFacturationSearch = () => {
   
   return {
     // Search state
-    searchQuery,
-    setSearchQuery,
-    searchMode,
-    setSearchMode,
     searchInputRef,
     selectedIndex,
     setSelectedIndex,
@@ -228,7 +227,6 @@ export const useFacturationSearch = () => {
     // Mode-specific actions
     onSelectDci: (dci: DciResult) => {
       setSelectedDci(dci)
-      setSearchQuery('')
       fetchDciProducts(dci.id)
     }
   }

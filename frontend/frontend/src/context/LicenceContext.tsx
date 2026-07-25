@@ -30,7 +30,7 @@ function loadCachedLicence(): LicenceInfo | null {
         const expMs = (data.exp ?? 0) * 1000;
         if (!data.exp || expMs > Date.now()) return data;
         localStorage.removeItem(LICENCE_STORAGE_KEY);
-    } catch {}
+    } catch { /* ignore */ }
     return null;
 }
 
@@ -51,7 +51,7 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
                 const licenceInfo = { ...data, is_valid: true };
                 setLicence(licenceInfo);
                 // Persister la dernière licence valide pour survie aux redémarrages
-                try { localStorage.setItem(LICENCE_STORAGE_KEY, JSON.stringify(licenceInfo)); } catch {}
+                try { localStorage.setItem(LICENCE_STORAGE_KEY, JSON.stringify(licenceInfo)); } catch { /* ignore */ }
 
                 // Calcul des jours restants
                 const expTimestamp = data.exp * 1000;
@@ -76,7 +76,7 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
                 }
             } else {
                 // Licence invalide côté serveur — effacer le cache local
-                try { localStorage.removeItem(LICENCE_STORAGE_KEY); } catch {}
+                try { localStorage.removeItem(LICENCE_STORAGE_KEY); } catch { /* ignore */ }
                 setLicence(null);
                 setDaysRemaining(null);
             }
@@ -96,7 +96,7 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
                         return;
                     }
                 }
-            } catch {}
+            } catch { /* ignore */ }
             setLicence(null);
             setDaysRemaining(null);
         } finally {

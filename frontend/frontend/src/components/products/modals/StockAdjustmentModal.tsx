@@ -10,13 +10,22 @@ import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
 
+interface AdjustFormType {
+  new_quantity: string;
+  new_reserve_quantity: string;
+  reason_type: string;
+  stock_lot_id: string;
+  new_lot_number: string;
+  new_lot_expiration: string;
+}
+
 interface StockAdjustmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   selectedProduit: ProduitModel | null;
-  form: { new_quantity: string; new_reserve_quantity: string; reason_type: string; stock_lot_id?: string };
-  setForm: (form: (prev: unknown) => any) => void;
+  form: AdjustFormType;
+  setForm: (form: (prev: AdjustFormType) => AdjustFormType) => void;
 }
 
 export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
@@ -38,7 +47,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
         const res = await api.get('configuration-options/?type=STOCK_ADJ&is_active=true');
         const data = res.data.results || res.data;
         if (Array.isArray(data)) {
-          const custom = data.map((opt: unknown) => ({
+          const custom = data.map((opt: { code: string; label: string }) => ({
             value: opt.code,
             label: opt.label
           }));
@@ -111,21 +120,70 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             )}
           </div>
 
-          {/* Lot selector */}
-          {lots.length > 0 && (
-            <Select
-              label="Lot concerné"
-              value={form.stock_lot_id || ''}
-              onChange={(e) => setForm((prev: unknown) => ({ ...prev, stock_lot_id: e.target.value }))}
-            >
-              <option value="">Tous les lots (global)</option>
-              {lots.map(lot => (
-                <option key={lot.id} value={lot.id}>
-                  {lot.lot || `Lot #${lot.id}`} — R: {lot.quantity_remaining} / Rés: {lot.quantity_reserved ?? 0}
-                  {lot.date_expiration ? ` · Exp: ${lot.date_expiration}` : ''}
-                </option>
-              ))}
-            </Select>
+          {/* Lot selector or creation */}
+          {selectedProduit?.use_lot_management && (
+            <div className="space-y-3">
+              {/* Toggle between existing and new lot */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, new_lot_number: '', new_lot_expiration: '', stock_lot_id: '' }))}
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+                    !form.new_lot_number ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  Lot existant
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, new_lot_number: ' ', stock_lot_id: '' }))}
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+                    form.new_lot_number ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  + Créer un nouveau lot
+                </button>
+              </div>
+
+              {/* Existing lot selector */}
+              {!form.new_lot_number && lots.length > 0 && (
+                <Select
+                  label="Lot concerné"
+                  value={form.stock_lot_id || ''}
+                  onChange={(e) => setForm((prev) => ({ ...prev, stock_lot_id: e.target.value }))}
+                >
+                  <option value="">Tous les lots (global)</option>
+                  {lots.map(lot => (
+                    <option key={lot.id} value={lot.id}>
+                      {lot.lot || `Lot #${lot.id}`} — R: {lot.quantity_remaining} / Rés: {lot.quantity_reserved ?? 0}
+                      {lot.date_expiration ? ` · Exp: ${lot.date_expiration}` : ''}
+                    </option>
+                  ))}
+                </Select>
+              )}
+
+              {/* New lot fields */}
+              {form.new_lot_number && (
+                <div className="space-y-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
+                  <Input
+                    type="text"
+                    label="Numéro de lot"
+                    value={form.new_lot_number?.trim() === '' ? '' : form.new_lot_number}
+                    onChange={(e) => setForm((prev) => ({ ...prev, new_lot_number: e.target.value }))}
+                    placeholder="Ex: LOT-2026-001"
+                    required
+                    size="md"
+                  />
+                  <Input
+                    type="date"
+                    label="Date de péremption"
+                    value={form.new_lot_expiration || ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, new_lot_expiration: e.target.value }))}
+                    size="md"
+                  />
+                </div>
+              )}
+            </div>
           )}
 
           {/* Lot info badge */}
@@ -144,7 +202,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             type="number"
             label={selectedProduit?.has_reserve_storage ? t('products:adjustment.new_shelf_stock') : t('products:adjustment.new_quantity')}
             value={form.new_quantity}
-            onChange={(e) => setForm((prev: unknown) => ({ ...prev, new_quantity: e.target.value }))}
+            onChange={(e) => setForm((prev) => ({ ...prev, new_quantity: e.target.value }))}
             required
             min={0}
             size="lg"
@@ -170,7 +228,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                 type="number"
                 label={t('products:adjustment.new_reserve_stock')}
                 value={form.new_reserve_quantity}
-                onChange={(e) => setForm((prev: unknown) => ({ ...prev, new_reserve_quantity: e.target.value }))}
+                onChange={(e) => setForm((prev) => ({ ...prev, new_reserve_quantity: e.target.value }))}
                 required
                 min={0}
                 size="lg"
@@ -195,7 +253,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           <Select
             label={t('products:adjustment.reason_type')}
             value={form.reason_type}
-            onChange={(e) => setForm((prev: unknown) => ({ ...prev, reason_type: e.target.value }))}
+            onChange={(e) => setForm((prev) => ({ ...prev, reason_type: e.target.value }))}
             required
           >
             {allReasons.map(reason => (

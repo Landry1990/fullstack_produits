@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import type { Substance } from '../hooks/useSubstances';
@@ -50,7 +50,6 @@ export default function ImportDCIPage() {
   const [unlinkedSearch, setUnlinkedSearch] = useState('');
   const [loadingUnlinked, setLoadingUnlinked] = useState(false);
   const [linkingId, setLinkingId] = useState<number | null>(null);
-  const [substances, setSubstances] = useState<Substance[]>([]);
 
   const fetchStats = useCallback(() => {
     setLoadingStats(true);
@@ -72,9 +71,6 @@ export default function ImportDCIPage() {
 
   useEffect(() => {
     fetchStats();
-    api.get('substances/?page_size=500')
-      .then(r => setSubstances(r.data.results || []))
-      .catch(console.error);
   }, [fetchStats]);
 
   useEffect(() => {
@@ -295,20 +291,11 @@ export default function ImportDCIPage() {
                       )}
                     </td>
                     <td>
-                      <select
-                        className="select select-bordered select-xs w-full max-w-[200px] rounded-xl bg-base-200/50 border-none"
-                        value=""
-                        onChange={e => {
-                          const val = parseInt(e.target.value);
-                          if (val) handleManualLink(p.id, val);
-                          e.target.value = '';
-                        }}
-                      >
-                        <option value="">{t('products:dci_admin.choose_dci', 'Choisir DCI...')}</option>
-                        {substances.map(s => (
-                          <option key={s.id} value={s.id}>{s.nom}</option>
-                        ))}
-                      </select>
+                      <DCISearchCombobox
+                        placeholder={t('products:dci_admin.choose_dci', 'Choisir DCI...')}
+                        onSelect={(substanceId) => handleManualLink(p.id, substanceId)}
+                        disabled={linkingId === p.id}
+                      />
                     </td>
                     <td>
                       {linkingId === p.id && <span className="loading loading-spinner loading-xs text-primary" />}
@@ -338,6 +325,134 @@ export default function ImportDCIPage() {
         )}
       </div>
       </>
+      )}
+    </div>
+  );
+}
+
+// --- DCISearchCombobox: searchable combobox for manual DCI linking ---
+interface DCISearchComboboxProps {
+  placeholder: string;
+  onSelect: (substanceId: number) => void;
+  disabled?: boolean;
+}
+
+function DCISearchCombobox({ placeholder, onSelect, disabled }: DCISearchComboboxProps) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Substance[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const doSearch = useCallback((q: string) => {
+    if (q.trim().length < 1) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    api.get<{ results: Substance[] }>('substances/', { params: { search: q.trim(), page_size: 20 } })
+      .then(r => {
+        setResults(r.data.results || []);
+        setHighlightIndex(-1);
+      })
+      .catch(() => setResults([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setQuery(val);
+    setOpen(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => doSearch(val), 300);
+  };
+
+  const handleSelect = (sub: Substance) => {
+    onSelect(sub.id);
+    setQuery('');
+    setResults([]);
+    setOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!open || results.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightIndex(i => (i + 1) % results.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIndex(i => (i - 1 + results.length) % results.length);
+    } else if (e.key === 'Enter' && highlightIndex >= 0) {
+      e.preventDefault();
+      handleSelect(results[highlightIndex]);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative inline-block w-full max-w-[220px]">
+      <input
+        type="text"
+        className="input input-bordered input-xs w-full rounded-xl bg-base-200/50 border-none"
+        placeholder={placeholder}
+        value={query}
+        onChange={handleChange}
+        onFocus={() => { if (query) setOpen(true); }}
+        onKeyDown={handleKeyDown}
+        disabled={disabled}
+        aria-label={placeholder}
+        aria-expanded={open}
+        aria-autocomplete="list"
+        role="combobox"
+      />
+      {open && (
+        <ul
+          className="absolute z-50 left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-base-100 border border-base-300 rounded-xl shadow-lg"
+          role="listbox"
+        >
+          {loading ? (
+            <li className="px-3 py-2 text-xs text-base-content/50 flex items-center gap-2">
+              <span className="loading loading-spinner loading-xs" /> Recherche...
+            </li>
+          ) : results.length === 0 ? (
+            <li className="px-3 py-2 text-xs text-base-content/40">
+              {query.trim() ? 'Aucun résultat' : 'Tapez pour rechercher...'}
+            </li>
+          ) : (
+            results.map((sub, i) => (
+              <li
+                key={sub.id}
+                role="option"
+                aria-selected={i === highlightIndex}
+                className={`px-3 py-1.5 text-xs cursor-pointer transition-colors ${i === highlightIndex ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-base-200'}`}
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(sub); }}
+                onMouseEnter={() => setHighlightIndex(i)}
+              >
+                {sub.nom}
+              </li>
+            ))
+          )}
+        </ul>
       )}
     </div>
   );

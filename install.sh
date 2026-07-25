@@ -30,6 +30,39 @@ step() {
     echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
 }
 
+# Spinner qui tourne en arrière-plan pendant les opérations longues
+_SPINNER_PID=""
+SPINNER_CHARS='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+start_spinner() {
+    local msg="$1"
+    (
+        local i=0
+        while true; do
+            echo -ne "\r${BLUE}  ${SPINNER_CHARS:$((i % 10)):1}${NC} $msg... "
+            i=$((i + 1))
+            sleep 0.3
+        done
+    ) &
+    _SPINNER_PID=$!
+}
+stop_spinner() {
+    if [ -n "$_SPINNER_PID" ]; then
+        kill "$_SPINNER_PID" 2>/dev/null || true
+        wait "$_SPINNER_PID" 2>/dev/null || true
+        echo -ne "\r\033[K"
+        _SPINNER_PID=""
+    fi
+}
+# Exécuter une commande avec spinner
+run_with_spinner() {
+    local msg="$1"; shift
+    start_spinner "$msg"
+    "$@"
+    local rc=$?
+    stop_spinner
+    return $rc
+}
+
 # ── 0. Vérifier Ubuntu ─────────────────────────────────
 step "0. Vérification du système"
 if ! grep -q "Ubuntu" /etc/os-release 2>/dev/null; then
@@ -40,7 +73,8 @@ ok "Ubuntu détecté : $(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)"
 
 # ── 1. Mise à jour ───────────────────────────────────
 step "1. Mise à jour du système"
-sudo apt-get update -qq && sudo apt-get upgrade -y -qq
+run_with_spinner "Mise à jour des paquets" sudo apt-get update -qq
+run_with_spinner "Mise à niveau du système" sudo apt-get upgrade -y -qq
 ok "Système à jour"
 
 # ── 2. Installer Docker ────────────────────────────────
@@ -58,14 +92,14 @@ else
         https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
         sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     sudo apt-get update -qq
-    sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    run_with_spinner "Installation des paquets Docker" sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     sudo usermod -aG docker "$USER"
     ok "Docker installé"
 fi
 
 # ── 3. Outils de base ─────────────────────────────────
 step "3. Installation de Git, Python3, htop"
-sudo apt-get install -y -qq git python3 python3-pip htop
+run_with_spinner "Installation de Git, Python3, htop" sudo apt-get install -y -qq git python3 python3-pip htop
 ok "Outils installés"
 
 # ── 4. Cloner le projet ───────────────────────────────
@@ -135,26 +169,52 @@ EOF
     echo -e "    DEPLOY_SECRET     : ${DEPLOY_SECRET:0:20}..."
 fi
 
-# ── 6. Permissions ────────────────────────────────────
-step "6. Permissions des scripts"
+# ── 6. Détection CPU & configuration des limites Docker ──
+step "6. Détection CPU & configuration des limites Docker"
+CPU_COUNT=$(nproc)
+log "CPUs détectés : $CPU_COUNT"
+if [ "$CPU_COUNT" -ge 8 ]; then
+    DB_CPUS=2.0; BACKEND_CPUS=4.0; REDIS_CPUS=1.0
+elif [ "$CPU_COUNT" -ge 4 ]; then
+    DB_CPUS=2.0; BACKEND_CPUS=3.0; REDIS_CPUS=0.5
+elif [ "$CPU_COUNT" -ge 2 ]; then
+    DB_CPUS=1.0; BACKEND_CPUS=1.5; REDIS_CPUS=0.5
+else
+    DB_CPUS=0.5; BACKEND_CPUS=0.5; REDIS_CPUS=0.25
+fi
+ok "Limites CPU → DB: ${DB_CPUS} | Backend: ${BACKEND_CPUS} | Redis: ${REDIS_CPUS}"
+# Ajouter ou mettre à jour les variables CPU dans le .env
+for _var in DB_CPUS BACKEND_CPUS REDIS_CPUS; do
+    _val=$(eval echo "\$$_var")
+    if grep -q "^${_var}=" .env 2>/dev/null; then
+        sed -i "s/^${_var}=.*/${_var}=${_val}/" .env
+    else
+        echo "${_var}=${_val}" >> .env
+    fi
+done
+ok "Variables CPU écrites dans .env"
+
+# ── 7. Permissions ────────────────────────────────────
+step "7. Permissions des scripts"
 chmod +x auto-deploy.sh deploy.sh rollback.sh backup-db.sh watchdog.sh start-watchdog.sh setup-cron.sh init-db.sh 2>/dev/null || true
 chmod +x webhook-deploy.py 2>/dev/null || true
 mkdir -p logs backups
 ok "Scripts prêts"
 
-# ── 7. Lancer Docker ──────────────────────────────────
-step "7. Construction & démarrage des conteneurs"
+# ── 8. Lancer Docker ──────────────────────────────────
+step "8. Construction & démarrage des conteneurs"
 sudo docker volume create fullstack_postgres_data_protected 2>/dev/null || true
 ok "Volume Docker PostgreSQL prêt"
 export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml pull 2>/dev/null || true
-sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml build --quiet 2>/dev/null || sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml build
-sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
+run_with_spinner "Pull des images Docker" sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml pull 2>/dev/null || true
+run_with_spinner "Build des conteneurs (peut prendre plusieurs minutes)" sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml build --quiet 2>/dev/null || sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml build
+run_with_spinner "Démarrage des conteneurs" sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
 ok "Conteneurs démarrés"
 
-# ── 8. Attendre que le backend soit prêt ──────────────
-step "8. Attente du backend (max 120s)"
+# ── 9. Attendre que le backend soit prêt ──────────────
+step "9. Attente du backend (max 120s)"
 RETRIES=40
+log "Vérification du backend en cours..."
 until sudo docker compose -f docker-compose.prod.yml exec -T backend python -c "
 import django, os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
@@ -169,12 +229,14 @@ print('DB ready')
         err "Vérifiez : sudo docker compose -f docker-compose.prod.yml logs backend --tail 50"
         exit 1
     fi
+    echo -ne "\r${BLUE}  ⏳${NC} Attente backend... ($((40 - RETRIES))/40) "
     sleep 3
 done
+echo -ne "\r\033[K"
 ok "Backend et base de données prêts"
 
-# ── 9. Vérification du superuser ──────────────────────
-step "9. Vérification du superutilisateur"
+# ── 10. Vérification du superuser ──────────────────────
+step "10. Vérification du superutilisateur"
 # Le entrypoint.sh du backend crée automatiquement l'admin
 # avec profil pharmacien complet via DEFAULT_ADMIN_* du .env.
 # On vérifie simplement qu'il existe.
@@ -191,8 +253,8 @@ else:
 " 2>/dev/null || warn "Impossible de vérifier le superuser"
 ok "Superutilisateur : admin / admin123 (changez le mot de passe !)"
 
-# ── 10. Services systemd ──────────────────────────────
-step "10. Installation des services auto-démarrage"
+# ── 11. Services systemd ──────────────────────────────
+step "11. Installation des services auto-démarrage"
 if [ -f zenith-webhook.service ]; then
     sudo cp zenith-webhook.service /etc/systemd/system/ 2>/dev/null || true
     # Configurer le secret webhook via un override systemd
@@ -221,8 +283,8 @@ sudo systemctl enable zenith-nightly-update.timer 2>/dev/null || warn "zenith-ni
 sudo systemctl start zenith-nightly-update.timer 2>/dev/null || true
 ok "Services systemd configurés"
 
-# ── 11. Portainer (optionnel) ─────────────────────────
-step "11. Installation de Portainer (interface web Docker)"
+# ── 12. Portainer (optionnel) ─────────────────────────
+step "12. Installation de Portainer (interface web Docker)"
 if docker ps --format '{{.Names}}' | grep -q '^portainer$'; then
     ok "Portainer déjà installé"
 else
@@ -237,7 +299,7 @@ else
     ok "Portainer démarré sur http://localhost:9001"
 fi
 
-# ── 12. Résumé ────────────────────────────────────────
+# ── 13. Résumé ────────────────────────────────────────
 step "✅ INSTALLATION TERMINÉE"
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

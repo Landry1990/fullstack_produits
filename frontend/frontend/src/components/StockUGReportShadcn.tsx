@@ -234,7 +234,7 @@ export default function StockUGReportShadcn() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-base-200 p-3 sm:p-4 lg:p-8">
+    <div className="h-full flex flex-col bg-base-200 p-3 sm:p-4 lg:p-6">
       <Toaster position="top-right" />
 
       <div className="max-w-7xl mx-auto space-y-6">

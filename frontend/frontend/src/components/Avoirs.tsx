@@ -69,7 +69,7 @@ export default function Avoirs() {
 
     // Default 'LIST' view
     return (
-        <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-6 font-sans">
+        <div className="h-full flex flex-col bg-slate-50 p-4 md:p-6 gap-4 sm:gap-6 font-sans">
             {/* Header Section */}
             <div className="flex flex-col gap-6">
                 <div className="w-full space-y-4">

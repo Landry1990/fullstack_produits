@@ -21,7 +21,7 @@ interface UseDataMatrixScannerOptions {
 
 function normalizeCip(cip: string | null | undefined): string {
     if (!cip) return '';
-    return cip.trim().replace(/[\s\-\.]/g, '').toUpperCase();
+    return cip.trim().replace(/[\s\-.]/g, '').toUpperCase();
 }
 
 function getProductCip(produit: number | ProduitModel | null | undefined): string[] {

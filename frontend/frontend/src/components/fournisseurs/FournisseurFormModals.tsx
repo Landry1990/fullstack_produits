@@ -93,14 +93,13 @@ export default function FournisseurFormModals({ hook }: Props) {
                     autoFocus={!isEdit}
                   />
                 </Field>
-                <Field label={t('providers:form.phone')} required>
+                <Field label={t('providers:form.phone')}>
                   <input
                     type="tel"
                     placeholder={t('providers:form.phone_placeholder')}
                     value={data.phone}
                     onChange={e => setData((f: unknown) => ({...f, phone: e.target.value}))}
                     className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
-                    required
                     disabled={isSubmitting}
                   />
                 </Field>
