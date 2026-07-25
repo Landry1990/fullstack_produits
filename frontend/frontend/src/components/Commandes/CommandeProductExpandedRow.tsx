@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/formatters';
-import type { CommandeProduit, ProduitModel } from '../../types';
+import type { CommandeProduit } from '../../types';
 
 interface CommandeProductExpandedRowProps {
     p: CommandeProduit;

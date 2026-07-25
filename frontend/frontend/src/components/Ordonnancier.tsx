@@ -81,7 +81,7 @@ const OrdonnancierPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 p-3 sm:p-6 space-y-4 sm:space-y-6 font-sans">
+        <div className="h-full flex flex-col bg-slate-50 p-3 sm:p-6 gap-4 sm:gap-6 font-sans">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>

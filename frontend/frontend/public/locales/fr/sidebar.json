@@ -79,6 +79,7 @@
         }
     },
     "utilisateurs": "Gestion Utilisateurs",
+    "planning_operateurs": "Planning Opérateurs",
     "user_sessions_sidebar": "Sessions Utilisateurs",
     "aide_formation": "Aide et Formation",
     "audit": "Journal d'Audit",

@@ -52,7 +52,8 @@ i18n
             'config',
             'help',
             'clinical',
-            'system_admin'
+            'system_admin',
+            'planning'
         ],
         defaultNS: 'common',
         interpolation: {

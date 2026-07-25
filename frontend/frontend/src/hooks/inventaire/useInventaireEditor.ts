@@ -530,7 +530,7 @@ export const useInventaireEditor = (
         // Helper de normalisation CIP (identique à Commandes.tsx)
         const normalizeCip = (cip: string | null | undefined): string => {
             if (!cip) return '';
-            const normalized = cip.trim().replace(/[\s\-\.]/g, '');
+            const normalized = cip.trim().replace(/[\s\-.]/g, '');
             return normalized.toUpperCase();
         };
 

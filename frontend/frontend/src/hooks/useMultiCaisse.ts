@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { cashSessionService, type PosteCaisse, type PosteVente } from '../services/cashSessionService'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
 
-export interface UseMultiCaisseOptions {
-}
+export type UseMultiCaisseOptions = Record<string, never>
 
 export interface UseMultiCaisseReturn {
     isMultiCaisse: boolean

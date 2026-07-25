@@ -318,11 +318,12 @@ class SystemAdminViewSet(ViewSet):
         if base_dir.exists():
             for d in sorted(base_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
                 if d.is_dir() and d.name.startswith('base-'):
-                    stat = d.stat()
+                    # Calculer la taille réelle du dossier (récursif)
+                    total_size = sum(f.stat().st_size for f in d.rglob('*') if f.is_file())
                     base_backups.append({
                         'name': d.name,
-                        'size_mb': round(stat.st_size / (1024 * 1024), 2),
-                        'created_at': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
+                        'size_mb': round(total_size / (1024 * 1024), 2),
+                        'created_at': datetime.fromtimestamp(d.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
                     })
 
         return Response({

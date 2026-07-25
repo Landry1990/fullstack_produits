@@ -86,7 +86,9 @@ export default function ProduitShadcn() {
     new_quantity: '',
     new_reserve_quantity: '',
     reason_type: 'INVENTAIRE',
-    stock_lot_id: ''
+    stock_lot_id: '',
+    new_lot_number: '',
+    new_lot_expiration: ''
   })
   const adjustStockMutation = useAdjustStock()
   const [transferLoading, setTransferLoading] = useState(false)
@@ -182,7 +184,9 @@ export default function ProduitShadcn() {
         quantity: parseInt(adjustForm.new_quantity),
         newReserveQuantity: selectedProduit.has_reserve_storage ? parseInt(adjustForm.new_reserve_quantity || '0') : undefined,
         reason: adjustForm.reason_type,
-        stockLotId: adjustForm.stock_lot_id ? parseInt(adjustForm.stock_lot_id) : undefined
+        stockLotId: adjustForm.stock_lot_id ? parseInt(adjustForm.stock_lot_id) : undefined,
+        newLotNumber: adjustForm.new_lot_number || undefined,
+        newLotExpiration: adjustForm.new_lot_expiration || undefined
       })
       const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : ''
       toast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
@@ -569,7 +573,9 @@ export default function ProduitShadcn() {
                           new_quantity: String(selectedProduit?.stock || 0),
                           new_reserve_quantity: String(selectedProduit?.stock_reserve || 0),
                           reason_type: 'INVENTAIRE',
-                          stock_lot_id: ''
+                          stock_lot_id: '',
+                          new_lot_number: '',
+                          new_lot_expiration: ''
                         })
                         setIsAdjustOpen(true)
                       }} leftIcon={<BarChart3 className="size-4" />} title={t('products:actions.adjust_stock', { defaultValue: 'Ajuster le stock' })}>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Package } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../shadcn/input';
 import { Select } from '../ui/Select';

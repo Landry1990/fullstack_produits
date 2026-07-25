@@ -63,7 +63,7 @@ const Ventes: React.FC = () => {
     }, [location.state, filteredFactures, actions, navigate]);
     
     return (
-        <div className="min-h-screen bg-slate-50 font-sans p-6 space-y-6">
+        <div className="h-full flex flex-col bg-slate-50 font-sans p-4 sm:p-6 gap-4 sm:gap-6">
 
             {/* ── HEADER ── */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">

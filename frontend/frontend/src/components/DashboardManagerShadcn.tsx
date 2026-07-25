@@ -474,10 +474,10 @@ export default function DashboardManagerShadcn() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 font-sans">
+    <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 font-sans overflow-hidden">
       <Toaster position="top-right" />
 
-      <div className="max-w-[1400px] mx-auto space-y-6">
+      <div className="max-w-[1400px] mx-auto w-full flex-1 overflow-y-auto space-y-6">
         <HeaderShadcn
           onOpenSettings={() => setIsSettingsModalOpen(true)}
           onOpenObjective={() => actions.openObjectiveModal()}

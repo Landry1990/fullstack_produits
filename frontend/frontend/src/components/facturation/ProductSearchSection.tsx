@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import type { ProduitModel, User } from '../../types'
-import { ProductSearch, type SearchResult, type PackResult, type DciResult } from '../common/ProductSearch'
+import { ProductSearch, type SearchResult, type PackResult, type DciResult, type SearchMode } from '../common/ProductSearch'
 import { useFacturationSearch } from '../../hooks/product-search/useFacturationSearch'
 import DatamatrixScanField from './DatamatrixScanField'
 import type { ScanStatus } from '../../hooks/useDatamatrixScan'
@@ -44,9 +44,8 @@ const ProductSearchSection = React.memo(({
   onScanChange,
   onScanKeyDown,
 }: ProductSearchSectionProps) => {
+  const [searchMode, setSearchMode] = useState<SearchMode>('products')
   const {
-    searchMode: _searchMode,
-    setSearchMode: _setSearchMode,
     packResults,
     dciResults,
     selectedDci,
@@ -55,7 +54,7 @@ const ProductSearchSection = React.memo(({
     handleKeyDown,
     getItemProps,
     fetchDciProducts
-  } = useFacturationSearch()
+  } = useFacturationSearch({ searchQuery, searchMode })
 
   // Wrapper that clears search after adding product
   const handleAddProduit = (produit: ProduitModel | SearchResult) => {
@@ -125,6 +124,8 @@ const ProductSearchSection = React.memo(({
       searchInputRef={searchInputRef}
       handleKeyDown={handleKeyDown}
       getItemProps={getItemProps}
+      controlledMode={searchMode}
+      onModeChange={setSearchMode}
       user={user}
     />
     </div>

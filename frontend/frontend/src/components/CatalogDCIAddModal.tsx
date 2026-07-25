@@ -1,19 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import PremiumModal from './common/PremiumModal';
+import { useProductSearch } from '../hooks/useProductSearch';
+import type { ProduitModel } from '../types';
 import type { Substance } from '../hooks/useSubstances';
-
-interface ProduitSearchItem {
-  id: number;
-  name: string;
-  forme_nom: string | null;
-  stock: number;
-  selling_price: string;
-  dci_reference: number | null;
-  substances: number[];
-}
 
 interface CatalogDCIAddModalProps {
   isOpen: boolean;
@@ -29,29 +20,29 @@ export default function CatalogDCIAddModal({
   onProductsAdded,
 }: CatalogDCIAddModalProps) {
   const { t } = useTranslation(['products', 'common']);
-  const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
-  // Recherche dans la base produit de la pharmacie
-  const { data, isLoading } = useQuery({
-    queryKey: ['produits-search', search || substance?.nom],
-    queryFn: async () => {
-      const q = search.trim() || substance?.nom || '';
-      if (!q) return { results: [] as ProduitSearchItem[], count: 0 };
-      const response = await api.get<{ results: ProduitSearchItem[]; count: number }>(
-        `produits/?search=${encodeURIComponent(q)}&page_size=100`
-      );
-      return response.data;
-    },
-    enabled: isOpen,
+  const { produits: results, loading: isLoading, searchQuery, setSearchQuery } = useProductSearch({
+    minSearchLength: 2,
+    debounceMs: 200,
+    pageSize: 100,
+    autoLoad: false,
   });
 
-  const results = data?.results || [];
+  // Auto-search avec le nom de la substance à l'ouverture du modal
+  useEffect(() => {
+    if (isOpen && substance?.nom) {
+      setSearchQuery(substance.nom);
+    } else if (!isOpen) {
+      setSearchQuery('');
+      setSelected(new Set());
+    }
+  }, [isOpen, substance?.nom, setSearchQuery]);
 
   // Détermine si un produit est déjà lié à cette DCI
-  const isAlreadyLinked = (p: ProduitSearchItem) =>
+  const isAlreadyLinked = (p: ProduitModel) =>
     p.dci_reference === substance?.id || (p.substances || []).includes(substance?.id ?? -1);
 
   const toggleSelect = (id: number) => {
@@ -94,7 +85,7 @@ export default function CatalogDCIAddModal({
     } else {
       onProductsAdded();
       setSelected(new Set());
-      setSearch('');
+      setSearchQuery('');
       onClose();
     }
   };
@@ -125,9 +116,9 @@ export default function CatalogDCIAddModal({
             type="text"
             className="input input-bordered w-full pl-10 rounded-xl bg-base-200/50 border-none focus:ring-2 ring-primary/20"
             placeholder={t('products:form.search_med_ref') || 'Rechercher un produit...'}
-            value={search}
+            value={searchQuery}
             onChange={(e) => {
-              setSearch(e.target.value);
+              setSearchQuery(e.target.value);
               setSelected(new Set());
             }}
           />
@@ -187,7 +178,7 @@ export default function CatalogDCIAddModal({
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs opacity-60">
-                      <span>{prod.forme_nom || 'Forme inconnue'}</span>
+                      <span>{prod.forme_name || 'Forme inconnue'}</span>
                       <span className={`badge badge-xs ${prod.stock > 0 ? 'badge-success' : 'badge-error'}`}>
                         {prod.stock} en stock
                       </span>

@@ -242,7 +242,7 @@ export default function CentreRapports() {
                                 )}
 
                                 {/* Results Section */}
-                                <div className="min-h-[400px] flex flex-col">
+                                <div className="flex-1 min-h-0 flex flex-col">
                                     {loading && !results ? (
                                         <div className="flex-1 flex flex-col items-center justify-center p-12 bg-white rounded-2xl shadow-sm border border-slate-200">
                                             <div className="flex gap-1 mb-4">
@@ -272,7 +272,7 @@ export default function CentreRapports() {
                                 </div>
                             </>
                         ) : (
-                            <div className="h-[calc(100vh-100px)] flex flex-col items-center justify-center text-slate-300 animate-in fade-in duration-1000">
+                            <div className="flex-1 min-h-0 flex flex-col items-center justify-center text-slate-300 animate-in fade-in duration-1000">
                                 <div className="size-32 rounded-full bg-slate-200/50 flex items-center justify-center mb-6 border border-slate-200">
                                     <LayoutPanelTop className="size-16 text-slate-300" />
                                 </div>

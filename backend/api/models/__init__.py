@@ -73,6 +73,9 @@ from .promotions import Promotion, PromotionPackItem
 from .objectif import ObjectifCommercial
 from .configuration_objectifs import ConfigurationObjectifs
 
+# Planning
+from .planning import ShiftConfig, ShiftSchedule, ShiftAssignment, LeaveRequest
+
 # Licence
 from .licence import Licence
 
@@ -113,6 +116,8 @@ __all__ = [
     'UserDailySession',
     # Licence
     'Licence',
+    # Planning
+    'ShiftConfig', 'ShiftSchedule', 'ShiftAssignment', 'LeaveRequest',
     # Comptabilité
     'CompteComptable', 'JournalComptable', 'EcritureComptable', 'LigneEcriture', 'ExerciceComptable', 'Lettrage',
 ]

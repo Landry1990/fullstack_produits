@@ -509,7 +509,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         setLignes(prev => {
             const newLignes = [...prev];
             const line = { ...newLignes[index] };
-            // @ts-ignore
+            // @ts-expect-error - dynamic field assignment on LigneAvoir
             line[field] = value;
             if (field === 'quantity' || field === 'price') {
                 const qty = field === 'quantity' ? Number(value) : Number(line.quantity);

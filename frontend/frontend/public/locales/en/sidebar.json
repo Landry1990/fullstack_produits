@@ -78,6 +78,7 @@
         }
     },
     "utilisateurs": "Users",
+    "planning_operateurs": "Staff Scheduling",
     "user_sessions_sidebar": "Presence Tracking",
     "audit": "Audit Log",
     "statistiques": {

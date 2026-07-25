@@ -307,7 +307,7 @@ export default function CategoryManager({
   }, [categories, hasHierarchy]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-140px)] gap-6 ">
+    <div className="flex flex-col lg:flex-row h-full gap-6">
       
       {/* Sidebar: Category List */}
       <div className="w-full lg:w-96 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

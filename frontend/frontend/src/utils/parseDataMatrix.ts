@@ -41,7 +41,7 @@ export function normalizeDateExpiration(raw: string | null | undefined): string 
     }
 
     // Format MM/YYYY, MM YYYY, MM.YYYY
-    const longMatch = s.match(/^(\d{1,2})[\/\s\.](\d{4})$/);
+    const longMatch = s.match(/^(\d{1,2})[/\s.](\d{4})$/);
     if (longMatch) {
         const mm = longMatch[1].padStart(2, '0');
         const yy = longMatch[2].slice(-2);
@@ -49,7 +49,7 @@ export function normalizeDateExpiration(raw: string | null | undefined): string 
     }
 
     // Format MM/YY, MM YY, MM.YY (déjà court)
-    const shortMatch = s.match(/^(\d{1,2})[\/\s\.](\d{2})$/);
+    const shortMatch = s.match(/^(\d{1,2})[/\s.](\d{2})$/);
     if (shortMatch) {
         const mm = shortMatch[1].padStart(2, '0');
         const yy = shortMatch[2];
@@ -81,6 +81,7 @@ export function parseDataMatrix(raw: string): ParsedDataMatrix {
     // Remplacer le séparateur GS (0x1D) par un délimiteur lisible
     const GS = '\x1d';
     // Certaines douchettes envoient <GS> en ASCII char ou en \x1D
+    // eslint-disable-next-line no-control-regex
     data = data.replace(/\x1d/g, GS);
 
     // Extraction des AI GS1 connus

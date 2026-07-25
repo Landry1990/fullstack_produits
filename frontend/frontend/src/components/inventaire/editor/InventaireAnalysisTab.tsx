@@ -31,7 +31,7 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
                     {data?.length || 0}
                 </span>
             </div>
-            <div className="p-0 flex-1 overflow-y-auto max-h-[500px]">
+            <div className="p-0 flex-1 overflow-y-auto max-h-[60vh]">
                 {!data || data.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full py-12 gap-3 text-slate-200">
                         <PieChart className="h-10 w-10" />

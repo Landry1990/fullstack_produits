@@ -57,7 +57,7 @@ interface CommandeFormProps {
     handleSearchKeyDown: (e: React.KeyboardEvent) => void;
     filteredProduits: ProduitModel[];
     selectProduct: (p: ProduitModel) => void;
-    getItemProps: (index: number) => any;
+    getItemProps: (index: number) => { 'data-search-index': number; className: string; style: React.CSSProperties };
     
     // Table Props
     commandeProduits: CommandeProduit[];
@@ -175,24 +175,24 @@ export default function CommandeForm({
 
     return (
         <div className="flex flex-col h-full overflow-hidden bg-slate-50">
-          <div className="flex items-center justify-between px-4 py-3 shrink-0 bg-white border-b border-slate-200">
+          <div className="flex items-center justify-between px-3 py-2 shrink-0 bg-white border-b border-slate-200">
              <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleBackToList}
-                  className="size-9 text-slate-400 hover:text-slate-600"
+                  className="size-8 text-slate-400 hover:text-slate-600"
                   title={t('orders:form.back_to_list')}
                 >
-                  <ArrowLeft className="size-5" />
+                  <ArrowLeft className="size-4" />
                 </Button>
                 <div>
-                  <h3 className="font-bold text-base text-slate-800">
+                  <h3 className="font-bold text-sm text-slate-800">
                       {viewMode === 'EDIT' && selectedCommande
                         ? t('orders:form.edit_title', { id: selectedCommande.numero_facture || selectedCommande.id })
                         : t('orders:form.new_title')}
                   </h3>
-                  <div className="flex gap-4 text-xs text-slate-400 mt-1">
+                  <div className="hidden xl:flex gap-4 text-xs text-slate-400 mt-0.5">
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">F2</kbd> {t('orders:form.shortcuts.search')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">F4</kbd> {t('orders:form.shortcuts.provider')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">Ctrl+A</kbd> {t('orders:form.shortcuts.select_all')}</span>
@@ -340,40 +340,40 @@ export default function CommandeForm({
             />
             </div>
 
-            <div className="mt-2 flex flex-wrap justify-between items-end gap-4 shrink-0 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex flex-wrap gap-3 items-center">
+            <div className="mt-1.5 flex flex-wrap justify-between items-end gap-2 shrink-0 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex flex-wrap gap-2 items-center">
                     {/* PRIX A HT */}
-                    <div className="flex flex-col items-end">
+                    <div className="hidden md:flex flex-col items-end">
                         <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">PRIX A HT</span>
                         <span className="text-sm font-bold text-slate-700">{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
                     </div>
 
                     {/* TVA A */}
-                    <div className="flex flex-col items-end border-l pl-3 border-slate-200">
+                    <div className="hidden md:flex flex-col items-end border-l pl-2 border-slate-200">
                         <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">TVA A</span>
                         <span className="text-sm font-bold text-slate-500">{formatCurrency(orderTotals?.totalBuyTVA || 0)}</span>
                     </div>
 
                     {/* PRIX A TTC */}
-                    <div className="flex flex-col items-end border-l pl-3 border-slate-200">
+                    <div className="flex flex-col items-end border-l pl-2 border-slate-200">
                         <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">PRIX A TTC</span>
-                        <span className="text-lg font-black leading-none text-slate-800">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
+                        <span className="text-base font-black leading-none text-slate-800">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
                     </div>
 
                     {/* PRIX V TTC */}
-                    <div className="flex flex-col items-end border-l pl-3 border-slate-200">
+                    <div className="flex flex-col items-end border-l pl-2 border-slate-200">
                         <span className="text-[9px] uppercase font-bold text-emerald-600 -mb-1">PRIX V TTC</span>
-                        <span className="text-lg font-black leading-none text-emerald-600">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
+                        <span className="text-base font-black leading-none text-emerald-600">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
                     </div>
 
                     {/* MARGE */}
-                    <div className="flex flex-col items-end border-l pl-3 border-slate-200">
+                    <div className="hidden sm:flex flex-col items-end border-l pl-2 border-slate-200">
                         <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">MARGE</span>
                         <span className={cn("text-sm font-bold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
                     </div>
 
                     {/* COEFF */}
-                    <div className="flex flex-col items-end border-l pl-3 border-slate-200">
+                    <div className="hidden lg:flex flex-col items-end border-l pl-2 border-slate-200">
                         <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">COEFF</span>
                         <div className="flex items-baseline gap-1">
                             <span className={cn("text-sm font-bold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>x{orderTotals?.globalMargin || '1.00'}</span>

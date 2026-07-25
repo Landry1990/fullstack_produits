@@ -52,6 +52,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   '/app/guide-financier': () => import('./GuideFinancier'),
   '/app/aide-formation': () => import('./HelpTraining'),
   '/app/utilisateurs': () => import('./GestionUtilisateurs'),
+  '/app/planning-operateurs': () => import('./PlanningOperateurs'),
   '/app/pharmacy-settings': () => import('./settings/PharmacySettingsForm'),
   '/app/maintenance': () => import('./Maintenance'),
   '/app/corbeille': () => import('./Corbeille'),
@@ -243,6 +244,14 @@ export default function Sidebar() {
       )
     },
     {
+      path: '/app/planning-operateurs',
+      label: t('planning_operateurs'),
+      key: 'planning_operateurs',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+      )
+    },
+    {
       path: '/app/user-sessions',
       label: t('user_sessions_sidebar'),
       key: 'user_sessions',
@@ -321,7 +330,7 @@ export default function Sidebar() {
       return filteredSubmenus.length > 0 ? [{ ...item, submenus: filteredSubmenus }] : [];
     }
     
-    const adminOnlyKeys = ['utilisateurs', 'user_sessions', 'audit', 'import_dci', 'maintenance', 'corbeille'];
+    const adminOnlyKeys = ['utilisateurs', 'planning_operateurs', 'user_sessions', 'audit', 'import_dci', 'maintenance', 'corbeille'];
     if (adminOnlyKeys.includes(item.key)) return [];
     return (hasExplicitParent || hasLegacyCategory || allowedSet.has(item.key)) ? [item] : [];
   }), [user, t]);

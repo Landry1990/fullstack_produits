@@ -38,6 +38,19 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     }
   }, [isMidnightTheme])
 
+  // Auto-collapse on small screens (< 1280px)
+  useEffect(() => {
+    const checkScreenWidth = () => {
+      const isSmall = window.innerWidth < 1280
+      if (isSmall) {
+        setIsCollapsed(true)
+      }
+    }
+    checkScreenWidth()
+    window.addEventListener('resize', checkScreenWidth)
+    return () => window.removeEventListener('resize', checkScreenWidth)
+  }, [])
+
   // Persister les préférences utilisateur
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', String(isCollapsed))

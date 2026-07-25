@@ -35,7 +35,7 @@ export default function Creances() {
     }, [data.selectedIds, data.creances]);
 
     return (
-        <div className="min-h-screen bg-slate-100 p-6 space-y-6 font-sans overflow-auto">
+        <div className="h-full flex flex-col bg-slate-100 p-4 sm:p-6 gap-4 sm:gap-6 font-sans overflow-auto">
             <Toaster position="top-center" />
 
             {/* Header Area */}
@@ -117,7 +117,7 @@ export default function Creances() {
             />
 
             {/* Main Content Table Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 relative min-h-[500px]">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 relative min-h-0">
                 <CreancesTable
                     mode={data.filters.selectedClient ? 'invoices' : 'clients'}
                     groupedClients={data.groupedClients}

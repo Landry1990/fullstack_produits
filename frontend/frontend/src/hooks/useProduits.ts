@@ -4,8 +4,6 @@ import type {
     ProduitModel,
     Rayon,
     AchatProduit,
-    StockLot,
-    StockAdjustment
 } from '../types';
 
 // Queries
@@ -200,8 +198,8 @@ export const useDeleteProduit = () => {
 export const useAdjustStock = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, quantity, reason, newReserveQuantity, stockLotId }: { id: number; quantity?: number; reason?: string; newReserveQuantity?: number; stockLotId?: number }) =>
-            produitService.adjustStock(id, quantity, reason, newReserveQuantity, stockLotId),
+        mutationFn: ({ id, quantity, reason, newReserveQuantity, stockLotId, newLotNumber, newLotExpiration }: { id: number; quantity?: number; reason?: string; newReserveQuantity?: number; stockLotId?: number; newLotNumber?: string; newLotExpiration?: string }) =>
+            produitService.adjustStock(id, quantity, reason, newReserveQuantity, stockLotId, newLotNumber, newLotExpiration),
         onMutate: async (vars) => {
             await queryClient.cancelQueries({ queryKey: ['produit', vars.id] });
             await queryClient.cancelQueries({ queryKey: ['produits'] });

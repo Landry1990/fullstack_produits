@@ -46,7 +46,7 @@ const Promis: React.FC = () => {
     } = usePromisData();
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6 space-y-6 font-sans">
+        <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 gap-4 sm:gap-6 font-sans">
             
             {/* Header Section */}
             <div className="flex flex-col gap-6">
@@ -75,7 +75,7 @@ const Promis: React.FC = () => {
             </div>
 
             {/* Main Content: Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-28rem)] min-h-[400px]">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
                 <PromisTable 
                     promisList={filteredPromis}
                     loading={loading}

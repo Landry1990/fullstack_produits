@@ -73,7 +73,7 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
   const currentTab = tabs.find(t => t.id === activeTab)!;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 space-y-6 font-sans">
+    <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 gap-4 sm:gap-6 font-sans">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
         <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
            <div>

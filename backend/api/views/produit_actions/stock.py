@@ -148,6 +148,8 @@ class ProduitStockMixin:
         reason_type = request.data.get('reason_type')
         reason_detail = request.data.get('reason_detail', '')
         stock_lot_id = request.data.get('stock_lot_id')
+        new_lot_number = request.data.get('new_lot_number', '').strip() if request.data.get('new_lot_number') else ''
+        new_lot_expiration = request.data.get('new_lot_expiration', '').strip() if request.data.get('new_lot_expiration') else ''
 
         if new_quantity is None and new_reserve_quantity is None:
             return Response({'detail': 'new_quantity ou new_reserve_quantity est requis'}, status=status.HTTP_400_BAD_REQUEST)
@@ -171,7 +173,33 @@ class ProduitStockMixin:
             return Response({'detail': 'Les quantités doivent être des entiers'}, status=status.HTTP_400_BAD_REQUEST)
 
         stock_lot = None
-        if stock_lot_id:
+        if new_lot_number:
+            # Créer un nouveau lot
+            from django.utils import timezone
+            import datetime as _dt
+            date_exp = None
+            if new_lot_expiration:
+                try:
+                    date_exp = _dt.datetime.strptime(new_lot_expiration, '%Y-%m-%d').date()
+                except ValueError:
+                    return Response({'detail': 'Format de date d\'expiration invalide (YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
+
+            stock_lot = StockLot.objects.create(
+                produit=produit,
+                quantity_initial=0,
+                quantity_paid=0,
+                quantity_free=0,
+                quantity_free_remaining=0,
+                quantity_remaining=0,
+                quantity_reserved=0,
+                price_cost=produit.pmp or 0,
+                selling_price=produit.selling_price or 0,
+                lot=new_lot_number,
+                date_expiration=date_exp,
+                date_reception=timezone.now(),
+                is_divers=True
+            )
+        elif stock_lot_id:
             try:
                 stock_lot = StockLot.objects.select_for_update().get(pk=stock_lot_id, produit=produit)
             except StockLot.DoesNotExist:
@@ -206,7 +234,12 @@ class ProduitStockMixin:
             if reserve_change != 0:
                 new_reserve_qty = stock_lot.quantity_reserved + reserve_change
                 stock_lot.quantity_reserved = max(0, new_reserve_qty)
-            stock_lot.save(update_fields=['quantity_remaining', 'quantity_reserved'])
+            # Pour un nouveau lot, mettre à jour quantity_initial
+            if new_lot_number:
+                stock_lot.quantity_initial = stock_lot.quantity_remaining + stock_lot.quantity_reserved
+                stock_lot.save(update_fields=['quantity_remaining', 'quantity_reserved', 'quantity_initial'])
+            else:
+                stock_lot.save(update_fields=['quantity_remaining', 'quantity_reserved'])
         
         type_mv = MouvementStock.TypeMouvement.AJUSTEMENT
         if quantity_change == -reserve_change and quantity_change != 0:

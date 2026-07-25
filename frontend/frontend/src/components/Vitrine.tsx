@@ -329,7 +329,7 @@ function SimulateurClient() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-[calc(100vh-200px)]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-full">
       {/* Colonne Recherche */}
       <div className="lg:col-span-2 space-y-4 order-1 lg:order-none">
         <Card variant="elevated" padding="lg">
