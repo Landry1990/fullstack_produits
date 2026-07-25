@@ -225,10 +225,10 @@ export default function ModuleFinancier() {
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <span className="text-2xl">📊</span>
-                {isEnglish ? 'Margin Variance Report' : 'Rapport de Variation de Marge'}
+                {t('variance.title')}
               </h2>
               <p className="text-sm text-slate-500">
-                {isEnglish ? 'Analysis of profit fluctuations and data integrity' : 'Analyse des fluctuations de profit et intégrité des données'}
+                {t('variance.subtitle')}
               </p>
             </div>
             {varianceReport && (
@@ -246,19 +246,19 @@ export default function ModuleFinancier() {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 bg-slate-100 rounded-xl">
-                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{isEnglish ? 'Current Period' : 'Période Actuelle'}</p>
+                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{t('variance.current_period')}</p>
                     <p className="text-2xl font-black">{Number(varianceReport?.period1?.stats?.margin_pct || 0).toFixed(1)}%</p>
-                    <p className="text-xs text-slate-500">{formatMoney(Number(varianceReport?.period1?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
+                    <p className="text-xs text-slate-500">{formatMoney(Number(varianceReport?.period1?.stats?.margin || 0))} {t('variance.profit')}</p>
                   </div>
                   <div className="p-4 bg-slate-100 rounded-xl">
-                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{isEnglish ? 'Baseline' : 'Référence (Hier)'}</p>
+                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{t('variance.baseline')}</p>
                     <p className="text-2xl font-black">{Number(varianceReport?.period2?.stats?.margin_pct || 0).toFixed(1)}%</p>
-                    <p className="text-xs text-slate-500">{formatMoney(Number(varianceReport?.period2?.stats?.margin || 0))} {isEnglish ? 'Profit' : 'Marge'}</p>
+                    <p className="text-xs text-slate-500">{formatMoney(Number(varianceReport?.period2?.stats?.margin || 0))} {t('variance.profit')}</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">{isEnglish ? 'Key Insights' : 'Analyses Clés'}</h3>
+                  <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400">{t('variance.key_insights')}</h3>
                   {varianceReport.insights.map((insight) => {
                     const text = isEnglish ? insight.en : insight.fr;
                     return (
@@ -274,7 +274,7 @@ export default function ModuleFinancier() {
               <div className="bg-slate-100/50 rounded-2xl p-4 border border-slate-200">
                 <h3 className="font-bold text-sm uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
                   <span className="text-amber-600">🚩</span>
-                  {isEnglish ? 'Atypical Margins Detected' : 'Marges Atypiques Détectées'}
+                  {t('variance.atypical_margins')}
                 </h3>
                 
                 {varianceReport.suspicious_products.length > 0 ? (
@@ -282,16 +282,16 @@ export default function ModuleFinancier() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="text-slate-400">
-                          <th className="text-left py-1">{isEnglish ? 'Product' : 'Produit'}</th>
-                          <th className="text-right py-1">{isEnglish ? 'Margin' : 'Marge'}</th>
-                          <th className="text-right py-1">{isEnglish ? 'Cost (PMP)' : 'Coût (PMP)'}</th>
+                          <th className="text-left py-1">{t('variance.product')}</th>
+                          <th className="text-right py-1">{t('variance.margin')}</th>
+                          <th className="text-right py-1">{t('variance.cost_pmp')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {varianceReport.suspicious_products.map((p, idx) => {
                           const productId = p?.produit__id || p?.id || `prod-${idx}`;
                           const productName = typeof p?.produit__name === 'string' ? p.produit__name : 
-                                            typeof p?.nom === 'string' ? p.nom : 'Produit inconnu';
+                                            typeof p?.nom === 'string' ? p.nom : t('common:unknown_product');
                           const marginPct = typeof p?.unit_margin_pct === 'number' ? p.unit_margin_pct : 
                                           typeof p?.unit_margin_pct === 'string' ? parseFloat(p.unit_margin_pct) : 0;
                           const pmp = typeof p?.produit__pmp === 'number' ? p.produit__pmp : 
@@ -309,14 +309,12 @@ export default function ModuleFinancier() {
                       </tbody>
                     </table>
                     <p className="text-[10px] mt-4 italic text-slate-400">
-                      {isEnglish 
-                        ? '* High margins (>80%) often indicate missing cost prices (PMP = 0).' 
-                        : '* Les marges élevées (>80%) indiquent souvent des prix d\'achat manquants (PMP = 0).'}
+                      {t('variance.high_margin_note')}
                     </p>
                   </div>
                 ) : (
                   <div className="h-40 flex items-center justify-center text-sm text-slate-400 italic">
-                    {isEnglish ? 'No abnormal margins detected today.' : 'Aucune marge anormale détectée aujourd\'hui.'}
+                    {t('variance.no_abnormal')}
                   </div>
                 )}
               </div>
@@ -454,7 +452,7 @@ export default function ModuleFinancier() {
                       predictions.confiance === 'haute' ? 'default' :
                       predictions.confiance === 'moyenne' ? 'secondary' : 'destructive'
                     }>
-                      Confiance: {predictions.confiance}
+                      {t('predictions.confidence', { value: predictions.confiance })}
                     </Badge>
                     <span className={`font-medium ${trendInfo?.color}`}>
                       {trendInfo?.icon} {trendInfo?.label}

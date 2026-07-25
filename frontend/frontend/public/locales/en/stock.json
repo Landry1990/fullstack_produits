@@ -1,4 +1,68 @@
 {
+    "matrix": {
+        "quadrants": {
+            "MOTEUR": { "label": "Engine", "description": "Sells well · well stocked", "impact": "Positive" },
+            "HEMORRAGIE": { "label": "Hemorrhage", "description": "High demand · out of stock", "impact": "Critical" },
+            "SOMNIFERE": { "label": "Sleeping", "description": "Overstock · no sale +90d", "impact": "Penalizing" },
+            "NEUTRE": { "label": "Neutral", "description": "Tight flow · demand-driven", "impact": "Neutral" }
+        },
+        "diagnostic": {
+            "excellent": "Excellent! Your stock is healthy, well balanced and turns efficiently.",
+            "dead_stock": "Your score is held back by {{count}} sleeping product{{plural}} tying up your cash.",
+            "shortage": "{{count}} fast-moving product{{plural}} out of stock are lowering your score. Act now.",
+            "unbalanced": "Several imbalances detected. Review the quadrants to identify priority actions."
+        },
+        "score_card": {
+            "title": "Health Score",
+            "tooltip_title": "5 components (100 pts)",
+            "tooltip_items": {
+                "disponibilite": "Availability — 30 pts",
+                "fluidite": "Fluidity — 25 pts",
+                "couverture": "Coverage — 20 pts",
+                "activite": "Recent activity — 15 pts",
+                "immobilisation": "Immobilization — 10 pts"
+            },
+            "labels": {
+                "disponibilite": "Avail.",
+                "fluidite": "Fluidity",
+                "couverture": "Cov.",
+                "activite": "Activity",
+                "immobilisation": "Immo"
+            },
+            "status": {
+                "healthy": "Healthy Stock",
+                "warning": "To Watch",
+                "critical": "Critical"
+            },
+            "out_of": "100"
+        },
+        "grid": {
+            "title": "Performance Matrix",
+            "high_rotation": "High rot.",
+            "low_rotation": "Low rot.",
+            "low_availability": "← Low avail.",
+            "high_availability": "High avail. →",
+            "value_labels": {
+                "missed_sales": "Missed sales / 7d",
+                "blocked_cash": "Blocked cash"
+            },
+            "product_one": "prod",
+            "product_other": "prods"
+        },
+        "penalties": {
+            "title": "Top 5 — Score Penalties",
+            "empty": "No significant penalty detected. Your stock is balanced.",
+            "headers": {
+                "designation": "Designation",
+                "type": "Type",
+                "days": "Days",
+                "value": "Value",
+                "impact": "Impact"
+            },
+            "rupture": "Out of stock",
+            "impact_pts": "{{pts}} pts"
+        }
+    },
     "inventaire": {
         "title": "Inventory",
         "subtitle": "Manage and validate your stock inventories",

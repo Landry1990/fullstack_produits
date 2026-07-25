@@ -17,7 +17,7 @@ from .stocks import (
     StockAnalysisUnsoldView, StockAnalysisOverstockView, StockAnalysisShortageView,
     CadencierViewSet
 )
-from .users import CustomAuthToken, UserViewSet, UserDailySessionViewSet
+from .users import CustomAuthToken, UserViewSet, UserDailySessionViewSet, TeamViewSet
 from .auth import verify_password
 from .settings import LoyaltySettingViewSet, InvoiceConfigurationView, PharmacySettingsView, ConfigurationOptionViewSet, TVAViewSet, WhatsAppTestView, TelegramTestView, TelegramGetChatIdView, TelegramRapportFlashView, TelegramRapportFlashDateView, TelegramRapportInventaireView, TelegramRapportMensuelView
 from .dashboard import DashboardViewSet, StatistiquesViewSet
@@ -55,7 +55,7 @@ __all__ = [
     'StockLotViewSet', 'InventaireViewSet', 'LigneInventaireViewSet', 'StockAdjustmentViewSet',
     'StatsUGViewSet', 'RelationTransformationViewSet', 'HistoriqueTransformationViewSet',
     'StockAnalysisUnsoldView', 'StockAnalysisOverstockView', 'StockAnalysisShortageView', 'CadencierViewSet',
-    'CustomAuthToken', 'UserViewSet', 'verify_password',
+    'CustomAuthToken', 'UserViewSet', 'TeamViewSet', 'verify_password',
     'LoyaltySettingViewSet', 'InvoiceConfigurationView', 'PharmacySettingsView', 'ConfigurationOptionViewSet', 'WhatsAppTestView',
     'TelegramTestView', 'TelegramGetChatIdView', 'TelegramRapportFlashView', 'TelegramRapportFlashDateView', 'TelegramRapportInventaireView', 'TelegramRapportMensuelView',
     'DashboardViewSet', 'StatistiquesViewSet',

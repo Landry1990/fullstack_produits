@@ -18,6 +18,7 @@ from .config import (
 from .users import (
     ProfileSerializer,
     UserSerializer,
+    TeamSerializer,
     PosteCaisseSerializer,
     PosteVenteSerializer,
     SessionCaisseSerializer,

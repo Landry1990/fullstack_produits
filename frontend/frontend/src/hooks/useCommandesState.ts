@@ -338,13 +338,13 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       if (sansPeremption.length > 0) {
           const noms = sansPeremption.map((p) => {
               const nom = typeof p.produit === 'object' ? (p.produit as ProduitModel).name : p.produit_nom;
-              return `   • ${nom || 'Produit #' + (p.id || '?')}`;
+              return `   • ${nom || t('orders:messages.product_reference', { id: String(p.id || t('common:unknown')) })}`;
           });
           const confirmMissing = await confirm({
-              title: 'Date de péremption manquante',
-              message: `${sansPeremption.length} produit(s) sans date de péremption :\n\n${noms.join('\n')}\n\nVoulez-vous continuer la clôture ?`,
-              confirmText: 'Continuer',
-              cancelText: 'Vérifier',
+              title: t('orders:messages.missing_expiration_title'),
+              message: t('orders:messages.missing_expiration_message', { count: sansPeremption.length, products: noms.join('\n') }),
+              confirmText: t('orders:messages.missing_expiration_continue'),
+              cancelText: t('orders:messages.missing_expiration_verify'),
               variant: 'warning'
           });
           if (!confirmMissing) return;
@@ -363,12 +363,13 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
               const nom = typeof p.produit === 'object' ? (p.produit as ProduitModel).name : p.produit_nom;
               const price = Math.round(Number(p.price || 0));
               const sellingHT = Math.round(Number(p.selling_price || 0) / (1 + Number(p.tva || 0) / 100));
-              return `   • ${nom || 'Produit #' + (p.id || '?')} — Achat: ${price} F / Vente HT: ${sellingHT} F`;
+              const productName = nom || t('orders:messages.product_reference', { id: String(p.id || t('common:unknown')) });
+              return t('orders:messages.loss_product_line', { nom: productName, price, sellingHT });
           });
           const confirmPerte = await confirm({
-              title: t('orders:messages.selling_below_cost_title', { defaultValue: 'Vente à perte détectée' }),
-              message: `${produitsEnPerte.length} produit(s) vendu(s) en dessous du prix d'achat :\n\n${nomsPerte.join('\n')}\n\nVoulez-vous vraiment continuer la clôture ?`,
-              confirmText: t('orders:messages.selling_below_cost_confirm', { defaultValue: 'Forcer la clôture' }),
+              title: t('orders:messages.selling_below_cost_title'),
+              message: t('orders:messages.selling_below_cost_message', { count: produitsEnPerte.length, products: nomsPerte.join('\n') }),
+              confirmText: t('orders:messages.selling_below_cost_confirm'),
               cancelText: t('common:cancel'),
               variant: 'warning'
           });
@@ -377,7 +378,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
       const confirmed = await confirm({
           title: t('orders:details.close'),
-          message: t('orders:messages.close_confirm', { defaultValue: 'Voulez-vous vraiment clôturer cette commande ?' }),
+          message: t('orders:messages.close_confirm'),
           confirmText: t('common:confirm')
       });
 
@@ -414,10 +415,10 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       if (!selectedCommande) return;
 
       const confirmed = await confirm({
-          title: t('orders:details.delete', { defaultValue: 'Supprimer la commande' }),
-          message: t('orders:messages.delete_confirm', { defaultValue: `Voulez-vous vraiment supprimer la commande #${selectedCommande.id} ?` }),
-          confirmText: t('common:confirm', { defaultValue: 'Confirmer' }),
-          cancelText: t('common:cancel', { defaultValue: 'Annuler' })
+          title: t('orders:details.delete'),
+          message: t('orders:messages.delete_confirm', { id: selectedCommande.id }),
+          confirmText: t('common:confirm'),
+          cancelText: t('common:cancel')
       });
 
       if (!confirmed) return;
@@ -922,7 +923,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         if (e.ctrlKey || isFullySelected || isEmpty) {
             e.preventDefault();
             removeProductFromCommande(rowIndex);
-            toast.success(t('products:messages.delete_success', { defaultValue: 'Produit retiré' }), { icon: '🗑️', duration: 1000 });
+            toast.success(t('orders:messages.product_removed'), { icon: '🗑️', duration: 1000 });
             
             setTimeout(() => {
                 const nextRow = Math.min(rowIndex, commandeProduits.length - 1);
@@ -1126,7 +1127,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     if (statuses.size > 1) return { canMerge: false, reason: t('orders:messages.merge_same_status') };
     
     const status = selectedOrders[0]?.status;
-    if (status !== 'PREP') return { canMerge: false, reason: t('orders:messages.merge_only_prep', { defaultValue: 'Seules les commandes en préparation peuvent être fusionnées.' }) };
+    if (status !== 'PREP') return { canMerge: false, reason: t('orders:messages.merge_only_prep') };
     
     return { canMerge: true, status };
   }
@@ -1454,7 +1455,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
     commandeProduits.forEach(item => {
         const product = typeof item.produit === 'object' ? item.produit : produitsList.find(p => p.id === item.produit);
-        const nom = (typeof item.produit === 'object' ? item.produit?.name : product?.name) || `Produit #${item.produit}`;
+        const produitId = typeof item.produit === 'object' ? (item.produit as ProduitModel).id : item.produit;
+        const nom = (typeof item.produit === 'object' ? item.produit?.name : product?.name) || t('orders:messages.product_reference', { id: String(produitId || t('common:unknown')) });
         const qty = item.quantity || 0;
 
         if (!product) {
@@ -1491,10 +1493,10 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     // Générer un fichier .txt listant les produits sans CIP
     if (skippedProducts.length > 0) {
         const lines = [
-            `Produits non exportés vers ${wholesaler} (code ${cipLabel} manquant)`,
-            `Date : ${dateStr}`,
+            t('orders:messages.csv_skipped_file_header', { wholesaler, code: cipLabel }),
+            t('orders:messages.csv_skipped_file_date', { date: dateStr }),
             ``,
-            ...skippedProducts.map(p => `- ${p.nom}  (Qté : ${p.qty})`)
+            ...skippedProducts.map(p => t('orders:messages.csv_skipped_file_line', { nom: p.nom, qty: p.qty }))
         ];
         const txtBlob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8;' });
         const txtLink = document.createElement("a");
@@ -1507,12 +1509,12 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         document.body.removeChild(txtLink);
 
         if (exportedCount === 0) {
-            toast(`Aucun produit exporté — ${skippedProducts.length} produit(s) sans code ${cipLabel} listés dans le fichier téléchargé.`, { icon: '⚠️' });
+            toast(t('orders:messages.csv_no_exported', { skipped: skippedProducts.length, code: cipLabel }), { icon: '⚠️' });
         } else {
-            toast(`${exportedCount} exporté(s), ${skippedProducts.length} sans ${cipLabel} → liste téléchargée`, { icon: '⚠️' });
+            toast(t('orders:messages.csv_partial_exported', { exported: exportedCount, skipped: skippedProducts.length, code: cipLabel }), { icon: '⚠️' });
         }
     } else if (exportedCount > 0) {
-        toast.success(`${exportedCount} produit(s) exportés vers ${wholesaler}`);
+        toast.success(t('orders:messages.csv_export_success', { count: exportedCount, wholesaler }));
     }
   };
 

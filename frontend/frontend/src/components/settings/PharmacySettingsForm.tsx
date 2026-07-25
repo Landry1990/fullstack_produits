@@ -197,7 +197,7 @@ export default function PharmacySettingsForm() {
   const handleGetChatId = async () => {
     const bot_token = formData.telegram_bot_token
     if (!bot_token) {
-      import('react-hot-toast').then(({ toast }) => toast.error('Renseignez le Token Bot Telegram d\'abord'))
+      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.telegram_token_required')))
       return
     }
     setGettingChatId(true)
@@ -206,12 +206,12 @@ export default function PharmacySettingsForm() {
       const res = await api.post('telegram/get-chat-id/', { bot_token })
       if (res.data.status === 'ok') {
         handleChange('telegram_chat_id', res.data.chat_id)
-        import('react-hot-toast').then(({ toast }) => toast.success(`✅ Chat ID récupéré : ${res.data.chat_id} (${res.data.chat_name || 'inconnu'}). Sauvegardez les paramètres.`))
+        import('react-hot-toast').then(({ toast }) => toast.success(t('messages.telegram_chat_retrieved', { id: res.data.chat_id, name: res.data.chat_name || t('common:unknown') })))
       } else {
         import('react-hot-toast').then(({ toast }) => toast.error('⚠️ ' + res.data.message, { duration: 8000 }))
       }
     } catch (err) {
-      const msg = getApiErrorDetail(err, 'Erreur inconnue')
+      const msg = getApiErrorDetail(err, t('messages.unknown_error'))
       import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
     } finally {
       setGettingChatId(false)
@@ -220,11 +220,11 @@ export default function PharmacySettingsForm() {
 
   const handleTestTelegram = async () => {
     if (!formData.telegram_bot_token) {
-      import('react-hot-toast').then(({ toast }) => toast.error('Renseignez le Token Bot Telegram d\'abord'))
+      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.telegram_token_required')))
       return
     }
     if (!formData.telegram_chat_id) {
-      import('react-hot-toast').then(({ toast }) => toast.error('Chat ID manquant — utilisez le bouton « Récupérer mon Chat ID » d\'abord'))
+      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.telegram_chat_id_missing')))
       return
     }
     setTestingTelegram(true)
@@ -234,9 +234,9 @@ export default function PharmacySettingsForm() {
         bot_token: formData.telegram_bot_token,
         chat_id: formData.telegram_chat_id,
       })
-      import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || 'Envoyé')))
+      import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || t('messages.test_sent'))))
     } catch (err) {
-      const msg = getApiErrorDetail(err, 'Erreur inconnue')
+      const msg = getApiErrorDetail(err, t('messages.unknown_error'))
       import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
     } finally {
       setTestingTelegram(false)
@@ -246,16 +246,16 @@ export default function PharmacySettingsForm() {
   const handleTestWhatsapp = async () => {
     const numero = formData.pharmacist_whatsapp_number
     if (!numero) {
-      import('react-hot-toast').then(({ toast }) => toast.error('Renseignez le numéro WhatsApp titulaire d\'abord'))
+      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.whatsapp_number_required')))
       return
     }
     setTestingWhatsapp(true)
     try {
       const { default: api } = await import('../../services/api')
       const res = await api.post('whatsapp/test/', { numero: numero.replace('+', '') })
-      import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || 'Envoyé')))
+      import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || t('messages.test_sent'))))
     } catch (err) {
-      const msg = getApiErrorDetail(err, 'Erreur inconnue')
+      const msg = getApiErrorDetail(err, t('messages.unknown_error'))
       import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
     } finally {
       setTestingWhatsapp(false)
@@ -266,7 +266,7 @@ export default function PharmacySettingsForm() {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 2 * 1024 * 1024) {
-      import('react-hot-toast').then(({ toast }) => toast.error('Le logo ne doit pas dépasser 2 Mo'))
+      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.logo_size')))
       return
     }
     setUploadingLogo(true)
@@ -314,10 +314,10 @@ export default function PharmacySettingsForm() {
     { id: 'printing', label: t('tabs.printing'), icon: Printer },
     { id: 'stocks', label: t('tabs.stocks'), icon: Package },
     { id: 'tva', label: t('tabs.tva'), icon: Percent },
-    { id: 'fiscal', label: 'Fiscalité', icon: DollarSign },
+    { id: 'fiscal', label: t('tabs.fiscal'), icon: DollarSign },
     { id: 'notifications', label: t('tabs.notifications'), icon: Bell },
-    { id: 'reports', label: 'Rapports Auto', icon: FileText },
-    { id: 'postes_vente', label: 'Points de vente', icon: Store },
+    { id: 'reports', label: t('tabs.reports'), icon: FileText },
+    { id: 'postes_vente', label: t('tabs.sales_points'), icon: Store },
   ] as const
 
   return (
@@ -368,19 +368,19 @@ export default function PharmacySettingsForm() {
                       {/* Logo upload */}
                       <div className="flex flex-col gap-3">
                         <label>
-                          <span className="text-sm font-bold text-slate-500">Logo de la pharmacie</span>
+                          <span className="text-sm font-bold text-slate-500">{t('labels.logo')}</span>
                         </label>
                         <div className="flex items-center gap-6">
                           <div className="shrink-0 w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden">
                             {settings.logo ? (
-                              <img src={settings.logo} alt="Logo" className="w-full h-full object-contain" />
+                              <img src={settings.logo} alt={t('labels.logo')} className="w-full h-full object-contain" />
                             ) : (
                               <Settings className="h-8 w-8 text-slate-200" />
                             )}
                           </div>
                           <div className="flex flex-col gap-2 flex-1">
                             <p className="text-xs text-slate-400">
-                              Le logo apparaîtra sur les tickets de caisse et les factures. Format PNG ou JPG, 2 Mo max.
+                              {t('hints.logo')}
                             </p>
                             <div className="flex items-center gap-3">
                               <input
@@ -397,7 +397,7 @@ export default function PharmacySettingsForm() {
                                 disabled={uploadingLogo}
                                 onClick={() => logoInputRef.current?.click()}
                               >
-                                {uploadingLogo ? 'Import...' : settings.logo ? 'Remplacer' : 'Importer un logo'}
+                                {uploadingLogo ? t('buttons.logo_importing') : settings.logo ? t('buttons.logo_replace') : t('buttons.logo_import')}
                               </Button>
                               {settings.logo && (
                                 <Button
@@ -408,7 +408,7 @@ export default function PharmacySettingsForm() {
                                   onClick={handleLogoRemove}
                                   className="text-red-600 hover:text-red-600"
                                 >
-                                  {removingLogo ? 'Suppression...' : 'Supprimer'}
+                                  {removingLogo ? t('buttons.logo_deleting') : t('buttons.logo_delete')}
                                 </Button>
                               )}
                             </div>
@@ -573,12 +573,12 @@ export default function PharmacySettingsForm() {
                         <div className="p-2 bg-indigo-50 rounded-lg">
                           <CreditCard className="h-5 w-5 text-indigo-600" />
                         </div>
-                        {t('sections.payment_modes', { defaultValue: 'Modes de paiement' })}
+                        {t('sections.payment_modes')}
                       </h2>
                     </div>
                     <div className="p-8 space-y-6">
                       <p className="text-sm text-slate-500">
-                        {t('hints.payment_modes', { defaultValue: 'Désactivez les modes de paiement que vous n\'utilisez pas. Ils ne seront plus proposés dans la caisse et la facturation.' })}
+                        {t('hints.payment_modes')}
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {getConfigurablePaymentModes(formData.custom_payment_modes).map((mode) => {
@@ -626,7 +626,7 @@ export default function PharmacySettingsForm() {
                                     }
                                   }}
                                   className="text-red-400 hover:text-red-600 text-xs font-bold transition-colors h-auto p-0"
-                                  title="Supprimer ce mode"
+                                  title={t('buttons.delete_mode_title')}
                                 >✕</Button>
                               )}
                             </label>
@@ -637,13 +637,13 @@ export default function PharmacySettingsForm() {
                       {/* Ajouter un mode personnalisé */}
                       <div className="border-t border-slate-200 pt-4">
                         <h3 className="text-sm font-bold text-slate-600 mb-3">
-                          {t('labels.add_custom_mode', { defaultValue: 'Ajouter un mode personnalisé' })}
+                          {t('labels.add_custom_mode')}
                         </h3>
                         <div className="flex items-center gap-3">
                           <Input
                             type="text"
                             id="new-payment-mode-input"
-                            placeholder={t('placeholders.custom_mode', { defaultValue: 'Ex: PayPal, Stripe, Wave...' })}
+                            placeholder={t('placeholders.custom_mode')}
                             className="flex-1 h-10 px-4 rounded-lg border border-slate-300 bg-white text-sm focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
@@ -655,7 +655,7 @@ export default function PharmacySettingsForm() {
                                 if (!value) return
                                 const existing = [...(formData.custom_payment_modes || [])]
                                 if (existing.some((m: { value: string }) => m.value === value)) {
-                                  import('react-hot-toast').then(({ toast }) => toast.error('Ce mode existe déjà'))
+                                  import('react-hot-toast').then(({ toast }) => toast.error(t('messages.payment_mode_exists')))
                                   return
                                 }
                                 handleChange('custom_payment_modes', [...existing, { value, label }])
@@ -676,18 +676,18 @@ export default function PharmacySettingsForm() {
                               if (!value) return
                               const existing = [...(formData.custom_payment_modes || [])]
                               if (existing.some((m: { value: string }) => m.value === value)) {
-                                import('react-hot-toast').then(({ toast }) => toast.error('Ce mode existe déjà'))
+                                import('react-hot-toast').then(({ toast }) => toast.error(t('messages.payment_mode_exists')))
                                 return
                               }
                               handleChange('custom_payment_modes', [...existing, { value, label }])
                               input.value = ''
                             }}
                           >
-                            + Ajouter
+                            {t('buttons.add')}
                           </Button>
                         </div>
                         <p className="text-xs text-slate-400 mt-2">
-                          {t('hints.custom_mode', { defaultValue: 'Saisissez un nom et appuyez sur Entrée ou cliquez Ajouter. N\'oubliez pas de sauvegarder.' })}
+                          {t('hints.custom_mode')}
                         </p>
                       </div>
                     </div>
@@ -754,7 +754,7 @@ export default function PharmacySettingsForm() {
                     <div className="p-6 p-8">
                       <h3 className="font-bold text-lg flex items-center gap-3 mb-6">
                         <Printer className="size-6 text-indigo-600" />
-                        Format d'Impression
+                        {t('sections.printing_format')}
                       </h3>
                       <div className="flex flex-col gap-1">
                         <label>
@@ -778,7 +778,7 @@ export default function PharmacySettingsForm() {
                       <div className="flex items-center justify-between mb-6">
                         <h3 className="font-bold text-lg flex items-center gap-3">
                           <Smartphone className="size-6 text-indigo-600" />
-                          Multi-Postes
+                          {t('sections.multi_pos')}
                         </h3>
                         <Checkbox
                           checked={invSettings?.is_multi_caisse || false}
@@ -787,20 +787,20 @@ export default function PharmacySettingsForm() {
                         />
                       </div>
                       <p className="text-sm text-slate-500 italic leading-relaxed">
-                        Si activé, le système permet de dispatcher les ventes vers différents terminaux physiques.
+                        {t('hints.multi_pos')}
                       </p>
                       
                       {invSettings?.is_multi_caisse && (
                         <div className="mt-6 p-5 bg-indigo-50/50 rounded-xl space-y-4 border border-indigo-100 animate-in zoom-in-95 duration-300">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold">Caisse Centralisée</span>
+                            <span className="text-sm font-bold">{t('labels.centralized_cash_register')}</span>
                             <Checkbox
                               checked={invSettings?.centralized_cash_register || false}
                               onCheckedChange={(checked) => updateInvSettings({ centralized_cash_register: !!checked })}
                             />
                           </div>
                           <p className="text-xs text-slate-500">
-                            Active le groupement des ventes par session journalière pour une clôture centralisée.
+                            {t('hints.centralized_cash_register')}
                           </p>
                         </div>
                       )}
@@ -818,7 +818,7 @@ export default function PharmacySettingsForm() {
                         <div className="p-2 bg-indigo-50 rounded-lg">
                           <Package className="h-5 w-5 text-indigo-600" />
                         </div>
-                        Seuils d'Alerte & Système
+                        {t('sections.alerts_system')}
                       </h2>
                     </div>
                     <div className="p-8 space-y-8">
@@ -904,7 +904,7 @@ export default function PharmacySettingsForm() {
                         <div className="p-2 bg-amber-50 rounded-lg">
                           <Lock className="h-5 w-5 text-amber-600" />
                         </div>
-                        {t('sections.cash_security', { defaultValue: 'Sécurité Caisse' })}
+                        {t('sections.cash_security')}
                       </h2>
                     </div>
                     <div className="p-8 space-y-6">
@@ -917,10 +917,10 @@ export default function PharmacySettingsForm() {
                         />
                         <div className="flex-1">
                           <label htmlFor="hide_cash_totals" className="font-medium text-slate-800 cursor-pointer">
-                            {t('labels.hide_cash_totals', { defaultValue: 'Masquer les montants de caisse aux caissières' })}
+                            {t('labels.hide_cash_totals')}
                           </label>
                           <p className="text-sm text-slate-500 mt-1">
-                            {t('hints.hide_cash_totals', { defaultValue: 'Si activé : les caissières ne verront pas le récapitulatif live (totaux par mode de règlement) ni les montants dans le rapport de fermeture de caisse. Le titulaire (admin) verra toujours tout. Décochez pour permettre aux caissières de suivre leur caisse en temps réel.' })}
+                            {t('hints.hide_cash_totals')}
                           </p>
                         </div>
                       </div>
@@ -1022,39 +1022,39 @@ export default function PharmacySettingsForm() {
                     <div className="p-2 bg-indigo-100 rounded-lg">
                       <DollarSign className="h-5 w-5 text-indigo-600" />
                     </div>
-                    Précompte & Accompte
+                    {t('sections.fiscal')}
                   </h2>
                   <p className="text-sm text-slate-500 mt-2">
-                    Configuration du régime fiscal applicable à la pharmacie.
+                    {t('hints.fiscal_intro')}
                   </p>
                 </div>
                 <div className="p-8 space-y-6">
                   {/* Régime fiscal */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Régime fiscal</label>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">{t('labels.regime_fiscal')}</label>
                       <Select
                         value={formData.regime_fiscal || 'REEL'}
                         onChange={(e) => handleChange('regime_fiscal', e.target.value)}
                       >
-                        <option value="REEL">Régime du Réel</option>
-                        <option value="SIMPLIFIE">Régime Simplifié</option>
+                        <option value="REEL">{t('options.regime_reel')}</option>
+                        <option value="SIMPLIFIE">{t('options.regime_simplifie')}</option>
                       </Select>
                       <p className="text-xs text-slate-400 mt-1">
-                        Réel : accompte 2% + précompte 1%. Simplifié : accompte 5% + précompte 3-5%.
+                        {t('hints.regime_fiscal')}
                       </p>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Mode d'imposition</label>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">{t('labels.mode_imposition')}</label>
                       <Select
                         value={formData.mode_imposition || 'MARGE_ADMINISTREE'}
                         onChange={(e) => handleChange('mode_imposition', e.target.value)}
                       >
-                        <option value="MARGE_ADMINISTREE">Marge Administrée (14% sur marge brute)</option>
-                        <option value="DROIT_COMMUN">Droit Commun (sur chiffre d'affaires global)</option>
+                        <option value="MARGE_ADMINISTREE">{t('options.imposition_marge')}</option>
+                        <option value="DROIT_COMMUN">{t('options.imposition_common')}</option>
                       </Select>
                       <p className="text-xs text-slate-400 mt-1">
-                        Marge administrée : spécifique aux distributeurs de médicaments.
+                        {t('hints.mode_imposition')}
                       </p>
                     </div>
                   </div>
@@ -1062,14 +1062,14 @@ export default function PharmacySettingsForm() {
                   {/* Taux d'accompte — actifs uniquement en Droit Commun */}
                   <div className={`border-t border-slate-200 pt-6 transition-all duration-300 ${isMargeAdministree ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
                     <div className="flex items-center gap-2 mb-4">
-                      <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">Taux d'accompte (sur CA)</h3>
+                      <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">{t('fiscal.acompte_title')}</h3>
                       {isMargeAdministree && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Désactivé en Marge Administrée</span>
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{t('hints.disabled_marge')}</span>
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className={`transition-all duration-300 ${isReel ? '' : 'opacity-40'}`}>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux Réel (%)</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">{t('labels.taux_acompte_reel')}</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -1080,7 +1080,7 @@ export default function PharmacySettingsForm() {
                         />
                       </div>
                       <div className={`transition-all duration-300 ${!isReel ? '' : 'opacity-40'}`}>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux Simplifié (%)</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">{t('labels.taux_acompte_simplifie')}</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -1091,7 +1091,7 @@ export default function PharmacySettingsForm() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">CAC (%)</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">{t('labels.taux_cac')}</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -1107,14 +1107,14 @@ export default function PharmacySettingsForm() {
                   {/* Taux de précompte — actifs uniquement en Droit Commun */}
                   <div className={`border-t border-slate-200 pt-6 transition-all duration-300 ${isMargeAdministree ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
                     <div className="flex items-center gap-2 mb-4">
-                      <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">Taux de précompte (sur achats)</h3>
+                      <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">{t('fiscal.precompte_title')}</h3>
                       {isMargeAdministree && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Désactivé en Marge Administrée</span>
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{t('hints.disabled_marge')}</span>
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className={`transition-all duration-300 ${isReel ? '' : 'opacity-40'}`}>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux Réel (%)</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">{t('labels.taux_precompte_reel')}</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -1125,7 +1125,7 @@ export default function PharmacySettingsForm() {
                         />
                       </div>
                       <div className={`transition-all duration-300 ${!isReel ? '' : 'opacity-40'}`}>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux Simplifié (%)</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">{t('labels.taux_precompte_simplifie')}</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -1141,14 +1141,14 @@ export default function PharmacySettingsForm() {
                   {/* Marge administrée — active uniquement en Marge Administrée */}
                   <div className={`border-t border-slate-200 pt-6 transition-all duration-300 ${!isMargeAdministree ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
                     <div className="flex items-center gap-2 mb-4">
-                      <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">Marge administrée</h3>
+                      <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">{t('fiscal.marge_brute_title')}</h3>
                       {!isMargeAdministree && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Désactivé en Droit Commun</span>
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{t('hints.disabled_common')}</span>
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Taux sur marge brute (%)</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">{t('labels.taux_marge_brute')}</label>
                         <Input
                           type="number"
                           step="0.01"
@@ -1165,11 +1165,11 @@ export default function PharmacySettingsForm() {
                   <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex gap-3">
                     <Info className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
                     <div className="text-sm text-slate-600 space-y-1">
-                      <p className="font-bold text-slate-700">Rappel fiscal</p>
-                      <p>• <strong>Réel</strong> : Accompte 2% (+10% CAC = 2,2%) · Précompte 1%</p>
-                      <p>• <strong>Simplifié</strong> : Accompte 5% (+10% CAC = 5,5%) · Précompte 3-5%</p>
-                      <p>• <strong>Marge administrée</strong> : 14% sur la marge brute (pharmacie)</p>
-                      <p>• <strong>Droit commun</strong> : sur CA global (2,2% ou 5,5% selon régime)</p>
+                      <p className="font-bold text-slate-700">{t('fiscal.info_title')}</p>
+                      <p>• <strong>{t('options.regime_reel')}</strong> : {t('fiscal.info_reel')}</p>
+                      <p>• <strong>{t('options.regime_simplifie')}</strong> : {t('fiscal.info_simplifie')}</p>
+                      <p>• <strong>{t('fiscal.marge_brute_title')}</strong> : {t('fiscal.info_marge')}</p>
+                      <p>• <strong>{t('options.imposition_common')}</strong> : {t('fiscal.info_common')}</p>
                     </div>
                   </div>
                 </div>
@@ -1207,7 +1207,7 @@ export default function PharmacySettingsForm() {
                             value={formData.whatsapp_phone_id || ''}
                             onChange={(e) => handleChange('whatsapp_phone_id', e.target.value)}
                             className="w-full font-mono h-12 rounded-xl"
-                            placeholder="ID numérique de 15 chiffres"
+                            placeholder={t('placeholders.whatsapp_phone_id')}
                           />
                         </div>
                         <div className="flex flex-col gap-1">
@@ -1217,7 +1217,7 @@ export default function PharmacySettingsForm() {
                             value={formData.whatsapp_business_id || ''}
                             onChange={(e) => handleChange('whatsapp_business_id', e.target.value)}
                             className="w-full font-mono h-12 rounded-xl"
-                            placeholder="ID du compte business"
+                            placeholder={t('placeholders.whatsapp_account_id')}
                           />
                         </div>
                       </div>
@@ -1229,7 +1229,7 @@ export default function PharmacySettingsForm() {
                           onChange={(e) => handleChange('whatsapp_access_token', e.target.value)}
                           className="w-full font-mono text-xs rounded-xl p-4"
                           rows={3}
-                          placeholder="Token EAAG..."
+                          placeholder={t('placeholders.whatsapp_token')}
                         />
                       </div>
 
@@ -1241,7 +1241,7 @@ export default function PharmacySettingsForm() {
                             value={formData.pharmacist_whatsapp_number || ''}
                             onChange={(e) => handleChange('pharmacist_whatsapp_number', e.target.value)}
                             className="flex-1 font-mono h-12 rounded-xl"
-                            placeholder="Ex: 2376XXXXXXXX"
+                            placeholder={t('placeholders.pharmacist_whatsapp')}
                           />
                           <Button
                             type="button"
@@ -1269,7 +1269,7 @@ export default function PharmacySettingsForm() {
                         <div className="p-2 bg-[#229ED9]/20 rounded-lg">
                           <Bell className="h-5 w-5 text-[#229ED9]" />
                         </div>
-                        Rapports Telegram Bot
+                        {t('sections.telegram')}
                       </h2>
                       <Checkbox
                         checked={formData.telegram_enabled || false}
@@ -1279,29 +1279,29 @@ export default function PharmacySettingsForm() {
                     <div className={`p-8 space-y-8 transition-all duration-300 ${!formData.telegram_enabled ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
                       <div className="flex gap-4 p-5 rounded-xl bg-blue-50 border border-blue-200 text-sm">
                         <Info className="size-6 text-blue-500 shrink-0" />
-                        <span>Créez un bot via <strong>@BotFather</strong>, copiez le token, envoyez <strong>/start</strong> au bot, puis récupérez le Chat ID.</span>
+                        <span>{t('hints.telegram')}</span>
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label><span className="text-sm font-bold text-slate-500">Token Bot Telegram</span></label>
+                        <label><span className="text-sm font-bold text-slate-500">{t('labels.telegram_bot_token')}</span></label>
                         <Input
                           type="text"
                           value={formData.telegram_bot_token || ''}
                           onChange={(e) => handleChange('telegram_bot_token', e.target.value)}
                           className="w-full font-mono h-12 rounded-xl"
-                          placeholder="123456789:ABCDefGh..."
+                          placeholder={t('placeholders.telegram_bot_token')}
                         />
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label><span className="text-sm font-bold text-slate-500">Chat ID</span></label>
+                        <label><span className="text-sm font-bold text-slate-500">{t('labels.telegram_chat_id')}</span></label>
                         <div className="flex flex-col sm:flex-row gap-4">
                           <Input
                             type="text"
                             value={formData.telegram_chat_id || ''}
                             onChange={(e) => handleChange('telegram_chat_id', e.target.value)}
                             className="flex-1 font-mono h-12 rounded-xl"
-                            placeholder="Identifiant numérique du chat"
+                            placeholder={t('placeholders.telegram_chat_id')}
                           />
                           <div className="flex gap-2">
                             <Button
@@ -1311,7 +1311,7 @@ export default function PharmacySettingsForm() {
                               disabled={gettingChatId || !formData.telegram_enabled}
                               className="h-12 px-6 rounded-xl flex-1 font-bold border-blue-500 text-blue-600 hover:bg-blue-50"
                             >
-                              {gettingChatId ? <Loader2 className="size-5 animate-spin" /> : '🔍 Récupérer Chat ID'}
+                              {gettingChatId ? <Loader2 className="size-5 animate-spin" /> : t('buttons.get_chat_id')}
                             </Button>
                             <Button
                               type="button"
@@ -1319,12 +1319,12 @@ export default function PharmacySettingsForm() {
                               disabled={testingTelegram || !formData.telegram_enabled}
                               className="h-12 px-8 rounded-xl shadow-lg shadow-blue-500/20 font-bold bg-blue-600 hover:bg-blue-700"
                             >
-                              {testingTelegram ? <Loader2 className="size-5 animate-spin" /> : 'Tester'}
+                              {testingTelegram ? <Loader2 className="size-5 animate-spin" /> : t('buttons.test')}
                             </Button>
                           </div>
                         </div>
                         <label>
-                            <span className="text-xs text-slate-400">Envoyez /start à votre bot avant de cliquer sur Récupérer.</span>
+                            <span className="text-xs text-slate-400">{t('hints.telegram_start')}</span>
                         </label>
                       </div>
                     </div>
@@ -1342,8 +1342,8 @@ export default function PharmacySettingsForm() {
                         <FileText className="size-6 text-indigo-600" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-slate-800">Rapport Mensuel Automatique</h3>
-                        <p className="text-sm text-slate-500">Configurez les éléments à inclure dans le rapport mensuel</p>
+                        <h3 className="text-lg font-bold text-slate-800">{t('sections.monthly_report')}</h3>
+                        <p className="text-sm text-slate-500">{t('hints.monthly_report')}</p>
                       </div>
                     </div>
 
@@ -1352,8 +1352,8 @@ export default function PharmacySettingsForm() {
                       <div className="flex items-center gap-3">
                         <Bell className="size-5 text-indigo-600" />
                         <div>
-                          <p className="font-medium text-slate-800">Activer le rapport automatique</p>
-                          <p className="text-xs text-slate-500">Envoyé chaque mois aux destinataires configurés</p>
+                          <p className="font-medium text-slate-800">{t('labels.monthly_report_enabled')}</p>
+                          <p className="text-xs text-slate-500">{t('hints.monthly_report_enabled')}</p>
                         </div>
                       </div>
                       <Checkbox
@@ -1368,7 +1368,7 @@ export default function PharmacySettingsForm() {
                         <label>
                           <span className="font-medium text-slate-800 flex items-center gap-2">
                             <Clock className="size-4 text-slate-400" />
-                            Jour d'envoi du rapport
+                            {t('labels.monthly_report_day')}
                           </span>
                         </label>
                         <Input
@@ -1381,7 +1381,7 @@ export default function PharmacySettingsForm() {
                           disabled={!formData.monthly_report_enabled}
                         />
                         <label>
-                          <span className="text-xs text-slate-400">Jour du mois (1-28)</span>
+                          <span className="text-xs text-slate-400">{t('hints.monthly_report_day')}</span>
                         </label>
                       </div>
 
@@ -1389,18 +1389,18 @@ export default function PharmacySettingsForm() {
                         <label>
                           <span className="font-medium text-slate-800 flex items-center gap-2">
                             <Mail className="size-4 text-slate-400" />
-                            Destinataires (emails)
+                            {t('labels.report_recipients')}
                           </span>
                         </label>
                         <textarea
                           value={formData.report_recipients_email || ''}
                           onChange={(e) => handleChange('report_recipients_email', e.target.value)}
                           className="w-full rounded-xl min-h-[48px]"
-                          placeholder="email1@exemple.com, email2@exemple.com"
+                          placeholder={t('placeholders.report_recipients')}
                           disabled={!formData.monthly_report_enabled}
                         />
                         <label>
-                          <span className="text-xs text-slate-400">Séparés par des virgules</span>
+                          <span className="text-xs text-slate-400">{t('hints.report_recipients')}</span>
                         </label>
                       </div>
                     </div>
@@ -1415,7 +1415,7 @@ export default function PharmacySettingsForm() {
                         />
                         <span className="text-sm text-slate-800 flex items-center gap-1">
                           <Smartphone className="size-4 text-emerald-600" />
-                          Envoyer via WhatsApp
+                          {t('labels.report_send_whatsapp')}
                         </span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -1426,7 +1426,7 @@ export default function PharmacySettingsForm() {
                         />
                         <span className="text-sm text-slate-800 flex items-center gap-1">
                           <MessageSquare className="size-4 text-blue-500" />
-                          Envoyer via Telegram
+                          {t('labels.report_send_telegram')}
                         </span>
                       </label>
                     </div>
@@ -1441,8 +1441,8 @@ export default function PharmacySettingsForm() {
                         <BarChart3 className="size-6 text-emerald-600" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-slate-800">Éléments du Rapport</h3>
-                        <p className="text-sm text-slate-500">Cochez les éléments à inclure dans le rapport mensuel</p>
+                        <h3 className="text-lg font-bold text-slate-800">{t('sections.report_items')}</h3>
+                        <p className="text-sm text-slate-500">{t('hints.report_items')}</p>
                       </div>
                     </div>
 
@@ -1458,9 +1458,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <TrendingUp className="size-4 text-emerald-600" />
-                            <span className="font-medium text-slate-800">Ventes du mois</span>
+                            <span className="font-medium text-slate-800">{t('report_items.sales.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Chiffre d'affaires et nombre de transactions</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.sales.hint')}</p>
                         </div>
                       </label>
 
@@ -1475,9 +1475,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <DollarSign className="size-4 text-emerald-600" />
-                            <span className="font-medium text-slate-800">Marges réalisées</span>
+                            <span className="font-medium text-slate-800">{t('report_items.margins.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Taux de marge et profit net</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.margins.hint')}</p>
                         </div>
                       </label>
 
@@ -1492,9 +1492,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <Package className="size-4 text-blue-500" />
-                            <span className="font-medium text-slate-800">Santé du stock</span>
+                            <span className="font-medium text-slate-800">{t('report_items.stock_health.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Score global et disponibilité</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.stock_health.hint')}</p>
                         </div>
                       </label>
 
@@ -1509,9 +1509,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <PackageX className="size-4 text-red-600" />
-                            <span className="font-medium text-slate-800">Ruptures de stock</span>
+                            <span className="font-medium text-slate-800">{t('report_items.ruptures.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Produits en rupture et pertes estimées</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.ruptures.hint')}</p>
                         </div>
                       </label>
 
@@ -1526,9 +1526,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="size-4 text-amber-600" />
-                            <span className="font-medium text-slate-800">Alertes péremption</span>
+                            <span className="font-medium text-slate-800">{t('report_items.expiration.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Produits proches de la péremption</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.expiration.hint')}</p>
                         </div>
                       </label>
 
@@ -1543,9 +1543,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <BarChart3 className="size-4 text-purple-600" />
-                            <span className="font-medium text-slate-800">Top 10 produits</span>
+                            <span className="font-medium text-slate-800">{t('report_items.top_products.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Produits les plus vendus du mois</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.top_products.hint')}</p>
                         </div>
                       </label>
 
@@ -1560,9 +1560,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <Clock className="size-4 text-slate-600" />
-                            <span className="font-medium text-slate-800">Rotation lente</span>
+                            <span className="font-medium text-slate-800">{t('report_items.slow_moving.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Produits dormants et surstock</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.slow_moving.hint')}</p>
                         </div>
                       </label>
 
@@ -1577,9 +1577,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <Users className="size-4 text-indigo-600" />
-                            <span className="font-medium text-slate-800">Dettes clients/fournisseurs</span>
+                            <span className="font-medium text-slate-800">{t('report_items.debt.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Créances et dettes fournisseurs</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.debt.hint')}</p>
                         </div>
                       </label>
 
@@ -1594,9 +1594,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <DollarSign className="size-4 text-emerald-600" />
-                            <span className="font-medium text-slate-800">Résumé financier</span>
+                            <span className="font-medium text-slate-800">{t('report_items.financial.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Balance et flux de trésorerie</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.financial.hint')}</p>
                         </div>
                       </label>
 
@@ -1611,9 +1611,9 @@ export default function PharmacySettingsForm() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <TrendingUp className="size-4 text-blue-500" />
-                            <span className="font-medium text-slate-800">Comparaison avec le mois précédent</span>
+                            <span className="font-medium text-slate-800">{t('report_items.comparison.title')}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">Évolution mensuelle en pourcentage (ex: +15% vs mois dernier)</p>
+                          <p className="text-xs text-slate-500 mt-1">{t('report_items.comparison.hint')}</p>
                         </div>
                       </label>
                     </div>

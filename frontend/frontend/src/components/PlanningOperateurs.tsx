@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next';
 import {
   CalendarDays, Settings, FileText, Sparkles, Send, ChevronLeft, ChevronRight,
   Plane, Check, X, Clock, User, Loader2, RefreshCw, MessageSquare, Printer, Calendar,
+  Users, Plus, Trash2, Palette,
 } from 'lucide-react';
 import planningService, {
   type ShiftConfig, type ShiftSchedule, type ShiftAssignment, type ShiftType,
-  type LeaveRequest, type LeaveType, type LeaveBalance,
+  type LeaveRequest, type LeaveType, type LeaveBalance, type Team, type TeamMode,
 } from '../services/planningService';
 import userService, { type SimpleUser } from '../services/userService';
 import { useAuth } from '../context/AuthContext';
@@ -139,6 +140,36 @@ function ConfigTab() {
         <span className="text-sm text-slate-700 dark:text-slate-300">{t('config.rotate_shifts')}</span>
       </label>
 
+      {/* Team mode */}
+      <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('config.team_section')}</h4>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_mode')}</label>
+          <Select
+            value={form.team_mode ?? 'INDIVIDUAL'}
+            onChange={e => update('team_mode', e.target.value as TeamMode)}
+          >
+            <option value="INDIVIDUAL">{t('config.team_modes.INDIVIDUAL')}</option>
+            <option value="FIXED">{t('config.team_modes.FIXED')}</option>
+            <option value="ROTATING">{t('config.team_modes.ROTATING')}</option>
+          </Select>
+        </div>
+        {form.team_mode && form.team_mode !== 'INDIVIDUAL' && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_rotation_days')}</label>
+            <Input
+              type="number" min={1} max={30}
+              value={form.team_rotation_days ?? 3}
+              onChange={e => update('team_rotation_days', parseInt(e.target.value) || 3)}
+            />
+            <p className="text-xs text-slate-400 mt-1">{t('config.team_rotation_hint')}</p>
+          </div>
+        )}
+        {form.team_mode && form.team_mode !== 'INDIVIDUAL' && (
+          <p className="text-xs text-slate-400">{t('config.team_manage_hint')}</p>
+        )}
+      </div>
+
         <Button
           className="w-full"
           disabled={saveMutation.isPending}
@@ -149,6 +180,227 @@ function ConfigTab() {
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+// ── Teams Tab ──
+
+const TEAM_COLORS = [
+  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316',
+];
+
+function TeamsTab() {
+  const { t } = useTranslation('planning');
+  const qc = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    default_shift: 'MATIN' as ShiftType,
+    color: TEAM_COLORS[0],
+    ordering: 0,
+    member_ids: [] as number[],
+  });
+
+  const { data: teams, isLoading } = useQuery<Team[]>({
+    queryKey: ['teams'],
+    queryFn: planningService.getTeams,
+  });
+
+  const { data: operators } = useQuery<SimpleUser[]>({
+    queryKey: ['operators'],
+    queryFn: userService.getAll,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: typeof formData) => planningService.createTeam(data),
+    onSuccess: () => {
+      toast.success(t('toast.team_created'));
+      qc.invalidateQueries({ queryKey: ['teams'] });
+      resetForm();
+    },
+    onError: () => toast.error(t('toast.team_error')),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: typeof formData }) => planningService.updateTeam(id, data),
+    onSuccess: () => {
+      toast.success(t('toast.team_updated'));
+      qc.invalidateQueries({ queryKey: ['teams'] });
+      resetForm();
+    },
+    onError: () => toast.error(t('toast.team_error')),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => planningService.deleteTeam(id),
+    onSuccess: () => {
+      toast.success(t('toast.team_deleted'));
+      qc.invalidateQueries({ queryKey: ['teams'] });
+    },
+    onError: () => toast.error(t('toast.team_error')),
+  });
+
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingTeam(null);
+    setFormData({ name: '', default_shift: 'MATIN', color: TEAM_COLORS[0], ordering: 0, member_ids: [] });
+  };
+
+  const openCreate = () => {
+    setEditingTeam(null);
+    setFormData({ name: '', default_shift: 'MATIN', color: TEAM_COLORS[(teams?.length ?? 0) % TEAM_COLORS.length], ordering: teams?.length ?? 0, member_ids: [] });
+    setShowForm(true);
+  };
+
+  const openEdit = (team: Team) => {
+    setEditingTeam(team);
+    setFormData({
+      name: team.name,
+      default_shift: team.default_shift,
+      color: team.color,
+      ordering: team.ordering,
+      member_ids: team.member_ids || team.members?.map(m => m.id) || [],
+    });
+    setShowForm(true);
+  };
+
+  const handleSubmit = () => {
+    if (!formData.name.trim()) return;
+    if (editingTeam) {
+      updateMutation.mutate({ id: editingTeam.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const toggleMember = (userId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      member_ids: prev.member_ids.includes(userId)
+        ? prev.member_ids.filter(id => id !== userId)
+        : [...prev.member_ids, userId],
+    }));
+  };
+
+  return (
+    <div className="space-y-4 max-w-3xl mx-auto">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">{t('teams.title')}</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('teams.subtitle')}</p>
+        </div>
+        <Button size="sm" onClick={openCreate}>
+          <Plus size={16} /> {t('teams.add')}
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center p-8"><Loader2 className="size-8 text-emerald-600 animate-spin" /></div>
+      ) : !teams || teams.length === 0 ? (
+        <div className="text-center py-12 text-slate-400">
+          <Users size={48} className="mx-auto mb-3 opacity-50" />
+          <p>{t('teams.empty')}</p>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {teams.map(team => (
+            <Card key={team.id} className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: team.color }} />
+                  <div>
+                    <div className="font-semibold text-slate-800 dark:text-slate-200">{team.name}</div>
+                    <div className="text-xs text-slate-400">{t('teams.default_shift')}: {t(`shift_types.${team.default_shift === 'MATIN' ? 'MORNING' : team.default_shift === 'NUIT' ? 'NIGHT' : team.default_shift === 'GARDE' ? 'GUARD' : 'REST'}`)}</div>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(team)}>
+                    <Settings size={14} />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500" onClick={() => deleteMutation.mutate(team.id)}>
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {team.members && team.members.length > 0 ? team.members.map(m => (
+                  <Badge key={m.id} variant="secondary" className="text-xs">
+                    {m.full_name || `${m.first_name} ${m.last_name}`.trim() || m.username}
+                  </Badge>
+                )) : (
+                  <span className="text-xs text-slate-400">{t('teams.no_members')}</span>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={showForm} onOpenChange={(open) => !open && resetForm()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingTeam ? t('teams.edit') : t('teams.add')}</DialogTitle>
+            <DialogDescription>{t('teams.form_desc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.name')}</label>
+              <Input value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder={t('teams.name_placeholder')} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.default_shift')}</label>
+              <Select value={formData.default_shift} onChange={e => setFormData(prev => ({ ...prev, default_shift: e.target.value as ShiftType }))}>
+                <option value="MATIN">{t('shift_types.MORNING')}</option>
+                <option value="NUIT">{t('shift_types.NIGHT')}</option>
+                <option value="REPOS">{t('shift_types.REST')}</option>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.color')}</label>
+              <div className="flex flex-wrap gap-2">
+                {TEAM_COLORS.map(color => (
+                  <button
+                    key={color}
+                    type="button"
+                    className={`w-8 h-8 rounded-full border-2 transition ${formData.color === color ? 'border-slate-800 dark:border-white scale-110' : 'border-transparent'}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setFormData(prev => ({ ...prev, color }))}
+                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.members')}</label>
+              <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                {(operators || []).map(op => (
+                  <label key={op.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={formData.member_ids.includes(op.id)}
+                      onCheckedChange={() => toggleMember(op.id)}
+                    />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">
+                      {op.first_name || op.last_name ? `${op.first_name} ${op.last_name}`.trim() : op.username}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={resetForm}>{t('leaves.cancel')}</Button>
+            <Button
+              disabled={createMutation.isPending || updateMutation.isPending || !formData.name.trim()}
+              onClick={handleSubmit}
+            >
+              {createMutation.isPending || updateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Check size={16} />}
+              {editingTeam ? t('teams.save') : t('teams.add')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
@@ -675,7 +927,7 @@ export default function PlanningOperateurs() {
   const { t } = useTranslation('planning');
   const { user } = useAuth();
   const isAdmin = !!user?.is_superuser;
-  const [activeTab, setActiveTab] = useState<'planning' | 'conges' | 'config'>('planning');
+  const [activeTab, setActiveTab] = useState<'planning' | 'conges' | 'teams' | 'config'>('planning');
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 gap-4 font-sans">
@@ -699,6 +951,11 @@ export default function PlanningOperateurs() {
                 <Plane size={16} /> {t('tabs.leaves')}
               </TabsTrigger>
               {isAdmin && (
+                <TabsTrigger value="teams" className="gap-1.5">
+                  <Users size={16} /> {t('tabs.teams')}
+                </TabsTrigger>
+              )}
+              {isAdmin && (
                 <TabsTrigger value="config" className="gap-1.5">
                   <Settings size={16} /> {t('tabs.config')}
                 </TabsTrigger>
@@ -711,6 +968,11 @@ export default function PlanningOperateurs() {
             <TabsContent value="conges" className="p-6 overflow-auto">
               <LeavesTab isAdmin={isAdmin} />
             </TabsContent>
+            {isAdmin && (
+              <TabsContent value="teams" className="p-6 overflow-auto">
+                <TeamsTab />
+              </TabsContent>
+            )}
             {isAdmin && (
               <TabsContent value="config" className="p-6 overflow-auto">
                 <ConfigTab />
