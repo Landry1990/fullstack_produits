@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 import {
   CalendarDays, Settings, FileText, Sparkles, Send, ChevronLeft, ChevronRight,
   Plane, Check, X, Clock, User, Loader2, RefreshCw, MessageSquare, Printer, Calendar,
-  Users, Plus, Trash2, Palette,
+  Users, Plus, Trash2, BarChart3, Sun, Moon, Shield, Coffee,
 } from 'lucide-react';
 import planningService, {
   type ShiftConfig, type ShiftSchedule, type ShiftAssignment, type ShiftType,
   type LeaveRequest, type LeaveType, type LeaveBalance, type Team, type TeamMode,
+  type OperatorStats,
 } from '../services/planningService';
 import userService, { type SimpleUser } from '../services/userService';
 import { useAuth } from '../context/AuthContext';
@@ -68,51 +69,45 @@ function ConfigTab() {
   };
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-lg">{t('config.title')}</CardTitle>
-        <CardDescription>{t('config.subtitle')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Rotation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <RefreshCw size={18} className="text-emerald-600" />
+            {t('config.rotation_title')}
+          </CardTitle>
+          <CardDescription>{t('config.rotation_desc')}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.work_days_before_rest')}</label>
+            <Input type="number" min={1} max={14} value={form.work_days_before_rest ?? 5} onChange={e => update('work_days_before_rest', parseInt(e.target.value) || 5)} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.rest_days')}</label>
+            <Input type="number" min={1} max={14} value={form.rest_days ?? 2} onChange={e => update('rest_days', parseInt(e.target.value) || 2)} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.guard_frequency')}</label>
+            <Input type="number" min={1} max={30} value={form.guard_frequency_days ?? 7} onChange={e => update('guard_frequency_days', parseInt(e.target.value) || 7)} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.annual_leave_days')}</label>
+            <Input type="number" min={0} max={60} value={form.annual_leave_days ?? 26} onChange={e => update('annual_leave_days', parseInt(e.target.value) || 26)} />
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.work_days_before_rest')}</label>
-          <Input
-            type="number" min={1} max={14}
-            value={form.work_days_before_rest ?? 5}
-            onChange={e => update('work_days_before_rest', parseInt(e.target.value) || 5)}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.rest_days')}</label>
-          <Input
-            type="number" min={1} max={14}
-            value={form.rest_days ?? 2}
-            onChange={e => update('rest_days', parseInt(e.target.value) || 2)}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.guard_frequency')}</label>
-          <Input
-            type="number" min={1} max={30}
-            value={form.guard_frequency_days ?? 7}
-            onChange={e => update('guard_frequency_days', parseInt(e.target.value) || 7)}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.annual_leave_days')}</label>
-          <Input
-            type="number" min={0} max={60}
-            value={form.annual_leave_days ?? 26}
-            onChange={e => update('annual_leave_days', parseInt(e.target.value) || 26)}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('config.shift_hours')}</h4>
-        <div className="grid grid-cols-2 gap-4">
+      {/* Horaires */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Clock size={18} className="text-indigo-600" />
+            {t('config.shift_hours')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs text-slate-500 mb-1">{t('config.morning_start')}</label>
             <Input type="time" value={form.morning_start ?? '08:00'} onChange={e => update('morning_start', e.target.value)} />
@@ -129,57 +124,49 @@ function ConfigTab() {
             <label className="block text-xs text-slate-500 mb-1">{t('config.night_end')}</label>
             <Input type="time" value={form.night_end ?? '22:00'} onChange={e => update('night_end', e.target.value)} />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <label className="flex items-center gap-3 cursor-pointer">
-        <Checkbox
-          checked={form.rotate_shifts ?? true}
-          onCheckedChange={(checked) => update('rotate_shifts', checked === true)}
-        />
-        <span className="text-sm text-slate-700 dark:text-slate-300">{t('config.rotate_shifts')}</span>
-      </label>
+      {/* Options */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Settings size={18} className="text-slate-600" />
+            {t('config.options_title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <Checkbox checked={form.rotate_shifts ?? true} onCheckedChange={(checked) => update('rotate_shifts', checked === true)} />
+            <span className="text-sm text-slate-700 dark:text-slate-300">{t('config.rotate_shifts')}</span>
+          </label>
 
-      {/* Team mode */}
-      <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('config.team_section')}</h4>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_mode')}</label>
-          <Select
-            value={form.team_mode ?? 'INDIVIDUAL'}
-            onChange={e => update('team_mode', e.target.value as TeamMode)}
-          >
-            <option value="INDIVIDUAL">{t('config.team_modes.INDIVIDUAL')}</option>
-            <option value="FIXED">{t('config.team_modes.FIXED')}</option>
-            <option value="ROTATING">{t('config.team_modes.ROTATING')}</option>
-          </Select>
-        </div>
-        {form.team_mode && form.team_mode !== 'INDIVIDUAL' && (
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_rotation_days')}</label>
-            <Input
-              type="number" min={1} max={30}
-              value={form.team_rotation_days ?? 3}
-              onChange={e => update('team_rotation_days', parseInt(e.target.value) || 3)}
-            />
-            <p className="text-xs text-slate-400 mt-1">{t('config.team_rotation_hint')}</p>
+          <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('config.team_section')}</h4>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_mode')}</label>
+              <Select value={form.team_mode ?? 'INDIVIDUAL'} onChange={e => update('team_mode', e.target.value as TeamMode)}>
+                <option value="INDIVIDUAL">{t('config.team_modes.INDIVIDUAL')}</option>
+                <option value="FIXED">{t('config.team_modes.FIXED')}</option>
+                <option value="ROTATING">{t('config.team_modes.ROTATING')}</option>
+              </Select>
+            </div>
+            {form.team_mode && form.team_mode !== 'INDIVIDUAL' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_rotation_days')}</label>
+                <Input type="number" min={1} max={30} value={form.team_rotation_days ?? 3} onChange={e => update('team_rotation_days', parseInt(e.target.value) || 3)} />
+                <p className="text-xs text-slate-400 mt-1">{t('config.team_rotation_hint')}</p>
+              </div>
+            )}
           </div>
-        )}
-        {form.team_mode && form.team_mode !== 'INDIVIDUAL' && (
-          <p className="text-xs text-slate-400">{t('config.team_manage_hint')}</p>
-        )}
-      </div>
+        </CardContent>
+      </Card>
 
-        <Button
-          className="w-full"
-          disabled={saveMutation.isPending}
-          onClick={() => saveMutation.mutate(form)}
-        >
-          {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Settings size={18} />}
-          {t('config.save')}
-        </Button>
-      </CardContent>
-    </Card>
+      <Button className="w-full" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate(form)}>
+        {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Check size={18} />}
+        {t('config.save')}
+      </Button>
+    </div>
   );
 }
 
@@ -401,6 +388,78 @@ function TeamsTab() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// ── Stats Panel ──
+
+function StatsPanel({ scheduleId }: { scheduleId: number }) {
+  const { t } = useTranslation('planning');
+  const { data: stats, isLoading } = useQuery<OperatorStats[]>({
+    queryKey: ['schedule-stats', scheduleId],
+    queryFn: () => planningService.getStats(scheduleId),
+  });
+
+  if (isLoading) return <div className="flex justify-center p-4"><Loader2 className="size-6 text-emerald-600 animate-spin" /></div>;
+  if (!stats || stats.length === 0) return null;
+
+  const shiftColors: Record<string, string> = {
+    MATIN: 'text-amber-600',
+    NUIT: 'text-indigo-600',
+    GARDE: 'text-red-600',
+    REPOS: 'text-slate-400',
+    CONGE: 'text-emerald-600',
+  };
+
+  const shiftIcons: Record<string, typeof Sun> = {
+    MATIN: Sun, NUIT: Moon, GARDE: Shield, REPOS: Coffee, CONGE: Plane,
+  };
+
+  return (
+    <Card className="mb-4">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <BarChart3 size={16} className="text-emerald-600" />
+          {t('stats.title')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 dark:border-slate-800">
+                <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase">{t('stats.operator')}</th>
+                {(['MATIN', 'NUIT', 'GARDE', 'REPOS', 'CONGE'] as const).map(st => {
+                  const Icon = shiftIcons[st];
+                  return (
+                    <th key={st} className="text-center py-2 px-2 font-medium text-slate-500 text-xs">
+                      <div className="flex items-center justify-center gap-1">
+                        <Icon size={12} />
+                        {t(SHIFT_STYLES[st].labelKey)}
+                      </div>
+                    </th>
+                  );
+                })}
+                <th className="text-center py-2 px-3 font-medium text-slate-500 text-xs uppercase">{t('stats.total_work')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.map(s => (
+                <tr key={s.user_id} className="border-b border-slate-50 dark:border-slate-800/50">
+                  <td className="py-2 px-3 font-medium text-slate-700 dark:text-slate-300">{s.full_name}</td>
+                  {(['MATIN', 'NUIT', 'GARDE', 'REPOS', 'CONGE'] as const).map(st => (
+                    <td key={st} className={`text-center py-2 px-2 font-semibold ${shiftColors[st]}`}>
+                      {s[st] > 0 ? s[st] : '—'}
+                    </td>
+                  ))}
+                  <td className="text-center py-2 px-3 font-bold text-slate-700 dark:text-slate-300">{s.total_work}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -631,7 +690,7 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2 print:hidden">
         {(Object.keys(SHIFT_STYLES) as ShiftType[]).map(type => {
           const { Icon } = SHIFT_STYLES[type];
           return (
@@ -642,6 +701,9 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
           );
         })}
       </div>
+
+      {/* Stats Panel (admin only, month view) */}
+      {schedule && isAdmin && viewMode === 'month' && <StatsPanel scheduleId={schedule.id} />}
 
       {/* Calendar Grid */}
       {isLoading ? (
@@ -684,14 +746,15 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
                     const assignment = assignmentMap[`${op.id}_${dateStr}`];
                     const shiftType = assignment?.shift_type;
                     const style = shiftType ? SHIFT_STYLES[shiftType] : null;
+                    const isToday = formatDateISO(day) === formatDateISO(new Date());
                     return (
                       <td
                         key={dateStr}
-                        className={`px-1 py-1 text-center cursor-${isAdmin ? 'pointer' : 'default'} ${isAdmin && schedule ? 'hover:ring-2 hover:ring-emerald-500/30' : ''}`}
+                        className={`px-1 py-1 text-center cursor-${isAdmin ? 'pointer' : 'default'} ${isToday ? 'ring-1 ring-emerald-200 dark:ring-emerald-800' : ''} ${isAdmin && schedule ? 'hover:ring-2 hover:ring-emerald-500/30' : ''}`}
                         onClick={() => handleCellClick(op.id, dateStr)}
                       >
                         {style && (
-                          <div className={`inline-flex items-center justify-center w-7 h-7 rounded-md ${style.bg} ${style.text}`} title={t(style.labelKey)}>
+                          <div className={`inline-flex items-center justify-center w-7 h-7 rounded-md ${style.bg} ${style.text} ${style.border} border`} title={t(style.labelKey)}>
                             <style.Icon size={14} />
                           </div>
                         )}

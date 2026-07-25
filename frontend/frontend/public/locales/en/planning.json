@@ -53,7 +53,15 @@
         },
         "team_rotation_days": "Block duration (days)",
         "team_rotation_hint": "Teams rotate between Morning / Night / Rest every N days.",
-        "team_manage_hint": "Create and manage your teams in the Teams tab."
+        "team_manage_hint": "Create and manage your teams in the Teams tab.",
+        "rotation_title": "Shift rotation",
+        "rotation_desc": "Configure work, rest and on-call cycles",
+        "options_title": "Advanced options"
+    },
+    "stats": {
+        "title": "Monthly statistics",
+        "operator": "Operator",
+        "total_work": "Total work"
     },
     "teams": {
         "title": "Operator teams",

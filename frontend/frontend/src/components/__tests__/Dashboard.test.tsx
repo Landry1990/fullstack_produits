@@ -20,6 +20,27 @@ const renderWithProviders = (ui: React.ReactElement) => {
     );
 };
 
+// Mock useRecharts so chart-dependent dashboard sections render synchronously
+vi.mock('../../hooks/useRecharts', () => ({
+    useRecharts: () => ({
+        ResponsiveContainer: ({ children }: unknown) => <div>{children}</div>,
+        BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
+        Bar: () => <div data-testid="bar" />,
+        AreaChart: ({ children }: unknown) => <div data-testid="area-chart">{children}</div>,
+        Area: () => <div data-testid="area" />,
+        LineChart: ({ children }: unknown) => <div data-testid="line-chart">{children}</div>,
+        Line: () => <div data-testid="line" />,
+        PieChart: ({ children }: unknown) => <div data-testid="pie-chart">{children}</div>,
+        Pie: () => <div data-testid="pie" />,
+        XAxis: () => <div data-testid="x-axis" />,
+        YAxis: () => <div data-testid="y-axis" />,
+        CartesianGrid: () => <div data-testid="cartesian-grid" />,
+        Tooltip: () => <div data-testid="tooltip" />,
+        Legend: () => <div data-testid="legend" />,
+        Cell: () => <div data-testid="cell" />,
+    }),
+}));
+
 // Mock recharts
 // Mock recharts
 vi.mock('recharts', () => ({
@@ -43,6 +64,7 @@ vi.mock('recharts', () => ({
 // Mock hooks — includes ALL hooks used by Dashboard
 vi.mock('../../hooks/useDashboard', () => ({
     useDashboardStats: vi.fn(),
+    useDashboardHeavyStats: vi.fn(),
     useRevenueChart: vi.fn(),
     useLowStock: vi.fn(),
     useUgStats: vi.fn(),
@@ -55,6 +77,8 @@ vi.mock('../../hooks/useDashboard', () => ({
     useManagerStats: vi.fn(),
     useCurrentObjectifs: vi.fn(),
     useVendeursRanking: vi.fn(),
+    useFrequentStockouts: vi.fn(),
+    useVendeurStats: vi.fn(),
 }));
 
 vi.mock('../../context/PharmacySettingsContext', () => ({
@@ -223,6 +247,9 @@ describe('Dashboard Component', () => {
         (useDashboardHooks.useManagerStats as unknown).mockReturnValue({ data: null });
         (useDashboardHooks.useCurrentObjectifs as unknown).mockReturnValue({ data: null });
         (useDashboardHooks.useVendeursRanking as unknown).mockReturnValue({ data: null });
+        (useDashboardHooks.useDashboardHeavyStats as unknown).mockReturnValue({ data: null, isLoading: false, error: null });
+        (useDashboardHooks.useFrequentStockouts as unknown).mockReturnValue({ data: null, isLoading: false, error: null });
+        (useDashboardHooks.useVendeurStats as unknown).mockReturnValue({ data: null, isLoading: false, error: null });
     });
 
     it('renders loading state correctly', () => {
@@ -248,16 +275,16 @@ describe('Dashboard Component', () => {
     });
 
     it('renders main statistics correctly', () => {
-        renderWithProviders(<Dashboard />);
+        const { container } = renderWithProviders(<Dashboard />);
         
-        // Check Revenue (150 000 appears in revenue card)
-        expect(screen.getAllByText(/150\s?000/).length).toBeGreaterThan(0);
+        // Check Revenue (150 000 appears in revenue card, tolerant to Intl separators)
+        expect(container.textContent).toMatch(/150[\s\u00a0\u202f,]?000/);
         
         // Check Receivables
-        expect(screen.getAllByText(/45\s?000/).length).toBeGreaterThan(0);
+        expect(container.textContent).toMatch(/45[\s\u00a0\u202f,]?000/);
         
         // Check Stock Value
-        expect(screen.getAllByText(/2\s?500\s?000/).length).toBeGreaterThan(0);
+        expect(container.textContent).toMatch(/2[\s\u00a0\u202f,]?500[\s\u00a0\u202f,]?000/);
     });
 
     it('displays stock product count', () => {
@@ -369,11 +396,29 @@ describe('Dashboard Component', () => {
         (useDashboardHooks.useDashboardStats as unknown).mockReturnValue({
             data: vendeurStats, isLoading: false, error: null, refetch: vi.fn()
         });
+        (useDashboardHooks.useVendeurStats as unknown).mockReturnValue({
+            data: {
+                vendeur: 'Test Vendeur',
+                ca_sem: 0,
+                nb_sem: 0,
+                ca_mois: 0,
+                nb_mois: 0,
+                panier_mois: 16667,
+                total_vendeurs: 1,
+                rang: 1,
+                objectif_jour_perso: 0,
+                progression_perso: 0,
+                sparkline: [],
+                top_produits: [],
+            },
+            isLoading: false,
+            error: null,
+        });
 
-        renderWithProviders(<Dashboard />);
+        const { container } = renderWithProviders(<Dashboard />);
 
         // VENDEUR voit Mon Panier Moyen (avg_basket: 16667) formaté
-        expect(screen.getAllByText(/16[\s\xa0]?667/).length).toBeGreaterThan(0);
+        expect(container.textContent).toMatch(/16[\s\xa0\u202f,]?667/);
         // Le dashboard se rend sans crash
         expect(document.body).toBeInTheDocument();
     });

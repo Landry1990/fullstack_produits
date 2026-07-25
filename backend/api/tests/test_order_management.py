@@ -32,6 +32,14 @@ class OrderManagementTestCase(APITestCase):
             rayon=self.rayon,
             fournisseur=self.fournisseur
         )
+        # Créer un lot initial pour que le stock géré par lots soit cohérent
+        TestDataFactory.create_stock_lot(
+            produit=self.produit,
+            quantity=10,
+            quantity_remaining=10,
+            lot_name='INIT',
+            price_cost=500,
+        )
 
     def test_create_commande(self):
         """Test creating a new draft command."""
