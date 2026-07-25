@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-07-25 (22:30)
+
+### 🔄 Refonte complète — Planning des Opérateurs
+
+- **Algorithme de génération de quarts réécrit** (`backend/api/views/planning.py`)
+  - Suivi des jours de travail consécutifs et nuits consécutives (max 3 nuits d'affilée).
+  - Couverture minimale garantie : si personne n'est assigné un jour, un opérateur en repos est requalifié en Matin.
+  - Équité améliorée : comptage des affectations depuis le début du mois (pas seulement depuis `start_day`).
+  - Gardes pharmaciens uniquement : rotation équitable basée sur le nombre de gardes déjà effectuées.
+  - Repos obligatoire le lendemain d'une garde.
+  - Support des modes équipe (FIXED, ROTATING) et individuel.
+
+- **Nouvel endpoint API `stats`** sur `ShiftScheduleViewSet`
+  - Compteurs par opérateur : MATIN, NUIT, GARDE, REPOS, CONGE + total travail.
+  - Permissions : `IsAuthenticated` (visible par tous les utilisateurs connectés).
+
+- **UI/UX PlanningOperateurs.tsx refaite**
+  - `ConfigTab` : 3 cartes séparées (Rotation, Horaires, Options) avec icônes et descriptions.
+  - Nouveau `StatsPanel` : tableau de statistiques par opérateur (admin, vue mois).
+  - Calendar grid améliorée : cellules avec bordures colorées, highlight du jour actuel, hover pour édition.
+  - Legend compacte avec pills arrondies + masquée à l'impression.
+  - Import de `BarChart3`, `Sun`, `Moon`, `Shield`, `Coffee` pour les icônes de stats.
+
+- **Frontend `planningService.ts`**
+  - Ajout du type `OperatorStats` et de la méthode `getStats(scheduleId)`.
+
+- **Frontend `planningHelpers.ts`**
+  - `SHIFT_STYLES` enrichi avec `border` et `short` pour chaque type de quart.
+
+- **Traductions `fr/planning.json` + `en/planning.json`**
+  - Ajout de `stats.title`, `stats.operator`, `stats.total_work`.
+  - Ajout de `config.rotation_title`, `config.rotation_desc`, `config.options_title`.
+
+- **Déploiement** : `deploy.ps1 -Target all` — frontend buildé, backend copié et redémarré.
+
+---
+
 ## 2026-07-25
 
 ### 🚀 Déploiement & Installation
