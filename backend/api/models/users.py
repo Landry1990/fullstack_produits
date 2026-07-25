@@ -61,6 +61,36 @@ class Profile(models.Model):
         return f"Profile of {self.user.username}"
 
 
+class Team(models.Model):
+    """Équipe de travail (regroupement d'utilisateurs pour le planning)."""
+    SHIFT_TYPE_CHOICES = [
+        ('MATIN', 'Matin'),
+        ('NUIT', 'Nuit'),
+        ('GARDE', 'Garde'),
+        ('REPOS', 'Repos'),
+    ]
+    name = models.CharField(max_length=100, verbose_name="Nom")
+    members = models.ManyToManyField(
+        User, related_name='teams', blank=True, verbose_name="Membres"
+    )
+    default_shift = models.CharField(
+        max_length=10, choices=SHIFT_TYPE_CHOICES, default='MATIN',
+        verbose_name="Poste par défaut (mode équipe fixe)"
+    )
+    color = models.CharField(max_length=7, default='#3B82F6', verbose_name="Couleur")
+    ordering = models.PositiveIntegerField(default=0, verbose_name="Ordre")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['ordering', 'name']
+        verbose_name = "Équipe"
+        verbose_name_plural = "Équipes"
+
+    def __str__(self):
+        return self.name
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

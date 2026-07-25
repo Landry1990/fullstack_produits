@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import communicationService from '../../services/communicationService';
 import MessagingModal from './MessagingModal';
 import FeedbackModal from './FeedbackModal';
-import { Bell, ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle, Key } from 'lucide-react';
 import { playNotificationSound } from '../../utils/audio';
 
 export default function UserHeader() {
@@ -214,6 +214,15 @@ export default function UserHeader() {
                 </div>
 
                 <div className="p-2 bg-slate-50 border-t border-slate-100">
+                  {user.is_superuser && (
+                    <button
+                      onClick={() => window.location.href = '/licence?update=1'}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600 hover:bg-amber-50 hover:text-amber-600 transition-colors text-left"
+                    >
+                      <Key size={18} />
+                      <span className="font-semibold">Mettre à jour la licence</span>
+                    </button>
+                  )}
                   <button 
                     onClick={logout}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 transition-colors text-left"

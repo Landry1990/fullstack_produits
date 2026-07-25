@@ -70,6 +70,23 @@
         "optimized": "Prix optimisés"
     },
     "supplier_analysis": "Analyse Fournisseurs",
+    "predictions": {
+        "confidence": "Confiance : {{value}}"
+    },
+    "variance": {
+        "title": "Rapport de Variation de Marge",
+        "subtitle": "Analyse des fluctuations de profit et intégrité des données",
+        "current_period": "Période Actuelle",
+        "baseline": "Référence (Hier)",
+        "profit": "Marge",
+        "key_insights": "Analyses Clés",
+        "atypical_margins": "Marges Atypiques Détectées",
+        "product": "Produit",
+        "margin": "Marge",
+        "cost_pmp": "Coût (PMP)",
+        "high_margin_note": "* Les marges élevées (>80%) indiquent souvent des prix d'achat manquants (PMP = 0).",
+        "no_abnormal": "Aucune marge anormale détectée aujourd'hui."
+    },
     "supplier": {
         "name": "Fournisseur",
         "score": "Score Global",

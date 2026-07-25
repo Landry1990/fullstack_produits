@@ -196,6 +196,8 @@
     "cip": "CIP",
     "not_available": "N/A",
     "no_results_found": "Aucun résultat trouvé",
+    "no_data": "Aucune donnée",
+    "others": "autres",
     "filters": "Filtres",
     "filter": "Filtrer",
     "months": {

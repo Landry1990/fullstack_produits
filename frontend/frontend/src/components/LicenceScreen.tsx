@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Lock, ShieldAlert, Copy, Send, FileUp, Info, UserCheck, Hospital, Calendar, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLicence } from '../context/LicenceContext';
 import { useTranslation } from 'react-i18next';
 
@@ -23,6 +23,8 @@ const LicenceScreen = () => {
     const [previewData, setPreviewData] = useState<PreviewData | null>(null);
     const { refreshLicence } = useLicence();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const isUpdateMode = searchParams.get('update') === '1';
 
     useEffect(() => {
         // Au chargement, on récupère l'empreinte matérielle pour l'afficher
@@ -31,7 +33,8 @@ const LicenceScreen = () => {
                 setHardwareId(res.data.hardware_id || 'UNKNOWN');
                 setStatus(res.data);
                 // Si la licence est déjà valide, on redirige vers l'accueil
-                if (res.data.is_valid) {
+                // sauf en mode mise à jour explicite (banner "Mettre à jour")
+                if (res.data.is_valid && !isUpdateMode) {
                     navigate('/');
                 }
             })
@@ -39,7 +42,7 @@ const LicenceScreen = () => {
                 console.error("Erreur lecture licence", err);
                 setHardwareId('UNKNOWN');
             });
-    }, [navigate]);
+    }, [navigate, isUpdateMode]);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(hardwareId);

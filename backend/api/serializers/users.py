@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib.auth.models import User
 from django.db.models import Sum
 from decimal import Decimal
-from ..models import Profile, PosteCaisse, PosteVente, SessionCaisse
+from ..models import Profile, Team, PosteCaisse, PosteVente, SessionCaisse
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -138,6 +138,18 @@ class UserSerializer(serializers.ModelSerializer):
             profile.save()
 
         return instance
+
+
+class TeamSerializer(serializers.ModelSerializer):
+    member_ids = serializers.PrimaryKeyRelatedField(
+        many=True, source='members', queryset=User.objects.all(), required=False
+    )
+    members = UserSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Team
+        fields = ['id', 'name', 'default_shift', 'color', 'ordering', 'members', 'member_ids', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class PosteCaisseSerializer(serializers.ModelSerializer):

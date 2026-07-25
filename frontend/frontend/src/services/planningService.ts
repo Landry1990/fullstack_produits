@@ -2,6 +2,8 @@ import api from './api';
 
 // ── Types ──
 
+export type TeamMode = 'INDIVIDUAL' | 'FIXED' | 'ROTATING';
+
 export interface ShiftConfig {
   id: number;
   work_days_before_rest: number;
@@ -13,6 +15,20 @@ export interface ShiftConfig {
   night_start: string;
   night_end: string;
   annual_leave_days: number;
+  team_mode: TeamMode;
+  team_rotation_days: number;
+}
+
+export interface Team {
+  id: number;
+  name: string;
+  default_shift: ShiftType;
+  color: string;
+  ordering: number;
+  members: SimpleUser[];
+  member_ids: number[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SimpleUser {
@@ -160,6 +176,24 @@ const planningService = {
   getLeaveBalance: async (): Promise<LeaveBalance> => {
     const res = await api.get<LeaveBalance>('leave-requests/balance/');
     return res.data;
+  },
+
+  // Teams
+  getTeams: async (): Promise<Team[]> => {
+    const res = await api.get<unknown>('teams/');
+    const data = res.data as Team[] | { results: Team[] };
+    return Array.isArray(data) ? data : (data.results || []);
+  },
+  createTeam: async (data: Partial<Team>): Promise<Team> => {
+    const res = await api.post<Team>('teams/', data);
+    return res.data;
+  },
+  updateTeam: async (id: number, data: Partial<Team>): Promise<Team> => {
+    const res = await api.patch<Team>(`teams/${id}/`, data);
+    return res.data;
+  },
+  deleteTeam: async (id: number): Promise<void> => {
+    await api.delete(`teams/${id}/`);
   },
 };
 

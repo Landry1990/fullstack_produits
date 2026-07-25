@@ -40,7 +40,7 @@ export default function LicenceExpirationBanner() {
 
             {!isExpired && (
                 <button 
-                    onClick={() => window.location.href = '/licence'}
+                    onClick={() => window.location.href = '/licence?update=1'}
                     className="ml-4 px-3 py-1 bg-base-100/20 hover:bg-base-100/30 rounded-lg transition-colors border border-white/20 text-xs font-bold uppercase"
                 >
                     {t('licence_banner.update')}

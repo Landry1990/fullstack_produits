@@ -742,7 +742,7 @@ export default function GestionUtilisateurs() {
                             )}
                             {allowedMenus.length === 0 && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-500 border border-red-100">
-                                Aucun accès
+                                {t('badges.no_access')}
                               </span>
                             )}
                           </>
