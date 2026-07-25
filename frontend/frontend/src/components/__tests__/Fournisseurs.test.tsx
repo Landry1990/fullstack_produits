@@ -15,6 +15,27 @@ vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: { id: 1, role: 'PHARMACIEN' } })
 }));
 
+// Mock useRecharts so the finance modal (ModuleFinancier) renders synchronously
+vi.mock('../../hooks/useRecharts', () => ({
+  useRecharts: () => ({
+    ResponsiveContainer: ({ children }: unknown) => <div>{children}</div>,
+    AreaChart: ({ children }: unknown) => <div data-testid="area-chart">{children}</div>,
+    Area: () => <div />,
+    LineChart: ({ children }: unknown) => <div data-testid="line-chart">{children}</div>,
+    Line: () => <div />,
+    BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
+    Bar: () => <div />,
+    PieChart: ({ children }: unknown) => <div data-testid="pie-chart">{children}</div>,
+    Pie: () => <div />,
+    XAxis: () => <div />,
+    YAxis: () => <div />,
+    CartesianGrid: () => <div />,
+    Tooltip: () => <div />,
+    Legend: () => <div />,
+    Cell: () => <div />,
+  }),
+}));
+
 vi.mock('../../hooks/useSupplierDashboard', () => ({
   useSupplierDashboard: () => ({
     stats: {
@@ -36,17 +57,23 @@ vi.mock('../../hooks/useConfirm', () => ({
   useConfirm: () => vi.fn().mockResolvedValue(true)
 }));
 
-vi.mock('../../hooks/useFinanceFournisseurs', () => ({
-  useFinanceFournisseurs: () => ({
-    paiements: [],
-    fournisseurs: [],
-    loading: false,
-    fetchFournisseurs: vi.fn(),
-    fetchPaiements: vi.fn().mockResolvedValue([]),
-    createPaiement: vi.fn().mockResolvedValue({}),
-    deletePaiement: vi.fn().mockResolvedValue({}),
-  }),
-}));
+vi.mock('../../hooks/useFinanceFournisseurs', () => {
+  const mockFetchPaiements = vi.fn().mockResolvedValue([]);
+  const mockFetchFournisseurs = vi.fn();
+  const mockCreatePaiement = vi.fn().mockResolvedValue({});
+  const mockDeletePaiement = vi.fn().mockResolvedValue({});
+  return {
+    useFinanceFournisseurs: () => ({
+      paiements: [],
+      fournisseurs: [],
+      loading: false,
+      fetchFournisseurs: mockFetchFournisseurs,
+      fetchPaiements: mockFetchPaiements,
+      createPaiement: mockCreatePaiement,
+      deletePaiement: mockDeletePaiement,
+    }),
+  };
+});
 
 const mockFournisseurs = [
   { id: 1, name: 'Pharma Distrib', phone: '0102030405', email: 'contact@pharma.com', address: 'Paris', solde_dette: '150000' },

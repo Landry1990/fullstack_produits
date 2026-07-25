@@ -89,6 +89,18 @@ export interface LeaveBalance {
   remaining_days: number;
 }
 
+export interface OperatorStats {
+  user_id: number;
+  username: string;
+  full_name: string;
+  MATIN: number;
+  NUIT: number;
+  GARDE: number;
+  REPOS: number;
+  CONGE: number;
+  total_work: number;
+}
+
 // ── Service ──
 
 const planningService = {
@@ -142,6 +154,10 @@ const planningService = {
     const res = await api.post<ShiftAssignment>(
       `shift-schedules/${scheduleId}/update_assignment/`, data
     );
+    return res.data;
+  },
+  getStats: async (scheduleId: number): Promise<OperatorStats[]> => {
+    const res = await api.get<OperatorStats[]>(`shift-schedules/${scheduleId}/stats/`);
     return res.data;
   },
 

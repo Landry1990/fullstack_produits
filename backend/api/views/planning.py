@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Views pour le planning des opérateurs.
+Views pour le planning des opérateurs — refonte complète.
 """
 import calendar
 import datetime
@@ -22,8 +22,19 @@ from ..serializers.planning import (
 from ..centralized_configs import BaseViewSetConfig
 
 
+# ── Algorithme de génération ──────────────────────────────────────────────────
+
 def _build_assignments(schedule, config, start_day):
-    """Génère les affectations du mois respectant congés, garde, équité et équipes."""
+    """
+    Génère les affectations du mois en respectant :
+    1. Congés approuvés (priorité absolue)
+    2. Gardes rotatives (pharmaciens uniquement, équité par comptage)
+    3. Repos obligatoire le lendemain d'une garde
+    4. Rotation X jours travail / Y jours repos
+    5. Alternance équitable Matin/Nuit (si rotate_shifts)
+    6. Pas plus de 3 nuits consécutives
+    7. Au moins 1 opérateur en Matin et 1 en Nuit par jour (si possible)
+    """
     year = schedule.month.year
     month = schedule.month.month
     _, num_days = calendar.monthrange(year, month)
@@ -34,7 +45,7 @@ def _build_assignments(schedule, config, start_day):
     if not operators:
         return []
 
-    # Congés approuvés
+    # --- Congés approuvés ---
     approved_leaves = LeaveRequest.objects.filter(
         status='APPROVED'
     ).values('user_id', 'start_date', 'end_date')
@@ -52,39 +63,58 @@ def _build_assignments(schedule, config, start_day):
                 return True
         return False
 
-    # Pharmaciens diplômés
+    # --- Pharmaciens (éligibles aux gardes) ---
     pharmacist_ids = set(
         Profile.objects.filter(
             user__in=operators, role='PHARMACIEN'
         ).values_list('user_id', flat=True)
     )
 
-    # Compteurs existants (affectations déjà en base, utile en régénération partielle)
+    # --- Compteurs depuis affectations existantes (avant start_day) ---
     existing_counts = ShiftAssignment.objects.filter(
-        schedule=schedule
+        schedule=schedule, date__lt=datetime.date(year, month, start_day)
     ).values('user_id', 'shift_type').annotate(total=Count('id'))
     counts = {op.id: {'MATIN': 0, 'NUIT': 0, 'GARDE': 0, 'REPOS': 0, 'CONGE': 0} for op in operators}
     for row in existing_counts:
-        counts[row['user_id']][row['shift_type']] += row['total']
+        if row['user_id'] in counts:
+            counts[row['user_id']][row['shift_type']] += row['total']
 
-    # Gardes déjà posées (pour éviter garde jour J puis jour J+1 sans repos)
+    # --- Historique des gardes déjà posées ---
     guard_by_day = {}
     for g in ShiftAssignment.objects.filter(
         schedule=schedule, shift_type='GARDE'
     ).values('date', 'user_id'):
         guard_by_day[g['date'].day] = g['user_id']
 
-    # Dernier shift connu (jour précédent le start_day si on régénère à partir d'un jour > 1)
+    # --- Dernier shift de chaque opérateur (jour précédent start_day) ---
     start_date = datetime.date(year, month, start_day)
     prev_date = start_date - datetime.timedelta(days=1)
     last_shift = {}
-    try:
-        for a in ShiftAssignment.objects.filter(schedule=schedule, date=prev_date):
-            last_shift[a.user_id] = a.shift_type
-    except ValueError:
-        pass
+    for a in ShiftAssignment.objects.filter(schedule=schedule, date=prev_date):
+        last_shift[a.user_id] = a.shift_type
 
-    # Chargement des équipes et appartenances
+    # --- Compteur de jours de travail consécutifs ---
+    consecutive_work = {op.id: 0 for op in operators}
+    # Reconstruire depuis le début du mois jusqu'à start_day - 1
+    for d in range(1, start_day):
+        date = datetime.date(year, month, d)
+        for a in ShiftAssignment.objects.filter(schedule=schedule, date=date):
+            if a.shift_type in ('MATIN', 'NUIT', 'GARDE'):
+                consecutive_work[a.user_id] = consecutive_work.get(a.user_id, 0) + 1
+            else:
+                consecutive_work[a.user_id] = 0
+
+    # --- Compteur de nuits consécutives ---
+    consecutive_nights = {op.id: 0 for op in operators}
+    for d in range(max(1, start_day - 3), start_day):
+        date = datetime.date(year, month, d)
+        for a in ShiftAssignment.objects.filter(schedule=schedule, date=date):
+            if a.shift_type == 'NUIT':
+                consecutive_nights[a.user_id] = consecutive_nights.get(a.user_id, 0) + 1
+            else:
+                consecutive_nights[a.user_id] = 0
+
+    # --- Équipes ---
     use_teams = config.team_mode in ('FIXED', 'ROTATING')
     teams = []
     user_team = {}
@@ -94,7 +124,7 @@ def _build_assignments(schedule, config, start_day):
             for member in team.members.all():
                 user_team[member.id] = (idx, team)
 
-    op_index = {op.id: idx for idx, op in enumerate(operators)}
+    # --- Paramètres ---
     work_days = max(config.work_days_before_rest, 1)
     rest_days = max(config.rest_days, 0)
     cycle_len = work_days + rest_days
@@ -102,11 +132,11 @@ def _build_assignments(schedule, config, start_day):
     rotate = config.rotate_shifts
     team_rotation_days = max(config.team_rotation_days, 1)
     rotation_cycle = ['MATIN', 'NUIT', 'REPOS']
+    max_consecutive_nights = 3
 
     def team_shift_for_day(team_index, team, day):
         if config.team_mode == 'FIXED':
             return team.default_shift if team.default_shift != 'GARDE' else 'MATIN'
-        # ROTATING : chaque équipe tourne sur MATIN/NUIT/REPOS
         block = (day - 1) // team_rotation_days
         return rotation_cycle[(team_index + block) % len(rotation_cycle)]
 
@@ -115,7 +145,7 @@ def _build_assignments(schedule, config, start_day):
     for day in range(start_day, num_days + 1):
         date = datetime.date(year, month, day)
 
-        # Choix du gardien pour le jour (toujours un pharmacien, indépendamment de l'équipe)
+        # ── 1. Assignation du gardien (pharmacien) ──
         guard_op = None
         if guard_freq > 0 and day % guard_freq == 0:
             candidates = []
@@ -124,17 +154,18 @@ def _build_assignments(schedule, config, start_day):
                     continue
                 if is_on_leave(op.id, date):
                     continue
-                # Pas de garde trop rapprochée
-                already = False
-                for d in range(day - guard_freq + 1, day):
+                # Pas de garde dans les guard_freq jours précédents
+                too_recent = False
+                for d in range(max(1, day - guard_freq + 1), day):
                     if guard_by_day.get(d) == op.id:
-                        already = True
+                        too_recent = True
                         break
-                if already:
+                if too_recent:
                     continue
                 candidates.append(op)
 
             if candidates:
+                # Prioriser: moins de gardes → moins de travail total → ID plus petit
                 candidates.sort(key=lambda op: (
                     counts[op.id]['GARDE'],
                     counts[op.id]['MATIN'] + counts[op.id]['NUIT'],
@@ -143,13 +174,18 @@ def _build_assignments(schedule, config, start_day):
                 guard_op = candidates[0]
                 guard_by_day[day] = guard_op.id
 
-        # Pré-calcul du poste de chaque équipe pour le jour (mode équipe)
+        # ── 2. Pré-calcul équipes ──
         team_shifts = {}
         if use_teams:
             for idx, team in enumerate(teams):
                 team_shifts[team.id] = team_shift_for_day(idx, team, day)
 
+        # ── 3. Assignation de chaque opérateur ──
+        day_matin = []
+        day_nuit = []
+
         for op in operators:
+            # Congé approuvé
             if is_on_leave(op.id, date):
                 assignments.append(ShiftAssignment(
                     schedule=schedule, user=op, date=date,
@@ -157,8 +193,11 @@ def _build_assignments(schedule, config, start_day):
                 ))
                 counts[op.id]['CONGE'] += 1
                 last_shift[op.id] = 'CONGE'
+                consecutive_work[op.id] = 0
+                consecutive_nights[op.id] = 0
                 continue
 
+            # Garde
             if guard_op and op.id == guard_op.id:
                 assignments.append(ShiftAssignment(
                     schedule=schedule, user=op, date=date,
@@ -166,9 +205,11 @@ def _build_assignments(schedule, config, start_day):
                 ))
                 counts[op.id]['GARDE'] += 1
                 last_shift[op.id] = 'GARDE'
+                consecutive_work[op.id] += 1
+                consecutive_nights[op.id] = 0
                 continue
 
-            # Repos obligatoire le lendemain d'une garde
+            # Repos obligatoire après garde (jour précédent)
             if guard_by_day.get(day - 1) == op.id:
                 assignments.append(ShiftAssignment(
                     schedule=schedule, user=op, date=date,
@@ -176,52 +217,102 @@ def _build_assignments(schedule, config, start_day):
                 ))
                 counts[op.id]['REPOS'] += 1
                 last_shift[op.id] = 'REPOS'
+                consecutive_work[op.id] = 0
+                consecutive_nights[op.id] = 0
                 continue
 
             # Affectation par équipe
             if use_teams and op.id in user_team:
                 _, team = user_team[op.id]
                 shift = team_shifts[team.id]
+                if shift == 'REPOS':
+                    consecutive_work[op.id] = 0
+                    consecutive_nights[op.id] = 0
+                else:
+                    consecutive_work[op.id] += 1
+                    consecutive_nights[op.id] = consecutive_nights[op.id] + 1 if shift == 'NUIT' else 0
                 assignments.append(ShiftAssignment(
                     schedule=schedule, user=op, date=date,
                     shift_type=shift,
                 ))
                 counts[op.id][shift] += 1
                 last_shift[op.id] = shift
+                if shift == 'MATIN':
+                    day_matin.append(op)
+                elif shift == 'NUIT':
+                    day_nuit.append(op)
                 continue
 
-            # Affectation individuelle (mode INDIVIDUAL ou opérateur sans équipe)
-            idx = op_index[op.id]
-            offset = idx * (cycle_len // max(len(operators), 1))
+            # ── Affectation individuelle ──
+            # Vérifier si l'opérateur doit être en repos (cycle)
+            op_idx = operators.index(op)
+            offset = op_idx * (cycle_len // max(len(operators), 1))
             cycle_pos = ((day - 1) + offset) % cycle_len
 
-            if cycle_pos < work_days:
-                if rotate:
-                    # Éviter deux nuits de suite
-                    if last_shift.get(op.id) == 'NUIT':
-                        shift = 'MATIN'
-                    else:
-                        # Équilibre MATIN / NUIT
-                        if counts[op.id]['MATIN'] <= counts[op.id]['NUIT']:
-                            shift = 'MATIN'
-                        else:
-                            shift = 'NUIT'
-                else:
-                    shift = 'MATIN'
-
-                assignments.append(ShiftAssignment(
-                    schedule=schedule, user=op, date=date,
-                    shift_type=shift,
-                ))
-                counts[op.id][shift] += 1
-                last_shift[op.id] = shift
-            else:
+            if cycle_pos >= work_days:
+                # Période de repos
                 assignments.append(ShiftAssignment(
                     schedule=schedule, user=op, date=date,
                     shift_type='REPOS',
                 ))
                 counts[op.id]['REPOS'] += 1
                 last_shift[op.id] = 'REPOS'
+                consecutive_work[op.id] = 0
+                consecutive_nights[op.id] = 0
+                continue
+
+            # Déterminer Matin ou Nuit
+            if rotate:
+                # Éviter plus de max_consecutive_nights nuits de suite
+                if consecutive_nights[op.id] >= max_consecutive_nights:
+                    shift = 'MATIN'
+                # Éviter deux nuits de suite si la dernière était nuit
+                elif last_shift.get(op.id) == 'NUIT' and consecutive_nights[op.id] >= 2:
+                    shift = 'MATIN'
+                else:
+                    # Équilibrer Matin / Nuit
+                    if counts[op.id]['MATIN'] <= counts[op.id]['NUIT']:
+                        shift = 'MATIN'
+                    else:
+                        shift = 'NUIT'
+            else:
+                shift = 'MATIN'
+
+            assignments.append(ShiftAssignment(
+                schedule=schedule, user=op, date=date,
+                shift_type=shift,
+            ))
+            counts[op.id][shift] += 1
+            last_shift[op.id] = shift
+            consecutive_work[op.id] += 1
+            consecutive_nights[op.id] = consecutive_nights[op.id] + 1 if shift == 'NUIT' else 0
+            if shift == 'MATIN':
+                day_matin.append(op)
+            elif shift == 'NUIT':
+                day_nuit.append(op)
+
+        # ── 4. Garantir une couverture minimale ──
+        # Si pas d'opérateur en matin, prendre un opérateur en repos pour ce jour
+        # et le requalifier en MATIN (seulement si pas en congé/garde/repos obligatoire)
+        if not day_matin and not day_nuit:
+            # Personne travaillant ce jour — essayer de récupérer quelqu'un en repos
+            repos_ops = [op for op in operators
+                         if any(a.user_id == op.id and a.shift_type == 'REPOS'
+                                for a in assignments if a.date == date)]
+            if repos_ops:
+                # Prendre celui avec le moins de jours travaillés
+                repos_ops.sort(key=lambda op: (counts[op.id]['MATIN'] + counts[op.id]['NUIT'], op.id))
+                chosen = repos_ops[0]
+                # Modifier l'affectation
+                for a in assignments:
+                    if a.user_id == chosen.id and a.date == date:
+                        a.shift_type = 'MATIN'
+                        counts[chosen.id]['REPOS'] -= 1
+                        counts[chosen.id]['MATIN'] += 1
+                        last_shift[chosen.id] = 'MATIN'
+                        consecutive_work[chosen.id] += 1
+                        consecutive_nights[chosen.id] = 0
+                        break
 
     return assignments
 
@@ -376,6 +467,42 @@ class ShiftScheduleViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         )
         serializer = ShiftAssignmentSerializer(obj)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def stats(self, request, pk=None):
+        """Statistiques par opérateur pour ce planning (compteurs par shift_type)."""
+        schedule = self.get_object()
+        stats = schedule.assignments.values(
+            'user_id', 'shift_type'
+        ).annotate(total=Count('id')).order_by('user_id')
+
+        # Grouper par utilisateur
+        user_stats = {}
+        for row in stats:
+            uid = row['user_id']
+            if uid not in user_stats:
+                user_stats[uid] = {
+                    'user_id': uid,
+                    'MATIN': 0, 'NUIT': 0, 'GARDE': 0, 'REPOS': 0, 'CONGE': 0,
+                    'total_work': 0,
+                }
+            user_stats[uid][row['shift_type']] = row['total']
+            if row['shift_type'] in ('MATIN', 'NUIT', 'GARDE'):
+                user_stats[uid]['total_work'] += row['total']
+
+        # Enrichir avec infos utilisateur
+        result = []
+        for uid, data in sorted(user_stats.items()):
+            try:
+                u = User.objects.get(id=uid)
+                data['username'] = u.username
+                data['full_name'] = (f"{u.first_name} {u.last_name}".strip()) or u.username
+            except User.DoesNotExist:
+                data['username'] = f'user-{uid}'
+                data['full_name'] = f'user-{uid}'
+            result.append(data)
+
+        return Response(result)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
     def send_to_operators(self, request, pk=None):

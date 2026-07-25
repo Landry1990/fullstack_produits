@@ -124,10 +124,16 @@ vi.mock('../../context/AuthContext', () => ({
 }));
 
 vi.mock('react-i18next', () => {
+    const translationCache = new Map<string, { t: (key: string, options?: unknown) => string; i18n: { changeLanguage: () => Promise<void>; language: string } }>();
+
     return {
         useTranslation: (ns?: string | string[]) => {
             const defaultNs = Array.isArray(ns) ? ns[0] : ns;
-            
+            const cacheKey = Array.isArray(ns) ? ns.join(',') : (ns ?? '__default__');
+            if (translationCache.has(cacheKey)) {
+                return translationCache.get(cacheKey)!;
+            }
+
             const resolve = (obj: unknown, path: unknown): unknown => {
                 if (!obj || typeof path !== 'string') return null;
                 const parts = path.split('.');
@@ -142,59 +148,62 @@ vi.mock('react-i18next', () => {
                 return current;
             };
 
-            return {
-                t: (key: string, options?: unknown) => {
-                    let result: unknown = null;
-                    const defaultValue = typeof options === 'string' ? options : options?.defaultValue;
+            const t = (key: string, options?: unknown) => {
+                let result: unknown = null;
+                const defaultValue = typeof options === 'string' ? options : options?.defaultValue;
 
-                    // 1. Check if key has explicit namespace
-                    if (key.includes(':')) {
-                        const [namespace, rest] = key.split(':');
-                        result = resolve((allTranslations as unknown)[namespace], rest);
-                    } 
-                    
-                    // 2. Try default namespace if provided
-                    if (!result && defaultNs) {
-                        const namespaces = Array.isArray(defaultNs) ? defaultNs : [defaultNs];
-                        for (const ns of namespaces) {
-                            result = resolve((allTranslations as unknown)[ns], key);
-                            if (result) break;
-                        }
+                // 1. Check if key has explicit namespace
+                if (key.includes(':')) {
+                    const [namespace, rest] = key.split(':');
+                    result = resolve((allTranslations as unknown)[namespace], rest);
+                }
+
+                // 2. Try default namespace if provided
+                if (!result && defaultNs) {
+                    const namespaces = Array.isArray(defaultNs) ? defaultNs : [defaultNs];
+                    for (const ns of namespaces) {
+                        result = resolve((allTranslations as unknown)[ns], key);
+                        if (result) break;
                     }
+                }
 
-                    // 3. Try common namespace
-                    if (!result) {
-                        result = resolve(allTranslations.common, key);
+                // 3. Try common namespace
+                if (!result) {
+                    result = resolve(allTranslations.common, key);
+                }
+
+                // 4. Final broad search across all registered namespaces
+                if (!result) {
+                    for (const nsKey of Object.keys(allTranslations)) {
+                        result = resolve((allTranslations as unknown)[nsKey], key);
+                        if (result) break;
                     }
+                }
 
-                    // 4. Final broad search across all registered namespaces
-                    if (!result) {
-                        for (const nsKey of Object.keys(allTranslations)) {
-                            result = resolve((allTranslations as unknown)[nsKey], key);
-                            if (result) break;
-                        }
+                if (result && typeof result === 'string') {
+                    if (options && typeof options === 'object') {
+                        let s = result;
+                        Object.keys(options).forEach(optKey => {
+                            if (optKey !== 'defaultValue') {
+                                s = s.replace(`{{${optKey}}}`, options[optKey]);
+                            }
+                        });
+                        return s;
                     }
+                    return result;
+                }
 
-                    if (result && typeof result === 'string') {
-                        if (options && typeof options === 'object') {
-                            let s = result;
-                            Object.keys(options).forEach(optKey => {
-                                if (optKey !== 'defaultValue') {
-                                    s = s.replace(`{{${optKey}}}`, options[optKey]);
-                                }
-                            });
-                            return s;
-                        }
-                        return result;
-                    }
-
-                    return result || defaultValue || key;
-                },
-                i18n: {
-                    changeLanguage: () => Promise.resolve(),
-                    language: 'fr',
-                },
+                return result || defaultValue || key;
             };
+
+            const i18n = {
+                changeLanguage: () => Promise.resolve(),
+                language: 'fr',
+            };
+
+            const translationResult = { t, i18n };
+            translationCache.set(cacheKey, translationResult);
+            return translationResult;
         },
         initReactI18next: {
             type: '3rdParty',
@@ -272,6 +281,46 @@ vi.mock('jsbarcode', () => ({
 vi.mock('react-barcode', () => ({
   default: () => React.createElement('div', { 'data-testid': 'barcode-mock' }),
 }));
+
+// Mock for PosteCaisseModeContext
+vi.mock('../context/PosteCaisseModeContext', () => {
+  const mockPosteCaisseModeValue = {
+    activePoste: null,
+    selectedPosteCaisseId: null,
+    isPosMode: false,
+    isLoading: false,
+    refresh: vi.fn(),
+    openPoste: vi.fn(),
+    setActivePosteVente: vi.fn(),
+    closePoste: vi.fn(),
+    selectPoste: vi.fn(),
+  };
+  const MockPosteCaisseModeContext = React.createContext(mockPosteCaisseModeValue);
+  return {
+    PosteCaisseModeContext: MockPosteCaisseModeContext,
+    PosteCaisseModeProvider: ({ children }: unknown) => React.createElement(MockPosteCaisseModeContext.Provider, { value: mockPosteCaisseModeValue }, children),
+    usePosteCaisseMode: () => mockPosteCaisseModeValue,
+  };
+});
+
+// Mock for PharmacySettingsContext
+vi.mock('../context/PharmacySettingsContext', () => {
+  const mockPharmacySettingsValue = {
+    settings: {},
+    loading: false,
+    error: null,
+    updateSettings: vi.fn(),
+    uploadLogo: vi.fn(),
+    removeLogo: vi.fn(),
+    refetch: vi.fn(),
+  };
+  const MockPharmacySettingsContext = React.createContext(mockPharmacySettingsValue);
+  return {
+    PharmacySettingsContext: MockPharmacySettingsContext,
+    PharmacySettingsProvider: ({ children }: unknown) => React.createElement(MockPharmacySettingsContext.Provider, { value: mockPharmacySettingsValue }, children),
+    usePharmacySettings: () => mockPharmacySettingsValue,
+  };
+});
 
 // Mock for react-datepicker
 // Mock for LicenceContext

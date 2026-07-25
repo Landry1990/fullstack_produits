@@ -53,7 +53,15 @@
         },
         "team_rotation_days": "Durée d'un bloc (jours)",
         "team_rotation_hint": "Les équipes tournent entre Matin / Nuit / Repos tous les N jours.",
-        "team_manage_hint": "Créez et gérez vos équipes dans l'onglet « Équipes »."
+        "team_manage_hint": "Créez et gérez vos équipes dans l'onglet « Équipes ».",
+        "rotation_title": "Rotation des quarts",
+        "rotation_desc": "Configurez les cycles de travail, repos et gardes",
+        "options_title": "Options avancées"
+    },
+    "stats": {
+        "title": "Statistiques du mois",
+        "operator": "Opérateur",
+        "total_work": "Total travail"
     },
     "teams": {
         "title": "Équipes d'opérateurs",

@@ -4,23 +4,25 @@ import { MemoryRouter } from 'react-router-dom';
 import ModuleFinancier from '../ModuleFinancier';
 import * as useFinanceStats from '../../hooks/useFinanceStats';
 
-// Mock recharts
-vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: unknown) => <div>{children}</div>,
-  AreaChart: ({ children }: unknown) => <div data-testid="area-chart">{children}</div>,
-  Area: () => <div />,
-  LineChart: ({ children }: unknown) => <div data-testid="line-chart">{children}</div>,
-  Line: () => <div />,
-  BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
-  Bar: () => <div />,
-  PieChart: ({ children }: unknown) => <div data-testid="pie-chart">{children}</div>,
-  Pie: () => <div />,
-  XAxis: () => <div />,
-  YAxis: () => <div />,
-  CartesianGrid: () => <div />,
-  Tooltip: () => <div />,
-  Legend: () => <div />,
-  Cell: () => <div />,
+// Mock useRecharts so the component renders synchronously with all chart components
+vi.mock('../../hooks/useRecharts', () => ({
+  useRecharts: () => ({
+    ResponsiveContainer: ({ children }: unknown) => <div>{children}</div>,
+    AreaChart: ({ children }: unknown) => <div data-testid="area-chart">{children}</div>,
+    Area: () => <div />,
+    LineChart: ({ children }: unknown) => <div data-testid="line-chart">{children}</div>,
+    Line: () => <div />,
+    BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
+    Bar: () => <div />,
+    PieChart: ({ children }: unknown) => <div data-testid="pie-chart">{children}</div>,
+    Pie: () => <div />,
+    XAxis: () => <div />,
+    YAxis: () => <div />,
+    CartesianGrid: () => <div />,
+    Tooltip: () => <div />,
+    Legend: () => <div />,
+    Cell: () => <div />,
+  }),
 }));
 
 // Mock hooks

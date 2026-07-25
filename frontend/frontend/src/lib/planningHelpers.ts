@@ -4,12 +4,12 @@ import {
 } from 'lucide-react';
 import type { ShiftType, LeaveType } from '../services/planningService';
 
-export const SHIFT_STYLES: Record<ShiftType, { bg: string; text: string; Icon: ComponentType<{ size?: number }>; labelKey: string }> = {
-  MATIN: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', Icon: Sun, labelKey: 'shift_types.MORNING' },
-  NUIT: { bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-700 dark:text-indigo-300', Icon: Moon, labelKey: 'shift_types.NIGHT' },
-  GARDE: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300', Icon: Shield, labelKey: 'shift_types.GUARD' },
-  REPOS: { bg: 'bg-slate-100 dark:bg-slate-800/50', text: 'text-slate-500 dark:text-slate-400', Icon: Coffee, labelKey: 'shift_types.REST' },
-  CONGE: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', Icon: Plane, labelKey: 'shift_types.LEAVE' },
+export const SHIFT_STYLES: Record<ShiftType, { bg: string; text: string; border: string; Icon: ComponentType<{ size?: number }>; labelKey: string; short: string }> = {
+  MATIN: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-800', Icon: Sun, labelKey: 'shift_types.MORNING', short: 'M' },
+  NUIT: { bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-700 dark:text-indigo-300', border: 'border-indigo-200 dark:border-indigo-800', Icon: Moon, labelKey: 'shift_types.NIGHT', short: 'N' },
+  GARDE: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300', border: 'border-red-200 dark:border-red-800', Icon: Shield, labelKey: 'shift_types.GUARD', short: 'G' },
+  REPOS: { bg: 'bg-slate-100 dark:bg-slate-800/50', text: 'text-slate-500 dark:text-slate-400', border: 'border-slate-200 dark:border-slate-700', Icon: Coffee, labelKey: 'shift_types.REST', short: 'R' },
+  CONGE: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-800', Icon: Plane, labelKey: 'shift_types.LEAVE', short: 'C' },
 };
 
 export const LEAVE_STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {

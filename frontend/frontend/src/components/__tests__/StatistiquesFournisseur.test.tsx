@@ -8,16 +8,21 @@ import { MemoryRouter } from 'react-router-dom';
 // Mock axios
 // (using global mock from setup.ts)
 
-// Mock Recharts
-vi.mock('recharts', () => ({
-    ResponsiveContainer: ({ children }: unknown) => <div className="recharts-responsive-container">{children}</div>,
-    BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
-    Bar: () => <div data-testid="bar" />,
-    XAxis: () => <div data-testid="x-axis" />,
-    YAxis: () => <div data-testid="y-axis" />,
-    CartesianGrid: () => <div data-testid="grid" />,
-    Tooltip: () => <div data-testid="tooltip" />,
-    Legend: () => <div data-testid="legend" />,
+// Mock useRecharts so the component renders synchronously with all chart components
+vi.mock('../../hooks/useRecharts', () => ({
+    useRecharts: () => ({
+        ResponsiveContainer: ({ children }: unknown) => <div className="recharts-responsive-container">{children}</div>,
+        BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
+        Bar: () => <div data-testid="bar" />,
+        XAxis: () => <div data-testid="x-axis" />,
+        YAxis: () => <div data-testid="y-axis" />,
+        CartesianGrid: () => <div data-testid="grid" />,
+        Tooltip: () => <div data-testid="tooltip" />,
+        Legend: () => <div data-testid="legend" />,
+        PieChart: ({ children }: unknown) => <div data-testid="pie-chart">{children}</div>,
+        Pie: () => <div data-testid="pie" />,
+        Cell: () => <div data-testid="cell" />,
+    }),
 }));
 
 const queryClient = new QueryClient({

@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 
 from .factories import TestDataFactory
 from ..models import (
-    Facture, FactureProduit, Produit, Caisse, MouvementStock
+    Facture, FactureProduit, Produit, Caisse, MouvementStock, PosteVente
 )
 
 
@@ -590,6 +590,8 @@ class CaisseCappingTests(APITestCase):
         self.user = TestDataFactory.create_superuser()
         self.client.force_authenticate(user=self.user)
         self.client_obj = TestDataFactory.create_client(name='Patient Test')
+        # CaisseViewSet.create requires an active sales point for the user
+        PosteVente.objects.create(vendeur=self.user, est_actif=True)
 
     def test_caisse_payment_capped_to_invoice_total(self):
         """CaisseViewSet.perform_create caps the amount to the invoice total."""
