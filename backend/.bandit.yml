@@ -1,0 +1,21 @@
+skips:
+  - B101  # assert usage — tests
+  - B311  # random non-crypto — UUID/shuffling, not security
+  - B110  # pass in except — intentional silent handling
+  - B404  # import subprocess — needed for backup scripts
+  - B603  # subprocess without shell — intentional
+  - B607  # subprocess partial path — false positive
+  - B105  # hardcoded password string — field names, Redis keys
+  - B106  # hardcoded_password_args — test credentials
+  - B107  # hardcoded_password_default — test credentials
+  - B602  # subprocess shell=True — intentional
+  - B608  # SQL injection — internal DB schema, not user input
+  - B108  # hardcoded_tmp — intentional temp paths
+  - B310  # urllib urlopen — internal use
+  - B113  # requests without timeout — all in test/diagnostic scripts
+
+exclude_dirs:
+  - my_env01
+  - .git
+  - postgres_data
+  - __pycache__
