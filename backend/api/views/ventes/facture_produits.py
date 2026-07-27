@@ -1,14 +1,15 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend
 import logging
 
-from ...models import FactureProduit, AuditLog
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ...audit_helpers import log_audit
+from ...models import AuditLog, FactureProduit
 from ...serializers import FactureProduitSerializer
 from ...whatsapp_service import WhatsAppService
-from ...audit_helpers import log_audit
 
 logger = logging.getLogger(__name__)
 

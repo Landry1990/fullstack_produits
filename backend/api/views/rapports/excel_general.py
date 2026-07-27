@@ -21,18 +21,15 @@ from __future__ import annotations
 import io
 import os
 from collections import defaultdict
-from datetime import datetime, date, time, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from datetime import date, datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 
 import openpyxl
 from django.http import HttpResponse
 from django.utils import timezone
 from openpyxl.drawing.image import Image as XLImage
-from openpyxl.styles import (
-    Alignment, Border, Font, PatternFill, Side
-)
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Palette & helpers de style
@@ -228,7 +225,7 @@ def _sheet_synthese(wb, data: dict, pharmacy: dict, mois_label: str, logo_path):
         if label == "":
             r += 1
             continue
-        is_total = label.startswith("CA TOTAL") or label.startswith("Marge brute TOTALE")
+        is_total = label.startswith(("CA TOTAL", "Marge brute TOTALE"))
         ws.cell(row=r, column=1, value=label).alignment = _align()
         if "Taux marge Pharmacie" in label:
             ws.cell(row=r, column=2, value=_pct(taux_pharma)).alignment = _align(h="right")
@@ -314,7 +311,7 @@ def _sheet_remises_avoirs(wb, remises_rows: list, avoirs_rows: list, pharmacy: d
     h_remises = ["Date", "N° Facture", "Client", "Remise Globale (F)", "Remises Lignes (F)", "Fidélité (F)", "Total Remise (F)"]
     _write_col_headers(ws, start, h_remises)
     r = start + 1
-    total_rem = Decimal("0")
+    total_rem = Decimal(0)
     for i, row in enumerate(remises_rows):
         vals = [
             row.get("date", ""),
@@ -342,7 +339,7 @@ def _sheet_remises_avoirs(wb, remises_rows: list, avoirs_rows: list, pharmacy: d
     h_avoirs = ["Date", "N° Avoir", "Fournisseur", "Montant HT (F)", "Statut"]
     _write_col_headers(ws, r, h_avoirs)
     r += 1
-    total_av = Decimal("0")
+    total_av = Decimal(0)
     for i, row in enumerate(avoirs_rows):
         vals = [
             row.get("date", ""),
@@ -600,7 +597,7 @@ def _sheet_fiscal(wb, data: dict, pharmacy: dict, mois_label: str, logo_path):
 
 def _sheet_ugs(wb, data: dict, pharmacy: dict, mois_label: str, logo_path):
     """Feuille UGs : unités gratuites reçues en achat, vendues, et restantes en stock."""
-    from api.models import StockLot, FactureProduit, Produit
+    from api.models import StockLot
 
     ws = wb.create_sheet("UGs (Unités Gratuites)")
     start = _write_sheet_header(ws, pharmacy, f"UNITÉS GRATUITES (UGs) — {mois_label}", logo_path)
@@ -784,8 +781,8 @@ def _sheet_depenses(wb, depenses_rows: list, pharmacy: dict, mois_label: str, lo
     headers = ["Date", "Heure", "Caisse", "Type", "Motif", "Description", "Montant (F)", "Saisi par"]
     _write_col_headers(ws, start, headers)
     r = start + 1
-    total_entrees = Decimal("0")
-    total_sorties = Decimal("0")
+    total_entrees = Decimal(0)
+    total_sorties = Decimal(0)
     for i, row in enumerate(depenses_rows):
         typ = row.get("type", "SORTIE")
         montant = Decimal(str(row.get("montant", 0) or 0))
@@ -833,7 +830,7 @@ def _sheet_depenses(wb, depenses_rows: list, pharmacy: dict, mois_label: str, lo
 
 def _compute_accompte_fiscal_inline(ca_ht, factures_qs):
     """Calcule l'accompte fiscal selon le régime et mode configurés dans PharmacySettings."""
-    from api.models import PharmacySettings, FactureProduit
+    from api.models import FactureProduit, PharmacySettings
 
     ps = PharmacySettings.objects.first()
     if not ps:
@@ -844,7 +841,7 @@ def _compute_accompte_fiscal_inline(ca_ht, factures_qs):
     taux_cac = ps.taux_cac
 
     if mode == 'MARGE_ADMINISTREE':
-        cout_ventes = Decimal('0')
+        cout_ventes = Decimal(0)
         for fp in FactureProduit.objects.filter(facture__in=factures_qs).select_related('produit'):
             cout_ventes += Decimal(str(fp.produit.cost_price or 0)) * Decimal(str(fp.quantity))
         marge_brute = ca_ht - cout_ventes
@@ -859,36 +856,55 @@ def _compute_accompte_fiscal_inline(ca_ht, factures_qs):
         base_imposition = ca_ht
         base_label = "Chiffre d'affaires HT"
 
-    accompte_base = base_imposition * taux_imposition / Decimal('100')
-    accompte_cac = accompte_base * taux_cac / Decimal('100')
+    accompte_base = base_imposition * taux_imposition / Decimal(100)
+    accompte_cac = accompte_base * taux_cac / Decimal(100)
     accompte_total = accompte_base + accompte_cac
 
     return {
         "base_label": base_label,
-        "base_imposition": int(base_imposition.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+        "base_imposition": int(base_imposition.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
         "taux": float(taux_imposition),
-        "accompte_base": int(accompte_base.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+        "accompte_base": int(accompte_base.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
         "taux_cac": float(taux_cac),
-        "accompte_cac": int(accompte_cac.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
-        "accompte_total": int(accompte_total.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+        "accompte_cac": int(accompte_cac.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
+        "accompte_total": int(accompte_total.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
     }
 
 
 def _collect_data(date_debut, date_fin):
     """Collecte toutes les données nécessaires aux 10 feuilles."""
     from django.db.models import (
-        Count, DecimalField, ExpressionWrapper, F, OuterRef,
-        Q, Subquery, Sum, Value, Max
+        Count,
+        DecimalField,
+        ExpressionWrapper,
+        F,
+        OuterRef,
+        Q,
+        Subquery,
+        Sum,
+        Value,
     )
-    from django.db.models.functions import Coalesce, TruncDate
-    from api.views.rapports.tz_utils import local_trunc_date
+    from django.db.models.functions import Coalesce
+
     from api.models import (
-        Facture, FactureProduit, FactureProduitAllocation,
-        ClotureCaisse, MouvementCaisse, Produit, Rayon,
-        Fournisseur, CommandeProduit, PaiementFournisseur,
-        Commande, Avoir, Client, Caisse, StockLot,
+        Avoir,
+        Caisse,
+        Client,
+        ClotureCaisse,
+        Commande,
+        CommandeProduit,
+        Facture,
+        FactureProduit,
+        FactureProduitAllocation,
+        Fournisseur,
+        MouvementCaisse,
+        PaiementFournisseur,
+        Produit,
+        Rayon,
+        StockLot,
     )
     from api.services.margin_service import MarginService
+    from api.views.rapports.tz_utils import local_trunc_date
 
     # ── Factures de la période ──────────────────────────────────────────────
     factures = Facture.objects.filter(
@@ -902,29 +918,29 @@ def _collect_data(date_debut, date_fin):
         facture_produit__facture=OuterRef("pk"),
         stock_lot__is_divers=True,
     ).values("facture_produit__facture").annotate(
-        total=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal("0"))
+        total=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal(0))
     ).values("total")
 
     factures_ann = factures.annotate(
-        divers_amount=Coalesce(Subquery(divers_sub, output_field=DecimalField()), Decimal("0")),
+        divers_amount=Coalesce(Subquery(divers_sub, output_field=DecimalField()), Decimal(0)),
     )
     agg = factures_ann.aggregate(
-        ca_total_ttc=Coalesce(Sum("total_ttc"), Decimal("0")),
-        ca_total_ht=Coalesce(Sum("total_ht"), Decimal("0")),
-        ca_divers_ttc=Coalesce(Sum("divers_amount"), Decimal("0")),
-        remises=Coalesce(Sum("remise"), Decimal("0")),
-        remises_fid=Coalesce(Sum("montant_fidelite"), Decimal("0")),
+        ca_total_ttc=Coalesce(Sum("total_ttc"), Decimal(0)),
+        ca_total_ht=Coalesce(Sum("total_ht"), Decimal(0)),
+        ca_divers_ttc=Coalesce(Sum("divers_amount"), Decimal(0)),
+        remises=Coalesce(Sum("remise"), Decimal(0)),
+        remises_fid=Coalesce(Sum("montant_fidelite"), Decimal(0)),
         nb_ventes=Count("id"),
     )
     remises_lignes = FactureProduit.objects.filter(
         facture__in=factures
     ).aggregate(
-        total=Coalesce(Sum(F("discount") * F("quantity"), output_field=DecimalField()), Decimal("0"))
+        total=Coalesce(Sum(F("discount") * F("quantity"), output_field=DecimalField()), Decimal(0))
     )["total"]
 
     ca_total   = agg["ca_total_ttc"]
     ca_divers  = agg["ca_divers_ttc"]
-    ca_pharma  = ca_total - ca_divers
+    ca_total - ca_divers
     total_remises = agg["remises"] + agg["remises_fid"] + remises_lignes
 
     # ── Marges ──────────────────────────────────────────────────────────────
@@ -948,11 +964,11 @@ def _collect_data(date_debut, date_fin):
     ):
         day = f["day"]
         if day not in daily_data:
-            daily_data[day] = {"ca_total": Decimal("0"), "ca_divers": Decimal("0"),
-                               "remises": Decimal("0"), "nb_ventes": 0}
-        daily_data[day]["ca_total"]  += f["total_ttc"] or Decimal("0")
-        daily_data[day]["ca_divers"] += f["divers_amount"] or Decimal("0")
-        daily_data[day]["remises"]   += (f["remise"] or Decimal("0")) + (f["montant_fidelite"] or Decimal("0"))
+            daily_data[day] = {"ca_total": Decimal(0), "ca_divers": Decimal(0),
+                               "remises": Decimal(0), "nb_ventes": 0}
+        daily_data[day]["ca_total"]  += f["total_ttc"] or Decimal(0)
+        daily_data[day]["ca_divers"] += f["divers_amount"] or Decimal(0)
+        daily_data[day]["remises"]   += (f["remise"] or Decimal(0)) + (f["montant_fidelite"] or Decimal(0))
         daily_data[day]["nb_ventes"] += 1
 
     # Marges par jour via allocations
@@ -961,18 +977,18 @@ def _collect_data(date_debut, date_fin):
     ).annotate(
         day=local_trunc_date("facture_produit__facture__date")
     ).values("day", "stock_lot__is_divers").annotate(
-        rev=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal("0")),
-        cost=Coalesce(Sum(F("cost_price") * F("quantity"), output_field=DecimalField()), Decimal("0")),
+        rev=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
+        cost=Coalesce(Sum(F("cost_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
     )
     for row in alloc_day:
         day = row["day"]
         if day not in daily_data:
             continue  # allocation orpheline (décalage timezone) — ignorer
-        marge_ligne = (row["rev"] or Decimal("0")) - (row["cost"] or Decimal("0"))
+        marge_ligne = (row["rev"] or Decimal(0)) - (row["cost"] or Decimal(0))
         if row["stock_lot__is_divers"]:
-            daily_data[day]["marge_divers"] = daily_data[day].get("marge_divers", Decimal("0")) + marge_ligne
+            daily_data[day]["marge_divers"] = daily_data[day].get("marge_divers", Decimal(0)) + marge_ligne
         else:
-            daily_data[day]["marge_pharma"] = daily_data[day].get("marge_pharma", Decimal("0")) + marge_ligne
+            daily_data[day]["marge_pharma"] = daily_data[day].get("marge_pharma", Decimal(0)) + marge_ligne
 
     daily_rows = []
     for day in sorted(daily_data):
@@ -998,10 +1014,10 @@ def _collect_data(date_debut, date_fin):
     remises_rows = []
     for f in factures.select_related("client").prefetch_related("produits"):
         rem_lignes = sum(
-            (fp.discount or Decimal("0")) * fp.quantity
+            (fp.discount or Decimal(0)) * fp.quantity
             for fp in f.produits.all()
         )
-        total_rem_f = (f.remise or Decimal("0")) + (f.montant_fidelite or Decimal("0")) + rem_lignes
+        total_rem_f = (f.remise or Decimal(0)) + (f.montant_fidelite or Decimal(0)) + rem_lignes
         if total_rem_f > 0:
             remises_rows.append({
                 "date":           f.date.strftime("%d/%m/%Y"),
@@ -1035,8 +1051,8 @@ def _collect_data(date_debut, date_fin):
         "facture_produit__produit__rayon__name",
         "stock_lot__is_divers",
     ).annotate(
-        ca_ttc=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal("0")),
-        cout_achat=Coalesce(Sum(F("cost_price") * F("quantity"), output_field=DecimalField()), Decimal("0")),
+        ca_ttc=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
+        cout_achat=Coalesce(Sum(F("cost_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
         quantite=Coalesce(Sum("quantity"), 0),
     ).order_by("-ca_ttc")[:50]
 
@@ -1060,7 +1076,6 @@ def _collect_data(date_debut, date_fin):
         })
 
     # ── Dettes Fournisseurs ──────────────────────────────────────────────────
-    from django.db.models import ExpressionWrapper
     comm_sub = CommandeProduit.objects.filter(
         commande__fournisseur=OuterRef("pk"),
         commande__status=Commande.Status.CLOTUREE,
@@ -1082,7 +1097,7 @@ def _collect_data(date_debut, date_fin):
     ).filter(solde_du__gt=0)
 
     dettes_rows = []
-    dettes_total = Decimal("0")
+    dettes_total = Decimal(0)
     for f in fournisseurs_ann:
         dettes_total += f.solde_du
         dettes_rows.append({
@@ -1115,14 +1130,14 @@ def _collect_data(date_debut, date_fin):
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             date__gte=date_debut,
             date__lt=date_fin,
-        ).aggregate(t=Coalesce(Sum("total_ttc"), Decimal("0")))["t"]
+        ).aggregate(t=Coalesce(Sum("total_ttc"), Decimal(0)))["t"]
         paye_c = Caisse.objects.filter(
             facture__client=c,
             facture__date__gte=date_debut,
             facture__date__lt=date_fin,
             statut="completee",
         ).exclude(mode_paiement="en_compte").aggregate(
-            t=Coalesce(Sum("montant"), Decimal("0"))
+            t=Coalesce(Sum("montant"), Decimal(0))
         )["t"]
         reste = ca_c - paye_c
         if reste > Decimal("0.5"):
@@ -1151,7 +1166,7 @@ def _collect_data(date_debut, date_fin):
             continue
         qte_totale   = prods.aggregate(t=Coalesce(Sum("stock"), 0))["t"]
         valeur_pmp   = prods.aggregate(
-            t=Coalesce(Sum(F("stock") * F("pmp"), output_field=DecimalField()), Decimal("0"))
+            t=Coalesce(Sum(F("stock") * F("pmp"), output_field=DecimalField()), Decimal(0))
         )["t"]
         alertes_rupt = prods.filter(stock__lte=F("stock_minimum")).count()
         alertes_per  = StockLot.objects.filter(
@@ -1172,7 +1187,7 @@ def _collect_data(date_debut, date_fin):
 
     # ── Achats fournisseurs ──────────────────────────────────────────────────
     achats_map: dict = {}
-    total_precompte_excel = Decimal("0")
+    total_precompte_excel = Decimal(0)
     for c in Commande.objects.filter(
         date__gte=date_debut, date__lt=date_fin,
         status=Commande.Status.CLOTUREE,
@@ -1183,9 +1198,9 @@ def _collect_data(date_debut, date_fin):
         if fid not in achats_map:
             achats_map[fid] = {
                 "fournisseur_nom": c.fournisseur.name,
-                "nb_commandes": 0, "montant_total": Decimal("0"),
-                "nb_avoirs": 0, "montant_avoirs": Decimal("0"),
-                "precompte": Decimal("0"),
+                "nb_commandes": 0, "montant_total": Decimal(0),
+                "nb_avoirs": 0, "montant_avoirs": Decimal(0),
+                "precompte": Decimal(0),
             }
         achats_map[fid]["montant_total"] += sum(
             cp.quantity * cp.price_cost for cp in c.produits.all()
@@ -1203,9 +1218,9 @@ def _collect_data(date_debut, date_fin):
         if fid not in achats_map:
             achats_map[fid] = {
                 "fournisseur_nom": a.fournisseur.name,
-                "nb_commandes": 0, "montant_total": Decimal("0"),
-                "nb_avoirs": 0, "montant_avoirs": Decimal("0"),
-                "precompte": Decimal("0"),
+                "nb_commandes": 0, "montant_total": Decimal(0),
+                "nb_avoirs": 0, "montant_avoirs": Decimal(0),
+                "precompte": Decimal(0),
             }
         achats_map[fid]["montant_total"] -= a.total_ht
         achats_map[fid]["montant_avoirs"] += a.total_ht
@@ -1258,7 +1273,9 @@ def _collect_data(date_debut, date_fin):
 
     return {
         "ca": {
+            "ca_ht":        float(agg["ca_total_ht"]),
             "ca_ttc":       ca_total,
+            "tva_collectee": float(ca_total - agg["ca_total_ht"]) if ca_total else 0,
             "total_remises": total_remises,
             "total_remises_detail": {
                 "global":   agg["remises"],
@@ -1289,14 +1306,9 @@ def _collect_data(date_debut, date_fin):
         "achats_rows":       achats_rows,
         "clotures_rows":     clotures_rows,
         "depenses_rows":     depenses_rows,
-        "ca": {
-            "ca_ht": float(agg["ca_total_ht"]),
-            "ca_ttc": float(ca_total),
-            "tva_collectee": float(ca_total - agg["ca_total_ht"]) if ca_total else 0,
-        },
         "achats_fiscaux": {
-            "total_achats_ht": int(sum(Decimal(str(r.get("montant_total", 0) or 0)) for r in achats_rows).quantize(Decimal("1"), rounding=ROUND_HALF_UP)),
-            "total_precompte": int(total_precompte_excel.quantize(Decimal("1"), rounding=ROUND_HALF_UP)) if total_precompte_excel else 0,
+            "total_achats_ht": int(sum(Decimal(str(r.get("montant_total", 0) or 0)) for r in achats_rows).quantize(Decimal(1), rounding=ROUND_HALF_UP)),
+            "total_precompte": int(total_precompte_excel.quantize(Decimal(1), rounding=ROUND_HALF_UP)) if total_precompte_excel else 0,
         },
         "accompte_fiscal": _compute_accompte_fiscal_inline(agg["ca_total_ht"], factures_ann),
     }
@@ -1328,10 +1340,15 @@ def build_rapport_general_excel(date_debut, date_fin, mois_label: str) -> HttpRe
         logo_path = None
 
     from api.views.rapports.excel_general_extra import (
-        collect_extra_data, enrich_synthese,
-        sheet_modes_paiement, sheet_retours_annulations,
-        sheet_performance_vendeurs, sheet_tresorerie,
-        sheet_perimes, sheet_promotions, sheet_clients_pro,
+        collect_extra_data,
+        enrich_synthese,
+        sheet_clients_pro,
+        sheet_modes_paiement,
+        sheet_performance_vendeurs,
+        sheet_perimes,
+        sheet_promotions,
+        sheet_retours_annulations,
+        sheet_tresorerie,
     )
 
     data  = _collect_data(date_debut, date_fin)

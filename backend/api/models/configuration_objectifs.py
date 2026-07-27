@@ -1,6 +1,8 @@
-from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
+
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+
 
 class ConfigurationObjectifs(models.Model):
     """
@@ -69,11 +71,12 @@ class ConfigurationObjectifs(models.Model):
         super().save(*args, **kwargs)
         
         # Delete all current-period objectives so they are recalculated with new parameters
-        from .objectif import ObjectifCommercial
         from django.utils import timezone
+
+        from .objectif import ObjectifCommercial
         
         today = timezone.localtime(timezone.now()).date()
-        start_of_week = today - timezone.timedelta(days=today.weekday())
+        today - timezone.timedelta(days=today.weekday())
         start_of_month = today.replace(day=1)
         
         # Delete auto-generated and also objectives with marge_objectif=0 (legacy CA-only)
@@ -83,5 +86,5 @@ class ConfigurationObjectifs(models.Model):
 
     @classmethod
     def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
+        obj, _created = cls.objects.get_or_create(pk=1)
         return obj

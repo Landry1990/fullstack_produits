@@ -3,8 +3,8 @@ Commande Django pour nettoyer les données Silk et éviter les deadlocks.
 Usage: python manage.py cleanup_silk [--keep N]
 """
 from django.core.management.base import BaseCommand
-from silk.models import Request, Response
 from django.db import connection, transaction
+from silk.models import Request, Response
 
 
 class Command(BaseCommand):

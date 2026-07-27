@@ -16,10 +16,10 @@ que l'ancien SalesService monolithique, donc aucun changement côté appelants
 """
 import logging
 
-from .sale_finalizer import SaleFinalizer
-from .sale_validator import SaleValidator
 from .sale_canceller import SaleCanceller
+from .sale_finalizer import SaleFinalizer
 from .sale_modifier import SaleModifier
+from .sale_validator import SaleValidator
 
 logger = logging.getLogger(__name__)
 

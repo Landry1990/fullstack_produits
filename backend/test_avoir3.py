@@ -1,13 +1,15 @@
-import os
-import django
 import json
+import os
+
+import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from rest_framework.test import APIRequestFactory, force_authenticate
-from api.views.commandes.avoirs import AvoirViewSet
 from django.contrib.auth.models import User
+from rest_framework.test import APIRequestFactory, force_authenticate
+
+from api.views.commandes.avoirs import AvoirViewSet
 
 user = User.objects.first()
 factory = APIRequestFactory()

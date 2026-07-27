@@ -1,21 +1,27 @@
-# -*- coding: utf-8 -*-
 """
 Commande d'envoi du rapport mensuel automatisé
 Respecte la configuration des cases à cocher dans PharmacySettings
 """
-from django.core.management.base import BaseCommand
-from django.utils import timezone
+import logging
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-from django.db.models import Sum, Count, F, Q, DecimalField
-from django.db.models.functions import Coalesce
 from decimal import Decimal
 
-from api.models import Facture, Caisse, MouvementCaisse, PharmacySettings, Produit, Client
-from api.models import FactureProduit, CommandeProduit
-from api.telegram_service import TelegramService
+from dateutil.relativedelta import relativedelta
+from django.core.management.base import BaseCommand
+from django.db.models import DecimalField, F, Sum
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+
+from api.models import (
+    Caisse,
+    Client,
+    Facture,
+    FactureProduit,
+    PharmacySettings,
+    Produit,
+)
 from api.services.finance_marges import calculate_margin_for_invoices
-import logging
+from api.telegram_service import TelegramService
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +174,7 @@ class Command(BaseCommand):
             perte = ruptures_qs.aggregate(
                 total=Coalesce(
                     Sum(F('rotation_moyenne') * F('selling_price')),
-                    Decimal('0'),
+                    Decimal(0),
                     output_field=DecimalField()
                 )
             )['total']
@@ -201,7 +207,7 @@ class Command(BaseCommand):
                 dernier_vente__lte=limit
             )
             val = slow.aggregate(
-                total=Coalesce(Sum(F('stock') * F('pmp')), Decimal('0'))
+                total=Coalesce(Sum(F('stock') * F('pmp')), Decimal(0))
             )['total']
             data['slow_moving'] = {
                 'count': slow.count(),
@@ -211,7 +217,7 @@ class Command(BaseCommand):
         # 7. Dettes
         if ps.report_include_debt:
             creances = Client.objects.filter(solde_factures__gt=0).aggregate(
-                total=Coalesce(Sum('solde_factures'), Decimal('0'))
+                total=Coalesce(Sum('solde_factures'), Decimal(0))
             )['total']
             data['debt'] = {
                 'creances': float(creances),
@@ -225,7 +231,7 @@ class Command(BaseCommand):
                 date_paiement__lte=end_date,
                 statut='completee'
             ).exclude(mode_paiement='en_compte').aggregate(
-                total=Coalesce(Sum('montant'), Decimal('0'))
+                total=Coalesce(Sum('montant'), Decimal(0))
             )['total']
             
             en_compte = Caisse.objects.filter(
@@ -234,7 +240,7 @@ class Command(BaseCommand):
                 statut='completee',
                 mode_paiement='en_compte'
             ).aggregate(
-                total=Coalesce(Sum('montant'), Decimal('0'))
+                total=Coalesce(Sum('montant'), Decimal(0))
             )['total']
             
             data['financial'] = {
@@ -262,7 +268,7 @@ class Command(BaseCommand):
                 date__lte=prev_end,
                 is_active=True
             ).exclude(status='BROUILLON').aggregate(
-                total=Coalesce(Sum('total_ttc'), Decimal('0'))
+                total=Coalesce(Sum('total_ttc'), Decimal(0))
             )['total']
             
             current = data['sales']['ca_ttc']
@@ -280,7 +286,6 @@ class Command(BaseCommand):
 
     def format_telegram_message(self, data, ps):
         """Formate le message Telegram selon les options activées"""
-        lang = ps.locale or 'fr-FR'
         pharmacy = data['pharmacy_name'].upper()
         period = data['period']
         
@@ -291,7 +296,7 @@ class Command(BaseCommand):
         # Ventes
         if 'sales' in data:
             s = data['sales']
-            msg += f"💰 <b>VENTES</b>\n"
+            msg += "💰 <b>VENTES</b>\n"
             msg += f"• CA: <code>{s['ca_ttc']:,} FCFA</code>\n"
             msg += f"• Transactions: <code>{s['nb_ventes']}</code>\n"
             msg += f"• Panier moyen: <code>{s['panier_moyen']:,} F</code>\n\n"
@@ -299,7 +304,7 @@ class Command(BaseCommand):
         # Marge
         if 'margin' in data:
             m = data['margin']
-            msg += f"📈 <b>MARGES</b>\n"
+            msg += "📈 <b>MARGES</b>\n"
             msg += f"• Marge brute: <code>{m['marge_brute']:,} FCFA</code>\n"
             msg += f"• Taux: <code>{m['taux']:.1f}%</code>\n\n"
 
@@ -314,13 +319,13 @@ class Command(BaseCommand):
         # Ruptures détaillées
         if 'ruptures' in data and data['ruptures']['count'] > 0:
             r = data['ruptures']
-            msg += f"⚠️ <b>RUPTURES</b>\n"
+            msg += "⚠️ <b>RUPTURES</b>\n"
             msg += f"• Produits: <code>{r['count']}</code>\n"
             msg += f"• Perte estimée: <code>{r['perte_estimee']:,.0f} F/mois</code>\n\n"
 
         # Top produits
-        if 'top_products' in data and data['top_products']:
-            msg += f"🏆 <b>TOP 5 PRODUITS</b>\n"
+        if data.get('top_products'):
+            msg += "🏆 <b>TOP 5 PRODUITS</b>\n"
             for i, p in enumerate(data['top_products'], 1):
                 msg += f"{i}. {p['name'][:20]}: <code>{p['qty']}</code> ventes\n"
             msg += "\n"
@@ -328,21 +333,21 @@ class Command(BaseCommand):
         # Rotation lente
         if 'slow_moving' in data and data['slow_moving']['count'] > 0:
             s = data['slow_moving']
-            msg += f"🐌 <b>ROTATION LENTE</b>\n"
+            msg += "🐌 <b>ROTATION LENTE</b>\n"
             msg += f"• Produits: <code>{s['count']}</code>\n"
             msg += f"• Valeur bloquée: <code>{s['value']:,.0f} FCFA</code>\n\n"
 
         # Dettes
         if 'debt' in data:
             d = data['debt']
-            msg += f"💳 <b>FINANCES</b>\n"
+            msg += "💳 <b>FINANCES</b>\n"
             msg += f"• Créances: <code>{d['creances']:,.0f} FCFA</code>\n"
             msg += f"• Dettes FS: <code>{d['dettes_fournisseurs']:,.0f} FCFA</code>\n\n"
 
         # Résumé financier
         if 'financial' in data:
             f = data['financial']
-            msg += f"💵 <b>TRÉSORERIE</b>\n"
+            msg += "💵 <b>TRÉSORERIE</b>\n"
             msg += f"• Encaissements: <code>{f['encaissements']:,.0f} FCFA</code>\n"
             msg += f"• En compte: <code>{f['en_compte']:,.0f} FCFA</code>\n\n"
 

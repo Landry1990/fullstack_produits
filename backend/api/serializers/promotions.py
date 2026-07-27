@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour les promotions et objectifs commerciaux.
 """
 from rest_framework import serializers
-from ..models import PromotionPackItem, ConfigurationObjectifs, Promotion
+
+from ..models import ConfigurationObjectifs, Promotion, PromotionPackItem
 
 
 class PromotionPackItemSerializer(serializers.ModelSerializer):

@@ -1,23 +1,36 @@
+from datetime import datetime, time, timedelta
+from decimal import Decimal
+from io import BytesIO
+
+import openpyxl
+from django.db.models import DecimalField, F, Sum, Value
+from django.db.models.functions import Coalesce
+from django.http import HttpResponse
+from django.utils import timezone
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm, mm
+from reportlab.platypus import (
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+)
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from django.db.models import Sum, F, DecimalField, Value
-from django.db.models.functions import TruncDate, Coalesce
-from django.utils import timezone
-from datetime import datetime, timedelta, time
-from decimal import Decimal
-import openpyxl
-from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
-from openpyxl.utils import get_column_letter
-from io import BytesIO
-from django.http import HttpResponse
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.units import cm, mm
-from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
-from api.models import Produit, CommandeProduit, Facture, FactureProduit, MouvementStock, StockLot
+
+from api.models import (
+    CommandeProduit,
+    Facture,
+    FactureProduit,
+    MouvementStock,
+    Produit,
+    StockLot,
+)
 from api.views.rapports.tz_utils import local_trunc_date
+
 
 class RapportInventoryMixin:
     """
@@ -32,8 +45,8 @@ class RapportInventoryMixin:
             return Response({'error': 'Dates requises'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            date_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00')).date()
-            date_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00')).date()
+            date_debut = datetime.fromisoformat(date_debut_str).date()
+            date_fin = datetime.fromisoformat(date_fin_str).date()
         except ValueError:
             return Response({'error': 'Format de date invalide'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -104,7 +117,7 @@ class RapportInventoryMixin:
             import csv
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="stocks_morts_{timezone.localtime(timezone.now()).date()}.csv"'
-            response.write(u'\ufeff'.encode('utf8'))
+            response.write('\ufeff'.encode('utf8'))
             writer = csv.writer(response, delimiter=';')
             writer.writerow(['Produit', 'CIP', 'Rayon', 'Fournisseur', 'Stock', 'PMP', 'Valeur Stock', 'Dernière Vente'])
             for r in results: writer.writerow([r['name'], r['cip'], r['rayon'], r['fournisseur'], str(r['stock']).replace('.', ','), str(r['pmp']).replace('.', ','), str(r['valeur']).replace('.', ','), r['dernier_vente'].strftime('%d/%m/%Y') if r['dernier_vente'] else 'Jamais'])
@@ -165,18 +178,17 @@ class RapportInventoryMixin:
                 if (cell.row, cell.column) in merged_ranges:
                     continue
                 val = str(cell.value or "")
-                if len(val) > length:
-                    length = len(val)
+                length = max(length, len(val))
             ws.column_dimensions[get_column_letter(col[0].column)].width = min(30, max(10, length + 2))
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f'attachment; filename="Balance_Stocks.xlsx"'; wb.save(response)
+        response['Content-Disposition'] = 'attachment; filename="Balance_Stocks.xlsx"'; wb.save(response)
         return response
 
     def _get_valeur_stock_summary_data(self, valorisation, group_by=None):
         """Méthode interne pour calculer les agrégats de valeur de stock avec option de groupement.
         Optimisé : calculs faits en SQL pur au lieu d'itérer sur tous les produits."""
-        from django.db.models import ExpressionWrapper, F, Sum, Value
+        from django.db.models import ExpressionWrapper, F, Sum
         from django.db.models.functions import Coalesce
 
         is_pmp = valorisation == 'ACHAT'
@@ -185,23 +197,23 @@ class RapportInventoryMixin:
 
         # 1. Totaux globaux
         totals = base_qs.aggregate(
-            ttc=Coalesce(Sum(ExpressionWrapper(F('stock') * price_field, output_field=DecimalField())), Decimal('0'))
+            ttc=Coalesce(Sum(ExpressionWrapper(F('stock') * price_field, output_field=DecimalField())), Decimal(0))
         )
-        total_ttc_global = totals['ttc'] or Decimal('0')
+        total_ttc_global = totals['ttc'] or Decimal(0)
 
         # 2. Répartition par taux de TVA (en SQL)
         tva_breakdown = []
         for row in base_qs.values('tva').annotate(
-            ttc=Coalesce(Sum(ExpressionWrapper(F('stock') * price_field, output_field=DecimalField())), Decimal('0'))
+            ttc=Coalesce(Sum(ExpressionWrapper(F('stock') * price_field, output_field=DecimalField())), Decimal(0))
         ).order_by('tva'):
-            tva_rate = row['tva'] or Decimal('0')
-            ttc = row['ttc'] or Decimal('0')
+            tva_rate = row['tva'] or Decimal(0)
+            ttc = row['ttc'] or Decimal(0)
             if tva_rate > 0:
-                ht_line = (ttc / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
+                ht_line = (ttc / (1 + tva_rate / Decimal(100))).quantize(Decimal('0.01'))
                 tva_line = ttc - ht_line
             else:
                 ht_line = ttc
-                tva_line = Decimal('0')
+                tva_line = Decimal(0)
             tva_breakdown.append({'rate': float(tva_rate), 'ht': ht_line, 'tva': tva_line, 'ttc': ttc})
 
         total_ht_global = sum(item['ht'] for item in tva_breakdown)
@@ -222,11 +234,11 @@ class RapportInventoryMixin:
             group_field = 'rayon__name' if group_by == 'rayon' else 'forme__nom' if group_by == 'forme' else 'groupe__nom'
             group_breakdown = []
             for row in base_qs.values(group_field).annotate(
-                ttc=Coalesce(Sum(ExpressionWrapper(F('stock') * price_field, output_field=DecimalField())), Decimal('0'))
+                ttc=Coalesce(Sum(ExpressionWrapper(F('stock') * price_field, output_field=DecimalField())), Decimal(0))
             ).order_by('-ttc'):
                 name = row[group_field] or "Non classé"
-                ttc = row['ttc'] or Decimal('0')
-                group_breakdown.append({'name': name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': ttc})
+                ttc = row['ttc'] or Decimal(0)
+                group_breakdown.append({'name': name, 'ht': Decimal(0), 'tva': Decimal(0), 'ttc': ttc})
             res['group_by'] = group_by
             res['group_breakdown'] = group_breakdown
 
@@ -246,23 +258,23 @@ class RapportInventoryMixin:
 
         # 1. Totaux globaux
         totals = base_qs.aggregate(
-            ttc=Coalesce(Sum(ExpressionWrapper(F('quantity_remaining') * price_field, output_field=DecimalField())), Decimal('0'))
+            ttc=Coalesce(Sum(ExpressionWrapper(F('quantity_remaining') * price_field, output_field=DecimalField())), Decimal(0))
         )
-        total_ttc_global = totals['ttc'] or Decimal('0')
+        total_ttc_global = totals['ttc'] or Decimal(0)
 
         # 2. Répartition par taux de TVA
         tva_breakdown = []
         for row in base_qs.values('produit__tva').annotate(
-            ttc=Coalesce(Sum(ExpressionWrapper(F('quantity_remaining') * price_field, output_field=DecimalField())), Decimal('0'))
+            ttc=Coalesce(Sum(ExpressionWrapper(F('quantity_remaining') * price_field, output_field=DecimalField())), Decimal(0))
         ).order_by('produit__tva'):
-            tva_rate = row['produit__tva'] or Decimal('0')
-            ttc = row['ttc'] or Decimal('0')
+            tva_rate = row['produit__tva'] or Decimal(0)
+            ttc = row['ttc'] or Decimal(0)
             if tva_rate > 0:
-                ht_line = (ttc / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
+                ht_line = (ttc / (1 + tva_rate / Decimal(100))).quantize(Decimal('0.01'))
                 tva_line = ttc - ht_line
             else:
                 ht_line = ttc
-                tva_line = Decimal('0')
+                tva_line = Decimal(0)
             tva_breakdown.append({'rate': float(tva_rate), 'ht': ht_line, 'tva': tva_line, 'ttc': ttc})
 
         total_ht_global = sum(item['ht'] for item in tva_breakdown)
@@ -282,11 +294,11 @@ class RapportInventoryMixin:
             group_field = 'produit__rayon__name' if group_by == 'rayon' else 'produit__forme__nom' if group_by == 'forme' else 'produit__groupe__nom'
             group_breakdown = []
             for row in base_qs.values(group_field).annotate(
-                ttc=Coalesce(Sum(ExpressionWrapper(F('quantity_remaining') * price_field, output_field=DecimalField())), Decimal('0'))
+                ttc=Coalesce(Sum(ExpressionWrapper(F('quantity_remaining') * price_field, output_field=DecimalField())), Decimal(0))
             ).order_by('-ttc'):
                 name = row[group_field] or "Non classé"
-                ttc = row['ttc'] or Decimal('0')
-                group_breakdown.append({'name': name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': ttc})
+                ttc = row['ttc'] or Decimal(0)
+                group_breakdown.append({'name': name, 'ht': Decimal(0), 'tva': Decimal(0), 'ttc': ttc})
             res['group_by'] = group_by
             res['group_breakdown'] = group_breakdown
 
@@ -326,9 +338,12 @@ class RapportInventoryMixin:
         - type: 'tous' (défaut), 'pharmacie' (sans divers), 'divers' (lots divers uniquement)
         """
         from api.pdf_utils import (
-            get_pharma_styles, draw_pharma_header, draw_pharma_footer, 
-            format_currency, PharmaColors, get_pharma_table_style, 
-            get_pharma_summary_table_style
+            draw_pharma_footer,
+            draw_pharma_header,
+            format_currency,
+            get_pharma_styles,
+            get_pharma_summary_table_style,
+            get_pharma_table_style,
         )
         
         valorisation = request.query_params.get('valorisation', 'ACHAT')
@@ -424,22 +439,22 @@ class RapportInventoryMixin:
         
         tva_map = {}
         rayon_map = {}
-        total_ttc_global = Decimal('0')
-        total_ht_global = Decimal('0')
-        total_tva_global = Decimal('0')
+        total_ttc_global = Decimal(0)
+        total_ht_global = Decimal(0)
+        total_tva_global = Decimal(0)
         
         for lot in lots_divers:
             qty = Decimal(str(lot.quantity_remaining))
-            price_ttc = (lot.price_cost if is_pmp else lot.produit.selling_price) or Decimal('0')
-            tva_rate = lot.produit.tva or Decimal('0')
+            price_ttc = (lot.price_cost if is_pmp else lot.produit.selling_price) or Decimal(0)
+            tva_rate = lot.produit.tva or Decimal(0)
             
             ttc_line = qty * price_ttc
             if tva_rate > 0:
-                ht_line = (ttc_line / (1 + tva_rate / Decimal('100'))).quantize(Decimal('0.01'))
+                ht_line = (ttc_line / (1 + tva_rate / Decimal(100))).quantize(Decimal('0.01'))
                 tva_line = ttc_line - ht_line
             else:
                 ht_line = ttc_line
-                tva_line = Decimal('0')
+                tva_line = Decimal(0)
                 
             total_ttc_global += ttc_line
             total_ht_global += ht_line
@@ -448,7 +463,7 @@ class RapportInventoryMixin:
             # Groupement par TVA
             rate_key = str(float(tva_rate))
             if rate_key not in tva_map:
-                tva_map[rate_key] = {'rate': float(tva_rate), 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
+                tva_map[rate_key] = {'rate': float(tva_rate), 'ht': Decimal(0), 'tva': Decimal(0), 'ttc': Decimal(0)}
             tva_map[rate_key]['ht'] += ht_line
             tva_map[rate_key]['tva'] += tva_line
             tva_map[rate_key]['ttc'] += ttc_line
@@ -456,7 +471,7 @@ class RapportInventoryMixin:
             # Groupement par rayon
             rayon_name = lot.produit.rayon.name if lot.produit.rayon else "Non classé"
             if rayon_name not in rayon_map:
-                rayon_map[rayon_name] = {'name': rayon_name, 'ht': Decimal('0'), 'tva': Decimal('0'), 'ttc': Decimal('0')}
+                rayon_map[rayon_name] = {'name': rayon_name, 'ht': Decimal(0), 'tva': Decimal(0), 'ttc': Decimal(0)}
             rayon_map[rayon_name]['ht'] += ht_line
             rayon_map[rayon_name]['tva'] += tva_line
             rayon_map[rayon_name]['ttc'] += ttc_line

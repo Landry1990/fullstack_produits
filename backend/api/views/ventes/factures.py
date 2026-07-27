@@ -1,37 +1,43 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.core.cache import cache
-from django.db import transaction, DatabaseError
-from django.db.models import Sum, Value, DecimalField, Count, Subquery, OuterRef, Q
-from django.db.models.functions import Coalesce
-from django_filters.rest_framework import DjangoFilterBackend
-from django.utils import timezone
-from django.http import HttpResponse
+import logging
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-import logging
 
+from django.db import DatabaseError, transaction
+from django.db.models import Count, DecimalField, OuterRef, Q, Subquery, Sum, Value
+from django.db.models.functions import Coalesce
+from django.http import HttpResponse
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
+
+from api.audit_helpers import log_audit
+from api.cache_mixins import SimpleListCacheMixin
+from api.centralized_configs import BaseViewSetConfig, CommonFilterFields
+from api.idempotency import idempotent_action
 from api.models import (
-    Facture, FactureProduit, InvoiceSettings, AuditLog, Caisse, Produit
+    AuditLog,
+    Caisse,
+    Facture,
+    FactureProduit,
+    InvoiceSettings,
+    Produit,
+)
+from api.security_utils import build_safe_content_disposition
+from api.serializer_mixins import OptimizedSerializerMixin
+from api.serializers import FacturePrintSerializer, FactureSerializer
+from api.serializers_optimized import (
+    FactureDetailSerializer,
+    FactureListSerializer,
+    FactureOmnisearchSerializer,
 )
 from api.services import SalesService
-from api.serializers import FactureSerializer, FacturePrintSerializer
-from api.serializers_optimized import FactureListSerializer, FactureDetailSerializer, FactureOmnisearchSerializer
-from api.serializer_mixins import OptimizedSerializerMixin
-from api.audit_helpers import log_audit
-from api.sudo_utils import validate_sudo_mode
-from api.whatsapp_service import WhatsAppService
-from api.centralized_configs import (
-    BaseViewSetConfig,
-    CommonFilterFields
-)
-from api.cache_mixins import SimpleListCacheMixin
-from api.security_utils import build_safe_content_disposition
-from api.idempotency import idempotent_action
 from api.services.invoice_pdf import generate_invoice_pdf
 from api.services.sales_statistics import build_sales_statistics
+from api.sudo_utils import validate_sudo_mode
+from api.whatsapp_service import WhatsAppService
 
 logger = logging.getLogger(__name__)
 
@@ -94,11 +100,11 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
         queryset = queryset.annotate(
             montant_regle=Coalesce(
                 Subquery(base_caisse_regle[:1], output_field=DecimalField()),
-                Value(Decimal('0'), output_field=DecimalField())
+                Value(Decimal(0), output_field=DecimalField())
             ),
             montant_en_compte=Coalesce(
                 Subquery(base_caisse_compte[:1], output_field=DecimalField()),
-                Value(Decimal('0'), output_field=DecimalField())
+                Value(Decimal(0), output_field=DecimalField())
             ),
         )
         
@@ -215,7 +221,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
 
         # Validate selling_price format and compute quick sum
         try:
-            temp_sum = Decimal('0')
+            temp_sum = Decimal(0)
             for p in produits_data:
                 q = Decimal(str(p.get('quantity', 0)))
                 pr = Decimal(str(p.get('selling_price', 0)))
@@ -227,7 +233,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
         try:
             remise_globale = Decimal(str(data.get('remise', 0) or 0))
         except (InvalidOperation, ValueError):
-            remise_globale = Decimal('0')
+            remise_globale = Decimal(0)
 
         if remise_globale > temp_sum:
             return Response({'detail': f"La remise globale ({remise_globale} F) ne peut pas être supérieure au total des produits ({temp_sum} F)."}, status=status.HTTP_400_BAD_REQUEST)
@@ -238,7 +244,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
         try:
             total_ttc = Decimal(str(totals_obj.get('totalTtc', 0)))
         except (ValueError, InvalidOperation):
-            total_ttc = Decimal('0')
+            total_ttc = Decimal(0)
 
         # If total is 0 but we have products, use the quick sum already computed
         if total_ttc <= 0 and produits_data:
@@ -300,7 +306,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
             except (DatabaseError, InvalidOperation, TypeError, ValueError) as e:
                 # Si une erreur DB survient pendant la validation Sudo, on rollback et retourne une erreur propre
                 transaction.set_rollback(True)
-                logger.error(f"[VENTE] Erreur DB lors de la validation Sudo: {str(e)}", exc_info=True)
+                logger.error(f"[VENTE] Erreur DB lors de la validation Sudo: {e!s}", exc_info=True)
                 return Response({'detail': "Erreur de base de données lors de la validation. Veuillez réessayer."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
@@ -331,14 +337,14 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
         except DatabaseError as e:
             # Gestion explicite des erreurs de base de données
             transaction.set_rollback(True)
-            logger.error(f"[VENTE] Erreur DB lors de la finalisation: {str(e)}", exc_info=True)
+            logger.error(f"[VENTE] Erreur DB lors de la finalisation: {e!s}", exc_info=True)
             return Response({'detail': "Erreur de base de données. La transaction a été annulée."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except ValueError as e:
             transaction.set_rollback(True)
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             transaction.set_rollback(True)
-            logger.error(f"[VENTE] Erreur critique finalisation: {str(e)}", exc_info=True)
+            logger.error(f"[VENTE] Erreur critique finalisation: {e!s}", exc_info=True)
             return Response({'detail': "Une erreur interne est survenue lors de la finalisation."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def destroy(self, request, *args, **kwargs):
@@ -457,7 +463,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             transaction.set_rollback(True)
-            logger.error(f"[VENTE] Erreur lors de la validation: {str(e)}", exc_info=True)
+            logger.error(f"[VENTE] Erreur lors de la validation: {e!s}", exc_info=True)
             return Response({'detail': "Une erreur est survenue lors de la validation."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
@@ -499,7 +505,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
             return Response({'detail': message}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             transaction.set_rollback(True)
-            logger.error(f"[VENTE] Erreur lors de l'annulation: {str(e)}", exc_info=True)
+            logger.error(f"[VENTE] Erreur lors de l'annulation: {e!s}", exc_info=True)
             return Response({'detail': "Une erreur est survenue lors de l'annulation."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
@@ -550,7 +556,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             transaction.set_rollback(True)
-            logger.error(f"[VENTE] Erreur lors de la modification: {str(e)}", exc_info=True)
+            logger.error(f"[VENTE] Erreur lors de la modification: {e!s}", exc_info=True)
             return Response({'detail': "Une erreur est survenue lors de la modification."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['get'])
@@ -740,7 +746,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             transaction.set_rollback(True)
-            logger.error(f"[MOBILE SYNC] Erreur critique lors de la synchronisation: {str(e)}", exc_info=True)
+            logger.error(f"[MOBILE SYNC] Erreur critique lors de la synchronisation: {e!s}", exc_info=True)
             return Response({'detail': "Erreur lors de la synchronisation de la facture."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -811,8 +817,8 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
             return Response({'detail': message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
         except Exception as e:
-            logger.error(f"Erreur envoi WhatsApp: {str(e)}")
-            return Response({'detail': f"Erreur lors de l'envoi : {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Erreur envoi WhatsApp: {e!s}")
+            return Response({'detail': f"Erreur lors de l'envoi : {e!s}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['get'])
     def print_data(self, request, pk=None):
@@ -839,7 +845,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
                     try:
                         start_datetime = datetime.strptime(date_debut_str, '%Y-%m-%dT%H:%M:%S')
                     except ValueError:
-                        return Response({'detail': f'Format invalide pour date_debut'}, status=status.HTTP_400_BAD_REQUEST)
+                        return Response({'detail': 'Format invalide pour date_debut'}, status=status.HTTP_400_BAD_REQUEST)
                 start_datetime = timezone.make_aware(start_datetime)
             else:
                 return Response({'detail': 'date_debut requis.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -851,7 +857,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
                     try:
                         end_datetime = datetime.strptime(date_fin_str, '%Y-%m-%dT%H:%M:%S')
                     except ValueError:
-                        return Response({'detail': f'Format invalide pour date_fin'}, status=status.HTTP_400_BAD_REQUEST)
+                        return Response({'detail': 'Format invalide pour date_fin'}, status=status.HTTP_400_BAD_REQUEST)
                 end_datetime = timezone.make_aware(end_datetime)
             else:
                 return Response({'detail': 'date_fin requis.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -859,7 +865,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
             if start_datetime >= end_datetime:
                 return Response({'detail': "La date de début doit être antérieure à la date de fin."}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
-            return Response({'detail': f'Erreur date: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': f'Erreur date: {e!s}'}, status=status.HTTP_400_BAD_REQUEST)
         
         factures = self.get_queryset().filter(
             date__gte=start_datetime,
@@ -1019,7 +1025,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
                     results.append({'id': facture.id, 'numero': facture.numero_facture, 'status': 'erreur', 'detail': message})
                     error_count += 1
             except Exception as e:
-                logger.error(f"[BULK_CANCEL] Erreur sur facture {facture.id}: {str(e)}")
+                logger.error(f"[BULK_CANCEL] Erreur sur facture {facture.id}: {e!s}")
                 results.append({'id': facture.id, 'numero': facture.numero_facture, 'status': 'erreur', 'detail': str(e)})
                 error_count += 1
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Data Purge / Maintenance ViewSet.
 Superadmin-only tool to preview, export and purge old transactional data.
@@ -10,10 +9,13 @@ import re
 import subprocess
 import threading
 import zipfile
-from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.core.cache import cache
+from django.core.management import call_command
 from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
@@ -22,11 +24,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
-from django.contrib.auth import authenticate
-from django.core.cache import cache
-from django.core.management import call_command
-from django.conf import settings
-
 
 # ── Registry of purgeable tables ──────────────────────────────────────────
 # Each entry: key → (label_fr, Model import path, date_field, [child relations])
@@ -35,18 +32,28 @@ from django.conf import settings
 
 def _get_purge_registry():
     """Lazy import to avoid circular imports."""
-    from api.models.billing import (
-        Facture, FactureProduit, FactureProduitAllocation,
-        Caisse, ClotureCaisse, CouponMonnaie, Promis, RelevePaiement,
+    from api.models.audit import (
+        ActivityLog,
+        AuditLog,
+        LigneOrdonnancier,
+        MouvementCaisse,
+        Ordonnancier,
     )
-    from api.models.orders import Commande, CommandeProduit, Avoir, LigneAvoir
+    from api.models.billing import (
+        Caisse,
+        ClotureCaisse,
+        CouponMonnaie,
+        Facture,
+        FactureProduit,
+        FactureProduitAllocation,
+        Promis,
+        RelevePaiement,
+    )
+    from api.models.communication import SmsLog
+    from api.models.objectif import ObjectifCommercial
+    from api.models.orders import Avoir, Commande, CommandeProduit, LigneAvoir
     from api.models.paiements import PaiementFournisseur
     from api.models.stock import MouvementStock, StockAdjustment
-    from api.models.audit import (
-        ActivityLog, AuditLog, MouvementCaisse, Ordonnancier, LigneOrdonnancier,
-    )
-    from api.models.objectif import ObjectifCommercial
-    from api.models.communication import SmsLog
 
     return {
         'factures': {
@@ -385,9 +392,10 @@ class PurgeViewSet(ViewSet):
             output = out.getvalue()
             
             # Check if double backup is needed (copying to secondary path)
-            from api.models.settings import PharmacySettings
-            import shutil
             import os
+            import shutil
+
+            from api.models.settings import PharmacySettings
             
             settings, _ = PharmacySettings.objects.get_or_create(pk=1)
             secondary_msg = ""
@@ -411,7 +419,7 @@ class PurgeViewSet(ViewSet):
                 'details': output
             })
         except Exception as e:
-            return Response({'detail': f'Erreur lors de la sauvegarde: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'detail': f'Erreur lors de la sauvegarde: {e!s}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'])
     def restore(self, request):
@@ -436,9 +444,8 @@ class PurgeViewSet(ViewSet):
             return Response({'detail': 'Mot de passe incorrect ou droits insuffisants.'}, status=status.HTTP_403_FORBIDDEN)
 
         # Save uploaded file to a temporary location
-        import tempfile
         import os
-        from io import StringIO
+        import tempfile
 
         with tempfile.NamedTemporaryFile(suffix='.sql.gz', delete=False) as tmp:
             for chunk in file_obj.chunks():
@@ -461,7 +468,7 @@ class PurgeViewSet(ViewSet):
         except Exception as e:
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
-            return Response({'detail': f'Erreur lors de la restauration: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'detail': f'Erreur lors de la restauration: {e!s}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
     def produits_count(self, request):
@@ -475,7 +482,11 @@ class PurgeViewSet(ViewSet):
         Lance l'import en tâche de fond (thread séparé).
         Retourne immédiatement un job_id pour suivre la progression.
         """
-        import tempfile, threading, uuid, json, glob, re
+        import glob
+        import re
+        import threading
+        import uuid
+
         from django.core.cache import cache
 
         # Vérifier qu'un import n'est pas déjà en cours
@@ -496,8 +507,7 @@ class PurgeViewSet(ViewSet):
         job_id = str(uuid.uuid4())[:8]
         tmp_path = os.path.join(settings.REPORTS_DIR, f'import_tmp_{job_id}{suffix}')
         with open(tmp_path, 'wb') as f:
-            for chunk in file_obj.chunks():
-                f.write(chunk)
+            f.writelines(file_obj.chunks())
 
         # Initialiser l'état dans le cache
         cache.set(f'import_{job_id}', {
@@ -572,7 +582,7 @@ class PurgeViewSet(ViewSet):
                 c.set(f'import_{job_id}', {
                     'status': 'error',
                     'progress': 0,
-                    'message': f'Erreur : {str(e)}',
+                    'message': f'Erreur : {e!s}',
                     'created': 0, 'updated': 0, 'errors': 0,
                     'rapport_xlsx': None, 'rapport_txt': None,
                 }, timeout=3600)
@@ -611,8 +621,9 @@ class PurgeViewSet(ViewSet):
         Purge les produits.
         Body: { password: str, sans_ventes: bool }
         """
-        from api.models import Produit
         from django.contrib.auth import authenticate
+
+        from api.models import Produit
 
         password = request.data.get('password', '')
         sans_ventes = request.data.get('sans_ventes', False)
@@ -655,7 +666,6 @@ class PurgeViewSet(ViewSet):
     @action(detail=False, methods=['get'])
     def download_rapport(self, request):
         """Télécharge un rapport d'import."""
-        import glob
         from django.http import FileResponse
         filename = request.query_params.get('file', '')
         if not filename or '/' in filename or '..' in filename:
@@ -746,7 +756,7 @@ class PurgeViewSet(ViewSet):
             if step:
                 state['step'] = step
             if progress is not None:
-                state['progress'] = progress if progress >= 0 else 0
+                state['progress'] = max(progress, 0)
             cache.set(cache_key, state, timeout=7200)
 
         try:
@@ -783,7 +793,7 @@ class PurgeViewSet(ViewSet):
         except Exception as e:
             state = cache.get(cache_key) or {}
             state['status'] = 'error'
-            state['step'] = f'Erreur: {str(e)}'
+            state['step'] = f'Erreur: {e!s}'
             state['finished_at'] = timezone.now().isoformat()
             cache.set(cache_key, state, timeout=7200)
 

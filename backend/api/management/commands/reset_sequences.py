@@ -28,6 +28,6 @@ class Command(BaseCommand):
                     cursor.execute(f"ALTER SEQUENCE {seq} RESTART WITH 1;")
                     self.stdout.write(f'  ✅ {seq}')
                 except Exception as e:
-                    self.stdout.write(f'  ⚠️  {seq}: {str(e)}')
+                    self.stdout.write(f'  ⚠️  {seq}: {e!s}')
             
             self.stdout.write(self.style.SUCCESS('\n✅ Séquences réinitialisées !'))

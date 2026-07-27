@@ -1,9 +1,9 @@
 
 import os
-import django
 import sys
 import uuid
-from decimal import Decimal
+
+import django
 
 # Setup Django environment
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -11,9 +11,11 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from django.contrib.auth.models import User
-from api.models import Avoir, Fournisseur, Produit, LigneAvoir, MouvementStock
 from rest_framework.test import APIRequestFactory
+
+from api.models import Avoir, Fournisseur, LigneAvoir, MouvementStock, Produit
 from api.views.commandes import AvoirViewSet
+
 
 def verify_sudo_mode():
     print("--- Starting Sudo Mode Verification for Avoirs ---")

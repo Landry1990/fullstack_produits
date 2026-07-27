@@ -1,12 +1,14 @@
 import os
+
 import django
 
 # Configuration Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture, Caisse
 from decimal import Decimal
+
+from api.models import Facture
 
 print('=' * 80)
 print('ANALYSE DETAILLEE DES PAIEMENTS')
@@ -21,7 +23,7 @@ factures = Facture.objects.filter(
 for f in factures:
     print(f'Facture {f.numero_facture} - Client: {f.client.name if f.client else "N/A"}')
     print(f'  Total TTC: {f.total_ttc:,.2f} F')
-    print(f'  Paiements:')
+    print('  Paiements:')
     
     total_paye_reel = Decimal('0.00')
     

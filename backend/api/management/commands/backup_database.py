@@ -1,11 +1,12 @@
-from django.core.management.base import BaseCommand
-from django.conf import settings
-import subprocess
 import os
-import sys
-from datetime import datetime, timedelta
-from pathlib import Path
 import shutil
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
@@ -156,7 +157,7 @@ class Command(BaseCommand):
             self.cleanup_old_backups(str(backup_dir), retention_count=retention)
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Error during backup: {str(e)}'))
+            self.stdout.write(self.style.ERROR(f'Error during backup: {e!s}'))
 
     def cleanup_old_backups(self, backup_dir, retention_count=30):
         """Keep only the N most recent backups (.sql + .sql.md5)"""
@@ -199,7 +200,7 @@ class Command(BaseCommand):
             shutil.copy2(checksum_file_path, os.path.join(destination, os.path.basename(checksum_file_path)))
             self.stdout.write(self.style.SUCCESS(f'[SUPPORT] Copie secondaire OK: {destination}'))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'[SUPPORT] Erreur copie: {str(e)}'))
+            self.stdout.write(self.style.ERROR(f'[SUPPORT] Erreur copie: {e!s}'))
 
     def copy_to_external(self, backup_file_path, checksum_file_path):
         """Copie le backup vers toutes les destinations externes configurées (USB, disque dur, réseau)."""
@@ -230,11 +231,11 @@ class Command(BaseCommand):
                     ))
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(
-                        f'[{label}] Erreur copie vers {dest}: {str(e)}'
+                        f'[{label}] Erreur copie vers {dest}: {e!s}'
                     ))
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'[EXT] Erreur générale: {str(e)}'))
+            self.stdout.write(self.style.ERROR(f'[EXT] Erreur générale: {e!s}'))
 
     def copy_to_google_drive(self, backup_file_path):
         """Copy backup file to a locally mounted Google Drive folder"""
@@ -263,7 +264,7 @@ class Command(BaseCommand):
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(
-                f'[GDRIVE] Erreur copie: {str(e)}'
+                f'[GDRIVE] Erreur copie: {e!s}'
             ))
 
     def upload_to_cloud(self, backup_file_path):
@@ -322,6 +323,6 @@ class Command(BaseCommand):
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(
-                f'[CLOUD] Erreur upload: {str(e)}'
+                f'[CLOUD] Erreur upload: {e!s}'
             ))
 

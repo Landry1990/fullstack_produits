@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Communication models: SMS Logs, Templates, etc.
 """
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+
 
 class SmsLog(models.Model):
     """Log des SMS envoyés."""

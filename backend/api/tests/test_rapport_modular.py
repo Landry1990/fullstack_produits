@@ -5,12 +5,12 @@ except ImportError:
     _noop = lambda *a, **k: (lambda f: f)
     _mark = types.SimpleNamespace(django_db=_noop, parametrize=_noop)
     pytest = types.SimpleNamespace(mark=_mark, fixture=_noop)  # type: ignore
-from django.urls import reverse
-from rest_framework.test import APIClient
-from api.models import Facture, Produit
-from decimal import Decimal
-from django.utils import timezone
 from datetime import timedelta
+
+from django.urls import reverse
+from django.utils import timezone
+from rest_framework.test import APIClient
+
 
 @pytest.mark.django_db
 class TestRapportModular:

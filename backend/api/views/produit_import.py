@@ -1,11 +1,13 @@
 import csv
 import io
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from api.models import Produit
 from decimal import Decimal
+
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from api.models import Produit
 
 
 class ProduitImportViewSet(viewsets.ViewSet):
@@ -94,7 +96,7 @@ class ProduitImportViewSet(viewsets.ViewSet):
                             tva_decimal = Decimal(tva.replace(',', '.'))
                             quantite_int = int(quantite)
                         except (ValueError, TypeError) as e:
-                            errors.append(f"Ligne {row_num}: Erreur de conversion des prix/TVA/quantité - {str(e)}")
+                            errors.append(f"Ligne {row_num}: Erreur de conversion des prix/TVA/quantité - {e!s}")
                             continue
                         
                         # CIP optionnels
@@ -162,7 +164,7 @@ class ProduitImportViewSet(viewsets.ViewSet):
                             created_count += 1
                             
                     except Exception as e:
-                        errors.append(f"Ligne {row_num}: {str(e)}")
+                        errors.append(f"Ligne {row_num}: {e!s}")
                         continue
             
             # Rapport final
@@ -180,5 +182,5 @@ class ProduitImportViewSet(viewsets.ViewSet):
             import traceback
             traceback.print_exc()
             return Response({
-                'error': f'Erreur lors du traitement du fichier: {str(e)}'
+                'error': f'Erreur lors du traitement du fichier: {e!s}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

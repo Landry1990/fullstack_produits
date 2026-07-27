@@ -5,19 +5,21 @@ Tests approfondis pour:
 - Gestion des créances (dettes clients)
 - Transactions complexes (coupons, remises, fidélité, paiements multiples)
 """
-from decimal import Decimal
-from django.test import TestCase, TransactionTestCase
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase, APITransactionTestCase
-from django.utils import timezone
 from datetime import timedelta
+from decimal import Decimal
 
-from .factories import TestDataFactory
+from django.urls import reverse
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APITestCase
+
 from ..models import (
-    Facture, FactureProduit, Produit, StockLot, Caisse,
-    FactureProduitAllocation, Client, CouponMonnaie
+    Caisse,
+    CouponMonnaie,
+    Facture,
+    FactureProduitAllocation,
 )
+from .factories import TestDataFactory
 
 
 class FIFOAllocationTestCase(APITestCase):
@@ -155,7 +157,7 @@ class FIFOAllocationTestCase(APITestCase):
             client=self.client_obj,
             status='BROU'
         )
-        facture_produit = TestDataFactory.create_facture_produit(
+        TestDataFactory.create_facture_produit(
             facture=facture,
             produit=self.produit,
             quantity=30,
@@ -250,7 +252,7 @@ class CreancesManagementTestCase(APITestCase):
         Test le calcul de la dette pour une facture unique non payée.
         """
         # Créer une facture validée non payée
-        facture = TestDataFactory.create_facture(
+        TestDataFactory.create_facture(
             client=self.client_pro,
             status='VAL',
             total_ttc=Decimal('10000.00')
@@ -288,7 +290,7 @@ class CreancesManagementTestCase(APITestCase):
         Test le calcul de la dette avec plusieurs factures.
         """
         # Créer 3 factures
-        facture1 = TestDataFactory.create_facture(
+        TestDataFactory.create_facture(
             client=self.client_pro,
             status='VAL',
             total_ttc=Decimal('5000.00')
@@ -298,7 +300,7 @@ class CreancesManagementTestCase(APITestCase):
             status='VAL',
             total_ttc=Decimal('8000.00')
         )
-        facture3 = TestDataFactory.create_facture(
+        TestDataFactory.create_facture(
             client=self.client_pro,
             status='VAL',
             total_ttc=Decimal('12000.00')
@@ -345,12 +347,12 @@ class CreancesManagementTestCase(APITestCase):
         """
         # Client avec plafond de 50000
         # Créer des factures totalisant 60000
-        facture1 = TestDataFactory.create_facture(
+        TestDataFactory.create_facture(
             client=self.client_pro,
             status='VAL',
             total_ttc=Decimal('30000.00')
         )
-        facture2 = TestDataFactory.create_facture(
+        TestDataFactory.create_facture(
             client=self.client_pro,
             status='VAL',
             total_ttc=Decimal('30000.00')
@@ -459,7 +461,7 @@ class ComplexTransactionsTestCase(APITestCase):
         """
         # Configurer la fidélité (créer LoyaltySetting si nécessaire)
         from ..models import LoyaltySetting
-        loyalty_setting, _ = LoyaltySetting.objects.get_or_create(
+        _loyalty_setting, _ = LoyaltySetting.objects.get_or_create(
             pk=1,
             defaults={
                 'amount_per_point': Decimal('1000.00'),  # 1 point pour 1000 F
@@ -545,19 +547,19 @@ class ComplexTransactionsTestCase(APITestCase):
         )
         
         # Payer avec plusieurs modes
-        paiement1 = TestDataFactory.create_caisse(
+        TestDataFactory.create_caisse(
             facture=facture,
             montant=Decimal('3000.00'),
             mode_paiement='especes',
             user=self.user
         )
-        paiement2 = TestDataFactory.create_caisse(
+        TestDataFactory.create_caisse(
             facture=facture,
             montant=Decimal('4000.00'),
             mode_paiement='carte',
             user=self.user
         )
-        paiement3 = TestDataFactory.create_caisse(
+        TestDataFactory.create_caisse(
             facture=facture,
             montant=Decimal('3000.00'),
             mode_paiement='mobile_money',
@@ -582,7 +584,7 @@ class ComplexTransactionsTestCase(APITestCase):
         """
         # Configurer la fidélité
         from ..models import LoyaltySetting
-        loyalty_setting, _ = LoyaltySetting.objects.get_or_create(
+        _loyalty_setting, _ = LoyaltySetting.objects.get_or_create(
             pk=1,
             defaults={
                 'amount_per_point': Decimal('1000.00'),

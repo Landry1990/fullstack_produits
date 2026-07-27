@@ -1,9 +1,9 @@
 
 import os
 import sys
-import django
 from datetime import timedelta
-from decimal import Decimal
+
+import django
 
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,12 +12,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from django.utils import timezone
-from rest_framework.test import APIRequestFactory, force_authenticate
 from django.contrib.auth.models import User
 from django.db.models import Sum
-from api.models import Produit, StockLot, RelationTransformation, Fournisseur
+from django.utils import timezone
+from rest_framework.test import APIRequestFactory, force_authenticate
+
+from api.models import Fournisseur, Produit, RelationTransformation, StockLot
 from api.views.stocks import RelationTransformationViewSet
+
 
 def run_test():
     print("=== STARTING TRANSFORMATION TEST ===")
@@ -77,7 +79,7 @@ def run_test():
     Produit.objects.filter(pk=source.pk).update(stock=total_lots)
     
     source.refresh_from_db()
-    print(f"INITIAL STATE (DB Refreshed, Fixed):")
+    print("INITIAL STATE (DB Refreshed, Fixed):")
     print(f"Source: {source.stock}")
     print(f"Lots in DB: {StockLot.objects.filter(produit=source).count()}")
     for l in StockLot.objects.filter(produit=source):

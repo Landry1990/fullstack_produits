@@ -1,14 +1,14 @@
 import os
+
 import django
-import json
 
 # Set up Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
+
 from api.serializers import UserSerializer
-from rest_framework.request import Request
-from rest_framework.test import APIRequestFactory
+
 
 def print_serializer_fields():
     serializer = UserSerializer()

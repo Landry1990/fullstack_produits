@@ -4,10 +4,12 @@ Patterns de résilience pour le backend
 À intégrer dans les hooks/services frontend
 """
 
-import time
 import random
+import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Any, Optional
+from typing import Any
+
 import requests
 
 # =============================================================================
@@ -34,9 +36,9 @@ class CircuitBreaker:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-        except Exception as e:
+        except Exception:
             self._on_failure()
-            raise e
+            raise
     
     def _on_success(self):
         self.failure_count = 0
@@ -62,7 +64,7 @@ def retry_with_backoff(max_retries=3, base_delay=1, max_delay=10,
             for attempt in range(max_retries):
                 try:
                     return func(*args, **kwargs)
-                except exceptions as e:
+                except exceptions:
                     if attempt == max_retries - 1:
                         raise
                     
@@ -219,6 +221,7 @@ def with_fallback(fallback_value: Any):
 
 import uuid
 
+
 class IdempotencyKey:
     """Génère des clés d'idempotence pour éviter les doublons"""
     def __init__(self):
@@ -302,7 +305,7 @@ class ResilientAPIClient:
             
             return result
             
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException:
             # Échec = circuit breaker compte
             self.circuit_breaker._on_failure()
             raise

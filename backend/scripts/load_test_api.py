@@ -11,10 +11,8 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
 
 import requests
-
 
 BASE_URL = "http://localhost:8000"
 AUTH_URL = f"{BASE_URL}/api-token-auth/"
@@ -28,8 +26,8 @@ class LoadTestResult:
         self.total = 0
         self.success = 0
         self.failed = 0
-        self.times: List[float] = []
-        self.errors: List[str] = []
+        self.times: list[float] = []
+        self.errors: list[str] = []
         self._lock = threading.Lock()
 
     def record(self, ok: bool, elapsed: float, error: str = ""):
@@ -63,7 +61,7 @@ def get_token(username: str, password: str) -> str:
     return resp.json()["token"]
 
 
-def fetch_product_ids(token: str, limit: int = 20) -> List[int]:
+def fetch_product_ids(token: str, limit: int = 20) -> list[int]:
     headers = {"Authorization": f"Token {token}"}
     resp = requests.get(PRODUITS_URL, params={"page_size": limit}, headers=headers, timeout=10)
     resp.raise_for_status()
@@ -72,7 +70,7 @@ def fetch_product_ids(token: str, limit: int = 20) -> List[int]:
     return [p["id"] for p in results if "id" in p][:limit]
 
 
-def fetch_clients(token: str, limit: int = 10) -> List[int]:
+def fetch_clients(token: str, limit: int = 10) -> list[int]:
     headers = {"Authorization": f"Token {token}"}
     resp = requests.get(f"{BASE_URL}/api/clients/", params={"page_size": limit}, headers=headers, timeout=10)
     resp.raise_for_status()
@@ -81,7 +79,7 @@ def fetch_clients(token: str, limit: int = 10) -> List[int]:
     return [c["id"] for c in results if "id" in c][:limit]
 
 
-def worker_search(token: str, product_ids: List[int], duration: int, result: LoadTestResult):
+def worker_search(token: str, product_ids: list[int], duration: int, result: LoadTestResult):
     headers = {"Authorization": f"Token {token}"}
     terms = ["doli", "para", "amoxi", "vita", "500", "sirop", "comprime"]
     end = time.time() + duration
@@ -109,7 +107,7 @@ def worker_list_factures(token: str, duration: int, result: LoadTestResult):
             result.record(False, 0, str(e))
 
 
-def worker_finalize(token: str, product_ids: List[int], client_ids: List[int], duration: int, result: LoadTestResult):
+def worker_finalize(token: str, product_ids: list[int], client_ids: list[int], duration: int, result: LoadTestResult):
     headers = {"Authorization": f"Token {token}", "Content-Type": "application/json"}
     end = time.time() + duration
     while time.time() < end:
@@ -140,7 +138,7 @@ def worker_finalize(token: str, product_ids: List[int], client_ids: List[int], d
         time.sleep(random.uniform(0.5, 2.0))
 
 
-def run_phase(token: str, product_ids: List[int], client_ids: List[int], clients: int, duration: int, finalize_ratio: float = 0.3):
+def run_phase(token: str, product_ids: list[int], client_ids: list[int], clients: int, duration: int, finalize_ratio: float = 0.3):
     search_result = LoadTestResult()
     list_result = LoadTestResult()
     finalize_result = LoadTestResult()

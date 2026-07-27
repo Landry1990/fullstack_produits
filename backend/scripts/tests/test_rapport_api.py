@@ -1,4 +1,5 @@
 import os
+
 import django
 
 # Configuration Django
@@ -6,8 +7,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from api.rapport_view import RapportViewSet
-from rest_framework.test import APIRequestFactory
 from django.contrib.auth.models import User
+from rest_framework.test import APIRequestFactory
 
 # Créer une fausse requête
 factory = APIRequestFactory()

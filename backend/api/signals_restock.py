@@ -1,6 +1,8 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from .models import Facture, FactureProduit, Commande, CommandeProduit, Produit
+
+from .models import Commande, CommandeProduit, Facture
+
 
 @receiver(pre_save, sender=Facture)
 def capture_old_status(sender, instance, update_fields=None, **kwargs):
@@ -38,11 +40,9 @@ def refill_restock_order(sender, instance, created, update_fields=None, **kwargs
 
 def _process_valid_facture(facture):
     """Ajoute les produits vendus à la commande de réassort en cours"""
-    from django.db import IntegrityError
-    
     # 1. Trouver ou créer la commande de réassort BROUILLON
     # On utilise un bloc try/except + transaction.atomic pour gérer la concurrence
-    from django.db import transaction
+    from django.db import IntegrityError, transaction
     try:
         with transaction.atomic():
             # Chercher d'abord si une commande active existe

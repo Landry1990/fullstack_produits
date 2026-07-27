@@ -1,12 +1,15 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture
-from django.db.models import Sum
 from decimal import Decimal
+
+from django.db.models import Sum
+
+from api.models import Facture
 
 print('=' * 80)
 print('TEST - NOUVELLE APPROCHE PYTHON POUR LES CREANCES')
@@ -43,9 +46,9 @@ for facture in toutes_factures_credit:
     if reste > 0:
         total_creances += reste
         nb_factures_impayees += 1
-        print(f'  [INCLUS] dans les creances')
+        print('  [INCLUS] dans les creances')
     else:
-        print(f'  [EXCLU] paye integralement')
+        print('  [EXCLU] paye integralement')
     print()
 
 print('=' * 80)

@@ -2,13 +2,31 @@
 Service centralisé pour tous les calculs de marge
 Évite les duplications et assure la cohérence des formules
 """
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Tuple, Union
-from datetime import timedelta, date as date_type, datetime
-from django.db.models import Sum, F, DecimalField, Q, Value, Count, Avg, Exists, OuterRef
+from datetime import date as date_type
+from datetime import datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
+
+from django.db.models import (
+    Avg,
+    Count,
+    DecimalField,
+    Exists,
+    F,
+    OuterRef,
+    Sum,
+    Value,
+)
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-from api.models import Produit, Facture, FactureProduit, FactureProduitAllocation, StockLot
+
+from api.models import (
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    Produit,
+    StockLot,
+)
+
 
 def _to_aware_datetime(d):
     """Convert a date or naive datetime to a timezone-aware datetime."""
@@ -30,7 +48,7 @@ class MarginService:
         cost_price: Decimal, 
         selling_price: Decimal,
         rounding: bool = True
-    ) -> Dict[str, Decimal]:
+    ) -> dict[str, Decimal]:
         """
         Calcule la marge pour un produit selon les formules standard
         
@@ -75,8 +93,8 @@ class MarginService:
     @staticmethod
     def calculate_lot_margin(
         lot: StockLot,
-        selling_price: Optional[Decimal] = None
-    ) -> Dict[str, Decimal]:
+        selling_price: Decimal | None = None
+    ) -> dict[str, Decimal]:
         """
         Calcule la marge pour un lot de stock
         
@@ -91,7 +109,7 @@ class MarginService:
         return MarginService.calculate_product_margin(lot.price_cost, price)
     
     @staticmethod
-    def calculate_facture_margin(facture: Facture) -> Dict[str, Decimal]:
+    def calculate_facture_margin(facture: Facture) -> dict[str, Decimal]:
         """
         Calcule la marge brute pour une facture
         
@@ -127,7 +145,7 @@ class MarginService:
         date_debut, 
         date_fin,
         factures_qs=None
-    ) -> Dict[str, Decimal]:
+    ) -> dict[str, Decimal]:
         """
         Calcule la marge sur une période avec requête optimisée
         
@@ -181,7 +199,7 @@ class MarginService:
         date_fin,
         factures_qs=None,
         exclude_is_divers=True
-    ) -> Dict[str, Decimal]:
+    ) -> dict[str, Decimal]:
         """
         Calcule la marge sur une période avec prise en compte des remises globales
         Formule unifiée : (CA TTC * ratio_remise) - coût_achat
@@ -255,7 +273,7 @@ class MarginService:
             total=Coalesce(Sum('remise'), Value(0, output_field=DecimalField()))
         )['total']
         
-        ratio_remise = Decimal('1')
+        ratio_remise = Decimal(1)
         if ca_ttc_total + total_remise > 0:
             ratio_remise = ca_ttc_total / (ca_ttc_total + total_remise)
         
@@ -275,7 +293,7 @@ class MarginService:
         }
     
     @staticmethod
-    def update_product_margins(product_ids: Optional[List[int]] = None) -> int:
+    def update_product_margins(product_ids: list[int] | None = None) -> int:
         """
         Met à jour les marges des produits en lot
         
@@ -309,7 +327,7 @@ class MarginService:
         date_fin,
         date_debut_compare=None,
         date_fin_compare=None
-    ) -> Dict:
+    ) -> dict:
         """
         Analyse de variance des marges entre deux périodes
         
@@ -354,7 +372,7 @@ class MarginService:
     def get_products_with_anomalous_margins(
         margin_threshold: float = 80.0,
         min_ca: Decimal = Decimal('1000.00')
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Identifie les produits avec des marges anormalement élevées
         
@@ -365,7 +383,7 @@ class MarginService:
         Returns:
             Liste des produits avec marges anormales
         """
-        from django.db.models import Avg, Count
+        from django.db.models import Count
         
         # Requête optimisée pour identifier les produits suspects
         suspicious = FactureProduit.objects.filter(

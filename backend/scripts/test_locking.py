@@ -1,12 +1,12 @@
 """
 Tests avancés du verrouillage pessimiste : TTL, race condition, WebSocket.
 """
-import requests
-import threading
-import subprocess
 import json
+import subprocess
+import threading
 import time
-import sys
+
+import requests
 
 BASE = 'http://localhost:8000'
 TOKEN_A = '1de8ad310a0cb8c971849f187edea04052993f87'  # loadtest

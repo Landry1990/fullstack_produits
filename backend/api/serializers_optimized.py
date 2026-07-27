@@ -5,11 +5,24 @@ Ce fichier contient des versions allégées des serializers pour améliorer
 les performances lors des listes paginées.
 """
 from rest_framework import serializers
-from .serializers import (
-    ProduitSerializer, FactureSerializer, ClientSerializer,
-    CommandeSerializer, StockLotSerializer, InventaireSerializer
+
+from .models import (
+    Client,
+    Commande,
+    Facture,
+    Inventaire,
+    PosteCaisse,
+    Produit,
+    StockLot,
 )
-from .models import Produit, Facture, Client, Commande, StockLot, Inventaire, PosteCaisse
+from .serializers import (
+    ClientSerializer,
+    CommandeSerializer,
+    FactureSerializer,
+    InventaireSerializer,
+    ProduitSerializer,
+    StockLotSerializer,
+)
 
 
 class PosteCaisseListSerializer(serializers.ModelSerializer):
@@ -28,7 +41,7 @@ class ProduitListSerializer(serializers.ModelSerializer):
 
     def get_fournisseur_name(self, obj):
         # Prefer the annotated latest supplier if it was requested and found
-        if hasattr(obj, 'latest_fournisseur_name') and getattr(obj, 'latest_fournisseur_name'):
+        if hasattr(obj, 'latest_fournisseur_name') and obj.latest_fournisseur_name:
             return obj.latest_fournisseur_name
         # Fallback to the main supplier
         if obj.fournisseur:
@@ -56,7 +69,6 @@ class ProduitDetailSerializer(ProduitSerializer):
     Serializer complet pour les détails d'un produit.
     Hérite du serializer de base avec tous les champs.
     """
-    pass
 
 
 class ClientListSerializer(serializers.ModelSerializer):
@@ -81,7 +93,6 @@ class ClientDetailSerializer(ClientSerializer):
     Serializer complet pour les détails d'un client.
     Inclut les ayants droit et toutes les informations.
     """
-    pass
 
 
 class FactureListSerializer(serializers.ModelSerializer):
@@ -143,7 +154,6 @@ class FactureDetailSerializer(FactureSerializer):
     Serializer complet pour les détails d'une facture.
     Inclut tous les produits et paiements.
     """
-    pass
 
 
 class CommandeListSerializer(serializers.ModelSerializer):
@@ -282,7 +292,6 @@ class CommandeDetailSerializer(CommandeSerializer):
     Serializer complet pour les détails d'une commande.
     Inclut tous les produits.
     """
-    pass
 
 
 class StockLotListSerializer(serializers.ModelSerializer):
@@ -306,7 +315,6 @@ class StockLotDetailSerializer(StockLotSerializer):
     """
     Serializer complet pour les détails d'un lot.
     """
-    pass
 
 
 class InventaireListSerializer(serializers.ModelSerializer):

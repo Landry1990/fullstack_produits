@@ -1,16 +1,19 @@
-import os
 import json
-import django
+import os
 import sys
 from decimal import Decimal
+
+import django
 
 # Configuration Django
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Produit
 from django.db import transaction
+
+from api.models import Produit
+
 
 def import_products(json_file_path):
     if not os.path.exists(json_file_path):
@@ -82,12 +85,12 @@ def import_products(json_file_path):
                     )
                     created_count += 1
 
-        print(f"✅ Import terminé !")
+        print("✅ Import terminé !")
         print(f"   - Créés : {created_count}")
         print(f"   - Mis à jour : {updated_count}")
 
     except Exception as e:
-        print(f"💥 Erreur lors de l'import : {str(e)}")
+        print(f"💥 Erreur lors de l'import : {e!s}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

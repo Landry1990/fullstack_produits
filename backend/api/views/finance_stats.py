@@ -1,37 +1,57 @@
-# -*- coding: utf-8 -*-
 """
 Finance Statistics ViewSet - Refactorisé.
 Les services sous-jacents sont dans api/services/finance_*.py
 """
+from datetime import timedelta
+from decimal import Decimal
+
+import numpy as np
+from dateutil.relativedelta import relativedelta
+from django.core.cache import cache
+from django.db.models import (
+    Avg,
+    BooleanField,
+    Case,
+    CharField,
+    Count,
+    DecimalField,
+    Exists,
+    F,
+    OuterRef,
+    Q,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce, TruncMonth
+from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
-from django.db.models import Sum, Count, Avg, F, Q, DecimalField, BooleanField, Case, When, Value, Exists, OuterRef, CharField
-from django.db.models.functions import TruncMonth, Coalesce
-from django.utils import timezone
-from datetime import timedelta
-from dateutil.relativedelta import relativedelta
-from decimal import Decimal
-import numpy as np
-
-from django.core.cache import cache
+from rest_framework.response import Response
 
 from ..models import (
-    Facture, FactureProduit, FactureProduitAllocation,
-    Produit, Rayon, Caisse
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    Produit,
 )
 from ..services.finance_base_queries import get_validated_invoices_queryset
 from ..services.finance_formatters import (
-    build_monthly_labels, fill_monthly_series, build_prediction_labels
-)
-from ..services.finance_predictions import (
-    moving_average, linear_regression, combined_prediction,
-    compute_trend, compute_confidence
+    build_monthly_labels,
+    build_prediction_labels,
+    fill_monthly_series,
 )
 from ..services.finance_marges import (
-    build_monthly_margin_map, calculate_margin_for_invoices
+    build_monthly_margin_map,
+    calculate_margin_for_invoices,
+)
+from ..services.finance_predictions import (
+    combined_prediction,
+    compute_confidence,
+    compute_trend,
+    linear_regression,
+    moving_average,
 )
 
 
@@ -48,14 +68,14 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         current_map = get_validated_invoices_queryset().filter(
             date__date__gte=start_date, date__date__lte=today
         ).annotate(month=TruncMonth('date')).values('month').annotate(
-            total=Coalesce(Sum('total_ttc'), Decimal('0'))
+            total=Coalesce(Sum('total_ttc'), Decimal(0))
         )
         current_map = {item['month'].strftime('%Y-%m'): float(item['total']) for item in current_map}
 
         n1_map = get_validated_invoices_queryset().filter(
             date__date__gte=start_date_n1, date__date__lt=start_date
         ).annotate(month=TruncMonth('date')).values('month').annotate(
-            total=Coalesce(Sum('total_ttc'), Decimal('0'))
+            total=Coalesce(Sum('total_ttc'), Decimal(0))
         )
         n1_map = {
             (item['month'] + relativedelta(years=1)).strftime('%Y-%m'): float(item['total'])
@@ -112,7 +132,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         ca_data = get_validated_invoices_queryset().filter(
             date__date__gte=start_date, date__date__lte=today
         ).annotate(month=TruncMonth('date')).values('month').annotate(
-            total=Coalesce(Sum('total_ttc'), Decimal('0'))
+            total=Coalesce(Sum('total_ttc'), Decimal(0))
         ).order_by('month')
 
         ca_map = {item['month'].strftime('%Y-%m'): float(item['total']) for item in ca_data}
@@ -148,7 +168,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             date__date__gte=start_of_month, date__date__lte=today
         )
         monthly_stats = monthly_invoices.aggregate(
-            ca=Coalesce(Sum('total_ttc'), Decimal('0')), count=Count('id')
+            ca=Coalesce(Sum('total_ttc'), Decimal(0)), count=Count('id')
         )
         panier_moyen_mois = float(monthly_stats['ca']) / monthly_stats['count'] if monthly_stats['count'] else 0
 
@@ -156,7 +176,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             date__date__gte=start_of_year, date__date__lte=today
         )
         yearly_stats = yearly_invoices.aggregate(
-            ca=Coalesce(Sum('total_ttc'), Decimal('0')), count=Count('id')
+            ca=Coalesce(Sum('total_ttc'), Decimal(0)), count=Count('id')
         )
         panier_moyen_annee = float(yearly_stats['ca']) / yearly_stats['count'] if yearly_stats['count'] else 0
 
@@ -164,7 +184,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         taux_marge = round(marge_month / ca_month * 100, 1) if ca_month else 0
 
         stock_value = Produit.objects.aggregate(
-            total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal('0'))
+            total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal(0))
         )['total']
 
         last_30_days = today - timedelta(days=30)
@@ -173,11 +193,11 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         )
         cogs_alloc = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=invoices_30d
-        ).aggregate(total=Coalesce(Sum(F('quantity') * F('cost_price'), output_field=DecimalField()), Decimal('0')))['total']
+        ).aggregate(total=Coalesce(Sum(F('quantity') * F('cost_price'), output_field=DecimalField()), Decimal(0)))['total']
         cogs_unalloc = FactureProduit.objects.filter(facture__in=invoices_30d).annotate(
             has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
         ).filter(has_alloc=False).aggregate(
-            total=Coalesce(Sum(F('quantity') * F('produit__pmp'), output_field=DecimalField()), Decimal('0'))
+            total=Coalesce(Sum(F('quantity') * F('produit__pmp'), output_field=DecimalField()), Decimal(0))
         )['total']
         cogs_30d = (cogs_alloc or 0) + (cogs_unalloc or 0)
         dsi = round(float(stock_value) / (float(cogs_30d) / 30), 0) if cogs_30d else 0
@@ -186,7 +206,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         prev_month_end = start_of_month - timedelta(days=1)
         prev_month_ca = get_validated_invoices_queryset().filter(
             date__date__gte=prev_month_start, date__date__lte=prev_month_end
-        ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca'] or 0
+        ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal(0)))['ca'] or 0
         croissance = round(((float(monthly_stats['ca']) - float(prev_month_ca)) / float(prev_month_ca)) * 100, 1) if prev_month_ca else 0
 
         data = {
@@ -296,7 +316,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
                     output_field=CharField()
                 )
             ).values('fournisseur_id_resolved', 'fournisseur_name_resolved').annotate(
-                ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0'))
+                ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal(0))
             ).order_by('-ca')[:10]
 
             result = [
@@ -312,7 +332,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
                 'facture_produit__produit__rayon__id',
                 'facture_produit__produit__rayon__name'
             ).annotate(
-                ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0'))
+                ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal(0))
             ).order_by('-ca')[:10]
 
             result = [
@@ -418,7 +438,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
                 date__date__gte=start_date, date__date__lte=today
             )
         ).values(id_field, name_field).annotate(
-            total_ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0'))
+            total_ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal(0))
         ).order_by('-total_ca')[:top_n]
 
         top_ids = [item[id_field] for item in top_categories if item[id_field]]
@@ -432,7 +452,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         ).annotate(
             month=TruncMonth('facture_produit__facture__date')
         ).values('month', id_field).annotate(
-            ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal('0'))
+            ca=Coalesce(Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), Decimal(0))
         ).order_by('month')
 
         labels = build_monthly_labels(start_date, today)
@@ -530,8 +550,9 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     # ── 10. Analyse Fournisseurs ──────────────────────────
     @action(detail=False, methods=['get'])
     def analyse_fournisseurs(self, request):
-        from ..models import Fournisseur, StockLot, StockAdjustment
         from collections import defaultdict
+
+        from ..models import Fournisseur, StockAdjustment, StockLot
         today = timezone.localtime(timezone.now()).date()
         start_date = today - relativedelta(months=12)
 
@@ -611,8 +632,9 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     # ── 11. Comparaison Prix Achat ────────────────────────
     @action(detail=False, methods=['get'])
     def comparaison_prix_achat(self, request):
-        from ..models import StockLot
         from collections import defaultdict
+
+        from ..models import StockLot
         today = timezone.localtime(timezone.now()).date()
         start_date = today - relativedelta(months=12)
 
@@ -673,7 +695,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         ).exclude(
             Q(fournisseur__isnull=True) | Q(fournisseur__name__iexact='Inconnu')
         ).values('fournisseur__id', 'fournisseur__name').annotate(
-            total_achat=Coalesce(Sum(F('quantity_initial') * F('price_cost'), output_field=DecimalField()), Decimal('0'))
+            total_achat=Coalesce(Sum(F('quantity_initial') * F('price_cost'), output_field=DecimalField()), Decimal(0))
         ).order_by('-total_achat')
 
         total_global = sum(a['total_achat'] for a in achats)
@@ -692,7 +714,6 @@ class FinanceStatsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def margin_variance_analysis(self, request):
         today = timezone.localtime(timezone.now()).date()
-        is_english = request.query_params.get('lang', 'fr') == 'en'
 
         # Période glissante configurable : 7j, 30j, 90j (défaut: 7j)
         period_days = int(request.query_params.get('period_days', 7))
@@ -714,13 +735,13 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             factures = get_validated_invoices_queryset().filter(
                 date__date__gte=start, date__date__lte=end
             )
-            global_remise = factures.aggregate(s=Coalesce(Sum('remise'), Decimal('0')))['s']
-            total_ca = factures.aggregate(s=Coalesce(Sum('total_ttc'), Decimal('0')))['s']
+            global_remise = factures.aggregate(s=Coalesce(Sum('remise'), Decimal(0)))['s']
+            total_ca = factures.aggregate(s=Coalesce(Sum('total_ttc'), Decimal(0)))['s']
 
             m_alloc = FactureProduitAllocation.objects.filter(
                 facture_produit__facture__in=factures
             ).aggregate(
-                m=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal('0'))
+                m=Coalesce(Sum((F('facture_produit__selling_price') - F('facture_produit__discount') - F('cost_price')) * F('quantity')), Decimal(0))
             )['m']
 
             m_unalloc = FactureProduit.objects.filter(
@@ -728,7 +749,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             ).annotate(
                 has_alloc=Exists(FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk')))
             ).filter(has_alloc=False).aggregate(
-                m=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal('0'))
+                m=Coalesce(Sum((F('selling_price') - F('discount') - F('produit__pmp')) * F('quantity')), Decimal(0))
             )['m']
 
             total_margin = m_alloc + m_unalloc - global_remise

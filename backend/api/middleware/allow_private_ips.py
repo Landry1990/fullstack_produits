@@ -4,7 +4,7 @@ Cela évite d'avoir à configurer ALLOWED_HOSTS pour chaque IP du réseau.
 """
 
 import ipaddress
-import os
+
 from django.conf import settings
 
 
@@ -36,11 +36,10 @@ class AllowPrivateIPsMiddleware:
             host = http_host.split(':')[0]  # Enlever le port
             
             # Ajouter automatiquement aux ALLOWED_HOSTS si c'est une IP privée
-            if is_private_ip(host):
-                if host not in settings._DYNAMIC_ALLOWED_HOSTS:
-                    settings._DYNAMIC_ALLOWED_HOSTS.add(host)
-                    # Mettre à jour ALLOWED_HOSTS
-                    settings.ALLOWED_HOSTS = list(settings._DYNAMIC_ALLOWED_HOSTS)
+            if is_private_ip(host) and host not in settings._DYNAMIC_ALLOWED_HOSTS:
+                settings._DYNAMIC_ALLOWED_HOSTS.add(host)
+                # Mettre à jour ALLOWED_HOSTS
+                settings.ALLOWED_HOSTS = list(settings._DYNAMIC_ALLOWED_HOSTS)
         
         response = self.get_response(request)
         return response

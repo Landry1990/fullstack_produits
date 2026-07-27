@@ -1,11 +1,11 @@
 import io
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.colors import HexColor
+from reportlab.lib.pagesizes import A4, letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm, inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from api.utils_licence import valider_licence_systeme
 
@@ -13,7 +13,7 @@ from api.utils_licence import valider_licence_systeme
 def _header_footer(canvas, doc, company_info, facture_info, facture):
     canvas.saveState()
     styles = getSampleStyleSheet()
-    page_width, page_height = letter
+    _page_width, page_height = letter
     margin = doc.leftMargin
     content_width = doc.width
 

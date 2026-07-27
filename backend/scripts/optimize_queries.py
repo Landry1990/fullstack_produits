@@ -6,6 +6,7 @@ Usage: python manage.py optimize_queries --check
 """
 import os
 import sys
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
@@ -14,7 +15,8 @@ django.setup()
 
 from django.db import connection, reset_queries
 from django.test.utils import override_settings
-from api.models import Facture, Produit, Commande
+
+from api.models import Produit
 
 
 class QueryOptimizer:
@@ -47,8 +49,9 @@ class QueryOptimizer:
         """Analyse la liste des factures"""
         print("\n🔍 Analyse FactureViewSet.list()...")
         
-        from api.views.ventes.factures import FactureViewSet
         from rest_framework.test import APIRequestFactory
+
+        from api.views.ventes.factures import FactureViewSet
         
         factory = APIRequestFactory()
         request = factory.get('/api/factures/')
@@ -100,26 +103,27 @@ class QueryOptimizer:
         
         reset_queries()
         
+        from django.db.models import Q, Sum
+
         from api.models import Caisse, MouvementCaisse
-        from django.db.models import Sum, Q
         
         # Simule les requêtes faites par get_totals
         paiements = Caisse.objects.filter(statut='completee')
         
         # 1. Requêtes séparées (AVANT)
-        total_ventes = paiements.exclude(
+        paiements.exclude(
             mode_paiement__in=['en_compte', 'depot']
         ).aggregate(Sum('montant'))
         
-        total_recouvrement = paiements.filter(
+        paiements.filter(
             Q(mode_paiement='recouvrement')
         ).aggregate(Sum('montant'))
         
-        modes_globaux = paiements.exclude(
+        paiements.exclude(
             mode_paiement__in=['en_compte', 'depot']
         ).values('mode_paiement').annotate(total=Sum('montant'))
         
-        mouvements = MouvementCaisse.objects.aggregate(
+        MouvementCaisse.objects.aggregate(
             entrees=Sum('montant', filter=Q(type='ENTREE')),
             sorties=Sum('montant', filter=Q(type='SORTIE'))
         )

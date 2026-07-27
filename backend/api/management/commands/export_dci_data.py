@@ -8,9 +8,11 @@ Usage:
 """
 import json
 import os
+
 from django.core.management.base import BaseCommand
 from django.core.serializers import serialize
-from api.models import Substance, MedicamentReference
+
+from api.models import MedicamentReference, Substance
 
 
 class Command(BaseCommand):

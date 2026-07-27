@@ -1,8 +1,10 @@
-from django_filters import rest_framework as filters
-from .models import Produit, AuditLog, EcritureComptable
+from datetime import timedelta
+
 from django.db.models import Q
 from django.utils import timezone
-from datetime import timedelta
+from django_filters import rest_framework as filters
+
+from .models import AuditLog, EcritureComptable, Produit
 
 
 class ProduitFilter(filters.FilterSet):

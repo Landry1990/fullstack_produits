@@ -2,21 +2,22 @@
 Validation d'inventaire avec support des lots et gestion des stocks.
 Utilise Optimistic Locking (pas de select_for_update) pour 12 postes simultanés.
 """
-from typing import Dict, List, Optional, Tuple, Any
-from django.db import transaction
-from django.utils import timezone
-from rest_framework.response import Response
-from rest_framework import status
 from django.db.models import Sum
-import time
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.response import Response
 
-from api.models import (
-    Inventaire, LigneInventaire, Produit, StockLot,
-    StockAdjustment, MouvementStock, AuditLog
-)
 from api.audit_helpers import log_audit
+from api.models import (
+    AuditLog,
+    Inventaire,
+    LigneInventaire,
+    MouvementStock,
+    Produit,
+    StockAdjustment,
+    StockLot,
+)
 from api.sudo_utils import validate_sudo_mode
-from api.optimistic_locking import ConcurrentModificationError
 
 
 def validate_inventaire(
@@ -67,13 +68,13 @@ def validate_inventaire(
 
     lots_list = list(StockLot.objects.filter(id__in=lot_ids))
     lots_map = {l.id: l for l in lots_list}
-    initial_lot_versions = {l.id: l.version for l in lots_list}
+    {l.id: l.version for l in lots_list}
 
     # Collections pour les opérations batch
-    lots_to_update: Dict[int, StockLot] = {}
-    adjustments_to_create: List[StockAdjustment] = []
-    mouvements_to_create: List[MouvementStock] = []
-    remaining_capacities: Dict[int, int] = {}
+    lots_to_update: dict[int, StockLot] = {}
+    adjustments_to_create: list[StockAdjustment] = []
+    mouvements_to_create: list[MouvementStock] = []
+    remaining_capacities: dict[int, int] = {}
     now = timezone.now()
 
     # Phase 2 : Traitement en mémoire
@@ -85,7 +86,7 @@ def validate_inventaire(
         target_lot = lots_map.get(ligne.stock_lot_id)
         if not target_lot:
             lot_number = f"LOT-INV-{inventaire.id}"
-            target_lot, created = StockLot.objects.get_or_create(
+            target_lot, _created = StockLot.objects.get_or_create(
                 produit=produit, lot=lot_number,
                 defaults={
                     'quantity_initial': ligne.quantite_physique,

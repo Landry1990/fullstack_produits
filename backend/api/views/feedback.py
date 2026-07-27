@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Feedback API views
 """
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from ..models import Feedback
 from ..services.email_service import email_service

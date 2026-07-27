@@ -5,15 +5,16 @@ Vérifie que tous les serializers utilisés par les ViewSets peuvent être insta
 """
 import os
 import sys
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 sys.path.insert(0, '/app')
 django.setup()
 
-from rest_framework import serializers
 from api.serializers import *
 from api.serializers_optimized import *
+
 
 def audit_serializer_class(cls, name):
     """Vérifie qu'un serializer peut être créé sans erreur."""

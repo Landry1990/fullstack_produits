@@ -1,13 +1,13 @@
-from .stats import ProduitStatsMixin
-from .stock import ProduitStockMixin
-from .export import ProduitExportMixin
 from .bulk_ops import ProduitBulkMixin
+from .export import ProduitExportMixin
+from .stats import ProduitStatsMixin
 from .status_ops import ProduitStatusMixin
+from .stock import ProduitStockMixin
 
 __all__ = [
-    'ProduitStatsMixin',
-    'ProduitStockMixin',
-    'ProduitExportMixin',
     'ProduitBulkMixin',
-    'ProduitStatusMixin'
+    'ProduitExportMixin',
+    'ProduitStatsMixin',
+    'ProduitStatusMixin',
+    'ProduitStockMixin'
 ]

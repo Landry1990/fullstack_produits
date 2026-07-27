@@ -1,6 +1,8 @@
 from decimal import Decimal
+
 from django.db import transaction
 from django.db.models import Sum
+
 
 class PaymentService:
     @staticmethod
@@ -21,19 +23,18 @@ class PaymentService:
             return
         
         # 1. Marquage Tiers Payant (Part Patient)
-        if facture.part_client is not None and caisse.mode_paiement != 'en_compte':
-            if not caisse.part_patient and (caisse.part_assurance is None or caisse.part_assurance == 0):
-                Caisse.objects.filter(id=caisse.id).update(
-                    part_patient=caisse.montant,
-                    part_assurance=Decimal('0.00')
-                )
+        if facture.part_client is not None and caisse.mode_paiement != 'en_compte' and not caisse.part_patient and (caisse.part_assurance is None or caisse.part_assurance == 0):
+            Caisse.objects.filter(id=caisse.id).update(
+                part_patient=caisse.montant,
+                part_assurance=Decimal('0.00')
+            )
         
         # 2. Split Billing (Génération automatique de la créance)
         if is_created and facture.part_client is not None and caisse.mode_paiement != 'en_compte':
             paiements_reels = Caisse.objects.filter(
                 facture=facture, 
                 statut='completee'
-            ).exclude(mode_paiement='en_compte').aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            ).exclude(mode_paiement='en_compte').aggregate(total=Sum('montant'))['total'] or Decimal(0)
             
             if paiements_reels >= facture.part_client:
                 reste_a_couvrir = facture.total_ttc - paiements_reels

@@ -1,15 +1,16 @@
-import io
 import csv
+import io
+
+from django.http import HttpResponse
+from reportlab.graphics.barcode import code128
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from django.http import HttpResponse
 
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.graphics.barcode import code128
+from ...models import Forme, Groupe, Produit, Rayon
 
-from ...models import Produit, Rayon, Forme, Groupe
 
 class ProduitExportMixin:
     """Mixin pour les exports CSV et génération PDF/Etiquettes des produits."""
@@ -46,7 +47,7 @@ class ProduitExportMixin:
 
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        response.write(u'\ufeff'.encode('utf8'))
+        response.write('\ufeff'.encode('utf8'))
         
         writer = csv.writer(response, delimiter=';')
         writer.writerow(['ID', 'Nom', 'CIP1', 'Stock', 'Prix Achat', 'Prix Vente', 'TVA'])

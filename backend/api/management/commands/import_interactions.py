@@ -8,10 +8,12 @@ Usage:
     python manage.py import_interactions --dry-run
 """
 import csv
-import unicodedata
 import re
+import unicodedata
+
 from django.core.management.base import BaseCommand
-from api.models import Substance, DrugInteraction
+
+from api.models import DrugInteraction, Substance
 
 
 def _normalize(text):

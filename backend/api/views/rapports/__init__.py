@@ -1,11 +1,13 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+
 from api.pagination import StandardResultsSetPagination
 
 from .base import RapportBaseMixin
+from .finance import RapportFinanceMixin
 from .inventory import RapportInventoryMixin
 from .sales import RapportSalesMixin
-from .finance import RapportFinanceMixin
+
 
 class RapportViewSet(
     viewsets.ViewSet,

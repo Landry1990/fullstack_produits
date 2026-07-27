@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Utilitaires de formatage des données pour les graphiques Recharts.
 """

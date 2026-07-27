@@ -1,8 +1,9 @@
 import os
-import csv
+
 from django.core.management.base import BaseCommand
+
 from api.models import MedicamentReference
-from django.db import transaction
+
 
 class Command(BaseCommand):
     help = 'Importe la table de référence des médicaments depuis unified_meds.txt'
@@ -31,7 +32,7 @@ class Command(BaseCommand):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 # Read header
-                header = f.readline()
+                f.readline()
                 
                 for line in f:
                     parts = line.strip().split('\t')
@@ -70,4 +71,4 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.SUCCESS(f"Import terminé avec succès : {count} médicaments importés."))
         except Exception as e:
-            self.stderr.write(f"Erreur lors de l'import : {str(e)}")
+            self.stderr.write(f"Erreur lors de l'import : {e!s}")

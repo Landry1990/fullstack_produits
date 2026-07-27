@@ -8,7 +8,6 @@ from collections import Counter
 
 import requests
 
-
 BASE_URL = "http://localhost:8000"
 AUTH_URL = f"{BASE_URL}/api-token-auth/"
 PRODUITS_URL = f"{BASE_URL}/api/produits/"

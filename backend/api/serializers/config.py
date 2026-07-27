@@ -1,12 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour la configuration et les paramètres globaux.
 """
+
 from rest_framework import serializers
-from decimal import Decimal
+
 from ..models import (
-    TVA, InvoiceSettings, LoyaltySetting, PharmacySettings,
-    ConfigurationOption, ObjectifCommercial,
+    TVA,
+    ConfigurationOption,
+    InvoiceSettings,
+    LoyaltySetting,
+    ObjectifCommercial,
+    PharmacySettings,
 )
 
 
@@ -25,7 +29,7 @@ class InvoiceSettingsSerializer(serializers.ModelSerializer):
 
     def get_company_name(self, obj):
         from ..utils_licence import valider_licence_systeme
-        valide, msg, payload = valider_licence_systeme()
+        valide, _msg, payload = valider_licence_systeme()
         if valide and payload and payload.get('pharmacie_nom'):
             return payload.get('pharmacie_nom')
         return obj.company_name
@@ -47,7 +51,7 @@ class PharmacySettingsSerializer(serializers.ModelSerializer):
 
     def get_pharmacy_name(self, obj):
         from ..utils_licence import valider_licence_systeme
-        valide, msg, payload = valider_licence_systeme()
+        valide, _msg, payload = valider_licence_systeme()
         if valide and payload and payload.get('pharmacie_nom'):
             return payload.get('pharmacie_nom')
         return obj.pharmacy_name

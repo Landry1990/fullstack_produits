@@ -4,7 +4,7 @@ Rapports financiers, comptables et analyse de TVA — RapportFinanceMixin.
 import csv
 import json
 from datetime import datetime, time, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 import openpyxl
 from django.db.models import Count, Exists, F, OuterRef, Q, Sum
@@ -17,11 +17,16 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.models import Caisse, Facture, FactureProduit, FactureProduitAllocation, Produit, StockLot
-from api.views.rapports.base import RapportBaseMixin
+from api.models import (
+    Caisse,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    Produit,
+    StockLot,
+)
 from api.views.rapports.pdf_builders import build_rapport_pdf
 from api.views.rapports.tz_utils import parse_api_datetime
-
 
 # ── Helpers privés ────────────────────────────────────────────────────────────
 
@@ -64,8 +69,7 @@ def _apply_auto_width(ws, min_w=10, max_w=30) -> None:
             if (cell.row, cell.column) in merged_ranges:
                 continue
             val = str(cell.value or "")
-            if len(val) > length:
-                length = len(val)
+            length = max(length, len(val))
         ws.column_dimensions[get_column_letter(col[0].column)].width = min(max_w, max(min_w, length + 2))
 
 
@@ -211,9 +215,10 @@ class RapportFinanceMixin:
         Génère le rapport général du mois passé (ou du mois demandé) en Excel multi-feuilles.
         Param optionnel : ?mois=YYYY-MM  (défaut : mois précédent)
         """
-        from api.views.rapports.excel_general import build_rapport_general_excel
+
         from django.utils import timezone as tz
-        import calendar
+
+        from api.views.rapports.excel_general import build_rapport_general_excel
 
         mois = request.query_params.get('mois')
         if mois:
@@ -351,6 +356,7 @@ class RapportFinanceMixin:
 
         # OPTIMISATION: Prefetch des paiements complétés pour éviter N+1
         from django.db.models import Prefetch
+
         from ...models import Caisse
         
         factures = (
@@ -372,7 +378,7 @@ class RapportFinanceMixin:
             # Utilise les paiements préchargés
             modes = ", ".join(
                 str(modes_dict.get(m, m))
-                for m in set(p.mode_paiement for p in f.completed_paiements)
+                for m in {p.mode_paiement for p in f.completed_paiements}
             )
             writer.writerow([
                 f.date.strftime('%d/%m/%Y'),
@@ -581,12 +587,12 @@ class RapportFinanceMixin:
             item     = alloc.facture_produit
             f        = item.facture
             p        = item.produit
-            tva      = Decimal(str(item.tva or 0))
+            Decimal(str(item.tva or 0))
             qty      = Decimal(str(alloc.quantity))
             price_ttc = item.selling_price - item.discount
             
             # Application au prorata de la remise globale de la facture
-            ratio_remise = Decimal('1')
+            ratio_remise = Decimal(1)
             if f.total_ttc and f.total_ttc > 0:
                 # Ratio = TTC Net / TTC Brut
                 total_brut = f.total_ttc + f.remise
@@ -597,7 +603,7 @@ class RapportFinanceMixin:
             mt_vente_ttc_net = (price_ttc * qty) * ratio_remise
             
             cost     = Decimal(str(alloc.cost_price))
-            mt_achat = (cost * qty).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            mt_achat = (cost * qty).quantize(Decimal(1), rounding=ROUND_HALF_UP)
             marge    = mt_vente_ttc_net - mt_achat
             
             results.append({
@@ -608,9 +614,9 @@ class RapportFinanceMixin:
                 'quantite':       float(qty),
                 'prix_vente_net': float((mt_vente_ttc_net / qty).quantize(Decimal('0.01'))) if qty > 0 else 0,
                 'cout_achat':     float(cost),
-                'mt_vente':       float(mt_vente_ttc_net.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'mt_vente':       float(mt_vente_ttc_net.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
                 'mt_achat':       float(mt_achat),
-                'marge':          float(marge.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'marge':          float(marge.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
                 'taux_marge':     round(float(marge / mt_vente_ttc_net * 100), 1) if mt_vente_ttc_net > 0 else 0,
             })
 
@@ -641,11 +647,11 @@ class RapportFinanceMixin:
         for item in unallocated:
             f        = item.facture
             p        = item.produit
-            tva      = Decimal(str(item.tva or 0))
+            Decimal(str(item.tva or 0))
             qty      = Decimal(str(item.quantity))
             price_ttc = item.selling_price - item.discount
             
-            ratio_remise = Decimal('1')
+            ratio_remise = Decimal(1)
             if f.total_ttc and f.total_ttc > 0:
                 total_brut = f.total_ttc + f.remise
                 if total_brut > 0:
@@ -654,7 +660,7 @@ class RapportFinanceMixin:
             mt_vente_ttc_net = (price_ttc * qty) * ratio_remise
             
             cost_unit = Decimal(str(last_lot_cost.get(p.id, float(p.pmp or p.cost_price or 0))))
-            mt_achat = (cost_unit * qty).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            mt_achat = (cost_unit * qty).quantize(Decimal(1), rounding=ROUND_HALF_UP)
             marge    = mt_vente_ttc_net - mt_achat
             
             results.append({
@@ -665,9 +671,9 @@ class RapportFinanceMixin:
                 'quantite':       float(qty),
                 'prix_vente_net': float((mt_vente_ttc_net / qty).quantize(Decimal('0.01'))) if qty > 0 else 0,
                 'cout_achat':     float(cost_unit),
-                'mt_vente':       float(mt_vente_ttc_net.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'mt_vente':       float(mt_vente_ttc_net.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
                 'mt_achat':       float(mt_achat),
-                'marge':          float(marge.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'marge':          float(marge.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
                 'taux_marge':     round(float(marge / mt_vente_ttc_net * 100), 1) if mt_vente_ttc_net > 0 else 0,
             })
         # --- Filtre marge avant pagination ---
@@ -729,7 +735,6 @@ class RapportFinanceMixin:
             return Response({"error": str(e)}, status=400)
 
         # 1. CA par jour (total_ttc des factures validées/payées)
-        from django.db.models.functions import TruncDate
         from api.views.rapports.tz_utils import local_trunc_date
         ca_by_day = (
             Facture.objects
@@ -737,7 +742,7 @@ class RapportFinanceMixin:
             .annotate(day=local_trunc_date('date'))
             .values('day')
             .annotate(
-                ca=Coalesce(Sum('total_ttc'), Decimal('0')),
+                ca=Coalesce(Sum('total_ttc'), Decimal(0)),
                 nb_ventes=Count('id'),
             )
             .order_by('day')
@@ -760,7 +765,7 @@ class RapportFinanceMixin:
             .annotate(day=local_trunc_date('facture_produit__facture__date'))
             .values('day')
             .annotate(
-                cout=Coalesce(Sum(F('quantity') * F('cost_price')), Decimal('0'))
+                cout=Coalesce(Sum(F('quantity') * F('cost_price')), Decimal(0))
             )
             .order_by('day')
         )
@@ -786,29 +791,29 @@ class RapportFinanceMixin:
 
         for item in unalloc:
             day = item.facture.date.date().strftime('%d/%m/%Y')
-            cost_unit = pmp_map.get(item.produit.id, Decimal('0'))
-            cout_map[day] = cout_map.get(day, Decimal('0')) + (Decimal(str(item.quantity)) * cost_unit)
+            cost_unit = pmp_map.get(item.produit.id, Decimal(0))
+            cout_map[day] = cout_map.get(day, Decimal(0)) + (Decimal(str(item.quantity)) * cost_unit)
 
         # 4. Assembler les résultats
         all_days = sorted(set(ca_map.keys()) | set(cout_map.keys()))
         results = []
-        total_ca = Decimal('0')
-        total_cout = Decimal('0')
-        total_marge = Decimal('0')
+        total_ca = Decimal(0)
+        total_cout = Decimal(0)
+        total_marge = Decimal(0)
         total_ventes = 0
 
         for day in all_days:
-            ca = ca_map.get(day, {}).get('ca', Decimal('0'))
-            cout = cout_map.get(day, Decimal('0'))
+            ca = ca_map.get(day, {}).get('ca', Decimal(0))
+            cout = cout_map.get(day, Decimal(0))
             marge = ca - cout
             nb = ca_map.get(day, {}).get('nb_ventes', 0)
             taux = round(float(marge / ca * 100), 1) if ca > 0 else 0
 
             results.append({
                 'date': day,
-                'ca': float(ca.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
-                'cout_ventes': float(cout.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
-                'marge': float(marge.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'ca': float(ca.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
+                'cout_ventes': float(cout.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
+                'marge': float(marge.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
                 'taux_marge': taux,
                 'nb_ventes': nb,
             })
@@ -820,9 +825,9 @@ class RapportFinanceMixin:
         if results:
             results.append({
                 'date': 'TOTAL',
-                'ca': float(total_ca.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
-                'cout_ventes': float(total_cout.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
-                'marge': float(total_marge.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'ca': float(total_ca.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
+                'cout_ventes': float(total_cout.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
+                'marge': float(total_marge.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
                 'taux_marge': round(float(total_marge / total_ca * 100), 1) if total_ca > 0 else 0,
                 'nb_ventes': total_ventes,
             })
@@ -959,7 +964,8 @@ class RapportFinanceMixin:
         results = []
 
         if source == 'ventes':
-            from api.models.billing import FactureProduit as FP, FactureProduitAllocation as FPA
+            from api.models.billing import FactureProduit as FP
+            from api.models.billing import FactureProduitAllocation as FPA
             filters = {
                 'facture__date__range': (date_debut, date_fin),
                 'facture__status__in':  ['VAL', 'PAY'],
@@ -1104,7 +1110,7 @@ class RapportFinanceMixin:
             else:
                 # Tri par défaut : première colonne, alphabétique
                 try:
-                    first_key = list(results[0].keys())[0]
+                    first_key = next(iter(results[0].keys()))
                     results.sort(key=lambda x: str(x.get(first_key, '')), reverse=reverse)
                 except (IndexError, KeyError):
                     pass
@@ -1242,8 +1248,8 @@ class RapportFinanceMixin:
             date__lt=date_fin,
             is_active=True,
         )
-        total_achats_ht = Decimal('0')
-        total_precompte = Decimal('0')
+        total_achats_ht = Decimal(0)
+        total_precompte = Decimal(0)
         details_achats = []
 
         for cmd in commandes:
@@ -1255,16 +1261,16 @@ class RapportFinanceMixin:
                 'date': cmd.date.isoformat() if cmd.date else None,
                 'fournisseur': cmd.fournisseur.name if cmd.fournisseur else (cmd.fournisseur_nom or 'N/A'),
                 'numero_facture': cmd.numero_facture or f'#{cmd.id}',
-                'total_ht': int(ht.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'total_ht': int(ht.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
                 'taux_precompte': float(cmd.taux_precompte),
-                'precompte': int(precompte.quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                'precompte': int(precompte.quantize(Decimal(1), rounding=ROUND_HALF_UP)),
             })
 
         # --- 3. Calcul de l'accompte ---
         if mode == 'MARGE_ADMINISTREE':
             # Marge brute = CA HT - Coût d'achat HT (sur les ventes de la période)
             # Pour la pharmacie : 14% sur la marge brute
-            cout_ventes = Decimal('0')
+            cout_ventes = Decimal(0)
             for fp in FactureProduit.objects.filter(
                 facture__in=factures
             ).select_related('produit'):
@@ -1283,8 +1289,8 @@ class RapportFinanceMixin:
             base_label = 'Chiffre d\'affaires HT'
 
         # Calcul en précision maximale, arrondi uniquement sur le montant final
-        accompte_base = (base_imposition * taux_imposition / Decimal('100'))
-        accompte_cac = (accompte_base * taux_cac / Decimal('100'))
+        accompte_base = (base_imposition * taux_imposition / Decimal(100))
+        accompte_cac = (accompte_base * taux_cac / Decimal(100))
         accompte_total = accompte_base + accompte_cac
 
         # --- 4. Taux de précompte (uniquement en Droit Commun) ---
@@ -1294,11 +1300,11 @@ class RapportFinanceMixin:
             else:
                 taux_precompte = ps.taux_precompte_simplifie
         else:
-            taux_precompte = Decimal('0')
+            taux_precompte = Decimal(0)
 
         def round_fcf(d):
             """Arrondit un Decimal à l'entier le plus proche (FCFA sans centimes)."""
-            return int(d.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+            return int(d.quantize(Decimal(1), rounding=ROUND_HALF_UP))
 
         results = {
             'periode': {

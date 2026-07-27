@@ -1,7 +1,9 @@
-from rest_framework import viewsets, permissions, mixins
+from rest_framework import mixins, permissions, viewsets
 from rest_framework.response import Response
+
 from ..models import ConfigurationObjectifs
 from ..serializers import ConfigurationObjectifsSerializer
+
 
 class ConfigurationObjectifsViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
     """

@@ -1,13 +1,17 @@
+
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.test import APIClient
 from rest_framework import status
+from rest_framework.test import APIClient
+
 from api.models import (
-    RelationTransformation, Produit, StockLot, MouvementStock, StockAdjustment, HistoriqueTransformation
+    HistoriqueTransformation,
+    RelationTransformation,
+    StockAdjustment,
+    StockLot,
 )
 from api.tests.factories import TestDataFactory
-from django.contrib.auth.models import User
-from decimal import Decimal
+
 
 class StockTransformationTest(TestCase):
     def setUp(self):

@@ -12,16 +12,15 @@ Teste la résilience du système face à:
 Usage: python network_chaos_test.py --chaos-level medium --duration 120
 """
 
-import requests
-import threading
-import random
-import time
 import argparse
-from enum import Enum
-from typing import Dict, Optional
+import random
 import statistics
-from dataclasses import dataclass, field
-from datetime import datetime
+import threading
+import time
+from dataclasses import dataclass
+from enum import Enum
+
+import requests
 
 # Configuration
 BASE_URL = "http://localhost:8000/api"
@@ -97,7 +96,7 @@ class ResilienceTestResult:
         self.chaos_events_triggered = 0
         
         self.response_times: list = []
-        self.errors_by_type: Dict[str, int] = {}
+        self.errors_by_type: dict[str, int] = {}
         self.recovery_times: list = []
         
         self.start_time: float = 0
@@ -144,7 +143,7 @@ class ResilienceTestResult:
         print("🌪️  RAPPORT TEST DE CHAOS RÉSEAU")
         print("="*80)
         print(f"Durée: {self.duration:.2f}s | Requêtes: {self.total_requests}")
-        print(f"\n📊 Résilience:")
+        print("\n📊 Résilience:")
         print(f"   ✅ Succès: {self.successful_requests} ({self.success_rate:.1f}%)")
         print(f"   ❌ Échecs: {self.failed_requests} ({100-self.success_rate:.1f}%)")
         print(f"   🔄 Retry: {self.retried_requests}")
@@ -152,14 +151,14 @@ class ResilienceTestResult:
         
         if self.response_times:
             sorted_times = sorted(self.response_times)
-            print(f"\n⏱️  Temps de réponse (sans chaos):")
+            print("\n⏱️  Temps de réponse (sans chaos):")
             print(f"   Moyenne: {statistics.mean(sorted_times)*1000:.0f}ms")
             print(f"   P50: {sorted_times[len(sorted_times)//2]*1000:.0f}ms")
             print(f"   P95: {sorted_times[int(len(sorted_times)*0.95)]*1000:.0f}ms")
             print(f"   Max: {max(sorted_times)*1000:.0f}ms")
         
         if self.errors_by_type:
-            print(f"\n⚠️  Erreurs par type:")
+            print("\n⚠️  Erreurs par type:")
             for error, count in sorted(self.errors_by_type.items(), key=lambda x: -x[1]):
                 print(f"   - {error}: {count}x")
         
@@ -195,7 +194,7 @@ class ChaosInjector:
     def should_trigger_chaos(self) -> bool:
         return random.random() < self.chaos_probability
     
-    def inject_chaos(self, event_name: str) -> Optional[ChaosEvent]:
+    def inject_chaos(self, event_name: str) -> ChaosEvent | None:
         """Injecte un événement de chaos si le niveau le permet"""
         if not self.should_trigger_chaos():
             return None
@@ -247,7 +246,7 @@ def login_with_retry(session: requests.Session, username: str, password: str,
             
             # Échec HTTP
             if resp.status_code in [400, 401]:
-                print(f"   ❌ Credentials invalides")
+                print("   ❌ Credentials invalides")
                 return False
                 
         except requests.exceptions.Timeout:
@@ -273,7 +272,7 @@ def login_with_retry(session: requests.Session, username: str, password: str,
 
 def make_request_with_chaos(session: requests.Session, method: str, url: str,
                               chaos: ChaosInjector, result: ResilienceTestResult,
-                              json_data: Optional[dict] = None, timeout: int = 30) -> Optional[requests.Response]:
+                              json_data: dict | None = None, timeout: int = 30) -> requests.Response | None:
     """Effectue une requête avec injection de chaos potentielle"""
     
     # 1. Vérifier si on injecte de la latence avant la requête
@@ -286,13 +285,13 @@ def make_request_with_chaos(session: requests.Session, method: str, url: str,
     
     # 2. Vérifier si on simule une erreur de connexion
     if chaos.inject_chaos("connection_error"):
-        print(f"   🔌 Simulation perte connexion")
+        print("   🔌 Simulation perte connexion")
         result.add_result(False, 0, "simulated_connection_error", chaos_triggered=True)
         return None
     
     # 3. Vérifier si on simule un timeout
     if chaos.inject_chaos("timeout"):
-        print(f"   ⏱️  Simulation timeout")
+        print("   ⏱️  Simulation timeout")
         time.sleep(timeout + 0.5)  # Force le timeout
         result.add_result(False, timeout, "simulated_timeout", chaos_triggered=True)
         return None
@@ -313,7 +312,7 @@ def make_request_with_chaos(session: requests.Session, method: str, url: str,
         
         # Simuler une réponse partielle
         if chaos.inject_chaos("partial_response") and random.random() < 0.5:
-            print(f"   📄 Réponse partielle simulée")
+            print("   📄 Réponse partielle simulée")
             result.add_result(False, elapsed, "partial_response", chaos_triggered=True)
             return None
         
@@ -407,7 +406,7 @@ def run_chaos_test(chaos_level: ChaosLevel, duration: int, clients: int):
     
     # Afficher les types de chaos actifs
     print("\n🎲 Types de chaos injectés:")
-    for name, event in CHAOS_EVENTS.items():
+    for event in CHAOS_EVENTS.values():
         print(f"   • {event.name}: {event.probability * 100:.0f}% de chances")
     
     # Vérification serveur

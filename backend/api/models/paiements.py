@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
-from django.db import models
-from django.utils import timezone
 import datetime
+
 from django.contrib.auth.models import User
+from django.db import models
+
 from .clients import Fournisseur
 from .orders import Commande
+
 
 class PaiementFournisseur(models.Model):
     """Modèle pour enregistrer les paiements effectués aux fournisseurs."""

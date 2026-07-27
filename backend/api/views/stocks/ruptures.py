@@ -1,14 +1,17 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
+import csv
+from datetime import timedelta
+
+from django.db.models import Count
+from django.http import HttpResponse
+from django.utils import timezone
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from ...models.stock import RuptureFournisseur
 from ...serializers import RuptureFournisseurSerializer
-from django.db.models import Count
-from django.utils import timezone
-from django.http import HttpResponse
-from datetime import timedelta
-import csv
+
 
 class RuptureFournisseurViewSet(viewsets.ModelViewSet):
     """

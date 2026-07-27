@@ -1,6 +1,6 @@
 # Migration pour ajouter le champ délai de livraison au fournisseur
 
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):

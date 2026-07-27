@@ -1,5 +1,6 @@
 import os
 import sys
+
 import django
 
 # Configuration Django
@@ -10,11 +11,10 @@ django.setup()
 if 'api.serializers' in sys.modules:
     del sys.modules['api.serializers']
 
-from api.serializers import CreanceSerializer
-from api.models import Facture
-from django.db.models import Sum, F, Q, DecimalField
-from django.db.models.functions import Coalesce
 from decimal import Decimal
+
+from api.models import Facture
+from api.serializers import CreanceSerializer
 
 print('=' * 80)
 print('VERIFICATION FINALE - CREANCES')

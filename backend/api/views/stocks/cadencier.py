@@ -1,14 +1,15 @@
-from rest_framework import viewsets
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q, F, OuterRef, Subquery, Sum
-from django.db.models.functions import Coalesce
-from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
 
-from ...models import Produit, StockLot, Facture, FactureProduit
-from ...centralized_configs import PaginationHelper, PaginationDefaults
+from django.db.models import F, OuterRef, Q, Subquery, Sum
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ...centralized_configs import PaginationDefaults, PaginationHelper
+from ...models import Facture, Produit, StockLot
 
 
 class CadencierViewSet(viewsets.ViewSet):
@@ -20,15 +21,13 @@ class CadencierViewSet(viewsets.ViewSet):
 
     def list(self, request):
         coverage_days = int(request.query_params.get('coverage_days', 30))
-        if coverage_days < 1:
-            coverage_days = 1
-        if coverage_days > 365:
-            coverage_days = 365
+        coverage_days = max(coverage_days, 1)
+        coverage_days = min(coverage_days, 365)
 
         rayon_id = request.query_params.get('rayon')
         fournisseur_id = request.query_params.get('fournisseur')
         search = (request.query_params.get('search') or '').strip()
-        order_type = request.query_params.get('type', 'grossiste')  # grossiste | divers
+        request.query_params.get('type', 'grossiste')  # grossiste | divers
         only_below_target = request.query_params.get('only_below_target', 'true').lower() != 'false'
         min_rotation = request.query_params.get('min_rotation')
 

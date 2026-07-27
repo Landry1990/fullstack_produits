@@ -1,20 +1,18 @@
 
 import os
-import django
 import sys
-import json
-from decimal import Decimal
+
+import django
 
 # Setup Django environment
 sys.path.append('c:/Projet Fullstack/fullstack_produits/backend')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from django.test import RequestFactory
 from django.contrib.auth.models import User
-from api.models import Client, Produit, Facture, FactureProduit, StockLot, Commande
-from api.views import FactureViewSet, FactureProduitViewSet, CaisseViewSet
-from api.serializers import FactureSerializer
+
+from api.models import Client, Commande, Produit, StockLot
+
 
 def run_test():
     print("--- Starting Invoice Flow Test ---")
@@ -48,8 +46,9 @@ def run_test():
     product.stock = 100
     product.save()
     
-    from api.models import Fournisseur, Commande, CommandeProduit
     import datetime
+
+    from api.models import CommandeProduit, Fournisseur
     
     supplier, _ = Fournisseur.objects.get_or_create(name=f"Test Supplier {suffix}", defaults={'email': f'supp{suffix}@test.com', 'phone': f'98765{suffix}'})
 

@@ -1,7 +1,9 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import filters, permissions, viewsets
+
 from ..models import Groupe
-from ..serializers import GroupeSerializer
 from ..pagination import StandardResultsSetPagination
+from ..serializers import GroupeSerializer
+
 
 class GroupeViewSet(viewsets.ModelViewSet):
     """

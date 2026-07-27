@@ -4,19 +4,26 @@ déstockage, gestion fidélité, promotions.
 
 Extrait de SalesService.validate_invoice pour lisibilité et maintenabilité.
 """
+import logging
 from decimal import Decimal
+
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
-from django.core.cache import cache
-import logging
 
 from ..models import (
-    Facture, FactureProduit, FactureProduitAllocation, Caisse,
-    Produit, StockLot, LoyaltySetting, Promis,
+    Caisse,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    LoyaltySetting,
+    Produit,
+    Promis,
+    StockLot,
 )
-from .promotion_service import PromotionService
 from .lot_allocation_service import LotAllocationService
+from .promotion_service import PromotionService
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +53,7 @@ class SaleValidator:
         # 2. Optimistic locking — fetch products
         product_ids = [item.produit_id for item in items]
         products_map = {p.id: p for p in Produit.objects.filter(id__in=product_ids)}
-        initial_versions = {pid: p.version for pid, p in products_map.items()}
+        {pid: p.version for pid, p in products_map.items()}
 
         # 3. Credit ceiling check
         SaleValidator._check_credit_ceiling(facture, data)
@@ -114,10 +121,10 @@ class SaleValidator:
         if not facture.client:
             return
         paiement_immediat = Decimal(str(data.get('paiement_immediat', 0)))
-        new_debt_increment = max(Decimal('0'), facture.total_ttc - paiement_immediat)
+        new_debt_increment = max(Decimal(0), facture.total_ttc - paiement_immediat)
 
         if (facture.client.client_type == 'PROFESSIONNEL'
-                and facture.client.plafond != Decimal('-1')
+                and facture.client.plafond != Decimal(-1)
                 and (facture.client.current_debt + new_debt_increment) > facture.client.plafond):
             raise ValueError(
                 f"Le plafond de crédit du client professionnel est dépassé "

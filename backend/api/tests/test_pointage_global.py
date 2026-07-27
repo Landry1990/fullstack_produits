@@ -5,12 +5,14 @@ Test cases:
 2. Vérification de la mise à jour des relations (commandes)
 """
 from decimal import Decimal
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from ..models import PaiementFournisseur
 from .factories import TestDataFactory
-from ..models import Commande, PaiementFournisseur
+
 
 class PointageGlobalTestCase(APITestCase):
     

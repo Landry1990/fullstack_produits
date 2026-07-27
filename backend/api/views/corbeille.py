@@ -8,20 +8,27 @@ Centralises all soft-deleted (is_active=False) items from:
 
 Provides list, restore, and permanent delete actions.
 """
-from rest_framework.viewsets import ViewSet
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework import status
+from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import ProtectedError
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
 
-from django.contrib.auth.models import User
-from ..models import Produit, Client, Fournisseur, Commande, Avoir, Promis, Inventaire, Facture
-from ..cache_utils import SearchCache
 from ..audit_helpers import log_audit
-from ..models import AuditLog
-
+from ..cache_utils import SearchCache
+from ..models import (
+    AuditLog,
+    Avoir,
+    Client,
+    Commande,
+    Facture,
+    Fournisseur,
+    Inventaire,
+    Produit,
+    Promis,
+)
 
 MODEL_MAP = {
     'produit': Produit,

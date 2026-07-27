@@ -1,11 +1,10 @@
 """
 Utilitaires de cache pour optimiser les performances des recherches fréquentes.
 """
-from django.core.cache import cache
-from django.db.models import QuerySet
-from typing import Optional, Any
 import hashlib
 import json
+
+from django.core.cache import cache
 
 
 class SearchCache:
@@ -41,7 +40,7 @@ class SearchCache:
         return f"{prefix}:{param_hash}"
     
     @classmethod
-    def get_search_results(cls, search_query: str, filters: Optional[dict] = None) -> Optional[list]:
+    def get_search_results(cls, search_query: str, filters: dict | None = None) -> list | None:
         """
         Récupère les résultats de recherche depuis le cache.
         
@@ -62,7 +61,7 @@ class SearchCache:
     
     @classmethod
     def set_search_results(cls, search_query: str, results: list,
-                          filters: Optional[dict] = None, ttl: Optional[int] = None) -> None:
+                          filters: dict | None = None, ttl: int | None = None) -> None:
         """
         Stocke les résultats de recherche dans le cache.
         
@@ -83,7 +82,7 @@ class SearchCache:
     
     @classmethod
     def get_product_list(cls, page: int = 1, page_size: int = 50, 
-                        ordering: str = '-created_at') -> Optional[dict]:
+                        ordering: str = '-created_at') -> dict | None:
         """
         Récupère la liste paginée de produits depuis le cache.
         
@@ -106,7 +105,7 @@ class SearchCache:
     @classmethod
     def set_product_list(cls, results: dict, page: int = 1,
                         page_size: int = 50, ordering: str = '-created_at',
-                        ttl: Optional[int] = None) -> None:
+                        ttl: int | None = None) -> None:
         """
         Stocke la liste paginée de produits dans le cache.
         
@@ -127,7 +126,7 @@ class SearchCache:
         cache.set(cache_key, results, ttl)
     
     @classmethod
-    def get_product_detail(cls, product_id: int) -> Optional[dict]:
+    def get_product_detail(cls, product_id: int) -> dict | None:
         """
         Récupère les détails d'un produit depuis le cache.
         
@@ -142,7 +141,7 @@ class SearchCache:
     
     @classmethod
     def set_product_detail(cls, product_id: int, product_data: dict, 
-                          ttl: Optional[int] = None) -> None:
+                          ttl: int | None = None) -> None:
         """
         Stocke les détails d'un produit dans le cache.
         
@@ -269,7 +268,7 @@ class ClientDebtCache:
     PREFIX_CLIENT_INVOICES = "client_invoices"
     
     @classmethod
-    def get_client_debt(cls, client_id: int) -> Optional[dict]:
+    def get_client_debt(cls, client_id: int) -> dict | None:
         """
         Récupère la dette calculée d'un client depuis le cache.
         
@@ -280,7 +279,7 @@ class ClientDebtCache:
         return cache.get(cache_key)
     
     @classmethod
-    def set_client_debt(cls, client_id: int, debt_data: dict, ttl: Optional[int] = None) -> None:
+    def set_client_debt(cls, client_id: int, debt_data: dict, ttl: int | None = None) -> None:
         """
         Stocke la dette calculée d'un client dans le cache.
         """
@@ -289,7 +288,7 @@ class ClientDebtCache:
         cache.set(cache_key, debt_data, ttl)
     
     @classmethod
-    def get_unpaid_invoices_count(cls, client_id: int) -> Optional[int]:
+    def get_unpaid_invoices_count(cls, client_id: int) -> int | None:
         """
         Récupère le nombre de factures impayées depuis le cache.
         """
@@ -297,7 +296,7 @@ class ClientDebtCache:
         return cache.get(cache_key)
     
     @classmethod
-    def set_unpaid_invoices_count(cls, client_id: int, count: int, ttl: Optional[int] = None) -> None:
+    def set_unpaid_invoices_count(cls, client_id: int, count: int, ttl: int | None = None) -> None:
         """
         Stocke le nombre de factures impayées dans le cache.
         """

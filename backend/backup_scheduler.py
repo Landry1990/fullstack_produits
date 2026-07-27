@@ -4,19 +4,22 @@ Backup Scheduler — Tourne en boucle dans le container Docker
 et déclenche les backups automatiques selon la configuration.
 """
 import os
+import subprocess
 import sys
 import time
-import subprocess
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 sys.path.insert(0, '/app')
 
 import django
+
 django.setup()
 
+from datetime import datetime
+
 from django.utils import timezone
-from datetime import datetime, timedelta
+
 from api.models.settings import PharmacySettings
 
 
@@ -66,7 +69,7 @@ def main():
     print("══════════════════════════════════════════════")
     print(f"  Heure actuelle: {timezone.localtime().strftime('%Y-%m-%d %H:%M:%S')}")
     print("  Vérification toutes les 5 minutes...")
-    print("")
+    print()
 
     while True:
         try:
@@ -91,9 +94,10 @@ def main():
                         should_run = True
                 else:
                     # Court intervalle: vérifier le temps depuis dernier backup
-                    from django.conf import settings as django_settings
-                    from pathlib import Path
                     import os as os_module
+                    from pathlib import Path
+
+                    from django.conf import settings as django_settings
                     backup_dir = Path(django_settings.BASE_DIR).parent / 'backups'
                     last_backup_time = None
                     if backup_dir.exists():

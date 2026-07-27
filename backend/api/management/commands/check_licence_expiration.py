@@ -15,11 +15,13 @@ Task Scheduler (Windows):
     Arguments: manage.py check_licence_expiration
     Start in: C:/path/to/project/backend
 """
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
-from api.utils_licence import get_licence_details, should_send_alert
+
 from api.models.licence import LicenceNotification
+from api.utils_licence import get_licence_details, should_send_alert
 
 
 class Command(BaseCommand):
@@ -136,7 +138,7 @@ class Command(BaseCommand):
         """Créer une notification in-app visible par tous les utilisateurs."""
         if dry_run:
             self.stdout.write(
-                self.style.WARNING(f"[DRY-RUN] Notification serait créée:")
+                self.style.WARNING("[DRY-RUN] Notification serait créée:")
             )
             self.stdout.write(f"   Titre: {title}")
             self.stdout.write(f"   Sévérité: {severity}")
@@ -174,7 +176,7 @@ class Command(BaseCommand):
 
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f"❌ Erreur lors de la création: {str(e)}")
+                self.style.ERROR(f"❌ Erreur lors de la création: {e!s}")
             )
 
     def _archive_old_notifications(self, dry_run):
@@ -196,5 +198,5 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.SUCCESS(f"✓ {count} ancienne(s) notification(s) archivée(s)")
                 )
-        except Exception as e:
+        except Exception:
             pass  # Pas critique

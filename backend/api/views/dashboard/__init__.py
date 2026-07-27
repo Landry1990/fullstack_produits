@@ -1,7 +1,7 @@
 from rest_framework.permissions import IsAuthenticated
 
-from .core import DashboardCoreMixin
 from .clients import DashboardClientsMixin
+from .core import DashboardCoreMixin
 from .fournisseurs import DashboardFournisseursMixin
 from .statistiques import StatistiquesViewSet
 

@@ -1,12 +1,13 @@
 import os
+
 import django
-import json
 
 # Set up Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from django.contrib.auth.models import User
+
 
 def check_user(user_id):
     try:

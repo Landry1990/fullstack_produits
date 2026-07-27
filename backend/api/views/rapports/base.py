@@ -1,8 +1,19 @@
-from decimal import Decimal
 from datetime import timedelta
-from django.db.models import Sum, F, DecimalField, Q, Count, Value, Min, Max
+from decimal import Decimal
+
+from django.db.models import Count, DecimalField, F, Max, Min, Q, Sum, Value
 from django.db.models.functions import Coalesce
-from api.models import Facture, FactureProduit, FactureProduitAllocation, Caisse, CouponMonnaie, CommandeProduit, MouvementCaisse
+
+from api.models import (
+    Caisse,
+    CommandeProduit,
+    CouponMonnaie,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    MouvementCaisse,
+)
+
 
 class RapportBaseMixin:
     """
@@ -229,7 +240,7 @@ class RapportBaseMixin:
         return [{'taux': float(t), 'ca_ht': s['ca_ht'], 'montant_tva': s['montant_tva'], 'ca_ttc': s['ca_ttc']} for t, s in sorted(ca_par_tva_stats.items(), key=lambda x: x[0], reverse=True)]
 
     def _calculate_achats_fournisseurs(self, date_debut, date_fin):
-        from api.models import Commande, Avoir
+        from api.models import Avoir, Commande
         achats_stats = {}
         for c in Commande.objects.filter(date__gte=date_debut, date__lt=date_fin, status='CLOT').exclude(type='DIV').prefetch_related('produits'):
             if not c.fournisseur: continue

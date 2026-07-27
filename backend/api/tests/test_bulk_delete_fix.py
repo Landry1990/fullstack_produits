@@ -1,9 +1,10 @@
-from decimal import Decimal
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from ..models import Facture, FactureProduit, FactureProduitAllocation, StockLot
 from .factories import TestDataFactory
-from ..models import Commande, CommandeProduit, StockLot, Facture, FactureProduit, FactureProduitAllocation
+
 
 class BulkDeleteFixTestCase(APITestCase):
     """Test suite for bulk delete fix."""

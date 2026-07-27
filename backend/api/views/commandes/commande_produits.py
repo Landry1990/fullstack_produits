@@ -1,17 +1,18 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+import calendar
+import logging
+from datetime import date
 from decimal import Decimal
+
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
-from datetime import date
-import calendar
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from ...models import Commande, CommandeProduit, StockLot, Produit
-from ...serializers import CommandeProduitSerializer
 from ...centralized_configs import StandardResultsSetPagination
-import logging
+from ...models import Commande, CommandeProduit, Produit, StockLot
+from ...serializers import CommandeProduitSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +143,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 parts = s.split('T')[0].split('-')
                 if len(parts) != 3:
                     return None
-                y, m, d = (int(parts[0]), int(parts[1]), int(parts[2]))
+                y, m, _d = (int(parts[0]), int(parts[1]), int(parts[2]))
                 last_day = calendar.monthrange(y, m)[1]
                 return date(y, m, last_day)
 
@@ -279,7 +280,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         if date_expiration_raw:
             try:
                 parts = str(date_expiration_raw).split('T')[0].split('-')
-                y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+                y, m, _d = int(parts[0]), int(parts[1]), int(parts[2])
                 last_day = calendar.monthrange(y, m)[1]
                 new_date = date(y, m, last_day)
             except Exception:

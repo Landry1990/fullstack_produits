@@ -1,10 +1,15 @@
 import logging
 import os
 import tempfile
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+
 from api.models import OrderSchedule
-from api.services.auto_order import run_suggestions_for_schedule, create_order_from_suggestions
+from api.services.auto_order import (
+    create_order_from_suggestions,
+    run_suggestions_for_schedule,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +58,8 @@ class Command(BaseCommand):
                 if self.should_run(schedule, local_now):
                     self.process_schedule(schedule)
             except Exception as e:
-                logger.error(f"Error processing schedule {schedule.id}: {str(e)}", exc_info=True)
-                self.stderr.write(self.style.ERROR(f"Error for schedule {schedule.id}: {str(e)}"))
+                logger.error(f"Error processing schedule {schedule.id}: {e!s}", exc_info=True)
+                self.stderr.write(self.style.ERROR(f"Error for schedule {schedule.id}: {e!s}"))
 
     def should_run(self, schedule, local_now):
         """Determines if the schedule should run at this precise moment."""

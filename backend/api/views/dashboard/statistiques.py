@@ -1,16 +1,34 @@
-from rest_framework import viewsets
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-
-from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, ExpressionWrapper, Case, When, Exists, OuterRef
-from django.db.models.functions import TruncDay, TruncMonth, Coalesce, TruncDate
-from django.utils import timezone
-from datetime import datetime, timedelta
-from ..rapports.tz_utils import parse_api_datetime
+from datetime import timedelta
 from decimal import Decimal
 
-from ...models import Facture, Commande, CommandeProduit, Produit, Client, StockLot, Caisse, ObjectifCommercial, FactureProduit, FactureProduitAllocation
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Q,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce, TruncDay
+from django.utils import timezone
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ...models import (
+    Commande,
+    CommandeProduit,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    ObjectifCommercial,
+    Produit,
+)
+from ..rapports.tz_utils import parse_api_datetime
 
 
 class StatistiquesViewSet(viewsets.ViewSet):
@@ -22,8 +40,9 @@ class StatistiquesViewSet(viewsets.ViewSet):
         start_date = request.query_params.get('date_debut') or request.query_params.get('start_date')
         end_date = request.query_params.get('date_fin') or request.query_params.get('end_date')
     
-        from ...models import Facture, FactureProduit, FactureProduitAllocation
         from collections import defaultdict
+
+        from ...models import Facture, FactureProduit
     
         # Filtre de base pour les factures
         factures_q = Q(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
@@ -77,7 +96,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
     
             # Ratio pour la remise globale (proportionnelle au brut TTC de la ligne)
             ratio = line_gross / total_gross_facture if total_gross_facture > 0 else Decimal('0.00')
-            part_remise = (l['facture__remise'] or Decimal('0')) * ratio
+            part_remise = (l['facture__remise'] or Decimal(0)) * ratio
             line_net = line_gross - part_remise
     
             line_allocs = alloc_map.get(l['id'], [])
@@ -93,7 +112,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
                 total_qty_alloc = sum(a['quantity'] for a in line_allocs)
                 for a in line_allocs:
                     # Répartition du net de la ligne au prorata de la quantité du lot
-                    ratio_alloc = Decimal(a['quantity']) / Decimal(total_qty_alloc) if total_qty_alloc > 0 else Decimal('0')
+                    ratio_alloc = Decimal(a['quantity']) / Decimal(total_qty_alloc) if total_qty_alloc > 0 else Decimal(0)
                     alloc_net = line_net * ratio_alloc
                     alloc_cost = a['quantity'] * a['cost_price']
     
@@ -129,8 +148,9 @@ class StatistiquesViewSet(viewsets.ViewSet):
         Retourne la liste des utilisateurs ayant annulé plus de X factures
         sur une période donnée.
         """
-        from ...models import AuditLog
         from django.contrib.auth.models import User
+
+        from ...models import AuditLog
     
         threshold = int(request.query_params.get('threshold', 5))
         days = int(request.query_params.get('days', 30))
@@ -192,7 +212,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
         )
     
         dead_stock_value = dormant_qs.aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
         )['total']
     
         dead_stock_count = dormant_qs.count()
@@ -201,11 +221,11 @@ class StatistiquesViewSet(viewsets.ViewSet):
         rupture_qs = Produit.objects.filter(stock__lte=0, rotation_moyenne__gt=0, is_active=True)
     
         lost_revenue_monthly = rupture_qs.aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('rotation_moyenne') * F('selling_price'), output_field=DecimalField())), Decimal('0'))
+            total=Coalesce(Sum(ExpressionWrapper(F('rotation_moyenne') * F('selling_price'), output_field=DecimalField())), Decimal(0))
         )['total']
     
         lost_margin_monthly = rupture_qs.aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('rotation_moyenne') * (F('selling_price') - F('pmp')), output_field=DecimalField())), Decimal('0'))
+            total=Coalesce(Sum(ExpressionWrapper(F('rotation_moyenne') * (F('selling_price') - F('pmp')), output_field=DecimalField())), Decimal(0))
         )['total']
     
         # 3. Ruptures Imminentes — aligné sur l'onglet Ruptures (ventes réelles pondérées)
@@ -250,13 +270,13 @@ class StatistiquesViewSet(viewsets.ViewSet):
                 ug_commandees=Sum('unites_gratuites')
             )
         )
-        map_commandes = {
+        {
             c['produit_id']: (c['qte_commandee'] or 0) + (c['ug_commandees'] or 0)
             for c in commandes_en_cours
         }
 
         critical_soon_count = 0
-        critical_soon_value = Decimal('0')
+        critical_soon_value = Decimal(0)
         produits_actifs = Produit.objects.filter(stock__gt=0, is_active=True).select_related('fournisseur')
         for produit in produits_actifs:
             vendu_recent = map_recentes.get(produit.id, 0)
@@ -281,10 +301,10 @@ class StatistiquesViewSet(viewsets.ViewSet):
                 critical_soon_value += Decimal(str(produit.stock)) * Decimal(str(produit.pmp or 0))
     
         # 4. Score de Santé Global — 5 composantes dynamiques
-        total_active_count = Produit.objects.filter(is_active=True).count() or 1
+        Produit.objects.filter(is_active=True).count() or 1
         total_stock_value = Produit.objects.filter(is_active=True, stock__gt=0).aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
-        )['total'] or Decimal('1')
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
+        )['total'] or Decimal(1)
 
         # ── Définition des produits pertinents ─────────────────────────────────
         # Un produit est pertinent s'il est en stock OU a eu de l'activité récente (vente/achat < 90j)
@@ -303,7 +323,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
         # Disponibilité = % des produits pertinents qui sont actuellement en stock
         available_relevant_count = relevant_qs.filter(stock__gt=0).count()
         availability_rate = (float(available_relevant_count) / float(relevant_count)) * 100
-        rupture_total_count = relevant_qs.filter(stock__lte=0).count()
+        relevant_qs.filter(stock__lte=0).count()
         score_a = availability_rate * 0.30  # max 30 pts
     
         # ── Composante B : Fluidité du stock (peu de stock dormant) — 25 pts ────
@@ -341,8 +361,8 @@ class StatistiquesViewSet(viewsets.ViewSet):
         # ── Composante E : Pas de sur-immobilisation financière — 10 pts ─────────
         # Ratio stock dormant / valeur totale du stock (avec rotation comme filtre)
         dead_stock_value_rot = dormant_qs.filter(rotation_moyenne__gt=0).aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
-        )['total'] or Decimal('0')
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
+        )['total'] or Decimal(0)
         immo_ratio = float(dead_stock_value_rot) / float(total_stock_value)
         immo_score = max(0.0, (1 - immo_ratio)) * 100
         score_e = immo_score * 0.10  # max 10 pts
@@ -447,7 +467,6 @@ class StatistiquesViewSet(viewsets.ViewSet):
         start_of_month = today.replace(day=1)
         start_7d = today - timedelta(days=6)
     
-        from django.db.models import Case, When
     
         # ── 1. CA & ventes personnels ─────────────────────────────────────
         user_qs = Facture.objects.filter(
@@ -456,11 +475,11 @@ class StatistiquesViewSet(viewsets.ViewSet):
             date__date__gte=start_of_month,
         )
         personal = user_qs.aggregate(
-            ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
             nb_jour=Count(Case(When(date__date=today, then=Value(1)))),
-            ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
             nb_sem=Count(Case(When(date__date__gte=start_of_week, then=Value(1)))),
-            ca_mois=Coalesce(Sum(F('total_ttc')), Decimal('0')),
+            ca_mois=Coalesce(Sum(F('total_ttc')), Decimal(0)),
             nb_mois=Count('id'),
         )
         ca_jour = personal['ca_jour']
@@ -492,7 +511,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
     
         # ── 3. Objectif du jour ──────────────────────────────────────────
         objectifs = ObjectifCommercial.get_objectifs_courants()
-        obj_jour = objectifs['jour'].ca_objectif if objectifs['jour'] else Decimal('0')
+        obj_jour = objectifs['jour'].ca_objectif if objectifs['jour'] else Decimal(0)
         nb_actifs = max(total_vendeurs, 1)
         objectif_perso = float(obj_jour / nb_actifs) if obj_jour > 0 else 0.0
         progression_perso = float((ca_jour / Decimal(str(objectif_perso))) * 100) if objectif_perso > 0 else 0.0
@@ -509,7 +528,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
             .annotate(day=TruncDay('date'))
             .values('day')
             .annotate(
-                ca=Coalesce(Sum('total_ttc'), Decimal('0')),
+                ca=Coalesce(Sum('total_ttc'), Decimal(0)),
                 nb=Count('id'),
             )
             .order_by('day')
@@ -533,7 +552,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
             .values('produit_id', 'produit__name')
             .annotate(
                 qty=Sum('quantity'),
-                revenue=Coalesce(Sum(F('quantity') * (F('selling_price') - F('discount'))), Decimal('0')),
+                revenue=Coalesce(Sum(F('quantity') * (F('selling_price') - F('discount'))), Decimal(0)),
             )
             .order_by('-revenue')[:5]
         )

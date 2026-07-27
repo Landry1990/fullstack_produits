@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Commande de sauvegarde automatique avec réorganisation des clés primaires.
 
@@ -7,15 +6,12 @@ Usage:
     python manage.py backup_and_reorg --confirm        # Exécuter
     python manage.py backup_and_reorg --confirm --skip-backup  # Sans backup
 """
-from django.core.management.base import BaseCommand
-from django.core.management import call_command
-from django.db import connection, transaction
-from django.conf import settings
-from collections import OrderedDict
 import time
-import os
-from datetime import datetime
+from collections import OrderedDict
 
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
+from django.db import connection, transaction
 
 # ──────────────────────────────────────────────────────────────────
 # Configuration : tables à réorganiser et leurs FK dépendantes

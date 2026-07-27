@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour le réapprovisionnement.
 """
 from rest_framework import serializers
-from ..models import StockAdjustment, ReapproSession
+
+from ..models import ReapproSession, StockAdjustment
 
 
 class ReapproAdjustmentSerializer(serializers.ModelSerializer):

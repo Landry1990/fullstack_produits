@@ -1,26 +1,26 @@
-# -*- coding: utf-8 -*-
 """
 Views pour le planning des opérateurs — refonte complète.
 """
 import calendar
 import datetime
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+
 from django.contrib.auth.models import User
-
 from django.db.models import Count
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
 
-from ..models.planning import ShiftConfig, ShiftSchedule, ShiftAssignment, LeaveRequest
+from ..centralized_configs import BaseViewSetConfig
 from ..models.communication import InternalMessage
+from ..models.planning import LeaveRequest, ShiftAssignment, ShiftConfig, ShiftSchedule
 from ..models.users import Profile, Team
 from ..serializers.planning import (
-    ShiftConfigSerializer, ShiftScheduleSerializer,
-    ShiftAssignmentSerializer, LeaveRequestSerializer,
+    LeaveRequestSerializer,
+    ShiftAssignmentSerializer,
+    ShiftConfigSerializer,
+    ShiftScheduleSerializer,
 )
-from ..centralized_configs import BaseViewSetConfig
-
 
 # ── Algorithme de génération ──────────────────────────────────────────────────
 
@@ -264,10 +264,7 @@ def _build_assignments(schedule, config, start_day):
             # Déterminer Matin ou Nuit
             if rotate:
                 # Éviter plus de max_consecutive_nights nuits de suite
-                if consecutive_nights[op.id] >= max_consecutive_nights:
-                    shift = 'MATIN'
-                # Éviter deux nuits de suite si la dernière était nuit
-                elif last_shift.get(op.id) == 'NUIT' and consecutive_nights[op.id] >= 2:
+                if consecutive_nights[op.id] >= max_consecutive_nights or last_shift.get(op.id) == 'NUIT' and consecutive_nights[op.id] >= 2:
                     shift = 'MATIN'
                 else:
                     # Équilibrer Matin / Nuit
@@ -392,7 +389,7 @@ class ShiftScheduleViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
 
         year = schedule.month.year
         month = schedule.month.month
-        _, num_days = calendar.monthrange(year, month)
+        _, _num_days = calendar.monthrange(year, month)
 
         # Déterminer le jour de départ : par défaut aujourd'hui si on est dans le mois,
         # sinon depuis le 1er (mois passé ou futur)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Export Excel configurable du listing de stock pour l'inventaire.
 Supporte le regroupement par : rayon, forme, groupe, fournisseur.
@@ -11,14 +10,13 @@ from django.http import HttpResponse
 
 try:
     from openpyxl import Workbook
-    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
     HAS_OPENPYXL = True
 except ImportError:
     HAS_OPENPYXL = False
 
-from api.models import Produit, StockLot, PharmacySettings
-
+from api.models import PharmacySettings, Produit, StockLot
 
 # ---------------------------------------------------------------------------
 # Helpers style
@@ -48,8 +46,8 @@ def _subtotal_fill(hex_color='D9E1F2'):
 def generate_listing_excel(
     group_by: str = 'rayon',
     stock_filter: str = 'tous',
-    filter_id: int = None,
-    inventaire_id: int = None,
+    filter_id: int | None = None,
+    inventaire_id: int | None = None,
 ):
     """
     Génère un fichier Excel du listing de stock courant (Produit.stock).
@@ -302,7 +300,7 @@ def generate_listing_excel(
         grand_total_refs += nb_refs
 
         # Sous-total groupe (fin)
-        subtotal_cols = 4 if listing_type == 'inventaire' else 4
+        subtotal_cols = 4
         ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=subtotal_cols)
         subtotal_label = f"  Total {group_name}  —  {nb_refs} réf.  |  {nb_lots} lot(s)  |  {group_total_stock} boîte(s)"
         cell = ws.cell(row=row, column=1, value=subtotal_label)
@@ -515,8 +513,8 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None):
             })
 
     # Tri final : toutes les lignes de chaque groupe par désignation alphabétique
-    for group_name in grouped:
-        grouped[group_name].sort(key=lambda r: r['name'].lower())
+    for group_name, rows in grouped.items():
+        rows.sort(key=lambda r: r['name'].lower())
 
     return grouped
 

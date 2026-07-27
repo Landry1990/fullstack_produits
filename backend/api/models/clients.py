@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
 """
 Client-related models: Fournisseur, Client, AyantDroit.
 """
-from django.db import models
-from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
-from django.utils import timezone
-from django.contrib.postgres.indexes import GinIndex
+from decimal import Decimal
+
 from django.contrib.auth.models import User
+from django.contrib.postgres.indexes import GinIndex
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-from decimal import Decimal
+from django.utils import timezone
 
 
 class Fournisseur(models.Model):
@@ -93,7 +93,8 @@ class Fournisseur(models.Model):
         Calcule la dette totale envers ce fournisseur.
         Somme des totaux des commandes CLOTUREE - Somme des paiements effectues.
         """
-        from django.db.models import Sum, F, DecimalField
+        from django.db.models import DecimalField, F, Sum
+
         from .orders import Commande, CommandeProduit
         from .paiements import PaiementFournisseur
         
@@ -234,8 +235,9 @@ class Client(models.Model):
         Retourne la dette actuelle du client.
         Utilise le champ dénormalisé si frais (< 5 min), sinon calcule.
         """
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
         
         # Priorité 1: Champ dénormalisé si frais (< 5 minutes)
         if self.derniere_mise_a_jour_solde and (
@@ -257,12 +259,13 @@ class Client(models.Model):
         Calcule la dette depuis les factures (méthode complète mais lente).
         À utiliser uniquement pour recalculer le solde dénormalisé.
         """
-        from django.db.models import Sum, F, Q, Value, DecimalField
-        from django.db.models.functions import Coalesce
         from decimal import Decimal
-        
+
+        from django.db.models import DecimalField, F, Q, Sum, Value
+        from django.db.models.functions import Coalesce
+
         # Importer ici pour éviter les imports circulaires
-        from .billing import Facture, Caisse
+        from .billing import Facture
         
         factures_with_debt = Facture.objects.filter(
             client=self,

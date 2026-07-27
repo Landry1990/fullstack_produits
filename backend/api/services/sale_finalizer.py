@@ -4,19 +4,25 @@ coupon, validation et paiements.
 
 Extrait de SalesService.finalize_sale pour lisibilité et maintenabilité.
 """
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+import logging
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+
 from django.db import transaction
 from django.db.utils import DataError
 from django.utils import timezone
-import logging
 
 from ..models import (
-    Facture, FactureProduit, Caisse,
-    Produit, Promis, Ordonnancier,
-    LigneOrdonnancier, get_next_ticket_session,
-    CouponMonnaie, DepotClient, PosteVente
+    Caisse,
+    CouponMonnaie,
+    Facture,
+    FactureProduit,
+    LigneOrdonnancier,
+    Ordonnancier,
+    PosteVente,
+    Produit,
+    Promis,
+    get_next_ticket_session,
 )
-from .promotion_service import PromotionService
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +44,7 @@ class SaleFinalizer:
         try:
             remise_montant = Decimal(str(data.get('remise', '0') or '0'))
         except (InvalidOperation, ValueError):
-            remise_montant = Decimal('0')
+            remise_montant = Decimal(0)
         produits_data = data.get('produits') or []
         paiements_data = data.get('paiements', [])
         loyalty_data = data.get('loyalty', {})
@@ -198,7 +204,7 @@ class SaleFinalizer:
                 raise ValueError(f"Produit introuvable (id={pid}).")
             try:
                 price = Decimal(str(p.get('selling_price', '0')))
-                if abs(price) >= Decimal('10000000000'):
+                if abs(price) >= Decimal(10000000000):
                     raise ValueError(f"Prix de vente hors limites pour le produit id={pid}.")
             except (InvalidOperation, ValueError) as exc:
                 raise ValueError(f"Prix de vente invalide pour le produit id={pid}: {exc}") from exc

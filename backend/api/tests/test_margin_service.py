@@ -2,13 +2,24 @@
 Tests pour le service centralisé des marges
 Valide les formules et la cohérence des calculs
 """
-from decimal import Decimal
 import unittest
+from datetime import timedelta
+from decimal import Decimal
+
 from django.test import TestCase
 from django.utils import timezone
-from datetime import datetime, timedelta
+
+from api.models import (
+    Client,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    Fournisseur,
+    Produit,
+    StockLot,
+)
 from api.services.margin_service import MarginService
-from api.models import Produit, Facture, FactureProduit, FactureProduitAllocation, StockLot, Client, Fournisseur
+
 
 class MarginServiceTestCase(TestCase):
     """Tests pour le service centralisé des marges"""
@@ -106,7 +117,6 @@ class MarginServiceTestCase(TestCase):
     
     def test_calculate_facture_margin(self):
         """Test calcul marge pour une facture"""
-        from api.models import FactureProduit
         # Créer une facture avec produits
         facture = Facture.objects.create(
             client=self.test_client,
@@ -145,7 +155,6 @@ class MarginServiceTestCase(TestCase):
     @unittest.skip("MarginService.calculate_period_margin utilise un lookup ORM obsolète (produits__factureproduitallocation)")
     def test_calculate_period_margin(self):
         """Test calcul marge sur période"""
-        pass
     
     def test_update_product_margins_all(self):
         """Test mise à jour marges de tous les produits"""
@@ -184,12 +193,10 @@ class MarginServiceTestCase(TestCase):
     @unittest.skip("MarginService.get_margin_variance_analysis utilise un lookup ORM obsolète (produits__factureproduitallocation)")
     def test_get_margin_variance_analysis(self):
         """Test analyse variance des marges"""
-        pass
     
     @unittest.skip("MarginService.get_products_with_anomalous_margins utilise un lookup ORM obsolète (produits__factureproduitallocation)")
     def test_get_products_with_anomalous_margins(self):
         """Test détection produits avec marges anormales"""
-        pass
     
     def test_margin_calculation_consistency(self):
         """Test cohérence des calculs de marge"""

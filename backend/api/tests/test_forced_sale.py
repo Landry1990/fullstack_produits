@@ -6,10 +6,12 @@ except ImportError:
     _mark = types.SimpleNamespace(django_db=_noop, parametrize=_noop)
     pytest = types.SimpleNamespace(mark=_mark, fixture=_noop)  # type: ignore
 from decimal import Decimal
+
 from django.contrib.auth.models import User
-from api.models import Produit, Facture, FactureProduit, Caisse
+
+from api.models import Caisse, Facture, FactureProduit, Produit
 from api.services.sales_service import SalesService
-from django.utils import timezone
+
 
 @pytest.mark.django_db
 def test_forced_sale_creates_negative_stock():

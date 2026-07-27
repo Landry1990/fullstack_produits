@@ -1,17 +1,16 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Commande Django pour importer les données d'un fournisseur spécifique.
 Usage: python manage.py import_supplier_data --supplier FOURNISSEUR1
 """
 
-import os
 import json
-import glob
 from pathlib import Path
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from api.models import Produit, Fournisseur, Substance, Forme, Groupe, Rayon
+
+from api.models import Produit
 
 
 class Command(BaseCommand):
@@ -85,7 +84,7 @@ class Command(BaseCommand):
                     continue
                     
                 # Créer ou mettre à jour le produit
-                produit, created = Produit.objects.update_or_create(
+                _produit, _created = Produit.objects.update_or_create(
                     code=item.get('code', ''),
                     defaults={
                         'nom': item.get('nom', ''),

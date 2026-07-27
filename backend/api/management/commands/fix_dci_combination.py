@@ -7,8 +7,10 @@ Usage:
     python manage.py fix_dci_combination --dry-run
 """
 import re
+
 from django.core.management.base import BaseCommand
-from api.models import Produit, MedicamentReference, Substance
+
+from api.models import MedicamentReference, Produit
 
 
 def parse_dosage(text: str) -> float:
@@ -67,10 +69,9 @@ class Command(BaseCommand):
 
                 for sub in substances:
                     sub_norm = sub.nom.upper()
-                    if sub_norm in entry_norm or entry_norm in sub_norm or self._fuzzy_match(sub_norm, entry_norm):
-                        if dosage > best_dosage:
-                            best_dosage = dosage
-                            best_substance = sub
+                    if (sub_norm in entry_norm or entry_norm in sub_norm or self._fuzzy_match(sub_norm, entry_norm)) and dosage > best_dosage:
+                        best_dosage = dosage
+                        best_substance = sub
 
             if best_substance and produit.dci_reference_id != best_substance.id:
                 self.stdout.write(

@@ -1,10 +1,13 @@
 import os
+
 import django
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from django.urls import resolve
 from rest_framework.test import APIRequestFactory
+
 from api.views.ventes.factures import FactureViewSet
 
 try:

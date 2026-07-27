@@ -1,13 +1,15 @@
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework import status
-from django.db.models import F, Sum, Count, Q
+from decimal import Decimal
+
+from dateutil.relativedelta import relativedelta
+from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import Coalesce, TruncMonth
 from django.utils import timezone
-from decimal import Decimal
-from dateutil.relativedelta import relativedelta
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-from ...models import Produit, FactureProduit, CommandeProduit
+from ...models import CommandeProduit, FactureProduit, Produit
+
 
 class ProduitStatsMixin:
     """Mixin pour les statistiques et analyses des produits."""
@@ -155,7 +157,7 @@ class ProduitStatsMixin:
             'produit', 'produit__name', 'produit__stock', 'produit__cip1', 
             'produit__selling_price', 'produit__rayon__name', 'produit__fournisseur__name'
         ).annotate(
-            chiffre_affaires=Coalesce(Sum(F('quantity') * F('selling_price')), Decimal('0')),
+            chiffre_affaires=Coalesce(Sum(F('quantity') * F('selling_price')), Decimal(0)),
             quantite_vendue=Coalesce(Sum('quantity'), 0)
         ).order_by('-chiffre_affaires')
         
@@ -175,11 +177,11 @@ class ProduitStatsMixin:
         seuil_a = Decimal('0.80')
         seuil_b = Decimal('0.95')
         
-        ca_cumule = Decimal('0')
+        ca_cumule = Decimal(0)
         produits_classes = []
         
         stats = {'A': 0, 'B': 0, 'C': 0}
-        ca_par_categorie = {'A': Decimal('0'), 'B': Decimal('0'), 'C': Decimal('0')}
+        ca_par_categorie = {'A': Decimal(0), 'B': Decimal(0), 'C': Decimal(0)}
         
         for item in ventes_par_produit:
             ca_produit = item['chiffre_affaires']

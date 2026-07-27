@@ -2,13 +2,17 @@
 Script pour tester la création d'un élément de label et voir l'erreur exacte
 """
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import LabelTemplate, LabelElement
+import sys
+
 from api.serializers_labels import LabelElementSerializer
+
+from api.models import LabelTemplate
 
 # Récupérer le template ID 1
 try:
@@ -16,7 +20,7 @@ try:
     print(f"✅ Template trouvé : {template.name}")
 except LabelTemplate.DoesNotExist:
     print("❌ Template ID 1 introuvable")
-    exit(1)
+    sys.exit(1)
 
 # Données d'exemple similaires à ce que le frontend envoie
 test_data = {
@@ -40,7 +44,7 @@ test_data = {
     'line_thickness': 2
 }
 
-print(f"\n📝 Données de test :")
+print("\n📝 Données de test :")
 for key, value in test_data.items():
     print(f"  {key}: {value} ({type(value).__name__})")
 

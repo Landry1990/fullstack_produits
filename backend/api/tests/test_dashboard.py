@@ -6,15 +6,16 @@ Tests couvrent:
 - Endpoint supplier_debts
 - Contrôle d'accès par rôle
 """
+from datetime import timedelta
 from decimal import Decimal
+
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.utils import timezone
-from datetime import timedelta
 
+from ..models import Produit
 from .factories import TestDataFactory
-from ..models import Facture, Produit, Client, Fournisseur, Commande, CommandeProduit
 
 
 class DashboardStatsTestCase(APITestCase):
@@ -33,7 +34,7 @@ class DashboardStatsTestCase(APITestCase):
 
     def test_stats_returns_revenue(self):
         """Vérifie que le CA du jour est correctement calculé."""
-        produit = TestDataFactory.create_produit(stock=100)
+        TestDataFactory.create_produit(stock=100)
         client_obj = TestDataFactory.create_client()
 
         f1 = TestDataFactory.create_facture(
@@ -48,7 +49,7 @@ class DashboardStatsTestCase(APITestCase):
         )
         TestDataFactory.create_caisse(facture=f2, montant=Decimal('25000.00'), user=self.user)
         # Facture brouillon (ne doit pas compter)
-        f3 = TestDataFactory.create_facture(
+        TestDataFactory.create_facture(
             client=client_obj, status='BROU',
             total_ttc=Decimal('99999.00'), created_by=self.user
         )
@@ -66,19 +67,19 @@ class DashboardStatsTestCase(APITestCase):
         rayon = TestDataFactory.create_rayon(name='R1')
         fournisseur = TestDataFactory.create_fournisseur(name='F1')
         Produit.objects.create(
-            name='P1', stock=10, pmp=Decimal('100'), cost_price=100,
+            name='P1', stock=10, pmp=Decimal(100), cost_price=100,
             selling_price=200, rayon=rayon, fournisseur=fournisseur
         )
         Produit.objects.create(
-            name='P2', stock=20, pmp=Decimal('50'), cost_price=50,
+            name='P2', stock=20, pmp=Decimal(50), cost_price=50,
             selling_price=100, rayon=rayon, fournisseur=fournisseur
         )
         Produit.objects.create(
-            name='P3', stock=5, pmp=Decimal('200'), cost_price=200,
+            name='P3', stock=5, pmp=Decimal(200), cost_price=200,
             selling_price=400, rayon=rayon, fournisseur=fournisseur
         )
         Produit.objects.create(
-            name='P4_vide', stock=0, pmp=Decimal('300'), cost_price=300,
+            name='P4_vide', stock=0, pmp=Decimal(300), cost_price=300,
             selling_price=600, rayon=rayon, fournisseur=fournisseur
         )
 
@@ -366,7 +367,7 @@ class DashboardManagerStatsTestCase(APITestCase):
             selling_price=Decimal('100.00')
         )
         
-        from ..models import FactureProduitAllocation, Caisse
+        from ..models import Caisse, FactureProduitAllocation
         FactureProduitAllocation.objects.create(
             facture_produit=fp1,
             stock_lot=lot,
@@ -403,9 +404,9 @@ class DashboardManagerStatsTestCase(APITestCase):
         Produit.objects.create(
             name='Produit Dormant',
             stock=10,
-            pmp=Decimal('100'),
-            cost_price=Decimal('100'),
-            selling_price=Decimal('200'),
+            pmp=Decimal(100),
+            cost_price=Decimal(100),
+            selling_price=Decimal(200),
             rayon=rayon,
             fournisseur=fournisseur,
             is_active=True,

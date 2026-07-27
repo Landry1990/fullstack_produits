@@ -9,13 +9,12 @@ Usage:
     python manage.py setup_dci_prod --skip-link
 """
 import os
-import sys
-import csv
-import unicodedata
 import re
+import unicodedata
+
 from django.core.management.base import BaseCommand
-from django.db import transaction
-from api.models import Substance, MedicamentReference, Produit
+
+from api.models import MedicamentReference, Produit, Substance
 
 
 class Command(BaseCommand):
@@ -71,7 +70,7 @@ class Command(BaseCommand):
         created = 0
         existing = 0
         for nom in sorted(substances):
-            obj, was_created = Substance.objects.get_or_create(
+            _obj, was_created = Substance.objects.get_or_create(
                 nom__iexact=nom,
                 defaults={'nom': nom}
             )

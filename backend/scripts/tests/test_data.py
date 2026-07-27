@@ -1,13 +1,16 @@
 """Script de test pour vérifier les données du dashboard et journal de caisse"""
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture, Caisse
-from django.db.models import Count, Sum
 from decimal import Decimal
+
+from django.db.models import Count, Sum
+
+from api.models import Caisse, Facture
 
 print("=" * 60)
 print("FACTURES VALIDÉES/PAYÉES (Recent Transactions)")
@@ -64,4 +67,4 @@ print(f"Total Factures VAL/PAY (Dashboard CA): {total_factures:15.2f} F")
 print(f"Total Caisse (TOUS modes):              {total_caisse_all:15.2f} F")
 print(f"Total Caisse (SANS en_compte):          {total_caisse_no_compte:15.2f} F")
 print(f"\nDifférence (Dashboard - Caisse):        {total_factures - total_caisse_no_compte:15.2f} F")
-print(f"(Cette différence devrait être la part assurance)")
+print("(Cette différence devrait être la part assurance)")

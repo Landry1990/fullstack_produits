@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
-from ..models import PaiementFournisseur, Fournisseur, Commande
-from ..serializers import PaiementFournisseurSerializer
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ..models import PaiementFournisseur
 from ..pagination import StandardResultsSetPagination
+from ..serializers import PaiementFournisseurSerializer
+
 
 class PaiementFournisseurViewSet(viewsets.ModelViewSet):
     """API endpoint for supplier payments."""
@@ -49,7 +50,7 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
         if date_fin:
             query = query.filter(date_paiement__lte=date_fin)
             
-        from django.db.models import Sum, F
+        from django.db.models import Sum
         from django.db.models.functions import TruncDate
         
         recap = query.annotate(

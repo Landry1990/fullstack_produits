@@ -1,16 +1,19 @@
+import csv
+from datetime import datetime, timedelta
+from decimal import Decimal
+
+from django.db.models import Count, DecimalField, F, Sum, Value
+from django.db.models.functions import Coalesce, TruncMonth
+from django.http import HttpResponse
+from django.utils import timezone
+from django.utils.formats import date_format
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from django.db.models import Sum, DecimalField, Count, F, Q, Value
-from django.db.models.functions import TruncMonth, Coalesce
-from django.utils import timezone
-from datetime import datetime, timedelta
-from .tz_utils import parse_api_datetime
-from decimal import Decimal
+
 from api.models import Facture, FactureProduit, FactureProduitAllocation, Fournisseur
-from django.utils.formats import date_format
-import csv
-from django.http import HttpResponse
+
+from .tz_utils import parse_api_datetime
+
 
 class RapportSalesMixin:
     """
@@ -115,7 +118,7 @@ class RapportSalesMixin:
 
         if fmt == 'csv':
             response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="meilleurs_clients.csv"'; response.write(u'\ufeff'.encode('utf8'))
+            response['Content-Disposition'] = 'attachment; filename="meilleurs_clients.csv"'; response.write('\ufeff'.encode('utf8'))
             writer = csv.writer(response, delimiter=';'); writer.writerow(['Rang', 'Client', 'Type', 'Nb Ventes', 'Chiffre Affaires', 'Panier Moyen'])
             for r in results: writer.writerow([r['rang'], r['client_name'], r['client_type'], r['nb_ventes'], str(r['chiffre_affaires']).replace('.', ','), str(r['panier_moyen']).replace('.', ',')])
             return response
@@ -320,7 +323,7 @@ class RapportSalesMixin:
         quantités, numéro de facture, remise et date de création.
         """
         from django.contrib.auth import get_user_model
-        User = get_user_model()
+        get_user_model()
 
         db_str = request.query_params.get('date_debut')
         df_str = request.query_params.get('date_fin')

@@ -1,11 +1,10 @@
-from rest_framework import viewsets, status
+
+from django.db.models import DecimalField, F, Sum
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Sum, F, Q, DecimalField, Count
-from django.db.models.functions import Coalesce
-from decimal import Decimal
-from .models import StockLot, Fournisseur, CommandeProduit, Commande
-from .serializers import FournisseurSerializer
+
+from .models import CommandeProduit, StockLot
 
 
 class StatsUGViewSet(viewsets.GenericViewSet):
@@ -155,7 +154,6 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         - Total UG reçues ce mois
         - Valeur totale économisée
         """
-        from datetime import datetime, timedelta
         from django.utils import timezone
         
         # Current month

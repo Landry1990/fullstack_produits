@@ -9,20 +9,15 @@ except ImportError:
     _noop = lambda *a, **k: (lambda f: f)
     _mark = types.SimpleNamespace(django_db=_noop, parametrize=_noop)
     pytest = types.SimpleNamespace(mark=_mark, fixture=_noop)  # type: ignore
-from decimal import Decimal, InvalidOperation
-from django.urls import reverse
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from rest_framework.test import APIClient
-from rest_framework import status
-from django.db import transaction
 import json
+from decimal import Decimal
 
-from ..models import (
-    Produit, Facture, FactureProduit, Client, Caisse, 
-    StockLot, Promis, Ordonnancier, Profile
-)
-from ..services.sales_service import SalesService
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from ..models import Caisse, Facture, Profile, Promis
 from .factories import TestDataFactory
 
 User = get_user_model()
@@ -284,6 +279,7 @@ def test_annulation_sans_permission():
 def test_modification_vente_veille():
     """Test: Impossible de modifier une vente d'hier."""
     from datetime import timedelta
+
     from django.utils import timezone
     
     client = APIClient()
@@ -335,7 +331,7 @@ def test_double_paiement_protection():
     assert response1.status_code == status.HTTP_201_CREATED
     
     # Deuxième paiement (excès)
-    response2 = client.post(
+    client.post(
         reverse('caisse-list'),
         data={
             'facture': facture.id,
@@ -351,9 +347,9 @@ def test_double_paiement_protection():
         facture=facture
     ).exclude(
         mode_paiement__in=['en_compte', 'recouvrement']
-    ).aggregate(DjangoSum('montant'))['montant__sum'] or Decimal('0')
+    ).aggregate(DjangoSum('montant'))['montant__sum'] or Decimal(0)
     
-    assert total_paye <= Decimal('100'), f"Sur-paiement détecté : {total_paye} > 100"
+    assert total_paye <= Decimal(100), f"Sur-paiement détecté : {total_paye} > 100"
 
 
 @pytest.mark.django_db

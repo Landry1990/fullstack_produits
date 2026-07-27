@@ -6,6 +6,7 @@ Scénario: Facture FAC-000039 du 11/05 avec 6 produits dont 1 LANZOP (is_divers=
 """
 
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
@@ -13,9 +14,11 @@ django.setup()
 
 from datetime import date
 from decimal import Decimal
-from django.db.models import Sum, F, OuterRef, Subquery, DecimalField, Count, Value
+
+from django.db.models import Count, DecimalField, F, OuterRef, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
-from api.models import Facture, FactureProduit, FactureProduitAllocation, StockLot
+
+from api.models import Facture, FactureProduit, FactureProduitAllocation
 
 # Date de test : 11 mai 2025
 DATE_TEST = date(2025, 5, 11)
@@ -67,7 +70,7 @@ factures_ancien = Facture.objects.filter(
     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
 ).exclude(produits__allocations__stock_lot__is_divers=True).distinct()
 
-ca_ancien = factures_ancien.aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+ca_ancien = factures_ancien.aggregate(ca=Coalesce(Sum('total_ttc'), Decimal(0)))['ca']
 print(f"📊 CA calculé (ancienne méthode): {ca_ancien}")
 print(f"   Factures prises en compte: {list(factures_ancien.values_list('numero_facture', flat=True))}")
 
@@ -105,7 +108,7 @@ divers_total_sub = FactureProduitAllocation.objects.filter(
 ).values('facture_produit__facture').annotate(
     total_divers=Coalesce(
         Sum(F('selling_price') * F('quantity'), output_field=DecimalField()),
-        Decimal('0')
+        Decimal(0)
     )
 ).values('total_divers')
 
@@ -115,12 +118,12 @@ factures_nouveau = Facture.objects.filter(
 ).annotate(
     divers_amount=Coalesce(
         Subquery(divers_total_sub, output_field=DecimalField()),
-        Decimal('0')
+        Decimal(0)
     ),
     adjusted_total=F('total_ttc') - F('divers_amount')
 )
 
-ca_nouveau = factures_nouveau.aggregate(ca=Coalesce(Sum('adjusted_total'), Decimal('0')))['ca']
+ca_nouveau = factures_nouveau.aggregate(ca=Coalesce(Sum('adjusted_total'), Decimal(0)))['ca']
 print(f"📊 CA calculé (nouvelle méthode): {ca_nouveau}")
 print(f"   Factures prises en compte: {list(factures_nouveau.values_list('numero_facture', flat=True))}")
 
@@ -137,6 +140,7 @@ print("4. EXEMPLE: Stats vendeurs pour le 11/05")
 print("=" * 70)
 
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 # Nouvelle méthode
@@ -186,11 +190,12 @@ margin_allocated = FactureProduitAllocation.objects.filter(
 ).exclude(
     stock_lot__is_divers=True
 ).aggregate(
-    total_cost=Coalesce(Sum(F('cost_price') * F('quantity'), output_field=DecimalField()), Decimal('0'))
+    total_cost=Coalesce(Sum(F('cost_price') * F('quantity'), output_field=DecimalField()), Decimal(0))
 )['total_cost']
 
 # Non alloués - exclure les produits avec lots is_divers
 from django.db.models import Exists
+
 unallocated_cost = FactureProduit.objects.filter(
     facture__date__date=DATE_TEST,
     facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
@@ -201,13 +206,13 @@ unallocated_cost = FactureProduit.objects.filter(
 ).exclude(
     produit__stock_lots__is_divers=True
 ).aggregate(
-    total=Coalesce(Sum(F('produit__pmp') * F('quantity'), output_field=DecimalField()), Decimal('0'))
+    total=Coalesce(Sum(F('produit__pmp') * F('quantity'), output_field=DecimalField()), Decimal(0))
 )['total']
 
-ca_total = factures_nouveau.aggregate(ca=Coalesce(Sum('adjusted_total'), Decimal('0')))['ca']
+ca_total = factures_nouveau.aggregate(ca=Coalesce(Sum('adjusted_total'), Decimal(0)))['ca']
 margin = ca_total - (margin_allocated + unallocated_cost)
 
-print(f"\n💰 Marge du 11/05/2025:")
+print("\n💰 Marge du 11/05/2025:")
 print(f"   CA (ajusté): {ca_total}")
 print(f"   Coût alloué (sans is_divers): {margin_allocated}")
 print(f"   Coût non alloué (sans is_divers): {unallocated_cost}")

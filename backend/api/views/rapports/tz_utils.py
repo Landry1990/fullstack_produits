@@ -8,10 +8,11 @@ Les datetimes lues depuis la DB sont naïves (sans tzinfo) en heure locale.
 => local_trunc_date() est un alias de TruncDate() — conservé pour compatibilité.
 => parse_api_datetime() retourne des datetimes naïves en heure locale.
 """
+import logging
+from datetime import datetime
+
 from django.db.models.functions import TruncDate
 from django.utils.dateparse import parse_datetime
-from datetime import datetime
-import logging
 
 logger = logging.getLogger(__name__)
 

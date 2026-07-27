@@ -1,14 +1,14 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models.communication import InternalMessage
-from api.serializers import InternalMessageSerializer
 from django.contrib.auth.models import User
-from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
+
+from api.serializers import InternalMessageSerializer
 
 factory = APIRequestFactory()
 user = User.objects.first()

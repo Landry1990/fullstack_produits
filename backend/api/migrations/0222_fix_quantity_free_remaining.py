@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Recalcule quantity_free_remaining pour tous les lots ayant des unités gratuites.
 

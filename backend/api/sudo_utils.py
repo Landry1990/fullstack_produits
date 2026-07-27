@@ -1,9 +1,11 @@
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.models import User
-from django.db import transaction, DatabaseError
-from .audit_helpers import log_audit
 import logging
+
+from django.contrib.auth.models import User
+from django.db import DatabaseError, transaction
+from rest_framework import status
+from rest_framework.response import Response
+
+from .audit_helpers import log_audit
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
         except User.DoesNotExist:
             return None, Response({'detail': 'Utilisateur validateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
         except DatabaseError as e:
-            logger.error(f"[SUDO] Erreur DB lors de la récupération de l'utilisateur: {str(e)}", exc_info=True)
+            logger.error(f"[SUDO] Erreur DB lors de la récupération de l'utilisateur: {e!s}", exc_info=True)
             return None, Response({'detail': 'Erreur de base de données lors de la validation.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not sudo_password:
@@ -78,7 +80,7 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
                     if not (hasattr(validation_user, 'profile') and getattr(validation_user.profile, permission, False))
                 ]
         except DatabaseError as e:
-            logger.error(f"[SUDO] Erreur DB lors de la vérification des permissions: {str(e)}", exc_info=True)
+            logger.error(f"[SUDO] Erreur DB lors de la vérification des permissions: {e!s}", exc_info=True)
             return None, Response({'detail': 'Erreur de base de données lors de la vérification des permissions.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if missing_permissions:
@@ -109,6 +111,6 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
                 )
         except DatabaseError as e:
             # On log l'erreur mais on ne bloque pas la validation si l'audit échoue
-            logger.error(f"[SUDO] Erreur DB lors de l'enregistrement de l'audit: {str(e)}", exc_info=True)
+            logger.error(f"[SUDO] Erreur DB lors de l'enregistrement de l'audit: {e!s}", exc_info=True)
 
     return validation_user, None

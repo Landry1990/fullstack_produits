@@ -1,14 +1,17 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture, Caisse, FactureProduitAllocation
-from django.db.models import Sum, F, DecimalField
-from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
+
+from django.db.models import Sum
+from django.utils import timezone
+
+from api.models import Caisse, Facture, FactureProduitAllocation
 
 print('=' * 80)
 print('VERIFICATION COMPLETE DU RAPPORT MENSUEL - DECEMBRE 2025')

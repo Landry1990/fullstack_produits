@@ -1,12 +1,17 @@
-from rest_framework import viewsets, permissions, status
+import logging
+
+from django.utils import timezone
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.utils import timezone
+
+from ...centralized_configs import StandardResultsSetPagination
 from ...models import OrderSchedule
 from ...serializers import OrderScheduleSerializer
-from ...services.auto_order import run_suggestions_for_schedule, create_order_from_suggestions
-from ...centralized_configs import StandardResultsSetPagination
-import logging
+from ...services.auto_order import (
+    create_order_from_suggestions,
+    run_suggestions_for_schedule,
+)
 
 logger = logging.getLogger(__name__)
 

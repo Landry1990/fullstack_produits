@@ -1,9 +1,10 @@
 
-import requests
-import threading
-import time
 import random
 import sys
+import threading
+import time
+
+import requests
 
 # Configuration
 BASE_URL = "http://127.0.0.1:8000"

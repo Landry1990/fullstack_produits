@@ -1,31 +1,28 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
-from django.db.models import Sum, Count, F, Q, Value, DecimalField
-from rest_framework.permissions import IsAdminUser
-from django.utils import timezone
-from django.http import HttpResponse
-from datetime import datetime, timedelta
-from decimal import Decimal
 import io
 import logging
+from datetime import datetime, timedelta
+from decimal import Decimal
 
+from django.db import transaction
+from django.db.models import Count, DecimalField, F, Q, Sum, Value
+from django.http import HttpResponse
+from django.utils import timezone
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import cm
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.colors import HexColor
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
 
-from ...models import (
-    Facture, FactureProduit, Caisse, InvoiceSettings, RelevePaiement
-)
-from ...serializers import CreanceSerializer
-from ...sudo_utils import validate_sudo_mode
+from ...models import Caisse, Facture, FactureProduit, InvoiceSettings, RelevePaiement
 from ...pagination import StandardResultsSetPagination
 from ...security_utils import build_safe_content_disposition
+from ...serializers import CreanceSerializer
+from ...sudo_utils import validate_sudo_mode
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +34,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
-        from django.db.models import Sum, F, Q, Value, DecimalField
+        from django.db.models import Sum
         from django.db.models.functions import Coalesce
 
         history = self.request.query_params.get('history', 'false').lower() == 'true'
@@ -96,13 +93,13 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         )
         
         return Response({
-            'total_reste': result['total_reste'] or Decimal('0'),
+            'total_reste': result['total_reste'] or Decimal(0),
             'count': result['count'] or 0
         })
     
     @action(detail=False, methods=['get'])
     def synthese_clients(self, request):
-        from django.db.models import Sum, F, Q, Value, DecimalField, Count, OuterRef, Subquery
+        from django.db.models import Count, OuterRef, Subquery, Sum
         from django.db.models.functions import Coalesce
 
         # 1. Subquery to sum payments for an invoice without join duplication
@@ -161,17 +158,18 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
     def export_excel(self, request):
         """Export Excel simple des créances filtrées par période et par client (assurance)."""
         import io
+
         import openpyxl
-        from openpyxl.styles import Font, Alignment, Border, Side
-        from openpyxl.utils import get_column_letter
         from django.http import HttpResponse
+        from openpyxl.styles import Alignment, Border, Font, Side
+        from openpyxl.utils import get_column_letter
 
         history = request.query_params.get('history', 'false').lower() == 'true'
         client_id = request.query_params.get('client_id')
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
 
-        from django.db.models import Sum, F, Value, DecimalField, OuterRef, Subquery
+        from django.db.models import OuterRef, Subquery, Sum
         from django.db.models.functions import Coalesce
 
         paid_subquery = Caisse.objects.filter(
@@ -291,13 +289,13 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         row += 1
 
         # Données
-        total_ttc_sum = Decimal('0')
-        total_paye_sum = Decimal('0')
-        total_reste_sum = Decimal('0')
+        total_ttc_sum = Decimal(0)
+        total_paye_sum = Decimal(0)
+        total_reste_sum = Decimal(0)
         count = 0
 
         for facture in queryset:
-            montant_paye = getattr(facture, 'paid_amount', Decimal('0'))
+            montant_paye = getattr(facture, 'paid_amount', Decimal(0))
             reste = facture.total_ttc - montant_paye
             client_name = facture.client_name_override or (facture.client.name if facture.client else 'Client de passage')
             ayant_droit = facture.ayant_droit.nom if hasattr(facture, 'ayant_droit') and facture.ayant_droit else ''
@@ -471,7 +469,6 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         Ajoute un paiement avec Optimistic Locking (pas de select_for_update).
         Gère les conflits de concurrence avec retry automatique.
         """
-        from ...optimistic_locking import optimistic_update_response, ConcurrentModificationError
         
         # Validation des données
         mode_paiement = request.data.get('mode_paiement')
@@ -568,7 +565,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         if not client_id:
             return Response({'detail': 'Le paramètre client_id est requis.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        from django.db.models import OuterRef, Subquery, Sum, DecimalField, Value
+        from django.db.models import OuterRef, Subquery, Sum
         from django.db.models.functions import Coalesce
         
         paid_subquery = Caisse.objects.filter(facture=OuterRef('pk'), statut='completee').exclude(mode_paiement='en_compte').values('facture').annotate(total=Sum('montant')).values('total')[:1]
@@ -635,7 +632,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         if not mode_paiement:
             return Response({'detail': 'mode_paiement is required.'}, status=status.HTTP_400_BAD_REQUEST)
             
-        from django.db.models import OuterRef, Subquery, Sum, DecimalField, Value
+        from django.db.models import OuterRef, Subquery, Sum
         from django.db.models.functions import Coalesce
         
         paid_subquery = Caisse.objects.filter(facture=OuterRef('pk'), statut='completee').exclude(mode_paiement='en_compte').values('facture').annotate(total=Sum('montant')).values('total')[:1]
@@ -752,7 +749,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         except RelevePaiement.DoesNotExist:
             return Response({'detail': 'Relevé non trouvé.'}, status=404)
         except Exception as e:
-            return Response({'detail': f'Erreur: {str(e)}'}, status=500)
+            return Response({'detail': f'Erreur: {e!s}'}, status=500)
         
         try:
             settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
@@ -824,7 +821,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                             ref
                         ])
                     except Exception as e:
-                        logger.error(f"Erreur traitement paiement {p.id}: {str(e)}")
+                        logger.error(f"Erreur traitement paiement {p.id}: {e!s}")
                         continue
                 
                 if len(table_data) > 1:
@@ -856,8 +853,8 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             return response
             
         except Exception as e:
-            logger.error(f"Erreur PDF relevé {releve_id}: {str(e)}", exc_info=True)
-            return Response({'detail': f'Erreur PDF: {str(e)}'}, status=500)
+            logger.error(f"Erreur PDF relevé {releve_id}: {e!s}", exc_info=True)
+            return Response({'detail': f'Erreur PDF: {e!s}'}, status=500)
 
     @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
     def vider(self, request):

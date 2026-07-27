@@ -1,23 +1,28 @@
-from .stock_lots import StockLotViewSet
-from .inventaire_main import InventaireViewSet, LigneInventaireViewSet
 from .adjustments import StockAdjustmentViewSet
-from .transformations import RelationTransformationViewSet, HistoriqueTransformationViewSet
 from .analysis import (
-    StatsUGViewSet, StockAnalysisUnsoldView,
-    StockAnalysisOverstockView, StockAnalysisShortageView
+    StatsUGViewSet,
+    StockAnalysisOverstockView,
+    StockAnalysisShortageView,
+    StockAnalysisUnsoldView,
 )
 from .cadencier import CadencierViewSet
+from .inventaire_main import InventaireViewSet, LigneInventaireViewSet
+from .stock_lots import StockLotViewSet
+from .transformations import (
+    HistoriqueTransformationViewSet,
+    RelationTransformationViewSet,
+)
 
 __all__ = [
-    'StockLotViewSet',
+    'CadencierViewSet',
+    'HistoriqueTransformationViewSet',
     'InventaireViewSet',
     'LigneInventaireViewSet',
-    'StockAdjustmentViewSet',
-    'StatsUGViewSet',
     'RelationTransformationViewSet',
-    'HistoriqueTransformationViewSet',
-    'StockAnalysisUnsoldView',
+    'StatsUGViewSet',
+    'StockAdjustmentViewSet',
     'StockAnalysisOverstockView',
     'StockAnalysisShortageView',
-    'CadencierViewSet',
+    'StockAnalysisUnsoldView',
+    'StockLotViewSet',
 ]

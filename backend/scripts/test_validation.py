@@ -1,17 +1,20 @@
 
 import os
-import django
 import sys
+
+import django
 
 # Setup Django environment
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Inventaire, LigneInventaire, Produit, StockLot, Commande, CommandeProduit
 from django.contrib.auth.models import User
 from rest_framework.test import APIRequestFactory
+
+from api.models import Inventaire, LigneInventaire, Produit, StockLot
 from api.views.stocks import InventaireViewSet
+
 
 def run_test():
     print("=== DÉBUT DU TEST DE VALIDATION INVENTAIRE ===")

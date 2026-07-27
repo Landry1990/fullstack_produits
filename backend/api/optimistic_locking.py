@@ -5,13 +5,14 @@ Principe: Au lieu de verrouiller la ligne en DB (bloquant),
 on vérifie que la version n'a pas changé depuis la lecture.
 Si conflit: retry automatique ou erreur explicite.
 """
-from django.db import transaction, models
-from django.db.models import F
-from rest_framework.response import Response
-from rest_framework import status
-from typing import TypeVar, Type, Callable, Any, Optional
 import logging
 import time
+from collections.abc import Callable
+from typing import Self, TypeVar
+
+from django.db import models, transaction
+from rest_framework import status
+from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 
@@ -56,12 +57,12 @@ class OptimisticLockingMixin:
     
     @classmethod
     def update_with_optimistic_lock(
-        cls: Type[T],
+        cls,
         pk: int,
         expected_version: int,
-        update_func: Callable[[T], None],
+        update_func: Callable[[Self], None],
         max_retries: int = 3
-    ) -> tuple[Optional[T], Optional[ConcurrentModificationError]]:
+    ) -> tuple[Self | None, ConcurrentModificationError | None]:
         """
         Met à jour un objet avec optimistic locking et retry automatique.
         
@@ -134,7 +135,7 @@ class OptimisticLockingMixin:
 
 
 def optimistic_update_response(
-    model_class: Type[T],
+    model_class: type[T],
     pk: int,
     expected_version: int,
     update_func: Callable[[T], None],
@@ -174,7 +175,7 @@ def optimistic_update_response(
 
 
 def bulk_optimistic_update(
-    model_class: Type[T],
+    model_class: type[T],
     updates: list[dict],  # [{'pk': 1, 'version': 5, 'update': func}, ...]
     max_retries: int = 3
 ) -> dict:
@@ -218,13 +219,13 @@ class OptimisticLockingViewSetMixin:
     Attend que le client envoie 'expected_version' dans le body.
     """
     
-    def get_expected_version(self, request) -> Optional[int]:
+    def get_expected_version(self, request) -> int | None:
         """Extrait la version attendue de la requête"""
         return request.data.get('expected_version') or request.data.get('version')
     
     def handle_optimistic_update(
         self,
-        model_class: Type[T],
+        model_class: type[T],
         instance: T,
         update_func: Callable[[T], None],
         success_message: str = "Mise à jour réussie"

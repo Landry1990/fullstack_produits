@@ -2,11 +2,12 @@
 Management command to check for expiring products and generate notifications.
 Run this daily via cron/scheduler to alert users about products nearing expiration.
 """
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
+
 from api.models import StockLot
-from django.conf import settings
 
 
 class Command(BaseCommand):

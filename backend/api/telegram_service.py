@@ -1,6 +1,8 @@
-import requests
 import logging
+
+import requests
 from django.utils import timezone
+
 from .retry_utils import retry_with_backoff
 
 logger = logging.getLogger(__name__)
@@ -122,7 +124,7 @@ class TelegramService:
         return '', ''
 
     @staticmethod
-    def send_message(text: str, bot_token: str = None, chat_id: str = None, parse_mode: str = 'HTML',
+    def send_message(text: str, bot_token: str | None = None, chat_id: str | None = None, parse_mode: str = 'HTML',
                      message_type: str = 'RAPPORT', recipient_name: str = '',
                      facture=None, client=None, user=None) -> tuple[bool, str]:
         """
@@ -208,9 +210,9 @@ class TelegramService:
         except requests.exceptions.RequestException as e:
             logger.error(f"[Telegram] Échec après retries: {e}")
             log.status = TelegramLog.Status.FAILED
-            log.provider_response = f"Échec après retries: {str(e)}"
+            log.provider_response = f"Échec après retries: {e!s}"
             log.save()
-            return False, f"Échec après retries: {str(e)}"
+            return False, f"Échec après retries: {e!s}"
         except Exception as e:
             logger.error(f"[Telegram] Exception: {e}")
             log.status = TelegramLog.Status.FAILED

@@ -6,10 +6,12 @@ Usage:
     python manage.py link_dci_produits
     python manage.py link_dci_produits --dry-run
 """
-import unicodedata
 import re
+import unicodedata
+
 from django.core.management.base import BaseCommand
-from api.models import Produit, Substance, MedicamentReference
+
+from api.models import MedicamentReference, Produit, Substance
 
 
 def normalize(text):

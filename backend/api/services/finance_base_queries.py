@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Requêtes de base factorisées pour les statistiques financières.
 Centralise les filtres communs (status VAL/PAY, exclusion VAL sans paiement).
 """
 from decimal import Decimal
-from django.db.models import Count, Q, DecimalField, F, Value, Exists, OuterRef, Sum
-from django.db.models.functions import TruncMonth, Coalesce
+
+from django.db.models import Count, Sum
+from django.db.models.functions import Coalesce, TruncMonth
 
 from ..models import Facture, FactureProduit, FactureProduitAllocation
 
@@ -73,7 +73,7 @@ def get_monthly_ca_aggregated(start_date, end_date):
     ).annotate(
         month=TruncMonth('date')
     ).values('month').annotate(
-        total=Coalesce(Sum('total_ttc'), Decimal('0'))
+        total=Coalesce(Sum('total_ttc'), Decimal(0))
     ).order_by('month')
 
     return {item['month'].strftime('%Y-%m'): float(item['total']) for item in qs}

@@ -1,13 +1,16 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture, Produit
-from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
+
+from django.utils import timezone
+
+from api.models import Facture, Produit
 
 print('=' * 80)
 print('VERIFICATION - DERNIERE FACTURE TOPICREM')
@@ -56,18 +59,18 @@ for facture in factures_recentes:
             if facture.tva > 0:
                 tva_calculee = facture.total_ht * (facture.tva / 100)
                 ttc_attendu = facture.total_ht + tva_calculee
-                print(f'  VERIFICATION TVA:')
+                print('  VERIFICATION TVA:')
                 print(f'    HT: {facture.total_ht:,.2f} F')
                 print(f'    TVA ({facture.tva}%): {tva_calculee:,.2f} F')
                 print(f'    TTC attendu: {ttc_attendu:,.2f} F')
                 print(f'    TTC reel: {facture.total_ttc:,.2f} F')
                 
                 if abs(ttc_attendu - facture.total_ttc) < Decimal('0.01'):
-                    print(f'    [OK] TVA correctement appliquee')
+                    print('    [OK] TVA correctement appliquee')
                 else:
                     print(f'    [ERREUR] Difference: {facture.total_ttc - ttc_attendu:,.2f} F')
             else:
-                print(f'  [INFO] Pas de TVA sur cette facture')
+                print('  [INFO] Pas de TVA sur cette facture')
             
             print()
 

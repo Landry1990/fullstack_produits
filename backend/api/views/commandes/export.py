@@ -6,11 +6,13 @@ Export des commandes fournisseurs avec gestion des CIP
 import csv
 import io
 from datetime import datetime
+
 from django.http import HttpResponse, JsonResponse
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from api.models import Commande, CommandeProduit, Produit, Fournisseur
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
+from api.models import Commande, CommandeProduit
 
 
 class ExportCommandeView(APIView):

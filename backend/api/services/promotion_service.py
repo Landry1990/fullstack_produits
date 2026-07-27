@@ -1,7 +1,10 @@
 from decimal import Decimal
-from django.utils import timezone
+
 from django.db import models
-from ..models import Promotion, FactureProduit, Produit
+from django.utils import timezone
+
+from ..models import FactureProduit, Promotion
+
 
 class PromotionService:
     """
@@ -81,15 +84,13 @@ class PromotionService:
                     result = (discount_per_unit, 0, promo.name)
 
             # --- TYPE: FIXED AMOUNT ---
-            elif promo.discount_type == Promotion.DiscountType.FIXED_AMOUNT:
-                if quantity >= promo.buy_quantity:
-                    discount_per_unit = promo.value
-                    if discount_per_unit > price:
-                        discount_per_unit = price # On ne rembourse pas
-                    
-                    total_discount = discount_per_unit * quantity
-                    current_discount_value = total_discount
-                    result = (discount_per_unit, 0, promo.name)
+            elif promo.discount_type == Promotion.DiscountType.FIXED_AMOUNT and quantity >= promo.buy_quantity:
+                discount_per_unit = promo.value
+                discount_per_unit = min(discount_per_unit, price) # On ne rembourse pas
+                
+                total_discount = discount_per_unit * quantity
+                current_discount_value = total_discount
+                result = (discount_per_unit, 0, promo.name)
 
             # COMPARISON (Best Deal)
             if current_discount_value > best_discount_value:

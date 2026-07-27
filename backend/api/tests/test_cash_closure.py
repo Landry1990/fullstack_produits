@@ -6,15 +6,16 @@ Tests critical business logic:
 - Date range filtering
 - Écart calculation
 """
+from datetime import timedelta
 from decimal import Decimal
+
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.utils import timezone
-from datetime import timedelta
 
+from ..models import ClotureCaisse
 from .factories import TestDataFactory
-from ..models import ClotureCaisse, Caisse, MouvementCaisse, Facture
 
 
 class CashClosureTotalsTestCase(APITestCase):

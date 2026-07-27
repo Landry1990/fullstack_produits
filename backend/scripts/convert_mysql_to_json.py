@@ -1,16 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Convertit les fichiers MySQL bruts (.MYD) en JSON pour import Django.
 Usage: python convert_mysql_to_json.py --input-dir "donnees mysql" --output supplier_data/FOURNISSEUR1/produits.json
 """
 
-import struct
-import os
-import json
 import argparse
-from pathlib import Path
+import json
 from datetime import datetime
+from pathlib import Path
 
 
 def parse_myd_file(filepath):
@@ -67,7 +64,7 @@ def convert_via_mysql_connector(input_dir, output_file):
         all_data = {}
         
         for table in tables:
-            table_name = list(table.values())[0]
+            table_name = next(iter(table.values()))
             print(f"📊 Export table: {table_name}")
             
             cursor.execute(f"SELECT * FROM {table_name}")

@@ -1,9 +1,10 @@
-from decimal import Decimal
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from ..models import Profile
 from .factories import TestDataFactory
-from ..models import Facture, FactureProduit, Profile
+
 
 class StockLoopholeTestCase(APITestCase):
     """Test case for the stock validation loophole (multiple lines bypassing stock)."""

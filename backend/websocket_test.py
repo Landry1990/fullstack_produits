@@ -7,14 +7,14 @@ Installation: pip install websockets
 Usage: python websocket_test.py --clients 10 --duration 60
 """
 
+import argparse
 import asyncio
-import websockets
 import json
 import random
-import time
-import argparse
-from typing import List, Dict
 import statistics
+import time
+
+import websockets
 
 # Configuration
 WS_URL = "ws://localhost:8000/ws/cashier/"
@@ -26,7 +26,7 @@ class WebSocketTestResult:
         self.total_messages = 0
         self.messages_received = 0
         self.connection_errors = 0
-        self.latencies: List[float] = []
+        self.latencies: list[float] = []
         self.start_time: float = 0
         self.end_time: float = 0
     
@@ -52,7 +52,7 @@ class WebSocketTestResult:
         print(f"Messages reçus: {self.messages_received}")
         print(f"Taux de réception: {self.messages_received/max(self.total_messages, 1)*100:.1f}%")
         print(f"Erreurs connexion: {self.connection_errors}")
-        print(f"\n⚡ Performance:")
+        print("\n⚡ Performance:")
         print(f"   Messages/sec: {self.messages_per_second:.2f}")
         print(f"   Latence moyenne: {self.avg_latency*1000:.2f}ms")
         if self.latencies:
@@ -113,7 +113,7 @@ async def simulate_websocket_client(client_id: int, result: 'WebSocketTestResult
                         if data.get("status") == "ok":
                             pass  # Message bien reçu
                         
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         pass  # Pas de réponse, mais pas forcément une erreur
                     
                 except websockets.exceptions.ConnectionClosed:

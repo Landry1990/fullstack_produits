@@ -1,12 +1,17 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour l'inventaire, les avoirs, et les mouvements de stock.
 """
 from rest_framework import serializers
+
 from ..models import (
-    LigneInventaire, Inventaire, LigneAvoir, Avoir,
-    MouvementStock, StockAdjustment,
-    RelationTransformation, HistoriqueTransformation,
+    Avoir,
+    HistoriqueTransformation,
+    Inventaire,
+    LigneAvoir,
+    LigneInventaire,
+    MouvementStock,
+    RelationTransformation,
+    StockAdjustment,
 )
 
 
