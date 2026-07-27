@@ -687,7 +687,10 @@ export default function SystemAdmin() {
                         min={1}
                         max={365}
                         value={backupSettings.backup_retention_count}
-                        onChange={(e) => setBackupSettings({ ...backupSettings, backup_retention_count: Math.max(1, Number(e.target.value)) })}
+                        onChange={(e) => {
+                          const parsed = e.target.value ? Number(e.target.value) : undefined;
+                          setBackupSettings({ ...backupSettings, backup_retention_count: parsed && !Number.isNaN(parsed) ? Math.max(1, parsed) : undefined });
+                        }}
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>

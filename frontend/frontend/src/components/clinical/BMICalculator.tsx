@@ -187,11 +187,12 @@ const BMICalculator: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              <label className="block">
-                <span className="text-[10px] md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.age')}</span>
+              <div className="block">
+                <label htmlFor="bmi-age" className="text-[10px] md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.age')}</label>
                 <div className="flex gap-2">
                   <div className="relative group flex-1">
                   <input
+                    id="bmi-age"
                     type="number"
                     inputMode="decimal"
                     value={age}
@@ -201,6 +202,7 @@ const BMICalculator: React.FC = () => {
                   />
                   </div>
                   <select
+                    aria-label={t('bmi.age_unit')}
                     value={ageUnit}
                     onChange={(e) => setAgeUnit(e.target.value as 'months' | 'years')}
                     className="bg-base-200 border border-base-300 rounded-xl md:rounded-2xl px-4 text-xs font-bold text-base-content focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -209,7 +211,7 @@ const BMICalculator: React.FC = () => {
                     <option value="months">{t('bmi.age_unit_months')}</option>
                   </select>
                 </div>
-              </label>
+              </div>
             </div>
           )}
 

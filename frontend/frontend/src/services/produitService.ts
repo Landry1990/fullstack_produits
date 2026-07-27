@@ -6,7 +6,8 @@ import type {
     AchatProduit,
     StockLot,
     StockAdjustment,
-    Forme
+    Forme,
+    Groupe
 } from '../types';
 
 export interface ProduitFilters {
@@ -85,8 +86,8 @@ const produitService = {
         return Array.isArray(response.data) ? response.data : response.data.results;
     },
 
-    getGroupes: async (): Promise<Record<string, unknown>[]> => {
-        const response = await api.get<{ results: Record<string, unknown>[] } | Record<string, unknown>[]>('groupes/', { params: { page_size: 1000 } });
+    getGroupes: async (): Promise<Groupe[]> => {
+        const response = await api.get<{ results: Groupe[] } | Groupe[]>('groupes/', { params: { page_size: 1000 } });
         return Array.isArray(response.data) ? response.data : response.data.results || [];
     },
 

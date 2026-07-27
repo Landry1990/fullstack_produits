@@ -238,8 +238,8 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {selectedAvoir.produits?.map((ligne, idx) => (
-                                        <TableRow key={ligne.id || idx}>
+                                    {selectedAvoir.produits?.map((ligne, _idx) => (
+                                        <TableRow key={ligne.id || `ligne-${ligne.produit_nom}-${ligne.lot}`}>
                                             <TableCell className="text-center">
                                                 <Button
                                                     type="button"

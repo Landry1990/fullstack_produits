@@ -61,19 +61,22 @@ function customModesToPaymentModes(customModes?: { value: string; label: string 
 /** Modes visibles dans la modale de paiement caisse */
 export function getCaissePaymentModes(disabledModes?: string[], customModes?: { value: string; label: string }[]): PaymentMode[] {
   const allModes = [...PAYMENT_MODES, ...customModesToPaymentModes(customModes)]
-  return allModes.filter(m => m.showInCaisse && !disabledModes?.includes(m.value))
+  const disabledSet = new Set(disabledModes ?? [])
+  return allModes.filter(m => m.showInCaisse && !disabledSet.has(m.value))
 }
 
 /** Modes visibles dans la facturation */
 function _getFacturationPaymentModes(disabledModes?: string[], customModes?: { value: string; label: string }[]): PaymentMode[] {
   const allModes = [...PAYMENT_MODES, ...customModesToPaymentModes(customModes)]
-  return allModes.filter(m => m.showInFacturation && !disabledModes?.includes(m.value))
+  const disabledSet = new Set(disabledModes ?? [])
+  return allModes.filter(m => m.showInFacturation && !disabledSet.has(m.value))
 }
 
 /** Modes visibles dans les filtres du journal */
 export function getJournalPaymentModes(disabledModes?: string[], customModes?: { value: string; label: string }[]): PaymentMode[] {
   const allModes = [...PAYMENT_MODES, ...customModesToPaymentModes(customModes)]
-  return allModes.filter(m => m.showInJournal && !disabledModes?.includes(m.value))
+  const disabledSet = new Set(disabledModes ?? [])
+  return allModes.filter(m => m.showInJournal && !disabledSet.has(m.value))
 }
 
 /** Tous les modes configurables par l'utilisateur (standards + custom) */

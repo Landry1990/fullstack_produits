@@ -238,6 +238,7 @@ export default function ProduitShadcn() {
       const url = window.URL.createObjectURL(new Blob([resp.data]))
       const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${produit.name}.pdf`)
       document.body.appendChild(link); link.click(); link.remove()
+      window.URL.revokeObjectURL(url)
     } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.generation_error', { defaultValue: 'Erreur g\u00e9n\u00e9ration' }))) }
   }
 

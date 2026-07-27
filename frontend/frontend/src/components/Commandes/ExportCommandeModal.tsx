@@ -55,6 +55,18 @@ interface ExportPreview {
   }>;
 }
 
+function downloadBlob(blob: Blob, fallbackFilename: string, contentDisposition?: string) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+  link.setAttribute('download', filenameMatch ? filenameMatch[1] : fallbackFilename);
+  document.body.appendChild(link);
+  link.click();
+  link.parentNode?.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
 export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
   isOpen,
   onClose,
@@ -86,18 +98,6 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const downloadBlob = (blob: Blob, fallbackFilename: string, contentDisposition?: string) => {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
-    link.setAttribute('download', filenameMatch ? filenameMatch[1] : fallbackFilename);
-    document.body.appendChild(link);
-    link.click();
-    link.parentNode?.removeChild(link);
-    window.URL.revokeObjectURL(url);
   };
 
   const handleExportCSV = async () => {

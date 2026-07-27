@@ -32,16 +32,6 @@ export const toApiDateTime = (date: Date): string => {
 };
 
 /**
- * Retourne minuit (00:00:00) du jour donné avec timezone locale.
- * À utiliser pour le paramètre date_debut d'un filtre journalier.
- */
-export const toApiDateStart = (date: Date): string => {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return toApiDateTime(d);
-};
-
-/**
  * Retourne 23:59:59 du jour donné avec timezone locale.
  * À utiliser pour le paramètre date_fin d'un filtre journalier.
  */

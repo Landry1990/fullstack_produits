@@ -31,6 +31,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 }) => {
   const { t } = useTranslation(['facturation', 'common']);
   const [preview, setPreview] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [matchResults, setMatchResults] = useState<MatchResult[]>([]);
@@ -51,6 +52,17 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
     }
   }, [isOpen]);
 
+  // Create and revoke preview object URL for the selected file
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+
   const loadProducts = async () => {
     setLoadingProducts(true);
     try {
@@ -67,9 +79,9 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      imageRef.current = file;
-      setPreview(URL.createObjectURL(file));
+      const selectedFile = e.target.files[0];
+      imageRef.current = selectedFile;
+      setFile(selectedFile);
       setMatchResults([]);
       setShowCamera(false);
     }
@@ -77,7 +89,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 
   const startCamera = async () => {
     setShowCamera(true);
-    setPreview(null);
+    setFile(null);
     imageRef.current = null;
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -113,7 +125,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
           if (blob) {
             const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
             imageRef.current = file;
-            setPreview(URL.createObjectURL(file));
+            setFile(file);
             stopCamera();
           }
         }, 'image/jpeg', 0.9);
@@ -200,7 +212,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 
   const reset = () => {
     imageRef.current = null;
-    setPreview(null);
+    setFile(null);
     setMatchResults([]);
     setExtractionData(null);
     stopCamera();

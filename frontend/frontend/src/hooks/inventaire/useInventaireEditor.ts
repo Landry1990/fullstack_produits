@@ -4,6 +4,43 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire, LigneInventaire, InventoryStats, ProduitModel } from '../../types';
 
+interface FocusInfo {
+    id: string;
+    selectionStart: number | null;
+    selectionEnd: number | null;
+    value: string;
+}
+
+function preserveFocus(): FocusInfo | null {
+    const active = document.activeElement;
+    if (!active || !(active instanceof HTMLInputElement)) return null;
+    return {
+        id: active.id,
+        selectionStart: active.selectionStart,
+        selectionEnd: active.selectionEnd,
+        value: active.value
+    };
+}
+
+function restoreFocus(focusInfo: FocusInfo | null) {
+    if (!focusInfo) return;
+    const el = document.getElementById(focusInfo.id);
+    if (el && el instanceof HTMLInputElement) {
+        el.focus();
+        if (focusInfo.value !== undefined && el.value !== focusInfo.value) {
+            // If the input was modified by a state update, keep the current value
+            // to avoid overwriting what the user is typing.
+        }
+        if (focusInfo.selectionStart !== null && focusInfo.selectionEnd !== null) {
+            try {
+                el.setSelectionRange(focusInfo.selectionStart, focusInfo.selectionEnd);
+            } catch {
+                // ignore if input type doesn't support selection
+            }
+        }
+    }
+}
+
 export const useInventaireEditor = (
     fetchInventaires: () => void,
     setViewMode: (mode: 'LIST' | 'CREATE' | 'EDIT' | 'AUDIT') => void,
@@ -139,37 +176,6 @@ export const useInventaireEditor = (
 
     // Ref to latest state for use inside async callbacks / intervals
     const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges: async () => {}, syncLocalOnlyLines: async () => {} });
-
-    // Preserve focus across state updates / reloads
-    const preserveFocus = () => {
-        const active = document.activeElement;
-        if (!active || !(active instanceof HTMLInputElement)) return null;
-        return {
-            id: active.id,
-            selectionStart: active.selectionStart,
-            selectionEnd: active.selectionEnd,
-            value: active.value
-        };
-    };
-
-    const restoreFocus = (focusInfo: ReturnType<typeof preserveFocus>) => {
-        if (!focusInfo) return;
-        const el = document.getElementById(focusInfo.id);
-        if (el && el instanceof HTMLInputElement) {
-            el.focus();
-            if (focusInfo.value !== undefined && el.value !== focusInfo.value) {
-                // If the input was modified by a state update, keep the current value
-                // to avoid overwriting what the user is typing.
-            }
-            if (focusInfo.selectionStart !== null && focusInfo.selectionEnd !== null) {
-                try {
-                    el.setSelectionRange(focusInfo.selectionStart, focusInfo.selectionEnd);
-                } catch {
-                    // ignore if input type doesn't support selection
-                }
-            }
-        }
-    };
 
     const flushPendingChanges = async () => {
         const pending = pendingChangesRef.current;
@@ -461,7 +467,8 @@ export const useInventaireEditor = (
             },
             {
                 title: t('inventaire.validation.title'),
-                message: t('inventaire.validation.message')
+                message: t('inventaire.validation.message'),
+                permission: 'can_adjust_stock'
             }
         );
     };
@@ -606,12 +613,14 @@ export const useInventaireEditor = (
                 const txtContent = notFoundItems.map(item => `${item.cip}${delimiter}${item.qty}`).join('\n');
                 const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
                 const link = document.createElement('a');
+                const objectUrl = URL.createObjectURL(blob);
                 const dateStr = new Date().toISOString().slice(0, 10);
-                link.href = URL.createObjectURL(blob);
+                link.href = objectUrl;
                 link.download = `produits_non_reconnus_inventaire_${dateStr}.txt`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                URL.revokeObjectURL(objectUrl);
 
                 toast.error(`${notFoundItems.length} produits non reconnus. Fichier rapport téléchargé.`);
             }

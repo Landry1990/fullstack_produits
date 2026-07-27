@@ -236,7 +236,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                         {lignes.map((ligne, index) => {
                                             const prod = typeof ligne.produit === 'object' ? ligne.produit : null;
                                             return (
-                                                <TableRow key={prod?.id ?? ligne.id ?? index}>
+                                                <TableRow key={prod?.id ?? ligne.id ?? `ligne-${prod?.name ?? ligne.lot}`}>
                                                     <TableCell>
                                                         <div className="font-semibold text-slate-800">{prod?.name || t('common:unknown_product', { defaultValue: 'Produit Inconnu' })}</div>
                                                         <div className="text-xs text-slate-400 font-mono mt-0.5">{prod?.cip1}</div>

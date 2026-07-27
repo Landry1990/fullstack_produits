@@ -7,6 +7,31 @@ import { formatNumber } from '../formatters';
  */
 
 /**
+ * Écrit du contenu HTML dans une fenêtre d'impression sans utiliser document.write().
+ * Utilise DOMParser pour analyser le HTML de manière sûre, puis innerHTML pour
+ * l'injecter. Les scripts inline sont ré-exécutés manuellement car innerHTML
+ * n'exécute pas les scripts.
+ */
+export function writePrintDocument(win: Window, html: string): void {
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+
+  win.document.head.innerHTML = parsed.head.innerHTML;
+  win.document.body.innerHTML = parsed.body.innerHTML;
+  win.document.title = parsed.title;
+
+  const scripts = win.document.querySelectorAll('script');
+  scripts.forEach(oldScript => {
+    const newScript = win.document.createElement('script');
+    if (oldScript.src) {
+      newScript.src = oldScript.src;
+    } else {
+      newScript.textContent = oldScript.textContent;
+    }
+    oldScript.parentNode?.replaceChild(newScript, oldScript);
+  });
+}
+
+/**
  * Échappe les caractères HTML spéciaux dans une chaîne provenant de la base de données.
  * Empêche l'injection HTML/XSS dans les templates d'impression.
  */

@@ -9,7 +9,7 @@ import { useReapproStats } from '../hooks/useDashboard';
 import { ChevronLeft, ChevronRight, ChevronDown, Menu, X } from 'lucide-react';
 import { formatVersion } from '../version';
 import { cn } from '../lib/utils';
-import { prefetchRoute } from '../routes';
+import { prefetchRoute } from '../utils/routePrefetch';
 
 const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   '/app/fournisseurs': () => import('./Fournisseurs'),

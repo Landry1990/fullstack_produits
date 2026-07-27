@@ -181,6 +181,7 @@ const JournalAudit: React.FC = () => {
             document.body.appendChild(link);
             link.click();
             link.remove();
+            window.URL.revokeObjectURL(url);
         } catch { alert(t('messages.export_error')); }
     };
 

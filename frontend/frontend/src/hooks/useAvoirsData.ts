@@ -404,7 +404,8 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             }
         }, {
             title: `Décharger stock — ${avoir.numero}`,
-            message: `Cette action va retirer physiquement ${avoir.produits?.length || 0} produit(s) du stock et enregistrer les mouvements. Action irréversible.`
+            message: `Cette action va retirer physiquement ${avoir.produits?.length || 0} produit(s) du stock et enregistrer les mouvements. Action irréversible.`,
+            permission: 'can_manage_avoirs'
         });
     };
 
@@ -473,9 +474,11 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         updateState(targetStatus);
 
         try {
-            const promises = selectedAvoir.produits
-                .filter(p => !!p.id)
-                .map(p => avoirService.updateLigne(p.id, { est_cloture: targetStatus }));
+            const promises: Promise<unknown>[] = [];
+            for (const p of selectedAvoir.produits) {
+                if (!p.id) continue;
+                promises.push(avoirService.updateLigne(p.id, { est_cloture: targetStatus }));
+            }
             await Promise.all(promises);
             toast.success(targetStatus ? t('avoirs.toasts.bulk_lines_closed') : t('avoirs.toasts.bulk_lines_reopened'));
         } catch {
@@ -573,7 +576,10 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     };
 
     const onToggleSelectAll = () => {
-        const draftIds = avoirs.filter(a => a.status === 'BROUILLON').map(a => a.id);
+        const draftIds: number[] = [];
+        for (const a of avoirs) {
+            if (a.status === 'BROUILLON') draftIds.push(a.id);
+        }
         if (selectedIds.size === draftIds.length && draftIds.length > 0) {
             setSelectedIds(new Set());
         } else {

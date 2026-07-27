@@ -32,8 +32,8 @@ const emptyStateIcons = {
 const SkeletonRow = ({ widths, hasCheckbox }: { widths: string[]; hasCheckbox: boolean }) => (
     <TableRow className="border-b border-slate-100 animate-pulse hover:bg-transparent">
         {hasCheckbox && <TableCell className="py-2 px-3 text-center"><div className="size-4 rounded bg-slate-200 mx-auto" /></TableCell>}
-        {widths.map((_, i) => (
-            <TableCell key={i} className="py-2 px-3">
+        {widths.map((w, _i) => (
+            <TableCell key={w} className="py-2 px-3">
                 <div className="h-4 rounded bg-slate-200" style={{ width: `${60 + Math.random() * 30}%` }} />
             </TableCell>
         ))}

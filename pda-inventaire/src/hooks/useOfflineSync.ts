@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import NetInfo from '@react-native-community/netinfo';
-import {
-    inventaireService,
-    localStorageService,
-    OfflineLigne
-} from '../services';
+import { inventaireService } from '../services/inventaire';
+import { localStorageService } from '../services/localStorage';
+import type { OfflineLigne } from '../services/localStorage';
 import type { Inventaire } from '../services/inventaire';
 
 interface UseOfflineSyncOptions {
@@ -89,9 +87,9 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
             syncedCount = result.imported;
 
             // Marquer toutes les lignes comme synchronisées
-            for (const ligne of offlineLignes) {
-                await localStorageService.markAsSynced(ligne.tempId);
-            }
+            await Promise.all(offlineLignes.map(ligne =>
+                localStorageService.markAsSynced(ligne.tempId)
+            ));
 
             // Nettoyer les lignes synchronisées
             await localStorageService.clearSyncedLignes();

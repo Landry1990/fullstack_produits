@@ -277,6 +277,7 @@ export function useFacturationState() {
         message: isPosteCaisseActive
           ? 'Ce poste est partagé. Veuillez saisir vos identifiants de vendeur pour cette vente.'
           : t('facturation:payment.sudo_send_to_caisse'),
+        permission: 'can_cash_out',
         forceCurrentUser: false,
       })
       return
@@ -406,7 +407,8 @@ export function useFacturationState() {
             await handleCompleteSale({ validatorId, password })
           }, {
             title: t('facturation:payment.sudo_mode.validate_by'),
-            message: `Cette vente avec un total de ${totalTtc} F nécessite l'autorisation d'un superviseur.`
+            message: `Cette vente avec un total de ${totalTtc} F nécessite l'autorisation d'un superviseur.`,
+            permission: 'can_validate_zero_amount'
           })
         }
       } else {
