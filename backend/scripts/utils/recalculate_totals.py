@@ -1,11 +1,12 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
+
 from api.models import Facture
-from decimal import Decimal
 
 print('=' * 80)
 print('RECALCUL DES TOTAUX - NOUVELLE LOGIQUE TVA LIGNE PAR LIGNE')

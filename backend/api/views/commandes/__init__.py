@@ -1,16 +1,16 @@
-from .commandes import CommandeViewSet
-from .commande_produits import CommandeProduitViewSet
 from .avoirs import AvoirViewSet, LigneAvoirViewSet
+from .commande_produits import CommandeProduitViewSet
+from .commandes import CommandeViewSet
 from .promis import PromisViewSet
-from .suggestions import generer_suggestions_commande
 from .schedules import OrderScheduleViewSet
+from .suggestions import generer_suggestions_commande
 
 __all__ = [
-    'CommandeViewSet',
-    'CommandeProduitViewSet',
     'AvoirViewSet',
+    'CommandeProduitViewSet',
+    'CommandeViewSet',
     'LigneAvoirViewSet',
+    'OrderScheduleViewSet',
     'PromisViewSet',
     'generer_suggestions_commande',
-    'OrderScheduleViewSet',
 ]

@@ -1,18 +1,27 @@
+from datetime import timedelta
+from decimal import Decimal
+
 from django.test import TestCase
 from django.utils import timezone
-from decimal import Decimal
-from datetime import timedelta
-from ..models import Promotion, Produit, Facture, FactureProduit, Client, FactureProduitAllocation, StockLot
+
+from ..models import (
+    Client,
+    Facture,
+    FactureProduit,
+    Produit,
+    Promotion,
+)
 from ..services import PromotionService
+
 
 class PromotionServiceTest(TestCase):
     def setUp(self):
         self.produit = Produit.objects.create(
             name="Doliprane",
-            cost_price=Decimal('500'),
-            selling_price=Decimal('1000'),
+            cost_price=Decimal(500),
+            selling_price=Decimal(1000),
             stock=100,
-            tva=Decimal('0')
+            tva=Decimal(0)
         )
         self.client = Client.objects.create(name="Test Client")
         self.facture = Facture.objects.create(client=self.client)
@@ -22,7 +31,7 @@ class PromotionServiceTest(TestCase):
         Promotion.objects.create(
             name="Promo 20%",
             discount_type=Promotion.DiscountType.PERCENTAGE,
-            value=Decimal('20'),
+            value=Decimal(20),
             start_date=timezone.now() - timedelta(days=1),
             active=True
         ).products.add(self.produit)
@@ -63,7 +72,6 @@ class PromotionServiceTest(TestCase):
         # But commonly in this codebase it might be global depending on usage.
         
         # Let's verify billing.py logic first.
-        pass
 
     def test_buy_x_get_y(self):
         # Buy 2 Get 1 Free

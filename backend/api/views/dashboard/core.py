@@ -1,16 +1,35 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-
-from django.db.models import Sum, Count, Avg, Max, F, Q, DecimalField, Value, ExpressionWrapper, Case, When, Exists, OuterRef
-from django.db.models.functions import TruncDay, TruncMonth, Coalesce, TruncDate
-from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
-from ...models import Facture, Commande, Produit, Client, StockLot, Caisse, ObjectifCommercial, FactureProduit, FactureProduitAllocation
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Max,
+    OuterRef,
+    Q,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce, TruncDay
+from django.utils import timezone
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
 from ...dashboard_cache import DashboardCache
+from ...models import (
+    Caisse,
+    Client,
+    Commande,
+    Facture,
+    FactureProduitAllocation,
+    ObjectifCommercial,
+    Produit,
+)
 
 
 class DashboardCoreMixin(viewsets.ViewSet):
@@ -69,14 +88,14 @@ class DashboardCoreMixin(viewsets.ViewSet):
     
         # Aggregate everything related to Facture in one pass for [today, yesterday]
         facture_metrics = facture_qs.aggregate(
-            ca_today=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            ca_today=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
             sales_today=Count(Case(When(date__date=today, then=Value(1)))),
-            discount_today=Coalesce(Sum(Case(When(date__date=today, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            discount_today=Coalesce(Sum(Case(When(date__date=today, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
     
-            ca_yesterday=Coalesce(Sum(Case(When(date__date=yesterday, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            ca_yesterday=Coalesce(Sum(Case(When(date__date=yesterday, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
             sales_yesterday=Count(Case(When(date__date=yesterday, then=Value(1)))),
     
-            user_ca_today=Coalesce(Sum(Case(When(Q(date__date=today) & Q(created_by=request.user), then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            user_ca_today=Coalesce(Sum(Case(When(Q(date__date=today) & Q(created_by=request.user), then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
             user_sales_today=Count(Case(When(Q(date__date=today) & Q(created_by=request.user), then=Value(1))))
         )
     
@@ -102,7 +121,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
             # Critical stock criteria: stock <= stock_min OR stock <= 0 OR stock < 15 days of rotation
             # rotation_moyenne is monthly, so daily is /30. 15 days = (rotation/30)*15 = rotation/2
             product_stats = Produit.objects.aggregate(
-                stock_value=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0')),
+                stock_value=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0)),
                 stock_count=Count(Case(When(stock__gt=0, then=Value(1)))),
                 stock_critique=Count(Case(When(
                     Q(is_active=True) & (
@@ -136,7 +155,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
             ).filter(
                 debt__gt=0.5
             ).aggregate(
-                total_debt=Coalesce(Sum('debt'), Decimal('0')),
+                total_debt=Coalesce(Sum('debt'), Decimal(0)),
                 count=Count('id')
             )
     
@@ -168,7 +187,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 for p in top_products
             ]
     
-        user_avg_basket = (user_ca_today / user_sales_count) if user_sales_count > 0 else Decimal('0')
+        user_avg_basket = (user_ca_today / user_sales_count) if user_sales_count > 0 else Decimal(0)
     
         # Base response
         response_data = {
@@ -232,7 +251,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
         )
         
         dormant_total = dormant_qs.aggregate(
-            total_val=Coalesce(Sum('dormant_value'), Decimal('0'))
+            total_val=Coalesce(Sum('dormant_value'), Decimal(0))
         )['total_val']
         
         top_dormant = dormant_qs.order_by('-dormant_value').values(
@@ -289,16 +308,16 @@ class DashboardCoreMixin(viewsets.ViewSet):
         # Secondary KPI is Margin for profitability tracking
     
         # 2. Performance Metrics (Grouped queries)
-        from django.db.models import Case, When, Value, DecimalField
+        from django.db.models import Case, DecimalField, Value, When
     
         # --- Chiffre d'Affaires (Grouped) ---
         ca_stats = Facture.objects.filter(
             date__date__gte=start_of_month,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(
-            ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            ca_mois=Coalesce(Sum(F('total_ttc')), Decimal('0'))
+            ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            ca_mois=Coalesce(Sum(F('total_ttc')), Decimal(0))
         )
         ca_jour = ca_stats['ca_jour']
         ca_sem = ca_stats['ca_sem']
@@ -311,17 +330,17 @@ class DashboardCoreMixin(viewsets.ViewSet):
         )
     
         # Aggregate total global discounts
-        remises_stats = factures_mois_qs.aggregate(
-            remise_jour=Coalesce(Sum(Case(When(date__date=today, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            remise_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            remise_mois=Coalesce(Sum(F('remise')), Decimal('0'))
+        factures_mois_qs.aggregate(
+            remise_jour=Coalesce(Sum(Case(When(date__date=today, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            remise_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            remise_mois=Coalesce(Sum(F('remise')), Decimal(0))
         )
     
         # 1. Somme du CA TTC sur les périodes
-        ca_ttc_stats = factures_mois_qs.aggregate(
-            ttc_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            ttc_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
-            ttc_mois=Coalesce(Sum(F('total_ttc')), Decimal('0'))
+        factures_mois_qs.aggregate(
+            ttc_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            ttc_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal(0)),
+            ttc_mois=Coalesce(Sum(F('total_ttc')), Decimal(0))
         )
     
         # 2. Somme des Coûts (Centralized calculation with discounts)
@@ -352,18 +371,18 @@ class DashboardCoreMixin(viewsets.ViewSet):
         # --- Objectifs (Full fetch) ---
         objectifs_data = ObjectifCommercial.get_objectifs_courants()
     
-        obj_jour = objectifs_data['jour'].ca_objectif if objectifs_data['jour'] else Decimal('0')
-        marge_obj_jour = objectifs_data['jour'].marge_objectif if objectifs_data['jour'] else Decimal('0')
+        obj_jour = objectifs_data['jour'].ca_objectif if objectifs_data['jour'] else Decimal(0)
+        marge_obj_jour = objectifs_data['jour'].marge_objectif if objectifs_data['jour'] else Decimal(0)
         taux_jour = float((ca_jour / obj_jour) * 100) if obj_jour > 0 else 0
         taux_marge_jour = float((margin_jour / marge_obj_jour) * 100) if marge_obj_jour > 0 else 0
     
-        obj_sem = objectifs_data['semaine'].ca_objectif if objectifs_data['semaine'] else Decimal('0')
-        marge_obj_sem = objectifs_data['semaine'].marge_objectif if objectifs_data['semaine'] else Decimal('0')
+        obj_sem = objectifs_data['semaine'].ca_objectif if objectifs_data['semaine'] else Decimal(0)
+        marge_obj_sem = objectifs_data['semaine'].marge_objectif if objectifs_data['semaine'] else Decimal(0)
         taux_sem = float((ca_sem / obj_sem) * 100) if obj_sem > 0 else 0
         taux_marge_sem = float((margin_sem / marge_obj_sem) * 100) if marge_obj_sem > 0 else 0
     
-        obj_mois = objectifs_data['mois'].ca_objectif if objectifs_data['mois'] else Decimal('0')
-        marge_obj_mois = objectifs_data['mois'].marge_objectif if objectifs_data['mois'] else Decimal('0')
+        obj_mois = objectifs_data['mois'].ca_objectif if objectifs_data['mois'] else Decimal(0)
+        marge_obj_mois = objectifs_data['mois'].marge_objectif if objectifs_data['mois'] else Decimal(0)
         taux_mois = float((ca_mois / obj_mois) * 100) if obj_mois > 0 else 0
         taux_marge_mois = float((margin_mois / marge_obj_mois) * 100) if marge_obj_mois > 0 else 0
     
@@ -376,8 +395,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
     
         perf_drop = settings.perf_drop_threshold if (settings and settings.perf_drop_threshold) else Decimal('0.7')
         perf_alert_hour = settings.perf_alert_hour if settings else 14
-        stock_days_alert = settings.low_stock_threshold_days if settings else 15
-        debt_alert_val = settings.debt_alert_threshold if settings else Decimal('100000')
+        debt_alert_val = settings.debt_alert_threshold if settings else Decimal(100000)
         dormant_days_limit = settings.dormant_stock_days if settings else 90
         shortage_alert_threshold = settings.shortage_alert_threshold if settings else 10
     
@@ -554,13 +572,13 @@ class DashboardCoreMixin(viewsets.ViewSet):
             date__date__gte=last_week_start,
             date__date__lt=last_week_limit,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(ca=Coalesce(Sum('total_ttc'), Decimal(0)))['ca']
     
         current_week_ca = Facture.objects.filter(
             date__date__gte=current_week_start,
             date__date__lte=today, # Include today explicitly
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').aggregate(ca=Coalesce(Sum('total_ttc'), Decimal(0)))['ca']
     
         # Only alert if we have enough history to compare and significant drop
         if last_week_partial_ca > 0 and current_week_ca < last_week_partial_ca * perf_drop:
@@ -623,6 +641,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
     def hourly_traffic(self, request):
         """Returns average hourly traffic (number of sales) over the last 30 days."""
         from django.db.models.functions import ExtractHour
+
         from ...models import PharmacySettings
 
         # Cache: 5 min pour le trafic horaire
@@ -706,7 +725,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
         ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL').annotate(
             day=TruncDay('date')
         ).values('day').annotate(
-            total=Coalesce(Sum('total_ttc'), Decimal('0')),
+            total=Coalesce(Sum('total_ttc'), Decimal(0)),
             nb_ventes=Count('id')
         ).order_by('day')
 
@@ -718,8 +737,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
         ).annotate(
             day=TruncDay('facture_produit__facture__date')
         ).values('day').annotate(
-            cout_achat=Coalesce(Sum(F('cost_price') * F('quantity')), Decimal('0')),
-            ca_ht=Coalesce(Sum(F('selling_price') * F('quantity')), Decimal('0')),
+            cout_achat=Coalesce(Sum(F('cost_price') * F('quantity')), Decimal(0)),
+            ca_ht=Coalesce(Sum(F('selling_price') * F('quantity')), Decimal(0)),
         ).order_by('day')
 
         # Build the data structure expected by frontend
@@ -770,8 +789,9 @@ class DashboardCoreMixin(viewsets.ViewSet):
         NOTE: rotation_moyenne is MONTHLY (units sold per month), so we divide by 30 to get daily rate.
         Includes products already out of stock (Coverage = 0).
         """
-        from django.db.models.functions import Cast
         from django.db.models import FloatField
+        from django.db.models.functions import Cast
+
         from ...models import PharmacySettings
     
         settings = PharmacySettings.objects.first()

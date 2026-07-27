@@ -1,12 +1,14 @@
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from typing import cast
-import subprocess
-import os
-import sys
 import gzip
+import os
 import shutil
+import subprocess
+import sys
 import tempfile
+from typing import cast
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
+
 
 class Command(BaseCommand):
     help = 'Restores the PostgreSQL database from a .sql.gz backup file'
@@ -107,11 +109,10 @@ class Command(BaseCommand):
             if is_gz:
                 self.stdout.write(f"Decompressing {backup_file_gz}...")
                 try:
-                    with gzip.open(backup_file_gz, 'rb') as f_in:
-                        with open(temp_sql_file, 'wb') as f_out:
-                            shutil.copyfileobj(cast(gzip.GzipFile, f_in), f_out)
+                    with gzip.open(backup_file_gz, 'rb') as f_in, open(temp_sql_file, 'wb') as f_out:
+                        shutil.copyfileobj(cast(gzip.GzipFile, f_in), f_out)
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'Decompression failed: {str(e)}'))
+                    self.stdout.write(self.style.ERROR(f'Decompression failed: {e!s}'))
                     return
             else:
                 self.stdout.write(f"Using plain SQL file: {backup_file_gz}")
@@ -164,9 +165,10 @@ class Command(BaseCommand):
                 # 3. Reset PostgreSQL sequences to avoid IntegrityErrors
                 self.stdout.write("Resetting PostgreSQL sequences for 'api' app...")
                 try:
+                    from io import StringIO
+
                     from django.core.management import call_command
                     from django.db import connection
-                    from io import StringIO
                     
                     output = StringIO()
                     call_command('sqlsequencereset', 'api', stdout=output)
@@ -179,8 +181,8 @@ class Command(BaseCommand):
                     else:
                         self.stdout.write(self.style.WARNING('No sequences to reset found for app "api".'))
                 except Exception as seq_err:
-                    self.stdout.write(self.style.WARNING(f'Could not reset sequences: {str(seq_err)}'))
+                    self.stdout.write(self.style.WARNING(f'Could not reset sequences: {seq_err!s}'))
                     self.stdout.write("Tip: You might need to run 'python manage.py sqlsequencereset api' manually.")
                     
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f'Error during restoration: {str(e)}'))
+                self.stdout.write(self.style.ERROR(f'Error during restoration: {e!s}'))

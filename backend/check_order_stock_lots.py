@@ -1,10 +1,11 @@
 import os
+
 import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
 
-from api.models import Commande, StockLot, CommandeProduit
+from api.models import Commande, StockLot
 
 c = Commande.objects.filter(numero_facture='FAC 346 BAS').first()
 if c:

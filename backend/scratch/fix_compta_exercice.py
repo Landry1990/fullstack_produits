@@ -1,12 +1,14 @@
 
 import os
-import django
 from datetime import date
+
+import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import ExerciceComptable, EcritureComptable
+from api.models import EcritureComptable, ExerciceComptable
+
 
 def run():
     # 1. Créer l'exercice 2026 s'il n'existe pas
@@ -19,9 +21,9 @@ def run():
         }
     )
     if created:
-        print(f"Exercice 2026 créé.")
+        print("Exercice 2026 créé.")
     else:
-        print(f"Exercice 2026 déjà existant.")
+        print("Exercice 2026 déjà existant.")
 
     # 2. Mettre à jour les écritures sans exercice
     count = EcritureComptable.objects.filter(exercice__isnull=True).update(exercice=exercice)

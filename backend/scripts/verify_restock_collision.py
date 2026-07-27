@@ -1,8 +1,8 @@
 
 import os
 import sys
+
 import django
-from decimal import Decimal
 
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -11,12 +11,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from django.utils import timezone
-from rest_framework.test import APIRequestFactory, force_authenticate
 from django.contrib.auth.models import User
-from api.models import Produit, Facture, FactureProduit, Commande, CommandeProduit
-from api.views.ventes import FactureViewSet
+from rest_framework.test import APIRequestFactory, force_authenticate
+
+from api.models import Commande, CommandeProduit, Produit
 from api.views.commandes import CommandeViewSet
+from api.views.ventes import FactureViewSet
+
 
 def run_test():
     print("=== STARTING AUTO-RESTOCK COLLISION TEST ===")

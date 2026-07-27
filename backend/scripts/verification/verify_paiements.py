@@ -1,11 +1,13 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture, Caisse
 from decimal import Decimal
+
+from api.models import Facture
 
 print('=' * 80)
 print('VERIFICATION DES PAIEMENTS REELS')
@@ -30,12 +32,12 @@ for f in factures:
     total_python = sum(p.montant for p in paiements_reels)
     
     print(f'  Paiements réels (via Python): {total_python:,.2f} F')
-    print(f'  Détail:')
+    print('  Détail:')
     for p in paiements_reels:
         print(f'    - {p.get_mode_paiement_display()}: {p.montant:,.2f} F')
     
     # Méthode 2: Via ORM aggregate
-    from django.db.models import Sum, Q
+    from django.db.models import Sum
     total_orm = f.paiements.filter(
         statut='completee'
     ).exclude(

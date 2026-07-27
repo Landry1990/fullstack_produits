@@ -1,11 +1,14 @@
-from django.core.management.base import BaseCommand
-from django.core.management import call_command
-from django.utils import timezone
-from api.models.settings import PharmacySettings
-from django.conf import settings
-from pathlib import Path
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
+from pathlib import Path
+
+from django.conf import settings
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from api.models.settings import PharmacySettings
+
 
 class Command(BaseCommand):
     help = 'Runs backup if enabled and interval since last backup is reached'

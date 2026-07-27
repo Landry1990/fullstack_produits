@@ -5,21 +5,22 @@ Vérifie que tous les serializers peuvent être instanciés sans erreur.
 """
 import os
 import sys
-import traceback
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 sys.path.insert(0, '/app')
 
 import django
+
 django.setup()
 
-from rest_framework import serializers
 from inspect import isclass
+
+from rest_framework import serializers
 
 # Import dynamique de tous les modules serializers
 import api.serializers
-import api.serializers_optimized
 import api.serializers_monolithic
+import api.serializers_optimized
 
 # Collecter toutes les classes de serializer
 all_serializers = []

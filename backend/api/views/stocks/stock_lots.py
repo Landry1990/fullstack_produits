@@ -1,26 +1,21 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
-from django.db.models import F, Sum
-from django_filters.rest_framework import DjangoFilterBackend
-from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from ...models import (
-    StockLot, Produit, MouvementStock, StockAdjustment, AuditLog
-)
-from ...serializers import StockLotSerializer
-from ...serializers_optimized import StockLotListSerializer, StockLotDetailSerializer
-from ...serializer_mixins import OptimizedSerializerMixin
+from django.db import transaction
+from django.db.models import F, Sum
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
 from ...audit_helpers import log_audit
+from ...centralized_configs import BaseViewSetConfig
+from ...models import AuditLog, MouvementStock, Produit, StockAdjustment, StockLot
+from ...serializer_mixins import OptimizedSerializerMixin
+from ...serializers import StockLotSerializer
+from ...serializers_optimized import StockLotDetailSerializer, StockLotListSerializer
 from ...sudo_utils import validate_sudo_mode
-from ...centralized_configs import (
-    BaseViewSetConfig,
-    StandardResultsSetPagination
-)
 
 
 class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.ModelViewSet):
@@ -275,8 +270,9 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         Retourne les alertes de péremption pour notification frontend.
         Inclut les lots expirant dans les X prochains jours avec quantité > 0.
         """
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
 
         # Paramètres configurables
         days_ahead = int(request.query_params.get('days', 30))
@@ -357,8 +353,8 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         - Prévisions à 30/60/90 jours
         - Taux de perte vs CA
         """
-        from api.models import Facture, FactureProduitAllocation
-        from django.db.models import Q
+
+        from api.models import Facture
         
         today = timezone.localtime(timezone.now()).date()
         
@@ -372,8 +368,8 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
             quantity_remaining__gt=0
         ).select_related('produit')
         
-        valeur_perimes_cout = Decimal('0')
-        valeur_perimes_vente = Decimal('0')
+        valeur_perimes_cout = Decimal(0)
+        valeur_perimes_vente = Decimal(0)
         count_lots_perimes = 0
         details_perimes = []
         
@@ -403,8 +399,8 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
                 date_expiration__lt=date_limite,
                 quantity_remaining__gt=0
             )
-            total_cout = Decimal('0')
-            total_vente = Decimal('0')
+            total_cout = Decimal(0)
+            total_vente = Decimal(0)
             count = 0
             
             for lot in lots:
@@ -431,7 +427,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         )
         ca_total = factures_periode.aggregate(
             total=Sum('total_ttc')
-        )['total'] or Decimal('0')
+        )['total'] or Decimal(0)
         
         # === PERTES HISTORIQUES (via MouvementStock) ===
         # Sorties pour périmés sur la période
@@ -444,7 +440,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         )['total_qty'] or 0
         
         # === TAUX DE PERTE ===
-        taux_perte = Decimal('0')
+        taux_perte = Decimal(0)
         if ca_total > 0:
             taux_perte = (valeur_perimes_vente / ca_total) * 100
         
@@ -501,8 +497,8 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
             fournisseurs_map = {}
             global_total_ug = 0
             global_total_ug_restantes = 0
-            global_total_valeur = Decimal('0')
-            global_total_valeur_restante = Decimal('0')
+            global_total_valeur = Decimal(0)
+            global_total_valeur_restante = Decimal(0)
 
             for lot in lots:
                 # Priorité au grossiste de la Commande sur le labo du Lot
@@ -519,8 +515,8 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
                         'fournisseur_nom': f_name,
                         'total_ug': 0,
                         'total_ug_restantes': 0,
-                        'total_valeur': Decimal('0'),
-                        'total_valeur_restante': Decimal('0'),
+                        'total_valeur': Decimal(0),
+                        'total_valeur_restante': Decimal(0),
                         'lots_count': 0,
                         'details': []
                     }

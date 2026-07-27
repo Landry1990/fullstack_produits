@@ -1,115 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 Package serializers - Refactorisation par domaine
 Tous les serializers sont exportés ici pour compatibilité ascendante.
 """
 
 # Config & Settings
-from .config import (
-    TVASerializer,
-    InvoiceSettingsSerializer,
-    LoyaltySettingSerializer,
-    PharmacySettingsSerializer,
-    ConfigurationOptionSerializer,
-    ObjectifCommercialSerializer,
-)
-
-# Users & Permissions
-from .users import (
-    ProfileSerializer,
-    UserSerializer,
-    TeamSerializer,
-    PosteCaisseSerializer,
-    PosteVenteSerializer,
-    SessionCaisseSerializer,
-)
-
-# Clients & Tiers
-from .clients import (
-    DepotClientSerializer,
-    AyantDroitSerializer,
-    ClientSerializer,
-)
-
-# Products & Catalog
-from .products import (
-    SubstanceSerializer,
-    DrugInteractionSerializer,
-    MedicamentReferenceSerializer,
-    RayonSerializer,
-    FormeSerializer,
-    FamilleRisqueSerializer,
-    GroupeSerializer,
-    ProduitSerializer,
-    StockLotSerializer,
-)
-
-# Orders & Procurement
-from .orders import (
-    FournisseurSerializer,
-    CommandeProduitSerializer,
-    CommandeSerializer,
-    PaiementFournisseurSerializer,
-    OrderScheduleSerializer,
-)
-
-# Billing & Sales
-from .billing import (
-    FactureProduitAllocationSerializer,
-    FactureProduitSerializer,
-    CaisseSerializer,
-    ClotureCaisseSerializer,
-    FactureSerializer,
-    FacturePrintSerializer,
-    CreanceSerializer,
-)
-
-# Inventory & Stock
-from .inventory import (
-    LigneInventaireSerializer,
-    InventaireSerializer,
-    LigneAvoirSerializer,
-    AvoirSerializer,
-    MouvementStockSerializer,
-    StockAdjustmentSerializer,
-    RelationTransformationSerializer,
-    HistoriqueTransformationSerializer,
-)
-
-# Promotions
-from .promotions import (
-    PromotionPackItemSerializer,
-    ConfigurationObjectifsSerializer,
-    PromotionSerializer,
-)
-
-# Promis & Coupons
-from .promis import (
-    PromisSerializer,
-    LigneOrdonnancierSerializer,
-    OrdonnancierSerializer,
-    OrdonnancierCreateSerializer,
-    CouponMonnaieSerializer,
-)
-
-# Communication
-from .communication import (
-    SmsTemplateSerializer,
-    SmsLogSerializer,
-    WhatsAppLogSerializer,
-    TelegramLogSerializer,
-    InternalMessageSerializer,
-    MessageTemplateSerializer,
-    RuptureFournisseurSerializer,
-)
-
 # Accounting
 from .accounting import (
     CompteComptableSerializer,
-    JournalComptableSerializer,
-    ExerciceComptableSerializer,
-    LigneEcritureSerializer,
     EcritureComptableSerializer,
+    ExerciceComptableSerializer,
+    JournalComptableSerializer,
+    LigneEcritureSerializer,
 )
 
 # Audit & Logs
@@ -118,104 +19,201 @@ from .audit import (
     MouvementCaisseSerializer,
 )
 
+# Billing & Sales
+from .billing import (
+    CaisseSerializer,
+    ClotureCaisseSerializer,
+    CreanceSerializer,
+    FacturePrintSerializer,
+    FactureProduitAllocationSerializer,
+    FactureProduitSerializer,
+    FactureSerializer,
+)
+
+# Clients & Tiers
+from .clients import (
+    AyantDroitSerializer,
+    ClientSerializer,
+    DepotClientSerializer,
+)
+
+# Communication
+from .communication import (
+    InternalMessageSerializer,
+    MessageTemplateSerializer,
+    RuptureFournisseurSerializer,
+    SmsLogSerializer,
+    SmsTemplateSerializer,
+    TelegramLogSerializer,
+    WhatsAppLogSerializer,
+)
+from .config import (
+    ConfigurationOptionSerializer,
+    InvoiceSettingsSerializer,
+    LoyaltySettingSerializer,
+    ObjectifCommercialSerializer,
+    PharmacySettingsSerializer,
+    TVASerializer,
+)
+
+# Inventory & Stock
+from .inventory import (
+    AvoirSerializer,
+    HistoriqueTransformationSerializer,
+    InventaireSerializer,
+    LigneAvoirSerializer,
+    LigneInventaireSerializer,
+    MouvementStockSerializer,
+    RelationTransformationSerializer,
+    StockAdjustmentSerializer,
+)
+
+# Orders & Procurement
+from .orders import (
+    CommandeProduitSerializer,
+    CommandeSerializer,
+    FournisseurSerializer,
+    OrderScheduleSerializer,
+    PaiementFournisseurSerializer,
+)
+
+# Planning
+from .planning import (
+    LeaveRequestSerializer,
+    ShiftAssignmentSerializer,
+    ShiftConfigSerializer,
+    ShiftScheduleSerializer,
+)
+
+# Products & Catalog
+from .products import (
+    DrugInteractionSerializer,
+    FamilleRisqueSerializer,
+    FormeSerializer,
+    GroupeSerializer,
+    MedicamentReferenceSerializer,
+    ProduitSerializer,
+    RayonSerializer,
+    StockLotSerializer,
+    SubstanceSerializer,
+)
+
+# Promis & Coupons
+from .promis import (
+    CouponMonnaieSerializer,
+    LigneOrdonnancierSerializer,
+    OrdonnancierCreateSerializer,
+    OrdonnancierSerializer,
+    PromisSerializer,
+)
+
+# Promotions
+from .promotions import (
+    ConfigurationObjectifsSerializer,
+    PromotionPackItemSerializer,
+    PromotionSerializer,
+)
+
 # Réapprovisionnement
 from .reappro import (
     ReapproAdjustmentSerializer,
     ReapproSessionSerializer,
 )
 
-# Planning
-from .planning import (
-    ShiftConfigSerializer,
-    ShiftScheduleSerializer,
-    ShiftAssignmentSerializer,
-    LeaveRequestSerializer,
+# Users & Permissions
+from .users import (
+    PosteCaisseSerializer,
+    PosteVenteSerializer,
+    ProfileSerializer,
+    SessionCaisseSerializer,
+    TeamSerializer,
+    UserSerializer,
 )
 
 __all__ = [
-    # Config
-    'TVASerializer',
-    'InvoiceSettingsSerializer',
-    'LoyaltySettingSerializer',
-    'PharmacySettingsSerializer',
-    'ConfigurationOptionSerializer',
-    'ObjectifCommercialSerializer',
-    # Users
-    'ProfileSerializer',
-    'UserSerializer',
-    'PosteCaisseSerializer',
-    'PosteVenteSerializer',
-    'SessionCaisseSerializer',
-    # Clients
-    'DepotClientSerializer',
+    # Audit
+    'AuditLogSerializer',
+    'AvoirSerializer',
     'AyantDroitSerializer',
+    'CaisseSerializer',
     'ClientSerializer',
-    # Products
-    'SubstanceSerializer',
-    'DrugInteractionSerializer',
-    'MedicamentReferenceSerializer',
-    'RayonSerializer',
-    'FormeSerializer',
-    'FamilleRisqueSerializer',
-    'GroupeSerializer',
-    'ProduitSerializer',
-    'StockLotSerializer',
-    # Orders
-    'FournisseurSerializer',
+    'ClotureCaisseSerializer',
     'CommandeProduitSerializer',
     'CommandeSerializer',
-    'PaiementFournisseurSerializer',
-    'OrderScheduleSerializer',
+    # Accounting
+    'CompteComptableSerializer',
+    'ConfigurationObjectifsSerializer',
+    'ConfigurationOptionSerializer',
+    'CouponMonnaieSerializer',
+    'CreanceSerializer',
+    # Clients
+    'DepotClientSerializer',
+    'DrugInteractionSerializer',
+    'EcritureComptableSerializer',
+    'ExerciceComptableSerializer',
+    'FacturePrintSerializer',
     # Billing
     'FactureProduitAllocationSerializer',
     'FactureProduitSerializer',
-    'CaisseSerializer',
-    'ClotureCaisseSerializer',
     'FactureSerializer',
-    'FacturePrintSerializer',
-    'CreanceSerializer',
+    'FamilleRisqueSerializer',
+    'FormeSerializer',
+    # Orders
+    'FournisseurSerializer',
+    'GroupeSerializer',
+    'HistoriqueTransformationSerializer',
+    'InternalMessageSerializer',
+    'InventaireSerializer',
+    'InvoiceSettingsSerializer',
+    'JournalComptableSerializer',
+    'LeaveRequestSerializer',
+    'LigneAvoirSerializer',
+    'LigneEcritureSerializer',
     # Inventory
     'LigneInventaireSerializer',
-    'InventaireSerializer',
-    'LigneAvoirSerializer',
-    'AvoirSerializer',
+    'LigneOrdonnancierSerializer',
+    'LoyaltySettingSerializer',
+    'MedicamentReferenceSerializer',
+    'MessageTemplateSerializer',
+    'MouvementCaisseSerializer',
     'MouvementStockSerializer',
-    'StockAdjustmentSerializer',
-    'RelationTransformationSerializer',
-    'HistoriqueTransformationSerializer',
-    # Promotions
-    'PromotionPackItemSerializer',
-    'ConfigurationObjectifsSerializer',
-    'PromotionSerializer',
+    'ObjectifCommercialSerializer',
+    'OrderScheduleSerializer',
+    'OrdonnancierCreateSerializer',
+    'OrdonnancierSerializer',
+    'PaiementFournisseurSerializer',
+    'PharmacySettingsSerializer',
+    'PosteCaisseSerializer',
+    'PosteVenteSerializer',
+    'ProduitSerializer',
+    # Users
+    'ProfileSerializer',
     # Promis
     'PromisSerializer',
-    'LigneOrdonnancierSerializer',
-    'OrdonnancierSerializer',
-    'OrdonnancierCreateSerializer',
-    'CouponMonnaieSerializer',
-    # Communication
-    'SmsTemplateSerializer',
-    'SmsLogSerializer',
-    'WhatsAppLogSerializer',
-    'TelegramLogSerializer',
-    'InternalMessageSerializer',
-    'MessageTemplateSerializer',
-    'RuptureFournisseurSerializer',
-    # Accounting
-    'CompteComptableSerializer',
-    'JournalComptableSerializer',
-    'ExerciceComptableSerializer',
-    'LigneEcritureSerializer',
-    'EcritureComptableSerializer',
-    # Audit
-    'AuditLogSerializer',
-    'MouvementCaisseSerializer',
+    # Promotions
+    'PromotionPackItemSerializer',
+    'PromotionSerializer',
+    'RayonSerializer',
     # Reappro
     'ReapproAdjustmentSerializer',
     'ReapproSessionSerializer',
+    'RelationTransformationSerializer',
+    'RuptureFournisseurSerializer',
+    'SessionCaisseSerializer',
+    'ShiftAssignmentSerializer',
     # Planning
     'ShiftConfigSerializer',
     'ShiftScheduleSerializer',
-    'ShiftAssignmentSerializer',
-    'LeaveRequestSerializer',
+    'SmsLogSerializer',
+    # Communication
+    'SmsTemplateSerializer',
+    'StockAdjustmentSerializer',
+    'StockLotSerializer',
+    # Products
+    'SubstanceSerializer',
+    # Config
+    'TVASerializer',
+    'TelegramLogSerializer',
+    'UserSerializer',
+    'WhatsAppLogSerializer',
 ]

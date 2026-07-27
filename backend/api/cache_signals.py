@@ -1,10 +1,11 @@
 """
 Signaux Django pour invalider automatiquement le cache lors des modifications.
 """
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from .models import StockLot, CommandeProduit, FactureProduit, Caisse
-from .cache_utils import SearchCache, CacheInvalidator, ClientDebtCache
+
+from .cache_utils import CacheInvalidator, ClientDebtCache, SearchCache
+from .models import Caisse, CommandeProduit, FactureProduit, StockLot
 
 # Note: Les signaux pour Produit, Commande, Facture, StockAdjustment
 # sont gérés dans cache_invalidation.py (importé dans apps.py).

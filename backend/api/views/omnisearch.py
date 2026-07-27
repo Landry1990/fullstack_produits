@@ -1,18 +1,20 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q, Count, Sum, F, DecimalField
-from django.db.models.functions import Coalesce
 from django.core.cache import cache
+from django.db.models import Count, DecimalField, F, Q, Sum
+from django.db.models.functions import Coalesce
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from ..models import Produit, Client, Facture, Commande, Fournisseur, CommandeProduit
+from ..models import Client, Commande, CommandeProduit, Facture, Fournisseur, Produit
 from ..models.paiements import PaiementFournisseur
-from ..serializers_optimized import (
-    ProduitListSerializer, ClientListSerializer, 
-    FactureListSerializer, FactureOmnisearchSerializer, 
-    CommandeListSerializer, CommandeOmnisearchSerializer
-)
 from ..serializers import FournisseurSerializer
+from ..serializers_optimized import (
+    ClientListSerializer,
+    CommandeOmnisearchSerializer,
+    FactureOmnisearchSerializer,
+    ProduitListSerializer,
+)
+
 
 class GlobalSearchView(APIView):
     permission_classes = [IsAuthenticated]

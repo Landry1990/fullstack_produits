@@ -1,8 +1,9 @@
-import threading
-import time
 import logging
 import os
 import tempfile
+import threading
+import time
+
 try:
     import fcntl
 except ImportError:  # pragma: no cover (Windows)
@@ -106,7 +107,7 @@ def start_background_tasks():
         _scheduler_lock_handle = True
     else:
         lock_path = os.path.join(tempfile.gettempdir(), 'pharma_background_scheduler.lock')
-        lock_handle = open(lock_path, 'w')
+        lock_handle = open(lock_path, 'w')  # noqa: SIM115 — kept open as file lock
         try:
             fcntl.flock(lock_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:

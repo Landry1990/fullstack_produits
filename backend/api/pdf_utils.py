@@ -5,12 +5,13 @@ Ce module fournit des composants réutilisables pour créer des documents PDF
 élégants et cohérents avec le branding PharmaStock.
 """
 
-from reportlab.lib import colors
-from reportlab.lib.units import cm, mm
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
-from reportlab.platypus import Table, TableStyle, Paragraph, Spacer
 from datetime import datetime
+
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
 
 # ============================================================================
 # COULEURS PHARMACEUTIQUES
@@ -220,7 +221,7 @@ def draw_pharma_footer(canvas, doc, additional_info=None, lang='fr'):
     
     # Page number (gauche)
     page_num = canvas.getPageNumber()
-    page_label = "Page" if lang == 'fr' else "Page" # Same for both? No, wait.
+    page_label = "Page"
     canvas.drawString(doc.leftMargin, 45, f"{page_label} {page_num}")
     
     # Date et heure (centre)

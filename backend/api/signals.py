@@ -1,7 +1,9 @@
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
 from django.core.cache import cache
-from .models import Facture, Caisse, Client, Produit, EcritureComptable, LigneEcriture
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
+
+from .models import Caisse, Client, EcritureComptable, Facture, LigneEcriture, Produit
+
 
 @receiver([post_save, post_delete], sender=Facture)
 @receiver([post_save, post_delete], sender=Caisse)
@@ -36,10 +38,13 @@ def invalidate_secondary_caches(sender, instance, **kwargs):
         pass
 
 # --- AUDIT LOGGING ---
-from django.forms.models import model_to_dict
-from .models import Commande, InvoiceSettings, AuditLog
 import json
+
 from django.core.serializers.json import DjangoJSONEncoder
+from django.forms.models import model_to_dict
+
+from .models import AuditLog, Commande, InvoiceSettings
+
 
 @receiver(post_save, sender=Produit)
 @receiver(post_save, sender=Commande)

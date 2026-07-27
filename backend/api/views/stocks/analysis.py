@@ -1,21 +1,17 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from django.db import transaction
-from django.db.models import F, Sum, DecimalField, Q
-from django.db.models.functions import Coalesce
-from django_filters.rest_framework import DjangoFilterBackend
-from django.utils import timezone
+import math
 from datetime import timedelta
 from decimal import Decimal
-import math
 
-from ...models import (
-    StockLot, Produit, Fournisseur, Commande, CommandeProduit
-)
-from ...pagination import StandardResultsSetPagination
+from django.db.models import DecimalField, F, Q, Sum
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from ...models import Commande, CommandeProduit, Fournisseur, Produit, StockLot
 
 
 class StatsUGViewSet(viewsets.GenericViewSet):
@@ -168,11 +164,11 @@ class StockAnalysisUnsoldView(APIView):
         # Paramètres de pagination
         try:
             page = int(request.query_params.get('page', 1))
-            if page < 1: page = 1
+            page = max(page, 1)
         except ValueError:
             page = 1
             
-        from ...centralized_configs import PaginationHelper, PaginationDefaults
+        from ...centralized_configs import PaginationDefaults, PaginationHelper
         page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_ANALYSIS_PAGE_SIZE)
         
         today = timezone.now()
@@ -253,7 +249,7 @@ class StockAnalysisOverstockView(APIView):
         # Paramètres de pagination
         try:
             page = int(request.query_params.get('page', 1))
-            if page < 1: page = 1
+            page = max(page, 1)
         except ValueError:
             page = 1
             
@@ -338,7 +334,7 @@ class StockAnalysisShortageView(APIView):
         # Paramètres de pagination
         try:
             page = int(request.query_params.get('page', 1))
-            if page < 1: page = 1
+            page = max(page, 1)
         except ValueError:
             page = 1
             

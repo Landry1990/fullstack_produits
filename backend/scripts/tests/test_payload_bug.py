@@ -1,5 +1,5 @@
 import os
-import json
+
 import django
 
 # Setup Django first
@@ -7,10 +7,19 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 # Then import DRF and models
-from rest_framework.test import APIClient
-from rest_framework import status
 from django.contrib.auth.models import User
-from api.models import Facture, Produit, FactureProduit, StockLot, Commande, CommandeProduit, Fournisseur
+from rest_framework.test import APIClient
+
+from api.models import (
+    Commande,
+    CommandeProduit,
+    Facture,
+    FactureProduit,
+    Fournisseur,
+    Produit,
+    StockLot,
+)
+
 
 def test_payload_mismatch():
     print("Testing Payload Mismatch...")

@@ -1,17 +1,19 @@
 import os
+
 import django
-import json
 
 # Configuration Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture, Caisse, FactureProduitAllocation
-from django.db.models import Sum, F, Q, DecimalField
-from django.db.models.functions import Coalesce
-from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
+
+from django.db.models import DecimalField, F, Q, Sum
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+
+from api.models import Facture
 
 mois = '2025-12'
 date_debut = datetime.strptime(f"{mois}-01", '%Y-%m-%d')
@@ -78,7 +80,7 @@ print(f'  Total: {total_creances_correct:,.2f} F')
 print()
 
 print('=' * 80)
-print(f'PROBLEME IDENTIFIE:')
+print('PROBLEME IDENTIFIE:')
 print(f'  Valeur actuelle (rapport): {total_creances:,.2f} F')
 print(f'  Valeur correcte: {total_creances_correct:,.2f} F')
 print(f'  Difference: {total_creances - total_creances_correct:,.2f} F')

@@ -1,5 +1,6 @@
 from api.models import ConfigurationOption
 
+
 def run():
     # 1. Stock Adjustment Reasons
     adj_reasons = [

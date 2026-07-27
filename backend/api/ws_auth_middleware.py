@@ -5,8 +5,8 @@ Permet aux clients React (qui utilisent token auth) de se connecter aux WebSocke
 Usage: ws://host/ws/.../?token=<drf_token>
 """
 from urllib.parse import parse_qs
+
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
 

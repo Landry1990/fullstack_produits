@@ -13,15 +13,15 @@ Teste simultanément:
 Usage: python multi_operation_test.py --scenario mixed --clients 20 --duration 120
 """
 
-import requests
-import threading
-import random
-import time
 import argparse
-from enum import Enum
-from typing import List, Dict, Callable
+import random
 import statistics
-from datetime import datetime
+import threading
+import time
+from collections.abc import Callable
+from enum import Enum
+
+import requests
 
 # Configuration
 BASE_URL = "http://localhost:8000/api"
@@ -42,7 +42,7 @@ class OperationType(Enum):
 
 class LoadTestResult:
     def __init__(self):
-        self.by_operation: Dict[str, Dict] = {
+        self.by_operation: dict[str, dict] = {
             op.value: {
                 "total": 0,
                 "success": 0,
@@ -345,7 +345,7 @@ SCENARIOS = {
 }
 
 
-def choose_operation(scenario: Dict) -> Callable:
+def choose_operation(scenario: dict) -> Callable:
     """Choisit une opération selon le scénario"""
     operations = list(scenario.keys())
     weights = list(scenario.values())
@@ -364,7 +364,7 @@ def choose_operation(scenario: Dict) -> Callable:
     return op_map[chosen]
 
 
-def simulate_user(user_id: int, scenario: Dict, result: LoadTestResult, stop_flag: threading.Event, 
+def simulate_user(user_id: int, scenario: dict, result: LoadTestResult, stop_flag: threading.Event, 
                   username: str, password: str):
     """Simule un utilisateur effectuant des opérations variées"""
     session = requests.Session()
@@ -402,7 +402,7 @@ def run_test(scenario_name: str):
     print(f"   URL: {BASE_URL}")
     print(f"   Utilisateurs: {CONCURRENT_CLIENTS}")
     print(f"   Durée: {TEST_DURATION}s")
-    print(f"\n   Distribution:")
+    print("\n   Distribution:")
     for op, pct in scenario.items():
         print(f"      - {op.value}: {pct*100:.0f}%")
     
@@ -458,7 +458,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Test de charge multi-opérations",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=f"""
+        epilog="""
 Scénarios disponibles:
   mixed          - Mix réaliste (ventes 40%, recherches 20%, etc.)
   sales_peak     - Pic de ventes (80% ventes)

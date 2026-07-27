@@ -1,11 +1,13 @@
+from datetime import timedelta
+
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
-from datetime import timedelta
-from decimal import Decimal
-from rest_framework.test import APIClient
 from rest_framework import status
+from rest_framework.test import APIClient
+
 from api.models import Facture, FactureProduit, Produit
-from django.contrib.auth.models import User
+
 
 class TemporalAnalysisTests(TestCase):
     def setUp(self):

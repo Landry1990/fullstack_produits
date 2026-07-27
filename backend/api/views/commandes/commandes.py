@@ -1,43 +1,61 @@
-from rest_framework import viewsets, status, filters, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+import io
+import logging
+from datetime import date, datetime, timedelta
 from decimal import Decimal
-from django.db import transaction
-from django.db.models import (
-    ProtectedError, F, Sum, DecimalField, Value, Count,
-    Subquery, OuterRef
-)
-from django.db.models.functions import Coalesce
+
 from django.core.cache import cache
-from django.contrib.auth.models import User
-from django_filters.rest_framework import DjangoFilterBackend
-from django.utils import timezone
+from django.db import transaction
+from django.db.models import Count, DecimalField, F, OuterRef, Subquery, Sum, Value
+from django.db.models.functions import Coalesce
 from django.http import HttpResponse
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from reportlab.graphics.barcode import code128
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import Paragraph, Table, TableStyle, Frame, PageTemplate, BaseDocTemplate, Spacer, SimpleDocTemplate, PageBreak
-import io
-from datetime import datetime, date, timedelta
-from reportlab.graphics.barcode import code128
-
-from ...models import (
-    Commande, CommandeProduit, Produit, StockLot, StockAdjustment, AuditLog,
-    Facture, FactureProduit, MouvementStock, FactureProduitAllocation,
-    PaiementFournisseur, Promis
+from reportlab.platypus import (
+    BaseDocTemplate,
+    Frame,
+    PageBreak,
+    PageTemplate,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
 )
-from ...serializers import CommandeSerializer, CommandeProduitSerializer
-from ...serializers_optimized import CommandeListSerializer, CommandeDetailSerializer, CommandeOmnisearchSerializer
-from ...serializer_mixins import OptimizedSerializerMixin
-from ...search_mixins import MultiTermSearchMixin
-from ...cache_mixins import SimpleListCacheMixin
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from ...audit_helpers import log_audit
-from ...sudo_utils import validate_sudo_mode
-from ...pagination import StandardResultsSetPagination
+from ...cache_mixins import SimpleListCacheMixin
 from ...idempotency import idempotent_action
-import logging
+from ...models import (
+    AuditLog,
+    Commande,
+    CommandeProduit,
+    FactureProduit,
+    FactureProduitAllocation,
+    MouvementStock,
+    PaiementFournisseur,
+    Produit,
+    Promis,
+    StockLot,
+)
+from ...pagination import StandardResultsSetPagination
+from ...search_mixins import MultiTermSearchMixin
+from ...serializer_mixins import OptimizedSerializerMixin
+from ...serializers import CommandeSerializer
+from ...serializers_optimized import (
+    CommandeDetailSerializer,
+    CommandeListSerializer,
+    CommandeOmnisearchSerializer,
+)
+from ...sudo_utils import validate_sudo_mode
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -47,7 +65,7 @@ def header_footer(canvas, doc, company_info, commande_info, total_achat):
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name='RightAlign', alignment=2))
     
-    page_width, page_height = letter
+    _page_width, page_height = letter
     margin = doc.leftMargin
     content_width = doc.width
 
@@ -63,7 +81,7 @@ def header_footer(canvas, doc, company_info, commande_info, total_achat):
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
     ]))
-    w_header, h_header = header_table.wrapOn(canvas, content_width, doc.topMargin)
+    _w_header, h_header = header_table.wrapOn(canvas, content_width, doc.topMargin)
     header_table.drawOn(canvas, margin, page_height - doc.topMargin - h_header)
 
     # Separator line after header
@@ -82,7 +100,7 @@ def header_footer(canvas, doc, company_info, commande_info, total_achat):
         ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
         ('TOPPADDING', (0,0), (-1,-1), 12)
     ]))
-    w_info, h_info = info_table.wrapOn(canvas, content_width, doc.topMargin)
+    _w_info, h_info = info_table.wrapOn(canvas, content_width, doc.topMargin)
     info_table.drawOn(canvas, margin, page_height - doc.topMargin - h_header - 0.1*inch - h_info - 0.1*inch)
 
     # Footer
@@ -414,9 +432,9 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
                 }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-             logger.exception(f"Unexpected error during bulk delete: {str(e)}")
+             logger.exception(f"Unexpected error during bulk delete: {e!s}")
              transaction.set_rollback(True)
-             return Response({'detail': f'Erreur lors de la suppression : {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+             return Response({'detail': f'Erreur lors de la suppression : {e!s}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         log_audit(
             user=request.user,
@@ -456,9 +474,11 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
         Clôture une commande avec Optimistic Locking (sans select_for_update).
         Met à jour le stock et calcule le PMP avec vérification de versions.
         """
-        from ...optimistic_locking import ConcurrentModificationError
-        from django.db import transaction
         import time
+
+        from django.db import transaction
+
+        from ...optimistic_locking import ConcurrentModificationError
         
         max_retries = 3
         expected_versions = {}
@@ -472,7 +492,7 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
                         return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
 
                     # Validation Sudo
-                    validation_user, error_res = validate_sudo_mode(request, permission_attr='can_close_commande')
+                    _validation_user, error_res = validate_sudo_mode(request, permission_attr='can_close_commande')
                     if error_res:
                         return error_res
 
@@ -799,7 +819,6 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
                     Produit.objects.filter(id__in=product_ids).update(dernier_achat=today)
 
                     # 2.5 Créer les mouvements de stock
-                    from ...models import MouvementStock
                     mouvements_to_create = []
                     for item in items:
                         produit = product_map.get(item.produit_id)
@@ -1005,7 +1024,7 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
         
         # Phase 3: Mettre à jour les stocks (recalcul depuis les lots pour les produits en gestion par lots)
         mouvements_to_create = []
-        for pid, data in produits_dict.items():
+        for data in produits_dict.values():
             produit = data['produit']
             qty_to_remove = data['qty_to_remove']
             
@@ -1268,8 +1287,8 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
         for label_data in labels_data:
             # Mode debug : dessiner bordure d'étiquette
             if debug_mode:
+                from reportlab.lib.colors import blue, red
                 from reportlab.platypus import Flowable
-                from reportlab.lib.colors import red, blue, green
                 
                 class DebugBorder(Flowable):
                     def __init__(self, width, height):
@@ -1343,7 +1362,6 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
                     story.append(barcode_flowable)
                     
                 except Exception as e:
-                    import traceback
                     logger.error(f"Erreur génération code-barres: {e}", exc_info=True)
                     story.append(Paragraph(f"<b>{label_data['barcode']}</b>", style_tiny))
             

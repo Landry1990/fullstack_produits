@@ -1,14 +1,15 @@
 import os
-import django
 import sys
-from decimal import Decimal
+
+import django
 
 # Setup Django
 sys.path.append(r"c:\Projet Fullstack\fullstack_produits\backend")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
 
-from api.models import Facture, Caisse
+from api.models import Caisse, Facture
+
 
 def run():
     # Find an invoice with insurance

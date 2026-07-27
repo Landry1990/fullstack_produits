@@ -2,7 +2,6 @@
 Ajout des champs dénormalisés pour le solde client (optimisation 12 postes)
 """
 from django.db import migrations, models
-import django.utils.timezone
 
 
 class Migration(migrations.Migration):

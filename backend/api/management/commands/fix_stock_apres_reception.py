@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Retro-compatibilité: calcule stock_apres_reception pour les CommandeProduit
 clôturées avant l'ajout du champ.
@@ -10,6 +9,7 @@ commandes après celle-ci.
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction
+
 from api.models import CommandeProduit, StockLot
 
 

@@ -2,14 +2,15 @@
 Endpoint de debug pour le score de santé du stock
 Affiche le calcul détaillé pour identifier le bug
 """
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, F, Q, DecimalField, ExpressionWrapper
+from datetime import timedelta
+from decimal import Decimal
+
+from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-from decimal import Decimal
-from datetime import timedelta
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from api.models import Produit
 from api.models.settings import PharmacySettings
@@ -40,12 +41,12 @@ class DebugStockScoreView(APIView):
         )
         
         dead_stock_value = dormant_qs.aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
         )['total']
         
         total_stock_value = Produit.objects.filter(is_active=True).aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
-        )['total'] or Decimal('1')
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
+        )['total'] or Decimal(1)
         
         # === CALCUL INTERMÉDIAIRE ===
         rupture_ratio = float(rupture_count) / float(total_active)

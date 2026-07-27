@@ -1,25 +1,73 @@
-from rest_framework import serializers
+from decimal import ROUND_HALF_UP, Decimal
+
 from django.contrib.auth.models import User
-from django.db.models import Sum, Q
+from django.db.models import Q, Sum
 from django.utils import timezone
-from decimal import Decimal, ROUND_HALF_UP
+from rest_framework import serializers
+
 from .models import (
-    Produit, Rayon, Fournisseur, Client, Commande, 
-    CommandeProduit, Facture, FactureProduit, Caisse, Profile,
-    StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse,
-    Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
-    RelationTransformation, HistoriqueTransformation, MouvementStock,
-    InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
-    Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
-    Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
-    Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
-    WhatsAppLog, TelegramLog, RuptureFournisseur, DepotClient, InternalMessage, MessageTemplate,
-    ReapproSession, PosteCaisse, PosteVente, SessionCaisse, OrderSchedule,
-    Substance, MedicamentReference,
-    CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable
+    TVA,
+    AuditLog,
+    Avoir,
+    AyantDroit,
+    Caisse,
+    Client,
+    ClotureCaisse,
+    Commande,
+    CommandeProduit,
+    CompteComptable,
+    ConfigurationObjectifs,
+    ConfigurationOption,
+    CouponMonnaie,
+    DepotClient,
+    EcritureComptable,
+    ExerciceComptable,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    Fournisseur,
+    Groupe,
+    HistoriqueTransformation,
+    InternalMessage,
+    Inventaire,
+    InvoiceSettings,
+    JournalComptable,
+    LigneAvoir,
+    LigneEcriture,
+    LigneInventaire,
+    LigneOrdonnancier,
+    LoyaltySetting,
+    MedicamentReference,
+    MessageTemplate,
+    MouvementCaisse,
+    MouvementStock,
+    ObjectifCommercial,
+    OrderSchedule,
+    Ordonnancier,
+    PaiementFournisseur,
+    PharmacySettings,
+    PosteCaisse,
+    PosteVente,
+    Produit,
+    Profile,
+    Promis,
+    Promotion,
+    PromotionPackItem,
+    Rayon,
+    ReapproSession,
+    RelationTransformation,
+    RuptureFournisseur,
+    SmsLog,
+    SmsTemplate,
+    StockAdjustment,
+    StockLot,
+    Substance,
+    TelegramLog,
+    WhatsAppLog,
 )
-from .services import PromotionService
 from .pdf_utils import number_to_french
+from .services import PromotionService
+
 
 class PromotionPackItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
@@ -111,7 +159,7 @@ class InvoiceSettingsSerializer(serializers.ModelSerializer):
 
     def get_company_name(self, obj):
         from .utils_licence import valider_licence_systeme
-        valide, msg, payload = valider_licence_systeme()
+        valide, _msg, payload = valider_licence_systeme()
         if valide and payload and payload.get('pharmacie_nom'):
             return payload.get('pharmacie_nom')
         return obj.company_name
@@ -132,7 +180,7 @@ class PharmacySettingsSerializer(serializers.ModelSerializer):
 
     def get_pharmacy_name(self, obj):
         from .utils_licence import valider_licence_systeme
-        valide, msg, payload = valider_licence_systeme()
+        valide, _msg, payload = valider_licence_systeme()
         if valide and payload and payload.get('pharmacie_nom'):
             return payload.get('pharmacie_nom')
         return obj.pharmacy_name
@@ -182,6 +230,7 @@ class SessionCaisseSerializer(serializers.ModelSerializer):
 
     def get_ventilation_paiements(self, obj):
         from django.utils import timezone
+
         from .models import Caisse
         
         start_date = obj.date_ouverture
@@ -341,6 +390,7 @@ class FournisseurSerializer(serializers.ModelSerializer):
         return obj.solde_dette
 
 from django.db import transaction
+
 
 class DepotClientSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
@@ -602,13 +652,12 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
             if selling_price is None:
                 selling_price = self.instance.selling_price
                 
-        if selling_price is not None and price_cost is not None:
-            if selling_price < price_cost:
-                produit = data.get('produit')
-                produit_name = produit.name if produit else 'Inconnu'
-                raise serializers.ValidationError(
-                    f"Marge négative détectée sur le produit {produit_name} (Achat: {price_cost}F, Vente: {selling_price}F). Veuillez corriger le prix d'achat ou de vente."
-                )
+        if selling_price is not None and price_cost is not None and selling_price < price_cost:
+            produit = data.get('produit')
+            produit_name = produit.name if produit else 'Inconnu'
+            raise serializers.ValidationError(
+                f"Marge négative détectée sur le produit {produit_name} (Achat: {price_cost}F, Vente: {selling_price}F). Veuillez corriger le prix d'achat ou de vente."
+            )
         return data
 
     def to_representation(self, instance):
@@ -678,7 +727,7 @@ class CommandeSerializer(serializers.ModelSerializer):
 
     def get_precompte(self, obj):
         val = obj.precompte
-        return int(val.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+        return int(val.quantize(Decimal(1), rounding=ROUND_HALF_UP))
 
     def get_taux_precompte(self, obj):
         return float(obj.taux_precompte)
@@ -764,7 +813,7 @@ class OrderScheduleSerializer(serializers.ModelSerializer):
             
             if existing_active.exists():
                 raise serializers.ValidationError({
-                    'fournisseur': f"Un planning actif existe déjà pour ce fournisseur. Désactivez-le d'abord."
+                    'fournisseur': "Un planning actif existe déjà pour ce fournisseur. Désactivez-le d'abord."
                 })
         
         return data
@@ -1038,13 +1087,12 @@ class StockLotSerializer(serializers.ModelSerializer):
             if selling_price is None:
                 selling_price = self.instance.selling_price
                 
-        if selling_price is not None and price_cost is not None:
-            if selling_price < price_cost:
-                produit = data.get('produit')
-                produit_name = produit.name if produit else data.get('produit_nom', 'Inconnu')
-                raise serializers.ValidationError(
-                    f"Marge négative détectée sur le lot pour {produit_name} (Achat: {price_cost}F, Vente: {selling_price}F). Veuillez corriger les prix."
-                )
+        if selling_price is not None and price_cost is not None and selling_price < price_cost:
+            produit = data.get('produit')
+            produit_name = produit.name if produit else data.get('produit_nom', 'Inconnu')
+            raise serializers.ValidationError(
+                f"Marge négative détectée sur le lot pour {produit_name} (Achat: {price_cost}F, Vente: {selling_price}F). Veuillez corriger les prix."
+            )
         return data
 
     def get_produit_nom(self, obj):
@@ -1184,7 +1232,6 @@ class InventaireSerializer(serializers.ModelSerializer):
             (ligne.ecart * (ligne.produit.pmp or ligne.produit.cost_price or 0))
             for ligne in obj.lignes.all()
         )
-        fields = '__all__'
 
 class MouvementCaisseSerializer(serializers.ModelSerializer):
     user_nom = serializers.CharField(source='user.username', read_only=True)

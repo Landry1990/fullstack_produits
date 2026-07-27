@@ -2,23 +2,24 @@
 ViewSet pour le système d'ordonnancier de la pharmacie.
 Gère le registre des médicaments délivrés sur ordonnance.
 """
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.http import HttpResponse
-from django.db.models import Q
-from django.utils import timezone
+import io
 from datetime import datetime
+
+from django.db.models import Q
+from django.http import HttpResponse
+from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-import io
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from rest_framework import filters, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from .models import Ordonnancier, LigneOrdonnancier, Produit
-from .serializers import OrdonnancierSerializer, OrdonnancierCreateSerializer
+from .models import LigneOrdonnancier, Ordonnancier
+from .serializers import OrdonnancierCreateSerializer, OrdonnancierSerializer
 
 
 class OrdonnancierViewSet(viewsets.ModelViewSet):

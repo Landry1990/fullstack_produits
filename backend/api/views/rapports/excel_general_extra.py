@@ -5,16 +5,21 @@ Importé par excel_general.py
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, date
+from datetime import datetime
 from decimal import Decimal
 
-from openpyxl.styles import Font
-
 from api.views.rapports.excel_general import (
-    PALETTE, _fill, _font, _align, _border, _fmt, _pct,
-    _write_sheet_header, _write_col_headers, _auto_width, _row_style,
+    PALETTE,
+    _align,
+    _auto_width,
+    _fill,
+    _fmt,
+    _font,
+    _pct,
+    _row_style,
+    _write_col_headers,
+    _write_sheet_header,
 )
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers locaux
@@ -44,21 +49,25 @@ def _evolution(val_now, val_prev):
 
 def collect_extra_data(date_debut, date_fin):
     """Collecte les données pour les feuilles supplémentaires."""
-    from django.db.models import (
-        Count, DecimalField, F, Q, Sum, Value
-    )
-    from django.db.models.functions import Coalesce, TruncDate
-    from api.views.rapports.tz_utils import local_trunc_date
-    from django.utils import timezone
-    from api.models import (
-        Facture, FactureProduit, FactureProduitAllocation,
-        ClotureCaisse, MouvementCaisse, Produit, StockAdjustment,
-        Promotion, ObjectifCommercial, Client,
-    )
-    from api.models.billing import Caisse
-
     # ── Mois précédent (pour évolution) ─────────────────────────────────────
     from datetime import timedelta
+
+    from django.db.models import Count, DecimalField, F, Q, Sum
+    from django.db.models.functions import Coalesce
+    from django.utils import timezone
+
+    from api.models import (
+        Client,
+        ClotureCaisse,
+        Facture,
+        FactureProduitAllocation,
+        MouvementCaisse,
+        ObjectifCommercial,
+        Promotion,
+        StockAdjustment,
+    )
+    from api.models.billing import Caisse
+    from api.views.rapports.tz_utils import local_trunc_date
     prev_fin   = date_debut
     prev_debut = (date_debut - timedelta(days=1)).replace(day=1)
     # make aware si nécessaire
@@ -75,12 +84,12 @@ def collect_extra_data(date_debut, date_fin):
     )
 
     agg_cur  = factures_cur.aggregate(
-        ca=Coalesce(Sum("total_ttc"), Decimal("0")),
+        ca=Coalesce(Sum("total_ttc"), Decimal(0)),
         nb=Count("id"),
-        remises=Coalesce(Sum("remise"), Decimal("0")),
+        remises=Coalesce(Sum("remise"), Decimal(0)),
     )
     agg_prev = factures_prev.aggregate(
-        ca=Coalesce(Sum("total_ttc"), Decimal("0")),
+        ca=Coalesce(Sum("total_ttc"), Decimal(0)),
         nb=Count("id"),
     )
 
@@ -89,8 +98,8 @@ def collect_extra_data(date_debut, date_fin):
         return FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=qs
         ).aggregate(
-            rev=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal("0")),
-            cost=Coalesce(Sum(F("cost_price")   * F("quantity"), output_field=DecimalField()), Decimal("0")),
+            rev=Coalesce(Sum(F("selling_price") * F("quantity"), output_field=DecimalField()), Decimal(0)),
+            cost=Coalesce(Sum(F("cost_price")   * F("quantity"), output_field=DecimalField()), Decimal(0)),
         )
 
     m_cur  = _marge_alloc(factures_cur)
@@ -105,9 +114,9 @@ def collect_extra_data(date_debut, date_fin):
             date_debut__year=date_debut.year,
             date_debut__month=date_debut.month,
         ).order_by("-date_debut").first()
-        ca_objectif = obj.ca_objectif if obj else Decimal("0")
+        ca_objectif = obj.ca_objectif if obj else Decimal(0)
     except Exception:
-        ca_objectif = Decimal("0")
+        ca_objectif = Decimal(0)
 
     evolution = {
         "ca_cur":       agg_cur["ca"],
@@ -121,7 +130,7 @@ def collect_extra_data(date_debut, date_fin):
     }
 
     # ── Modes de paiement (global + par jour) ───────────────────────────────
-    paiements = Caisse.objects.filter(
+    Caisse.objects.filter(
         facture__in=factures_cur,
         statut="completee",
     ).values("mode_paiement", "date_paiement")
@@ -131,7 +140,7 @@ def collect_extra_data(date_debut, date_fin):
     for p in Caisse.objects.filter(
         facture__in=factures_cur, statut="completee"
     ).values("mode_paiement").annotate(total=Sum("montant")):
-        modes_global[p["mode_paiement"]] = p["total"] or Decimal("0")
+        modes_global[p["mode_paiement"]] = p["total"] or Decimal(0)
 
     for p in Caisse.objects.filter(
         facture__in=factures_cur, statut="completee"
@@ -141,7 +150,7 @@ def collect_extra_data(date_debut, date_fin):
         day = p["day"]
         if day not in modes_daily:
             modes_daily[day] = defaultdict(Decimal)
-        modes_daily[day][p["mode_paiement"]] = p["total"] or Decimal("0")
+        modes_daily[day][p["mode_paiement"]] = p["total"] or Decimal(0)
 
     # Aussi via details_paiement de ClotureCaisse (JSON)
     cloture_modes: dict = defaultdict(Decimal)
@@ -196,12 +205,12 @@ def collect_extra_data(date_debut, date_fin):
         nom = (f.created_by.get_full_name().strip() or f.created_by.username) if f.created_by else "Inconnu"
         if uid not in vendeurs:
             vendeurs[uid] = {
-                "nom": nom, "nb_ventes": 0, "ca": Decimal("0"),
-                "remises": Decimal("0"), "annulations": 0,
+                "nom": nom, "nb_ventes": 0, "ca": Decimal(0),
+                "remises": Decimal(0), "annulations": 0,
             }
         vendeurs[uid]["nb_ventes"] += 1
-        vendeurs[uid]["ca"] += f.total_ttc or Decimal("0")
-        vendeurs[uid]["remises"] += (f.remise or Decimal("0")) + (f.montant_fidelite or Decimal("0"))
+        vendeurs[uid]["ca"] += f.total_ttc or Decimal(0)
+        vendeurs[uid]["remises"] += (f.remise or Decimal(0)) + (f.montant_fidelite or Decimal(0))
 
     # Annulations par vendeur
     for f in factures_ann:
@@ -228,8 +237,8 @@ def collect_extra_data(date_debut, date_fin):
             iso = day.isocalendar()
             sem_key = f"S{iso[1]:02d}"
             if sem_key not in semaines:
-                semaines[sem_key] = {"label": sem_key, "encaissements": Decimal("0"), "depenses": Decimal("0"), "achats": Decimal("0")}
-            semaines[sem_key]["encaissements"] += p["total"] or Decimal("0")
+                semaines[sem_key] = {"label": sem_key, "encaissements": Decimal(0), "depenses": Decimal(0), "achats": Decimal(0)}
+            semaines[sem_key]["encaissements"] += p["total"] or Decimal(0)
 
     # Dépenses par semaine
     for m in MouvementCaisse.objects.filter(
@@ -240,12 +249,12 @@ def collect_extra_data(date_debut, date_fin):
             iso = day.isocalendar()
             sem_key = f"S{iso[1]:02d}"
             if sem_key not in semaines:
-                semaines[sem_key] = {"label": sem_key, "encaissements": Decimal("0"), "depenses": Decimal("0"), "achats": Decimal("0")}
-            semaines[sem_key]["depenses"] += m["total"] or Decimal("0")
+                semaines[sem_key] = {"label": sem_key, "encaissements": Decimal(0), "depenses": Decimal(0), "achats": Decimal(0)}
+            semaines[sem_key]["depenses"] += m["total"] or Decimal(0)
 
     # Achats fournisseurs par semaine (via CommandeProduit.price_cost * quantity)
+
     from api.models.orders import Commande
-    from django.db.models.functions import TruncDate as _TruncDate
     for cmd in Commande.objects.filter(
         date__gte=date_debut, date__lt=date_fin,
         status=Commande.Status.CLOTUREE,
@@ -256,7 +265,7 @@ def collect_extra_data(date_debut, date_fin):
             iso = day.isocalendar()
             sem_key = f"S{iso[1]:02d}"
             if sem_key not in semaines:
-                semaines[sem_key] = {"label": sem_key, "encaissements": Decimal("0"), "depenses": Decimal("0"), "achats": Decimal("0")}
+                semaines[sem_key] = {"label": sem_key, "encaissements": Decimal(0), "depenses": Decimal(0), "achats": Decimal(0)}
             montant_cmd = sum(
                 Decimal(str(cp.price_cost or 0)) * cp.quantity
                 for cp in cmd.produits.all()
@@ -265,7 +274,7 @@ def collect_extra_data(date_debut, date_fin):
 
     tresorerie_rows = sorted(semaines.values(), key=lambda x: x["label"])
     # Calcul solde cumulé
-    solde = Decimal("0")
+    solde = Decimal(0)
     for row in tresorerie_rows:
         solde += row["encaissements"] - row["depenses"] - row["achats"]
         row["solde_cumule"] = float(solde)
@@ -277,7 +286,7 @@ def collect_extra_data(date_debut, date_fin):
     creances_total = Facture.objects.filter(
         status=Facture.Status.VALIDEE,
         client__isnull=False,
-    ).aggregate(t=Coalesce(Sum("total_ttc"), Decimal("0")))["t"]
+    ).aggregate(t=Coalesce(Sum("total_ttc"), Decimal(0)))["t"]
 
     # ── Périmés du mois ──────────────────────────────────────────────────────
     perimes_rows = []
@@ -328,7 +337,7 @@ def collect_extra_data(date_debut, date_fin):
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 facture__date__gte=date_debut, facture__date__lt=date_fin,
             )
-        ), Decimal("0")),
+        ), Decimal(0)),
     ).filter(nb_f__gt=0).order_by("-ca_mois"):
         clients_pro_rows.append({
             "nom":         c.name,
@@ -474,7 +483,7 @@ def sheet_modes_paiement(wb, extra: dict, pharmacy: dict, mois_label: str, logo_
     # ── Évolution journalière ──
     modes_daily = extra["modes_daily"]
     if modes_daily:
-        all_modes = sorted({m for d in modes_daily.values() for m in d.keys()})
+        all_modes = sorted({m for d in modes_daily.values() for m in d})
         _section_title(ws, r, "ÉVOLUTION JOURNALIÈRE PAR MODE")
         r += 1
         day_headers = ["Date"] + [_mode_label(m) for m in all_modes] + ["Total jour (F)"]
@@ -510,7 +519,7 @@ def sheet_retours_annulations(wb, extra: dict, pharmacy: dict, mois_label: str, 
     headers_a = ["Date annulation", "N° Facture", "Client", "Montant (F)", "Annulé par", "Motif"]
     _write_col_headers(ws, r, headers_a)
     r += 1
-    total_ann = Decimal("0")
+    total_ann = Decimal(0)
     for i, row in enumerate(ann):
         vals = [row["date"], row["numero"], row["client"],
                 _fmt(row["montant"]), row["annule_par"], row["motif"]]

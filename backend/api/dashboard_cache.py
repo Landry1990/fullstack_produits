@@ -2,12 +2,12 @@
 Cache spécifique pour les statistiques du Dashboard.
 Optimise les performances des calculs lourds (CA, stock, ventes).
 """
-from django.core.cache import cache
-from rest_framework.response import Response
-from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
 import hashlib
 import json
+from datetime import datetime
+
+from django.core.cache import cache
+from rest_framework.response import Response
 
 
 class DashboardCache:
@@ -35,7 +35,7 @@ class DashboardCache:
     PREFIX_HEAVY = "dashboard_heavy"
     
     @classmethod
-    def _generate_key(cls, prefix: str, user_id: int = 0, date_str: str = None, **params) -> str:
+    def _generate_key(cls, prefix: str, user_id: int = 0, date_str: str | None = None, **params) -> str:
         """Génère une clé de cache unique."""
         if date_str is None:
             date_str = datetime.now().strftime('%Y-%m-%d')
@@ -46,113 +46,113 @@ class DashboardCache:
     
     # === STATS PRINCIPALES ===
     @classmethod
-    def get_stats(cls, user_id: int, role: str) -> Optional[Dict]:
+    def get_stats(cls, user_id: int, role: str) -> dict | None:
         """Récupère les stats principales du dashboard."""
         key = cls._generate_key(cls.PREFIX_STATS, user_id, role=role)
         return cache.get(key)
     
     @classmethod
-    def set_stats(cls, user_id: int, role: str, data: Dict, ttl: int = None) -> None:
+    def set_stats(cls, user_id: int, role: str, data: dict, ttl: int | None = None) -> None:
         """Stocke les stats principales."""
         key = cls._generate_key(cls.PREFIX_STATS, user_id, role=role)
         cache.set(key, data, ttl or cls.STATS_TTL)
     
     # === GRAPHIQUES ===
     @classmethod
-    def get_revenue_chart(cls, user_id: int, period: str = '7d') -> Optional[Dict]:
+    def get_revenue_chart(cls, user_id: int, period: str = '7d') -> dict | None:
         """Récupère les données du graphique de CA."""
         key = cls._generate_key(cls.PREFIX_REVENUE_CHART, user_id, period=period)
         return cache.get(key)
     
     @classmethod
-    def set_revenue_chart(cls, user_id: int, period: str, data: Dict, ttl: int = None) -> None:
+    def set_revenue_chart(cls, user_id: int, period: str, data: dict, ttl: int | None = None) -> None:
         """Stocke les données du graphique de CA."""
         key = cls._generate_key(cls.PREFIX_REVENUE_CHART, user_id, period=period)
         cache.set(key, data, ttl or cls.CHARTS_TTL)
     
     @classmethod
-    def get_hourly_traffic(cls, user_id: int) -> Optional[List]:
+    def get_hourly_traffic(cls, user_id: int) -> list | None:
         """Récupère les données de trafic horaire."""
         key = cls._generate_key(cls.PREFIX_HOURLY_TRAFFIC, user_id)
         return cache.get(key)
     
     @classmethod
-    def set_hourly_traffic(cls, user_id: int, data: List, ttl: int = None) -> None:
+    def set_hourly_traffic(cls, user_id: int, data: list, ttl: int | None = None) -> None:
         """Stocke les données de trafic horaire."""
         key = cls._generate_key(cls.PREFIX_HOURLY_TRAFFIC, user_id)
         cache.set(key, data, ttl or cls.CHARTS_TTL)
     
     # === STOCK & ALERTES ===
     @classmethod
-    def get_low_stock(cls, user_id: int, threshold: int = 10) -> Optional[List]:
+    def get_low_stock(cls, user_id: int, threshold: int = 10) -> list | None:
         """Récupère la liste des produits en stock bas."""
         key = cls._generate_key(cls.PREFIX_LOW_STOCK, user_id, threshold=threshold)
         return cache.get(key)
     
     @classmethod
-    def set_low_stock(cls, user_id: int, threshold: int, data: List, ttl: int = None) -> None:
+    def set_low_stock(cls, user_id: int, threshold: int, data: list, ttl: int | None = None) -> None:
         """Stocke la liste des produits en stock bas."""
         key = cls._generate_key(cls.PREFIX_LOW_STOCK, user_id, threshold=threshold)
         cache.set(key, data, ttl or cls.ALERTS_TTL)
     
     @classmethod
-    def get_expiring_lots(cls, user_id: int, days: int = 30) -> Optional[List]:
+    def get_expiring_lots(cls, user_id: int, days: int = 30) -> list | None:
         """Récupère les lots proches de l'expiration."""
         key = cls._generate_key(cls.PREFIX_EXPIRING_LOTS, user_id, days=days)
         return cache.get(key)
     
     @classmethod
-    def set_expiring_lots(cls, user_id: int, days: int, data: List, ttl: int = None) -> None:
+    def set_expiring_lots(cls, user_id: int, days: int, data: list, ttl: int | None = None) -> None:
         """Stocke les lots proches de l'expiration."""
         key = cls._generate_key(cls.PREFIX_EXPIRING_LOTS, user_id, days=days)
         cache.set(key, data, ttl or cls.ALERTS_TTL)
     
     @classmethod
-    def get_promis(cls, user_id: int) -> Optional[List]:
+    def get_promis(cls, user_id: int) -> list | None:
         """Récupère les promis disponibles."""
         key = cls._generate_key(cls.PREFIX_PROMIS, user_id)
         return cache.get(key)
     
     @classmethod
-    def set_promis(cls, user_id: int, data: List, ttl: int = None) -> None:
+    def set_promis(cls, user_id: int, data: list, ttl: int | None = None) -> None:
         """Stocke les promis disponibles."""
         key = cls._generate_key(cls.PREFIX_PROMIS, user_id)
         cache.set(key, data, ttl or cls.ALERTS_TTL)
     
     # === STATS MANAGER ===
     @classmethod
-    def get_manager_stats(cls, user_id: int) -> Optional[Dict]:
+    def get_manager_stats(cls, user_id: int) -> dict | None:
         """Récupère les stats manager (objectifs, performances)."""
         key = cls._generate_key(cls.PREFIX_MANAGER_STATS, user_id)
         return cache.get(key)
     
     @classmethod
-    def set_manager_stats(cls, user_id: int, data: Dict, ttl: int = None) -> None:
+    def set_manager_stats(cls, user_id: int, data: dict, ttl: int | None = None) -> None:
         """Stocke les stats manager."""
         key = cls._generate_key(cls.PREFIX_MANAGER_STATS, user_id)
         cache.set(key, data, ttl or cls.STATS_TTL)
     
     @classmethod
-    def get_alerts(cls, user_id: int) -> Optional[List]:
+    def get_alerts(cls, user_id: int) -> list | None:
         """Récupère les alertes du manager."""
         key = cls._generate_key(cls.PREFIX_ALERTS, user_id)
         return cache.get(key)
     
     @classmethod
-    def set_alerts(cls, user_id: int, data: List, ttl: int = None) -> None:
+    def set_alerts(cls, user_id: int, data: list, ttl: int | None = None) -> None:
         """Stocke les alertes du manager."""
         key = cls._generate_key(cls.PREFIX_ALERTS, user_id)
         cache.set(key, data, ttl or cls.ALERTS_TTL)
     
     # === HEAVY STATS (dormant_stock + margin) ===
     @classmethod
-    def get_heavy_stats(cls, user_id: int) -> Optional[Dict]:
+    def get_heavy_stats(cls, user_id: int) -> dict | None:
         """Récupère les stats lourdes (dormant_stock, margin_today)."""
         key = cls._generate_key(cls.PREFIX_HEAVY, user_id)
         return cache.get(key)
 
     @classmethod
-    def set_heavy_stats(cls, user_id: int, data: Dict, ttl: int = None) -> None:
+    def set_heavy_stats(cls, user_id: int, data: dict, ttl: int | None = None) -> None:
         """Stocke les stats lourdes."""
         key = cls._generate_key(cls.PREFIX_HEAVY, user_id)
         cache.set(key, data, ttl or cls.HEAVY_STATS_TTL)

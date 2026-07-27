@@ -2,14 +2,16 @@
 Views pour le service centralisé des marges
 Endpoints pour les calculs et analyses de marges
 """
+from datetime import datetime
+from decimal import Decimal
+
+from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import viewsets, permissions
-from django.utils import timezone
-from datetime import datetime, timedelta
-from decimal import Decimal
-from api.services.margin_service import MarginService
+
 from api.models import Produit
+from api.services.margin_service import MarginService
+
 
 class MarginViewSet(viewsets.ViewSet):
     """

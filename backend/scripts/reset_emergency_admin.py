@@ -9,9 +9,9 @@ Usage:
     python scripts/reset_emergency_admin.py --disable
 """
 
+import argparse
 import os
 import sys
-import argparse
 from pathlib import Path
 
 # Setup Django
@@ -19,6 +19,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import django
+
 django.setup()
 
 from django.contrib.auth import get_user_model

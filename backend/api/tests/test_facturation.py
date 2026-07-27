@@ -4,16 +4,21 @@ Covers: finaliser, destroy, bulk_delete, marquer_payee, stats_jour,
         historique ventes, and model calculate_totals.
 """
 from decimal import Decimal
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .factories import TestDataFactory
 from ..models import (
-    Facture, FactureProduit, Produit, Caisse, MouvementStock, PosteVente
+    Caisse,
+    Facture,
+    FactureProduit,
+    MouvementStock,
+    PosteVente,
 )
+from .factories import TestDataFactory
 
 
 class FinaliserVenteTests(APITestCase):
@@ -144,7 +149,7 @@ class FinaliserVenteTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         facture = Facture.objects.order_by('-id').first()
-        self.assertEqual(facture.remise, Decimal('200'))
+        self.assertEqual(facture.remise, Decimal(200))
         # TTC = 3 * 500 - 200 = 1300
         self.assertEqual(facture.total_ttc, Decimal('1300.00'))
 
@@ -176,7 +181,7 @@ class MarquerPayeeTests(APITestCase):
     def test_marquer_payee_valid(self):
         """Marking a validated invoice as paid succeeds."""
         facture = TestDataFactory.create_facture(
-            client=self.client_obj, status='VAL', total_ttc=Decimal('1000')
+            client=self.client_obj, status='VAL', total_ttc=Decimal(1000)
         )
         url = reverse('facture-marquer-payee', kwargs={'pk': facture.pk})
         response = self.client.post(url)
@@ -317,10 +322,10 @@ class StatsJourTests(APITestCase):
             total_ttc=Decimal('1200.00'), created_by=self.user
         )
         TestDataFactory.create_facture_produit(
-            facture=facture, produit=produit1, quantity=3, selling_price=Decimal('300')
+            facture=facture, produit=produit1, quantity=3, selling_price=Decimal(300)
         )
         TestDataFactory.create_facture_produit(
-            facture=facture, produit=produit2, quantity=1, selling_price=Decimal('150')
+            facture=facture, produit=produit2, quantity=1, selling_price=Decimal(150)
         )
         
         # Add a payment so the invoice is included in stats
@@ -358,10 +363,10 @@ class HistoriqueVentesTests(APITestCase):
 
     def test_historique_list(self):
         """List returns aggregated daily data for validated invoices."""
-        facture = TestDataFactory.create_facture(
+        TestDataFactory.create_facture(
             client=self.client_obj, status='VAL',
-            total_ttc=Decimal('5000'), total_ht=Decimal('4200'),
-            total_tva=Decimal('800')
+            total_ttc=Decimal(5000), total_ht=Decimal(4200),
+            total_tva=Decimal(800)
         )
 
         url = reverse('historiqueventes-list')
@@ -387,7 +392,7 @@ class HistoriqueVentesTests(APITestCase):
             client=self.client_obj, status='VAL'
         )
         TestDataFactory.create_facture_produit(
-            facture=facture, produit=produit, quantity=5, selling_price=Decimal('80')
+            facture=facture, produit=produit, quantity=5, selling_price=Decimal(80)
         )
 
         now = timezone.now()
@@ -424,7 +429,7 @@ class CalculateTotalsTests(TestCase):
         )
         TestDataFactory.create_facture_produit(
             facture=facture, produit=self.produit,
-            quantity=3, selling_price=Decimal('1000')
+            quantity=3, selling_price=Decimal(1000)
         )
 
         facture.refresh_from_db()
@@ -433,11 +438,11 @@ class CalculateTotalsTests(TestCase):
     def test_totals_with_global_discount(self):
         """calculate_totals subtracts the global discount (remise)."""
         facture = TestDataFactory.create_facture(
-            client=self.client_obj, status='BROU', remise=Decimal('500')
+            client=self.client_obj, status='BROU', remise=Decimal(500)
         )
         TestDataFactory.create_facture_produit(
             facture=facture, produit=self.produit,
-            quantity=2, selling_price=Decimal('1000')
+            quantity=2, selling_price=Decimal(1000)
         )
 
         facture.refresh_from_db()
@@ -451,8 +456,8 @@ class CalculateTotalsTests(TestCase):
         )
         TestDataFactory.create_facture_produit(
             facture=facture, produit=self.produit,
-            quantity=5, selling_price=Decimal('1000'),
-            discount=Decimal('100')  # 100 F off each unit
+            quantity=5, selling_price=Decimal(1000),
+            discount=Decimal(100)  # 100 F off each unit
         )
 
         facture.refresh_from_db()
@@ -479,7 +484,7 @@ class CalculateTotalsTests(TestCase):
     def test_part_client_with_coverage(self):
         """calculate_totals sets part_client based on taux_couverture."""
         insured_client = TestDataFactory.create_client(
-            name='Client Assuré', taux_couverture=Decimal('80'),
+            name='Client Assuré', taux_couverture=Decimal(80),
             email='assure@test.com', phone='0600000004'
         )
         facture = TestDataFactory.create_facture(
@@ -487,7 +492,7 @@ class CalculateTotalsTests(TestCase):
         )
         TestDataFactory.create_facture_produit(
             facture=facture, produit=self.produit,
-            quantity=1, selling_price=Decimal('1000')
+            quantity=1, selling_price=Decimal(1000)
         )
 
         facture.refresh_from_db()
@@ -533,7 +538,7 @@ class AnnulationTests(APITestCase):
         )
         TestDataFactory.create_facture_produit(
             facture=facture, produit=self.produit,
-            quantity=5, selling_price=Decimal('250')
+            quantity=5, selling_price=Decimal(250)
         )
 
         # Validate first
@@ -565,7 +570,7 @@ class AnnulationTests(APITestCase):
         )
         TestDataFactory.create_facture_produit(
             facture=facture, produit=self.produit,
-            quantity=15, selling_price=Decimal('250')
+            quantity=15, selling_price=Decimal(250)
         )
 
         # Validate
@@ -596,7 +601,7 @@ class CaisseCappingTests(APITestCase):
     def test_caisse_payment_capped_to_invoice_total(self):
         """CaisseViewSet.perform_create caps the amount to the invoice total."""
         facture = TestDataFactory.create_facture(
-            client=self.client_obj, status='VAL', total_ttc=Decimal('1000')
+            client=self.client_obj, status='VAL', total_ttc=Decimal(1000)
         )
         url = reverse('caisse-list')
         payload = {
@@ -616,12 +621,12 @@ class CaisseCappingTests(APITestCase):
     def test_caisse_payment_capped_to_part_patient(self):
         """CaisseViewSet.perform_create caps the amount to the part_client for insured clients."""
         facture = TestDataFactory.create_facture(
-            client=self.client_obj, status='VAL', total_ttc=Decimal('1000'),
-            part_client=Decimal('200')
+            client=self.client_obj, status='VAL', total_ttc=Decimal(1000),
+            part_client=Decimal(200)
         )
         # Record the insurance part as 'en_compte'
         Caisse.objects.create(
-            facture=facture, mode_paiement='en_compte', montant=Decimal('800'),
+            facture=facture, mode_paiement='en_compte', montant=Decimal(800),
             statut='completee', user=self.user
         )
         
@@ -643,11 +648,11 @@ class CaisseCappingTests(APITestCase):
     def test_caisse_payment_partial_capped(self):
         """Subsequent payments are also capped to the remaining balance."""
         facture = TestDataFactory.create_facture(
-            client=self.client_obj, status='VAL', total_ttc=Decimal('1000')
+            client=self.client_obj, status='VAL', total_ttc=Decimal(1000)
         )
         # First payment of 600
         Caisse.objects.create(
-            facture=facture, mode_paiement='especes', montant=Decimal('600'),
+            facture=facture, mode_paiement='especes', montant=Decimal(600),
             statut='completee', user=self.user
         )
         

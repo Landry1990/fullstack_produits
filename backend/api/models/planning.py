@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Planning des opérateurs : quarts, gardes, repos, congés.
 """
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 
 
 class ShiftConfig(models.Model):

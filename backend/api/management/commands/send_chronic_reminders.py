@@ -1,6 +1,7 @@
-# -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
+
 from ...services.chronic_reminder_service import ChronicReminderService
+
 
 class Command(BaseCommand):
     help = 'Sends WhatsApp reminders to clients with chronic diseases whose treatment is ending soon.'

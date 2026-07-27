@@ -1,18 +1,19 @@
-# -*- coding: utf-8 -*-
 """
 Order-related models: Commande, CommandeProduit, Avoir, LigneAvoir.
 """
-from django.db import models
-from django.utils import timezone
-from django.contrib.auth.models import User
-from django.db.models import Sum, F, DecimalField
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
 from typing import TYPE_CHECKING
+
+from django.contrib.auth.models import User
+from django.db import models
+from django.db.models import DecimalField, F, Sum
+from django.utils import timezone
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
     from django.db.models.fields.related_descriptors import RelatedManager
+
     from .paiements import PaiementFournisseur
 
 
@@ -146,7 +147,7 @@ class Commande(models.Model):
             qty = Decimal(str(ligne.quantity))
             price = Decimal(str(ligne.price))
             tva = Decimal(str(ligne.tva or 0))
-            total += qty * price * tva / Decimal("100")
+            total += qty * price * tva / Decimal(100)
         return total.quantize(Decimal("0.01"))
 
     @property
@@ -162,14 +163,14 @@ class Commande(models.Model):
             from .settings import PharmacySettings
             ps = PharmacySettings.objects.first()
             if not ps:
-                return Decimal("0")
+                return Decimal(0)
             if ps.mode_imposition == 'MARGE_ADMINISTREE':
-                return Decimal("0")
+                return Decimal(0)
             if ps.regime_fiscal == 'REEL':
                 return ps.taux_precompte_reel
             return ps.taux_precompte_simplifie
         except Exception:
-            return Decimal("0")
+            return Decimal(0)
 
     @property
     def precompte(self):
@@ -178,8 +179,8 @@ class Commande(models.Model):
         from decimal import Decimal
         taux = self.taux_precompte
         if taux <= 0:
-            return Decimal("0")
-        return self.total_ht * taux / Decimal("100")
+            return Decimal(0)
+        return self.total_ht * taux / Decimal(100)
 
     @property
     def statut_paiement(self):

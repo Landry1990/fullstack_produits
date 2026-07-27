@@ -1,14 +1,15 @@
 import os
-import django
 import sys
+
+import django
 
 # Set up Django environment
 sys.path.append(os.getcwd())
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
+
 from api.views.commandes.suggestions import calculer_ventes_tranche_horaire
-from django.utils import timezone
 
 print("Starting test...")
 try:
@@ -20,6 +21,6 @@ try:
     for s in res[:5]:
         print(f" - {s['produit_nom']}: {s['quantite_suggeree']}")
 except Exception as e:
-    print(f"CRASHED: {type(e).__name__}: {str(e)}")
+    print(f"CRASHED: {type(e).__name__}: {e!s}")
     import traceback
     traceback.print_exc()

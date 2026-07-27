@@ -4,15 +4,16 @@ restauration d'allocations et synchronisation du stock depuis les lots.
 
 Factorise la logique commune entre SaleValidator, SaleCanceller et SaleModifier.
 """
-from decimal import Decimal
-from django.db import transaction
-from django.db.models import F, Sum, Value, Subquery, OuterRef
-from django.db.models.functions import Coalesce
 import logging
 
+from django.db.models import F, OuterRef, Subquery, Sum, Value
+from django.db.models.functions import Coalesce
+
 from ..models import (
-    Facture, FactureProduit, FactureProduitAllocation,
-    Produit, StockLot, MouvementStock,
+    FactureProduitAllocation,
+    MouvementStock,
+    Produit,
+    StockLot,
 )
 
 logger = logging.getLogger(__name__)

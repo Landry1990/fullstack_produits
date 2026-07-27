@@ -1,16 +1,17 @@
-import os
-import django
 import json
-from decimal import Decimal
+import os
+
+import django
 
 # Set up Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from django.contrib.auth.models import User
-from api.serializers import UserSerializer
-from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
+
+from api.serializers import UserSerializer
+
 
 def test_patch_user(user_id):
     try:

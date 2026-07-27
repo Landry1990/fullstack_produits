@@ -1,9 +1,11 @@
-from rest_framework import viewsets, permissions, filters
-from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, permissions, viewsets
+
 from ..models import Promotion
-from ..serializers import PromotionSerializer
 from ..pagination import StandardResultsSetPagination
+from ..serializers import PromotionSerializer
+
 
 class PromotionViewSet(viewsets.ModelViewSet):
     """

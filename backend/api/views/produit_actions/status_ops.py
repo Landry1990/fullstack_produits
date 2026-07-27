@@ -1,11 +1,12 @@
+from django.db.models import Q
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from django.db.models import Q
 
+from ...cache_utils import SearchCache
 from ...models import Produit
 from ...serializers import ProduitSerializer
-from ...cache_utils import SearchCache
+
 
 class ProduitStatusMixin:
     """Mixin pour les changements de statut et les vues simplifiées."""

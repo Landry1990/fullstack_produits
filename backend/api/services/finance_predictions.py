@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Algorithmes de prédiction pour les statistiques financières.
 """

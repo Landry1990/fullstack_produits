@@ -2,14 +2,26 @@
 Test data factories for creating test objects.
 Uses Django's ORM directly for simplicity.
 """
-from django.contrib.auth import get_user_model
-from decimal import Decimal
-from django.utils import timezone
 import itertools
+from decimal import Decimal
+
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
 from ..models import (
-    Produit, Rayon, Fournisseur, Client, Facture, FactureProduit,
-    StockLot, Commande, CommandeProduit, ClotureCaisse, Caisse,
-    MouvementCaisse, StockAdjustment, PosteCaisse, PosteVente
+    Caisse,
+    Client,
+    Commande,
+    CommandeProduit,
+    Facture,
+    FactureProduit,
+    Fournisseur,
+    MouvementCaisse,
+    PosteCaisse,
+    PosteVente,
+    Produit,
+    Rayon,
+    StockLot,
 )
 
 User = get_user_model()

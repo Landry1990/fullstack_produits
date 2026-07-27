@@ -1,23 +1,34 @@
-from rest_framework import viewsets, filters, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
-from django.db.models import F, Sum, Value, DecimalField, OuterRef, Subquery, ProtectedError, Count, Max
-from django.db.models.functions import Coalesce
-from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
-from collections import defaultdict
-from django_filters.rest_framework import DjangoFilterBackend
 
-from ..models import Client, Facture, Caisse, AyantDroit, DepotClient
-from ..serializers import ClientSerializer, AyantDroitSerializer, DepotClientSerializer
-from ..serializers_optimized import ClientListSerializer, ClientDetailSerializer
-from ..serializer_mixins import OptimizedSerializerMixin
+from django.db import transaction
+from django.db.models import (
+    Count,
+    DecimalField,
+    F,
+    Max,
+    OuterRef,
+    ProtectedError,
+    Subquery,
+    Sum,
+    Value,
+)
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from ..cache_mixins import SimpleListCacheMixin
-from ..pagination import StandardResultsSetPagination
 from ..cache_utils import ClientDebtCache
+from ..models import AyantDroit, Caisse, Client, DepotClient, Facture
+from ..pagination import StandardResultsSetPagination
+from ..serializer_mixins import OptimizedSerializerMixin
+from ..serializers import AyantDroitSerializer, ClientSerializer, DepotClientSerializer
+from ..serializers_optimized import ClientDetailSerializer, ClientListSerializer
+
 
 class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
@@ -105,6 +116,7 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
 
     def perform_destroy(self, instance):
         import logging
+
         from django.utils import timezone
         logger = logging.getLogger(__name__)
         logger.info(f'[ClientViewSet] Soft deleting client {instance.id} - {instance.name}')
@@ -120,7 +132,8 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         """Retourne l'historique enrichi des achats d'un client — optimisé SQL."""
         client = self.get_object()
 
-        from django.db.models import Q, Count, Sum, F as F_orm
+        from django.db.models import F as F_orm
+        from django.db.models import Sum
         from django.db.models.functions import TruncMonth
 
         # ── Stats globales en une seule requête ─────────────────
@@ -307,7 +320,7 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
                     'status': 'success',
                     'message': f'{count} clients mis en corbeille avec succès.'
                 })
-        except ProtectedError as e:
+        except ProtectedError:
             return Response({
                 'error': 'Impossible de supprimer certains clients',
                 'detail': 'Certains clients sont liés à des factures ou d\'autres enregistrements et ne peuvent pas être supprimés.'
@@ -325,9 +338,10 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=400)
         
-        from ..models import Facture, Caisse
-        from django.db.models import Sum, Value, DecimalField
+        from django.db.models import DecimalField, Sum, Value
         from django.db.models.functions import Coalesce
+
+        from ..models import Caisse, Facture
         
         clients_with_unpaid = []
         total_unpaid_all = Decimal('0.00')
@@ -381,9 +395,10 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         Calcule les factures impayées d'un client (sans cache).
         Cette méthode est appelée uniquement en cas de cache miss.
         """
-        from ..models import Facture, Caisse
-        from django.db.models import Sum, F, Value, DecimalField
+        from django.db.models import DecimalField, Sum, Value
         from django.db.models.functions import Coalesce
+
+        from ..models import Caisse, Facture
         
         unpaid_invoices = []
         total_due = Decimal('0.00')

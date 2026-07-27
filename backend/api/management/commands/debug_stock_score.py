@@ -2,12 +2,13 @@
 Commande de debug pour le score de santé du stock
 Usage: python manage.py debug_stock_score
 """
+from datetime import timedelta
+from decimal import Decimal
+
 from django.core.management.base import BaseCommand
-from django.db.models import Sum, Count, F, Q, DecimalField, ExpressionWrapper
+from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-from decimal import Decimal
-from datetime import timedelta
 
 from api.models import Produit
 from api.models.settings import PharmacySettings
@@ -39,14 +40,14 @@ class Command(BaseCommand):
         )
         
         dead_stock_value = dormant_qs.aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
         )['total']
         
         dead_stock_count = dormant_qs.count()
         
         total_stock_value = Produit.objects.filter(is_active=True).aggregate(
-            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0'))
-        )['total'] or Decimal('1')
+            total=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0))
+        )['total'] or Decimal(1)
         
         # === AFFICHAGE DONNÉES BRUTES ===
         self.stdout.write(self.style.WARNING('\n📊 DONNÉES BRUTES:'))

@@ -1,13 +1,17 @@
+
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.test import APIClient
 from rest_framework import status
+from rest_framework.test import APIClient
+
 from api.models import (
-    Inventaire, LigneInventaire, Produit, StockLot, MouvementStock, StockAdjustment
+    Inventaire,
+    LigneInventaire,
+    MouvementStock,
+    StockAdjustment,
 )
 from api.tests.factories import TestDataFactory
-from django.contrib.auth.models import User
-from decimal import Decimal
+
 
 class StockInventoryTest(TestCase):
     def setUp(self):
@@ -36,7 +40,6 @@ class StockInventoryTest(TestCase):
         inv_id = res_create.data['id']
         
         # Vérification manuelle en base
-        from api.models import Inventaire
         inv_check = Inventaire.objects.get(id=inv_id)
         print(f"DEBUG: DB CHECK - is_active={inv_check.is_active}, status={inv_check.status}")
         

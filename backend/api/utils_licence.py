@@ -1,9 +1,11 @@
-import jwt
 import hashlib
-import subprocess
 import os
-from datetime import datetime, timedelta
+import subprocess
+from datetime import datetime
+
+import jwt
 from django.utils import timezone
+
 from api.models.licence import Licence
 
 # /!\ INSÉREZ ICI LE CONTENU DE VOTRE FICHIER 'cle_publique_a_distribuer.pem'
@@ -92,6 +94,7 @@ def get_hardware_id():
 
 from django.core.cache import cache
 
+
 def valider_licence_systeme():
     """Vérifie la licence stockée en base de données."""
     # 1. Vérification du cache pour éviter la surcharge sur chaque requête API
@@ -142,4 +145,4 @@ def valider_licence_systeme():
     except jwt.InvalidSignatureError:
         return False, "Clé corrompue ou falsifiée.", None
     except Exception as e:
-        return False, f"Erreur système: {str(e)}", None
+        return False, f"Erreur système: {e!s}", None

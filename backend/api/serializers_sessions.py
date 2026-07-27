@@ -1,6 +1,7 @@
 from rest_framework import serializers
+
 from .models import UserDailySession
-from django.contrib.auth.models import User
+
 
 class UserDailySessionSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)

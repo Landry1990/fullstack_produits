@@ -1,12 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour les commandes, fournisseurs et paiements.
 """
+from decimal import ROUND_HALF_UP, Decimal
+
 from rest_framework import serializers
-from django.db.models import Sum, Q
-from decimal import Decimal, ROUND_HALF_UP
+
 from ..models import (
-    Fournisseur, Commande, CommandeProduit, PaiementFournisseur, OrderSchedule,
+    Commande,
+    CommandeProduit,
+    Fournisseur,
+    OrderSchedule,
+    PaiementFournisseur,
 )
 from .mixins import UppercaseSerializerMixin
 
@@ -180,7 +184,7 @@ class CommandeSerializer(serializers.ModelSerializer):
 
     def get_precompte(self, obj):
         val = obj.precompte
-        return int(val.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+        return int(val.quantize(Decimal(1), rounding=ROUND_HALF_UP))
 
     def get_taux_precompte(self, obj):
         return float(obj.taux_precompte)
@@ -239,7 +243,6 @@ class OrderScheduleSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Valider que la date de fin est après la date de début."""
-        if data.get('end_date') and data.get('start_date'):
-            if data['end_date'] < data['start_date']:
-                raise serializers.ValidationError("La date de fin doit être après la date de début.")
+        if data.get('end_date') and data.get('start_date') and data['end_date'] < data['start_date']:
+            raise serializers.ValidationError("La date de fin doit être après la date de début.")
         return data

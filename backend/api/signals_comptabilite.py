@@ -1,12 +1,18 @@
-# -*- coding: utf-8 -*-
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.db import transaction
 from django.utils import timezone
+
 from .models import (
-    Facture, Caisse, Commande, EcritureComptable, 
-    LigneEcriture, CompteComptable, JournalComptable, PaiementFournisseur,
-    ExerciceComptable
+    Caisse,
+    Commande,
+    CompteComptable,
+    EcritureComptable,
+    ExerciceComptable,
+    Facture,
+    JournalComptable,
+    LigneEcriture,
+    PaiementFournisseur,
 )
 
 
@@ -32,7 +38,6 @@ def get_exercice_courant():
         )
     
     return exercice
-from decimal import Decimal
 
 @receiver(post_save, sender=PaiementFournisseur)
 def generer_ecriture_paiement_fournisseur(sender, instance, created, **kwargs):
@@ -146,8 +151,8 @@ def generer_ecriture_vente(sender, instance, created, **kwargs):
                 
     except Exception as e:
         # IMPORTANT : Ne jamais bloquer la vente ! Logger l'erreur pour correction manuelle
-        logger.error(f"[COMPTA] ERREUR création écriture vente pour facture {instance.id}: {str(e)}")
-        logger.error(f"[COMPTA] L'écriture devra être créée manuellement ou via la commande de régénération")
+        logger.error(f"[COMPTA] ERREUR création écriture vente pour facture {instance.id}: {e!s}")
+        logger.error("[COMPTA] L'écriture devra être créée manuellement ou via la commande de régénération")
 
 
 @receiver(post_save, sender=Caisse)
@@ -201,8 +206,8 @@ def generer_ecriture_paiement(sender, instance, created, **kwargs):
                 
     except Exception as e:
         # IMPORTANT : Ne jamais bloquer le paiement ! Logger l'erreur pour correction manuelle
-        logger.error(f"[COMPTA] ERREUR création écriture paiement pour caisse {instance.id}: {str(e)}")
-        logger.error(f"[COMPTA] L'écriture devra être créée manuellement ou via la commande de régénération")
+        logger.error(f"[COMPTA] ERREUR création écriture paiement pour caisse {instance.id}: {e!s}")
+        logger.error("[COMPTA] L'écriture devra être créée manuellement ou via la commande de régénération")
 
 
 @receiver(post_save, sender=Commande)

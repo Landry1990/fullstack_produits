@@ -2,17 +2,18 @@
 API pour la gestion des backups depuis l'interface web
 Permet aux pharmaciens de restaurer sans ligne de commande
 """
-import os
-import gzip
 import glob
-import subprocess
-from datetime import datetime, timedelta
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.conf import settings
+import gzip
 import logging
+import os
+import subprocess
+from datetime import datetime
+
+from django.conf import settings
+from rest_framework import status
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +139,7 @@ class BackupListView(APIView):
             })
             
         except Exception as e:
-            logger.error(f"Erreur listage backups: {str(e)}")
+            logger.error(f"Erreur listage backups: {e!s}")
             return Response(
                 {'error': 'Erreur lors du listage des backups'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -182,15 +183,14 @@ class CreateBackupView(APIView):
                             f.write(result.stdout)
                         
                         # Compresser
-                        with open(output_file, 'rb') as f_in:
-                            with gzip.open(f"{output_file}.gz", 'wb') as f_out:
-                                f_out.write(f_in.read())
+                        with open(output_file, 'rb') as f_in, gzip.open(f"{output_file}.gz", 'wb') as f_out:
+                            f_out.write(f_in.read())
                         
                         os.remove(output_file)
                         tables_backed_up += 1
                         
                 except Exception as e:
-                    logger.warning(f"Erreur backup table {table}: {str(e)}")
+                    logger.warning(f"Erreur backup table {table}: {e!s}")
                     continue
             
             logger.info(f"Backup manuel créé: {tables_backed_up} tables")
@@ -203,9 +203,9 @@ class CreateBackupView(APIView):
             })
             
         except Exception as e:
-            logger.error(f"Erreur création backup: {str(e)}")
+            logger.error(f"Erreur création backup: {e!s}")
             return Response(
-                {'error': f'Erreur lors de la création du backup: {str(e)}'},
+                {'error': f'Erreur lors de la création du backup: {e!s}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -328,7 +328,7 @@ class RestoreBackupView(APIView):
             })
             
         except Exception as e:
-            logger.error(f"Erreur restauration: {str(e)}")
+            logger.error(f"Erreur restauration: {e!s}")
             
             # Essayer de redémarrer le backend en cas d'erreur
             try:
@@ -338,7 +338,7 @@ class RestoreBackupView(APIView):
                 pass
             
             return Response(
-                {'error': f'Erreur lors de la restauration: {str(e)}'},
+                {'error': f'Erreur lors de la restauration: {e!s}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -372,8 +372,8 @@ class DeleteBackupView(APIView):
             return Response({'success': True, 'message': 'Backup supprimé'})
             
         except Exception as e:
-            logger.error(f"Erreur suppression backup: {str(e)}")
+            logger.error(f"Erreur suppression backup: {e!s}")
             return Response(
-                {'error': f'Erreur lors de la suppression: {str(e)}'},
+                {'error': f'Erreur lors de la suppression: {e!s}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

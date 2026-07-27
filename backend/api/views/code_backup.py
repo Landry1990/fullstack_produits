@@ -1,15 +1,16 @@
+import io
 import os
 import zipfile
-import io
-import shutil
 from datetime import datetime
+
 from django.conf import settings
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
+
 
 class CodeBackupViewSet(ViewSet):
     permission_classes = [IsAdminUser]
@@ -93,4 +94,4 @@ class CodeBackupViewSet(ViewSet):
                 
             return Response({'message': 'Code source restauré avec succès. Redémarrez le serveur pour appliquer les changements.'})
         except Exception as e:
-            return Response({'detail': f'Erreur lors de la restauration: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'detail': f'Erreur lors de la restauration: {e!s}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

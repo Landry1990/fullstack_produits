@@ -3,9 +3,10 @@ Tests de validation des entrées sur les endpoints de verrouillage.
 Vérifie : auth manquante/invalid, PK inexistant, méthodes HTTP interdites,
 payloads malformés, injection Redis, accès cross-entité, etc.
 """
-import requests
 import json
 import sys
+
+import requests
 
 BASE = 'http://localhost:8000'
 VALID_TOKEN = '1de8ad310a0cb8c971849f187edea04052993f87'
@@ -191,11 +192,10 @@ print('\n=== 9. WebSocket : authentification ===')
 
 try:
     import websocket
-    import threading
 
     # Invalid token
     try:
-        ws = websocket.create_connection(f'ws://localhost:8000/ws/lock/commande/1/?token=invalidtoken', timeout=3)
+        ws = websocket.create_connection('ws://localhost:8000/ws/lock/commande/1/?token=invalidtoken', timeout=3)
         check('WS token invalide → connexion fermée', False, 'should have been rejected')
         ws.close()
     except Exception as e:
@@ -203,7 +203,7 @@ try:
 
     # No token
     try:
-        ws = websocket.create_connection(f'ws://localhost:8000/ws/lock/commande/1/', timeout=3)
+        ws = websocket.create_connection('ws://localhost:8000/ws/lock/commande/1/', timeout=3)
         # AuthMiddlewareStack might allow anonymous → consumer closes with 4001
         msg = ws.recv()
         check('WS sans token → rejeté par consumer', True)

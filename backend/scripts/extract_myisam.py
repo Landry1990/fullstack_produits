@@ -1,5 +1,6 @@
-import sys
 import re
+import sys
+
 
 def extract_records(filename, record_size, limit=100):
     with open(filename, 'rb') as f:

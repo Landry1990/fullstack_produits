@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models.depot import DepotClient
-from .models.billing import Caisse
+
 from .models.audit import MouvementCaisse
-from django.db import transaction
+from .models.billing import Caisse
+from .models.depot import DepotClient
+
 
 @receiver(post_save, sender=DepotClient)
 def handle_depot_client_change(sender, instance, created, **kwargs):
@@ -51,15 +51,13 @@ def handle_caisse_depot_payment(sender, instance, created, **kwargs):
     """
     Si une vente est payée par dépôt, on enregistre l'utilisation dans l'historique DepotClient.
     """
-    if created and instance.mode_paiement == 'depot' and instance.statut == 'completee':
-        if instance.facture and instance.facture.client:
-            # Vérifier si cet achat n'est pas déjà enregistré (évite doubles triggers)
-            if not DepotClient.objects.filter(facture=instance.facture, type=DepotClient.Type.ACHAT, montant=instance.montant).exists():
-                DepotClient.objects.create(
-                    client=instance.facture.client,
-                    type=DepotClient.Type.ACHAT,
-                    montant=instance.montant,
-                    facture=instance.facture,
-                    created_by=instance.user,
-                    notes=f"Paiement facture {instance.facture.numero_facture or instance.facture.id}"
-                )
+    if (created and instance.mode_paiement == 'depot' and instance.statut == 'completee' and instance.facture and instance.facture.client
+            and not DepotClient.objects.filter(facture=instance.facture, type=DepotClient.Type.ACHAT, montant=instance.montant).exists()):
+            DepotClient.objects.create(
+                client=instance.facture.client,
+                type=DepotClient.Type.ACHAT,
+                montant=instance.montant,
+                facture=instance.facture,
+                created_by=instance.user,
+                notes=f"Paiement facture {instance.facture.numero_facture or instance.facture.id}"
+            )

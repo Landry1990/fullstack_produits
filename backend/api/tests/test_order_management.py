@@ -6,13 +6,14 @@ Tests critical business logic:
 - Closing order (Stock increment, Lot creation, PMP update)
 """
 from decimal import Decimal
-from django.utils import timezone
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from ..models import Commande, CommandeProduit, StockLot
 from .factories import TestDataFactory
-from ..models import Commande, CommandeProduit, StockLot, Produit
+
 
 class OrderManagementTestCase(APITestCase):
     """Test suite for order management flow."""

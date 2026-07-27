@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour les clients, ayants droit et dépôts.
 """
 from rest_framework import serializers
-from ..models import DepotClient, AyantDroit, Client
+
+from ..models import AyantDroit, Client, DepotClient
 from .mixins import UppercaseSerializerMixin
 
 

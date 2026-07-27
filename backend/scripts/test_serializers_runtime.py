@@ -10,17 +10,25 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 sys.path.insert(0, '/app')
 
 import django
+
 django.setup()
 
-from api.models import Facture, Client, Caisse, ClotureCaisse, Commande, Produit
+from api.models import Caisse, Client, ClotureCaisse, Commande, Facture, Produit
 from api.serializers import (
-    FactureSerializer, ClientSerializer, CaisseSerializer,
-    ClotureCaisseSerializer, CommandeSerializer, ProduitSerializer,
+    CaisseSerializer,
+    ClientSerializer,
+    ClotureCaisseSerializer,
+    CommandeSerializer,
+    FactureSerializer,
+    ProduitSerializer,
 )
 from api.serializers_optimized import (
-    FactureListSerializer, FactureDetailSerializer,
-    ClientListSerializer, ClientDetailSerializer,
+    ClientDetailSerializer,
+    ClientListSerializer,
+    FactureDetailSerializer,
+    FactureListSerializer,
 )
+
 
 def test_serializer(name, serializer_class, queryset, limit=3):
     """Teste un serializer avec des instances réelles."""
@@ -28,7 +36,7 @@ def test_serializer(name, serializer_class, queryset, limit=3):
     try:
         instances = queryset[:limit]
         if not instances.exists():
-            print(f"   ⚠️  Aucune instance trouvée, test d'instanciation seul...")
+            print("   ⚠️  Aucune instance trouvée, test d'instanciation seul...")
             instance = serializer_class()
             print(f"   ✅ Instanciation OK — {len(instance.get_fields())} champs")
             return True

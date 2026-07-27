@@ -4,6 +4,7 @@ Used by both the management command and the trigger_now API action.
 """
 import logging
 from decimal import Decimal
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -99,8 +100,8 @@ def run_suggestions_for_schedule(schedule):
     """
     from ..views.commandes.suggestions import (
         calculer_optimisation_intelligente,
-        calculer_reapprovisionnement_simple,
         calculer_reapprovisionnement_cumulatif,
+        calculer_reapprovisionnement_simple,
     )
 
     if schedule.execution_mode == 'OPTIMISE':

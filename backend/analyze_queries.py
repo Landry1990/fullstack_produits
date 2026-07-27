@@ -6,17 +6,20 @@ Détecte les N+1 queries et suggère des optimisations
 
 import os
 import sys
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 django.setup()
 
-from django.db import connection, reset_queries
-from django.db.models import Prefetch, Count, Sum, Avg
-from api.models import Facture, Produit, Client
-from api.models.billing import FactureProduit
 import time
+
+from django.db import connection, reset_queries
+from django.db.models import Count, Prefetch, Sum
+
+from api.models import Facture, Produit
+from api.models.billing import FactureProduit
 
 
 class QueryAnalyzer:

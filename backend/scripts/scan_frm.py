@@ -1,5 +1,6 @@
-import sys
 import re
+import sys
+
 
 def extract_strings(filename):
     with open(filename, 'rb') as f:

@@ -1,17 +1,26 @@
-# -*- coding: utf-8 -*-
-from rest_framework import viewsets, status, permissions
+from decimal import Decimal
+
+from django.core.cache import cache
+from django.db.models import F, Q, Sum
+from django.utils import timezone
+from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.core.cache import cache
-from django.db.models import Sum, Q, F
-from django.utils import timezone
-from decimal import Decimal
-from ..models import CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable
-from ..serializers import (
-    CompteComptableSerializer, JournalComptableSerializer, 
-    EcritureComptableSerializer, LigneEcritureSerializer,
-    ExerciceComptableSerializer
+
+from ..models import (
+    CompteComptable,
+    EcritureComptable,
+    ExerciceComptable,
+    JournalComptable,
+    LigneEcriture,
 )
+from ..serializers import (
+    CompteComptableSerializer,
+    EcritureComptableSerializer,
+    ExerciceComptableSerializer,
+    JournalComptableSerializer,
+)
+
 
 class CompteComptableViewSet(viewsets.ModelViewSet):
     queryset = CompteComptable.objects.all()
@@ -29,6 +38,7 @@ class ExerciceComptableViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 from ..filters import EcritureComptableFilter
+
 
 class EcritureComptableViewSet(viewsets.ModelViewSet):
     queryset = EcritureComptable.objects.all().select_related('journal', 'exercice').prefetch_related('lignes', 'lignes__compte')
@@ -165,9 +175,10 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         
         # 3. Variation de stock (603100) calculée dynamiquement (Inventaire Intermittent continu)
         # Valeur actuelle du stock physique
-        from ..models import Produit
         from django.db.models import DecimalField
         from django.db.models.functions import Coalesce
+
+        from ..models import Produit
         
         valeur_stock_actuel = Produit.objects.filter(is_active=True).aggregate(
             total=Coalesce(Sum(F('stock') * Coalesce(F('pmp'), F('cost_price'))), Decimal('0.00'), output_field=DecimalField())
@@ -227,9 +238,10 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         total_charges = Decimal('0.00')
         
         # --- Injection dynamique du stock physique (Inventaire Intermittent continu) ---
-        from ..models import Produit
         from django.db.models import DecimalField
         from django.db.models.functions import Coalesce
+
+        from ..models import Produit
         
         valeur_stock_actuel = Produit.objects.filter(is_active=True).aggregate(
             total=Coalesce(Sum(F('stock') * Coalesce(F('pmp'), F('cost_price'))), Decimal('0.00'), output_field=DecimalField())
@@ -288,8 +300,12 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         """
         Action pour générer les écritures manquantes pour les factures et paiements passés.
         """
-        from ..models import Facture, Caisse, Commande
-        from ..signals_comptabilite import generer_ecriture_vente, generer_ecriture_paiement, generer_ecriture_achat
+        from ..models import Caisse, Commande, Facture
+        from ..signals_comptabilite import (
+            generer_ecriture_achat,
+            generer_ecriture_paiement,
+            generer_ecriture_vente,
+        )
         
         # Cette action peut être longue, à utiliser avec précaution
         count = 0
@@ -382,8 +398,7 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
             comptes_summary[num]['total_credit'] += ligne.credit
         
         # Calculer les soldes
-        for num in comptes_summary:
-            s = comptes_summary[num]
+        for num, s in comptes_summary.items():
             s['solde'] = s['total_debit'] - s['total_credit']
         
         response_data = {

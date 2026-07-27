@@ -5,18 +5,20 @@ CRUD complet + recherche + statistiques + import CSV.
 import csv
 import io
 import os
+import re
 import tempfile
 import unicodedata
-import re
-from rest_framework import viewsets, status, filters
+
+from django.db.models import Q
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import Q, Count
+
+from ..centralized_configs import StandardResultsSetPagination
 from ..models import DrugInteraction, Substance
 from ..serializers import DrugInteractionSerializer
-from ..centralized_configs import StandardResultsSetPagination
 
 
 def _normalize(text):
@@ -57,7 +59,7 @@ class DrugInteractionViewSet(viewsets.ModelViewSet):
         total = DrugInteraction.objects.count()
         by_gravity = {}
         for choice in DrugInteraction.GRAVITY_CHOICES:
-            code, label = choice
+            code, _label = choice
             by_gravity[code] = DrugInteraction.objects.filter(gravity=code).count()
         substances_with_interactions = Substance.objects.filter(
             Q(interactions_a__isnull=False) | Q(interactions_b__isnull=False)
@@ -148,7 +150,7 @@ class DrugInteractionViewSet(viewsets.ModelViewSet):
 
                 pair_a, pair_b = (sub_a, sub_b) if sub_a.id < sub_b.id else (sub_b, sub_a)
 
-                obj, was_created = DrugInteraction.objects.update_or_create(
+                _obj, was_created = DrugInteraction.objects.update_or_create(
                     substance_a=pair_a,
                     substance_b=pair_b,
                     defaults={'gravity': gravity, 'description': description}

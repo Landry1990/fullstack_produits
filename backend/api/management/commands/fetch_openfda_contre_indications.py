@@ -7,12 +7,12 @@ Usage:
     python manage.py fetch_openfda_contre_indications --limit 100
     python manage.py fetch_openfda_contre_indications --substance PARACETAMOL
 """
-import requests
 import time
-import json
-from django.core.management.base import BaseCommand
-from api.models import Substance
 
+import requests
+from django.core.management.base import BaseCommand
+
+from api.models import Substance
 
 OPENFDA_URL = "https://api.fda.gov/drug/label.json"
 HEADERS = {"User-Agent": "ZenithPharma/1.0"}
@@ -75,7 +75,6 @@ def fetch_fda_data(substance_name: str) -> dict | None:
         'BISOPROLOL': 'BISOPROLOL',
         'METOPROLOL': 'METOPROLOL',
         'CARVEDILOL': 'CARVEDILOL',
-        'ATORVASTATINE': 'ATORVASTATIN',
         'FENOFIBRATE': 'FENOFIBRATE',
         'EZETIMIBE': 'EZETIMIBE',
         'ASPIRINE': 'ASPIRIN',
@@ -209,13 +208,13 @@ def extract_safety(label: dict) -> str:
     sections = []
 
     for key in ["contraindications", "warnings", "do_not_use", "precautions"]:
-        if key in label and label[key]:
+        if label.get(key):
             val = label[key]
             if isinstance(val, list):
                 val = " ".join(val)
             sections.append(f"=== {key.upper().replace('_', ' ')} ===\n{val.strip()}")
 
-    if "pregnancy_or_breast_feeding" in label and label["pregnancy_or_breast_feeding"]:
+    if label.get("pregnancy_or_breast_feeding"):
         val = label["pregnancy_or_breast_feeding"]
         if isinstance(val, list):
             val = " ".join(val)

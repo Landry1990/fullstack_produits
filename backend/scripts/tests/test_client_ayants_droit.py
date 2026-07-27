@@ -1,5 +1,7 @@
+
+import sys
+
 import requests
-import json
 
 # URL de base de l'API
 BASE_URL = "http://127.0.0.1:8000"
@@ -22,7 +24,7 @@ auth_response = requests.post(f"{BASE_URL}/api/token/", json={
 if auth_response.status_code != 200:
     print(f"❌ Erreur d'authentification: {auth_response.status_code}")
     print(auth_response.text)
-    exit(1)
+    sys.exit(1)
 
 token = auth_response.json().get('token')
 print(f"✅ Token obtenu: {token[:20]}...")

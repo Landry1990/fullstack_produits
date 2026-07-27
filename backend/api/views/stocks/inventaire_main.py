@@ -1,38 +1,47 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
+
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.db.models import (
-    F, Sum, DecimalField, Q, Count,
-    Case, When, Value, ExpressionWrapper
+    Case,
+    DecimalField,
+    F,
+    Q,
+    Sum,
+    Value,
+    When,
 )
 from django.db.models.functions import Coalesce
-from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
-from decimal import Decimal
-from django.db import IntegrityError
-from django.core.exceptions import ValidationError
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from ...models import (
-    StockLot, Inventaire, LigneInventaire, StockAdjustment, Produit,
-    MouvementStock, AuditLog
+    Inventaire,
+    LigneInventaire,
+    Produit,
+    StockLot,
 )
+from ...pagination import StandardResultsSetPagination
+from ...search_mixins import MultiTermSearchMixin
 from ...serializers import InventaireSerializer, LigneInventaireSerializer
 from ...serializers_optimized import InventaireListSerializer
-from ...search_mixins import MultiTermSearchMixin
-from ...audit_helpers import log_audit
-from ...sudo_utils import validate_sudo_mode
-from ...pagination import StandardResultsSetPagination
 from .inventaire import (
-    generate_ecarts_pdf, generate_etat_pdf, get_print_data,
-    import_csv_inventaire,
-    bulk_delete_lignes_inventaire, bulk_lignes_inventaire,
-    merge_inventaires, merge_duplicate_lines,
-    get_inventaire_stats, audit_discrepancies,
-    validate_inventaire,
+    audit_discrepancies,
+    bulk_delete_lignes_inventaire,
+    bulk_lignes_inventaire,
+    generate_ecarts_pdf,
+    generate_etat_pdf,
     generate_listing_excel,
+    get_inventaire_stats,
+    get_print_data,
+    import_csv_inventaire,
+    merge_duplicate_lines,
+    merge_inventaires,
+    validate_inventaire,
 )
 
 
@@ -60,7 +69,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         queryset = super().get_queryset().filter(is_active=True)
         
         if self.action == 'list':
-            from django.db.models import Subquery, OuterRef
+            from django.db.models import OuterRef, Subquery
             
             # Price expression: use product's current PMP, fallback to cost_price
             line_price_expr = Case(
@@ -123,7 +132,6 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         return queryset
 
 
-    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -251,13 +259,13 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                 data = request.data.copy()
                 data['inventaire'] = inventaire.id
                 
-                if 'stock_lot' in data and data['stock_lot']:
+                if data.get('stock_lot'):
                     lot = StockLot.objects.get(id=data['stock_lot'])
                     data['stock_theorique'] = lot.quantity_remaining
                     if 'quantite_physique' not in data:
                         data['quantite_physique'] = lot.quantity_remaining
                 
-                elif 'lot_numero' in data and data['lot_numero']:
+                elif data.get('lot_numero'):
                     # Mode NOUVEAU LOT ou LOT PAR NUMERO
                     lot_num = data.get('lot_numero')
                     lot_exp = data.get('lot_expiration') # Optional
@@ -327,13 +335,13 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
             except ValidationError as e:
                 transaction.set_rollback(True)
-                return Response({'error': f"Erreur de validation: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': f"Erreur de validation: {e!s}"}, status=status.HTTP_400_BAD_REQUEST)
             except IntegrityError as e:
                 transaction.set_rollback(True)
-                return Response({'error': f"Erreur d'intégrité (doublon probable): {str(e)}"}, status=status.HTTP_409_CONFLICT)
+                return Response({'error': f"Erreur d'intégrité (doublon probable): {e!s}"}, status=status.HTTP_409_CONFLICT)
             except Exception as e:
                 transaction.set_rollback(True)
-                return Response({'error': f'Erreur interne: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({'error': f'Erreur interne: {e!s}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'], url_path='lignes/bulk-delete')
     @transaction.atomic
@@ -501,7 +509,10 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         Retourne les données du listing de stock en JSON plat (pour export côté client).
         Paramètres identiques à listing-excel.
         """
-        from .inventaire.listing_excel import _get_rows_from_stock, _get_rows_from_inventaire
+        from .inventaire.listing_excel import (
+            _get_rows_from_inventaire,
+            _get_rows_from_stock,
+        )
 
         group_by = request.query_params.get('group_by', 'rayon')
         stock_filter = request.query_params.get('stock_filter', 'tous')
@@ -565,7 +576,7 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
         """
         data = request.data.copy()
         
-        if 'stock_lot' in data and data['stock_lot']:
+        if data.get('stock_lot'):
             # Mode LOT EXISTANT: Utiliser l'ID du lot fourni
             try:
                 lot = StockLot.objects.get(id=data['stock_lot'])
@@ -575,7 +586,7 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
             except StockLot.DoesNotExist:
                 return Response({'error': 'Lot non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
         
-        elif 'lot_numero' in data and data['lot_numero']:
+        elif data.get('lot_numero'):
             # Mode NOUVEAU LOT ou LOT PAR NUMERO
             lot_num = data.get('lot_numero')
             lot_exp = data.get('lot_expiration') # Optional

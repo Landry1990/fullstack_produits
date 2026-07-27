@@ -1,5 +1,7 @@
 import logging
+
 from django.utils import timezone
+
 from ..models import SmsLog
 
 logger = logging.getLogger(__name__)
@@ -53,14 +55,14 @@ class SmsService:
             return True, "SMS envoyé avec succès (Simulé)"
             
         except Exception as e:
-            logger.error(f"Erreur envoi SMS ({clean_number}): {str(e)}")
+            logger.error(f"Erreur envoi SMS ({clean_number}): {e!s}")
             
             # 3. Mise à jour échec
             log.status = SmsLog.Status.FAILED
-            log.provider_response = f"Exception: {str(e)}"
+            log.provider_response = f"Exception: {e!s}"
             log.save()
             
-            return False, f"Erreur lors de l'envoi: {str(e)}"
+            return False, f"Erreur lors de l'envoi: {e!s}"
 
     def _mock_provider_send(self, recipient, message, sms_type='MANUEL', user=None):
         """Simule l'envoi via une API externe."""

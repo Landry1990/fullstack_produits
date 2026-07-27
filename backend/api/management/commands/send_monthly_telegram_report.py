@@ -1,13 +1,20 @@
-# -*- coding: utf-8 -*-
-from django.core.management.base import BaseCommand
-from django.utils import timezone
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-from django.db.models import Sum, F
-from ...models import Facture, Caisse, MouvementCaisse, PharmacySettings, CommandeProduit
-from ...telegram_service import TelegramService
-from ...services.finance_marges import calculate_margin_for_invoices
 import logging
+from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
+from django.core.management.base import BaseCommand
+from django.db.models import F, Sum
+from django.utils import timezone
+
+from ...models import (
+    Caisse,
+    CommandeProduit,
+    Facture,
+    MouvementCaisse,
+    PharmacySettings,
+)
+from ...services.finance_marges import calculate_margin_for_invoices
+from ...telegram_service import TelegramService
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +187,7 @@ class Command(BaseCommand):
             text += f"🏪 <b>{TelegramService.t('top_suppliers', lang)} :</b>\n"
             for f in achats:
                 nom = str(f.get('commande__fournisseur__name') or 'Fournisseur inconnu')[:20]
-                montant = int(f.get('montant_total' or 0))
+                montant = int(f.get('montant_total'))
                 text += f"  • {nom} : {montant:,} F\n"
             text += "\n"
 

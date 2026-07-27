@@ -7,8 +7,10 @@ Usage:
     python manage.py inject_licence --validate-only "eyJhbGciOiJSUzI1NiIs..."
 """
 import os
+
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
+
 from api.models.licence import Licence
 from api.utils_licence import valider_licence_systeme
 

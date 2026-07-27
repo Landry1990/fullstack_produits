@@ -1,12 +1,23 @@
-from rest_framework import viewsets, permissions, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from rest_framework import permissions, status, viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from ..models import LoyaltySetting, InvoiceSettings, PharmacySettings, AuditLog, ConfigurationOption
-from ..serializers import LoyaltySettingSerializer, InvoiceSettingsSerializer, PharmacySettingsSerializer, ConfigurationOptionSerializer
 from ..audit_helpers import log_audit
+from ..models import (
+    AuditLog,
+    ConfigurationOption,
+    InvoiceSettings,
+    LoyaltySetting,
+    PharmacySettings,
+)
 from ..pagination import StandardResultsSetPagination
+from ..serializers import (
+    ConfigurationOptionSerializer,
+    InvoiceSettingsSerializer,
+    LoyaltySettingSerializer,
+    PharmacySettingsSerializer,
+)
 
 # ... (existing classes)
 
@@ -66,7 +77,7 @@ class LoyaltySettingViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         # For singleton pattern, always update existing or create if doesn't exist
-        obj, created = LoyaltySetting.objects.get_or_create(pk=1)
+        obj, _created = LoyaltySetting.objects.get_or_create(pk=1)
         serializer = self.get_serializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -102,7 +113,7 @@ class LoyaltySettingViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         # Always return the first object (singleton pattern)
-        obj, created = LoyaltySetting.objects.get_or_create(pk=1)
+        obj, _created = LoyaltySetting.objects.get_or_create(pk=1)
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -115,12 +126,12 @@ class InvoiceConfigurationView(APIView):
     permission_classes = [IsAuthenticated] # Ou IsAdminUser selon besoins
 
     def get(self, request):
-        config, created = InvoiceSettings.objects.get_or_create(pk=1)
+        config, _created = InvoiceSettings.objects.get_or_create(pk=1)
         serializer = InvoiceSettingsSerializer(config)
         return Response(serializer.data)
 
     def put(self, request):
-        config, created = InvoiceSettings.objects.get_or_create(pk=1)
+        config, _created = InvoiceSettings.objects.get_or_create(pk=1)
         serializer = InvoiceSettingsSerializer(config, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -146,14 +157,14 @@ class PharmacySettingsView(APIView):
 
     def get(self, request):
         from django.utils import timezone
-        settings, created = PharmacySettings.objects.get_or_create(pk=1)
+        settings, _created = PharmacySettings.objects.get_or_create(pk=1)
         serializer = PharmacySettingsSerializer(settings)
         data = serializer.data
         data['server_time'] = timezone.now().isoformat()
         return Response(data)
 
     def put(self, request):
-        settings, created = PharmacySettings.objects.get_or_create(pk=1)
+        settings, _created = PharmacySettings.objects.get_or_create(pk=1)
         serializer = PharmacySettingsSerializer(settings, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -178,8 +189,9 @@ class WhatsAppTestView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        import requests as req_lib
         import logging
+
+        import requests as req_lib
         logger = logging.getLogger(__name__)
         from ..models import PharmacySettings
         ps = PharmacySettings.objects.first()
@@ -318,6 +330,7 @@ class TelegramGetChatIdView(APIView):
 
     def post(self, request):
         import requests as req_lib
+
         from ..models import PharmacySettings
 
         ps = PharmacySettings.objects.first()
@@ -356,10 +369,11 @@ class TelegramRapportFlashView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        from ..telegram_service import TelegramService
-        from ..models import PharmacySettings
-        from decimal import Decimal
+
         from django.utils import timezone
+
+        from ..models import PharmacySettings
+        from ..telegram_service import TelegramService
 
         try:
             ps = PharmacySettings.objects.first()
@@ -422,11 +436,11 @@ class TelegramRapportFlashDateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+
+        from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
+
+        from ..models import Facture, FactureProduit, PharmacySettings
         from ..telegram_service import TelegramService
-        from ..models import PharmacySettings, Facture, FactureProduit
-        from django.db.models import Sum, Count, F, ExpressionWrapper, DecimalField
-        from django.utils import timezone
-        from datetime import date as date_type
 
         try:
             ps = PharmacySettings.objects.first()
@@ -521,10 +535,14 @@ class TelegramRapportInventaireView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        from ..telegram_service import TelegramService
-        from ..models import PharmacySettings, Inventaire, LigneInventaire, Produit, StockLot
-        from django.db.models import Sum, F, ExpressionWrapper, DecimalField
         from django.utils import timezone
+
+        from ..models import (
+            Inventaire,
+            LigneInventaire,
+            PharmacySettings,
+        )
+        from ..telegram_service import TelegramService
 
         try:
             ps = PharmacySettings.objects.first()
@@ -621,9 +639,10 @@ class TelegramRapportMensuelView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        from ..telegram_service import TelegramService
-        from ..models import PharmacySettings
         from django.utils import timezone
+
+        from ..models import PharmacySettings
+        from ..telegram_service import TelegramService
 
         try:
             ps = PharmacySettings.objects.first()

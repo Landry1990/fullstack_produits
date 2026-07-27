@@ -7,14 +7,13 @@ Installation: pip install requests
 Usage: python load_test_simple.py --clients 15 --duration 60
 """
 
-import requests
-import threading
-import random
-import time
 import argparse
-from datetime import datetime
-from typing import List, Dict
+import random
 import statistics
+import threading
+import time
+
+import requests
 
 # Configuration
 BASE_URL = "http://localhost:8000/api"
@@ -29,8 +28,8 @@ class LoadTestResult:
         self.total_requests = 0
         self.successful_requests = 0
         self.failed_requests = 0
-        self.response_times: List[float] = []
-        self.errors: List[str] = []
+        self.response_times: list[float] = []
+        self.errors: list[str] = []
         self.start_time: float = 0
         self.end_time: float = 0
         self._lock = threading.Lock()
@@ -80,7 +79,7 @@ class LoadTestResult:
         print(f"✅ Succès: {self.successful_requests} ({success_rate:.1f}%)")
         print(f"❌ Échecs: {self.failed_requests} ({100-success_rate:.1f}%)")
         
-        print(f"\n⚡ Performance:")
+        print("\n⚡ Performance:")
         print(f"   Requêtes/sec: {self.requests_per_second:.2f}")
         print(f"   Temps moyen: {self.avg_response_time*1000:.2f}ms")
         print(f"   Temps P95: {self.p95_response_time*1000:.2f}ms")
@@ -90,7 +89,7 @@ class LoadTestResult:
             print(f"   Temps max: {max(self.response_times)*1000:.2f}ms")
         
         if self.errors:
-            print(f"\n⚠️  Erreurs fréquentes:")
+            print("\n⚠️  Erreurs fréquentes:")
             error_counts = {}
             for err in self.errors:
                 error_counts[err] = error_counts.get(err, 0) + 1
@@ -110,7 +109,7 @@ class LoadTestResult:
         print("="*70)
 
 
-def generate_random_sale() -> Dict:
+def generate_random_sale() -> dict:
     """Génère une vente aléatoire réaliste"""
     products = [
         {"id": 1, "name": "Paracétamol 500mg", "price": 2500},

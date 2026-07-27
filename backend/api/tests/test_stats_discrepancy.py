@@ -1,10 +1,13 @@
-from django.test import TestCase
-from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
+
 from django.contrib.auth.models import User
-from api.models import Facture
+from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
+
+from api.models import Facture
+
 
 class StatsDiscrepancyTest(TestCase):
     def setUp(self):

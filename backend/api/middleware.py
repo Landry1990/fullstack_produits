@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Middleware de protection du serveur :
 - CrashGuardMiddleware : intercepte les exceptions non gérées pour éviter qu'elles ne tuent le worker.

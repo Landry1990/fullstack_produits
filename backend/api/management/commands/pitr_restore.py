@@ -1,11 +1,12 @@
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
-import subprocess
 import os
-import sys
 import shutil
-from pathlib import Path
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
+
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):

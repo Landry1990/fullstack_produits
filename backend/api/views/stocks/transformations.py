@@ -1,23 +1,30 @@
 import time
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
-from django.db.models import Sum, F, Q
-from django_filters.rest_framework import DjangoFilterBackend
-from django.utils import timezone
 from decimal import Decimal
 
-from ...models import (
-    StockLot, Produit, MouvementStock, StockAdjustment,
-    RelationTransformation, HistoriqueTransformation, AuditLog
-)
-from ...serializers import (
-    RelationTransformationSerializer, HistoriqueTransformationSerializer
-)
+from django.db import transaction
+from django.db.models import Sum
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from ...audit_helpers import log_audit
+from ...models import (
+    AuditLog,
+    HistoriqueTransformation,
+    MouvementStock,
+    Produit,
+    RelationTransformation,
+    StockAdjustment,
+    StockLot,
+)
 from ...pagination import StandardResultsSetPagination
+from ...serializers import (
+    HistoriqueTransformationSerializer,
+    RelationTransformationSerializer,
+)
 
 
 class RelationTransformationViewSet(viewsets.ModelViewSet):

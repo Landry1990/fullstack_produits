@@ -1,10 +1,12 @@
 import os
+
 import django
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from rest_framework.authtoken.models import Token
 import requests
+from rest_framework.authtoken.models import Token
 
 token = Token.objects.first()
 if not token:

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 import os
+
 
 def format_currency(amount, symbol=None):
     """Formate un montant avec la devise configurée."""

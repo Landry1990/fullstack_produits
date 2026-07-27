@@ -1,18 +1,17 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+import logging
+
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from ...models import (
-    Avoir, LigneAvoir, Produit, MouvementStock, AuditLog, StockLot
-)
-from ...serializers import AvoirSerializer, LigneAvoirSerializer
 from ...audit_helpers import log_audit
-from ...sudo_utils import validate_sudo_mode
+from ...models import Avoir, LigneAvoir, MouvementStock, Produit, StockLot
 from ...pagination import StandardResultsSetPagination
-import logging
+from ...serializers import AvoirSerializer, LigneAvoirSerializer
+from ...sudo_utils import validate_sudo_mode
 
 logger = logging.getLogger(__name__)
 
@@ -116,8 +115,8 @@ class AvoirViewSet(viewsets.ModelViewSet):
         La clôture = le fournisseur a répondu favorablement.
         Le déchargement = on retire physiquement du stock.
         """
-        from django.utils import timezone
         from django.db.models import F
+        from django.utils import timezone
         avoir = self.get_object()
 
         if avoir.stock_decharge:

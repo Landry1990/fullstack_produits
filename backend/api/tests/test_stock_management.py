@@ -7,17 +7,17 @@ Tests critical business logic:
 - PMP calculation
 """
 from decimal import Decimal
-from django.test import TestCase
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.utils import timezone
 
-from .factories import TestDataFactory
 from ..models import (
-    Produit, StockLot, StockAdjustment, Commande, CommandeProduit,
-    MouvementStock
+    CommandeProduit,
+    StockAdjustment,
+    StockLot,
 )
+from .factories import TestDataFactory
 
 
 class StockAdjustmentTestCase(APITestCase):
@@ -205,7 +205,6 @@ class PMPCalculationTestCase(APITestCase):
         Test that PMP is recalculated when a new order is closed.
         """
         # Initial: 100 units at 50 F = 5000 F total
-        initial_pmp = self.produit.pmp
         
         # Reception: 50 units at 60 F = 3000 F
         commande = TestDataFactory.create_commande(
@@ -268,4 +267,3 @@ class StockHistoryTestCase(APITestCase):
         # But StockAdjustment is already tested in StockAdjustmentTestCase.
         
         # I'll keep it but adapt:
-        pass

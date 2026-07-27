@@ -14,25 +14,17 @@ Couvre :
 - Intégrité : produit_nom sauvegardé si produit supprimé
 - Champs obligatoires / validations
 """
-from decimal import Decimal
 
-from django.contrib.auth.models import User
 from django.urls import reverse
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from ..models import (
-    Commande,
-    CommandeProduit,
     MouvementStock,
-    Produit,
     Promis,
     RelationTransformation,
-    StockLot,
 )
 from .factories import TestDataFactory
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -485,7 +477,7 @@ class MouvementTransformationTestCase(APITestCase):
         self.source = TestDataFactory.create_produit(
             name="Source Box", stock=10, use_lot_management=True
         )
-        lot = TestDataFactory.create_stock_lot(
+        TestDataFactory.create_stock_lot(
             produit=self.source, quantity=10, lot_name="LOT-S1"
         )
 
@@ -635,7 +627,6 @@ class MouvementStockIntegriteTestCase(APITestCase):
             quantite=-5,
             user=self.user,
         )
-        produit_pk = produit.pk
         produit.delete()
 
         mvt.refresh_from_db()

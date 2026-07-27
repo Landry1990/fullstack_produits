@@ -1,19 +1,23 @@
-from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from ...models.stock import ReapproSession, StockAdjustment
-from ...serializers import ReapproSessionSerializer
 import io
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+
+from django.http import HttpResponse
 from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
 from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
+from rest_framework import permissions, viewsets
+from rest_framework.decorators import action
+
+from ...models.stock import ReapproSession
 from ...pdf_utils import (
-    PharmaColors, get_pharma_styles, draw_pharma_header, 
-    draw_pharma_footer, get_pharma_table_style, create_spacer
+    PharmaColors,
+    create_spacer,
+    draw_pharma_footer,
+    draw_pharma_header,
+    get_pharma_styles,
+    get_pharma_table_style,
 )
+from ...serializers import ReapproSessionSerializer
+
 
 class ReapproSessionViewSet(viewsets.ReadOnlyModelViewSet):
     """

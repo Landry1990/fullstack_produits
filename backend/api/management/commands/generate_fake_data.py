@@ -1,14 +1,16 @@
 import random
+from datetime import timedelta
 from decimal import Decimal
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 from faker import Faker
-from datetime import timedelta
 
-from api.models.products import Produit, Rayon, Forme, Groupe
-from api.models.clients import Client, Fournisseur
 from api.models.billing import Facture, FactureProduit
+from api.models.clients import Client, Fournisseur
+from api.models.products import Forme, Groupe, Produit, Rayon
+
 
 class Command(BaseCommand):
     help = 'Génère un gros volume de données aléatoires pour tester les performances de la base de données.'
@@ -165,7 +167,7 @@ class Command(BaseCommand):
             if len(batch_factures) >= 2000:
                 Facture.objects.bulk_create(batch_factures)
                 self._generate_lignes_for_factures(batch_factures, produits)
-                self.stdout.write(f"  ... Factures créées.")
+                self.stdout.write("  ... Factures créées.")
                 batch_factures = []
 
         if batch_factures:

@@ -1,7 +1,9 @@
 
 from django.test import TestCase
-from api.models import Produit, Substance, DrugInteraction
+
 from api.clinical_service import ClinicalService
+from api.models import DrugInteraction, Produit, Substance
+
 
 class ClinicalServiceTest(TestCase):
     def setUp(self):

@@ -1,13 +1,15 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.utils import timezone
-from ..models import CouponMonnaie, Facture, Caisse, AuditLog
-from ..serializers import CouponMonnaieSerializer
-from ..pagination import StandardResultsSetPagination
-from ..audit_helpers import log_audit
 import logging
+
+from django.utils import timezone
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ..audit_helpers import log_audit
+from ..models import AuditLog, CouponMonnaie, Facture
+from ..pagination import StandardResultsSetPagination
+from ..serializers import CouponMonnaieSerializer
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -95,7 +97,6 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
                 logger.info(f"Facture associée: {facture.id}")
             except Facture.DoesNotExist:
                 logger.warning(f"Facture {facture_id} non trouvée")
-                pass
         
         # Mettre à jour le coupon
         coupon.status = CouponMonnaie.Status.UTILISE

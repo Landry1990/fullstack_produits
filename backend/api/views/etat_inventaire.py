@@ -1,26 +1,23 @@
-# -*- coding: utf-8 -*-
 """
 État d'inventaire API - Génère des PDF d'états d'inventaire groupés par forme, rayon ou groupe.
 Colonnes: ID, CIP1, Libellé, Stock, Prix de Vente, avec lignes par lot si multi-lots.
 """
 import io
 from datetime import datetime
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from django.http import HttpResponse
-
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.units import mm
-from reportlab.platypus import (
-    SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-)
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 from django.db.models import Prefetch
-from ..models import Produit, Rayon, Forme, Groupe, StockLot
+from django.http import HttpResponse
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from ..models import Forme, Groupe, Produit, Rayon, StockLot
 
 
 class EtatInventairePDFView(APIView):
@@ -236,7 +233,7 @@ class EtatInventairePDFView(APIView):
             items.sort(key=lambda x: (x['name'].lower(), x.get('lot_numero', '')))
             
             # Compter les produits uniques
-            unique_products = len(set(item['id'] for item in items))
+            unique_products = len({item['id'] for item in items})
             story.append(Paragraph(f"<b>{group_name}</b> ({unique_products} produits)", group_style))
             
             # Données du tableau

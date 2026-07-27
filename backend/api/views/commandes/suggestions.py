@@ -1,12 +1,13 @@
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.utils import timezone
-from django.core.cache import cache
-from datetime import timedelta, datetime
-from django.conf import settings
+from datetime import timedelta
 
-from ...models import Produit, Facture, FactureProduit
+from django.conf import settings
+from django.core.cache import cache
+from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ...models import Facture, FactureProduit, Produit
 
 
 def get_produits_a_par_marge(periode=90, fournisseur_id=None):
@@ -14,9 +15,10 @@ def get_produits_a_par_marge(periode=90, fournisseur_id=None):
     Classifie les produits selon la méthode ABC sur la marge générée.
     Retourne l'ensemble des IDs des produits de classe A (top ~80% de la marge cumulée).
     """
-    from django.db.models import Sum, Q, F
-    from django.db.models.functions import Coalesce
     from decimal import Decimal
+
+    from django.db.models import F, Q, Sum
+    from django.db.models.functions import Coalesce
 
     date_debut = timezone.now() - timedelta(days=periode)
 
@@ -34,8 +36,8 @@ def get_produits_a_par_marge(periode=90, fournisseur_id=None):
         produit__isnull=False
     ).values('produit_id').annotate(
         marge_totale=Sum(
-            Coalesce(F('quantity') * (F('selling_price') - F('produit__cost_price')), Decimal('0')),
-            default=Decimal('0')
+            Coalesce(F('quantity') * (F('selling_price') - F('produit__cost_price')), Decimal(0)),
+            default=Decimal(0)
         ),
         qte_totale=Sum('quantity')
     )
@@ -115,7 +117,8 @@ def generer_suggestions_commande(request):
     
     # ── Enrichir avec indicateurs Promis & Rupture Fournisseur ──
     if suggestions:
-        from django.db.models import Sum, Q
+        from django.db.models import Sum
+
         from ...models import Promis, RuptureFournisseur
         
         produit_ids = [s['produit_id'] for s in suggestions]
@@ -157,7 +160,7 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     Si budget_max est fourni, on priorise les meilleurs vendeurs.
     """
     date_debut = timezone.now() - timedelta(days=periode)
-    from django.db.models import Sum, Q
+    from django.db.models import Q, Sum
     
     # Récupérer les produits actifs uniquement (pas les inactifs/supprimés)
     # Limiter à 5000 produits max pour éviter les timeouts
@@ -179,6 +182,7 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     
     if fournisseur_id:
         from django.db.models import OuterRef, Subquery
+
         from ...models import StockLot
         last_price_subquery = StockLot.objects.filter(
             produit=OuterRef('pk'),
@@ -290,10 +294,9 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     periode_analyse = max(periode, 30)
     date_debut = timezone.now() - timedelta(days=periode_analyse)
     date_mi_periode = timezone.now() - timedelta(days=periode_analyse // 2)
-    from django.db.models import Sum, Q
+    from django.db.models import Q, Sum
 
     # Produits actifs uniquement, filtrer par fournisseur si spécifié
-    from django.db.models import Q
     produits_qs = Produit.objects.filter(is_active=True)
 
     fournisseur_obj = None
@@ -343,6 +346,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
 
     if fournisseur_id:
         from django.db.models import OuterRef, Subquery
+
         from ...models import StockLot
         last_price_subquery = StockLot.objects.filter(
             produit=OuterRef('pk'),
@@ -403,7 +407,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         if en_rupture or en_alerte:
             stock_objectif = stock_maximum
             besoin_net = max(0, stock_objectif - stock_actuel)
-            qte_finale = int(round(besoin_net))
+            qte_finale = round(besoin_net)
 
             urgence = 'urgent'
             score_urgence = 90 if en_rupture else 70
@@ -511,7 +515,7 @@ def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
     Génère des suggestions basées sur les produits vendus pendant une tranche horaire.
     Agrège les quantités vendues par produit sur la plage [date_debut, date_fin].
     """
-    from django.db.models import Sum, Q
+    from django.db.models import Q, Sum
     from django.utils.dateparse import parse_datetime
     
     # Parser les dates ISO
@@ -563,6 +567,7 @@ def calculer_ventes_tranche_horaire(date_debut, date_fin, fournisseur_id=None):
     
     if fournisseur_id:
         from django.db.models import OuterRef, Subquery
+
         from ...models import StockLot
         last_price_subquery = StockLot.objects.filter(
             produit=OuterRef('pk'),
@@ -631,9 +636,10 @@ def calculer_reapprovisionnement_cumulatif(fournisseur_id, periode_fallback=30, 
     
     Ex: Lundi 14h génération → Mercredi 14h compte les ventes de Lundi 14h01 à Mercredi 14h
     """
-    from ...models import Commande
-    from django.db.models import Sum, Q, OuterRef, Subquery
-    from ...models import StockLot as StockLotModel, Fournisseur
+    from django.db.models import OuterRef, Q, Subquery, Sum
+
+    from ...models import Commande, Fournisseur
+    from ...models import StockLot as StockLotModel
     
     # Trouver la dernière commande auto-générée pour ce fournisseur
     last_auto_order = Commande.objects.filter(

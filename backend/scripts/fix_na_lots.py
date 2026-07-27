@@ -3,12 +3,15 @@ Script to fix N/A lot numbers in StockLot records.
 Uses commande_id from the associated commande_produit to generate lot numbers.
 """
 import os
+
 import django
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import StockLot
 from django.db.models import Q
+
+from api.models import StockLot
 
 # Find lots with NULL, empty, or N/A lot numbers
 lots_to_fix = StockLot.objects.filter(

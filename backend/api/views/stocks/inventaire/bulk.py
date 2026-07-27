@@ -1,19 +1,19 @@
 """
 Opérations bulk (en masse) pour les inventaires.
 """
-from typing import List, Dict, Any, Optional, Set, Tuple
-from django.db import transaction
-from django.utils import timezone
-from rest_framework.response import Response
-from rest_framework import status
+from typing import Any
 
-from api.models import Inventaire, LigneInventaire, Produit, StockLot, AuditLog
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.response import Response
+
 from api.audit_helpers import log_audit
+from api.models import AuditLog, Inventaire, LigneInventaire, Produit, StockLot
 
 
 def bulk_delete_lignes_inventaire(
     inventaire: Inventaire,
-    ids: List[int],
+    ids: list[int],
     user,
     request
 ) -> Response:
@@ -71,7 +71,7 @@ def bulk_delete_lignes_inventaire(
 
 def bulk_lignes_inventaire(
     inventaire: Inventaire,
-    lignes_data: List[Dict[str, Any]]
+    lignes_data: list[dict[str, Any]]
 ) -> Response:
     """
     Import en masse de lignes d'inventaire optimisé (Réduction N+1).
@@ -89,14 +89,14 @@ def bulk_lignes_inventaire(
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    errors: List[str] = []
+    errors: list[str] = []
     imported_count = 0
 
     # PRE-CHARGEMENT pour éviter le N+1
-    produit_ids: Set[int] = {
+    produit_ids: set[int] = {
         d.get('produit') for d in lignes_data if d.get('produit')
     }
-    lot_ids: Set[int] = {
+    lot_ids: set[int] = {
         d.get('stock_lot') for d in lignes_data if d.get('stock_lot')
     }
 
@@ -104,18 +104,18 @@ def bulk_lignes_inventaire(
     lots_map = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids)}
 
     # Pour les recherches par numéro de lot
-    lot_tuples: Set[Tuple[int, str]] = {
+    lot_tuples: set[tuple[int, str]] = {
         (d.get('produit'), d.get('lot_numero'))
         for d in lignes_data
         if d.get('lot_numero') and d.get('produit')
     }
-    existing_lots_by_num: Dict[Tuple[int, str], StockLot] = {}
+    existing_lots_by_num: dict[tuple[int, str], StockLot] = {}
     if lot_tuples:
         for l in StockLot.objects.filter(produit_id__in=produit_ids):
             existing_lots_by_num[(l.produit_id, l.lot)] = l
 
     # Groupement par (produit_id, lot_id) pour fusionner avant bulk_create
-    lignes_finales: Dict[Tuple[int, Optional[int]], LigneInventaire] = {}
+    lignes_finales: dict[tuple[int, int | None], LigneInventaire] = {}
 
     for index, data in enumerate(lignes_data):
         try:
@@ -132,7 +132,7 @@ def bulk_lignes_inventaire(
                 imported_count += result
 
         except Exception as e:
-            errors.append(f"Ligne {index}: {str(e)}")
+            errors.append(f"Ligne {index}: {e!s}")
 
     if lignes_finales:
         LigneInventaire.objects.bulk_create(lignes_finales.values())
@@ -146,12 +146,12 @@ def bulk_lignes_inventaire(
 
 def _process_bulk_line(
     index: int,
-    data: Dict[str, Any],
+    data: dict[str, Any],
     inventaire: Inventaire,
-    produits_map: Dict[int, Produit],
-    lots_map: Dict[int, StockLot],
-    existing_lots_by_num: Dict[Tuple[int, str], StockLot],
-    lignes_finales: Dict[Tuple[int, Optional[int]], LigneInventaire]
+    produits_map: dict[int, Produit],
+    lots_map: dict[int, StockLot],
+    existing_lots_by_num: dict[tuple[int, str], StockLot],
+    lignes_finales: dict[tuple[int, int | None], LigneInventaire]
 ) -> int:
     """
     Traite une ligne d'import bulk et retourne 1 si une ligne est créée/modifiée, 0 sinon.

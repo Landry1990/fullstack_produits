@@ -1,12 +1,12 @@
+from django.db import transaction
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from django.db import transaction
-from django.db.models import ProtectedError
 
-from ...models import Produit, AuditLog
 from ...audit_helpers import log_audit
 from ...cache_utils import SearchCache
+from ...models import AuditLog, Produit
+
 
 class ProduitBulkMixin:
     """Mixin pour les opérations en masse sur les produits."""

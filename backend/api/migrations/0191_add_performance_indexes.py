@@ -1,6 +1,7 @@
 # Generated migration for adding performance indexes
 from django.db import migrations, models
 
+
 class Migration(migrations.Migration):
     dependencies = [
         ('api', '0190_postecaisse_fond_de_caisse_alter_fournisseur_address_and_more'),
