@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Audit-related models: ActivityLog, AuditLog, MouvementCaisse, Ordonnancier, LigneOrdonnancier.
 """
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import User
 
 
 class ActivityLog(models.Model):

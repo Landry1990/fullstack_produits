@@ -1,11 +1,22 @@
-from django.test import TestCase
-from django.utils import timezone
-from api.models import Client, Produit, Facture, FactureProduit, StockLot, Commande, CommandeProduit, Fournisseur
 from datetime import timedelta
-from rest_framework.test import APIClient
-from rest_framework import status
 
 from django.contrib.auth.models import User
+from django.test import TestCase
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from api.models import (
+    Client,
+    Commande,
+    CommandeProduit,
+    Facture,
+    FactureProduit,
+    Fournisseur,
+    Produit,
+    StockLot,
+)
+
 
 class FefoAllocationTest(TestCase):
     def setUp(self):

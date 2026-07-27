@@ -1,10 +1,10 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from rest_framework.routers import DefaultRouter
 from api.urls import router
 
 print("=== Routes enregistrées dans le Router ===")
@@ -22,7 +22,7 @@ if stats_ug_present:
     for prefix, viewset, basename in router.registry:
         if prefix == 'stats-ug':
             print(f"\nViewSet trouvé: {viewset}")
-            print(f"Actions disponibles:")
+            print("Actions disponibles:")
             for attr in dir(viewset):
                 if hasattr(getattr(viewset, attr), 'mapping'):
                     print(f"  - {attr}")

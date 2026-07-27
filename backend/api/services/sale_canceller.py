@@ -4,16 +4,21 @@ annulation des promis, annulation des paiements.
 
 Extrait de SalesService.cancel_invoice pour lisibilité et maintenabilité.
 """
-from decimal import Decimal
+import logging
+
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
-from django.core.cache import cache
-import logging
 
 from ..models import (
-    Facture, FactureProduit, Caisse,
-    Produit, Promis, MouvementStock, DepotClient,
+    Caisse,
+    DepotClient,
+    Facture,
+    FactureProduit,
+    MouvementStock,
+    Produit,
+    Promis,
 )
 from .lot_allocation_service import LotAllocationService
 
@@ -37,7 +42,7 @@ class SaleCanceller:
 
         if was_validated:
             # 1. Restore lot allocations
-            allocations, product_ids_with_allocations = LotAllocationService.restore_allocations(facture)
+            _allocations, product_ids_with_allocations = LotAllocationService.restore_allocations(facture)
 
             # 2. Restore general stock for non-lot products
             old_items = list(FactureProduit.objects.filter(facture=facture).select_related('produit'))

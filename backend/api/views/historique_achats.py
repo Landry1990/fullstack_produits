@@ -1,15 +1,14 @@
+
+from django.db.models import Count, DecimalField, F, Sum, Value
+from django.db.models.functions import Coalesce, TruncDate
 from rest_framework import viewsets
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from ..models import Commande, CommandeProduit
-from django.db.models import Sum, Count, F, DecimalField, Value
-from django.db.models.functions import TruncDate, Coalesce
-from django.utils import timezone
-import datetime
-
-from rest_framework.pagination import PageNumberPagination
-
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ..models import Commande, CommandeProduit
+
 
 class HistoriqueAchatsPagination(PageNumberPagination):
     page_size = 50

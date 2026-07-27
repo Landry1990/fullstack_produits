@@ -1,11 +1,13 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models.communication import InternalMessage
 from django.contrib.auth.models import User
+
+from api.models.communication import InternalMessage
 
 # let's count messages and read_by
 total = InternalMessage.objects.count()

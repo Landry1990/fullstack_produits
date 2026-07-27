@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour le planning des opérateurs.
 """
-from rest_framework import serializers
 from django.contrib.auth.models import User
-from ..models.planning import ShiftConfig, ShiftSchedule, ShiftAssignment, LeaveRequest
+from rest_framework import serializers
+
+from ..models.planning import LeaveRequest, ShiftAssignment, ShiftConfig, ShiftSchedule
 from .mixins import UppercaseSerializerMixin
 
 

@@ -15,10 +15,11 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import django
+
 django.setup()
 
-from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -48,7 +49,7 @@ def ensure_emergency_admin():
         user.save()
         print(f"✅ Compte de secours '{username}' créé")
         print(f"⚠️  MOT DE PASSE PAR DÉFAUT: {default_password}")
-        print(f"⚠️  CHANGEZ IMMÉDIATEMENT avec: python scripts/reset_emergency_admin.py --password '...'")
+        print("⚠️  CHANGEZ IMMÉDIATEMENT avec: python scripts/reset_emergency_admin.py --password '...'")
     else:
         # Vérifier que c'est bien un superuser
         if not user.is_superuser:

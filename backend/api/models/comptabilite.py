@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
-from django.core.exceptions import ValidationError
-from decimal import Decimal
+
 
 class CompteComptable(models.Model):
     """
@@ -107,8 +108,8 @@ class EcritureComptable(models.Model):
     
     def _generer_numero_piece(self):
         """Génère un numéro de pièce unique selon le format OHADA: EX{année}-{journal}-{séquence}"""
-        from django.db.models import Max, Value, IntegerField
-        from django.db.models.functions import Cast, Substr, Length
+        from django.db.models import IntegerField, Max
+        from django.db.models.functions import Cast, Substr
         
         exercice_nom = self.exercice.nom.replace(' ', '').replace('.', '')[:6]  # EX2026
         journal_code = self.journal.code  # VT, AC, CA, BQ...
@@ -134,12 +135,11 @@ class EcritureComptable(models.Model):
     def clean(self):
         super().clean()
         # Validation supplémentaire au niveau modèle
-        if self.exercice and self.date:
-            if self.date < self.exercice.date_debut or self.date > self.exercice.date_fin:
-                raise ValidationError(
-                    f"La date de l'écriture ({self.date}) doit être comprise dans l'exercice "
-                    f"({self.exercice.date_debut} au {self.exercice.date_fin})."
-                )
+        if self.exercice and self.date and (self.date < self.exercice.date_debut or self.date > self.exercice.date_fin):
+            raise ValidationError(
+                f"La date de l'écriture ({self.date}) doit être comprise dans l'exercice "
+                f"({self.exercice.date_debut} au {self.exercice.date_fin})."
+            )
 
     def __str__(self):
         return f"{self.date} | {self.journal.code} | {self.reference} | {self.libelle}"

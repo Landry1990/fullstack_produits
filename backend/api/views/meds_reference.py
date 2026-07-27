@@ -1,7 +1,9 @@
-from rest_framework import viewsets, filters
+from rest_framework import filters, viewsets
+
+from ..centralized_configs import StandardResultsSetPagination
 from ..models import MedicamentReference
 from ..serializers import MedicamentReferenceSerializer
-from ..centralized_configs import StandardResultsSetPagination
+
 
 class MedicamentReferenceViewSet(viewsets.ReadOnlyModelViewSet):
     """

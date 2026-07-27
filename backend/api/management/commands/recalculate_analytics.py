@@ -1,10 +1,13 @@
+from decimal import Decimal
+
 from django.core.management.base import BaseCommand
-from django.db.models import Sum, Q
+from django.db.models import Q, Sum
 from django.utils import timezone
-from api.models import Produit, Facture
+
+from api.models import Facture, Produit
 from api.services.margin_service import MarginService
 from api.services.replenishment_service import get_replenishment_metrics
-from decimal import Decimal
+
 
 class Command(BaseCommand):
     help = 'Recalculate product analytics (Rotation, Margins)'
@@ -20,7 +23,7 @@ class Command(BaseCommand):
         )
         
         updated_produits = []
-        now = timezone.now()
+        timezone.now()
         count = 0
         
         for p in produits:

@@ -10,32 +10,32 @@ Ce module regroupe toutes les opérations complexes du ViewSet Inventaire:
 - validation: Validation d'inventaire
 """
 
-from .pdf import generate_ecarts_pdf, generate_etat_pdf, get_print_data
-from .csv_import import import_csv_inventaire
 from .bulk import bulk_delete_lignes_inventaire, bulk_lignes_inventaire
-from .merge import merge_inventaires, merge_duplicate_lines
-from .stats import get_inventaire_stats, audit_discrepancies
-from .validation import validate_inventaire
+from .csv_import import import_csv_inventaire
 from .listing_excel import generate_listing_excel
+from .merge import merge_duplicate_lines, merge_inventaires
+from .pdf import generate_ecarts_pdf, generate_etat_pdf, get_print_data
+from .stats import audit_discrepancies, get_inventaire_stats
+from .validation import validate_inventaire
 
 __all__ = [
-    # PDF
-    'generate_ecarts_pdf',
-    'generate_etat_pdf',
-    'get_print_data',
-    # Import CSV
-    'import_csv_inventaire',
+    'audit_discrepancies',
     # Bulk
     'bulk_delete_lignes_inventaire',
     'bulk_lignes_inventaire',
-    # Merge
-    'merge_inventaires',
-    'merge_duplicate_lines',
-    # Stats
-    'get_inventaire_stats',
-    'audit_discrepancies',
-    # Validation
-    'validate_inventaire',
+    # PDF
+    'generate_ecarts_pdf',
+    'generate_etat_pdf',
     # Listing Excel
     'generate_listing_excel',
+    # Stats
+    'get_inventaire_stats',
+    'get_print_data',
+    # Import CSV
+    'import_csv_inventaire',
+    'merge_duplicate_lines',
+    # Merge
+    'merge_inventaires',
+    # Validation
+    'validate_inventaire',
 ]

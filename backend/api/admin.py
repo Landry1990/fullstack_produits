@@ -1,21 +1,22 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
+
 from .models import (
-    Produit,
-    Rayon,
-    Fournisseur,
     Client,
     Commande,
-    Commande,
     CommandeProduit,
-    Substance,
     DrugInteraction,
-    Forme,
-    Groupe,
     FamilleRisque,
-    Profile
+    Forme,
+    Fournisseur,
+    Groupe,
+    Produit,
+    Profile,
+    Rayon,
+    Substance,
 )
+
 
 class CommandeProduitInline(admin.TabularInline):
     model = CommandeProduit

@@ -1,13 +1,12 @@
-from django.test import TestCase
-from django.urls import reverse
-from rest_framework.test import APIClient
-from rest_framework import status
-from api.models import Fournisseur, Commande, CommandeProduit, PaiementFournisseur
-from django.contrib.auth.models import User
-from decimal import Decimal
 
 from django.conf import settings
-from django.test import override_settings
+from django.test import TestCase, override_settings
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from api.models import Commande, CommandeProduit, Fournisseur, PaiementFournisseur
+
 
 @override_settings(
     DEBUG=True,
@@ -68,6 +67,7 @@ class DashboardOptimizationTest(TestCase):
 
     def test_suppliers_stats_queries(self):
         from django.test import RequestFactory
+
         from api.views.dashboard import DashboardViewSet
         
         factory = RequestFactory()

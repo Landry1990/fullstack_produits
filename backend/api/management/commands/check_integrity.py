@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Commande de vérification d'intégrité à exécuter au démarrage du serveur.
 Vérifie : connexion DB, migrations, espace disque, séquences auto-increment.
 """
-import os
 import shutil
 import sys
 from io import StringIO
@@ -167,7 +165,7 @@ class Command(BaseCommand):
                 if age_hours > 48:
                     warnings.append(f"Dernière sauvegarde il y a {age_hours:.0f}h")
                     self.stdout.write(self.style.WARNING(
-                        f"   ⚠ Dernière sauvegarde date de plus de 48h !"
+                        "   ⚠ Dernière sauvegarde date de plus de 48h !"
                     ))
             else:
                 warnings.append("Aucune sauvegarde trouvée")

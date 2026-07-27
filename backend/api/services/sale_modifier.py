@@ -4,18 +4,24 @@ application des modifications, ré-allocation des lots, recalcul des totaux.
 
 Extrait de SalesService.modify_sale pour lisibilité et maintenabilité.
 """
+import logging
 from decimal import Decimal
+
 from django.db import transaction
 from django.db.models import F, Sum
 from django.utils import timezone
-import logging
 
 from ..models import (
-    Facture, FactureProduit, FactureProduitAllocation, Caisse,
-    Produit, StockLot, MouvementStock,
+    Caisse,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    MouvementStock,
+    Produit,
+    StockLot,
 )
-from .promotion_service import PromotionService
 from .lot_allocation_service import LotAllocationService
+from .promotion_service import PromotionService
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +50,7 @@ class SaleModifier:
             raise ValueError("La liste des produits est requise.")
 
         # 1. Restore stock (temporary)
-        old_quantity_by_product, old_product_ids, old_product_ids_with_allocations = \
+        old_quantity_by_product, _old_product_ids, old_product_ids_with_allocations = \
             SaleModifier._restore_stock(facture)
 
         # 2. Apply changes to facture
@@ -87,7 +93,7 @@ class SaleModifier:
     @staticmethod
     def _restore_stock(facture):
         """Restaure temporairement le stock avant modification."""
-        allocations, product_ids_with_allocations = LotAllocationService.restore_allocations(facture)
+        _allocations, product_ids_with_allocations = LotAllocationService.restore_allocations(facture)
 
         old_items = FactureProduit.objects.filter(facture=facture)
         old_quantity_by_product = {}
@@ -129,9 +135,7 @@ class SaleModifier:
 
             if lots_allocated:
                 new_product_ids_with_allocations.add(produit_id)
-            elif produit and not produit.use_lot_management:
-                Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
-            elif produit and produit.use_lot_management:
+            elif produit and not produit.use_lot_management or produit and produit.use_lot_management:
                 Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
 
             # Sync FactureProduit fields from allocated lots
@@ -177,7 +181,7 @@ class SaleModifier:
 
         total_paye = Caisse.objects.filter(facture=facture, statut='completee').aggregate(
             total=Sum('montant')
-        )['total'] or Decimal('0')
+        )['total'] or Decimal(0)
 
         if total_paye > 0 or facture.status == Facture.Status.PAYEE:
             paiement_adj = Caisse.objects.create(

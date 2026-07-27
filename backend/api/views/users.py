@@ -1,25 +1,26 @@
-from rest_framework import viewsets, status, filters, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework import filters, status, viewsets
 from rest_framework.authtoken.models import Token
-from rest_framework.settings import api_settings
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
+
 
 class LoginRateThrottle(AnonRateThrottle):
     scope = 'login'
     THROTTLE_RATES = {'login': '10/min'}
 
 from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
-from ..models import Profile as UserProfile, Team, Client, AuditLog, UserDailySession
-from ..serializers import UserSerializer, ProfileSerializer as UserProfileSerializer, TeamSerializer
 from ..audit_helpers import log_audit
 from ..centralized_configs import BaseViewSetConfig, StandardResultsSetPagination
+from ..models import AuditLog, Team, UserDailySession
+from ..serializers import ProfileSerializer as UserProfileSerializer
+from ..serializers import TeamSerializer, UserSerializer
+
 
 def auto_close_old_sessions(user=None):
     """
@@ -188,7 +189,7 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
     def perform_update(self, serializer):
         try:
             user = serializer.save()
-        except Exception as e:
+        except Exception:
             raise
             
         log_audit(
@@ -392,8 +393,9 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
         Returns a summary of hours worked per user for a specific month/year.
         Params: month (1-12), year (e.g. 2024)
         """
-        from django.db.models import Sum, F, ExpressionWrapper, fields, Count
         import datetime
+
+        from django.db.models import ExpressionWrapper, F, Sum, fields
         
         month = request.query_params.get('month')
         year = request.query_params.get('year')

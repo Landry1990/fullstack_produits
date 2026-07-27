@@ -1,13 +1,17 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour la comptabilité (Comptes, Journaux, Ecritures).
 """
-from rest_framework import serializers
 from decimal import Decimal
+
 from django.utils import timezone
+from rest_framework import serializers
+
 from ..models import (
-    CompteComptable, JournalComptable, ExerciceComptable,
-    LigneEcriture, EcritureComptable,
+    CompteComptable,
+    EcritureComptable,
+    ExerciceComptable,
+    JournalComptable,
+    LigneEcriture,
 )
 
 

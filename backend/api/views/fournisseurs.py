@@ -1,17 +1,31 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
-from django.db.models import ProtectedError, Sum, F, DecimalField, OuterRef, Subquery
-from datetime import timedelta, date
+from datetime import date, timedelta
 
-from ..models import Fournisseur, Commande, PaiementFournisseur, CommandeProduit, Produit, AuditLog
-from ..serializers import FournisseurSerializer
-from ..pagination import StandardResultsSetPagination
+from django.db import transaction
+from django.db.models import DecimalField, F, OuterRef, ProtectedError, Subquery, Sum
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from ..audit_helpers import log_audit
+from ..models import (
+    AuditLog,
+    Commande,
+    CommandeProduit,
+    Fournisseur,
+    PaiementFournisseur,
+    Produit,
+)
+from ..pagination import StandardResultsSetPagination
+from ..serializers import FournisseurSerializer
+from ..services.supplier_finance import (
+    annotate_supplier_debt,
+    build_supplier_detailed_schedule,
+    build_supplier_schedule,
+    build_supplier_statement,
+)
 from ..sudo_utils import validate_sudo_mode
-from ..services.supplier_finance import annotate_supplier_debt, build_supplier_detailed_schedule, build_supplier_schedule, build_supplier_statement
+
 
 class FournisseurViewSet(viewsets.ModelViewSet):
     """API endpoint for fournisseurs."""
@@ -109,14 +123,14 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                 continue
             
             try:
-                selling_price = produit.selling_price or Decimal('0')
-                dernier_prix = item['dernier_prix_achat'] or Decimal('0')
+                selling_price = produit.selling_price or Decimal(0)
+                dernier_prix = item['dernier_prix_achat'] or Decimal(0)
                 marge = selling_price - dernier_prix
                 
                 if selling_price > 0:
                     marge_pourcent = (marge / selling_price) * 100
                 else:
-                    marge_pourcent = Decimal('0')
+                    marge_pourcent = Decimal(0)
                 
                 result.append({
                     'produit_id': produit.id,
@@ -204,10 +218,11 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         """
         Retourne des statistiques consolidées pour le tableau de bord fournisseurs.
         """
-        from decimal import Decimal
-        from django.db.models import Count, Sum, F, DecimalField
-        from django.utils import timezone
         import traceback
+        from decimal import Decimal
+
+        from django.db.models import F, Sum
+        from django.utils import timezone
         
         try:
             today = timezone.localtime(timezone.now()).date()
@@ -354,7 +369,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                     'status': 'success',
                     'message': f'{count} fournisseurs supprimés avec succès.'
                 })
-        except ProtectedError as e:
+        except ProtectedError:
             return Response({
                 'error': 'Impossible de supprimer certains fournisseurs',
                 'detail': 'Certains fournisseurs sont liés à des produits ou d\'autres enregistrements et ne peuvent pas être supprimés.'

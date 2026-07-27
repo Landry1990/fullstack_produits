@@ -1,13 +1,11 @@
 """
 Fonctions de fusion (merge) pour les inventaires.
 """
-from typing import Dict, Any
-from django.db import transaction
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
 
-from api.models import Inventaire, LigneInventaire, AuditLog
 from api.audit_helpers import log_audit
+from api.models import AuditLog, Inventaire, LigneInventaire
 
 
 def merge_inventaires(

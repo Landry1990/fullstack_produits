@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Import de données produits depuis Excel ou CSV.
 Usage: 
@@ -9,14 +8,16 @@ Usage:
 
 import csv
 import json
-from pathlib import Path
-from decimal import Decimal
 from datetime import datetime
-from django.utils import timezone
+from decimal import Decimal
+from pathlib import Path
+
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from django.conf import settings
-from api.models import Produit, Fournisseur, Forme, Groupe, Rayon
+
+from api.models import Forme, Fournisseur, Groupe, Produit
+
 try:
     import pandas as pd
     PANDAS_AVAILABLE = True

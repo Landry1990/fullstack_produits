@@ -1,20 +1,23 @@
 import os
-import django
 import sys
 from decimal import Decimal
+
+import django
 
 # Setup Django
 sys.path.append(r"c:\Projet Fullstack\fullstack_produits\backend")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
 
-from api.models import Facture, Caisse, CouponMonnaie
 from django.db import models
+
+from api.models import Caisse, CouponMonnaie, Facture
+
 
 def run():
     month = 3
     year = 2026
-    print(f"--- ANALYSE COMPLETE MARS 2026 ---")
+    print("--- ANALYSE COMPLETE MARS 2026 ---")
     
     # Filter factures like the backend does
     factures = Facture.objects.filter(
@@ -28,7 +31,8 @@ def run():
     # Wait, billing.py had Status.ANNULEE.
     # In rapport_view.py it uses is_cancelled=False.
     # Let me check if Facture has is_cancelled.
-    part_client = factures.aggregate(total=models.Sum('part_client'))['total'] or Decimal('0')
+    ca_ttc = factures.aggregate(total=models.Sum('total_ttc'))['total'] or Decimal(0)
+    part_client = factures.aggregate(total=models.Sum('part_client'))['total'] or Decimal(0)
     part_assurance = ca_ttc - part_client
     
     paiements_tous = Caisse.objects.filter(
@@ -37,15 +41,15 @@ def run():
         statut='completee'
     )
     
-    cash_momo_etc = paiements_tous.filter(mode_paiement__in=['especes', 'om', 'momo', 'carte', 'virement', 'cheque', 'depot']).aggregate(total=models.Sum('montant'))['total'] or Decimal('0')
-    en_compte = paiements_tous.filter(mode_paiement='en_compte').aggregate(total=models.Sum('montant'))['total'] or Decimal('0')
-    coupons_caisse = paiements_tous.filter(mode_paiement='coupon').aggregate(total=models.Sum('montant'))['total'] or Decimal('0')
+    cash_momo_etc = paiements_tous.filter(mode_paiement__in=['especes', 'om', 'momo', 'carte', 'virement', 'cheque', 'depot']).aggregate(total=models.Sum('montant'))['total'] or Decimal(0)
+    en_compte = paiements_tous.filter(mode_paiement='en_compte').aggregate(total=models.Sum('montant'))['total'] or Decimal(0)
+    coupons_caisse = paiements_tous.filter(mode_paiement='coupon').aggregate(total=models.Sum('montant'))['total'] or Decimal(0)
     
     coupons_model = CouponMonnaie.objects.filter(
         date_utilisation__month=month,
         date_utilisation__year=year,
         status='UTILISE'
-    ).aggregate(total=models.Sum('montant'))['total'] or Decimal('0')
+    ).aggregate(total=models.Sum('montant'))['total'] or Decimal(0)
 
     print(f"1. CA TTC TOTAL: {ca_ttc}")
     print(f"2. PART CLIENT (THEORIQUE): {part_client}")
@@ -58,7 +62,7 @@ def run():
     somme = cash_momo_etc + en_compte + coupons_caisse + part_assurance
     gap = ca_ttc - somme
     
-    print(f"\n--- BALANCE ---")
+    print("\n--- BALANCE ---")
     print(f"SOMME DES COMPOSANTS: {somme}")
     print(f"GAP (CA - SOMME): {gap}")
     

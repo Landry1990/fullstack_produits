@@ -8,9 +8,11 @@ Usage:
     python manage.py normalize_dci --dry-run
 """
 import re
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from api.models import Substance, Produit
+
+from api.models import Produit, Substance
 
 
 def extract_base_name(nom: str) -> str:

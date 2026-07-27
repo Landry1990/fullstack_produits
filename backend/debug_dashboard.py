@@ -1,17 +1,18 @@
 
 import os
+
 import django
+from django.contrib.auth.models import User
 from django.db import connection, reset_queries
 from django.test import RequestFactory
-from django.contrib.auth.models import User
-from decimal import Decimal
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pharma_stock.settings')
 django.setup()
 
-from api.models import Fournisseur, Commande, CommandeProduit, PaiementFournisseur
+from api.models import Commande, CommandeProduit, Fournisseur, PaiementFournisseur
 from api.views.dashboard import DashboardViewSet
+
 
 def debug_dashboard_queries():
     # Setup data
@@ -20,7 +21,7 @@ def debug_dashboard_queries():
     
     user = User.objects.create_superuser('admin', 'admin@test.com', 'password')
     f1 = Fournisseur.objects.create(name="F1", email="f1@test.com", phone="123456789")
-    f2 = Fournisseur.objects.create(name="F2", email="f2@test.com", phone="987654321")
+    Fournisseur.objects.create(name="F2", email="f2@test.com", phone="987654321")
 
     c1 = Commande.objects.create(fournisseur=f1, status='CLOT')
     CommandeProduit.objects.create(commande=c1, price=10, price_cost=10, quantity=10)

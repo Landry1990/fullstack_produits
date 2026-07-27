@@ -1,10 +1,12 @@
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.utils import timezone
-from datetime import timedelta
-from api.models import AuditLog, Produit
+
+from api.models import AuditLog
+
 from .factories import TestDataFactory
+
 
 class RecentFixesIntegrationTest(APITestCase):
     def setUp(self):

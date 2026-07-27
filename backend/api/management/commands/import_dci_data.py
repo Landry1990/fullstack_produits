@@ -8,10 +8,10 @@ Usage:
     python manage.py import_dci_data --input dci_data.json --link-produits
 """
 import json
+
 from django.core.management.base import BaseCommand
-from django.db import transaction
 from django.core.serializers import deserialize
-from api.models import Produit
+from django.db import transaction
 
 
 class Command(BaseCommand):

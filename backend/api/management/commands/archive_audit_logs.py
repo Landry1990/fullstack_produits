@@ -6,9 +6,11 @@ Usage:
     python manage.py archive_audit_logs --days 30 # Archive les entrées > 30 jours
     python manage.py archive_audit_logs --dry-run # Affiche le compte sans supprimer
 """
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
+
 from api.models import AuditLog
 
 

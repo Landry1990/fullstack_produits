@@ -6,11 +6,13 @@ except ImportError:
     _mark = types.SimpleNamespace(django_db=_noop, parametrize=_noop)
     pytest = types.SimpleNamespace(mark=_mark, fixture=_noop)  # type: ignore
 import json
+
 from django.urls import reverse
-from rest_framework.test import APIClient
-from api.models.products import Produit
 from django.utils import timezone
-from datetime import timedelta, time, datetime
+from rest_framework.test import APIClient
+
+from api.models.products import Produit
+
 
 @pytest.mark.django_db
 class TestRapportDynamiqueRobustness:

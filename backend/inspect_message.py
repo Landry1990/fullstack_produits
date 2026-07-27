@@ -1,14 +1,15 @@
-import os
-import django
 import json
+import os
+
+import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
+from rest_framework.test import APIRequestFactory
+
 from api.models.communication import InternalMessage
 from api.serializers import InternalMessageSerializer
-from rest_framework.request import Request
-from rest_framework.test import APIRequestFactory
 
 factory = APIRequestFactory()
 msg = InternalMessage.objects.first()

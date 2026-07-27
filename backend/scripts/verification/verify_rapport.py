@@ -1,16 +1,19 @@
 import os
+
 import django
 
 # Configuration Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture, Caisse, FactureProduitAllocation
-from django.db.models import Sum, F, Q, DecimalField
-from django.db.models.functions import Coalesce
-from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
+
+from django.db.models import DecimalField, F, Q, Sum
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+
+from api.models import Caisse, Facture, FactureProduitAllocation
 
 # Paramètres du rapport (décembre 2025)
 mois = '2025-12'

@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour les promis, ordonnanciers et coupons.
 """
 from rest_framework import serializers
-from ..models import Promis, LigneOrdonnancier, Ordonnancier, CouponMonnaie
+
+from ..models import CouponMonnaie, LigneOrdonnancier, Ordonnancier, Promis
 
 
 class PromisSerializer(serializers.ModelSerializer):

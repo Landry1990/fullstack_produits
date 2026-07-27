@@ -1,9 +1,11 @@
 import json
-import requests
 import logging
+
+import requests
 from django.conf import settings
-from .models import WhatsAppLog, PharmacySettings
 from django.utils import timezone
+
+from .models import PharmacySettings, WhatsAppLog
 from .retry_utils import retry_with_backoff
 
 logger = logging.getLogger(__name__)
@@ -111,17 +113,17 @@ class WhatsAppService:
             log_entry.save()
             return True, "Ticket envoyé avec succès"
         except requests.exceptions.RequestException as e:
-            logger.error(f"Erreur WhatsApp (Invoice) après retries: {str(e)}")
+            logger.error(f"Erreur WhatsApp (Invoice) après retries: {e!s}")
             log_entry.status = WhatsAppLog.Status.FAILED
-            log_entry.provider_response = f"Échec après retries: {str(e)}"
+            log_entry.provider_response = f"Échec après retries: {e!s}"
             log_entry.save()
-            return False, f"Erreur: {str(e)}"
+            return False, f"Erreur: {e!s}"
         except Exception as e:
-            logger.error(f"Erreur WhatsApp (Invoice): {str(e)}")
+            logger.error(f"Erreur WhatsApp (Invoice): {e!s}")
             log_entry.status = WhatsAppLog.Status.FAILED
             log_entry.provider_response = str(e)
             log_entry.save()
-            return False, f"Erreur: {str(e)}"
+            return False, f"Erreur: {e!s}"
 
     @staticmethod
     def send_text_message(recipient_number, message, recipient_name="", msg_type=WhatsAppLog.Type.MANUEL):
@@ -182,13 +184,13 @@ class WhatsAppService:
             log_entry.save()
             return True
         except requests.exceptions.RequestException as e:
-            logger.error(f"Erreur WhatsApp (Text) après retries: {str(e)}")
+            logger.error(f"Erreur WhatsApp (Text) après retries: {e!s}")
             log_entry.status = WhatsAppLog.Status.FAILED
-            log_entry.provider_response = f"Échec après retries: {str(e)}"
+            log_entry.provider_response = f"Échec après retries: {e!s}"
             log_entry.save()
             return False
         except Exception as e:
-            logger.error(f"Erreur WhatsApp (Text): {str(e)}")
+            logger.error(f"Erreur WhatsApp (Text): {e!s}")
             log_entry.status = WhatsAppLog.Status.FAILED
             log_entry.provider_response = str(e)
             log_entry.save()

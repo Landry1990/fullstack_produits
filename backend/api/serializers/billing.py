@@ -1,13 +1,17 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour la facturation, caisse et paiements.
 """
-from rest_framework import serializers
-from django.db.models import Sum
 from decimal import Decimal
+
+from django.db.models import Sum
+from rest_framework import serializers
+
 from ..models import (
-    FactureProduitAllocation, FactureProduit, Caisse, ClotureCaisse,
+    Caisse,
+    ClotureCaisse,
     Facture,
+    FactureProduit,
+    FactureProduitAllocation,
 )
 from .clients import AyantDroitSerializer
 

@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 Product-related models: Rayon, Forme, Groupe, FamilleRisque, Substance, DrugInteraction, Produit.
 """
-from django.db import models
-from django.contrib.postgres.indexes import GinIndex  # Recherche textuelle performante
-from django.utils import timezone
-from django.contrib.auth.models import User
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from django.contrib.auth.models import User
+from django.contrib.postgres.indexes import GinIndex  # Recherche textuelle performante
+from django.db import models
+from django.utils import timezone
+
 if TYPE_CHECKING:
-    from .stock import StockLot, StockAdjustment, MouvementStock
+    from .stock import MouvementStock, StockAdjustment, StockLot
 
 
 class Rayon(models.Model):

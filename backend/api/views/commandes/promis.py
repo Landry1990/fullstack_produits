@@ -1,19 +1,20 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db import transaction, models
-from django.db.models import F
-from django_filters.rest_framework import DjangoFilterBackend
-from django.utils import timezone
-from django.http import HttpResponse
 import io
-
-from ...models import Promis, MouvementStock, Produit
-from ...serializers import PromisSerializer
-from ...search_mixins import MultiTermSearchMixin
-from ...pagination import StandardResultsSetPagination
 import logging
+
+from django.db import models, transaction
+from django.db.models import F
+from django.http import HttpResponse
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ...models import MouvementStock, Produit, Promis
+from ...pagination import StandardResultsSetPagination
+from ...search_mixins import MultiTermSearchMixin
+from ...serializers import PromisSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -416,8 +417,14 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         # Génération du PDF (Ticket 80mm)
         from reportlab.lib import colors
         from reportlab.lib.pagesizes import mm
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.platypus import (
+            Paragraph,
+            SimpleDocTemplate,
+            Spacer,
+            Table,
+            TableStyle,
+        )
         
         # Dimensions 80mm
         ticket_width = 80 * mm

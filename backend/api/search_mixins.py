@@ -1,5 +1,6 @@
 from django.db.models import Q
 
+
 def apply_multiterm_search(queryset, search_query, search_fields):
     """
     Applique une recherche multi-termes sur un queryset.
@@ -31,7 +32,6 @@ def apply_multiterm_search(queryset, search_query, search_fields):
             return queryset.filter(barcode_query)
 
     terms = search_query.split()
-    is_single_term = len(terms) == 1
     
     for i, term in enumerate(terms):
         # Chaque terme doit matcher au moins un des champs (OR entre champs)

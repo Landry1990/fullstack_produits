@@ -5,6 +5,7 @@ Isolé de finance.py pour alléger la lecture du mixin.
 from io import BytesIO
 
 from django.http import HttpResponse
+
 from api.security_utils import build_safe_content_disposition
 
 
@@ -19,11 +20,19 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
     from reportlab.lib.styles import ParagraphStyle, PropertySet
     from reportlab.lib.units import mm
     from reportlab.platypus import (
-        Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
     )
+
     from api.pdf_utils import (
-        PharmaColors, draw_pharma_footer, draw_pharma_header,
-        format_currency, get_pharma_styles,
+        PharmaColors,
+        draw_pharma_footer,
+        draw_pharma_header,
+        format_currency,
+        get_pharma_styles,
     )
 
     buffer = BytesIO()

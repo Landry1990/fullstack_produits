@@ -1,6 +1,7 @@
 
 import os
 import sys
+
 import django
 from django.utils import timezone
 
@@ -10,9 +11,11 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from django.contrib.auth.models import User
-from api.models import Produit, Fournisseur, StockLot, MouvementStock, StockAdjustment
 from rest_framework.test import APIRequestFactory
+
+from api.models import Fournisseur, MouvementStock, Produit, StockAdjustment, StockLot
 from api.views.stocks import StockLotViewSet
+
 
 def verify_sudo_perimes():
     print("--- Verification du Mode Sudo pour Sortie Périmés ---")

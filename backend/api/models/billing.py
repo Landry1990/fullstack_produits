@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 Billing-related models: Facture, FactureProduit, Caisse, etc.
 """
-from django.db import models
-from django.utils import timezone
-from django.contrib.auth.models import User
-from django.db.models import Sum, F, DecimalField
-from django.db.models.signals import pre_save, post_save, post_delete
-from django.contrib.postgres.indexes import GinIndex
-from django.dispatch import receiver
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING
+
+from django.contrib.auth.models import User
+from django.contrib.postgres.indexes import GinIndex
+from django.db import models
+from django.db.models import DecimalField, F, Sum
+from django.db.models.signals import post_delete, post_save, pre_save
+from django.dispatch import receiver
+from django.utils import timezone
 
 
 class PosteCaisse(models.Model):
@@ -212,7 +212,7 @@ class Facture(models.Model):
     
     def calculate_totals(self, save=True):
         """Calcule les totaux HT, TVA et TTC avec une seule requête d'agrégation (haute performance)."""
-        from django.db.models import Sum, F, DecimalField, ExpressionWrapper
+        from django.db.models import ExpressionWrapper
         
         # Agrégation SQL de base pour les totaux bruts des lignes
         # On calcule le TTC de chaque ligne directement en SQL : quantite * (prix_vente - remise_ligne)
@@ -240,7 +240,7 @@ class Facture(models.Model):
                 tva_taux = ligne['tva']
                 if tva_taux > 0:
                     # Utilisation de l'arrondi à l'entier pour le HT en FCFA
-                    ht = (ttc_ligne / (1 + tva_taux / 100)).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+                    ht = (ttc_ligne / (1 + tva_taux / 100)).quantize(Decimal(1), rounding=ROUND_HALF_UP)
                     total_ht += ht
                     total_tva += (ttc_ligne - ht)
                 else:
@@ -249,12 +249,12 @@ class Facture(models.Model):
         # Application de la remise globale au prorata
         remise_globale = Decimal(str(self.remise))
         # Arrondi du TTC net à l'entier pour le FCFA (pas de décimales)
-        total_ttc_net = (total_ttc_brut - remise_globale).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+        total_ttc_net = (total_ttc_brut - remise_globale).quantize(Decimal(1), rounding=ROUND_HALF_UP)
 
         if total_ttc_brut > 0:
             ratio = total_ttc_net / total_ttc_brut
             # Arrondi du HT au prorata à l'entier
-            self.total_ht = (total_ht * ratio).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            self.total_ht = (total_ht * ratio).quantize(Decimal(1), rounding=ROUND_HALF_UP)
             # La TVA est la différence pour garantir HT + TVA = TTC
             self.total_tva = total_ttc_net - self.total_ht
         else:
@@ -266,7 +266,7 @@ class Facture(models.Model):
         # Tiers Payant
         if self.client and self.client.taux_couverture > 0:
             taux_client = Decimal('100.00') - self.client.taux_couverture
-            self.part_client = (self.total_ttc * max(taux_client, Decimal('0')) / Decimal('100.00')).quantize(Decimal('0.01'))
+            self.part_client = (self.total_ttc * max(taux_client, Decimal(0)) / Decimal('100.00')).quantize(Decimal('0.01'))
         else:
             self.part_client = self.total_ttc
 
@@ -288,7 +288,7 @@ class Facture(models.Model):
             
             if taux > 0:
                 # Arrondi à l'entier pour le FCFA
-                ht_ligne = (total_ttc_ligne / (1 + taux / Decimal('100.00'))).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+                ht_ligne = (total_ttc_ligne / (1 + taux / Decimal('100.00'))).quantize(Decimal(1), rounding=ROUND_HALF_UP)
                 tva_ligne = total_ttc_ligne - ht_ligne
             else:
                 ht_ligne = total_ttc_ligne
@@ -303,9 +303,9 @@ class Facture(models.Model):
             total_ttc_net = total_ttc_brut - self.remise
             ratio = total_ttc_net / total_ttc_brut
             
-            for taux in analysis:
-                analysis[taux]['montant_tva'] = (analysis[taux]['montant_tva'] * ratio).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
-                analysis[taux]['base_ht'] = (analysis[taux]['base_ht'] * ratio).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            for taux, data in analysis.items():
+                data['montant_tva'] = (data['montant_tva'] * ratio).quantize(Decimal(1), rounding=ROUND_HALF_UP)
+                data['base_ht'] = (data['base_ht'] * ratio).quantize(Decimal(1), rounding=ROUND_HALF_UP)
 
         return analysis
 
@@ -323,9 +323,11 @@ class Facture(models.Model):
         Returns:
             Tuple (facture, None) ou (None, ConcurrentModificationError)
         """
-        from django.db import transaction
-        from ..optimistic_locking import ConcurrentModificationError
         import time
+
+        from django.db import transaction
+
+        from ..optimistic_locking import ConcurrentModificationError
         
         for attempt in range(max_retries):
             try:

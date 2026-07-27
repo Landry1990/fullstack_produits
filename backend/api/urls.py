@@ -1,8 +1,9 @@
 from django.http import JsonResponse
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import include, path
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
+from rest_framework.routers import DefaultRouter
+
 
 # Health check endpoint for Docker monitoring
 @api_view(['GET'])
@@ -14,9 +15,10 @@ def health_check(request):
     Retourne 200 si tout est OK, 503 si un composant critique est down.
     Accessible sans authentification pour le healthcheck Docker et le frontend.
     """
-    from django.db import connection
-    from django.core.cache import cache
     import shutil
+
+    from django.core.cache import cache
+    from django.db import connection
 
     checks = {}
     status_code = 200
@@ -46,7 +48,7 @@ def health_check(request):
 
     # 3. Espace disque (alerte si < 1GB)
     try:
-        total, used, free = shutil.disk_usage('.')
+        total, _used, free = shutil.disk_usage('.')
         free_gb = free / (1024 ** 3)
         disk_status = 'ok' if free_gb > 1.0 else 'warning'
         if disk_status == 'warning':
@@ -67,58 +69,120 @@ def health_check(request):
     }
     return JsonResponse(response_data, status=status_code)
 
+from .ordonnancier_view import OrdonnancierViewSet
 from .views import (
-    ProduitViewSet, CategorieViewSet, FournisseurViewSet, ClientViewSet,
-    CommandeViewSet, CommandeProduitViewSet, FactureViewSet, FactureProduitViewSet, CaisseViewSet,
-    DashboardViewSet, StatistiquesViewSet, AyantDroitViewSet, StockLotViewSet, CreanceViewSet,
-    MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet,
-    RelationTransformationViewSet, HistoriqueTransformationViewSet,
-    InvoiceConfigurationView, ClotureCaisseViewSet, StockAdjustmentViewSet,
-    generer_suggestions_commande, HistoriqueVentesViewSet, HistoriqueAchatsViewSet,
-    StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView, StockAnalysisShortageView,
+    AuditLogViewSet,
+    AvoirViewSet,
+    AyantDroitViewSet,
     CadencierViewSet,
-    PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet, WhatsAppTestView,
-    TelegramTestView, TelegramGetChatIdView, TelegramRapportFlashView, TelegramRapportFlashDateView, TelegramRapportInventaireView, TelegramRapportMensuelView,
-    AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken, TeamViewSet,
-    CategoriesListView, CategoriesDetailView, PromisViewSet,
-    PromotionViewSet, TVAViewSet, UserDailySessionViewSet,
-    DepotClientViewSet, PosteCaisseViewSet, PosteVenteViewSet, SessionCaisseViewSet, OrderScheduleViewSet
+    CaisseViewSet,
+    CategoriesDetailView,
+    CategoriesListView,
+    CategorieViewSet,
+    ClientViewSet,
+    ClotureCaisseViewSet,
+    CommandeProduitViewSet,
+    CommandeViewSet,
+    ConfigurationOptionViewSet,
+    CreanceViewSet,
+    CustomAuthToken,
+    DashboardViewSet,
+    DepotClientViewSet,
+    FactureProduitViewSet,
+    FactureViewSet,
+    FournisseurViewSet,
+    HistoriqueAchatsViewSet,
+    HistoriqueTransformationViewSet,
+    HistoriqueVentesViewSet,
+    InventaireViewSet,
+    InvoiceConfigurationView,
+    LigneAvoirViewSet,
+    LigneInventaireViewSet,
+    LoyaltySettingViewSet,
+    MouvementCaisseViewSet,
+    OrderScheduleViewSet,
+    PharmacySettingsView,
+    PosteCaisseViewSet,
+    PosteVenteViewSet,
+    ProductImportView,
+    ProduitViewSet,
+    PromisViewSet,
+    PromotionViewSet,
+    RelationTransformationViewSet,
+    SessionCaisseViewSet,
+    StatistiquesViewSet,
+    StatsUGViewSet,
+    StockAdjustmentViewSet,
+    StockAnalysisOverstockView,
+    StockAnalysisShortageView,
+    StockAnalysisUnsoldView,
+    StockLotViewSet,
+    TeamViewSet,
+    TelegramGetChatIdView,
+    TelegramRapportFlashDateView,
+    TelegramRapportFlashView,
+    TelegramRapportInventaireView,
+    TelegramRapportMensuelView,
+    TelegramTestView,
+    TVAViewSet,
+    UserDailySessionViewSet,
+    UserViewSet,
+    WhatsAppTestView,
+    generer_suggestions_commande,
+)
+from .views.auth import verify_password
+from .views.backup_views import (
+    BackupListView,
+    CreateBackupView,
+    DeleteBackupView,
+    RestoreBackupView,
+)
+from .views.code_backup import CodeBackupViewSet
+from .views.commandes.export import ExportCommandePreviewView, ExportCommandeView
+from .views.communication import (
+    InternalMessageViewSet,
+    MessageTemplateViewSet,
+    SmsTemplateViewSet,
+    SmsViewSet,
+    TelegramLogViewSet,
+    WhatsAppLogViewSet,
 )
 from .views.comptabilite import (
-    CompteComptableViewSet, JournalComptableViewSet, EcritureComptableViewSet, ExerciceComptableViewSet
+    CompteComptableViewSet,
+    EcritureComptableViewSet,
+    ExerciceComptableViewSet,
+    JournalComptableViewSet,
 )
-from .views.formes import FormeViewSet
-from .views.paiements import PaiementFournisseurViewSet
-from .views.coupons import CouponMonnaieViewSet
-from .views.groupes import GroupeViewSet
-from .views.substances import SubstanceViewSet
-from .views.auth import verify_password
-from .views.etat_inventaire import EtatInventairePDFView
-from .views.rapports import RapportViewSet
-from .ordonnancier_view import OrdonnancierViewSet
-from .views.communication import SmsViewSet, SmsTemplateViewSet, WhatsAppLogViewSet, TelegramLogViewSet, InternalMessageViewSet, MessageTemplateViewSet
-from .views.finance_stats import FinanceStatsViewSet
-from .views.objectifs import ObjectifViewSet
 from .views.configuration_objectifs import ConfigurationObjectifsViewSet
-from .views.temporal_analysis import TemporalAnalysisViewSet
-from .views.purge import PurgeViewSet
-from .views.system_admin import SystemAdminViewSet
-from .views.code_backup import CodeBackupViewSet
-from .views.stocks.ruptures import RuptureFournisseurViewSet
-from .views.omnisearch import GlobalSearchView
-from .views.stocks.reappro_history import ReapproSessionViewSet
-from .views.feedback import FeedbackListView, FeedbackDetailView
-from .views.version import app_version
 from .views.corbeille import CorbeilleViewSet
-from .views.licence import LicenceStatusView, LicenceNotificationsView
+from .views.coupons import CouponMonnaieViewSet
+from .views.dci_admin import DCIAdminViewSet
+from .views.debug_score import DebugStockScoreView
+from .views.etat_inventaire import EtatInventairePDFView
+from .views.feedback import FeedbackDetailView, FeedbackListView
+from .views.finance_stats import FinanceStatsViewSet
+from .views.formes import FormeViewSet
+from .views.groupes import GroupeViewSet
+from .views.interactions import DrugInteractionViewSet
+from .views.licence import LicenceNotificationsView, LicenceStatusView
 from .views.margin_views import MarginViewSet
 from .views.meds_reference import MedicamentReferenceViewSet
-from .views.dci_admin import DCIAdminViewSet
-from .views.interactions import DrugInteractionViewSet
-from .views.debug_score import DebugStockScoreView
-from .views.commandes.export import ExportCommandeView, ExportCommandePreviewView
-from .views.backup_views import BackupListView, CreateBackupView, RestoreBackupView, DeleteBackupView
-from .views.planning import ShiftConfigViewSet, ShiftScheduleViewSet, LeaveRequestViewSet
+from .views.objectifs import ObjectifViewSet
+from .views.omnisearch import GlobalSearchView
+from .views.paiements import PaiementFournisseurViewSet
+from .views.planning import (
+    LeaveRequestViewSet,
+    ShiftConfigViewSet,
+    ShiftScheduleViewSet,
+)
+from .views.purge import PurgeViewSet
+from .views.rapports import RapportViewSet
+from .views.stocks.reappro_history import ReapproSessionViewSet
+from .views.stocks.ruptures import RuptureFournisseurViewSet
+from .views.substances import SubstanceViewSet
+from .views.system_admin import SystemAdminViewSet
+from .views.temporal_analysis import TemporalAnalysisViewSet
+from .views.version import app_version
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()

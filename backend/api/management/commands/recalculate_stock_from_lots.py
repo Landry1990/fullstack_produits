@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand
-from api.models import Produit
 from django.db.models import Sum
+
+from api.models import Produit
+
 
 class Command(BaseCommand):
     help = 'Recalculate product stock based on sum of lots'

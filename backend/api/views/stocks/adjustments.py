@@ -1,20 +1,20 @@
-from rest_framework import viewsets, status, filters, permissions
+import io
+
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
+from django.db.models.functions import Abs, Coalesce
+from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
+from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import F, Sum, DecimalField, Count, Value, ExpressionWrapper, Q
-from django.db.models.functions import Coalesce, Abs
-from django_filters.rest_framework import DjangoFilterBackend
-import io
-from django.http import HttpResponse
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment
-from openpyxl.utils import get_column_letter
 
 from ...models import StockAdjustment
-from ...serializers import StockAdjustmentSerializer
-from ...search_mixins import MultiTermSearchMixin
 from ...pagination import StandardResultsSetPagination
+from ...search_mixins import MultiTermSearchMixin
+from ...serializers import StockAdjustmentSerializer
 
 
 class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet):
@@ -69,8 +69,9 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
             )
         )
 
-        from ...models import PharmacySettings
         from django.utils import timezone as tz
+
+        from ...models import PharmacySettings
 
         wb = Workbook()
         sheet = wb.active

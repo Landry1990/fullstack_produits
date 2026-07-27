@@ -1,0 +1,22 @@
+target-version = "py311"
+line-length = 200
+
+[lint]
+ignore = [
+    "RUF012",  # mutable-class-default — standard Django/DRF pattern
+    "DTZ001", "DTZ005", "DTZ006", "DTZ007", "DTZ011",  # timezone — USE_TZ=False is intentional
+    "BLE001",  # blind-except — standard Django API error handling
+    "S110",    # try-except-pass — common in Django optional features
+    "E722",    # bare-except — legacy code, low risk
+    "G201",    # logging-exc-info — style preference
+    "TRY002",  # raise-vanilla-class — refactoring risk too high
+    "TRY401",  # verbose-log-message — style preference
+    "TRY203",  # useless-try-except — harmless
+    "PLW1510", # subprocess-run-without-check — intentional in backup scripts
+    "DTZ003", "DTZ004",  # utcnow/utcfromtimestamp — intentional in licence utils
+]
+
+[lint.per-file-ignores]
+"*/migrations/*" = ["E", "F", "W", "I", "UP", "RUF"]
+"my_env01/*" = ["E", "F", "W", "I", "UP", "RUF", "S", "BLE", "DTZ", "SIM", "PLR", "TRY", "FURB", "PIE", "C4", "B", "N", "G", "PERF"]
+"*/__init__.py" = ["F401"]  # re-exports in barrel files

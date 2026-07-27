@@ -1,8 +1,10 @@
-from rest_framework.views import exception_handler
-from rest_framework.response import Response
-from rest_framework import status
-from django.db.models import ProtectedError
 import re
+
+from django.db.models import ProtectedError
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import exception_handler
+
 
 def custom_exception_handler(exc, context):
     # Call REST framework's default exception handler first,
@@ -10,8 +12,7 @@ def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
     # If an unexpected exception occurs (like ProtectedError), response will be None.
-    if response is None:
-        if isinstance(exc, ProtectedError):
+    if response is None and isinstance(exc, ProtectedError):
             # Extract models from ProtectedError if possible for a better message
             # The message looks like: ("Cannot delete some instances of model 'Fournisseur' because they are referenced through protected foreign keys: 'Commande.fournisseur', 'StockLot.fournisseur'.", ...)
             msg = str(exc.args[0]) if exc.args else "Cet élément ne peut pas être supprimé car il est utilisé ailleurs dans le système."

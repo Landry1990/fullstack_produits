@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Stock-related models: StockLot, LotSequence, StockAdjustment, MouvementStock.
 """
-from django.db import models
-from django.utils import timezone
-from django.core.cache import cache
 from django.contrib.auth.models import User
-from django.db.models.signals import pre_save, post_save, post_delete
+from django.core.cache import cache
+from django.db import models
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 
 class LotSequence(models.Model):
@@ -226,11 +225,6 @@ class StockAdjustment(models.Model):
     )
 
     
-    reappro_session = models.ForeignKey(
-        'ReapproSession', on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='adjustments',
-        help_text="Session de réapprovisionnement associée (si applicable)"
-    )
 
     
     quantity_before = models.IntegerField(help_text="Stock Rayon avant ajustement")
@@ -358,6 +352,7 @@ def sync_product_stock_on_lot_save(sender, instance, created, **kwargs):
     """
     if instance.produit and instance.produit.use_lot_management:
         from django.db.models import Sum
+
         from .products import Produit
         
         results = instance.produit.stock_lots.aggregate(
@@ -381,6 +376,7 @@ def sync_product_stock_on_lot_delete(sender, instance, **kwargs):
     """Synchronise le stock du produit quand un lot est supprimé."""
     if instance.produit and instance.produit.use_lot_management:
         from django.db.models import Sum
+
         from .products import Produit
         
         results = instance.produit.stock_lots.aggregate(

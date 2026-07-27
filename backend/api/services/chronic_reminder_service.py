@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
-from datetime import timedelta
-from django.utils import timezone
-from django.db.models import Q
-from ..models import FactureProduit, WhatsAppLog, PharmacySettings
-from ..whatsapp_service import WhatsAppService
 import logging
+from datetime import timedelta
+
+from django.db.models import Q
+from django.utils import timezone
+
+from ..models import FactureProduit, PharmacySettings, WhatsAppLog
+from ..whatsapp_service import WhatsAppService
 
 logger = logging.getLogger(__name__)
 

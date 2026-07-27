@@ -2,15 +2,16 @@
 Endpoints admin pour la gestion DCI : import, matching, liaison manuelle.
 """
 import os
-import tempfile
 import re
+import tempfile
+
 from django.db.models import Q
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
-from ..models import Produit, Substance, MedicamentReference
-from ..serializers import ProduitSerializer
+
+from ..models import MedicamentReference, Produit, Substance
 
 
 class DCIAdminViewSet(viewsets.ViewSet):
@@ -68,7 +69,7 @@ class DCIAdminViewSet(viewsets.ViewSet):
                     continue
                 parts = line.split('\t')
                 if len(parts) >= 2:
-                    code = parts[0].strip()
+                    parts[0].strip()
                     nom = parts[1].strip()
                     if nom:
                         _, was_created = Substance.objects.get_or_create(
@@ -91,8 +92,9 @@ class DCIAdminViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
     def auto_match(self, request):
         """Lance le matching automatique produit ↔ substance et retourne les résultats."""
-        from django.core.management import call_command
         from io import StringIO
+
+        from django.core.management import call_command
 
         out = StringIO()
         try:

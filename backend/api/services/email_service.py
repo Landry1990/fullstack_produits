@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Email service for sending notifications
 """
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.conf import settings
 import logging
+
+from django.conf import settings
+from django.core.mail import send_mail
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ Envoyé depuis l'application Pharma
             return True
             
         except Exception as e:
-            logger.error(f"Erreur lors de l'envoi de l'email de feedback #{feedback.id}: {str(e)}")
+            logger.error(f"Erreur lors de l'envoi de l'email de feedback #{feedback.id}: {e!s}")
             return False
     
     @staticmethod
@@ -104,7 +103,7 @@ Merci pour votre contribution !
             return True
             
         except Exception as e:
-            logger.error(f"Erreur lors de l'envoi de l'email de réponse pour feedback #{feedback.id}: {str(e)}")
+            logger.error(f"Erreur lors de l'envoi de l'email de réponse pour feedback #{feedback.id}: {e!s}")
             return False
 
 

@@ -1,14 +1,17 @@
 import os
+
 import django
 
 # Configuration Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture, Caisse
-from django.db.models import Sum, F, Q, DecimalField
-from django.db.models.functions import Coalesce
 from decimal import Decimal
+
+from django.db.models import DecimalField, F, Q, Sum
+from django.db.models.functions import Coalesce
+
+from api.models import Facture
 
 # Récupérer toutes les factures à crédit
 factures_credit = Facture.objects.filter(

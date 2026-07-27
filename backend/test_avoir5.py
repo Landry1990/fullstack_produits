@@ -1,11 +1,12 @@
 import os
+
 import django
-import json
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from django.utils.translation import activate
+
 activate('fr')
 
 # test possible errors and print their byte lengths
@@ -17,9 +18,10 @@ payloads = [
     {"type_avoir": "PERIME"},
 ]
 
-from rest_framework.test import APIRequestFactory, force_authenticate
-from api.views.commandes.avoirs import AvoirViewSet
 from django.contrib.auth.models import User
+from rest_framework.test import APIRequestFactory, force_authenticate
+
+from api.views.commandes.avoirs import AvoirViewSet
 
 user = User.objects.first()
 factory = APIRequestFactory()

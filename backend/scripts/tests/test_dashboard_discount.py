@@ -1,10 +1,22 @@
-from django.test import TestCase
-from rest_framework.test import APIClient
-from django.contrib.auth.models import User
-from api.models import Client, Produit, Facture, FactureProduit, StockLot, Commande, CommandeProduit, Fournisseur
-from decimal import Decimal
-from django.utils import timezone
 from datetime import timedelta
+from decimal import Decimal
+
+from django.contrib.auth.models import User
+from django.test import TestCase
+from django.utils import timezone
+from rest_framework.test import APIClient
+
+from api.models import (
+    Client,
+    Commande,
+    CommandeProduit,
+    Facture,
+    FactureProduit,
+    Fournisseur,
+    Produit,
+    StockLot,
+)
+
 
 class DashboardDiscountTest(TestCase):
     def setUp(self):
@@ -68,8 +80,6 @@ class DashboardDiscountTest(TestCase):
         print(f"Factures with date {today}: {Facture.objects.filter(date__date=today).count()}")
         
         # Reproduce View Query
-        from django.db.models import Sum, Count, F, Value, DecimalField, OuterRef, Subquery
-        from django.db.models.functions import Coalesce
         
         qs = Facture.objects.filter(
             status__in=['VAL', 'PAY'],
@@ -103,10 +113,10 @@ class DashboardDiscountTest(TestCase):
         
         # Find stats for today
         if today_str in data:
-            stats = data[today_str]
+            data[today_str]
         else:
             # Fallback if structure is flat (it shouldn't be based on code)
-            stats = data
+            pass
             
         print(f"Stats Data: {data}")
         

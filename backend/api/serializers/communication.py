@@ -1,11 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour la communication (SMS, WhatsApp, Telegram, messages internes).
 """
 from rest_framework import serializers
+
 from ..models import (
-    SmsTemplate, SmsLog, WhatsAppLog, TelegramLog,
-    RuptureFournisseur, InternalMessage, MessageTemplate,
+    InternalMessage,
+    MessageTemplate,
+    RuptureFournisseur,
+    SmsLog,
+    SmsTemplate,
+    TelegramLog,
+    WhatsAppLog,
 )
 
 

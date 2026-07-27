@@ -1,10 +1,17 @@
 """
 Statistiques et audit pour les inventaires.
 """
-from typing import Dict, Any, List, Optional
 from decimal import Decimal
+
 from django.db.models import (
-    F, Sum, Count, DecimalField, Case, When, Value, ExpressionWrapper
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Sum,
+    Value,
+    When,
 )
 from django.db.models.functions import Cast, Coalesce
 from rest_framework.response import Response
@@ -91,8 +98,8 @@ def get_inventaire_stats(inventaire: Inventaire) -> Response:
 
 
 def audit_discrepancies(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None
+    start_date: str | None = None,
+    end_date: str | None = None
 ) -> Response:
     """
     Audit global des écarts sur tous les inventaires validés.
@@ -115,10 +122,10 @@ def audit_discrepancies(
     queryset = queryset.annotate(
         valeur_ecart=ExpressionWrapper(
             Cast(F('ecart'), output_field=DecimalField(max_digits=12, decimal_places=2)) * Case(
-                When(produit__pmp__gt=Decimal('0'), then=F('produit__pmp')),
+                When(produit__pmp__gt=Decimal(0), then=F('produit__pmp')),
                 default=Coalesce(
                     F('produit__cost_price'),
-                    Value(Decimal('0'), output_field=DecimalField(max_digits=12, decimal_places=2))
+                    Value(Decimal(0), output_field=DecimalField(max_digits=12, decimal_places=2))
                 ),
                 output_field=DecimalField(max_digits=12, decimal_places=2)
             ),
@@ -127,7 +134,7 @@ def audit_discrepancies(
     )
 
     # 1. Top Produits par Pertes (somme des écarts négatifs)
-    top_pertes = queryset.filter(valeur_ecart__lt=Decimal('0')).values(
+    top_pertes = queryset.filter(valeur_ecart__lt=Decimal(0)).values(
         'produit__id', 'produit__name', 'produit__cip1'
     ).annotate(
         total_valeur=Sum('valeur_ecart'),
@@ -136,7 +143,7 @@ def audit_discrepancies(
     ).order_by('total_valeur')[:20]
 
     # 2. Top Produits par Surplus
-    top_surplus = queryset.filter(valeur_ecart__gt=Decimal('0')).values(
+    top_surplus = queryset.filter(valeur_ecart__gt=Decimal(0)).values(
         'produit__id', 'produit__name'
     ).annotate(
         total_valeur=Sum('valeur_ecart'),
@@ -146,40 +153,40 @@ def audit_discrepancies(
 
     # 3. Répartition par Rayon
     par_rayon = queryset.values('produit__rayon__name').annotate(
-        total_valeur=Coalesce(Sum('valeur_ecart'), Value(Decimal('0'), output_field=DecimalField())),
+        total_valeur=Coalesce(Sum('valeur_ecart'), Value(Decimal(0), output_field=DecimalField())),
         perte_valeur=Coalesce(
             Sum(Case(
-                When(valeur_ecart__lt=Decimal('0'), then=F('valeur_ecart')),
-                default=Value(Decimal('0'), output_field=DecimalField())
+                When(valeur_ecart__lt=Decimal(0), then=F('valeur_ecart')),
+                default=Value(Decimal(0), output_field=DecimalField())
             )),
-            Value(Decimal('0'), output_field=DecimalField())
+            Value(Decimal(0), output_field=DecimalField())
         ),
         gain_valeur=Coalesce(
             Sum(Case(
-                When(valeur_ecart__gt=Decimal('0'), then=F('valeur_ecart')),
-                default=Value(Decimal('0'), output_field=DecimalField())
+                When(valeur_ecart__gt=Decimal(0), then=F('valeur_ecart')),
+                default=Value(Decimal(0), output_field=DecimalField())
             )),
-            Value(Decimal('0'), output_field=DecimalField())
+            Value(Decimal(0), output_field=DecimalField())
         ),
         nombre_lignes=Count('id')
     ).order_by('total_valeur')
 
     # 4. Répartition par Groupe
     par_groupe = queryset.values(produit__groupe__name=F('produit__groupe__nom')).annotate(
-        total_valeur=Coalesce(Sum('valeur_ecart'), Value(Decimal('0'), output_field=DecimalField())),
+        total_valeur=Coalesce(Sum('valeur_ecart'), Value(Decimal(0), output_field=DecimalField())),
         perte_valeur=Coalesce(
             Sum(Case(
-                When(valeur_ecart__lt=Decimal('0'), then=F('valeur_ecart')),
-                default=Value(Decimal('0'), output_field=DecimalField())
+                When(valeur_ecart__lt=Decimal(0), then=F('valeur_ecart')),
+                default=Value(Decimal(0), output_field=DecimalField())
             )),
-            Value(Decimal('0'), output_field=DecimalField())
+            Value(Decimal(0), output_field=DecimalField())
         ),
         gain_valeur=Coalesce(
             Sum(Case(
-                When(valeur_ecart__gt=Decimal('0'), then=F('valeur_ecart')),
-                default=Value(Decimal('0'), output_field=DecimalField())
+                When(valeur_ecart__gt=Decimal(0), then=F('valeur_ecart')),
+                default=Value(Decimal(0), output_field=DecimalField())
             )),
-            Value(Decimal('0'), output_field=DecimalField())
+            Value(Decimal(0), output_field=DecimalField())
         ),
     ).order_by('total_valeur')
 
@@ -191,19 +198,19 @@ def audit_discrepancies(
         'stats_globales': queryset.aggregate(
             total_perte=Coalesce(
                 Sum(Case(
-                    When(valeur_ecart__lt=Decimal('0'), then=F('valeur_ecart')),
-                    default=Value(Decimal('0'), output_field=DecimalField())
+                    When(valeur_ecart__lt=Decimal(0), then=F('valeur_ecart')),
+                    default=Value(Decimal(0), output_field=DecimalField())
                 )),
-                Value(Decimal('0'), output_field=DecimalField())
+                Value(Decimal(0), output_field=DecimalField())
             ),
             total_gain=Coalesce(
                 Sum(Case(
-                    When(valeur_ecart__gt=Decimal('0'), then=F('valeur_ecart')),
-                    default=Value(Decimal('0'), output_field=DecimalField())
+                    When(valeur_ecart__gt=Decimal(0), then=F('valeur_ecart')),
+                    default=Value(Decimal(0), output_field=DecimalField())
                 )),
-                Value(Decimal('0'), output_field=DecimalField())
+                Value(Decimal(0), output_field=DecimalField())
             ),
-            net=Coalesce(Sum('valeur_ecart'), Value(Decimal('0'), output_field=DecimalField())),
+            net=Coalesce(Sum('valeur_ecart'), Value(Decimal(0), output_field=DecimalField())),
             nombre_inventaires=Count('inventaire', distinct=True),
             nombre_lignes=Count('id')
         )

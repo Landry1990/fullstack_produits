@@ -1,9 +1,10 @@
-from django.http import JsonResponse
-from django.db import transaction, DatabaseError
-from django.core.cache import cache
-from api.utils_licence import valider_licence_systeme, CLE_PUBLIQUE
 import logging
-import jwt
+
+from django.core.cache import cache
+from django.db import DatabaseError, transaction
+from django.http import JsonResponse
+
+from api.utils_licence import valider_licence_systeme
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class LicenceMiddleware:
             return cached_result.get('est_valide'), cached_result.get('message'), payload
             
         except Exception as e:
-            logger.warning(f"[LICENCE] Erreur vérification rapide: {str(e)}")
+            logger.warning(f"[LICENCE] Erreur vérification rapide: {e!s}")
             # En cas d'erreur, forcer re-vérification DB
             cache.delete(LICENCE_CACHE_KEY)
             return None, None, None
@@ -69,10 +70,7 @@ class LicenceMiddleware:
         # Sinon le client ne pourra même pas soumettre sa nouvelle clé !
         # Health check doit toujours être accessible pour le monitoring Docker
         if (
-            path.startswith('/api/licence/') or
-            path.startswith('/api/users/login/') or
-            path.startswith('/api/health/') or
-            path.startswith('/admin/')
+            path.startswith(('/api/licence/', '/api/users/login/', '/api/health/', '/admin/'))
         ):
             return self.get_response(request)
 
@@ -98,7 +96,7 @@ class LicenceMiddleware:
                         cache.set(LICENCE_CACHE_KEY, result_dict, timeout=LICENCE_CACHE_TTL)
                         
                 except DatabaseError as e:
-                    logger.error(f"[LICENCE] Erreur DB lors de la validation: {str(e)}", exc_info=True)
+                    logger.error(f"[LICENCE] Erreur DB lors de la validation: {e!s}", exc_info=True)
                     # En cas d'erreur DB, on utilise le cache si disponible (même expiré)
                     cached_fallback = cache.get(LICENCE_CACHE_KEY)
                     if cached_fallback:

@@ -1,9 +1,7 @@
 """
 Mixin pour utiliser automatiquement les serializers optimisés selon le contexte.
 """
-from rest_framework import viewsets
 from rest_framework import serializers  # Import serializers specifically
-
 
 
 class OptimizedSerializerMixin:

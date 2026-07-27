@@ -1,11 +1,12 @@
 from decimal import Decimal
-from django.test import TestCase
+
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.utils import timezone
+
 from .factories import TestDataFactory
-from ..models import Produit, MouvementStock, Commande, CommandeProduit
+
 
 class GlobalStockHistoryTestCase(APITestCase):
     def setUp(self):

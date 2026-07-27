@@ -1,6 +1,8 @@
 
-from typing import List, Dict, Any
-from .models import Produit, Substance, DrugInteraction
+from typing import Any
+
+from .models import DrugInteraction, Produit
+
 
 class ClinicalService:
     """
@@ -8,7 +10,7 @@ class ClinicalService:
     """
 
     @staticmethod
-    def check_interactions(product_ids: List[int]) -> List[Dict[str, Any]]:
+    def check_interactions(product_ids: list[int]) -> list[dict[str, Any]]:
         """
         Vérifie les interactions entre une liste de produits.
         Retourne une liste d'alertes.
@@ -83,7 +85,7 @@ class ClinicalService:
                     })
 
         # 4. Détecter les redondances (même substance dans 2+ produits différents)
-        for sub_id, info in substance_map.items():
+        for info in substance_map.values():
             if len(info['products']) >= 2:
                 substance = info['substance']
                 product_names = [p.name for p in info['products']]

@@ -1,15 +1,17 @@
 import os
+from datetime import timedelta
+
 import django
 from django.utils import timezone
-from datetime import datetime, timedelta
-from decimal import Decimal
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import FactureProduitAllocation, Facture
-from api.views import StatistiquesViewSet
 from rest_framework.test import APIRequestFactory
+
+from api.models import FactureProduitAllocation
+from api.views import StatistiquesViewSet
+
 
 def test_stats():
     print("--- TEST STATISTIQUES ---")
@@ -32,7 +34,7 @@ def test_stats():
     
     view = StatistiquesViewSet()
     factory = APIRequestFactory()
-    request = factory.get(f'/api/statistiques/ca_par_fournisseur/?date_debut={date_debut}&date_fin={date_fin}')
+    factory.get(f'/api/statistiques/ca_par_fournisseur/?date_debut={date_debut}&date_fin={date_fin}')
     
     # Simuler l'utilisateur authentifié (si nécessaire, mais ici on appelle la méthode directement)
     # view.request = request # Pas suffisant pour viewsets

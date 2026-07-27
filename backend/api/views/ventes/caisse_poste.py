@@ -1,13 +1,18 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.utils import timezone
-from django.db.models import Sum, Q, Count
-from django.db import transaction
 from decimal import Decimal
-from ...models import PosteCaisse, PosteVente, Caisse, Facture
-from ...serializers import PosteCaisseSerializer, PosteVenteSerializer, SessionCaisseSerializer
+
+from django.db.models import Count, Q, Sum
+from django.utils import timezone
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ...models import Caisse, Facture, PosteCaisse, PosteVente
+from ...serializers import (
+    PosteCaisseSerializer,
+    PosteVenteSerializer,
+    SessionCaisseSerializer,
+)
 
 
 class PosteCaisseViewSet(viewsets.ModelViewSet):
@@ -199,7 +204,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             facture__poste_vente=poste,
             date_paiement__gte=poste.date_ouverture,
             statut='completee'
-        ).exclude(mode_paiement__in=['en_compte', 'depot']).aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        ).exclude(mode_paiement__in=['en_compte', 'depot']).aggregate(total=Sum('montant'))['total'] or Decimal(0)
 
         poste.est_actif = False
         poste.date_fermeture = timezone.now()
@@ -237,7 +242,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
                 'date_fermeture': poste.date_fermeture,
                 'fond_de_caisse': float(poste.fond_de_caisse) if poste.fond_de_caisse else 0,
                 'montant_encaisse': float(montant_encaisse) if not hide_amounts else None,
-                'montant_theorique': float((poste.fond_de_caisse or Decimal('0')) + montant_encaisse) if not hide_amounts else None,
+                'montant_theorique': float((poste.fond_de_caisse or Decimal(0)) + montant_encaisse) if not hide_amounts else None,
                 'montant_masque': hide_amounts
             },
             'transactions': {
@@ -302,7 +307,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             ).exclude(mode_paiement__in=['en_compte', 'depot'])
 
             agg = paiements_qs.aggregate(total=Sum('montant'), count=Count('facture', distinct=True))
-            total_general = agg['total'] or Decimal('0')
+            total_general = agg['total'] or Decimal(0)
             nb_transactions = agg['count'] or 0
 
             details = {}
@@ -333,7 +338,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             statut='completee'
         ).exclude(mode_paiement__in=['en_compte', 'depot'])
 
-        total_general = paiements.aggregate(t=Sum('montant'))['t'] or Decimal('0')
+        total_general = paiements.aggregate(t=Sum('montant'))['t'] or Decimal(0)
         modes_data = paiements.values('mode_paiement').annotate(total=Sum('montant'))
         details = {
             item['mode_paiement']: float(item['total'])
@@ -342,7 +347,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         }
 
         nb_transactions = paiements.values('facture').distinct().count()
-        fond = Decimal(str(poste.fond_de_caisse)) if poste.fond_de_caisse else Decimal('0')
+        fond = Decimal(str(poste.fond_de_caisse)) if poste.fond_de_caisse else Decimal(0)
 
         return Response({
             'has_session': True,
@@ -364,7 +369,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             montant_encaisse = Caisse.objects.filter(
                 facture__poste_vente=poste,
                 date_paiement__gte=poste.date_ouverture
-            ).aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            ).aggregate(total=Sum('montant'))['total'] or Decimal(0)
             poste.est_actif = False
             poste.date_fermeture = timezone.now()
             poste.montant_total_encaisse = montant_encaisse

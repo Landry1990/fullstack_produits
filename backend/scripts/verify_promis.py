@@ -1,17 +1,20 @@
 
 import os
 import sys
-import django
 from decimal import Decimal
+
+import django
 
 # Setup Django environment
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
 
-from api.models import Promis, Facture, Produit
 from django.contrib.auth.models import User
+
+from api.models import Facture, Produit
 from api.serializers import PromisSerializer
+
 
 def test_promis_creation():
     print("--- Starting Promis Creation Verification ---")

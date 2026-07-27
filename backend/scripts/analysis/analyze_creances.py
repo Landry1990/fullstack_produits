@@ -1,15 +1,18 @@
 import os
+
 import django
 
 # Configuration Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.serializers import CreanceSerializer
-from api.models import Facture
-from django.db.models import Sum, F, Q, DecimalField
-from django.db.models.functions import Coalesce
 from decimal import Decimal
+
+from django.db.models import DecimalField, F, Q, Sum
+from django.db.models.functions import Coalesce
+
+from api.models import Facture
+from api.serializers import CreanceSerializer
 
 print('=' * 80)
 print('ANALYSE DES CRÉANCES - COMPARAISON BASE DE DONNÉES vs API')

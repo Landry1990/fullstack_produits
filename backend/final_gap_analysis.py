@@ -1,22 +1,23 @@
 import os
-import django
 import sys
 from decimal import Decimal
+
+import django
 
 # Setup Django
 sys.path.append(r"c:\Projet Fullstack\fullstack_produits\backend")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
 
-from api.models import Facture, Caisse, CouponMonnaie
-from django.db import models
+from api.models import Caisse, Facture
+
 
 def run():
     month = 3
     year = 2026
     factures = Facture.objects.filter(date__month=month, date__year=year, status__in=['VAL', 'PAY'], is_cancelled=False)
     
-    global_gap = Decimal('0')
+    global_gap = Decimal(0)
     print(f"Checking {factures.count()} invoices...")
     
     for f in factures:

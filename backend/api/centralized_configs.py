@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Configuration centralisée pour l'API backend
 Regroupe toutes les constantes, settings et patterns réutilisables
 """
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.pagination import PageNumberPagination
-from django.db.models import Value, DecimalField, Q, Case, When, Sum
-from django.db.models.functions import Coalesce
 from decimal import Decimal
 
+from django.db.models import Case, DecimalField, Q, Sum, Value, When
+from django.db.models.functions import Coalesce
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 
 # ============================================================================
 # CONFIGURATIONS DE PAGINATION
@@ -96,15 +95,14 @@ class SQLAnnotations:
     """Patterns d'annotations SQL réutilisables"""
     
     @staticmethod
-    def coalesce_decimal(default_value=Decimal('0')):
+    def coalesce_decimal(default_value=Decimal(0)):
         """Retourne une valeur Coalesce pour les champs décimaux"""
-        from django.db.models import Value
         return Value(default_value, output_field=DecimalField())
     
     @staticmethod
-    def safe_decimal_expression(expression, default=Decimal('0')):
+    def safe_decimal_expression(expression, default=Decimal(0)):
         """Expression décimale sécurisée avec valeur par défaut"""
-        from django.db.models import Case, When, Value, DecimalField
+        from django.db.models import DecimalField
         return Case(
             When(expression__isnull=True, then=Value(default, output_field=DecimalField())),
             default=expression,
@@ -112,9 +110,9 @@ class SQLAnnotations:
         )
     
     @staticmethod
-    def conditional_sum(condition_field, condition_value, sum_field, default=Decimal('0')):
+    def conditional_sum(condition_field, condition_value, sum_field, default=Decimal(0)):
         """Sum conditionnel réutilisable"""
-        from django.db.models import Sum, Case, When, Q, Value, DecimalField
+        from django.db.models import DecimalField
         return Coalesce(
             Sum(Case(
                 When(Q(**{condition_field: condition_value}), then=sum_field),
@@ -341,8 +339,6 @@ class BusinessLogicMixin:
     
     def validate_business_rules(self, instance, **kwargs):
         """Point d'entrée pour les validations métier"""
-        pass
     
     def perform_business_actions(self, instance, **kwargs):
         """Point d'entrée pour les actions métier post-crud"""
-        pass

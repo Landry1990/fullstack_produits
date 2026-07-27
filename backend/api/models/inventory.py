@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Inventory-related models: Inventaire, LigneInventaire, RelationTransformation, HistoriqueTransformation.
 """
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import User
 
 
 class Inventaire(models.Model):

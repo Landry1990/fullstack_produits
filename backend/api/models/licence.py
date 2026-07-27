@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
+
 class Licence(models.Model):
     cle = models.TextField(help_text="Le token JWT complet")
     date_installation = models.DateTimeField(auto_now_add=True)

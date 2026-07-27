@@ -1,8 +1,10 @@
-from django.test import TestCase
-from rest_framework.test import APIClient
-from rest_framework import status
 from django.contrib.auth.models import User
-from api.models import Groupe, Produit, Rayon, Fournisseur
+from django.test import TestCase
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from api.models import Fournisseur, Groupe, Produit, Rayon
+
 
 class ProduitFilteringTest(TestCase):
     def setUp(self):

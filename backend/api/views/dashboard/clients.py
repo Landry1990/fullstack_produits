@@ -1,15 +1,22 @@
+
+from django.db.models import (
+    DecimalField,
+    F,
+    OuterRef,
+    Q,
+    Sum,
+    Value,
+)
+from django.db.models.functions import Coalesce
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 
-from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, ExpressionWrapper, Case, When, Exists, OuterRef
-from django.db.models.functions import TruncDay, TruncMonth, Coalesce, TruncDate
-from django.utils import timezone
-from datetime import datetime, timedelta
-from decimal import Decimal
-
-from ...models import Facture, Commande, Produit, Client, StockLot, Caisse, ObjectifCommercial, FactureProduit, FactureProduitAllocation
+from ...models import (
+    Caisse,
+    Client,
+    Facture,
+)
 
 
 class DashboardClientsMixin(viewsets.ViewSet):
@@ -20,8 +27,7 @@ class DashboardClientsMixin(viewsets.ViewSet):
         Retourne la liste des clients professionnels ayant dépassé leur plafond de crédit.
         Utilisé pour les alertes du tableau de bord.
         """
-        from django.db.models import Sum, F, Q, Value, DecimalField, Subquery
-        from django.db.models.functions import Coalesce
+        from django.db.models import Subquery
     
         # Sous-requête 1: Total facturé par client (factures VAL/PAY)
         billed_sub = Facture.objects.filter(

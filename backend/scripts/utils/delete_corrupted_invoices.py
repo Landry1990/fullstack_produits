@@ -1,12 +1,14 @@
 """Script pour supprimer les factures corrompues (marquées PAYÉES sans entrée Caisse)"""
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture, Caisse
 from django.db import transaction
+
+from api.models import Facture
 
 print("=" * 60)
 print("RECHERCHE DES FACTURES CORROMPUES")

@@ -1,68 +1,150 @@
-from .produits import ProduitViewSet
-from .categories import CategorieViewSet, CategoriesListView, CategoriesDetailView
+from ..ordonnancier_view import OrdonnancierViewSet
+from .audit import AuditLogViewSet
+from .auth import verify_password
+from .categories import CategoriesDetailView, CategoriesListView, CategorieViewSet
+from .clients import AyantDroitViewSet, ClientViewSet, DepotClientViewSet
+from .commandes import (
+    AvoirViewSet,
+    CommandeProduitViewSet,
+    CommandeViewSet,
+    LigneAvoirViewSet,
+    OrderScheduleViewSet,
+    PromisViewSet,
+    generer_suggestions_commande,
+)
+from .communication import SmsTemplateViewSet, SmsViewSet
+from .configuration_objectifs import ConfigurationObjectifsViewSet
+from .coupons import CouponMonnaieViewSet
+from .dashboard import DashboardViewSet, StatistiquesViewSet
+from .finance_stats import FinanceStatsViewSet
+from .formes import FormeViewSet
 from .fournisseurs import FournisseurViewSet
 from .groupes import GroupeViewSet
-from .clients import ClientViewSet, AyantDroitViewSet, DepotClientViewSet
-from .commandes import (
-    CommandeViewSet, CommandeProduitViewSet, AvoirViewSet, LigneAvoirViewSet, 
-    PromisViewSet, generer_suggestions_commande, OrderScheduleViewSet
-)
-from .ventes import (
-    FactureViewSet, FactureProduitViewSet, CaisseViewSet, ClotureCaisseViewSet,
-    CreanceViewSet, MouvementCaisseViewSet, PosteCaisseViewSet, PosteVenteViewSet, SessionCaisseViewSet
-)
-from .stocks import (
-    StockLotViewSet, InventaireViewSet, LigneInventaireViewSet, StockAdjustmentViewSet,
-    StatsUGViewSet, RelationTransformationViewSet, HistoriqueTransformationViewSet,
-    StockAnalysisUnsoldView, StockAnalysisOverstockView, StockAnalysisShortageView,
-    CadencierViewSet
-)
-from .users import CustomAuthToken, UserViewSet, UserDailySessionViewSet, TeamViewSet
-from .auth import verify_password
-from .settings import LoyaltySettingViewSet, InvoiceConfigurationView, PharmacySettingsView, ConfigurationOptionViewSet, TVAViewSet, WhatsAppTestView, TelegramTestView, TelegramGetChatIdView, TelegramRapportFlashView, TelegramRapportFlashDateView, TelegramRapportInventaireView, TelegramRapportMensuelView
-from .dashboard import DashboardViewSet, StatistiquesViewSet
-from .audit import AuditLogViewSet
-from .historique_ventes import HistoriqueVentesViewSet
 from .historique_achats import HistoriqueAchatsViewSet
+from .historique_ventes import HistoriqueVentesViewSet
 from .import_views import ProductImportView
-from .formes import FormeViewSet
-from .communication import SmsViewSet, SmsTemplateViewSet
-from .finance_stats import FinanceStatsViewSet
 from .objectifs import ObjectifViewSet
 from .paiements import PaiementFournisseurViewSet
-from .coupons import CouponMonnaieViewSet
+from .planning import LeaveRequestViewSet, ShiftConfigViewSet, ShiftScheduleViewSet
+from .produits import ProduitViewSet
 from .promotions import PromotionViewSet
-from .configuration_objectifs import ConfigurationObjectifsViewSet
-from .temporal_analysis import TemporalAnalysisViewSet
 from .purge import PurgeViewSet
-from .system_admin import SystemAdminViewSet
-from .planning import ShiftConfigViewSet, ShiftScheduleViewSet, LeaveRequestViewSet
 
 # Import from modular rapports
 from .rapports import RapportViewSet
-from ..ordonnancier_view import OrdonnancierViewSet
+from .settings import (
+    ConfigurationOptionViewSet,
+    InvoiceConfigurationView,
+    LoyaltySettingViewSet,
+    PharmacySettingsView,
+    TelegramGetChatIdView,
+    TelegramRapportFlashDateView,
+    TelegramRapportFlashView,
+    TelegramRapportInventaireView,
+    TelegramRapportMensuelView,
+    TelegramTestView,
+    TVAViewSet,
+    WhatsAppTestView,
+)
+from .stocks import (
+    CadencierViewSet,
+    HistoriqueTransformationViewSet,
+    InventaireViewSet,
+    LigneInventaireViewSet,
+    RelationTransformationViewSet,
+    StatsUGViewSet,
+    StockAdjustmentViewSet,
+    StockAnalysisOverstockView,
+    StockAnalysisShortageView,
+    StockAnalysisUnsoldView,
+    StockLotViewSet,
+)
+from .system_admin import SystemAdminViewSet
+from .temporal_analysis import TemporalAnalysisViewSet
+from .users import CustomAuthToken, TeamViewSet, UserDailySessionViewSet, UserViewSet
+from .ventes import (
+    CaisseViewSet,
+    ClotureCaisseViewSet,
+    CreanceViewSet,
+    FactureProduitViewSet,
+    FactureViewSet,
+    MouvementCaisseViewSet,
+    PosteCaisseViewSet,
+    PosteVenteViewSet,
+    SessionCaisseViewSet,
+)
 
 # Expose all for import from api.views
 __all__ = [
-    'ProduitViewSet', 'CategorieViewSet', 'FournisseurViewSet',
-    'CategoriesListView', 'CategoriesDetailView', 'GroupeViewSet',
-    'ClientViewSet', 'AyantDroitViewSet', 'DepotClientViewSet',
-    'PaiementFournisseurViewSet',
-    'CommandeViewSet', 'CommandeProduitViewSet', 'AvoirViewSet', 'LigneAvoirViewSet',
-    'PromisViewSet', 'generer_suggestions_commande', 'OrderScheduleViewSet',
-    'FactureViewSet', 'FactureProduitViewSet', 'CaisseViewSet', 'ClotureCaisseViewSet',
-    'CreanceViewSet', 'MouvementCaisseViewSet', 'PosteCaisseViewSet', 'PosteVenteViewSet', 'SessionCaisseViewSet',
-    'StockLotViewSet', 'InventaireViewSet', 'LigneInventaireViewSet', 'StockAdjustmentViewSet',
-    'StatsUGViewSet', 'RelationTransformationViewSet', 'HistoriqueTransformationViewSet',
-    'StockAnalysisUnsoldView', 'StockAnalysisOverstockView', 'StockAnalysisShortageView', 'CadencierViewSet',
-    'CustomAuthToken', 'UserViewSet', 'TeamViewSet', 'verify_password',
-    'LoyaltySettingViewSet', 'InvoiceConfigurationView', 'PharmacySettingsView', 'ConfigurationOptionViewSet', 'WhatsAppTestView',
-    'TelegramTestView', 'TelegramGetChatIdView', 'TelegramRapportFlashView', 'TelegramRapportFlashDateView', 'TelegramRapportInventaireView', 'TelegramRapportMensuelView',
-    'DashboardViewSet', 'StatistiquesViewSet',
     'AuditLogViewSet',
-    'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
-    'RapportViewSet', 'OrdonnancierViewSet', 'FormeViewSet', 'CouponMonnaieViewSet',
-    'PromotionViewSet', 'TemporalAnalysisViewSet', 'TVAViewSet',
-    'PurgeViewSet', 'UserDailySessionViewSet', 'SystemAdminViewSet',
-    'ShiftConfigViewSet', 'ShiftScheduleViewSet', 'LeaveRequestViewSet',
+    'AvoirViewSet',
+    'AyantDroitViewSet',
+    'CadencierViewSet',
+    'CaisseViewSet',
+    'CategorieViewSet',
+    'CategoriesDetailView',
+    'CategoriesListView',
+    'ClientViewSet',
+    'ClotureCaisseViewSet',
+    'CommandeProduitViewSet',
+    'CommandeViewSet',
+    'ConfigurationOptionViewSet',
+    'CouponMonnaieViewSet',
+    'CreanceViewSet',
+    'CustomAuthToken',
+    'DashboardViewSet',
+    'DepotClientViewSet',
+    'FactureProduitViewSet',
+    'FactureViewSet',
+    'FormeViewSet',
+    'FournisseurViewSet',
+    'GroupeViewSet',
+    'HistoriqueAchatsViewSet',
+    'HistoriqueTransformationViewSet',
+    'HistoriqueVentesViewSet',
+    'InventaireViewSet',
+    'InvoiceConfigurationView',
+    'LeaveRequestViewSet',
+    'LigneAvoirViewSet',
+    'LigneInventaireViewSet',
+    'LoyaltySettingViewSet',
+    'MouvementCaisseViewSet',
+    'OrderScheduleViewSet',
+    'OrdonnancierViewSet',
+    'PaiementFournisseurViewSet',
+    'PharmacySettingsView',
+    'PosteCaisseViewSet',
+    'PosteVenteViewSet',
+    'ProductImportView',
+    'ProduitViewSet',
+    'PromisViewSet',
+    'PromotionViewSet',
+    'PurgeViewSet',
+    'RapportViewSet',
+    'RelationTransformationViewSet',
+    'SessionCaisseViewSet',
+    'ShiftConfigViewSet',
+    'ShiftScheduleViewSet',
+    'StatistiquesViewSet',
+    'StatsUGViewSet',
+    'StockAdjustmentViewSet',
+    'StockAnalysisOverstockView',
+    'StockAnalysisShortageView',
+    'StockAnalysisUnsoldView',
+    'StockLotViewSet',
+    'SystemAdminViewSet',
+    'TVAViewSet',
+    'TeamViewSet',
+    'TelegramGetChatIdView',
+    'TelegramRapportFlashDateView',
+    'TelegramRapportFlashView',
+    'TelegramRapportInventaireView',
+    'TelegramRapportMensuelView',
+    'TelegramTestView',
+    'TemporalAnalysisViewSet',
+    'UserDailySessionViewSet',
+    'UserViewSet',
+    'WhatsAppTestView',
+    'generer_suggestions_commande',
+    'verify_password',
 ]

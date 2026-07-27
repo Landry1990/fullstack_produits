@@ -1,12 +1,14 @@
-import pandas as pd
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework import status
-from django.db import transaction
-from ..models import Produit
-from rest_framework.permissions import IsAuthenticated
 import logging
+
+import pandas as pd
+from django.db import transaction
+from rest_framework import status
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from ..models import Produit
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -212,7 +214,7 @@ class ProductImportView(APIView):
                         
                 except Exception as e:
                     transaction.savepoint_rollback(sid)
-                    error_msg = f"Ligne {index + 2} ({name if 'name' in dir() else 'unknown'}): {str(e)}"
+                    error_msg = f"Ligne {index + 2} ({name if 'name' in dir() else 'unknown'}): {e!s}"
                     errors.append(error_msg)
                     if len(errors) > 20: 
                         errors.append("... trop d'erreurs, arrêt du rapport.")
@@ -228,4 +230,4 @@ class ProductImportView(APIView):
         except Exception as e:
             business_logger.error(f"[IMPORT] Erreur lors de l'import : {e}")
             logger.error(f"Import error: {e}")
-            return Response({'error': f"Erreur critique lors de l'import: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f"Erreur critique lors de l'import: {e!s}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

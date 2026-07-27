@@ -1,6 +1,7 @@
 # Generated manually
 from django.db import migrations, models
 
+
 class Migration(migrations.Migration):
     dependencies = [
         ('api', '0191_add_performance_indexes'),

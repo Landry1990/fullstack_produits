@@ -1,5 +1,6 @@
 import sys
 
+
 def analyze_structure(filename, max_sample=1000000):
     with open(filename, 'rb') as f:
         data = f.read(max_sample)

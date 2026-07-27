@@ -1,22 +1,18 @@
-# -*- coding: utf-8 -*-
 """
 System Administration ViewSet.
 Superadmin-only: Docker health, backup management.
 """
 import os
 import subprocess
-import hashlib
 from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
-from api.security_utils import validate_safe_path
 
 
 def _get_backup_dir() -> Path:
@@ -140,8 +136,9 @@ class SystemAdminViewSet(ViewSet):
     @action(detail=False, methods=['post'])
     def run_backup(self, request):
         """Lance un backup manuel immédiat via la commande Django backup_database."""
-        from django.core.management import call_command
         from io import StringIO
+
+        from django.core.management import call_command
 
         out = StringIO()
         err = StringIO()
@@ -149,7 +146,7 @@ class SystemAdminViewSet(ViewSet):
         try:
             call_command('backup_database', stdout=out, stderr=err)
             output = out.getvalue()
-            error = err.getvalue()
+            err.getvalue()
 
             # La commande backup_database retourne une erreur si pg_dump est introuvable
             if 'pg_dump not found' in output:
@@ -212,10 +209,10 @@ class SystemAdminViewSet(ViewSet):
     @action(detail=False, methods=['post'])
     def restore(self, request):
         """Restaure la base de données depuis un backup existant ou un fichier uploadé."""
-        from django.core.management import call_command
-        from io import StringIO
         import tempfile
-        import shutil
+        from io import StringIO
+
+        from django.core.management import call_command
 
         # Récupérer le fichier soit par nom, soit par upload
         uploaded_file = request.FILES.get('file')
@@ -273,7 +270,7 @@ class SystemAdminViewSet(ViewSet):
 
         except Exception as e:
             return Response(
-                {'detail': f'Erreur: {str(e)}'},
+                {'detail': f'Erreur: {e!s}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         finally:
@@ -340,8 +337,9 @@ class SystemAdminViewSet(ViewSet):
     @action(detail=False, methods=['post'])
     def base_backup(self, request):
         """Lance un pg_basebackup pour créer un backup de base compatible WAL."""
-        from django.core.management import call_command
         from io import StringIO
+
+        from django.core.management import call_command
 
         out = StringIO()
         err = StringIO()
@@ -370,8 +368,9 @@ class SystemAdminViewSet(ViewSet):
     @action(detail=False, methods=['post'])
     def pitr_restore(self, request):
         """Restauration PITR: base backup + replay WAL jusqu'au timestamp."""
-        from django.core.management import call_command
         from io import StringIO
+
+        from django.core.management import call_command
 
         base_backup_dir = request.data.get('base_backup_dir', '')
         target_time = request.data.get('target_time', '')
@@ -418,6 +417,6 @@ class SystemAdminViewSet(ViewSet):
             }, status=status.HTTP_200_OK if success else status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             return Response(
-                {'detail': f'Erreur: {str(e)}'},
+                {'detail': f'Erreur: {e!s}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

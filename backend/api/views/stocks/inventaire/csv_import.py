@@ -3,12 +3,12 @@ Import CSV pour les inventaires.
 """
 import csv
 import io as csv_io
-from typing import List, Dict, Any, Tuple
-from django.db import transaction
-from rest_framework.response import Response
-from rest_framework import status
+from typing import Any
 
-from api.models import Inventaire, Produit, LigneInventaire
+from rest_framework import status
+from rest_framework.response import Response
+
+from api.models import Inventaire, LigneInventaire, Produit
 
 
 def import_csv_inventaire(inventaire: Inventaire, uploaded_file) -> Response:
@@ -44,13 +44,13 @@ def import_csv_inventaire(inventaire: Inventaire, uploaded_file) -> Response:
                     {'error': 'Le fichier est vide.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            dialect = csv.Sniffer().sniff(content_sample, delimiters=";,")
+            csv.Sniffer().sniff(content_sample, delimiters=";,")
         except Exception:
             # Fallback si le sniffer échoue (souvent le cas avec très peu de lignes)
             if ';' in content_sample:
-                dialect = 'excel'
+                pass
             else:
-                dialect = 'excel-tab' if '\t' in content_sample else 'excel'
+                pass
 
         # On utilise DictReader avec un séparateur explicite
         delimiter = ';' if ';' in content_sample else ','
@@ -72,8 +72,8 @@ def import_csv_inventaire(inventaire: Inventaire, uploaded_file) -> Response:
             )
 
         imported_count = 0
-        errors: List[str] = []
-        lignes_a_creer: List[LigneInventaire] = []
+        errors: list[str] = []
+        lignes_a_creer: list[LigneInventaire] = []
         row_num = 0
 
         for row_num, row in enumerate(csv_reader, start=2):
@@ -86,7 +86,7 @@ def import_csv_inventaire(inventaire: Inventaire, uploaded_file) -> Response:
                     # result is None when there's an error already logged
                     pass
             except Exception as e:
-                errors.append(f"Ligne {row_num}: Erreur inattendue: {str(e)}")
+                errors.append(f"Ligne {row_num}: Erreur inattendue: {e!s}")
 
         if lignes_a_creer:
             LigneInventaire.objects.bulk_create(lignes_a_creer)
@@ -100,18 +100,18 @@ def import_csv_inventaire(inventaire: Inventaire, uploaded_file) -> Response:
 
     except csv.Error as e:
         return Response(
-            {'error': f'Erreur de format CSV: {str(e)}'},
+            {'error': f'Erreur de format CSV: {e!s}'},
             status=status.HTTP_400_BAD_REQUEST
         )
     except Exception as e:
         return Response(
-            {'error': f'Erreur lors du traitement: {str(e)}'},
+            {'error': f'Erreur lors du traitement: {e!s}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 
 def _process_csv_row(
-    row: Dict[str, Any],
+    row: dict[str, Any],
     inventaire: Inventaire,
     row_num: int
 ) -> LigneInventaire | None:

@@ -1,28 +1,27 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from django.db import transaction
-from django.db.models import Sum, Q, Value, DecimalField, Count, F
-from django.db.models.functions import Coalesce, Abs
-from django_filters.rest_framework import DjangoFilterBackend
-from django.utils import timezone
+import logging
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-import logging
 
 from django.contrib.auth.models import User
+from django.db import transaction
+from django.db.models import Count, DecimalField, F, Q, Sum, Value
+from django.db.models.functions import Abs, Coalesce
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-from ...models import (
-    Caisse, ClotureCaisse, MouvementCaisse, AuditLog
-)
-from ...serializers import CaisseSerializer, ClotureCaisseSerializer, MouvementCaisseSerializer
 from ...audit_helpers import log_audit
+from ...centralized_configs import BaseViewSetConfig, StandardResultsSetPagination
+from ...models import AuditLog, Caisse, ClotureCaisse, MouvementCaisse
+from ...serializers import (
+    CaisseSerializer,
+    ClotureCaisseSerializer,
+    MouvementCaisseSerializer,
+)
 from ...sudo_utils import validate_sudo_mode
 from ..rapports.tz_utils import parse_api_datetime as _parse_iso_datetime
-from ...centralized_configs import (
-    BaseViewSetConfig,
-    StandardResultsSetPagination
-)
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +69,8 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         try:
             montant = Decimal(str(request.data.get('montant', 0)))
         except (InvalidOperation, TypeError, ValueError):
-            montant = Decimal('0')
-        if montant < Decimal('0'):
+            montant = Decimal(0)
+        if montant < Decimal(0):
             return Response({'detail': "Le montant d'un paiement ne peut pas être négatif."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Bloquer l'encaissement si l'utilisateur n'a pas de point de vente actif
@@ -93,10 +92,10 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                     facture=facture_obj, statut__in=['completee', 'en_attente']
                 ).exclude(
                     mode_paiement__in=['en_compte', 'recouvrement']
-                ).aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
+                ).aggregate(Sum('montant'))['montant__sum'] or Decimal(0)
                 part = facture_obj.part_client
-                montant_du = part if (part is not None and part >= Decimal('0')) else facture_obj.total_ttc
-                reste = max(Decimal('0'), montant_du - deja_paye)
+                montant_du = part if (part is not None and part >= Decimal(0)) else facture_obj.total_ttc
+                reste = max(Decimal(0), montant_du - deja_paye)
                 if montant > reste:
                     # Make request.data mutable and cap the amount
                     data = request.data.copy()
@@ -105,7 +104,7 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             except FactureModel.DoesNotExist:
                 pass
 
-        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cash_out')
+        _validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cash_out')
         if error_res:
             return error_res
 
@@ -143,7 +142,6 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         """
         Liste paginée des produits divers vendus par période, avec total CA global.
         """
-        from datetime import datetime, timedelta
         from ...models import FactureProduitAllocation
         
         date_debut = request.query_params.get('date_debut')
@@ -194,7 +192,10 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         )['ca'] or Decimal('0.00')
         
         # Pagination avec DRF (headers + metadata)
-        from ...centralized_configs import PaginationHelper, PaginationDefaults, StandardResultsSetPagination
+        from ...centralized_configs import (
+            PaginationDefaults,
+            PaginationHelper,
+        )
         paginator = StandardResultsSetPagination()
         paginator.page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_LIST_PAGE_SIZE)
         
@@ -214,8 +215,8 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         
         # Regroupement par jour
         if group_by == 'day':
-            from django.db.models.functions import TruncDate
             from django.db.models import Count
+            from django.db.models.functions import TruncDate
             
             daily_totals = queryset.annotate(
                 day=TruncDate('created_at')
@@ -307,7 +308,7 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             coupons=-Coalesce(Sum('montant', filter=Q(mode_paiement='coupon')), Value(0, output_field=DecimalField()))
         )
         total_ventes = ventes_aggregated['total']
-        total_ventes_especes = ventes_aggregated['especes']
+        ventes_aggregated['especes']
         total_coupons = ventes_aggregated['coupons']
 
         # 2. Totaux des recouvrements en UNE requête
@@ -736,7 +737,7 @@ class ClotureCaisseViewSet(BaseViewSetConfig, viewsets.ReadOnlyModelViewSet):
         return queryset
 
     def list(self, request, *args, **kwargs):
-        from ...centralized_configs import PaginationHelper, PaginationDefaults
+        from ...centralized_configs import PaginationDefaults, PaginationHelper
         queryset = self.get_queryset()
         page = PaginationHelper.get_page_number(request)
         page_size = PaginationHelper.get_page_size(request, PaginationDefaults.DEFAULT_REPORT_PAGE_SIZE)

@@ -7,16 +7,16 @@ Tests critical business logic:
 - Cancellation and stock restoration
 """
 from decimal import Decimal
+
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.utils import timezone
 
-from .factories import TestDataFactory
 from ..models import (
-    Facture, FactureProduit, Produit, StockLot, Caisse,
-    FactureProduitAllocation
+    Caisse,
 )
+from .factories import TestDataFactory
 
 
 class InvoiceValidationTestCase(APITestCase):
@@ -98,7 +98,7 @@ class InvoiceValidationTestCase(APITestCase):
         )
         
         url = reverse('facture-valider', kwargs={'pk': facture.pk})
-        response = self.client.post(url, {'mode_paiement': 'especes'})
+        self.client.post(url, {'mode_paiement': 'especes'})
         
         # Should fail or handle appropriately
         # Note: Actual behavior depends on implementation
@@ -113,7 +113,7 @@ class InvoiceValidationTestCase(APITestCase):
             client=self.client_obj,
             status='BROU'
         )
-        facture_produit = TestDataFactory.create_facture_produit(
+        TestDataFactory.create_facture_produit(
             facture=facture,
             produit=self.produit,
             quantity=2,

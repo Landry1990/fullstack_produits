@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Application settings models: Loyalty, Pharmacy, and Invoice settings (Singletons).
 """
-from django.db import models
 import uuid
+
+from django.db import models
 
 
 class LoyaltySetting(models.Model):
@@ -32,7 +32,7 @@ class LoyaltySetting(models.Model):
 
     def save(self, *args, **kwargs):
         self.pk = 1  # Singleton
-        super(LoyaltySetting, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
         
     def __str__(self):
         return "Configuration Fidélité"
@@ -292,10 +292,6 @@ class PharmacySettings(models.Model):
         default=10, 
         help_text="Nb de produits en rupture avant alerte"
     )
-    dormant_stock_days = models.IntegerField(
-        default=90,
-        help_text="Seuil de jours pour stock dormant"
-    )
 
 
     # --- Paramètres Rapport Automatique Mensuel ---
@@ -426,7 +422,7 @@ class PharmacySettings(models.Model):
     
     def save(self, *args, **kwargs):
         self.pk = 1  # Singleton pattern
-        super(PharmacySettings, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return self.pharmacy_name
@@ -459,7 +455,7 @@ class InvoiceSettings(models.Model):
     def save(self, *args, **kwargs):
         if not self.pk and InvoiceSettings.objects.exists():
             return InvoiceSettings.objects.first()
-        return super(InvoiceSettings, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return "Invoice Configuration"

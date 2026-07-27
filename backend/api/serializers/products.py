@@ -1,12 +1,19 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour les produits, stock et catalog.
 """
-from rest_framework import serializers
 from django.db.models import Q
+from rest_framework import serializers
+
 from ..models import (
-    Substance, MedicamentReference, Rayon, Forme, FamilleRisque,
-    Groupe, Produit, StockLot, Promotion, DrugInteraction,
+    DrugInteraction,
+    FamilleRisque,
+    Forme,
+    Groupe,
+    MedicamentReference,
+    Produit,
+    Rayon,
+    StockLot,
+    Substance,
 )
 from .mixins import UppercaseSerializerMixin
 

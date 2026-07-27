@@ -1,22 +1,31 @@
 import io
 from datetime import datetime
-from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
+
 from django.db.models import Q
 from django.http import HttpResponse
-
-from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.lib.units import inch
-from reportlab.platypus import BaseDocTemplate, Frame, Paragraph, PageTemplate, Table, TableStyle, Spacer
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    BaseDocTemplate,
+    Frame,
+    PageTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
+)
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from ..models import Rayon, Produit
-from ..serializers import RayonSerializer
+from ..models import Produit, Rayon
 from ..pagination import StandardResultsSetPagination
+from ..serializers import RayonSerializer
+
 
 class CategorieViewSet(viewsets.ModelViewSet):
     """API endpoint for categories (rayons) - Fresh implementation."""

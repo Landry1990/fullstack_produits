@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand
-from api.models import FactureProduit, FactureProduitAllocation
 from django.db.models import Q
+
+from api.models import FactureProduit
+
 
 class Command(BaseCommand):
     help = 'Populates the "lot" field in FactureProduit from existing allocations (FactureProduitAllocation) for historical data.'
@@ -30,7 +32,7 @@ class Command(BaseCommand):
             
             if lot_names:
                 # Deduplicate and join
-                unique_lots = sorted(list(set(lot_names)))
+                unique_lots = sorted(set(lot_names))
                 joined_lots = ",".join(unique_lots)[:20] # Truncate to match max_length=20
                 
                 item.lot = joined_lots

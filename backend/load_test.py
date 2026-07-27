@@ -6,15 +6,13 @@ Teste les limites du serveur avec envois simultanés
 Usage: python load_test.py --clients 15 --duration 60 --ramp-up 10
 """
 
-import asyncio
-import aiohttp
-import random
-import string
-import time
 import argparse
-from datetime import datetime
-from typing import List, Dict
+import asyncio
+import random
 import statistics
+import time
+
+import aiohttp
 
 # Configuration
 BASE_URL = "http://localhost:8000/api"
@@ -27,8 +25,8 @@ class LoadTestResult:
         self.total_requests = 0
         self.successful_requests = 0
         self.failed_requests = 0
-        self.response_times: List[float] = []
-        self.errors: List[str] = []
+        self.response_times: list[float] = []
+        self.errors: list[str] = []
         self.start_time: float = 0
         self.end_time: float = 0
     
@@ -61,7 +59,7 @@ class LoadTestResult:
         print(f"\nRequêtes totales: {self.total_requests}")
         print(f"✅ Succès: {self.successful_requests} ({self.successful_requests/self.total_requests*100:.1f}%)")
         print(f"❌ Échecs: {self.failed_requests} ({self.failed_requests/self.total_requests*100:.1f}%)")
-        print(f"\n⚡ Performance:")
+        print("\n⚡ Performance:")
         print(f"   Requêtes/sec: {self.requests_per_second:.2f}")
         print(f"   Temps moyen: {self.avg_response_time*1000:.2f}ms")
         print(f"   Temps P95: {self.p95_response_time*1000:.2f}ms")
@@ -69,7 +67,7 @@ class LoadTestResult:
         print(f"   Temps max: {max(self.response_times)*1000:.2f}ms")
         
         if self.errors:
-            print(f"\n⚠️  Erreurs fréquentes:")
+            print("\n⚠️  Erreurs fréquentes:")
             error_counts = {}
             for err in self.errors:
                 error_counts[err] = error_counts.get(err, 0) + 1
@@ -89,7 +87,7 @@ class LoadTestResult:
         print("="*70)
 
 
-def generate_random_sale() -> Dict:
+def generate_random_sale() -> dict:
     """Génère une vente aléatoire réaliste"""
     products = [
         {"id": 1, "name": "Paracétamol 500mg", "price": 2500},
@@ -155,7 +153,7 @@ async def simulate_cashier(client_id: int, session: aiohttp.ClientSession,
                     result.failed_requests += 1
                     result.errors.append(f"HTTP {response.status}")
                     
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result.total_requests += 1
             result.failed_requests += 1
             result.errors.append("Timeout")

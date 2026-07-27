@@ -1,12 +1,19 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework import status
-from django.utils import timezone
-from django.core.cache import cache
 import jwt
+from django.core.cache import cache
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from api.models.licence import Licence, LicenceNotification
-from api.utils_licence import valider_licence_systeme, get_hardware_id, get_licence_details, CLE_PUBLIQUE
+from api.utils_licence import (
+    CLE_PUBLIQUE,
+    get_hardware_id,
+    get_licence_details,
+    valider_licence_systeme,
+)
+
 
 class LicenceStatusView(APIView):
     # L'utilisateur n'a pas besoin d'être connecté pour voir le statut de la licence
@@ -43,7 +50,7 @@ class LicenceStatusView(APIView):
                     "hardware_match": hw_match,
                 })
             except Exception as e:
-                return Response({"detail": f"Clé invalide : {str(e)}"}, status=400)
+                return Response({"detail": f"Clé invalide : {e!s}"}, status=400)
 
         # Validation en mémoire AVANT d'écraser l'ancienne licence
         try:
@@ -51,7 +58,7 @@ class LicenceStatusView(APIView):
         except jwt.ExpiredSignatureError:
             return Response({"detail": "Clé rejetée : Licence expirée."}, status=400)
         except Exception as e:
-            return Response({"detail": f"Clé invalide : {str(e)}"}, status=400)
+            return Response({"detail": f"Clé invalide : {e!s}"}, status=400)
 
         hw_id = get_hardware_id()
         if payload.get('hardware_id') != "ANY" and payload.get('hardware_id') != hw_id:

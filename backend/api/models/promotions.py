@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Promotion logic: Percentage, Fixed Amount, Buy X Get Y.
 """
+
 from django.db import models
 from django.utils import timezone
-from decimal import Decimal
+
 
 class Promotion(models.Model):
     """
@@ -80,9 +80,7 @@ class Promotion(models.Model):
             return False
         if self.end_date and now > self.end_date:
             return False
-        if now < self.start_date:
-            return False
-        return True
+        return not now < self.start_date
 
 class PromotionPackItem(models.Model):
     """

@@ -1,14 +1,16 @@
 import os
-import django
 import sys
 from decimal import Decimal
+
+import django
 
 # Setup Django
 sys.path.append(r"c:\Projet Fullstack\fullstack_produits\backend")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
 
-from api.models.billing import Facture, Caisse, CouponMonnaie
+from api.models.billing import Caisse, Facture
+
 
 def analyze_march():
     month = 3

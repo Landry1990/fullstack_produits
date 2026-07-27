@@ -1,14 +1,15 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour les utilisateurs, profils et caisse.
 """
-from rest_framework import serializers
-from django.contrib.auth import password_validation
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.contrib.auth.models import User
-from django.db.models import Sum
 from decimal import Decimal
-from ..models import Profile, Team, PosteCaisse, PosteVente, SessionCaisse
+
+from django.contrib.auth import password_validation
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import Sum
+from rest_framework import serializers
+
+from ..models import PosteCaisse, PosteVente, Profile, Team
 from .mixins import UppercaseSerializerMixin
 
 
@@ -205,6 +206,7 @@ class SessionCaisseSerializer(serializers.ModelSerializer):
 
     def get_ventilation_paiements(self, obj):
         from django.utils import timezone
+
         from ..models import Caisse
 
         start_date = obj.date_ouverture

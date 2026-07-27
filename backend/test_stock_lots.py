@@ -4,13 +4,15 @@ Test script to verify stock_lots relationship works
 """
 import os
 import sys
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 django.setup()
 
-from api.models import Produit, StockLot
+from api.models import Produit
+
 
 def test_stock_lots_relationship():
     """Test that stock_lots relationship is accessible"""

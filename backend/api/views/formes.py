@@ -1,8 +1,10 @@
-from rest_framework import viewsets, filters
+from rest_framework import filters, viewsets
 from rest_framework.permissions import IsAuthenticated
+
 from ..models import Forme
-from ..serializers_forme import FormeSerializer
 from ..pagination import StandardResultsSetPagination
+from ..serializers_forme import FormeSerializer
+
 
 class FormeViewSet(viewsets.ModelViewSet):
     """

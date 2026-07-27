@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Mixin pour normaliser automatiquement les champs texte en MAJUSCULES.
 Applique .upper() sur tous les CharField/TextField writables,

@@ -1,10 +1,10 @@
-from rest_framework import viewsets, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
-from django.contrib.auth.models import User
+from rest_framework import filters, permissions, viewsets
 
 from ..models import AuditLog
-from ..serializers import AuditLogSerializer
 from ..pagination import StandardResultsSetPagination
+from ..serializers import AuditLogSerializer
+
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """

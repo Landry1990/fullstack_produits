@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 API Models Package
 
@@ -7,117 +6,210 @@ Usage: from api.models import Produit, Facture, etc.
 """
 
 # Users
-from .users import Profile, Team, create_user_profile, save_user_profile
-from .user_sessions import UserDailySession
-
-# Settings
-from .settings import (
-    LoyaltySetting, PharmacySettings, InvoiceSettings, ConfigurationOption, TVA
+# Audit
+from .audit import (
+    ActivityLog,
+    AuditLog,
+    LigneOrdonnancier,
+    MouvementCaisse,
+    Ordonnancier,
 )
-# Products
-from .products import (
-    Rayon, Forme, Groupe, FamilleRisque, 
-    Substance, DrugInteraction, Produit, MedicamentReference
-)
-
-# Stock
-from .stock import (
-    StockLot, LotSequence, StockAdjustment, MouvementStock,
-    TicketSessionSequence, RuptureFournisseur, ReapproSession,
-    generate_lot_number, get_next_ticket_session
-)
-
-# Clients
-from .clients import Fournisseur, Client, AyantDroit
-from .depot import DepotClient
-
-# Orders
-from .orders import Commande, CommandeProduit, Avoir, LigneAvoir, OrderSchedule
-from .paiements import PaiementFournisseur
 
 # Billing
 from .billing import (
-    Facture, FactureProduit, FactureProduitAllocation,
-    Caisse, RelevePaiement, ClotureCaisse, CouponMonnaie, Promis, PosteCaisse, PosteVente, SessionCaisse
+    Caisse,
+    ClotureCaisse,
+    CouponMonnaie,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    PosteCaisse,
+    PosteVente,
+    Promis,
+    RelevePaiement,
+    SessionCaisse,
+)
+
+# Clients
+from .clients import AyantDroit, Client, Fournisseur
+
+# Communication
+from .communication import (
+    InternalMessage,
+    MessageTemplate,
+    SmsLog,
+    SmsTemplate,
+    TelegramLog,
+    WhatsAppLog,
 )
 
 # Comptabilité
 from .comptabilite import (
-    CompteComptable, JournalComptable, EcritureComptable, LigneEcriture, ExerciceComptable,
-    Lettrage
+    CompteComptable,
+    EcritureComptable,
+    ExerciceComptable,
+    JournalComptable,
+    Lettrage,
+    LigneEcriture,
 )
-
-# Inventory
-from .inventory import (
-    Inventaire, LigneInventaire, 
-    RelationTransformation, HistoriqueTransformation
-)
-
-# Audit
-from .audit import (
-    ActivityLog, AuditLog, MouvementCaisse, 
-    Ordonnancier, LigneOrdonnancier
-)
-
-# Communication
-from .communication import SmsLog, SmsTemplate, WhatsAppLog, TelegramLog, InternalMessage, MessageTemplate
+from .configuration_objectifs import ConfigurationObjectifs
+from .depot import DepotClient
 
 # Feedback
 from .feedback import Feedback
+
+# Inventory
+from .inventory import (
+    HistoriqueTransformation,
+    Inventaire,
+    LigneInventaire,
+    RelationTransformation,
+)
+
+# Licence
+from .licence import Licence
+from .objectif import ObjectifCommercial
+
+# Orders
+from .orders import Avoir, Commande, CommandeProduit, LigneAvoir, OrderSchedule
+from .paiements import PaiementFournisseur
+
+# Planning
+from .planning import LeaveRequest, ShiftAssignment, ShiftConfig, ShiftSchedule
+
+# Products
+from .products import (
+    DrugInteraction,
+    FamilleRisque,
+    Forme,
+    Groupe,
+    MedicamentReference,
+    Produit,
+    Rayon,
+    Substance,
+)
+from .promotions import Promotion, PromotionPackItem
+
+# Settings
+from .settings import (
+    TVA,
+    ConfigurationOption,
+    InvoiceSettings,
+    LoyaltySetting,
+    PharmacySettings,
+)
 
 # Signals for soft delete (preserving names before deletion)
 from .signals import (
     preserve_product_name_on_delete,
 )
-from .promotions import Promotion, PromotionPackItem
-from .objectif import ObjectifCommercial
-from .configuration_objectifs import ConfigurationObjectifs
 
-# Planning
-from .planning import ShiftConfig, ShiftSchedule, ShiftAssignment, LeaveRequest
-
-# Licence
-from .licence import Licence
+# Stock
+from .stock import (
+    LotSequence,
+    MouvementStock,
+    ReapproSession,
+    RuptureFournisseur,
+    StockAdjustment,
+    StockLot,
+    TicketSessionSequence,
+    generate_lot_number,
+    get_next_ticket_session,
+)
+from .user_sessions import UserDailySession
+from .users import Profile, Team, create_user_profile, save_user_profile
 
 __all__ = [
-    # Users
-    'Profile', 'Team',
-    # Settings
-    'LoyaltySetting', 'PharmacySettings', 'InvoiceSettings', 'ConfigurationOption',
-    # Products
-    'Rayon', 'Forme', 'Groupe', 'FamilleRisque', 
-    'Substance', 'DrugInteraction', 'Produit', 'MedicamentReference',
-    # Stock
-    'StockLot', 'LotSequence', 'StockAdjustment', 'MouvementStock',
-    'TicketSessionSequence', 'RuptureFournisseur', 'ReapproSession',
-    'generate_lot_number', 'get_next_ticket_session',
-    # Clients
-    'Fournisseur', 'Client', 'AyantDroit', 'DepotClient',
-    # Orders
-    'Commande', 'CommandeProduit', 'Avoir', 'LigneAvoir', 'PaiementFournisseur', 'OrderSchedule',
-    # Billing
-    'Facture', 'FactureProduit', 'FactureProduitAllocation',
-    'Caisse', 'RelevePaiement', 'ClotureCaisse', 'CouponMonnaie', 'Promis', 'PosteCaisse', 'PosteVente', 'SessionCaisse',
-    # Inventory
-    'Inventaire', 'LigneInventaire', 
-    'RelationTransformation', 'HistoriqueTransformation',
     # Audit
-    'ActivityLog', 'AuditLog', 'MouvementCaisse', 
-    'Ordonnancier', 'LigneOrdonnancier',
-    # Communication
-    'SmsLog', 'SmsTemplate', 'WhatsAppLog', 'InternalMessage', 'MessageTemplate',
+    'ActivityLog',
+    'AuditLog',
+    'Avoir',
+    'AyantDroit',
+    'Caisse',
+    'Client',
+    'ClotureCaisse',
+    # Orders
+    'Commande',
+    'CommandeProduit',
+    # Comptabilité
+    'CompteComptable',
+    'ConfigurationObjectifs',
+    'ConfigurationOption',
+    'CouponMonnaie',
+    'DepotClient',
+    'DrugInteraction',
+    'EcritureComptable',
+    'ExerciceComptable',
+    # Billing
+    'Facture',
+    'FactureProduit',
+    'FactureProduitAllocation',
+    'FamilleRisque',
     # Feedback
     'Feedback',
-    # Promotions
-    'Promotion', 'PromotionPackItem',
-    # Objectifs
-    'ObjectifCommercial', 'ConfigurationObjectifs',
-    # Sessions
-    'UserDailySession',
+    'Forme',
+    # Clients
+    'Fournisseur',
+    'Groupe',
+    'HistoriqueTransformation',
+    'InternalMessage',
+    # Inventory
+    'Inventaire',
+    'InvoiceSettings',
+    'JournalComptable',
+    'LeaveRequest',
+    'Lettrage',
     # Licence
     'Licence',
+    'LigneAvoir',
+    'LigneEcriture',
+    'LigneInventaire',
+    'LigneOrdonnancier',
+    'LotSequence',
+    # Settings
+    'LoyaltySetting',
+    'MedicamentReference',
+    'MessageTemplate',
+    'MouvementCaisse',
+    'MouvementStock',
+    # Objectifs
+    'ObjectifCommercial',
+    'OrderSchedule',
+    'Ordonnancier',
+    'PaiementFournisseur',
+    'PharmacySettings',
+    'PosteCaisse',
+    'PosteVente',
+    'Produit',
+    # Users
+    'Profile',
+    'Promis',
+    # Promotions
+    'Promotion',
+    'PromotionPackItem',
+    # Products
+    'Rayon',
+    'ReapproSession',
+    'RelationTransformation',
+    'RelevePaiement',
+    'RuptureFournisseur',
+    'SessionCaisse',
+    'ShiftAssignment',
     # Planning
-    'ShiftConfig', 'ShiftSchedule', 'ShiftAssignment', 'LeaveRequest',
-    # Comptabilité
-    'CompteComptable', 'JournalComptable', 'EcritureComptable', 'LigneEcriture', 'ExerciceComptable', 'Lettrage',
+    'ShiftConfig',
+    'ShiftSchedule',
+    # Communication
+    'SmsLog',
+    'SmsTemplate',
+    'StockAdjustment',
+    # Stock
+    'StockLot',
+    'Substance',
+    'Team',
+    'TicketSessionSequence',
+    # Sessions
+    'UserDailySession',
+    'WhatsAppLog',
+    'generate_lot_number',
+    'get_next_ticket_session',
 ]

@@ -1,12 +1,22 @@
+from django.db import transaction
+from django.db.models import Case, F, IntegerField, Sum, When
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from django.db import transaction
-from django.db.models import F, Sum, IntegerField, Case, When
 
-from ...models import Produit, StockLot, StockAdjustment, ReapproSession, AuditLog, FactureProduit, Commande, MouvementStock
 from ...audit_helpers import log_audit
+from ...models import (
+    AuditLog,
+    Commande,
+    FactureProduit,
+    MouvementStock,
+    Produit,
+    ReapproSession,
+    StockAdjustment,
+    StockLot,
+)
 from ...sudo_utils import validate_sudo_mode
+
 
 class ProduitStockMixin:
     """Mixin pour la gestion des stocks, ajustements, et historique des produits."""
@@ -162,7 +172,7 @@ class ProduitStockMixin:
         ).values_list('code', flat=True))
 
         if reason_type not in valid_reasons and reason_type not in custom_reasons:
-            return Response({'detail': f'reason_type invalide. Choisir parmi les motifs standards ou personnaliss.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'reason_type invalide. Choisir parmi les motifs standards ou personnaliss.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             if new_quantity is not None:
@@ -175,8 +185,9 @@ class ProduitStockMixin:
         stock_lot = None
         if new_lot_number:
             # Créer un nouveau lot
-            from django.utils import timezone
             import datetime as _dt
+
+            from django.utils import timezone
             date_exp = None
             if new_lot_expiration:
                 try:

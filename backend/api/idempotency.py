@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Idempotency Key support pour les endpoints critiques (POST /finaliser, etc.)
 
@@ -15,10 +14,10 @@ import json
 import logging
 from functools import wraps
 
-from django.core.cache import cache
 from django.conf import settings
-from rest_framework.response import Response
+from django.core.cache import cache
 from rest_framework import status as http_status
+from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 

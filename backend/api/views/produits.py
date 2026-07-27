@@ -1,31 +1,43 @@
-from rest_framework import viewsets, filters
+from django.db.models import (
+    CharField,
+    Count,
+    DecimalField,
+    F,
+    IntegerField,
+    Min,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Sum,
+)
+from django.db.models.functions import Coalesce
+from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Count, OuterRef, Subquery, IntegerField, CharField, Q, F, Sum, DecimalField, Min
-from django.db.models.functions import Coalesce
-from django.db.models import Prefetch
-from ..models import Produit, Promis, CommandeProduit, StockLot
-from ..serializers import ProduitSerializer
-from ..serializers_optimized import ProduitListSerializer, ProduitDetailSerializer
-from ..serializer_mixins import OptimizedSerializerMixin
+
 from ..cache_mixins import CachedSearchMixin
-from ..search_mixins import MultiTermSearchMixin
 from ..cache_utils import SearchCache
 from ..centralized_configs import (
-    BaseViewSetConfig, 
-    CommonSearchFields, 
+    BaseViewSetConfig,
     CommonOrderingFields,
-    StandardResultsSetPagination
+    CommonSearchFields,
 )
+from ..models import CommandeProduit, Produit, Promis, StockLot
+from ..search_mixins import MultiTermSearchMixin
+from ..serializer_mixins import OptimizedSerializerMixin
+from ..serializers import ProduitSerializer
+from ..serializers_optimized import ProduitDetailSerializer, ProduitListSerializer
 
 # Imports des mixins modulaires
 from .produit_actions import (
-    ProduitStatsMixin,
-    ProduitStockMixin,
-    ProduitExportMixin,
     ProduitBulkMixin,
-    ProduitStatusMixin
+    ProduitExportMixin,
+    ProduitStatsMixin,
+    ProduitStatusMixin,
+    ProduitStockMixin,
 )
+
 
 class ProduitViewSet(
     BaseViewSetConfig,
@@ -216,6 +228,7 @@ class ProduitViewSet(
         stock > 0, actif. Utilise toutes les substances liées (M2M), pas seulement dci_reference.
         """
         from django.db.models import Q
+
         from ..serializers_optimized import ProduitListSerializer
 
         produit = self.get_object()

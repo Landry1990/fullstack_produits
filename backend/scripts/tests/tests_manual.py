@@ -1,15 +1,16 @@
 import os
+
 import django
-import sys
-from django.core.files.base import ContentFile
 
 # Setup Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from django.test import RequestFactory
-from api.models import Rayon, Produit, Fournisseur
+
+from api.models import Fournisseur, Produit, Rayon
 from api.views import CategorieViewSet
+
 
 def test_pdf_generation():
     print("Testing PDF Generation for Rayon...")
@@ -18,7 +19,7 @@ def test_pdf_generation():
     try:
         rayon, _ = Rayon.objects.get_or_create(name="Test Rayon")
         fournisseur, _ = Fournisseur.objects.get_or_create(name="Test Fournisseur", email="test@test.com", phone="123456789")
-        produit, _ = Produit.objects.get_or_create(
+        _produit, _ = Produit.objects.get_or_create(
             rayon=rayon, 
             fournisseur=fournisseur,
             defaults={'selling_price': 100, 'cost_price': 50, 'stock': 10, 'pmp': 50}
@@ -35,7 +36,7 @@ def test_pdf_generation():
             
         # Test 2: Sans Rayon
         print("Testing PDF Generation for Sans Rayon...")
-        produit2, _ = Produit.objects.get_or_create(
+        _produit2, _ = Produit.objects.get_or_create(
             name="Product No Rayon",
             rayon=None,
             defaults={'selling_price': 100, 'cost_price': 50, 'stock': 5, 'pmp': 50}

@@ -1,11 +1,13 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import FactureProduit
 from decimal import Decimal
+
+from api.models import FactureProduit
 
 print('=' * 80)
 print('MIGRATION DES DONNEES - TVA LIGNE PAR LIGNE')
@@ -35,7 +37,7 @@ for ligne in lignes:
 
 print()
 print('=' * 80)
-print(f'Migration terminée:')
+print('Migration terminée:')
 print(f'  - Lignes mises à jour: {updated_count}')
 print(f'  - Lignes ignorées: {skipped_count}')
 print('=' * 80)

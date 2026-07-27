@@ -12,7 +12,7 @@ workers = int(os.getenv("GUNICORN_WORKERS", multiprocessing.cpu_count() * 2 + 1)
 
 # Threads par worker — augmente la capacité sans multiplier les processus
 # 4 threads × 9 workers = 36 requêtes simultanées théoriques
-threads = int(os.getenv("GUNICORN_THREADS", 4))
+threads = int(os.getenv("GUNICORN_THREADS", "4"))
 
 # Worker class : gthread (sync + threads) — compatible Django 100%
 # Alternative : "gevent" si vous installez gevent (encore plus de capacité)
@@ -26,7 +26,7 @@ backlog = 512
 
 # ── Timeouts ─────────────────────────────────────────────────────
 # Durée max d'une requête avant kill du worker (secondes)
-timeout = int(os.getenv("GUNICORN_TIMEOUT", 60))
+timeout = int(os.getenv("GUNICORN_TIMEOUT", "60"))
 
 # Garde les connexions HTTP ouvertes (évite le handshake à chaque requête)
 keepalive = 5

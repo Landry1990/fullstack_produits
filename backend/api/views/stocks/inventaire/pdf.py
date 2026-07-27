@@ -2,19 +2,22 @@
 Génération PDF et données d'impression pour les inventaires.
 """
 import io
-from decimal import Decimal
+
 from django.http import HttpResponse
-from django.utils import timezone
-from rest_framework.response import Response
 
 # ReportLab imports
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
-    Paragraph, Table, TableStyle, Spacer,
-    Frame, PageTemplate, BaseDocTemplate
+    BaseDocTemplate,
+    Frame,
+    PageTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
 )
 
 
@@ -215,7 +218,6 @@ def get_print_data(inventaire, group_by='rayon', is_report=False):
     Returns:
         dict avec les données structurées
     """
-    from api.models import Inventaire
 
     lignes = inventaire.lignes.select_related(
         'produit', 'produit__rayon', 'produit__forme', 'produit__groupe', 'stock_lot'

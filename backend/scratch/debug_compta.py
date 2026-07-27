@@ -1,10 +1,11 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import EcritureComptable, LigneEcriture, CompteComptable
+from api.models import EcritureComptable, LigneEcriture
 
 print("--- ANALYSE COMPTABILITE ---")
 print(f"Total Ecritures: {EcritureComptable.objects.count()}")

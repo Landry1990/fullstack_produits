@@ -1,15 +1,25 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Q, Avg, F as models_f, ExpressionWrapper, DecimalField, F, OuterRef, Subquery, Case, When
-from django.db.models.functions import TruncDate, Coalesce
-from django.utils import timezone
-from datetime import datetime
-from .rapports.tz_utils import parse_api_datetime
-from decimal import Decimal
-from ..models import Facture, Caisse, FactureProduit, FactureProduitAllocation
 import logging
+from datetime import datetime
+
+from django.db.models import (
+    Avg,
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Sum,
+    When,
+)
+from django.db.models import F as models_f
+from django.db.models.functions import TruncDate
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from ..models import Caisse, Facture, FactureProduit
+from .rapports.tz_utils import parse_api_datetime
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -20,7 +30,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
     
     def list(self, request):
         # Get query parameters
-        from ..centralized_configs import PaginationHelper, PaginationDefaults
+        from ..centralized_configs import PaginationDefaults, PaginationHelper
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
         page = PaginationHelper.get_page_number(request)
@@ -240,9 +250,9 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         Génère un export Excel de l'historique des ventes.
         """
         import openpyxl
-        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-        from openpyxl.utils import get_column_letter
         from django.http import HttpResponse
+        from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+        from openpyxl.utils import get_column_letter
         
         # Récupérer les données filtrées (sans pagination)
         date_debut = request.query_params.get('date_debut')
@@ -336,8 +346,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 if cell.row == 1:
                     continue
                 try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
+                    max_length = max(max_length, len(str(cell.value)))
                 except:
                     pass
             ws.column_dimensions[column].width = min(25, max(10, max_length + 2))

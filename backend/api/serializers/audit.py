@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Serializers pour l'audit, logs et mouvements de caisse.
 """
 from rest_framework import serializers
+
 from ..models import AuditLog, MouvementCaisse
 
 

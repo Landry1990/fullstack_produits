@@ -1,13 +1,16 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from api.models import Facture
-from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
+
+from django.utils import timezone
+
+from api.models import Facture
 
 print('=' * 80)
 print('TEST - NOUVELLE LOGIQUE CA HT (avec soustraction des remises)')

@@ -6,14 +6,13 @@ import json
 import time
 from collections import Counter
 
-from django.core.management.base import BaseCommand
-from django.test import Client
-from django.contrib.auth.models import User
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
 from django.db import connection
-from django.utils import timezone
+from django.test import Client
 
-from api.models import PosteCaisse, SessionCaisse, Produit
+from api.models import PosteCaisse, Produit, SessionCaisse
 
 
 class Command(BaseCommand):

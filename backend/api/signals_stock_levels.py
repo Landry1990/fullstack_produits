@@ -15,15 +15,16 @@ Recalcule automatiquement:
 2. Après chaque vente (pour réactivité immédiate)
 """
 
+from datetime import timedelta
+from decimal import ROUND_HALF_UP, Decimal
+
+from django.db.models import Sum
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from django.db.models import Sum
 from django.utils import timezone
-from datetime import timedelta
-from decimal import Decimal, ROUND_HALF_UP
 
-from .models import Facture, FactureProduit, Produit, Fournisseur
 from .cache_utils import SearchCache
+from .models import Facture, FactureProduit, Produit
 from .services.replenishment_service import calculate_stock_thresholds
 
 
@@ -92,8 +93,6 @@ def calculate_and_apply_stock_levels(produit_id=None):
         Nombre de produits mis à jour
     """
     # Délai par défaut pour fournisseurs locaux (même jour ou 2 jours max)
-    DELAI_LIVRAISON_DEFAULT = 2  # jours
-    COEFFICIENT_SECURITE = 1.2   # 20% de sécurité pour le max
     
     updated_count = 0
     
@@ -116,21 +115,21 @@ def calculate_and_apply_stock_levels(produit_id=None):
             # 2. Récupérer le délai de livraison du fournisseur principal
             fournisseur = produit.fournisseur
             if fournisseur and hasattr(fournisseur, 'delai_livraison_jours'):
-                delai_livraison = fournisseur.delai_livraison_jours or DELAI_LIVRAISON_DEFAULT
+                pass
             else:
-                delai_livraison = DELAI_LIVRAISON_DEFAULT
+                pass
             
             # 3. Calculer les seuils
             # MINIMUM: quantité pour tenir pendant le délai de livraison
-            ventes_par_jour = ventes_mensuelles / 30.0
+            ventes_mensuelles / 30.0
             stock_minimum = thresholds['stock_minimum']
             
             # MAXIMUM: quantité pour tenir 1 mois + 20% de sécurité
             stock_maximum = thresholds['stock_maximum']
             
             # 4. Convertir en entiers (arrondi)
-            stock_minimum_int = int(Decimal(str(stock_minimum)).quantize(Decimal('1'), rounding=ROUND_HALF_UP))
-            stock_maximum_int = int(Decimal(str(stock_maximum)).quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+            stock_minimum_int = int(Decimal(str(stock_minimum)).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+            stock_maximum_int = int(Decimal(str(stock_maximum)).quantize(Decimal(1), rounding=ROUND_HALF_UP))
             
             # Minimum 1 unité si le produit se vend
             if stock_minimum_int < 1 and ventes_mensuelles > 0:

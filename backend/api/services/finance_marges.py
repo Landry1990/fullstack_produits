@@ -1,13 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 Services de calcul des marges (allocated + unallocated).
 """
-from decimal import Decimal
-from django.db.models import Sum, F, Value, DecimalField, Exists, OuterRef
-from django.db.models.functions import TruncMonth, Coalesce
+from django.db.models import DecimalField, Exists, F, OuterRef, Sum, Value
+from django.db.models.functions import Coalesce, TruncMonth
 
-from ..models import FactureProduitAllocation, FactureProduit
-from .finance_base_queries import get_allocations_base_queryset, get_unallocated_products_base_queryset
+from ..models import FactureProduit, FactureProduitAllocation
+from .finance_base_queries import (
+    get_allocations_base_queryset,
+    get_unallocated_products_base_queryset,
+)
 
 
 def build_monthly_margin_map(start_date, end_date=None):

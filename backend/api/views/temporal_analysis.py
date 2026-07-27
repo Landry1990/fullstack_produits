@@ -1,18 +1,21 @@
-# -*- coding: utf-8 -*-
 """
 Temporal Analysis ViewSet - Analyse temporelle des ventes.
 Endpoints pour les heures de pointe, jours rentables et saisonnalité.
 """
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-
-from django.db.models import Count, Sum, Avg, F
-from django.db.models.functions import ExtractHour, ExtractWeekDay, ExtractMonth, TruncMonth
-from django.utils import timezone
 from datetime import timedelta
-from decimal import Decimal
+
+from django.db.models import Count, F, Sum
+from django.db.models.functions import (
+    ExtractHour,
+    ExtractMonth,
+    ExtractWeekDay,
+    TruncMonth,
+)
+from django.utils import timezone
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from ..models import Facture, FactureProduit
 

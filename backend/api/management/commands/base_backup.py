@@ -1,11 +1,12 @@
-from django.core.management.base import BaseCommand
-from django.conf import settings
-import subprocess
 import os
+import shutil
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-import shutil
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
@@ -83,7 +84,7 @@ class Command(BaseCommand):
             with open(meta_file, 'w') as f:
                 f.write(f'base_backup_created={datetime.now().isoformat()}\n')
                 f.write(f'pg_version={result.stderr.splitlines()[0] if result.stderr else "unknown"}\n')
-                f.write(f'wal_archive_dir=/wal_archive\n')
+                f.write('wal_archive_dir=/wal_archive\n')
 
             # Créer une archive tar pour faciliter le stockage
             tar_file = backup_dir / f'base-{timestamp}.tar'
@@ -108,4 +109,4 @@ class Command(BaseCommand):
             ))
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Erreur: {str(e)}'))
+            self.stdout.write(self.style.ERROR(f'Erreur: {e!s}'))

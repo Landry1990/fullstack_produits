@@ -1,16 +1,23 @@
+from datetime import timedelta
+from decimal import Decimal
+
+from django.core.cache import cache
+from django.db.models import (
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Sum,
+    Value,
+)
+from django.db.models.functions import Coalesce
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 
-from django.core.cache import cache
-from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, ExpressionWrapper, Case, When, Exists, OuterRef
-from django.db.models.functions import TruncDay, TruncMonth, Coalesce, TruncDate
-from django.utils import timezone
-from datetime import datetime, timedelta
-from decimal import Decimal
-
-from ...models import Facture, Commande, Produit, Client, StockLot, Caisse, ObjectifCommercial, FactureProduit, FactureProduitAllocation
+from ...models import (
+    Commande,
+)
 
 
 class DashboardFournisseursMixin(viewsets.ViewSet):
@@ -28,12 +35,12 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
         if cached is not None:
             return Response(cached)
 
-        from ...models import Fournisseur, CommandeProduit, PaiementFournisseur, Commande
-        from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value, ExpressionWrapper
-        from django.db.models.functions import Coalesce
-        from datetime import date, timedelta
         from collections import defaultdict
-        from decimal import Decimal
+        from datetime import date
+
+        from django.db.models import Subquery
+
+        from ...models import CommandeProduit, Fournisseur, PaiementFournisseur
     
         today = date.today()
     
@@ -141,8 +148,8 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
             else:  # RELEVE
                 # Group by releve periods
                 period_days = supplier.periode_releve_jours or 10
-                from typing import Dict, List, Any
-                periods: Dict[str, Dict[str, Any]] = {}
+                from typing import Any
+                periods: dict[str, dict[str, Any]] = {}
     
                 for order in orders:
                     remaining = remainings.get(order.id, order.total_annotated)
@@ -169,7 +176,7 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
                 for period_key in sorted(periods.keys(), reverse=True):
                     period_data = periods[period_key]
                     period_total: Decimal = period_data['total']
-                    period_orders: List[Any] = period_data['orders']
+                    period_data['orders']
     
                     if period_total > 0:
                         period_start = date.fromisoformat(period_key)

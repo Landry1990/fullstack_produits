@@ -2,9 +2,10 @@
 Utilitaires de sécurité pour l'application API.
 Fonctions de sanitisation et validation des entrées.
 """
-import re
 import os
+import re
 from pathlib import Path
+
 from django.core.exceptions import ValidationError
 
 
@@ -12,7 +13,7 @@ def sanitize_filename(filename: str, max_length: int = 255) -> str:
     """
     Sanitize a filename to prevent header injection and path traversal.
     
-    - Removes path traversal sequences (../, ..\)
+    - Removes path traversal sequences (../, ..\\)
     - Removes control characters and null bytes
     - Removes dangerous characters (< > : " | ? * \x00)
     - Limits length to max_length

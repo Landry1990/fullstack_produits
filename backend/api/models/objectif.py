@@ -1,8 +1,10 @@
-from django.db import models, IntegrityError
-from django.db.models import Sum
-from django.contrib.auth import get_user_model
-from django.utils import timezone
 from decimal import Decimal
+
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError, models
+from django.db.models import Sum
+from django.utils import timezone
+
 from .configuration_objectifs import ConfigurationObjectifs
 
 User = get_user_model()
@@ -86,9 +88,8 @@ class ObjectifCommercial(models.Model):
             # S'assurer que date_debut est un objet date pour les calculs
             if hasattr(self.date_debut, 'weekday'):
                 self.date_debut = self.date_debut - timezone.timedelta(days=self.date_debut.weekday())
-        elif self.periode == self.Periode.MOIS:
-            if hasattr(self.date_debut, 'replace'):
-                self.date_debut = self.date_debut.replace(day=1)
+        elif self.periode == self.Periode.MOIS and hasattr(self.date_debut, 'replace'):
+            self.date_debut = self.date_debut.replace(day=1)
         super().save(*args, **kwargs)
     
     @classmethod
@@ -119,7 +120,7 @@ class ObjectifCommercial(models.Model):
 
         # Taux de marge = (coeff - 1) / coeff, ex: (1.40 - 1) / 1.40 = 0.2857
         coeff = config.coefficient_marge or Decimal('1.40')
-        taux_marge = (coeff - Decimal('1')) / coeff
+        taux_marge = (coeff - Decimal(1)) / coeff
 
         marge_objectif = Decimal('0.00')
         ca_objectif = Decimal('0.00')
@@ -160,7 +161,7 @@ class ObjectifCommercial(models.Model):
                     date__date=ref_date,
                     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
                 ).aggregate(total=Sum('total_ttc'))['total'] or Decimal('0.00')
-                ca_objectif = ca_ref * (Decimal('1') + config.pourcentage_croissance / Decimal('100'))
+                ca_objectif = ca_ref * (Decimal(1) + config.pourcentage_croissance / Decimal(100))
                 
             elif periode == cls.Periode.SEMAINE:
                 # N-1 : Previous week
@@ -171,7 +172,7 @@ class ObjectifCommercial(models.Model):
                     date__date__lte=ref_end,
                     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
                 ).aggregate(total=Sum('total_ttc'))['total'] or Decimal('0.00')
-                ca_objectif = ca_ref * (Decimal('1') + config.pourcentage_croissance / Decimal('100'))
+                ca_objectif = ca_ref * (Decimal(1) + config.pourcentage_croissance / Decimal(100))
                 
             elif periode == cls.Periode.MOIS:
                 # N-1 : Previous month
@@ -182,7 +183,7 @@ class ObjectifCommercial(models.Model):
                     date__date__lte=last_of_prev_month,
                     status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
                 ).aggregate(total=Sum('total_ttc'))['total'] or Decimal('0.00')
-                ca_objectif = ca_ref * (Decimal('1') + config.pourcentage_croissance / Decimal('100'))
+                ca_objectif = ca_ref * (Decimal(1) + config.pourcentage_croissance / Decimal(100))
 
         # Save and return new generated objectif if valid
         if ca_objectif > Decimal('0.00') or marge_objectif > Decimal('0.00'):
