@@ -41,7 +41,7 @@ class DashboardCache:
             date_str = datetime.now().strftime('%Y-%m-%d')
         
         sorted_params = json.dumps(params, sort_keys=True)
-        param_hash = hashlib.md5(sorted_params.encode()).hexdigest()[:8]
+        param_hash = hashlib.md5(sorted_params.encode(), usedforsecurity=False).hexdigest()[:8]
         return f"{prefix}:{user_id}:{date_str}:{param_hash}"
     
     # === STATS PRINCIPALES ===

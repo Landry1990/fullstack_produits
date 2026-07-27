@@ -36,7 +36,7 @@ class SearchCache:
         # Trier les paramètres pour garantir la cohérence
         sorted_params = json.dumps(params, sort_keys=True)
         # Créer un hash pour éviter les clés trop longues
-        param_hash = hashlib.md5(sorted_params.encode()).hexdigest()
+        param_hash = hashlib.md5(sorted_params.encode(), usedforsecurity=False).hexdigest()
         return f"{prefix}:{param_hash}"
     
     @classmethod
