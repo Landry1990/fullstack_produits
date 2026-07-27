@@ -126,7 +126,7 @@ class Command(BaseCommand):
 
             # Generate MD5 checksum
             import hashlib
-            hasher = hashlib.md5()
+            hasher = hashlib.md5(usedforsecurity=False)
             with open(backup_file, 'rb') as f:
                 for chunk in iter(lambda: f.read(8192), b''):
                     hasher.update(chunk)
