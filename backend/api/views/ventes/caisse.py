@@ -105,14 +105,13 @@ class CaisseViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
             except FactureModel.DoesNotExist:
                 pass
 
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cash_out')
+        if error_res:
+            return error_res
+
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        # Validate Sudo mode if credentials provided
-        validation_user, error_res = validate_sudo_mode(self.request)
-        if error_res:
-            pass
-
         # Note: We always use self.request.user as the 'owner' of the payment (the person at the station),
         # even if a supervisor (validation_user) authorized the action.
         serializer.save(user=self.request.user)

@@ -1,7 +1,7 @@
 
 import type { Ref } from 'react';
 import Barcode from 'react-barcode';
-import type { TicketCaisse, PharmacySettings } from '../../types';
+import type { TicketCaisse, PharmacySettings, FactureProduit, PaymentDetails } from '../../types';
 import { formatNumber } from '../../utils/formatters';
 import { useTranslation } from 'react-i18next';
 
@@ -27,7 +27,7 @@ const formatM = (val: number | string) => formatNumber(Math.round(Number(val)));
 export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) => {
   const { t } = useTranslation('printing');
 
-  const getProductName = (p: unknown) => {
+  const getProductName = (p: FactureProduit) => {
     if (!p) return t('ticket.unknown_article');
     if (typeof p.produit === 'object') return p.produit.name;
     return p.produit_nom || `${t('ticket.product')} #${p.produit || '?'}`;
@@ -48,7 +48,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
   const clientName = ticket.client_name 
       || facture?.client_name_override 
       || facture?.client_name 
-      || (facture?.client && typeof facture.client === 'object' && 'name' in facture.client ? (facture.client as unknown).name : null)
+      || (facture?.client && typeof facture.client === 'object' && 'name' in facture.client ? String((facture.client as Record<string, unknown>).name) : null)
       || t('invoice.walk_in_customer');
 
   return (
@@ -143,13 +143,13 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
               </tr>
             </thead>
             <tbody className="text-[10px]">
-              {produits.map((p: unknown, idx: number) => {
+              {produits.map((p: FactureProduit, _idx: number) => {
                 const qty = Math.abs(p.quantity);
                 const price = Number(p.selling_price || 0);
                 const lineTotal = qty * price;
                 
                 return (
-                  <tr key={p.id ?? p.produit_id ?? p.produit ?? idx} className="border-b border-black/10">
+                  <tr key={p.id ?? p.produit ?? `row-${p.produit_nom ?? p.lot}`} className="border-b border-black/10">
                     <td className="py-2 align-top leading-tight overflow-hidden">
                         <div className="font-bold uppercase" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{getProductName(p)}</div>
                         <div className="text-[8px] font-mono italic">
@@ -199,9 +199,9 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
           <table className="w-full text-[9px]">
             <tbody>
               {ticket.paiements_details && ticket.paiements_details.length > 0 ? (
-                  ticket.paiements_details.map((paiement, idx) => (
-                      <tr key={(paiement as unknown).mode_paiement ?? paiement.mode ?? idx}>
-                          <td className="uppercase font-bold">[{getModeLabel((paiement as unknown).mode_paiement || paiement.mode)}]</td>
+                  ticket.paiements_details.map((paiement: PaymentDetails, _idx) => (
+                      <tr key={paiement.mode ?? `pmt-${paiement.montant}`}>
+                          <td className="uppercase font-bold">[{getModeLabel(paiement.mode)}]</td>
                           <td className="text-right font-mono font-black">{formatM(paiement.montant)}</td>
                       </tr>
                   ))

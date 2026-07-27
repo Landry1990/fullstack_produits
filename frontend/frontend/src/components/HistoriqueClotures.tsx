@@ -5,6 +5,7 @@ import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import { generateClotureTemplate } from '../utils/print/printTemplates'
+import { writePrintDocument } from '../utils/print/printHelpers'
 import BestCashierMetric from './BestCashierMetric'
 import { format } from 'date-fns'
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters'
@@ -329,7 +330,7 @@ export default function HistoriqueClotures() {
         pharmacy_name: pharmacySettings.pharmacy_name
       });
       
-      win.document.write(`
+      writePrintDocument(win, `
         <html>
           <head>
             <title>{t('modal.print_title', { id: cloture.id })}</title>
@@ -346,7 +347,6 @@ export default function HistoriqueClotures() {
           </body>
         </html>
       `)
-      win.document.close()
       
       // Wait for resources if any (none in this template currently but good practice)
       win.onload = () => {

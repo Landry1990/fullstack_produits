@@ -366,7 +366,7 @@ export default function Perimes() {
 
   const handleExportExcel = () => {
     const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-    window.open(`${baseUrl}/api/stock-adjustments/export_excel/?reason_type=PERIME&created_at__date__gte=${dateDebut}&created_at__date__lte=${dateFin}`, '_blank')
+    window.open(`${baseUrl}/api/stock-adjustments/export_excel/?reason_type=PERIME&created_at__date__gte=${dateDebut}&created_at__date__lte=${dateFin}`, '_blank', 'noopener,noreferrer')
   }
 
   return (

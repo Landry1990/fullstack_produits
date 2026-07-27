@@ -14,7 +14,7 @@ from decimal import Decimal, InvalidOperation
 import logging
 
 from api.models import (
-    Facture, FactureProduit, InvoiceSettings, AuditLog, Caisse
+    Facture, FactureProduit, InvoiceSettings, AuditLog, Caisse, Produit
 )
 from api.services import SalesService
 from api.serializers import FactureSerializer, FacturePrintSerializer
@@ -244,7 +244,7 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
         if total_ttc <= 0 and produits_data:
             total_ttc = temp_sum - remise_globale
 
-        validation_user = None
+        validation_user = user
         is_avoir_client = data.get('is_avoir_client', False)
         poste_vente_id = data.get('poste_vente_id')
 
@@ -257,24 +257,47 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        # Enforce Sudo for non-positive amounts, centralized cash register, or sales made on an opened sales point
-        needs_sudo = (total_ttc <= 0 and not is_avoir_client) or centralized or bool(poste_vente_id)
+        # Every privileged override is authorized by the sudo validator's profile.
+        product_prices = {
+            product.id: product.selling_price
+            for product in Produit.objects.filter(id__in=[p.get('produit') for p in produits_data])
+        }
+        requested_quantities = {}
+        requires_price_override = remise_globale > 0
+        for product_data in produits_data:
+            product_id = product_data.get('produit')
+            quantity = int(product_data.get('quantity', 0))
+            requested_quantities[product_id] = requested_quantities.get(product_id, 0) + quantity
+            line_price = Decimal(str(product_data.get('selling_price', 0)))
+            line_discount = Decimal(str(product_data.get('discount', 0) or 0))
+            if line_price != product_prices.get(product_id) or line_discount > 0:
+                requires_price_override = True
 
-        if needs_sudo:
+        products = {product.id: product for product in Produit.objects.filter(id__in=requested_quantities)}
+        requires_negative_stock_sale = any(
+            quantity > 0 and products.get(product_id) is not None and quantity > products[product_id].stock
+            for product_id, quantity in requested_quantities.items()
+        )
+        required_permissions = []
+        if centralized or poste_vente_id:
+            required_permissions.append('can_cash_out')
+        if total_ttc <= 0 and not is_avoir_client:
+            required_permissions.append('can_validate_zero_amount')
+        if requires_price_override:
+            required_permissions.append('can_modify_price')
+        if requires_negative_stock_sale:
+            required_permissions.append('can_sell_negative_stock')
+
+        if required_permissions:
             try:
-                validation_user, error_res = validate_sudo_mode(request, data_source=data)
+                validation_user, error_res = validate_sudo_mode(
+                    request,
+                    permission_attr=required_permissions,
+                    data_source=data
+                )
                 if error_res:
                     return error_res
-
-                # Allow if user is superuser OR has the specific permission
-                if total_ttc <= 0 and not is_avoir_client:
-                    has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False  # type: ignore[attr-defined]
-
-                    if validation_user == user and not user.is_superuser and not has_permission:
-                        return Response({
-                            'detail': "Une vente à montant nul ou négatif nécessite la validation d'un tiers-validateur (Sudo)."
-                        }, status=status.HTTP_403_FORBIDDEN)
-            except DatabaseError as e:
+            except (DatabaseError, InvalidOperation, TypeError, ValueError) as e:
                 # Si une erreur DB survient pendant la validation Sudo, on rollback et retourne une erreur propre
                 transaction.set_rollback(True)
                 logger.error(f"[VENTE] Erreur DB lors de la validation Sudo: {str(e)}", exc_info=True)
@@ -386,19 +409,10 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
         if not facture:
             facture = self.get_object()
         
-        # Mode Sudo logic kept in ViewSet as it's request-related
-        validation_user, error_res = validate_sudo_mode(request)
+        required_permission = 'can_validate_zero_amount' if facture.total_ttc <= 0 else None
+        validation_user, error_res = validate_sudo_mode(request, permission_attr=required_permission)
         if error_res:
             return error_res
-        
-        # Enforce Sudo for non-positive amounts on validation
-        # Allow bypass if superuser OR has specific permission
-        has_permission = getattr(validation_user.profile, 'can_validate_zero_amount', False) if hasattr(validation_user, 'profile') else False
-        
-        if facture.total_ttc <= 0 and validation_user == request.user and not request.user.is_superuser and not has_permission:
-            return Response({
-                'detail': "Cette facture à montant nul ou négatif nécessite la validation d'un tiers (Sudo) pour être validée."
-            }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             SalesService.validate_invoice(facture, validation_user, request.data)

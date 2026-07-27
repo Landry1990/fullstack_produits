@@ -256,7 +256,10 @@ export default function ConfigOptionManager({
                    type="number"
                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                    value={formData.order}
-                   onChange={e => setFormData({...formData, order: parseInt(e.target.value)})}
+                   onChange={e => {
+                     const parsed = e.target.value ? parseInt(e.target.value, 10) : undefined;
+                     setFormData({...formData, order: parsed !== undefined && !Number.isNaN(parsed) ? parsed : undefined});
+                   }}
                    required
                  />
               </div>

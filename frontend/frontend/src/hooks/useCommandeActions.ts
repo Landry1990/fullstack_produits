@@ -6,7 +6,7 @@ import type { Commande, CommandeProduit, User } from '../types';
 import commandeService, { type SudoCredentials } from '../services/commandeService';
 import { usePharmacySettings } from './usePharmacySettings';
 import { formatDate as formatDateUtil, formatDateTime, getLocale } from '../utils/dateUtils';
-import { escHtml } from '../utils/print/printHelpers';
+import { escHtml, writePrintDocument } from '../utils/print/printHelpers';
 
 interface UseCommandeActionsProps {
     fetchCommandes: () => Promise<void>;
@@ -239,7 +239,7 @@ export function useCommandeActions({
                             <div style="font-weight: 500; font-size: 10px;">${escHtml(produitName)}</div>
                             ${lotInfo}
                         </td>
-                        <td style="padding: 4px; text-align: center; font-family: monospace; font-size: 9px;">${cip}</td>
+                        <td style="padding: 4px; text-align: center; font-family: monospace; font-size: 9px;">${escHtml(cip)}</td>
                         <td style="padding: 4px; text-align: center;">${stAnt}</td>
                         <td style="padding: 4px; text-align: center;">${p.quantity}</td>
                         <td style="padding: 4px; text-align: center;">${p.unites_gratuites || 0}</td>
@@ -256,7 +256,7 @@ export function useCommandeActions({
                 return;
             }
 
-            win.document.write(`
+            writePrintDocument(win, `
 <!DOCTYPE html>
 <html>
 <head>
@@ -487,7 +487,6 @@ export function useCommandeActions({
 </body>
 </html>
             `);
-            win.document.close();
 
         } catch {
             toast.error(t('messages.print_error'));

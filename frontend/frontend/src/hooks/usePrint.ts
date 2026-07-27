@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
-import { escHtml } from '../utils/print/printHelpers';
+import { escHtml, writePrintDocument } from '../utils/print/printHelpers';
 import { usePharmacySettings } from './usePharmacySettings';
 import { formatDateTime } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
@@ -206,8 +206,7 @@ function usePrint(): UsePrintReturn {
       return null;
     }
 
-    printWindow.document.write(content);
-    printWindow.document.close();
+    writePrintDocument(printWindow, content);
     printWindow.document.title = title;
 
     if (autoPrint) {

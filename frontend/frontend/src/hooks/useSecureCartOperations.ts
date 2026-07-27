@@ -11,7 +11,7 @@ export interface UseSecureCartOperationsOptions {
     }
     requireSudo: (
         callback: (validatorId: number, password: string) => Promise<void>,
-        options: { title: string; message: string; onCancel?: () => void }
+        options: { title: string; message: string; permission?: string; onCancel?: () => void }
     ) => void
     setActiveSudoCreds: (creds: { validatorId: number; password: string } | null) => void
     activeSudoCreds: { validatorId: number; password: string } | null
@@ -42,6 +42,7 @@ export function useSecureCartOperations({
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
                 message: `Confirmer la quantité ${newQty} pour le produit ${currentLine?.produit.name ?? ''} ?`,
+                permission: 'can_do_returns',
                 onCancel: triggerUiRefresh
             })
         } else {
@@ -63,6 +64,7 @@ export function useSecureCartOperations({
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
                 message: `Confirmer le changement de prix de ${currentLine.prix_unitaire} à ${newPrice} pour ${currentLine.produit.name} ?`,
+                permission: 'can_modify_price',
                 onCancel: triggerUiRefresh
             })
         } else {
@@ -84,6 +86,7 @@ export function useSecureCartOperations({
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
                 message: `Confirmer une remise de ${newRemise}% sur le produit ${currentLine.produit.name} ?`,
+                permission: 'can_modify_price',
                 onCancel: triggerUiRefresh
             })
         } else {
@@ -134,6 +137,7 @@ export function useSecureCartOperations({
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
                 message: `Autoriser une remise globale de ${cappedValue}${mode === 'taux' ? '%' : ' F'} (plafond maximum) ?`,
+                permission: 'can_modify_price',
                 onCancel: () => { setRemiseGlobale('0'); triggerUiRefresh() }
             })
             return
@@ -144,6 +148,7 @@ export function useSecureCartOperations({
         }, {
             title: t('facturation:payment.sudo_mode.validate_by'),
             message: `Autoriser une remise globale de ${newValue}${mode === 'taux' ? '%' : ' F'} ?`,
+            permission: 'can_modify_price',
             onCancel: () => { setRemiseGlobale('0'); triggerUiRefresh() }
         })
     }, [requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh, maxDiscountRate])

@@ -345,7 +345,7 @@ export default function ClientFormModal({
                     </thead>
                     <tbody className="bg-base-100 divide-y divide-base-200">
                       {data.ayants_droit.map((ad: AyantDroit, idx: number) => (
-                        <tr key={ad.id ?? idx} className="hover:bg-base-200 transition-colors">
+                        <tr key={ad.id ?? `ad-${ad.nom}-${ad.matricule}`} className="hover:bg-base-200 transition-colors">
                           <td className="px-4 py-2.5 text-sm font-medium text-base-content">{ad.nom}</td>
                           <td className="px-4 py-2.5 text-sm font-mono text-base-content/60">{ad.matricule}</td>
                           <td className="px-4 py-2.5 text-sm text-base-content/60">{ad.societe || '—'}</td>

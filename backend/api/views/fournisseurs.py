@@ -42,7 +42,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         from django.utils import timezone
-        validation_user, error_response = validate_sudo_mode(request)
+        validation_user, error_response = validate_sudo_mode(request, permission_attr='can_delete_fournisseur')
         if error_response:
             return error_response
         instance = self.get_object()
@@ -325,7 +325,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request):
         """Supprime plusieurs fournisseurs par lot."""
-        validation_user, error_response = validate_sudo_mode(request)
+        validation_user, error_response = validate_sudo_mode(request, permission_attr='can_delete_fournisseur')
         if error_response:
             return error_response
 

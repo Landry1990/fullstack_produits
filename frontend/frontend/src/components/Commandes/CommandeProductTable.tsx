@@ -143,7 +143,7 @@ export default function CommandeProductTable({
 
                         <tbody>
                             {commandeProduits.map((p, index) => (
-                                <React.Fragment key={p.id || `row-${index}`}>
+                                <React.Fragment key={p.id || p.produit || `row-${p.cip}-${p.produit_nom}`}>
                                     <CommandeProductRow
                                         p={p}
                                         index={index}

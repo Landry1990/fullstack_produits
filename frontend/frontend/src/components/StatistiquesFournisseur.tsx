@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
@@ -342,32 +342,36 @@ export default function StatistiquesFournisseur() {
                             </tr>
                         </thead>
                         <tbody>
-                            {prixComparaison?.filter(prod => prod.ecart_pourcentage > 0).map((prod) => (
-                                <tr key={prod.id}>
-                                    <td className="font-bold max-w-xs truncate" title={prod.produit}>{prod.produit}</td>
-                                    <td>
-                                        <span className={`badge ${
-                                            prod.ecart_pourcentage > 20 ? 'badge-error text-white' : 
-                                            prod.ecart_pourcentage > 5 ? 'badge-warning' : 'badge-ghost'
-                                        }`}>
-                                            {prod.ecart_pourcentage}%
-                                        </span>
-                                    </td>
-                                    <td className="space-y-1">
-                                        {prod.offres.map((offre) => (
-                                            <div key={offre.fournisseur} className="flex justify-between text-xs w-64">
-                                                <span>{offre.fournisseur}:</span>
-                                                 <span className={offre.prix_moyen === prod.meilleur_prix ? 'font-bold text-success' : ''}>
-                                                     {formatCurrency(Math.round(offre.prix_moyen), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
-                                                 </span>
-                                             </div>
-                                         ))}
-                                     </td>
-                                      <td className="font-bold text-success text-lg">
-                                         {formatCurrency(Math.round(prod.meilleur_prix), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
-                                      </td>
-                                </tr>
-                            ))}
+                            {prixComparaison?.reduce<ReactNode[]>((rows, prod) => {
+                                if (prod.ecart_pourcentage <= 0) return rows;
+                                rows.push(
+                                    <tr key={prod.id}>
+                                        <td className="font-bold max-w-xs truncate" title={prod.produit}>{prod.produit}</td>
+                                        <td>
+                                            <span className={`badge ${
+                                                prod.ecart_pourcentage > 20 ? 'badge-error text-white' : 
+                                                prod.ecart_pourcentage > 5 ? 'badge-warning' : 'badge-ghost'
+                                            }`}>
+                                                {prod.ecart_pourcentage}%
+                                            </span>
+                                        </td>
+                                        <td className="space-y-1">
+                                            {prod.offres.map((offre) => (
+                                                <div key={offre.fournisseur} className="flex justify-between text-xs w-64">
+                                                    <span>{offre.fournisseur}:</span>
+                                                     <span className={offre.prix_moyen === prod.meilleur_prix ? 'font-bold text-success' : ''}>
+                                                         {formatCurrency(Math.round(offre.prix_moyen), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
+                                                     </span>
+                                                 </div>
+                                             ))}
+                                         </td>
+                                          <td className="font-bold text-success text-lg">
+                                             {formatCurrency(Math.round(prod.meilleur_prix), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
+                                          </td>
+                                    </tr>
+                                );
+                                return rows;
+                            }, [])}
                         </tbody>
                     </table>
                 </div>

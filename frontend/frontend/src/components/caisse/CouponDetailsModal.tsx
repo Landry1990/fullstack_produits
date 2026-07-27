@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '../../utils/formatters'
-import { escHtml } from '../../utils/print/printHelpers'
+import { escHtml, writePrintDocument } from '../../utils/print/printHelpers'
 import PremiumModal from '../common/PremiumModal'
 import type { CouponMonnaie, Facture } from '../../types'
 
@@ -32,7 +32,7 @@ export function CouponDetailsModal({
         hour: '2-digit', minute: '2-digit'
       })
 
-      win.document.write(`<!DOCTYPE html>
+      writePrintDocument(win, `<!DOCTYPE html>
 <html>
 <head>
   <title>Coupon de Monnaie</title>
@@ -175,7 +175,7 @@ export function CouponDetailsModal({
     ${coupon.facture_origine ? `
     <div class="info-row">
       <span class="info-label">Facture origine:</span>
-      <span>#${coupon.facture_origine}</span>
+      <span>#${escHtml(coupon.facture_origine)}</span>
     </div>
     ` : ''}
   </div>
@@ -196,7 +196,6 @@ export function CouponDetailsModal({
   </div>
 </body>
 </html>`)
-      win.document.close()
       win.onload = () => {
         setTimeout(() => {
           win.print()

@@ -374,8 +374,8 @@ export default function ClientSection({
               className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
             >
               <option value="">{t('facturation:client.ayant_droit.select_placeholder')}</option>
-              {Array.isArray(ayantsDroitList) && ayantsDroitList.map((ad, idx) => (
-                <option key={ad?.id ?? idx} value={String(ad?.id ?? '')}>
+              {Array.isArray(ayantsDroitList) && ayantsDroitList.map((ad, _idx) => (
+                <option key={ad?.id ?? `ad-${ad?.nom}-${ad?.matricule}`} value={String(ad?.id ?? '')}>
                   {ad?.nom || 'N/A'} ({ad?.matricule || 'N/A'}){ad?.societe ? ` - ${ad.societe}` : ''}
                 </option>
               ))}

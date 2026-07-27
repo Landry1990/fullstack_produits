@@ -618,7 +618,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['post'])
     @transaction.atomic
     def bulk_paiement(self, request):
-        validation_user, error_response = validate_sudo_mode(request, permission_attr='can_view_dashboard')
+        validation_user, error_response = validate_sudo_mode(request, permission_attr='can_cash_out')
         if error_response:
             return error_response
 

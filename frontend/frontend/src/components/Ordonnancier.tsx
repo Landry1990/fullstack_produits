@@ -77,7 +77,7 @@ const OrdonnancierPage: React.FC = () => {
         if (searchPrescripteur) params.append('prescripteur', searchPrescripteur);
         
         const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-        window.open(`${baseUrl}/api/ordonnancier/export_pdf/?${params.toString()}`, '_blank');
+        window.open(`${baseUrl}/api/ordonnancier/export_pdf/?${params.toString()}`, '_blank', 'noopener,noreferrer');
     };
 
     return (

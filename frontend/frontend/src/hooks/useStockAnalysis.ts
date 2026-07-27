@@ -162,14 +162,17 @@ export const useStockAnalysis = () => {
 
     const handleGenerateOrder = () => {
         if (!data || selectedItems.size === 0) return;
-        const products = data.items
-            .filter(item => selectedItems.has(item.id))
-            .map(item => ({
-                id: item.id,
-                name: item.name,
-                stock: item.stock,
-                avg_daily_sales: item.avg_daily_sales
-            }));
+        const products: { id: number; name: string; stock: number; avg_daily_sales?: number }[] = [];
+        for (const item of data.items) {
+            if (selectedItems.has(item.id)) {
+                products.push({
+                    id: item.id,
+                    name: item.name,
+                    stock: item.stock,
+                    avg_daily_sales: item.avg_daily_sales
+                });
+            }
+        }
 
         navigate('/app/commandes/locales', {
             state: {

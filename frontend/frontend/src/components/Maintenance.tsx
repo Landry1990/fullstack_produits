@@ -1200,8 +1200,8 @@ export default function Maintenance() {
                     </div>
                     <div className="max-h-32 overflow-y-auto rounded-lg bg-slate-900 p-2 text-[10px] font-mono text-emerald-400">
                       {updateLog.length === 0 ? 'En attente de logs...' : (
-                        updateLog.slice(-20).map((line, i) => (
-                          <div key={i} className="truncate">{line}</div>
+                        updateLog.slice(-20).map((line) => (
+                          <div key={`log-${line}`} className="truncate">{line}</div>
                         ))
                       )}
                     </div>

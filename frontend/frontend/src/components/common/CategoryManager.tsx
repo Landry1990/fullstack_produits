@@ -234,7 +234,7 @@ export default function CategoryManager({
     } else {
       url = `${baseUrl}${apiPath}${printTarget.id}/imprimer_etat_stock/?exclude_zero=${excludeZeroStock}`;
     }
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
     setIsPrintModalOpen(false);
   };
 
@@ -365,21 +365,21 @@ export default function CategoryManager({
               hierarchy.map((cat) => (
                 <div key={cat.id} className="space-y-1">
                   <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedCategory(cat)}
-                    onKeyDown={(e) => e.key === 'Enter' && setSelectedCategory(cat)}
-                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-all group cursor-pointer ${
+                    className={`w-full flex items-center justify-between rounded-xl transition-all group cursor-pointer ${
                       selectedCategory?.id === cat.id
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'hover:bg-slate-100 text-slate-700'
                     }`}
                   >
-                    <div className="flex items-center gap-3 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategory(cat)}
+                      className="flex-1 flex items-center gap-3 overflow-hidden p-3 text-left bg-transparent"
+                    >
                        <LayoutGrid size={16} className={selectedCategory?.id === cat.id ? 'text-white' : 'text-slate-400'} />
                        <span className="font-medium truncate">{getCategoryName(cat)}</span>
-                    </div>
-                    <div className={`flex gap-1 items-center transition-opacity ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                    </button>
+                    <div className={`flex gap-1 items-center p-3 transition-opacity ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                        {type === 'rayon' && (
                           <button
                             className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-white/70 hover:bg-white/20' : 'text-blue-500 hover:bg-blue-50'}`}
@@ -426,18 +426,20 @@ export default function CategoryManager({
                       {cat.children.map((child) => (
                         <div
                           key={child.id}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => setSelectedCategory(child)}
-                          onKeyDown={(e) => e.key === 'Enter' && setSelectedCategory(child)}
-                          className={`w-full flex items-center justify-between p-2 rounded-xl transition-all group text-sm cursor-pointer ${
+                          className={`w-full flex items-center justify-between rounded-xl transition-all group text-sm cursor-pointer ${
                             selectedCategory?.id === child.id
                             ? 'bg-emerald-50 text-emerald-700 font-semibold'
                             : 'hover:bg-slate-100 text-slate-600'
                           }`}
                         >
-                          <span className="truncate">↳ {getCategoryName(child)}</span>
-                          <div className={`flex gap-1 items-center ${selectedCategory?.id === child.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCategory(child)}
+                            className="flex-1 flex items-center min-w-0 p-2 text-left bg-transparent"
+                          >
+                            <span className="truncate">↳ {getCategoryName(child)}</span>
+                          </button>
+                          <div className={`flex gap-1 items-center p-2 ${selectedCategory?.id === child.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
                              {type === 'rayon' && (
                                 <button
                                   className="inline-flex items-center justify-center size-6 rounded-md text-blue-500 hover:bg-blue-50 transition-colors"
