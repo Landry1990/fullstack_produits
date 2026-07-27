@@ -28,7 +28,7 @@ export interface QueryDefinition {
     endpoint: string;
     method?: 'GET' | 'POST';
     params: QueryParam[];
-    resultType: 'table' | 'cards' | 'raw';
+    resultType: 'table' | 'cards' | 'raw' | 'stock_valuation';
     columns?: string[];
 }
 

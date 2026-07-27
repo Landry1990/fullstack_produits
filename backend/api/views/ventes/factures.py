@@ -503,9 +503,9 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
             return error_res
 
         try:
-            facture, old_total, difference = SalesService.modify_sale(facture, validation_user, request.data)
+            facture, old_total, difference, old_quantities, new_quantities = SalesService.modify_sale(facture, validation_user, request.data)
             
-            # Audit log
+            # Audit log - une seule ligne par modification de vente
             log_audit(
                 user=request.user,
                 action=AuditLog.Action.UPDATE,
@@ -517,7 +517,9 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
                     'numero_facture': facture.numero_facture,
                     'old_total': float(old_total),
                     'new_total': float(facture.total_ttc),
-                    'difference': float(difference)
+                    'difference': float(difference),
+                    'old_quantities': old_quantities,
+                    'new_quantities': new_quantities,
                 },
                 request=request
             )

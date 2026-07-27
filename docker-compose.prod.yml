@@ -67,6 +67,7 @@ services:
       - ./backup-db.sh:/backup-db.sh
       - ./backups:/backups
       - wal_archive:/wal_archive
+      - /opt/zenith-pharma:/opt/zenith-pharma
     environment:
       - DJANGO_SETTINGS_MODULE=backend.settings
       - DJANGO_DEBUG=False

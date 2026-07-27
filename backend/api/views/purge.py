@@ -6,9 +6,13 @@ Superadmin-only tool to preview, export and purge old transactional data.
 import csv
 import io
 import os
+import re
+import subprocess
+import threading
 import zipfile
 from datetime import datetime
 from io import StringIO
+from pathlib import Path
 
 from django.db import transaction
 from django.http import HttpResponse
@@ -19,6 +23,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from django.contrib.auth import authenticate
+from django.core.cache import cache
 from django.core.management import call_command
 from django.conf import settings
 
@@ -659,3 +664,160 @@ class PurgeViewSet(ViewSet):
         if not os.path.exists(path):
             return Response({'detail': 'Fichier non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
         return FileResponse(open(path, 'rb'), as_attachment=True, filename=filename)
+
+    # ── Helpers : changelog + mise à jour manuelle ─────────────────────────
+
+    def _changelog_path(self):
+        candidates = [
+            Path(settings.BASE_DIR).parent / 'CHANGELOG.md',
+            Path(settings.BASE_DIR) / 'CHANGELOG.md',
+        ]
+        for p in candidates:
+            if p.exists():
+                return p
+        return None
+
+    def _read_changelog(self, limit_sections=3):
+        path = self._changelog_path()
+        if not path:
+            return None
+        text = path.read_text(encoding='utf-8')
+        # Split on horizontal rules; keep sections that look like version entries
+        sections = re.split(r'\n---\s*\n', text)
+        result = []
+        for section in sections[:limit_sections + 2]:
+            section = section.strip()
+            if not section or section == '# Changelog — Fullstack Produits':
+                continue
+            result.append(section)
+        return result
+
+    @action(detail=False, methods=['get'])
+    def changelog(self, request):
+        """Retourne les dernières entrées du CHANGELOG.md."""
+        sections = self._read_changelog(limit_sections=3)
+        if sections is None:
+            return Response({'detail': 'CHANGELOG.md introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'latest': sections[0] if sections else '', 'sections': sections})
+
+    def _update_script_path(self):
+        candidates = [
+            Path('/opt/zenith-pharma/nightly-update.sh'),
+            Path(settings.BASE_DIR).parent / 'nightly-update.sh',
+            Path(settings.BASE_DIR) / 'nightly-update.sh',
+        ]
+        for p in candidates:
+            if p.exists():
+                return p
+        return None
+
+    def _parse_update_progress(self, line: str) -> tuple:
+        """Extrait une étape et un pourcentage d'une ligne du log nightly-update.sh."""
+        m = re.search(r'Étape\s+(\d)/(\d+)', line)
+        if m:
+            current = int(m.group(1))
+            total = int(m.group(2))
+            progress = int((current / total) * 100)
+            return f'Étape {current}/{total}', progress
+        if 'Mise à jour terminée avec succès' in line:
+            return 'Terminé', 100
+        if 'ANNULÉE' in line or 'Rollback' in line:
+            return 'Rollback en cours', -1
+        return None, None
+
+    def _run_update_thread(self, script_path: Path):
+        cache_key = 'manual_update_job'
+        cache.set(cache_key, {
+            'status': 'running',
+            'step': 'Démarrage',
+            'progress': 0,
+            'log': ['Démarrage de la mise à jour...'],
+            'started_at': timezone.now().isoformat(),
+            'finished_at': None,
+        }, timeout=7200)
+
+        def append_log(line: str):
+            state = cache.get(cache_key) or {}
+            log = state.get('log', [])
+            log.append(line.strip())
+            log = log[-500:]  # garder les 500 dernières lignes
+            state['log'] = log
+            step, progress = self._parse_update_progress(line)
+            if step:
+                state['step'] = step
+            if progress is not None:
+                state['progress'] = progress if progress >= 0 else 0
+            cache.set(cache_key, state, timeout=7200)
+
+        try:
+            proc = subprocess.Popen(
+                ['bash', str(script_path)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                cwd=str(script_path.parent),
+            )
+            if proc.stdout:
+                for line in proc.stdout:
+                    append_log(line)
+            proc.wait(timeout=600)
+            state = cache.get(cache_key) or {}
+            if proc.returncode == 0 and state.get('progress', 0) != 100:
+                state['progress'] = 100
+                state['step'] = 'Terminé'
+            if proc.returncode != 0:
+                state['status'] = 'error'
+                state['step'] = 'Échec'
+                state['error_code'] = proc.returncode
+            else:
+                state['status'] = 'done'
+            state['finished_at'] = timezone.now().isoformat()
+            cache.set(cache_key, state, timeout=7200)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            state = cache.get(cache_key) or {}
+            state['status'] = 'error'
+            state['step'] = 'Timeout (10 min)'
+            state['finished_at'] = timezone.now().isoformat()
+            cache.set(cache_key, state, timeout=7200)
+        except Exception as e:
+            state = cache.get(cache_key) or {}
+            state['status'] = 'error'
+            state['step'] = f'Erreur: {str(e)}'
+            state['finished_at'] = timezone.now().isoformat()
+            cache.set(cache_key, state, timeout=7200)
+
+    @action(detail=False, methods=['get'])
+    def update_status(self, request):
+        """Retourne l'état courant d'une mise à jour manuelle."""
+        state = cache.get('manual_update_job')
+        if not state:
+            return Response({'status': 'idle', 'step': 'Aucune mise à jour en cours', 'progress': 0, 'log': []})
+        return Response(state)
+
+    @action(detail=False, methods=['post'])
+    def run_update(self, request):
+        """Déclenche une mise à jour manuelle (script nightly-update.sh)."""
+        password = request.data.get('password', '')
+        user = authenticate(username=request.user.username, password=password)
+        if not user or not user.is_superuser:
+            return Response({'detail': 'Mot de passe admin requis.'}, status=status.HTTP_403_FORBIDDEN)
+
+        existing = cache.get('manual_update_job')
+        if existing and existing.get('status') == 'running':
+            return Response({'detail': 'Une mise à jour est déjà en cours.'}, status=status.HTTP_409_CONFLICT)
+
+        script_path = self._update_script_path()
+        if not script_path:
+            return Response({
+                'detail': 'Script nightly-update.sh introuvable. Vérifiez le montage du conteneur ou le chemin /opt/zenith-pharma/nightly-update.sh.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        t = threading.Thread(target=self._run_update_thread, args=(script_path,), daemon=True)
+        t.start()
+
+        return Response({
+            'status': 'running',
+            'message': 'Mise à jour manuelle démarrée.',
+            'poll_url': 'maintenance/update_status/',
+        })

@@ -40,7 +40,9 @@ class Command(BaseCommand):
         pg_cmd = self.find_pg_basebackup()
         if not pg_cmd:
             self.stdout.write(self.style.ERROR(
-                'pg_basebackup introuvable! Installez PostgreSQL client tools.'
+                'pg_basebackup introuvable! Installez PostgreSQL client tools.\n'
+                '  - Linux: apt-get install -y postgresql-client\n'
+                '  - Windows: C:\\Program Files\\PostgreSQL\\[version]\\bin'
             ))
             return
 

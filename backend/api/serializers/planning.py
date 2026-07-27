@@ -5,6 +5,7 @@ Serializers pour le planning des opérateurs.
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from ..models.planning import ShiftConfig, ShiftSchedule, ShiftAssignment, LeaveRequest
+from .mixins import UppercaseSerializerMixin
 
 
 class ShiftConfigSerializer(serializers.ModelSerializer):
@@ -50,7 +51,7 @@ class ShiftScheduleSerializer(serializers.ModelSerializer):
         return value.replace(day=1)
 
 
-class LeaveRequestSerializer(serializers.ModelSerializer):
+class LeaveRequestSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     user_detail = SimpleUserSerializer(source='user', read_only=True)
     approved_by_name = serializers.CharField(source='approved_by.username', read_only=True)
     days_count = serializers.IntegerField(read_only=True)

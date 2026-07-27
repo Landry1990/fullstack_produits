@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useReducer } from 'react';
+import { useState, useEffect, useMemo, useReducer, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';
-import type { Fournisseur } from '../types';
+import type { Fournisseur, PaiementFournisseur } from '../types';
 import { useFinanceFournisseurs } from '../hooks/useFinanceFournisseurs';
 import fournisseurService from '../services/fournisseurService';
 import {
@@ -36,6 +36,17 @@ import {
   AlertCircle,
   CalendarClock,
 } from 'lucide-react';
+
+interface EcheanceDetaillee {
+  id?: number;
+  numero_facture: string;
+  date_echeance: string;
+  montant_total: number;
+  montant_paye: number;
+  montant_reste: number;
+  montant_alloue?: number;
+  montant_apres?: number;
+}
 
 interface FinanceFournisseurModalProps {
   isOpen: boolean;
@@ -104,26 +115,34 @@ export default function FinanceFournisseurModal({
   const { montant, modePaiement, reference, notes } = paymentForm;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [justPaid, setJustPaid] = useState(false);
-  const [echeances, setEcheances] = useState<unknown[]>([]);
+  const [echeances, setEcheances] = useState<EcheanceDetaillee[]>([]);
   const [echeancesLoading, setEcheancesLoading] = useState(false);
+  const prevIsOpenRef = useRef(false);
 
   useEffect(() => {
+    const wasOpen = prevIsOpenRef.current;
+    prevIsOpenRef.current = isOpen;
+
     if (isOpen && fournisseur) {
+      // Refresh paiements + echeances on every dependency change
       fetchPaiements(fournisseur.id);
-      dispatchPaymentForm({
-        type: 'INIT',
-        montant: prefilledMontant ? prefilledMontant.toString() : '',
-        notes: commandeIds && commandeIds.length > 0
-          ? t('providers:finance.pointage_note', { count: commandeIds.length })
-          : '',
-      });
-      setJustPaid(false);
-      // Charger les échéances
       setEcheancesLoading(true);
       fournisseurService.getEcheancesDetaillees(fournisseur.id)
-        .then(data => setEcheances(data || []))
+        .then(data => setEcheances((data as EcheanceDetaillee[]) || []))
         .catch(() => setEcheances([]))
         .finally(() => setEcheancesLoading(false));
+
+      // Only reset form + justPaid when the modal just opened (not on every re-render)
+      if (!wasOpen) {
+        dispatchPaymentForm({
+          type: 'INIT',
+          montant: prefilledMontant ? prefilledMontant.toString() : '',
+          notes: commandeIds && commandeIds.length > 0
+            ? t('providers:finance.pointage_note', { count: commandeIds.length })
+            : '',
+        });
+        setJustPaid(false);
+      }
     }
   }, [isOpen, fournisseur, fetchPaiements, prefilledMontant, commandeIds, t]);
 
@@ -133,10 +152,10 @@ export default function FinanceFournisseurModal({
 
     setIsSubmitting(true);
     try {
-      const payload: unknown = {
+      const payload: Partial<PaiementFournisseur> & { commande_ids?: number[] } = {
         fournisseur: fournisseur.id,
         montant: normalizeNumberInput(montant).toFixed(0),
-        mode_paiement: modePaiement as unknown,
+        mode_paiement: modePaiement as PaiementFournisseur['mode_paiement'],
         reference: reference,
         notes: notes,
       };
@@ -146,7 +165,7 @@ export default function FinanceFournisseurModal({
       }
 
       await createPaiement(payload);
-      dispatchPaymentForm({ type: 'RESET' });
+      dispatchPaymentForm({ type: 'SET_FIELD', field: 'montant', value: '0' });
       setJustPaid(true);
       if (onSuccess) onSuccess();
     } catch {
@@ -169,7 +188,7 @@ export default function FinanceFournisseurModal({
     if (!amount || amount <= 0 || echeances.length === 0) return [];
 
     let remaining = amount;
-    return echeances.map((ech: unknown) => {
+    return echeances.map((ech) => {
       const reste = ech.montant_reste || 0;
       if (remaining <= 0 || reste <= 0) {
         return { ...ech, montant_alloue: 0, montant_apres: reste };
@@ -204,12 +223,12 @@ export default function FinanceFournisseurModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden max-h-[85vh]">
+      <DialogContent className="max-w-5xl p-0 overflow-hidden max-h-[90vh]">
         {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-0">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-              <Wallet className="h-4 w-4 text-emerald-600" />
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <Wallet className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
               <DialogTitle className="text-lg">{t('providers:finance.title')}</DialogTitle>
@@ -219,11 +238,11 @@ export default function FinanceFournisseurModal({
         </DialogHeader>
 
         {/* Debt Banner */}
-        <div className="px-5">
+        <div className="px-6">
           <Card
             variant="bordered"
             padding="sm"
-            className="flex items-center justify-between py-2.5"
+            className="flex items-center justify-between py-3"
           >
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-base-content/40" />
@@ -249,15 +268,15 @@ export default function FinanceFournisseurModal({
         </div>
 
         {/* Content */}
-        <div className="flex flex-col md:flex-row max-h-[62vh] min-h-0">
+        <div className="flex flex-col md:flex-row max-h-[65vh] min-h-0">
           {/* Left Panel: Payment Form */}
-          <div className="w-full md:w-72 border-b md:border-b-0 md:border-r border-base-200 bg-base-100 p-4 overflow-y-auto shrink-0 h-full">
-            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+          <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-base-200 bg-base-100 p-5 overflow-y-auto shrink-0 h-full">
+            <h4 className="font-bold text-sm mb-4 flex items-center gap-2">
               <Receipt className="h-4 w-4 text-primary" />
               {t('providers:finance.new_payment')}
             </h4>
-            <form onSubmit={handleSubmit} className="space-y-3.5 flex flex-col h-[calc(100%-1.75rem)]">
-              <div className="space-y-1.5">
+            <form onSubmit={handleSubmit} className="space-y-4 flex flex-col h-[calc(100%-1.75rem)]">
+              <div className="space-y-2">
                 <Label htmlFor="montant" className="text-xs">{t('providers:finance.amount')}</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 font-bold text-sm">
@@ -282,7 +301,7 @@ export default function FinanceFournisseurModal({
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label htmlFor="mode" className="text-xs">
                   {t('providers:finance.payment_mode')}
                 </Label>
@@ -300,7 +319,7 @@ export default function FinanceFournisseurModal({
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label htmlFor="reference" className="text-xs">
                   {t('providers:finance.reference')}
                 </Label>
@@ -314,7 +333,7 @@ export default function FinanceFournisseurModal({
                 />
               </div>
 
-              <div className="space-y-1.5 flex-1 flex flex-col min-h-0">
+              <div className="space-y-2 flex-1 flex flex-col min-h-0">
                 <Label htmlFor="notes" className="text-xs">
                   {t('providers:finance.notes')}
                 </Label>
@@ -337,7 +356,7 @@ export default function FinanceFournisseurModal({
                 leftIcon={<Receipt className="h-4 w-4" />}
                 className="mt-auto shrink-0"
               >
-                {t('providers:finance.save_payment')}
+                {justPaid ? t('providers:finance.payment_saved', { defaultValue: 'Règlement enregistré' }) : t('providers:finance.save_payment')}
               </Button>
             </form>
           </div>
@@ -346,7 +365,7 @@ export default function FinanceFournisseurModal({
           <div className="flex-1 bg-base-200/30 flex flex-col overflow-hidden min-h-0">
             {/* Échéances */}
             <div className="shrink-0 border-b border-base-200">
-              <div className="px-4 py-2 bg-base-100/60 backdrop-blur flex items-center gap-2">
+              <div className="px-5 py-2.5 bg-base-100/60 backdrop-blur flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-base-content/60" />
                 <h4 className="font-semibold text-sm text-base-content/90">
                   Échéancier — {echeances.length} échéance(s)
@@ -357,7 +376,7 @@ export default function FinanceFournisseurModal({
                   </Badge>
                 )}
               </div>
-              <div className="max-h-[150px] overflow-y-auto">
+              <div className="max-h-[170px] overflow-y-auto">
                 {echeancesLoading ? (
                   <div className="flex justify-center items-center py-3">
                     <Loader2 className="h-5 w-5 text-primary animate-spin" />
@@ -380,8 +399,8 @@ export default function FinanceFournisseurModal({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {computeDistribution().map((ech: unknown) => (
-                        <TableRow key={ech.id || ech.numero_facture} className={ech.montant_alloue > 0 ? 'bg-emerald-50/50' : ''}>
+                      {computeDistribution().map((ech) => (
+                        <TableRow key={ech.id || ech.numero_facture} className={ech.montant_alloue ? 'bg-emerald-50/50' : ''}>
                           <TableCell className="py-1.5">
                             <div className="font-medium text-xs truncate max-w-[140px]" title={ech.numero_facture}>
                               {ech.numero_facture}
@@ -401,7 +420,7 @@ export default function FinanceFournisseurModal({
                           </TableCell>
                           {normalizeNumberInput(montant) > 0 && (
                             <TableCell className="text-right py-1.5 font-mono text-xs font-bold text-emerald-600">
-                              {ech.montant_alloue > 0 ? formatCurrency(ech.montant_alloue) : '-'}
+                              {ech.montant_alloue && ech.montant_alloue > 0 ? formatCurrency(ech.montant_alloue) : '-'}
                             </TableCell>
                           )}
                         </TableRow>
@@ -414,13 +433,13 @@ export default function FinanceFournisseurModal({
 
             {/* History */}
             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-              <div className="px-4 py-2 border-b border-base-200 bg-base-100/60 backdrop-blur shrink-0">
+              <div className="px-5 py-2.5 border-b border-base-200 bg-base-100/60 backdrop-blur shrink-0">
                 <h4 className="font-semibold text-sm text-base-content/90 flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   {t('providers:finance.history')}
                 </h4>
               </div>
-              <div className="flex-1 overflow-y-auto p-0 min-h-0">
+              <div className="flex-1 overflow-y-auto p-2 min-h-0">
                 {loading ? (
                   <div className="flex justify-center items-center h-full">
                     <Loader2 className="h-8 w-8 text-primary animate-spin" />
@@ -478,7 +497,7 @@ export default function FinanceFournisseurModal({
                             {paiement.commandes_liees &&
                               paiement.commandes_liees.length > 0 && (
                                 <div className="mt-1 flex flex-wrap gap-1">
-                                  {paiement.commandes_liees.map((cmd: unknown) => (
+                                  {paiement.commandes_liees.map((cmd) => (
                                     <Badge
                                       key={cmd}
                                       variant="ghost"

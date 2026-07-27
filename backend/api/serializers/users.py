@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from django.db.models import Sum
 from decimal import Decimal
 from ..models import Profile, Team, PosteCaisse, PosteVente, SessionCaisse
+from .mixins import UppercaseSerializerMixin
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -140,7 +141,7 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 
-class TeamSerializer(serializers.ModelSerializer):
+class TeamSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     member_ids = serializers.PrimaryKeyRelatedField(
         many=True, source='members', queryset=User.objects.all(), required=False
     )
@@ -152,7 +153,7 @@ class TeamSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
 
-class PosteCaisseSerializer(serializers.ModelSerializer):
+class PosteCaisseSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     est_actif = serializers.SerializerMethodField()
 
     def get_est_actif(self, obj):
@@ -164,7 +165,7 @@ class PosteCaisseSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
 
-class PosteVenteSerializer(serializers.ModelSerializer):
+class PosteVenteSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     caisse_nom = serializers.SerializerMethodField()
     caisse_code = serializers.SerializerMethodField()
     vendeur_name = serializers.SerializerMethodField()
@@ -207,6 +208,9 @@ class SessionCaisseSerializer(serializers.ModelSerializer):
         from ..models import Caisse
 
         start_date = obj.date_ouverture
+        if not start_date:
+            return {}
+
         end_date = obj.date_fermeture or timezone.now()
 
         queryset = Caisse.objects.filter(

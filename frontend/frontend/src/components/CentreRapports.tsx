@@ -294,9 +294,34 @@ export default function CentreRapports() {
                     .h-screen { height: auto !important; overflow: visible !important; }
                     .flex-1 { overflow: visible !important; }
                     .p-8 { padding: 0 !important; }
-                    .bg-slate-100 { background: white !important; }
-                    .shadow-sm, .shadow-lg { shadow: none !important; }
-                    .card, .rounded-2xl { border: 1px solid #eee !important; border-radius: 0 !important; }
+                    .p-4, .p-6 { padding: 0.5rem !important; }
+                    .bg-slate-100, .bg-slate-50 { background: white !important; }
+                    .shadow-sm, .shadow-lg, .shadow-xl, .shadow-md { box-shadow: none !important; }
+                    .card, .rounded-2xl, .rounded-3xl, .rounded-xl { border: 1px solid #ddd !important; border-radius: 0 !important; }
+                    .animate-in, .animate-fade-in { animation: none !important; opacity: 1 !important; transform: none !important; }
+
+                    /* Réduire le gras */
+                    .font-black, .font-extrabold { font-weight: 600 !important; }
+                    .font-bold { font-weight: 500 !important; }
+                    .font-semibold { font-weight: 400 !important; }
+                    .uppercase, .tracking-widest, .tracking-wider, .tracking-tighter, .tracking-tight {
+                        text-transform: none !important; letter-spacing: 0 !important;
+                    }
+
+                    /* Supprimer les fonds colorés */
+                    *, *::before, *::after {
+                        background-color: transparent !important;
+                        background-image: none !important;
+                        color: #000 !important;
+                    }
+
+                    /* Bordures plus fines */
+                    [class*="border-2"] { border-width: 0.5px !important; }
+                    [class*="border-t-2"] { border-top-width: 0.5px !important; }
+                    [class*="border-b-2"] { border-bottom-width: 0.5px !important; }
+                    [class*="border-slate-900"], [class*="border-black"] { border-color: #999 !important; }
+                    [class*="border-slate-200"], [class*="border-slate-100"] { border-color: #ccc !important; }
+                    [class*="border-emerald"], [class*="border-blue"], [class*="border-indigo"] { border-color: #ccc !important; }
                 }
             `}</style>
         </div>
