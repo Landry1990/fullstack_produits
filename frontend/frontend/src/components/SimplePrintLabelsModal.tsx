@@ -1093,9 +1093,9 @@ ${labelsHTML}
             
             <div className="bg-base-300/30 rounded-2xl p-6 max-h-[400px] overflow-y-auto custom-scrollbar border border-base-content/5">
               <div className="grid grid-cols-1 gap-8 justify-items-center">
-                {labelsData.slice(0, 10).map((label, i) => (
+                {labelsData.slice(0, 10).map((label, _i) => (
                   <PreviewLabelWrapper
-                    key={label.cip || label.barcode || i}
+                    key={label.cip || label.barcode || `label-${label.productName}-${label.lot}`}
                     label={label}
                     fields={fields}
                     format={labelFormat}

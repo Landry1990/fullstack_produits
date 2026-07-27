@@ -13,7 +13,7 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
     
     Args:
         request: L'objet DRF Request
-        permission_attr: Le nom de l'attribut de permission à vérifier sur le profil (ex: 'can_modify_price')
+        permission_attr: Un attribut de permission, ou une liste d'attributs à vérifier sur le profil (ex: 'can_modify_price').
         data_source: Le dictionnaire contenant les données (par défaut request.data)
         
     Returns:
@@ -46,7 +46,9 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
 
         if not sudo_password:
             return None, Response({'detail': 'Mot de passe requis pour la validation Sudo.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+        if not validator_user.is_active:
+            return None, Response({'detail': 'Le compte du validateur est désactivé.'}, status=status.HTTP_403_FORBIDDEN)
+
         # Vérification du mot de passe
         if not validator_user.check_password(sudo_password):
             return None, Response({'detail': 'Mot de passe incorrect pour le validateur.'}, status=status.HTTP_403_FORBIDDEN)
@@ -66,25 +68,29 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
         if not validation_user:
             return None, Response({'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
 
-    # Vérification de la permission granulaire sur le validateur
-    if permission_attr and not validation_user.is_superuser:
+    # Vérification des permissions granulaires sur le validateur.
+    required_permissions = [permission_attr] if isinstance(permission_attr, str) else list(permission_attr or [])
+    if required_permissions and not validation_user.is_superuser:
         try:
             with transaction.atomic():
-                has_permission = hasattr(validation_user, 'profile') and getattr(validation_user.profile, permission_attr, False)
+                missing_permissions = [
+                    permission for permission in required_permissions
+                    if not (hasattr(validation_user, 'profile') and getattr(validation_user.profile, permission, False))
+                ]
         except DatabaseError as e:
             logger.error(f"[SUDO] Erreur DB lors de la vérification des permissions: {str(e)}", exc_info=True)
             return None, Response({'detail': 'Erreur de base de données lors de la vérification des permissions.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        if not has_permission:
+
+        if missing_permissions:
             return None, Response({
-                'detail': f"L'utilisateur {validation_user.username} n'a pas la permission requise ({permission_attr})."
+                'detail': f"L'utilisateur {validation_user.username} n'a pas les permissions requises ({', '.join(missing_permissions)})."
             }, status=status.HTTP_403_FORBIDDEN)
 
     # Enregistrement AuditLog (Optionnel mais recommandé si validé par un tiers)
     if validation_user != request.user:
         action_name = "Action nécessitant privilège d'encaissement/modification"
-        if permission_attr:
-            action_name = f"Privilège: {permission_attr}"
+        if required_permissions:
+            action_name = f"Privilèges: {', '.join(required_permissions)}"
 
         try:
             with transaction.atomic():
@@ -96,7 +102,7 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
                     description=f"Validation Sudo accordée à {request.user.username} - {action_name} - Route: {request.path}",
                     details={
                         'requested_by': request.user.username,
-                        'permission': permission_attr,
+                        'permissions': required_permissions,
                         'path': request.path
                     },
                     request=request

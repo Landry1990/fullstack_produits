@@ -66,9 +66,10 @@ export const useCreanceActions = ({
     }, [selectedIds.length]);
 
     const handlePrintDirectReceipt = useCallback(async (creanceId: number, paiementId?: number) => {
+        let blobUrl: string | undefined;
         try {
             const blob = await creanceService.imprimerRecu(creanceId, paiementId);
-            const blobUrl = window.URL.createObjectURL(blob);
+            blobUrl = window.URL.createObjectURL(blob);
             const printWindow = window.open(blobUrl, '_blank');
 
             if (!printWindow) {
@@ -80,20 +81,23 @@ export const useCreanceActions = ({
                 link.parentNode?.removeChild(link);
             }
 
-            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+            await new Promise(resolve => setTimeout(resolve, 5000));
         } catch (err: unknown) {
             console.error('Erreur lors de l\'impression du reçu:', err);
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('creances:toasts.error_print_receipt'));
+        } finally {
+            if (blobUrl) window.URL.revokeObjectURL(blobUrl);
         }
     }, []);
 
     const handlePrintBulkReceipt = useCallback(async (releveId: number) => {
         if (!releveId) return;
 
+        let url: string | undefined;
         try {
             const blob = await creanceService.imprimerRelevePaiement(releveId);
-            const url = window.URL.createObjectURL(blob);
+            url = window.URL.createObjectURL(blob);
             const printWindow = window.open(url, '_blank');
 
             if (!printWindow) {
@@ -105,11 +109,13 @@ export const useCreanceActions = ({
                 link.parentNode?.removeChild(link);
             }
 
-            setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            await new Promise(resolve => setTimeout(resolve, 5000));
         } catch (err: unknown) {
             console.error('Erreur lors de l\'impression du relevé:', err);
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('creances:toasts.error_print_statement'));
+        } finally {
+            if (url) window.URL.revokeObjectURL(url);
         }
     }, []);
 
@@ -150,7 +156,7 @@ export const useCreanceActions = ({
     }, [selectedCreance, montantPaiement, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt, updateLocalCreance]);
 
     const handleAjouterPaiement = () => {
-        requireSudo(performAjouterPaiement);
+        requireSudo(performAjouterPaiement, { permission: 'can_cash_out' });
     };
 
     const performBulkPayment = useCallback(async (validatorId: number, password: string) => {
@@ -230,7 +236,7 @@ export const useCreanceActions = ({
     }, [selectedIds, modePaiement, referencePaiement, montantTotalBulk, setSelectedIds, refresh, handlePrintBulkReceipt, filteredCreances, pharmacySettings]);
 
     const confirmBulkPayment = () => {
-        requireSudo(performBulkPayment);
+        requireSudo(performBulkPayment, { permission: 'can_cash_out' });
     };
 
     const handleImprimerReleve = useCallback(async (selectedClient: string, dateDebut: string, dateFin: string) => {

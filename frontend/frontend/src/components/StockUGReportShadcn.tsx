@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import toast, { Toaster } from 'react-hot-toast';
 import { formatCurrency, formatNumber } from '../utils/formatters';
+import { writePrintDocument, escHtml } from '../utils/print/printHelpers';
 import { getLocale } from '../utils/dateUtils';
 
 import { Card } from './ui/Card';
@@ -107,10 +108,10 @@ export default function StockUGReportShadcn() {
     if (!data) return;
     const win = window.open('about:blank', '', 'height=600,width=800');
     if (win) {
-      win.document.write(`
+      writePrintDocument(win, `
         <html>
           <head>
-            <title>${t('stock:rapport_ug.print_template.title')} - ${format(new Date(), 'dd/MM/yyyy')}</title>
+            <title>${escHtml(t('stock:rapport_ug.print_template.title'))} - ${format(new Date(), 'dd/MM/yyyy')}</title>
             <style>
               body { font-family: sans-serif; padding: 20px; color: #334155; }
               h1 { text-align: center; font-size: 24px; color: #1e293b; margin-bottom: 5px; }
@@ -165,15 +166,15 @@ export default function StockUGReportShadcn() {
               <tbody>
                 ${data.fournisseurs.map(f => `
                   <tr class="supplier-row">
-                    <td colspan="2">${f.fournisseur_nom} (${t('stock:rapport_ug.print_template.lots_count', { count: f.lots_count })})</td>
+                    <td colspan="2">${escHtml(f.fournisseur_nom)} (${t('stock:rapport_ug.print_template.lots_count', { count: f.lots_count })})</td>
                     <td style="text-align: right;">${formatNumber(f.total_ug)}</td>
                     <td style="text-align: right;">${formatNumber(f.total_ug_restantes)}</td>
                     <td style="text-align: right;">${formatCurrency(f.total_valeur_restante)}</td>
                   </tr>
                   ${f.details.map(d => `
                     <tr>
-                      <td style="padding-left: 25px;">${d.produit_nom}</td>
-                      <td style="color: #64748b; font-size: 9px; white-space: nowrap;">${t('stock:rapport_ug.print_template.lot_label')}: ${d.lot_numero}<br/>${t('stock:rapport_ug.print_template.invoice_label')}: ${d.facture_numero}</td>
+                      <td style="padding-left: 25px;">${escHtml(d.produit_nom)}</td>
+                      <td style="color: #64748b; font-size: 9px; white-space: nowrap;">${t('stock:rapport_ug.print_template.lot_label')}: ${escHtml(d.lot_numero)}<br/>${t('stock:rapport_ug.print_template.invoice_label')}: ${escHtml(d.facture_numero)}</td>
                       <td style="text-align: right;">${formatNumber(d.quantity_free)}</td>
                       <td style="text-align: right; font-weight: bold; color: #10b981;">${formatNumber(d.quantity_free_remaining)}</td>
                       <td style="text-align: right; font-weight: bold; color: #1d293b;">${formatCurrency(d.valeur_restante)}</td>
@@ -189,7 +190,6 @@ export default function StockUGReportShadcn() {
           </body>
         </html>
       `);
-      win.document.close();
       win.onload = () => win.print();
       setTimeout(() => { if (win) win.print(); }, 500);
     }

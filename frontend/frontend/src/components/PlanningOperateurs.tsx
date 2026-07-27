@@ -31,6 +31,22 @@ import {
   getWeekDays, getWeekLabel, startOfWeek,
 } from '../lib/planningHelpers';
 
+const shiftColors: Record<string, string> = {
+  MATIN: 'text-amber-600',
+  NUIT: 'text-indigo-600',
+  GARDE: 'text-red-600',
+  REPOS: 'text-slate-400',
+  CONGE: 'text-emerald-600',
+};
+
+const shiftIcons: Record<string, typeof Sun> = {
+  MATIN: Sun, NUIT: Moon, GARDE: Shield, REPOS: Coffee, CONGE: Plane,
+};
+
+function handlePrint() {
+  window.print();
+}
+
 // ── Config Tab ──
 
 function ConfigTab() {
@@ -270,6 +286,8 @@ function TeamsTab() {
     }));
   };
 
+  const memberIdsSet = new Set(formData.member_ids);
+
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
@@ -364,7 +382,7 @@ function TeamsTab() {
                 {(operators || []).map(op => (
                   <label key={op.id} className="flex items-center gap-2 cursor-pointer">
                     <Checkbox
-                      checked={formData.member_ids.includes(op.id)}
+                      checked={memberIdsSet.has(op.id)}
                       onCheckedChange={() => toggleMember(op.id)}
                     />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
@@ -402,18 +420,6 @@ function StatsPanel({ scheduleId }: { scheduleId: number }) {
 
   if (isLoading) return <div className="flex justify-center p-4"><Loader2 className="size-6 text-emerald-600 animate-spin" /></div>;
   if (!stats || stats.length === 0) return null;
-
-  const shiftColors: Record<string, string> = {
-    MATIN: 'text-amber-600',
-    NUIT: 'text-indigo-600',
-    GARDE: 'text-red-600',
-    REPOS: 'text-slate-400',
-    CONGE: 'text-emerald-600',
-  };
-
-  const shiftIcons: Record<string, typeof Sun> = {
-    MATIN: Sun, NUIT: Moon, GARDE: Shield, REPOS: Coffee, CONGE: Plane,
-  };
 
   return (
     <Card className="mb-4">
@@ -570,10 +576,6 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
   const handleCellClick = (userId: number, date: string) => {
     if (!isAdmin || !schedule) return;
     setEditingCell({ userId, date });
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const handleShiftChange = (shiftType: ShiftType) => {

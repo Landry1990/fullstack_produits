@@ -193,8 +193,8 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: unknown, idx: number) => (
-                                    <tr key={row.id ?? row.produit_id ?? row.code ?? idx} className={`hover:bg-emerald-50 transition-all group ${
+                                {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: unknown, _idx: number) => (
+                                    <tr key={row.id ?? row.produit_id ?? row.code ?? row['nom'] ?? row['produit_nom']} className={`hover:bg-emerald-50 transition-all group ${
                                         isMargesReport && Number(row['taux_marge'] ?? 0) < 0 ? 'bg-red-50' :
                                         isMargesReport && Number(row['taux_marge'] ?? 0) < 25 ? 'bg-amber-50' : ''
                                     }`}>

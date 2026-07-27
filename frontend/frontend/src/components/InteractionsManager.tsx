@@ -228,7 +228,7 @@ export default function InteractionsManager() {
             {uploadResult.skipped > 0 && <span className="text-warning">, {uploadResult.skipped} ignorées</span>}
             {uploadResult.errors.length > 0 && (
               <div className="mt-1 text-error text-xs">
-                {uploadResult.errors.map((e, i) => <div key={i}>{e}</div>)}
+                {uploadResult.errors.map((e) => <div key={`err-${e}`}>{e}</div>)}
               </div>
             )}
           </div>

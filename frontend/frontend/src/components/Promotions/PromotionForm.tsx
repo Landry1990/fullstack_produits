@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { getLocale } from '../../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
-import type { Promotion } from '../../types/Promotion';
+import type { Promotion, PromotionPackItem } from '../../types/Promotion';
+import type { ProduitModel } from '../../types';
 import { DiscountType, ApplicationMode } from '../../types/Promotion';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
 import { useProductSearch as useProductSearchBase } from '../../hooks/product-search/useProductSearch';
@@ -19,6 +20,10 @@ interface PromotionFormProps {
     initialData?: Promotion;
 }
 
+interface SelectedProduct extends SearchResult {
+    quantity: number;
+}
+
 const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialData }) => {
     const { t } = useTranslation(['promotions', 'common']);
     const [name, setName] = useState(initialData?.name || '');
@@ -33,13 +38,17 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
     const [loading, setLoading] = useState(false);
 
 
-    const [selectedProducts, setSelectedProducts] = useState<unknown[]>(() => {
+    const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>(() => {
         if (!initialData) return [];
         if (initialData.products) {
-            return initialData.products.map(id => ({ id, name: t('promotions:form.products.loading_names'), quantity: 1 }));
+            return initialData.products.map(id => ({
+                id,
+                name: t('promotions:form.products.loading_names'),
+                quantity: 1
+            }));
         }
         if (initialData.pack_items) {
-            return initialData.pack_items.map((item: unknown) => ({
+            return initialData.pack_items.map((item: PromotionPackItem) => ({
                 id: item.product,
                 name: t('promotions:form.products.loading_names'),
                 quantity: item.quantity
@@ -57,8 +66,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
         });
     }, []);
 
-    const updateProductQuantity = useCallback((id: number, qty: number) => {
-        setSelectedProducts(prev => prev.map(p => 
+    const updateProductQuantity = useCallback((id: number, qty: number | undefined) => {
+        if (qty === undefined) return;
+        setSelectedProducts(prev => prev.map(p =>
             p.id === id ? { ...p, quantity: qty } : p
         ));
     }, []);
@@ -79,8 +89,8 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
         modes: ['products']
     });
 
-    const handleAddProduct = (product: SearchResult) => {
-        addProduct(product);
+    const handleAddProduct = (product: SearchResult | ProduitModel) => {
+        addProduct(product as SearchResult);
         resetSearch();
     };
 
@@ -135,13 +145,14 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
         };
 
         if (initialData) resolveNames();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialData]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        const payload: unknown = {
+        const payload: Record<string, unknown> = {
             name,
             description,
             discount_type: discountType,
@@ -263,7 +274,10 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                 type="number"
                                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-2xl font-black text-emerald-600 h-14 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                                                 value={value}
-                                                onChange={e => setValue(Number(e.target.value))}
+                                                onChange={e => {
+                                                    const parsed = e.target.value ? Number(e.target.value) : undefined;
+                                                    setValue(prev => (parsed !== undefined && !Number.isNaN(parsed) ? parsed : prev));
+                                                }}
                                             />
                                             <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">
                                                 {discountType === DiscountType.PERCENTAGE ? '%' : t('common:currency')}
@@ -276,11 +290,17 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="bg-white p-2 rounded-lg border border-slate-200">
                                             <label className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.buy')}</label>
-                                            <input type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold focus:outline-none focus:border-emerald-300" value={buyQuantity} onChange={e => setBuyQuantity(Number(e.target.value))} min="1" />
+                                            <input type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold focus:outline-none focus:border-emerald-300" value={buyQuantity} onChange={e => {
+                                                const parsed = e.target.value ? Number(e.target.value) : undefined;
+                                                setBuyQuantity(prev => (parsed !== undefined && !Number.isNaN(parsed) && parsed > 0 ? parsed : prev));
+                                            }} min="1" />
                                         </div>
                                         <div className="bg-white p-2 rounded-lg border border-slate-200">
                                             <label className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.get')}</label>
-                                            <input type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-emerald-600 focus:outline-none focus:border-emerald-300" value={getQuantity} onChange={e => setGetQuantity(Number(e.target.value))} />
+                                            <input type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-emerald-600 focus:outline-none focus:border-emerald-300" value={getQuantity} onChange={e => {
+                                                const parsed = e.target.value ? Number(e.target.value) : undefined;
+                                                setGetQuantity(prev => (parsed !== undefined && !Number.isNaN(parsed) && parsed >= 0 ? parsed : prev));
+                                            }} />
                                         </div>
                                     </div>
                                 )}
@@ -339,7 +359,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                             </td>
                                         </tr>
                                     ) : (
-                                        selectedProducts.map((p: unknown, idx: number) => (
+                                        selectedProducts.map((p: SelectedProduct, idx: number) => (
                                             <tr
                                                 key={p.id}
                                                 className={cn(
@@ -349,10 +369,10 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                             >
                                                 <td className="py-3 px-4">
                                                     <div className="font-semibold text-slate-800">{p.name}</div>
-                                                    <div className="text-[10px] font-mono text-slate-400">{p.cip1 || '#'+p.id}</div>
+                                                    <div className="text-[10px] font-mono text-slate-400">{p.cip1 ? String(p.cip1) : '#'+p.id}</div>
                                                 </td>
                                                 <td className="py-3 px-4 text-center">
-                                                    <span className={cn("font-bold", p.stock <= 0 ? 'text-red-500' : 'text-emerald-600')}>
+                                                    <span className={cn("font-bold", p.stock !== undefined && p.stock <= 0 ? 'text-red-500' : 'text-emerald-600')}>
                                                         {p.stock ?? t('common:not_available')}
                                                     </span>
                                                 </td>
@@ -370,7 +390,12 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                                 type="number"
                                                                 className="w-12 text-center bg-transparent border-none font-bold text-sm text-slate-700 focus:outline-none"
                                                                 value={p.quantity || 1}
-                                                                onChange={(e) => updateProductQuantity(p.id, Number(e.target.value))}
+                                                                onChange={(e) => {
+                                                                    const parsed = e.target.value ? Number(e.target.value) : undefined;
+                                                                    if (parsed !== undefined && !Number.isNaN(parsed) && parsed >= 1) {
+                                                                        updateProductQuantity(p.id, parsed);
+                                                                    }
+                                                                }}
                                                                 min="1"
                                                             />
                                                             <Button

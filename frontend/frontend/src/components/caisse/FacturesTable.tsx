@@ -390,14 +390,14 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {previewFacture.produits.map((p: unknown, idx: number) => {
+                    {previewFacture.produits.map((p: unknown, _idx: number) => {
                       const name = getProductName(p)
                       const qty = p.quantity || p.quantite || 1
                       const price = Number(p.selling_price || p.prix_vente || 0)
                       const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || (user as unknown)?.can_modify_invoice
 
                       return (
-                        <TableRow key={p.id ?? p.produit_id ?? p.produit ?? idx} className="group">
+                        <TableRow key={p.id ?? p.produit_id ?? p.produit ?? `row-${name}-${p.lot}`} className="group">
                           <TableCell>
                             <div className="flex flex-col">
                               <span className="font-semibold text-slate-800">{name}</span>

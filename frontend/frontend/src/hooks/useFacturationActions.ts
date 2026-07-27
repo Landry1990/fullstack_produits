@@ -168,9 +168,9 @@ export function useFacturationActions({
                 }
             })
 
-            for (const payload of produitsPayload) {
-                await api.post('facture-produits/', payload)
-            }
+            await Promise.all(produitsPayload.map(payload =>
+                api.post('facture-produits/', payload)
+            ))
 
             const blWin = window.open(`/app/print-invoice/${createdFacture.id}?type=BL`, '_blank')
             if (!blWin) toast.error("Popup bloqué. Autorisez les popups pour imprimer.")

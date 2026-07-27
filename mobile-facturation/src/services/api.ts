@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAuthStore } from '../stores';
+import { useAuthStore } from '../stores/useAuthStore';
 
 const api = axios.create({ timeout: 10000 });
 

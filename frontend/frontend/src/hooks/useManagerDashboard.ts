@@ -107,6 +107,7 @@ export const useManagerDashboard = () => {
             document.body.appendChild(link);
             link.click();
             link.remove();
+            window.URL.revokeObjectURL(downloadUrl);
             toast.success(t('common:export_success', 'Export réussi'));
         } catch (error: unknown) {
             console.error('Export error:', error);

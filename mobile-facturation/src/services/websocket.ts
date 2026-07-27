@@ -1,4 +1,4 @@
-import { useAuthStore } from '../stores';
+import { useAuthStore } from '../stores/useAuthStore';
 import type { CashierPayload } from '../types';
 
 type WSStatus = 'disconnected' | 'connecting' | 'connected' | 'error';

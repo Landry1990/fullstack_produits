@@ -350,16 +350,9 @@ class ProduitStockMixin:
         product_ids = request.data.get('product_ids', [])
         if not product_ids: return Response({'detail': 'Aucun produit sélectionné'}, status=status.HTTP_400_BAD_REQUEST)
             
-        sudo_password = request.data.get('sudo_password')
-        validated_by_id = request.data.get('validated_by_id')
-        
-        validation_user = request.user
-        if validated_by_id and sudo_password:
-            valid, user_or_err = validate_sudo_mode(validated_by_id, sudo_password)
-            if not valid: return Response({'detail': user_or_err}, status=status.HTTP_403_FORBIDDEN)
-            validation_user = user_or_err
-        elif not (request.user.is_superuser or getattr(request.user, 'can_adjust_stock', False) or (hasattr(request.user, 'profile') and getattr(request.user.profile, 'can_adjust_stock', False))):
-            return Response({'detail': 'Permission refusée (Mode Validation requis)'}, status=status.HTTP_403_FORBIDDEN)
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_adjust_stock')
+        if error_res:
+            return error_res
 
         results = []
         with transaction.atomic():

@@ -7,7 +7,7 @@ import { usePharmacySettings } from './usePharmacySettings';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
-import { escHtml } from '../utils/print/printHelpers';
+import { escHtml, writePrintDocument } from '../utils/print/printHelpers';
 import { formatDate, formatDateTime, toApiDateTime, toApiDateEnd } from '../utils/dateUtils';
 import { getPaymentModeLabel } from '../config/paymentModes';
 
@@ -597,12 +597,7 @@ export function useJournalCaisse() {
         </div>
       `;
       
-      win.document.write('<html><head><title>' + t('print.window_title') + '</title>');
-      win.document.write('<style>body { font-family: monospace; padding: 0; margin: 0; } @media print { body { padding: 0; margin: 0; } }</style>');
-      win.document.write('</head><body>');
-      win.document.write(content);
-      win.document.write('</body></html>');
-      win.document.close();
+      writePrintDocument(win, '<html><head><title>' + t('print.window_title') + '</title><style>body { font-family: monospace; padding: 0; margin: 0; } @media print { body { padding: 0; margin: 0; } }</style></head><body>' + content + '</body></html>');
       win.print();
     }
   };

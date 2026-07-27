@@ -18,6 +18,8 @@ import { usePharmacySettings } from './usePharmacySettings';
 import { useFormes } from './useProduits';
 import { useCommandesStore } from '../stores/useCommandesStore';
 
+const statusOrder: Record<string, number> = { 'PREP': 1, 'ATT': 2, 'CLOT': 3 };
+
 function formatDateToMMYY(isoDate: string | null | undefined): string {
     if (!isoDate) return '';
     const parts = isoDate.split('-');
@@ -273,12 +275,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       const cip1 = p.cip1 || '';
       const cip2 = p.cip2 || '';
       const cip3 = p.cip3 || '';
-      return terms.every(term =>
-        name.includes(term) ||
-        cip1.includes(term) ||
-        cip2.includes(term) ||
-        cip3.includes(term)
-      );
+      const haystack = `${name} ${cip1} ${cip2} ${cip3}`;
+      return terms.every(term => haystack.includes(term));
     });
   }, [produitsList, searchProduitQuery]);
 
@@ -1421,13 +1419,15 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         const txtContent = notFoundItems.map(item => `${item.cip};${item.qty}`).join('\n');
         const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
         const link = document.createElement('a');
+        const importReportUrl = URL.createObjectURL(blob);
         const dateStr = new Date().toISOString().slice(0, 10);
-        link.href = URL.createObjectURL(blob);
+        link.href = importReportUrl;
         link.download = `produits_non_reconnus_${dateStr}.txt`;
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(importReportUrl);
         
         toast.error(t('orders:messages.csv_partial_import', { found: productsFound, notFound: productsNotFound }));
       } else {
@@ -1488,6 +1488,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 
     // Générer un fichier .txt listant les produits sans CIP
@@ -1507,6 +1508,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         document.body.appendChild(txtLink);
         txtLink.click();
         document.body.removeChild(txtLink);
+        URL.revokeObjectURL(txtUrl);
 
         if (exportedCount === 0) {
             toast(t('orders:messages.csv_no_exported', { skipped: skippedProducts.length, code: cipLabel }), { icon: '⚠️' });
@@ -1530,8 +1532,6 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     if (key === sortKey) setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortOrder('desc'); }
   }, [sortKey]);
-
-  const statusOrder: Record<string, number> = { 'PREP': 1, 'ATT': 2, 'CLOT': 3 };
 
   const sortedCommandes = useMemo(() => {
     let filtered = commandes;
@@ -1562,7 +1562,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       if (valA! > valB!) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [commandes, sortKey, sortOrder, fournisseurs, filterStatus, statusOrder, searchQuery]);
+  }, [commandes, sortKey, sortOrder, fournisseurs, filterStatus, searchQuery]);
 
   function handleProduitCreated(produit: ProduitModel) {
     selectProduct(produit); 

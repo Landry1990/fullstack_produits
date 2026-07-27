@@ -120,7 +120,8 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
                 onComplete(updatedLignes, { validatorId, password })
             }, {
                 title: t('facturation:stock_resolution.force_sale_title'),
-                message: t('facturation:stock_resolution.force_sale_message')
+                message: t('facturation:stock_resolution.force_sale_message'),
+                permission: 'can_sell_negative_stock'
             });
         } else {
             onClose()

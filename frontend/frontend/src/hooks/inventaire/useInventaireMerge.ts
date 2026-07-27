@@ -93,12 +93,12 @@ export const useInventaireMerge = ({
                 const sources = Array.from(selectedInventaireIds).filter(id => id !== targetId);
                 let successCount = 0;
 
-                for (const sourceId of sources) {
-                    await api.post(`inventaires/${targetId}/merge/`, {
+                await Promise.all(sources.map(sourceId =>
+                    api.post(`inventaires/${targetId}/merge/`, {
                         source_inventaire_id: sourceId
-                    });
-                    successCount++;
-                }
+                    })
+                ));
+                successCount = sources.length;
 
                 toast.success(t('inventaire.merge.success_count', { count: successCount }));
                 setSelectedInventaireIds(new Set());

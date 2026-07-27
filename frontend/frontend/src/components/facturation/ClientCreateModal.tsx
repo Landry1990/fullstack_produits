@@ -1,19 +1,21 @@
 ﻿import { useTranslation } from 'react-i18next'
 import PremiumModal from '../common/PremiumModal'
 
+type ClientForm = {
+  client_type: 'PARTICULIER' | 'PROFESSIONNEL'
+  name: string
+  phone: string
+  email: string
+  address: string
+  plafond: string
+  taux_couverture: string
+}
+
 interface ClientCreateModalProps {
   isOpen: boolean
   onClose: () => void
-  newClientForm: {
-    client_type: 'PARTICULIER' | 'PROFESSIONNEL'
-    name: string
-    phone: string
-    email: string
-    address: string
-    plafond: string
-    taux_couverture: string
-  }
-  setNewClientForm: (val: unknown) => void
+  newClientForm: ClientForm
+  setNewClientForm: (val: ClientForm | ((prev: ClientForm) => ClientForm)) => void
   isCreatingClient: boolean
   handleCreateClient: (e: React.FormEvent) => void
 }
@@ -50,18 +52,20 @@ export default function ClientCreateModal({
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
+              name="client_type"
               className="size-4 accent-emerald-600"
               checked={newClientForm.client_type === 'PARTICULIER'}
-              onChange={() => setNewClientForm((prev: unknown) => ({ ...prev, client_type: 'PARTICULIER' }))}
+              onChange={() => setNewClientForm((prev) => ({ ...prev, client_type: 'PARTICULIER' }))}
             />
             <span className="text-sm text-slate-700">{t('create_client.individual')}</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
+              name="client_type"
               className="size-4 accent-blue-600"
               checked={newClientForm.client_type === 'PROFESSIONNEL'}
-              onChange={() => setNewClientForm((prev: unknown) => ({ ...prev, client_type: 'PROFESSIONNEL' }))}
+              onChange={() => setNewClientForm((prev) => ({ ...prev, client_type: 'PROFESSIONNEL' }))}
             />
             <span className="text-sm text-slate-700">{t('create_client.professional')}</span>
           </label>
@@ -74,7 +78,7 @@ export default function ClientCreateModal({
             <input
               type="text"
               value={newClientForm.name}
-              onChange={e => setNewClientForm((prev: unknown) => ({ ...prev, name: e.target.value }))}
+              onChange={e => setNewClientForm((prev) => ({ ...prev, name: e.target.value }))}
               className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               placeholder={t('create_client.name')}
               required
@@ -85,7 +89,7 @@ export default function ClientCreateModal({
             <input
               type="tel"
               value={newClientForm.phone}
-              onChange={e => setNewClientForm((prev: unknown) => ({ ...prev, phone: e.target.value }))}
+              onChange={e => setNewClientForm((prev) => ({ ...prev, phone: e.target.value }))}
               className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               placeholder={t('create_client.phone')}
               required
@@ -98,7 +102,7 @@ export default function ClientCreateModal({
           <input
             type="email"
             value={newClientForm.email}
-            onChange={e => setNewClientForm((prev: unknown) => ({ ...prev, email: e.target.value }))}
+            onChange={e => setNewClientForm((prev) => ({ ...prev, email: e.target.value }))}
             className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
             placeholder={t('create_client.email')}
             required
@@ -109,7 +113,7 @@ export default function ClientCreateModal({
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t('create_client.address')} *</label>
           <textarea
             value={newClientForm.address}
-            onChange={e => setNewClientForm((prev: unknown) => ({ ...prev, address: e.target.value }))}
+            onChange={e => setNewClientForm((prev) => ({ ...prev, address: e.target.value }))}
             className="w-full h-16 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
             placeholder={t('create_client.address')}
             required
@@ -126,7 +130,7 @@ export default function ClientCreateModal({
                 <input
                   type="number"
                   value={newClientForm.plafond}
-                  onChange={e => setNewClientForm((prev: unknown) => ({ ...prev, plafond: e.target.value }))}
+                  onChange={e => setNewClientForm((prev) => ({ ...prev, plafond: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   min="0"
                 />
@@ -136,7 +140,7 @@ export default function ClientCreateModal({
                 <input
                   type="number"
                   value={newClientForm.taux_couverture}
-                  onChange={e => setNewClientForm((prev: unknown) => ({ ...prev, taux_couverture: e.target.value }))}
+                  onChange={e => setNewClientForm((prev) => ({ ...prev, taux_couverture: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   min="0"
                   max="100"

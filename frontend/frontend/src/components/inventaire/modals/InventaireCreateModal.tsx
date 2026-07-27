@@ -72,6 +72,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                 <div className="flex items-center h-5 mr-3 mt-1">
                                     <input
                                         type="radio"
+                                        name="action"
                                         className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500"
                                         checked={action === 'VERIFY'}
                                         onChange={() => setAction('VERIFY')}
@@ -88,6 +89,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                 <div className="flex items-center h-5 mr-3 mt-1">
                                     <input
                                         type="radio"
+                                        name="action"
                                         className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500"
                                         checked={action === 'ENTRY'}
                                         onChange={() => setAction('ENTRY')}
@@ -110,19 +112,19 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                         <div className="grid grid-cols-3 gap-3">
                             <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'GLOBAL' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
                                 <Archive className={`h-5 w-5 mb-2 ${stockType === 'GLOBAL' ? 'text-emerald-600' : 'text-slate-300'}`} />
-                                <input type="radio" className="hidden" checked={stockType === 'GLOBAL'} onChange={() => setStockType('GLOBAL')} />
+                                <input type="radio" name="stockType" className="hidden" checked={stockType === 'GLOBAL'} onChange={() => setStockType('GLOBAL')} />
                                 <span className={`text-xs font-bold text-center ${stockType === 'GLOBAL' ? 'text-emerald-700' : 'text-slate-500'}`}>{t('inventaire.create.stock_global')}</span>
                             </label>
 
                             <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RAYON' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
                                 <Store className={`h-5 w-5 mb-2 ${stockType === 'RAYON' ? 'text-emerald-600' : 'text-slate-300'}`} />
-                                <input type="radio" className="hidden" checked={stockType === 'RAYON'} onChange={() => setStockType('RAYON')} />
+                                <input type="radio" name="stockType" className="hidden" checked={stockType === 'RAYON'} onChange={() => setStockType('RAYON')} />
                                 <span className={`text-xs font-bold text-center ${stockType === 'RAYON' ? 'text-emerald-700' : 'text-slate-500'}`}>{t('inventaire.create.stock_rayon')}</span>
                             </label>
 
                             <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RESERVE' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
                                 <Warehouse className={`h-5 w-5 mb-2 ${stockType === 'RESERVE' ? 'text-emerald-600' : 'text-slate-300'}`} />
-                                <input type="radio" className="hidden" checked={stockType === 'RESERVE'} onChange={() => setStockType('RESERVE')} />
+                                <input type="radio" name="stockType" className="hidden" checked={stockType === 'RESERVE'} onChange={() => setStockType('RESERVE')} />
                                 <span className={`text-xs font-bold text-center ${stockType === 'RESERVE' ? 'text-emerald-700' : 'text-slate-500'}`}>{t('inventaire.create.stock_reserve')}</span>
                             </label>
                         </div>
@@ -154,7 +156,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                         onChange={(e) => setGroupeId(e.target.value ? parseInt(e.target.value) : undefined)}
                                     >
                                         <option value="">{t('inventaire.create.groupe_all')}</option>
-                                        {groupes?.map((g: unknown) => <option key={g.id} value={g.id}>{g.nom}</option>)}
+                                        {groupes?.map((g) => <option key={g.id} value={g.id}>{g.nom}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">

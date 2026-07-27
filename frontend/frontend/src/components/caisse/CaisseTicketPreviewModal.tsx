@@ -5,6 +5,7 @@ import { TicketTemplate } from '../printing/TicketTemplate'
 import { ClientNameModal } from '../sales/modals/ClientNameModal'
 import api from '../../services/api'
 import type { TicketCaisse, Facture } from '../../types'
+import { writePrintDocument } from '../../utils/print/printHelpers'
 
 interface CaisseTicketPreviewModalProps {
   isOpen: boolean
@@ -13,6 +14,11 @@ interface CaisseTicketPreviewModalProps {
   settings: unknown
   onSendWhatsApp: () => void
   loading?: boolean
+}
+
+function isGenericClientName(name: string): boolean {
+  const lower = (name || '').toLowerCase().trim()
+  return !lower || lower.includes('divers') || lower.includes('passage')
 }
 
 export function CaisseTicketPreviewModal({
@@ -33,11 +39,6 @@ export function CaisseTicketPreviewModal({
 
   const [showClientNameModal, setShowClientNameModal] = useState(false)
   const [pendingFacture, setPendingFacture] = useState<Facture | null>(null)
-
-  const isGenericClientName = (name: string): boolean => {
-    const lower = (name || '').toLowerCase().trim()
-    return !lower || lower.includes('divers') || lower.includes('passage')
-  }
 
   const handlePrintInvoice = useCallback(() => {
     if (!ticket) return
@@ -61,7 +62,7 @@ export function CaisseTicketPreviewModal({
 
     let url = `/app/print-invoice/${factureId}`
     if (clientName) url += `?client_name=${encodeURIComponent(clientName)}`
-    window.open(url, '_blank')
+    window.open(url, '_blank', 'noopener,noreferrer')
   }, [ticket])
 
   const handleConfirmPrintClientName = useCallback(async (clientNameInput: string) => {
@@ -75,7 +76,7 @@ export function CaisseTicketPreviewModal({
     } finally {
       let url = `/app/print-invoice/${pendingFacture.id}`
       if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`
-      window.open(url, '_blank')
+      window.open(url, '_blank', 'noopener,noreferrer')
       setShowClientNameModal(false)
       setPendingFacture(null)
     }
@@ -124,7 +125,7 @@ export function CaisseTicketPreviewModal({
 
     const win = window.open('about:blank', '', 'height=800,width=600')
     if (win && content) {
-      win.document.write(`<!DOCTYPE html>
+      writePrintDocument(win, `<!DOCTYPE html>
 <html data-theme="light" lang="fr">
 <head>
   <title>Ticket de Caisse</title>
@@ -213,7 +214,6 @@ export function CaisseTicketPreviewModal({
   </script>
 </body>
 </html>`)
-      win.document.close()
       win.focus()
     }
   }, [settings])

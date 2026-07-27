@@ -209,12 +209,12 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                 </tr>
             </thead>
             <tbody className="text-[10px]">
-                {data.produits.map((item, idx) => {
+                {data.produits.map((item, _idx) => {
                     const htUnit = calculateHTUnit(item.selling_price, item.tva);
                     const totalLineNetHT = ((Number(item.selling_price) - Number(item.discount)) * item.quantity) / (1 + (Number(item.tva)||0)/100);
                     
                     return (
-                      <tr key={item.cip ?? item.produit_nom ?? idx} className="group border-b border-slate-50 hover:bg-base-200/30 transition-colors break-inside-avoid">
+                      <tr key={item.cip ?? item.produit_nom ?? `item-${item.lot}`} className="group border-b border-slate-50 hover:bg-base-200/30 transition-colors break-inside-avoid">
                           <td className="py-2 px-3">
                               <div className="font-bold text-base-content text-[10.5px] uppercase leading-tight">{item.produit_nom}</div>
                               {item.cip && <div className="text-[8.5px] text-base-content/40 font-mono mt-0.5 tracking-tight inline-block mr-3">{t('invoice.cip')}: {item.cip}</div>}

@@ -9,20 +9,6 @@ interface _StartErrorExtraction {
 }
 
 /**
- * Type-safe helper to extract an error message from an `unknown` catch variable.
- * Handles Axios errors, native Errors, strings, and arbitrary objects.
- */
-export function getErrorMessage(err: unknown): string {
-    if (!err) return "Une erreur inconnue est survenue.";
-    if (typeof err === 'string') return err;
-    if (err instanceof Error) return err.message;
-    if (typeof err === 'object' && err !== null && 'message' in err) {
-        return String((err as { message: unknown }).message);
-    }
-    return "Une erreur inattendue est survenue.";
-}
-
-/**
  * Type-safe helper to extract the API detail string from an Axios-like error.
  * Returns the `response.data.detail` if present, or falls back to the provided default.
  */

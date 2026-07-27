@@ -352,9 +352,10 @@ export function useFournisseurs() {
   const executeBulkDeleteFournisseurs = async (validatorId?: number, password?: string) => {
     try {
       await api.post('fournisseurs/bulk_delete/', { ids: selectedIds, validated_by_id: validatorId, sudo_password: password });
-      setFournisseurs(prev => prev.filter(f => !selectedIds.includes(f.id!)));
+      const selectedIdsSet = new Set(selectedIds);
+      setFournisseurs(prev => prev.filter(f => !selectedIdsSet.has(f.id!)));
       setSelectedIds([]);
-      if (selectedFournisseur && selectedIds.includes(selectedFournisseur.id!)) {
+      if (selectedFournisseur && selectedIdsSet.has(selectedFournisseur.id!)) {
         setSelectedFournisseur(null);
       }
       toast.success(t('providers:messages.bulk_delete_success', { count: selectedIds.length }));
