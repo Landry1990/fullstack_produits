@@ -53,6 +53,7 @@ export default function ModuleFinancier() {
   const [repartitionBy, setRepartitionBy] = useState<'categorie' | 'fournisseur'>('categorie');
   const [activeChart, setActiveChart] = useState<'ca' | 'marges' | 'predictions'>('ca');
   const [categoryType, setCategoryType] = useState<'rayon' | 'groupe' | 'forme'>('rayon');
+  const [variancePeriod, setVariancePeriod] = useState<7 | 30 | 90>(7);
 
   // Fetch data
   const { data: caEvolution, isLoading: loadingCA } = useCAEvolution();
@@ -64,7 +65,7 @@ export default function ModuleFinancier() {
   const { data: categoryAnalysis, isLoading: loadingCategories } = useAnalyseCategories(categoryType, periode);
   const { data: marginAnalysis, isLoading: loadingMarginAnalysis } = useAnalyseMarges();
   const { data: supplierAnalysis, isLoading: loadingSupplierAnalysis } = useAnalyseFournisseurs();
-  const { data: varianceReport, isLoading: loadingVariance } = useMarginVarianceAnalysis();
+  const { data: varianceReport, isLoading: loadingVariance } = useMarginVarianceAnalysis({ period_days: variancePeriod });
 
   const isEnglish = i18n.language.startsWith('en');
 
@@ -221,7 +222,7 @@ export default function ModuleFinancier() {
       {/* Margin Variance Report (NEW) */}
       <div className="bg-white rounded-xl shadow-xl border-t-4 border-indigo-500 overflow-hidden">
         <div className="p-0">
-          <div className="bg-indigo-50 p-4 flex items-center justify-between">
+          <div className="bg-indigo-50 p-4 flex items-center justify-between flex-wrap gap-3">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <span className="text-2xl">📊</span>
@@ -231,11 +232,28 @@ export default function ModuleFinancier() {
                 {t('variance.subtitle')}
               </p>
             </div>
-            {varianceReport && (
-              <div className={`px-4 py-2 rounded-lg font-bold text-lg ${varianceReport.variance_pct >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
-                {varianceReport.variance_pct >= 0 ? '+' : ''}{varianceReport.variance_pct}%
+            <div className="flex items-center gap-3">
+              <div className="inline-flex bg-white p-1 rounded-lg gap-1 border border-indigo-100">
+                {([7, 30, 90] as const).map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setVariancePeriod(d)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                      variancePeriod === d
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    {d}j
+                  </button>
+                ))}
               </div>
-            )}
+              {varianceReport && (
+                <div className={`px-4 py-2 rounded-lg font-bold text-lg ${varianceReport.variance_pct >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                  {varianceReport.variance_pct >= 0 ? '+' : ''}{varianceReport.variance_pct}%
+                </div>
+              )}
+            </div>
           </div>
 
           {loadingVariance ? (
@@ -246,12 +264,12 @@ export default function ModuleFinancier() {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 bg-slate-100 rounded-xl">
-                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{t('variance.current_period')}</p>
+                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{varianceReport?.period1?.label || t('variance.current_period')}</p>
                     <p className="text-2xl font-black">{Number(varianceReport?.period1?.stats?.margin_pct || 0).toFixed(1)}%</p>
                     <p className="text-xs text-slate-500">{formatMoney(Number(varianceReport?.period1?.stats?.margin || 0))} {t('variance.profit')}</p>
                   </div>
                   <div className="p-4 bg-slate-100 rounded-xl">
-                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{t('variance.baseline')}</p>
+                    <p className="text-xs uppercase font-bold text-slate-400 mb-1">{varianceReport?.period2?.label || t('variance.baseline')}</p>
                     <p className="text-2xl font-black">{Number(varianceReport?.period2?.stats?.margin_pct || 0).toFixed(1)}%</p>
                     <p className="text-xs text-slate-500">{formatMoney(Number(varianceReport?.period2?.stats?.margin || 0))} {t('variance.profit')}</p>
                   </div>

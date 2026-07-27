@@ -8,9 +8,10 @@ from decimal import Decimal, ROUND_HALF_UP
 from ..models import (
     Fournisseur, Commande, CommandeProduit, PaiementFournisseur, OrderSchedule,
 )
+from .mixins import UppercaseSerializerMixin
 
 
-class FournisseurSerializer(serializers.ModelSerializer):
+class FournisseurSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     solde_dette = serializers.SerializerMethodField()
 
     class Meta:

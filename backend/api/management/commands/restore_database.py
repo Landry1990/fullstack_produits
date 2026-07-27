@@ -70,7 +70,13 @@ class Command(BaseCommand):
 
         psql_cmd = self.find_psql()
         if not psql_cmd:
-            self.stdout.write(self.style.ERROR('psql not found! Please install PostgreSQL or add it to your PATH.'))
+            self.stdout.write(self.style.ERROR(
+                'psql not found! Please install PostgreSQL or add it to your PATH.\n'
+                'Common locations:\n'
+                '  - Windows: C:\\Program Files\\PostgreSQL\\[version]\\bin\n'
+                '  - Linux:   /usr/bin/psql, /usr/local/bin/psql\n'
+                '  - Docker:  apt-get install -y postgresql-client'
+            ))
             return
 
         # Warning

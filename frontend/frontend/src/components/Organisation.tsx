@@ -73,7 +73,7 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
   const currentTab = tabs.find(t => t.id === activeTab)!;
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 gap-4 sm:gap-6 font-sans">
+    <div className="h-full flex flex-col bg-slate-50 p-2 sm:p-4 gap-4 font-sans overflow-hidden">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
         <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
            <div>
@@ -100,7 +100,7 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
         </div>
       </div>
 
-      <div className="max-w-full mx-auto">
+      <div className="w-full flex-1 min-h-0">
          {(currentTab.config as unknown).isConfigOption ? (
             <ConfigOptionManager 
                key={activeTab}

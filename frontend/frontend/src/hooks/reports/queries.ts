@@ -206,10 +206,10 @@ export const QUERIES: QueryDefinition[] = [
         resultType: 'raw'
     },
     {
-        id: 'recap_valeur_stock_pdf',
-        name: 'Récapitulatif Valeur Stock (PDF)',
-        description: 'Valeur totale HT, TVA, TTC et répartition détaillée par taux (Format PDF)',
-        endpoint: '/api/rapports/valeur_stock_pdf/',
+        id: 'recap_valeur_stock',
+        name: 'Récapitulatif Valeur Stock',
+        description: 'Valeur totale HT, TVA, TTC et répartition détaillée par taux',
+        endpoint: '/api/rapports/valeur_stock_json/',
         params: [
             { 
                 key: 'valorisation', 
@@ -234,7 +234,7 @@ export const QUERIES: QueryDefinition[] = [
                 ]
             }
         ],
-        resultType: 'raw'
+        resultType: 'stock_valuation'
     },
     {
         id: 'rapport_ca_multi_annuel',

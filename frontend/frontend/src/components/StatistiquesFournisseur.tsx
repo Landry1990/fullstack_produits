@@ -342,7 +342,7 @@ export default function StatistiquesFournisseur() {
                             </tr>
                         </thead>
                         <tbody>
-                            {prixComparaison?.map((prod) => (
+                            {prixComparaison?.filter(prod => prod.ecart_pourcentage > 0).map((prod) => (
                                 <tr key={prod.id}>
                                     <td className="font-bold max-w-xs truncate" title={prod.produit}>{prod.produit}</td>
                                     <td>
@@ -398,7 +398,7 @@ export default function StatistiquesFournisseur() {
                                             innerRadius={60}
                                             outerRadius={100}
                                             paddingAngle={5}
-                                            dataKey="ca"
+                                            dataKey="value"
                                         >
                                             {repartitionAchats?.data.map((entry, index) => (
                                                 <Cell key={entry.nom} fill={COLORS[index % COLORS.length]} />
@@ -427,7 +427,7 @@ export default function StatistiquesFournisseur() {
                                                 </td>
                                                 <td className="font-bold">{entry.nom}</td>
                                                 <td>{entry.pourcentage}%</td>
-                                                 <td>{formatCurrency(Math.round(Number(entry.ca)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
+                                                 <td>{formatCurrency(Math.round(Number(entry.value)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
                                             </tr>
                                         ))}
                                     </tbody>

@@ -76,7 +76,7 @@
   },
   "retention": "Backups à conserver",
   "secondary_path": "Chemin de sauvegarde secondaire (optionnel)",
-  "secondary_path_placeholder": "Ex: E:\\Backups_Pharma",
+  "secondary_path_placeholder": "Ex: /mnt/backups ou /opt/zenith-pharma/backups",
   "cloud_backup": "Sauvegarde Cloud (S3)",
   "cloud_backup_desc": "AWS, Wasabi, Scaleway, MinIO, etc.",
   "endpoint": "Endpoint S3",

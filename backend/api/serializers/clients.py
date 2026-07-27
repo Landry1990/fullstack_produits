@@ -4,9 +4,10 @@ Serializers pour les clients, ayants droit et dépôts.
 """
 from rest_framework import serializers
 from ..models import DepotClient, AyantDroit, Client
+from .mixins import UppercaseSerializerMixin
 
 
-class DepotClientSerializer(serializers.ModelSerializer):
+class DepotClientSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.name', read_only=True)
     produit_name = serializers.CharField(source='produit.name', read_only=True)
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
@@ -17,7 +18,7 @@ class DepotClientSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
 
-class AyantDroitSerializer(serializers.ModelSerializer):
+class AyantDroitSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.name', read_only=True)
 
     class Meta:
@@ -25,7 +26,7 @@ class AyantDroitSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ClientSerializer(serializers.ModelSerializer):
+class ClientSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     ayants_droit = AyantDroitSerializer(many=True, read_only=True)
     depot_count = serializers.SerializerMethodField()
     solde_depot_display = serializers.SerializerMethodField()

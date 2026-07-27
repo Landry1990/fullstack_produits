@@ -711,20 +711,20 @@ export default function SystemAdmin() {
                     <p className="text-xs text-gray-400 mb-3">Clés USB, disques durs, dossiers partagés réseau (SMB/NFS). Le backup sera copié vers chaque destination accessible.</p>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 1 (ex: D:\Backups ou \\NAS\backups)</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 1 (ex: /mnt/usb-backup ou \\NAS\backups)</label>
                         <input
                           type="text"
-                          placeholder="Ex: D:\Backups_Pharmacie"
+                          placeholder="Ex: /mnt/usb-backup"
                           value={backupSettings.external_backup_path_1}
                           onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_1: e.target.value })}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 2 (ex: E:\Backups ou \\192.168.1.50\backups)</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 2 (ex: /mnt/nas-backup ou \\192.168.1.50\backups)</label>
                         <input
                           type="text"
-                          placeholder="Ex: E:\Backups_Pharmacie"
+                          placeholder="Ex: /mnt/nas-backup"
                           value={backupSettings.external_backup_path_2}
                           onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_2: e.target.value })}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -734,7 +734,7 @@ export default function SystemAdmin() {
                         <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 3 (ex: autre machine réseau)</label>
                         <input
                           type="text"
-                          placeholder="Ex: \\192.168.1.50\backups"
+                          placeholder="Ex: /mnt/network-backup"
                           value={backupSettings.external_backup_path_3}
                           onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_3: e.target.value })}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
