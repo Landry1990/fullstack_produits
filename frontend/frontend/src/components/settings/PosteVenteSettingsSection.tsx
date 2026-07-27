@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast'
 import {
   cashSessionService,
   type PosteVente,
+  type PosteCaisse,
 } from '../../services/cashSessionService'
 import { getApiErrorDetail } from '../../utils/errorHandling'
 
@@ -23,6 +24,7 @@ function formatDate(value: string | null): string {
 export default function PosteVenteSettingsSection() {
   const { t } = useTranslation('pharmacy_settings')
   const [postes, setPostes] = useState<PosteVente[]>([])
+  const [caissesDisponibles, setCaissesDisponibles] = useState<PosteCaisse[]>([])
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [newNom, setNewNom] = useState('')
@@ -30,8 +32,12 @@ export default function PosteVenteSettingsSection() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await cashSessionService.getPostesVente().catch(() => [])
+      const [data, caisses] = await Promise.all([
+        cashSessionService.getPostesVente().catch(() => []),
+        cashSessionService.getCaissesDisponibles().catch(() => [])
+      ])
       setPostes(data)
+      setCaissesDisponibles(caisses)
     } catch (err) {
       toast.error(getApiErrorDetail(err, 'Erreur chargement points de vente'))
     } finally {
@@ -90,7 +96,6 @@ export default function PosteVenteSettingsSection() {
 
   // Postes créés depuis une caisse physique (ouverture depuis Caisse Centrale)
   const caisseActives = postes.filter((p) => !!p.caisse && p.est_actif)
-  const caisseDisponibles = postes.filter((p) => !!p.caisse && !p.est_actif)
 
   return (
     <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
@@ -243,11 +248,11 @@ export default function PosteVenteSettingsSection() {
             )}
 
             {/* Caisses physiques disponibles */}
-            {caisseDisponibles.length > 0 && (
+            {caissesDisponibles.length > 0 && (
               <div>
                 <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
                   {t('postes_vente.caisse_available', { defaultValue: 'Points de caisse disponibles' })}
-                  <Badge className="bg-slate-400 text-white">{caisseDisponibles.length}</Badge>
+                  <Badge className="bg-slate-400 text-white">{caissesDisponibles.length}</Badge>
                 </h4>
                 <div className="rounded-xl border border-slate-200 overflow-hidden">
                   <table className="w-full text-sm">
@@ -258,21 +263,10 @@ export default function PosteVenteSettingsSection() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {caisseDisponibles.map((p) => (
-                        <tr key={p.id} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-medium text-slate-800">{p.nom}</td>
-                          <td className="px-4 py-3 text-right">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(p.id)}
-                              className="text-red-600 hover:bg-red-50 hover:text-red-600"
-                              title={t('postes_vente.delete', { defaultValue: 'Supprimer' })}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </td>
+                      {caissesDisponibles.map((caisse: PosteCaisse) => (
+                        <tr key={caisse.id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium text-slate-800">{caisse.nom}</td>
+                          <td className="px-4 py-3 text-right">—</td>
                         </tr>
                       ))}
                     </tbody>

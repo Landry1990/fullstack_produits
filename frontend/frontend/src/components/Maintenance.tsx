@@ -4,14 +4,14 @@ import {
   Trash2, Download, Eye, ShieldAlert, AlertTriangle,
   CheckSquare, Square, Calendar, Loader2,
   Wrench, ChevronDown, ChevronUp, Database, Clock, Save, Upload,
-  Package, FileUp, FileDown, RefreshCw
+  Package, FileUp, FileDown, RefreshCw, Rocket, ScrollText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
 import { getApiErrorDetail } from '../utils/errorHandling';
-import { Button } from './ui/Button';
+import { Button } from './shadcn/button';
 import { Input } from './shadcn/input';
 import { Checkbox } from './shadcn/checkbox';
 import { Badge } from './shadcn/badge';
@@ -152,6 +152,7 @@ export default function Maintenance() {
   const importJobIdRef = useRef<string | null>(null);
   const [showPurgeModal, setShowPurgeModal] = useState(false);
   const [purgePassword, setPurgePassword] = useState('');
+  const [activeRightTab, setActiveRightTab] = useState<'nettoyage' | 'sauvegardes'>('nettoyage');
   const [purgeSansVentes, setPurgeSansVentes] = useState(true);
   const [purging2, setPurging2] = useState(false);
   const [purgeResult, setPurgeResult] = useState<ProductPurgeResult | null>(null);
@@ -160,6 +161,16 @@ export default function Maintenance() {
   const [codeBackupLoading, setCodeBackupLoading] = useState(false);
   const [codeRestoreFile, setCodeRestoreFile] = useState<File | null>(null);
   const [codeRestoring, setCodeRestoring] = useState(false);
+
+  // Manual Update States
+  const [changelog, setChangelog] = useState<string>('');
+  const [updateRunning, setUpdateRunning] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState(0);
+  const [updateStep, setUpdateStep] = useState('');
+  const [updateLog, setUpdateLog] = useState<string[]>([]);
+  const [updatePassword, setUpdatePassword] = useState('');
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [updateError, setUpdateError] = useState('');
 
   // Fetch available tables and pharmacy settings
   useEffect(() => {
@@ -174,7 +185,68 @@ export default function Maintenance() {
     api.get('maintenance/produits_count/')
       .then(res => setProduitsCount(res.data.count))
       .catch(() => {});
+
+    api.get('maintenance/changelog/')
+      .then(res => setChangelog(res.data.latest || ''))
+      .catch(() => {});
+
+    // Check if a manual update is already running
+    api.get('maintenance/update_status/')
+      .then(res => {
+        if (res.data.status === 'running') {
+          setUpdateRunning(true);
+          setUpdateProgress(res.data.progress || 0);
+          setUpdateStep(res.data.step || '');
+          setUpdateLog(res.data.log || []);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  // Poll manual update progress
+  useEffect(() => {
+    if (!updateRunning) return;
+    const poll = setInterval(async () => {
+      try {
+        const res = await api.get('maintenance/update_status/');
+        const d = res.data;
+        setUpdateProgress(d.progress || 0);
+        setUpdateStep(d.step || '');
+        setUpdateLog(d.log || []);
+        if (d.status !== 'running') {
+          setUpdateRunning(false);
+          if (d.status === 'done') {
+            toast.success('Mise à jour terminée avec succès.');
+          } else if (d.status === 'error') {
+            toast.error(`Mise à jour échouée : ${d.step || 'Erreur inconnue'}`);
+            setUpdateError(d.step || 'Erreur inconnue');
+          }
+        }
+      } catch {
+        clearInterval(poll);
+        setUpdateRunning(false);
+      }
+    }, 2000);
+    return () => clearInterval(poll);
+  }, [updateRunning]);
+
+  const handleRunUpdate = async () => {
+    if (!updatePassword) { toast.error('Mot de passe requis'); return; }
+    setUpdateRunning(true);
+    setUpdateProgress(0);
+    setUpdateStep('Démarrage...');
+    setUpdateLog([]);
+    setUpdateError('');
+    try {
+      const res = await api.post('maintenance/run_update/', { password: updatePassword });
+      setUpdatePassword('');
+      setShowUpdateConfirm(false);
+      toast.success(res.data.message || 'Mise à jour démarrée.');
+    } catch (err) {
+      setUpdateRunning(false);
+      toast.error(getApiErrorDetail(err, 'Erreur lors du lancement de la mise à jour'));
+    }
+  };
 
   const handleImportProduits = async () => {
     if (!importFile) { toast.error('Sélectionnez un fichier Excel'); return; }
@@ -643,6 +715,35 @@ export default function Maintenance() {
 
         {/* Right Column: Controls */}
         <div className="space-y-4">
+          <div className="flex gap-2 mb-2">
+            <button
+              type="button"
+              onClick={() => setActiveRightTab('nettoyage')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeRightTab === 'nettoyage'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+              }`}
+            >
+              <Wrench className="size-4" />
+              Nettoyage
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveRightTab('sauvegardes')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeRightTab === 'sauvegardes'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+              }`}
+            >
+              <Database className="size-4" />
+              Sauvegardes & Code
+            </button>
+          </div>
+
+          {activeRightTab === 'nettoyage' && (
+            <div className="space-y-4">
           {/* Date Range */}
           <div className="bg-white shadow-xl rounded-2xl border border-slate-200">
             <div className="p-6">
@@ -682,9 +783,9 @@ export default function Maintenance() {
               <h2 className="text-lg font-bold">{t('actions')}</h2>
 
               <Button
-                variant="primary"
+                variant="default"
                 size="sm"
-                className="w-full gap-2"
+                className="w-full gap-2 !whitespace-normal"
                 onClick={handlePreview}
                 disabled={loading || selectedTables.size === 0}
               >
@@ -706,9 +807,9 @@ export default function Maintenance() {
               <div className="border-t border-slate-200 my-0"></div>
 
               <Button
-                variant="danger"
+                variant="destructive"
                 size="sm"
-                className="w-full gap-2"
+                className="w-full gap-2 !whitespace-normal"
                 onClick={() => { if (selectedTables.size > 0) setShowConfirmModal(true); else toast.error(t('common:select_tables')); }}
                 disabled={selectedTables.size === 0}
               >
@@ -753,9 +854,9 @@ export default function Maintenance() {
                   />
                 </div>
                 <Button
-                  variant="primary"
+                  variant="default"
                   size="sm"
-                  className="w-full gap-2"
+                  className="w-full gap-2 !whitespace-normal"
                   onClick={handleImportProduits}
                   disabled={importing || !importFile}
                 >
@@ -835,9 +936,9 @@ export default function Maintenance() {
                   Conserver les produits liés à des ventes
                 </label>
                 <Button
-                  variant="danger"
+                  variant="destructive"
                   size="sm"
-                  className="w-full gap-2"
+                  className="w-full gap-2 !whitespace-normal"
                   onClick={() => { setPurgeResult(null); setShowPurgeModal(true); }}
                 >
                   <Trash2 className="size-4" />
@@ -847,8 +948,23 @@ export default function Maintenance() {
             </div>
           </div>
 
+          {/* Selection Summary */}
+          <div className="bg-slate-100/50 rounded-2xl">
+            <div className="p-3">
+              <p className="text-sm">
+                <span className="font-bold text-indigo-600">{selectedTables.size}</span> {t('selection_summary', { count: selectedTables.size })}
+              </p>
+              {dateFrom && <p className="text-xs text-slate-500">{t('from')}: {dateFrom}</p>}
+              {dateTo && <p className="text-xs text-slate-500">{t('to')}: {dateTo}</p>}
+            </div>
+          </div>
+          </div>
+          )}
+
+          {activeRightTab === 'sauvegardes' && (
+            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
           {/* Backup Section */}
-          <div className="bg-white shadow-xl rounded-2xl border border-indigo-500/20">
+          <div className="bg-white shadow-xl rounded-2xl border border-indigo-500/20 min-w-[280px] max-w-[320px] flex-shrink-0 snap-start break-words">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Database className="size-5 text-indigo-600" />
@@ -860,9 +976,9 @@ export default function Maintenance() {
                 <div>
                   <p className="text-xs text-slate-500 mb-2">{t('backup_desc')}</p>
                   <Button
-                    variant="primary"
+                    variant="default"
                     size="sm"
-                    className="w-full gap-2"
+                    className="w-full gap-2 !whitespace-normal"
                     onClick={handleManualBackup}
                     disabled={backupLoading}
                   >
@@ -921,17 +1037,21 @@ export default function Maintenance() {
                     </label>
                     <Input 
                       type="text" 
-                      className="h-9 text-sm w-full" 
-                      placeholder="Ex: E:\Backups_Pharma"
+                      className="h-9 text-sm w-full"
+                      disableUppercase
+                      placeholder="/mnt/backups"
                       value={pharmacySettings?.secondary_backup_path || ""}
                       onChange={e => setPharmacySettings({...pharmacySettings, secondary_backup_path: e.target.value})}
                     />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Chemin Linux dans le conteneur (ex: /mnt/backups). Le volume doit être monté dans docker-compose.
+                    </p>
                   </div>
 
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full gap-2 mt-2"
+                    className="w-full gap-2 mt-2 !whitespace-normal"
                     onClick={saveBackupSettings}
                     disabled={savingSettings || !pharmacySettings}
                   >
@@ -945,7 +1065,7 @@ export default function Maintenance() {
 
 
           {/* Restoration Section */}
-          <div className="bg-white shadow-xl rounded-2xl border border-red-500/20">
+          <div className="bg-white shadow-xl rounded-2xl border border-red-500/20 min-w-[280px] max-w-[320px] flex-shrink-0 snap-start break-words">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Upload className="size-5 text-red-600" />
@@ -965,9 +1085,9 @@ export default function Maintenance() {
                 </div>
 
                 <Button
-                  variant="danger"
+                  variant="destructive"
                   size="sm"
-                  className="w-full gap-2"
+                  className="w-full gap-2 !whitespace-normal"
                   onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else toast.error(t('common:select_file')); }}
                   disabled={restoring || !restoreFile}
                 >
@@ -993,7 +1113,7 @@ export default function Maintenance() {
 
 
           {/* Source Code Management Section */}
-          <div className="bg-white shadow-xl rounded-2xl border border-slate-400/20">
+          <div className="bg-white shadow-xl rounded-2xl border border-slate-400/20 min-w-[280px] max-w-[320px] flex-shrink-0 snap-start break-words">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <ShieldAlert className="size-5 text-slate-600" />
@@ -1007,7 +1127,7 @@ export default function Maintenance() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="w-full gap-2"
+                    className="w-full gap-2 !whitespace-normal"
                     onClick={handleCodeBackup}
                     disabled={codeBackupLoading}
                   >
@@ -1032,7 +1152,7 @@ export default function Maintenance() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full gap-2"
+                    className="w-full gap-2 !whitespace-normal"
                     onClick={handleCodeRestore}
                     disabled={codeRestoring || !codeRestoreFile}
                   >
@@ -1045,16 +1165,73 @@ export default function Maintenance() {
           </div>
 
 
-          {/* Selection Summary */}
-          <div className="bg-slate-100/50 rounded-2xl">
-            <div className="p-3">
-              <p className="text-sm">
-                <span className="font-bold text-indigo-600">{selectedTables.size}</span> {t('selection_summary', { count: selectedTables.size })}
-              </p>
-              {dateFrom && <p className="text-xs text-slate-500">{t('from')}: {dateFrom}</p>}
-              {dateTo && <p className="text-xs text-slate-500">{t('to')}: {dateTo}</p>}
+          {/* Mise à jour manuelle */}
+          <div className="bg-white shadow-xl rounded-2xl border border-emerald-500/20 min-w-[280px] max-w-[320px] flex-shrink-0 snap-start break-words">
+            <div className="p-6 space-y-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Rocket className="size-5 text-emerald-600" />
+                Mise à jour manuelle
+              </h2>
+
+              <div className="space-y-4">
+                <p className="text-xs text-slate-500">
+                  Lance la mise à jour nocturne (git pull + build Docker + migrations) à la demande.
+                </p>
+
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="w-full gap-2 !whitespace-normal"
+                  onClick={() => { setUpdateError(''); setShowUpdateConfirm(true); }}
+                  disabled={updateRunning}
+                >
+                  {updateRunning ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                  {updateRunning ? 'Mise à jour en cours...' : 'Lancer la mise à jour'}
+                </Button>
+
+                {updateRunning && (
+                  <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                      <span>{updateStep}</span>
+                      <span>{Math.round(updateProgress)}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                      <div className="h-full bg-emerald-600 rounded-full transition-all" style={{ width: `${updateProgress}%` }} />
+                    </div>
+                    <div className="max-h-32 overflow-y-auto rounded-lg bg-slate-900 p-2 text-[10px] font-mono text-emerald-400">
+                      {updateLog.length === 0 ? 'En attente de logs...' : (
+                        updateLog.slice(-20).map((line, i) => (
+                          <div key={i} className="truncate">{line}</div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {updateError && (
+                  <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
+                    {updateError}
+                  </div>
+                )}
+
+                <div className="border-t border-slate-200 my-0"></div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2 mb-2">
+                    <ScrollText className="size-4" />
+                    Derniers changements
+                  </h3>
+                  <div className="max-h-48 overflow-y-auto rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-700 whitespace-pre-wrap">
+                    {changelog || 'Changelog non disponible.'}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+
+
+          </div>
+          )}
         </div>
       </div>
 
@@ -1190,7 +1367,7 @@ export default function Maintenance() {
               {t('cancel')}
             </Button>
             <Button
-              variant="danger"
+              variant="destructive"
               className="gap-2"
               onClick={handlePurge}
               disabled={purging || !password}
@@ -1243,7 +1420,7 @@ export default function Maintenance() {
               {t('cancel')}
             </Button>
             <Button
-              variant="danger"
+              variant="destructive"
               className="gap-2 px-8"
               onClick={handleRestore}
               disabled={restoring || !restorePassword}
@@ -1299,13 +1476,67 @@ export default function Maintenance() {
               Annuler
             </Button>
             <Button
-              variant="danger"
+              variant="destructive"
               className="gap-2"
               onClick={handlePurgeProduits}
               disabled={purging2 || !purgePassword}
             >
               {purging2 ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
               Confirmer la purge
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Mise à jour manuelle */}
+      <Dialog open={showUpdateConfirm} onOpenChange={(open) => { if (!open) { setShowUpdateConfirm(false); setUpdatePassword(''); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-emerald-100">
+                <Rocket className="size-6 text-emerald-600" />
+              </div>
+              Lancer la mise à jour
+            </DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
+                <AlertTriangle className="size-5 text-amber-600 shrink-0" />
+                <div>
+                  <p className="font-bold text-amber-800">Opération sensible</p>
+                  <p className="text-sm text-amber-700">
+                    Cette action va télécharger la dernière version, reconstruire les images Docker et redémarrer les conteneurs. L'application sera brièvement indisponible.
+                  </p>
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mb-4">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Confirmez votre mot de passe admin</span>
+            </label>
+            <Input
+              type="password"
+              placeholder="Mot de passe admin"
+              value={updatePassword}
+              onChange={e => setUpdatePassword(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleRunUpdate(); }}
+              autoFocus
+            />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => { setShowUpdateConfirm(false); setUpdatePassword(''); }}>
+              Annuler
+            </Button>
+            <Button
+              variant="default"
+              className="gap-2"
+              onClick={handleRunUpdate}
+              disabled={!updatePassword}
+            >
+              <Rocket className="size-4" />
+              Confirmer la mise à jour
             </Button>
           </div>
         </DialogContent>

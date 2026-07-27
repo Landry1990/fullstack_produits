@@ -8,9 +8,10 @@ from ..models import (
     Substance, MedicamentReference, Rayon, Forme, FamilleRisque,
     Groupe, Produit, StockLot, Promotion, DrugInteraction,
 )
+from .mixins import UppercaseSerializerMixin
 
 
-class SubstanceSerializer(serializers.ModelSerializer):
+class SubstanceSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Substance
         fields = '__all__'
@@ -33,25 +34,25 @@ class MedicamentReferenceSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class RayonSerializer(serializers.ModelSerializer):
+class RayonSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Rayon
         fields = '__all__'
 
 
-class FormeSerializer(serializers.ModelSerializer):
+class FormeSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Forme
         fields = '__all__'
 
 
-class FamilleRisqueSerializer(serializers.ModelSerializer):
+class FamilleRisqueSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = FamilleRisque
         fields = '__all__'
 
 
-class GroupeSerializer(serializers.ModelSerializer):
+class GroupeSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Groupe
         fields = '__all__'
@@ -73,7 +74,7 @@ class StockLotSerializer(serializers.ModelSerializer):
         read_only_fields = ['date_reception']
 
 
-class ProduitSerializer(serializers.ModelSerializer):
+class ProduitSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     """Serializer optimisé pour Produit avec gestion N+1 des lots et promotions."""
     rayon_name = serializers.CharField(source='rayon.name', read_only=True)
     fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)

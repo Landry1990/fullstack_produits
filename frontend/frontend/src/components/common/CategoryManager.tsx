@@ -3,9 +3,11 @@ import api from '../../services/api';
 import { 
   Sparkles, Pencil, Trash2, Plus, 
   Search, Package, LayoutGrid, Printer,
-  Download, ChevronLeft, ChevronRight 
+  Download
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Input } from '../shadcn/input';
+import { Textarea } from '../shadcn/textarea';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../../hooks/useConfirm';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
@@ -75,11 +77,8 @@ export default function CategoryManager({
   const [isOrganizerOpen, setIsOrganizerOpen] = useState(false);
   const [organizerTarget, setOrganizerTarget] = useState<{id: number, name: string} | null>(null);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  // Count display
   const [totalCount, setTotalCount] = useState(0);
-  const pageSize = 50;
 
   // Printing state (Rayon only)
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
@@ -101,22 +100,19 @@ export default function CategoryManager({
     }
   };
 
-  const fetchProducts = async (catId: number, page: number = 1) => {
+  const fetchProducts = async (catId: number) => {
     try {
       setProductsLoading(true);
-      const res = await api.get(`produits/?${type}=${catId}&page=${page}&page_size=${pageSize}`);
+      const res = await api.get(`produits/?${type}=${catId}&page_size=9999`);
       
       const data = res.data.results || res.data;
       setProducts(Array.isArray(data) ? data : []);
       
       if (res.data.count !== undefined) {
         setTotalCount(res.data.count);
-        setTotalPages(Math.ceil(res.data.count / pageSize));
       } else {
         setTotalCount(Array.isArray(data) ? data.length : 0);
-        setTotalPages(1);
       }
-      setCurrentPage(page);
     } catch (err) {
       console.error("Error fetching products:", err);
       toast.error(t('common:messages.load_error', { defaultValue: "Erreur lors du chargement des produits" }));
@@ -131,14 +127,18 @@ export default function CategoryManager({
 
   useEffect(() => {
     if (selectedCategory) {
-      fetchProducts(selectedCategory.id, 1);
+      fetchProducts(selectedCategory.id);
     } else {
       setProducts([]);
       setTotalCount(0);
-      setTotalPages(1);
-      setCurrentPage(1);
     }
   }, [selectedCategory]);
+
+  useEffect(() => {
+    if (isModalOpen && !editingCategory) {
+      setFormData({ name: '', description: '', parent: '' });
+    }
+  }, [isModalOpen, editingCategory]);
 
   const handleExportExcel = async () => {
     if (!selectedCategory) return;
@@ -193,6 +193,7 @@ export default function CategoryManager({
         }));
         toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       }
+      setFormData({ name: '', description: '', parent: '' });
       setIsModalOpen(false);
     } catch {
       toast.error(t('common:messages.error_saving'));
@@ -307,10 +308,10 @@ export default function CategoryManager({
   }, [categories, hasHierarchy]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-full gap-6">
+    <div className="flex flex-col lg:flex-row h-full min-h-0 gap-4">
       
       {/* Sidebar: Category List */}
-      <div className="w-full lg:w-96 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="w-full lg:w-[30rem] flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-100 bg-gradient-to-br from-slate-50 to-transparent">
            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -514,7 +515,7 @@ export default function CategoryManager({
                   </div>
                </div>
 
-               <div className="flex-1 overflow-hidden p-4">
+               <div className="flex-1 overflow-auto p-4">
                   {productsLoading ? (
                      <div className="flex flex-col items-center justify-center h-64 gap-4">
                         <span className="size-8 border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></span>
@@ -577,29 +578,10 @@ export default function CategoryManager({
                   )}
                </div>
 
-                 {totalPages > 1 && (
-                    <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+                 {totalCount > 0 && (
+                    <div className="p-3 border-t border-slate-100 bg-slate-50 flex items-center justify-center">
                        <div className="text-xs font-medium text-slate-400">
-                          {t('common:pagination_info', { page: currentPage, total: totalPages, count: totalCount, label: t('common:items') })}
-                       </div>
-                       <div className="flex items-center gap-2">
-                          <button
-                             className="inline-flex items-center justify-center size-8 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors disabled:opacity-40"
-                             disabled={currentPage === 1}
-                             onClick={() => fetchProducts(selectedCategory.id, currentPage - 1)}
-                          >
-                             <ChevronLeft size={18} />
-                          </button>
-                          <div className="px-3 py-1 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-700">
-                             {t('common:pagination.page_of', { page: currentPage, count: totalPages })}
-                          </div>
-                          <button
-                             className="inline-flex items-center justify-center size-8 rounded-lg text-slate-500 hover:bg-slate-200 transition-colors disabled:opacity-40"
-                             disabled={currentPage === totalPages}
-                             onClick={() => fetchProducts(selectedCategory.id, currentPage + 1)}
-                          >
-                             <ChevronRight size={18} />
-                          </button>
+                          {totalCount} {t('common:items')}
                        </div>
                     </div>
                  )}
@@ -628,16 +610,17 @@ export default function CategoryManager({
           : t('stock:organisation.category_manager.new_subtitle', { type: title })}
         icon={editingCategory ? <Pencil className="size-5" /> : <Plus className="size-5" />}
       >
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5" autoComplete="off">
            <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.name_label', { type })}</label>
-              <input
+              <Input
                 type="text"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 value={formData.name}
                 onChange={e => setFormData({...formData, name: e.target.value})}
                 required
                 autoFocus
+                autoComplete="off"
               />
            </div>
 
@@ -660,8 +643,8 @@ export default function CategoryManager({
            {hasDescription && (
               <div>
                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.description_label')}</label>
-                 <textarea
-                   className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
+                 <Textarea
+                   className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 resize-none"
                    value={formData.description}
                    onChange={e => setFormData({...formData, description: e.target.value})}
                    rows={3}

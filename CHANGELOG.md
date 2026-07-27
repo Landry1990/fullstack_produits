@@ -2,6 +2,76 @@
 
 ---
 
+## 2026-07-27 (00:58)
+
+### ✨ Rapports & Statistiques — Améliorations
+
+- **Rapport de variation de marge** (`ModuleFinancier.tsx`)
+  - Période glissante configurable : sélecteur 7j / 30j / 90j (remplace le fixe "aujourd'hui vs hier").
+  - Labels dynamiques des périodes affichés depuis le backend (`p1_label`, `p2_label`).
+  - Backend `finance_stats.py` : paramètre `period_days` (7, 30, 90) avec calcul automatique des fenêtres glissantes.
+
+- **Statistiques Fournisseur — Concentrations Achats**
+  - Correction NaN : la clé `ca` n'existait pas dans la réponse backend (`value`), corrigé dans le pie chart et le tableau.
+
+- **Statistiques Fournisseur — Comparateur de Prix**
+  - Filtrage des produits avec `ecart_pourcentage > 0` uniquement (les produits sans écart de prix ne s'affichent plus).
+
+- **Centre de Rapports — Récapitulatif Valeur Stock**
+  - Refonte complète : passage de `valeur_stock_pdf` (téléchargement PDF backend, page vierge à l'impression) à `valeur_stock_json` (affichage inline).
+  - Nouveau composant `StockValuationReport.tsx` : cartes résumé HT/TVA/TTC + tableaux de répartition par taux de TVA et par groupe.
+  - Nouveau générateur PDF frontend `stockValuationPdf.ts` (jsPDF + autoTable) : bouton "Télécharger PDF" 100% côté navigateur.
+  - Bouton "Imprimer" avec CSS d'impression allégé : gras réduit (`font-black` → 600), fonds colorés supprimés, bordures affinées à 0.5px.
+  - Print CSS global du `CentreRapports.tsx` enrichi (animations désactivées, ombres supprimées, couleurs neutralisées).
+
+---
+
+## 2026-07-26 (16:50)
+
+### 🐛 Maintenance UI — Débordement + Retrait Daisy UI
+
+- **Frontend**
+  - `Maintenance.tsx` : remplacement de `ui/Button` (Daisy UI) par `shadcn/button` ; mapping `primary`→`default`, `danger`→`destructive`.
+  - `ui/Table.tsx` : suppression des classes Daisy (`base-*`) au profit des tokens shadcn (`slate-*`).
+  - `shadcn/input.tsx` : ajout de la prop `disableUppercase` pour les champs sensibles à la casse (chemins Linux, etc.).
+  - `Maintenance.tsx` : correction du débordement de la section "Clé USB / Chemin externe" (placeholder en minuscules + aide contextuelle sur les volumes Docker).
+  - `Maintenance.tsx` : nouvelle section "Mise à jour manuelle" avec bouton de lancement, barre de progression, suivi des étapes/logs et affichage du CHANGELOG.
+
+- **Backend**
+  - `backup_database.py`, `restore_database.py`, `base_backup.py` : messages d'erreur `pg_dump`/`psql`/`pg_basebackup` enrichis avec les chemins Linux et l'installation Docker.
+  - `api/views/purge.py` : endpoints `maintenance/changelog/`, `maintenance/update_status/` et `maintenance/run_update/` pour lire le CHANGELOG, vérifier l'état et déclencher une mise à jour manuelle en arrière-plan.
+
+- **Déploiement**
+  - `nightly-update.sh` : build des images Docker AVANT l'arrêt des conteneurs pour éviter toute coupure en cas de perte Internet.
+  - `nightly-update.sh` : remplacement des appels `sudo docker compose` par une variable `DC` qui détecte root (Docker) vs utilisateur standard (hôte).
+  - `docker-compose.prod.yml` : montage du volume `/opt/zenith-pharma:/opt/zenith-pharma` dans le conteneur backend pour permettre le lancement manuel depuis l'interface.
+
+---
+
+## 2026-07-26 (02:04)
+
+### ✨ Normalisation MAJUSCULES + Corrections diverses
+
+- **Frontend**
+  - `shadcn/input.tsx` et `shadcn/textarea.tsx` : saisie et affichage automatique en majuscules (text, search, tel, textarea), excluant email et password.
+  - `index.css` : règle CSS globale `text-transform: uppercase` sur tous les `input[type="text"]/search/tel` et `textarea`, avec exceptions email/password/number/date.
+  - `components/common/CategoryManager.tsx` : modal de création/édition avec `Input`/`Textarea` shadcn, reset automatique du formulaire à l'ouverture.
+  - `components/Organisation.tsx` + `CategoryManager.tsx` : layout plus large, hauteur maximale, scrollbar sur les détails, suppression de la pagination produits (chargement complet d'un rayon).
+
+- **Backend**
+  - `api/serializers/mixins.py` : création de `UppercaseSerializerMixin` pour forcer l'enregistrement en majuscules des `CharField` en écriture.
+  - Application du mixin aux serializers `Produit`/`Substance`/`Rayon`/`Forme`/`Groupe`/`FamilleRisque`/`Client`/`Fournisseur`/`Team`/`PosteCaisse`/`PosteVente`/`LeaveRequest`.
+  - Fix `AttributeError` sur `serializers.TextField` inexistant dans `UppercaseSerializerMixin`.
+  - Fix `ValueError: Cannot use None as a query value` dans `api/serializers/users.py` (`get_ventilation_paiements`).
+  - Fix filtre `forme` manquant dans `ProduitViewSet.get_queryset` (`api/views/produits.py`) : une Forme nouvellement créée reste désormais vide comme Rayon/Groupe.
+
+- **Paramètres Pharmacie**
+  - `PosteVenteSettingsSection.tsx` : liste "Points de caisse disponibles" affiche maintenant les vraies caisses physiques (`PosteCaisse`) et non plus les anciennes sessions inactives, donc max 2 : Principale et Secondaire.
+
+- **Déploiement** : `deploy.ps1 -Target all/frontend/backend` — frontend buildé, backend copié et redémarré.
+
+---
+
 ## 2026-07-25 (22:30)
 
 ### 🔄 Refonte complète — Planning des Opérateurs

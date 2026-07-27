@@ -152,6 +152,10 @@ class ProduitViewSet(
         if rayon_id is not None:
              queryset = queryset.filter(rayon_id=rayon_id)
 
+        forme_id = self.request.query_params.get('forme')
+        if forme_id is not None:
+             queryset = queryset.filter(forme_id=forme_id)
+
         # Filtrage par DCI / Substance
         substance_id = self.request.query_params.get('substances')
         if substance_id:

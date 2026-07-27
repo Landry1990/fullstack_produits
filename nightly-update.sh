@@ -2,8 +2,13 @@
 # ============================================================
 # nightly-update.sh — Mise à jour automatique nocturne (Docker)
 # Vérifie si de nouveaux commits sont disponibles sur GitHub.
-# Si oui : backup DB → pull → rebuild → migrate → healthcheck.
-# Si le healthcheck échoue : rollback automatique.
+# Si oui : backup DB → pull → build (sans arrêter l'app) →
+#          basculement → migrate → healthcheck.
+# Si le build ou le healthcheck échoue : rollback automatique.
+#
+# Sécurité : les conteneurs actuels ne sont arrêtés qu'APRÈS
+# que le build des nouvelles images a réussi. Ainsi, une coupure
+# Internet pendant le build n'interrompt pas l'application.
 #
 # À planifier via systemd timer (voir zenith-nightly-update.timer)
 # ou cron : 0 2 * * * /opt/zenith-pharma/nightly-update.sh
@@ -18,8 +23,17 @@ COMPOSE_FILE="docker-compose.prod.yml"
 LOG_FILE="$APP_DIR/logs/nightly-update.log"
 HEALTH_TIMEOUT=120
 HEALTH_INTERVAL=5
+BUILD_TIMEOUT=600    # 10 min max pour le build
 
 mkdir -p "$APP_DIR/logs"
+
+# ── Docker Compose helper ────────────────────────────────────
+# Dans un conteneur Docker on est root et sudo est absent.
+if [ "$(id -u)" -eq 0 ]; then
+    DC="docker compose"
+else
+    DC="sudo docker compose"
+fi
 
 # ── Fonctions ────────────────────────────────────────────────
 log() {
@@ -31,6 +45,20 @@ log() {
 err()  { log "❌ ERREUR : $1"; }
 ok()   { log "✅ $1"; }
 warn() { log "⚠️  $1"; }
+
+# rollback() — restaure les images précédentes et redémarre
+rollback() {
+    log "🔄 Rollback automatique..."
+    if [ -f "$APP_DIR/rollback.sh" ]; then
+        bash "$APP_DIR/rollback.sh" --force 2>&1 | while read -r line; do log "  $line"; done || true
+    else
+        # Fallback : restaurer les images :previous
+        $DC -f "$COMPOSE_FILE" down 2>/dev/null || true
+        $DC -f "$COMPOSE_FILE" up -d --remove-orphans 2>/dev/null || true
+    fi
+    err "Mise à jour ANNULÉE — rollback effectué"
+    exit 1
+}
 
 # ── Vérifier la connexion internet ───────────────────────────
 if ! ping -c 1 github.com &>/dev/null; then
@@ -56,7 +84,7 @@ fi
 log "Nouvelle version détectée : ${REMOTE_COMMIT:0:8} (local : ${LOCAL_COMMIT:0:8})"
 
 # ── 1. Backup DB ─────────────────────────────────────────────
-log "💾 Étape 1/5 — Backup DB"
+log "💾 Étape 1/6 — Backup DB"
 if [ -f "$APP_DIR/backup-db.sh" ]; then
     bash "$APP_DIR/backup-db.sh" 2>&1 | while read -r line; do log "  $line"; done || warn "Backup échoué (continuation)"
 else
@@ -66,17 +94,15 @@ fi
 # ── 2. Tag de sauvegarde ─────────────────────────────────────
 BACKUP_TAG="backup-$(date '+%Y%m%d-%H%M%S')"
 git tag "$BACKUP_TAG" 2>>"$LOG_FILE" || true
-log "🏷️  Étape 2/5 — Tag sauvegarde : $BACKUP_TAG"
+log "🏷️  Étape 2/6 — Tag sauvegarde : $BACKUP_TAG"
 
 # ── 3. Pull ──────────────────────────────────────────────────
-log "📥 Étape 3/5 — Git pull"
+log "📥 Étape 3/6 — Git pull"
 git reset --hard "origin/$BRANCH" 2>>"$LOG_FILE" || { err "git reset a échoué"; exit 1; }
 ok "Code mis à jour"
 
-# ── 4. Rebuild Docker ────────────────────────────────────────
-log "🔨 Étape 4/5 — Rebuild & redémarrage Docker"
-
-# Tagger les images actuelles pour rollback
+# ── 4. Tagger les images actuelles pour rollback ─────────────
+log "🏷️  Étape 4/6 — Sauvegarde des images actuelles"
 for container in "fullstack_produits-backend-1" "fullstack_produits-frontend-1"; do
     current_image=$(docker inspect --format='{{.Image}}' "$container" 2>/dev/null || true)
     if [ -n "$current_image" ]; then
@@ -85,15 +111,28 @@ for container in "fullstack_produits-backend-1" "fullstack_produits-frontend-1";
         docker tag "$current_image" "${image_name}:previous" 2>/dev/null || true
     fi
 done
+ok "Images actuelles taggées :previous"
 
-sudo docker compose -f "$COMPOSE_FILE" down 2>>"$LOG_FILE" || { err "docker compose down a échoué"; exit 1; }
+# ── 5. Build des nouvelles images (sans arrêter l'app) ───────
+log "🔨 Étape 5/6 — Build des nouvelles images (application toujours en ligne)"
 export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f "$COMPOSE_FILE" build --no-cache 2>>"$LOG_FILE" || { err "docker build a échoué"; exit 1; }
-sudo docker compose -f "$COMPOSE_FILE" up -d --remove-orphans 2>>"$LOG_FILE" || { err "docker up a échoué"; exit 1; }
+
+# Build avec timeout — si Internet coupe, le build échoue mais l'app tourne toujours
+if ! GIT_COMMIT="$GIT_COMMIT" timeout "$BUILD_TIMEOUT" $DC -f "$COMPOSE_FILE" build --no-cache 2>>"$LOG_FILE"; then
+    err "docker build a échoué (coupure Internet ou timeout ${BUILD_TIMEOUT}s)"
+    warn "Les conteneurs actuels continuent de fonctionner — aucune interruption"
+    exit 1
+fi
+ok "Nouvelles images construites avec succès"
+
+# ── Basculement : arrêter les anciens conteneurs et démarrer les nouveaux
+log "🔄 Basculement — arrêt des anciens conteneurs et démarrage des nouveaux"
+$DC -f "$COMPOSE_FILE" down 2>>"$LOG_FILE" || { err "docker compose down a échoué"; rollback; }
+$DC -f "$COMPOSE_FILE" up -d --remove-orphans 2>>"$LOG_FILE" || { err "docker up a échoué"; rollback; }
 ok "Conteneurs redémarrés"
 
-# ── 5. Migrate + Healthcheck ─────────────────────────────────
-log "🔄 Étape 5/5 — Migrations + Healthcheck"
+# ── 6. Migrate + Healthcheck ─────────────────────────────────
+log "🔄 Étape 6/6 — Migrations + Healthcheck"
 
 # Attendre que le backend soit prêt
 elapsed=0
@@ -101,7 +140,7 @@ backend_ready=false
 while [ $elapsed -lt $HEALTH_TIMEOUT ]; do
     sleep $HEALTH_INTERVAL
     elapsed=$((elapsed + HEALTH_INTERVAL))
-    if sudo docker compose -f "$COMPOSE_FILE" exec -T backend python -c "
+    if $DC -f "$COMPOSE_FILE" exec -T backend python -c "
 import django, os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
@@ -117,27 +156,17 @@ done
 
 if [ "$backend_ready" != "true" ]; then
     err "Backend non accessible après ${HEALTH_TIMEOUT}s"
-    log "🔄 Rollback automatique..."
-    if [ -f "$APP_DIR/rollback.sh" ]; then
-        bash "$APP_DIR/rollback.sh" --force 2>&1 | while read -r line; do log "  $line"; done || true
-    fi
-    err "Mise à jour ANNULÉE — rollback effectué"
-    exit 1
+    rollback
 fi
 
 # Migrations
-sudo docker compose -f "$COMPOSE_FILE" exec -T backend python manage.py migrate --noinput 2>>"$LOG_FILE" || {
+$DC -f "$COMPOSE_FILE" exec -T backend python manage.py migrate --noinput 2>>"$LOG_FILE" || {
     err "Migrations échouées"
-    log "🔄 Rollback automatique..."
-    if [ -f "$APP_DIR/rollback.sh" ]; then
-        bash "$APP_DIR/rollback.sh" --force 2>&1 | while read -r line; do log "  $line"; done || true
-    fi
-    err "Mise à jour ANNULÉE — rollback effectué"
-    exit 1
+    rollback
 }
 
 # Collectstatic
-sudo docker compose -f "$COMPOSE_FILE" exec -T backend python manage.py collectstatic --noinput 2>>"$LOG_FILE" || warn "collectstatic échoué (non bloquant)"
+$DC -f "$COMPOSE_FILE" exec -T backend python manage.py collectstatic --noinput 2>>"$LOG_FILE" || warn "collectstatic échoué (non bloquant)"
 
 # Nettoyage images orphelines
 docker image prune -f >/dev/null 2>&1 || true

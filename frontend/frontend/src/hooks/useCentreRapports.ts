@@ -295,17 +295,6 @@ export function useCentreRapports() {
                 return;
             }
 
-            if (selectedQuery.id === 'recap_valeur_stock_pdf' && !urlOverride) {
-                const valorisation = params.valorisation || 'ACHAT';
-                const groupBy = params.group_by || '';
-                const printUrl = `/app/printing/0?type=STOCK_VALUATION&valorisation=${valorisation}&group_by=${groupBy}`;
-                const printWin = window.open(printUrl, '_blank');
-                if (!printWin) toast.error('Popup bloqué. Autorisez les popups pour imprimer.');
-                setResults({ status: 'success', filename: t('reports.results.print_launched', { defaultValue: 'Impression lancée' }) });
-                setLoading(false);
-                return;
-            }
-
             const response = urlOverride
                 ? await api.get(urlOverride)
                 : await api.get(endpoint, { params: mergedParams });

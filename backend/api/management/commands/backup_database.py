@@ -65,7 +65,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(
                 'pg_dump not found! Please install PostgreSQL or add it to your PATH.\n'
                 'Common locations:\n'
-                '  - C:\\Program Files\\PostgreSQL\\[version]\\bin\n'
+                '  - Windows: C:\\Program Files\\PostgreSQL\\[version]\\bin\n'
+                '  - Linux:   /usr/bin/pg_dump, /usr/local/bin/pg_dump\n'
+                '  - Docker:  apt-get install -y postgresql-client\n'
                 '\nOr set PG_DUMP_PATH environment variable.'
             ))
             return

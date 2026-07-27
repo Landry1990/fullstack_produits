@@ -694,11 +694,21 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         today = timezone.localtime(timezone.now()).date()
         is_english = request.query_params.get('lang', 'fr') == 'en'
 
-        p1_start = request.query_params.get('p1_start', today.isoformat())
-        p1_end = request.query_params.get('p1_end', today.isoformat())
-        yesterday = today - timedelta(days=1)
-        p2_start = request.query_params.get('p2_start', yesterday.isoformat())
-        p2_end = request.query_params.get('p2_end', yesterday.isoformat())
+        # Période glissante configurable : 7j, 30j, 90j (défaut: 7j)
+        period_days = int(request.query_params.get('period_days', 7))
+        if period_days not in (7, 30, 90):
+            period_days = 7
+
+        p1_end = today
+        p1_start = today - timedelta(days=period_days - 1)
+        p2_end = p1_start - timedelta(days=1)
+        p2_start = p2_end - timedelta(days=period_days - 1)
+
+        # Override manuel possible
+        p1_start = request.query_params.get('p1_start', p1_start.isoformat())
+        p1_end = request.query_params.get('p1_end', p1_end.isoformat())
+        p2_start = request.query_params.get('p2_start', p2_start.isoformat())
+        p2_end = request.query_params.get('p2_end', p2_end.isoformat())
 
         def get_period_stats(start, end):
             factures = get_validated_invoices_queryset().filter(
@@ -772,9 +782,12 @@ class FinanceStatsViewSet(viewsets.ViewSet):
                 'en': f"Detected {len(suspicious_products)} products with abnormal margins (>80% or <5%). This may skew the results."
             })
 
+        p1_label = f"{p1_start} → {p1_end}" if isinstance(p1_start, str) else f"{p1_start.strftime('%d/%m/%Y')} → {p1_end.strftime('%d/%m/%Y')}"
+        p2_label = f"{p2_start} → {p2_end}" if isinstance(p2_start, str) else f"{p2_start.strftime('%d/%m/%Y')} → {p2_end.strftime('%d/%m/%Y')}"
+
         return Response({
-            'period1': {'label': 'Aujourd\'hui' if not is_english else 'Today', 'stats': stats1},
-            'period2': {'label': 'Hier' if not is_english else 'Yesterday', 'stats': stats2},
+            'period1': {'label': p1_label, 'stats': stats1},
+            'period2': {'label': p2_label, 'stats': stats2},
             'variance_pct': round(variance_pct, 2),
             'suspicious_products': suspicious_products,
             'insights': insights,

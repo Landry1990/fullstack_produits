@@ -10,6 +10,7 @@ import {
 } from '../../../hooks/useCentreRapports';
 import type { QueryDefinition, PaginationData } from '../../../hooks/useCentreRapports';
 import { MonthlyReportView } from './MonthlyReportView';
+import { StockValuationReport } from './StockValuationReport';
 import { ChevronLeft, ChevronRight, Inbox, Eye, Download, AlertTriangle } from 'lucide-react';
 import { Button } from '../../shadcn/button';
 
@@ -59,6 +60,11 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         // Special case: Monthly Report
         if (selectedQuery.id === 'rapport_mensuel' && typeof results === 'object' && !Array.isArray(results)) {
             return <MonthlyReportView data={results} />;
+        }
+
+        // Special case: Stock Valuation Report
+        if (selectedQuery.resultType === 'stock_valuation' && typeof results === 'object' && !Array.isArray(results)) {
+            return <StockValuationReport data={results} />;
         }
 
         // Special case: Direct Download / Raw results

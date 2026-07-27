@@ -12,9 +12,8 @@ import logging
 
 from ..models import (
     Facture, FactureProduit, FactureProduitAllocation, Caisse,
-    Produit, StockLot, MouvementStock, AuditLog,
+    Produit, StockLot, MouvementStock,
 )
-from ..audit_helpers import log_audit
 from .promotion_service import PromotionService
 from .lot_allocation_service import LotAllocationService
 
@@ -74,12 +73,12 @@ class SaleModifier:
 
         SaleModifier._handle_payment_adjustment(facture, difference, user)
 
-        # 5. Traceability: stock movements and audit log
+        # 5. Traceability: stock movements
         SaleModifier._create_modification_movements(
-            facture, user, old_quantity_by_product, new_quantity_by_product, old_total
+            facture, user, old_quantity_by_product, new_quantity_by_product
         )
 
-        return facture, old_total, difference
+        return facture, old_total, difference, old_quantity_by_product, new_quantity_by_product
 
     # ──────────────────────────────────────────────
     #  Private helpers
@@ -190,8 +189,8 @@ class SaleModifier:
             PaymentService.process_payment(paiement_adj, is_created=True)
 
     @staticmethod
-    def _create_modification_movements(facture, user, old_quantity_by_product, new_quantity_by_product, old_total):
-        """Crée les mouvements de stock et le log d'audit pour la modification."""
+    def _create_modification_movements(facture, user, old_quantity_by_product, new_quantity_by_product):
+        """Crée les mouvements de stock pour la modification."""
         all_product_ids = set(old_quantity_by_product.keys()) | set(new_quantity_by_product.keys())
         if not all_product_ids:
             return
@@ -222,17 +221,3 @@ class SaleModifier:
             ))
         if mouvements:
             MouvementStock.objects.bulk_create(mouvements)
-
-        log_audit(
-            user=user,
-            action=AuditLog.Action.STOCK_ADJUST,
-            model_name='Facture',
-            object_id=str(facture.id),
-            description=f"Modification vente #{facture.numero_facture or facture.id} - ajustement stock tracé",
-            details={
-                'old_total': str(old_total),
-                'new_total': str(facture.total_ttc),
-                'old_quantities': old_quantity_by_product,
-                'new_quantities': new_quantity_by_product,
-            },
-        )
