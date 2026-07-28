@@ -155,7 +155,7 @@ services:
   # Tunnel Tailscale Funnel pour accès externe sécurisé
   tailscale:
     image: tailscale/tailscale:latest
-    hostname: ${TAILSCALE_HOSTNAME:-fullstack-app}
+    hostname: ${TAILSCALE_HOSTNAME:-zenith-pharma}
     environment:
       - TS_AUTHKEY=${TAILSCALE_AUTHKEY}
       - TS_STATE_DIR=/var/lib/tailscale
