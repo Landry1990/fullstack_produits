@@ -208,6 +208,26 @@ input, button, textarea, select {
   background: #059669;
 }
 
+/* Dark mode: ensure emerald scrollbar stays visible on dark backgrounds */
+[data-theme="dark"] .custom-scrollbar {
+  scrollbar-color: #34d399 rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #34d399;
+  border-radius: 10px;
+  min-height: 40px;
+}
+
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #10b981;
+}
+
 /* Prevent horizontal overflow globally */
 html,
 body {

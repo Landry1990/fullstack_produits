@@ -118,7 +118,13 @@ python manage.py check_integrity --fix || {
 # ── 4. Collecte des fichiers statiques ──
 echo ""
 echo "📂 Collecte des fichiers statiques..."
-python manage.py collectstatic --noinput
+# Supprimer le manifeste corrompu avant collectstatic (sinon le storage plante à l'init)
+rm -rf "${STATIC_ROOT:-/app/staticfiles}"/*
+python manage.py collectstatic --noinput --clear || {
+    echo "⚠ collectstatic a échoué — nouvelle tentative après nettoyage..."
+    rm -rf "${STATIC_ROOT:-/app/staticfiles}"/*
+    python manage.py collectstatic --noinput || echo "⚠ collectstatic toujours en échec — démarrage sans manifeste"
+}
 
 # ── 5. Créer le dossier de sauvegarde et vérifier les backups ──
 echo ""
