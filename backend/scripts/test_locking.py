@@ -22,7 +22,7 @@ def test_ttl():
     assert r.status_code == 200
 
     result = subprocess.run(
-        ['docker', 'exec', 'fullstack_produits-redis-1', 'redis-cli', 'TTL', ':1:doc_lock:commande:1'],
+        ['docker', 'exec', 'zenith-pharma-redis', 'redis-cli', 'TTL', ':1:doc_lock:commande:1'],
         capture_output=True, text=True
     )
     ttl = int(result.stdout.strip())

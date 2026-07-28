@@ -63,3 +63,24 @@ docker restart fullstack_produits-backend-1
 - `docker cp` pour copier les fichiers
 - `docker restart` pour recharger
 - `docker exec` pour les commandes Django
+
+## Déploiement du script nightly-update.sh sur le serveur Ubuntu
+
+```bash
+# 1. Pousser le script modifié vers GitHub depuis le poste dev
+git add nightly-update.sh && git commit -m "fix: auto-correction permissions nightly-update" && git push
+
+# 2. Sur le serveur Ubuntu, récupérer et appliquer les permissions
+cd /opt/zenith-pharma
+git pull origin main
+sudo chmod +x nightly-update.sh
+sudo chown root:root nightly-update.sh
+
+# 3. Vérifier
+ls -la nightly-update.sh
+# Doit afficher : -rwxr-xr-x ... root root ... nightly-update.sh
+
+# 4. Tester
+sudo ./nightly-update.sh
+```
+

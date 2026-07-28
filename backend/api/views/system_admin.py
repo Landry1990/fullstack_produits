@@ -420,3 +420,203 @@ class SystemAdminViewSet(ViewSet):
                 {'detail': f'Erreur: {e!s}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=False, methods=['post'])
+    def check_update(self, request):
+        """Vérifie si une mise à jour est disponible sur GitHub."""
+        import subprocess as sp
+
+        app_dir = os.environ.get('APP_DIR', '/opt/zenith-pharma')
+        try:
+            sp.run(['git', 'fetch', 'origin', 'main', '--quiet'],
+                   capture_output=True, timeout=30, cwd=app_dir)
+            local = sp.run(['git', 'rev-parse', 'HEAD'],
+                          capture_output=True, text=True, timeout=10, cwd=app_dir)
+            remote = sp.run(['git', 'rev-parse', 'origin/main'],
+                           capture_output=True, text=True, timeout=10, cwd=app_dir)
+            local_commit = local.stdout.strip()
+            remote_commit = remote.stdout.strip()
+
+            if local_commit == remote_commit:
+                return Response({
+                    'update_available': False,
+                    'current_version': local_commit[:8],
+                    'message': 'Système déjà à jour',
+                })
+            return Response({
+                'update_available': True,
+                'current_version': local_commit[:8],
+                'latest_version': remote_commit[:8],
+                'message': 'Une mise à jour est disponible',
+            })
+        except Exception as e:
+            return Response({
+                'update_available': False,
+                'error': str(e),
+                'message': 'Impossible de vérifier les mises à jour',
+            }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def run_update(self, request):
+        """Lance le script nightly-update.sh pour mettre à jour le système."""
+        import threading
+        import subprocess as sp
+
+        app_dir = os.environ.get('APP_DIR', '/opt/zenith-pharma')
+        script_path = os.path.join(app_dir, 'nightly-update.sh')
+
+        if not os.path.exists(script_path):
+            return Response({
+                'success': False,
+                'message': 'Script de mise à jour introuvable',
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Vérifier la connexion internet
+        try:
+            sp.run(['ping', '-c', '1', 'github.com'],
+                   capture_output=True, timeout=10)
+        except Exception:
+            return Response({
+                'success': False,
+                'message': 'Pas de connexion Internet — mise à jour impossible',
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        # Lancer le script en arrière-plan (peut prendre plusieurs minutes)
+        def _run_update():
+            try:
+                os.chmod(script_path, 0o755)
+            except Exception:
+                pass
+            sp.run(
+                ['bash', script_path],
+                capture_output=True,
+                timeout=900,  # 15 min max
+                cwd=app_dir,
+            )
+
+        thread = threading.Thread(target=_run_update, daemon=True)
+        thread.start()
+
+        return Response({
+            'success': True,
+            'message': 'Mise à jour lancée — l\'application sera temporairement indisponible pendant quelques minutes',
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def update_schedule(self, request):
+        """Retourne l'heure de mise à jour automatique configurée."""
+        import re
+        app_dir = os.environ.get('APP_DIR', '/opt/zenith-pharma')
+        conf_file = os.path.join(app_dir, 'update-time.conf')
+
+        # Lire la préférence
+        update_time = '02:00'
+        auto_update_enabled = True
+
+        if os.path.exists(conf_file):
+            try:
+                with open(conf_file, 'r') as f:
+                    content = f.read().strip()
+                if content.startswith('DISABLED'):
+                    auto_update_enabled = False
+                elif re.match(r'^[0-2][0-9]:[0-5][0-9]$', content):
+                    update_time = content
+            except Exception:
+                pass
+
+        # Lire l'heure actuelle du timer systemd
+        timer_file = '/etc/systemd/system/zenith-nightly-update.timer'
+        if os.path.exists(timer_file):
+            try:
+                with open(timer_file, 'r') as f:
+                    for line in f:
+                        if 'OnCalendar' in line:
+                            match = re.search(r'(\d{2}:\d{2}):\d{2}', line)
+                            if match:
+                                update_time = match.group(1)
+            except Exception:
+                pass
+
+        return Response({
+            'update_time': update_time,
+            'auto_update_enabled': auto_update_enabled,
+        })
+
+    @action(detail=False, methods=['post'])
+    def set_update_schedule(self, request):
+        """Modifie l'heure de mise à jour automatique."""
+        import subprocess as sp
+
+        update_time = request.data.get('update_time', '02:00')
+        auto_update_enabled = request.data.get('auto_update_enabled', True)
+        app_dir = os.environ.get('APP_DIR', '/opt/zenith-pharma')
+        conf_file = os.path.join(app_dir, 'update-time.conf')
+        script_path = os.path.join(app_dir, 'set-update-time.sh')
+
+        if not auto_update_enabled:
+            # Désactiver la mise à jour automatique
+            try:
+                with open(conf_file, 'w') as f:
+                    f.write('DISABLED')
+                sp.run(['docker', 'run', '--rm', '--privileged', '--pid=host',
+                        '-v', '/etc/systemd/system:/etc/systemd/system',
+                        'alpine:latest', 'sh', '-c',
+                        'systemctl stop zenith-nightly-update.timer 2>/dev/null; '
+                        'systemctl disable zenith-nightly-update.timer 2>/dev/null; '
+                        'true'],
+                       capture_output=True, timeout=30)
+                return Response({
+                    'success': True,
+                    'message': 'Mise à jour automatique désactivée. Vous devrez lancer les mises à jour manuellement.',
+                })
+            except Exception as e:
+                return Response({
+                    'success': False,
+                    'message': f'Erreur: {e!s}',
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Valider le format HH:MM
+        import re
+        if not re.match(r'^[0-2][0-9]:[0-5][0-9]$', update_time):
+            return Response({
+                'success': False,
+                'message': 'Format invalide. Utilisez HH:MM (ex: 02:00, 03:30)',
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not os.path.exists(script_path):
+            return Response({
+                'success': False,
+                'message': 'Script set-update-time.sh introuvable',
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            # Écrire la préférence
+            with open(conf_file, 'w') as f:
+                f.write(update_time)
+
+            # Lancer le script via un conteneur privilégié (accès systemd sur l'hôte)
+            result = sp.run([
+                'docker', 'run', '--rm', '--privileged', '--pid=host',
+                '-v', '/etc/systemd/system:/etc/systemd/system',
+                '-v', f'{app_dir}:{app_dir}',
+                'alpine:latest', 'sh', '-c',
+                f'apk add --no-cache bash >/dev/null 2>&1; '
+                f'bash {script_path} {update_time}'
+            ], capture_output=True, text=True, timeout=60)
+
+            if result.returncode == 0:
+                return Response({
+                    'success': True,
+                    'update_time': update_time,
+                    'message': f'Mise à jour automatique configurée à {update_time}',
+                })
+            else:
+                return Response({
+                    'success': False,
+                    'message': result.stderr.strip() or 'Erreur lors de la configuration',
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Erreur: {e!s}',
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

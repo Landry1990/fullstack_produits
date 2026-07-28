@@ -17,6 +17,8 @@ from api.utils_licence import (
 
 class LicenceStatusView(APIView):
     # L'utilisateur n'a pas besoin d'être connecté pour voir le statut de la licence
+    # Ignorer les tokens périmés envoyés accidentellement par le navigateur
+    authentication_classes = []
     permission_classes = [AllowAny] 
     
     def get(self, request):

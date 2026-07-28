@@ -16,6 +16,13 @@
 
 set -euo pipefail
 
+# ── Auto-correction des permissions ─────────────────────────
+# Si le script n'est pas exécutable, on le corrige et on relance
+if [ ! -x "$0" ]; then
+    chmod +x "$0" 2>/dev/null || sudo chmod +x "$0" 2>/dev/null || true
+    exec "$0" "$@"
+fi
+
 # ── Configuration ────────────────────────────────────────────
 APP_DIR="/opt/zenith-pharma"
 BRANCH="main"
@@ -28,11 +35,13 @@ BUILD_TIMEOUT=600    # 10 min max pour le build
 mkdir -p "$APP_DIR/logs"
 
 # ── Docker Compose helper ────────────────────────────────────
-# Dans un conteneur Docker on est root et sudo est absent.
-if [ "$(id -u)" -eq 0 ]; then
+# L'utilisateur est dans le groupe docker (install.sh l'ajoute)
+# donc docker compose fonctionne sans sudo.
+# En cas d'exécution en tant que root (systemd), sudo est absent.
+if [ "$(id -u)" -eq 0 ] || ! command -v sudo &>/dev/null; then
     DC="docker compose"
 else
-    DC="sudo docker compose"
+    DC="docker compose"
 fi
 
 # ── Fonctions ────────────────────────────────────────────────
@@ -103,10 +112,10 @@ ok "Code mis à jour"
 
 # ── 4. Tagger les images actuelles pour rollback ─────────────
 log "🏷️  Étape 4/6 — Sauvegarde des images actuelles"
-for container in "fullstack_produits-backend-1" "fullstack_produits-frontend-1"; do
+for container in "zenith-pharma-backend" "zenith-pharma-frontend"; do
     current_image=$(docker inspect --format='{{.Image}}' "$container" 2>/dev/null || true)
     if [ -n "$current_image" ]; then
-        image_name="fullstack_produits-${container##fullstack_produits-}"
+        image_name="zenith-pharma-${container##zenith-pharma-}"
         image_name="${image_name%-1}"
         docker tag "$current_image" "${image_name}:previous" 2>/dev/null || true
     fi
@@ -117,13 +126,14 @@ ok "Images actuelles taggées :previous"
 log "🔨 Étape 5/6 — Build des nouvelles images (application toujours en ligne)"
 export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
-# Build avec timeout — si Internet coupe, le build échoue mais l'app tourne toujours
-if ! GIT_COMMIT="$GIT_COMMIT" timeout "$BUILD_TIMEOUT" $DC -f "$COMPOSE_FILE" build --no-cache 2>>"$LOG_FILE"; then
+# Build avec cache Docker — ne rebuilder que les layers modifiés
+# Si Internet coupe, le build échoue mais l'app tourne toujours
+if ! GIT_COMMIT="$GIT_COMMIT" timeout "$BUILD_TIMEOUT" $DC -f "$COMPOSE_FILE" build 2>>"$LOG_FILE"; then
     err "docker build a échoué (coupure Internet ou timeout ${BUILD_TIMEOUT}s)"
     warn "Les conteneurs actuels continuent de fonctionner — aucune interruption"
     exit 1
 fi
-ok "Nouvelles images construites avec succès"
+ok "Nouvelles images construites avec succès (cache Docker utilisé)"
 
 # ── Basculement : arrêter les anciens conteneurs et démarrer les nouveaux
 log "🔄 Basculement — arrêt des anciens conteneurs et démarrage des nouveaux"

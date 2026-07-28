@@ -12,10 +12,10 @@ Sur le serveur Ubuntu, le conteneur Tailscale est déjà configuré. Vérifiez q
 
 ```bash
 # Vérifier le statut Tailscale
-docker exec fullstack_produits-tailscale-1 tailscale status
+docker exec zenith-pharma-tailscale tailscale status
 
 # Si "Logged out", se connecter avec :
-docker exec fullstack_produits-tailscale-1 tailscale up --hostname=zenith-pharma
+docker exec zenith-pharma-tailscale tailscale up --hostname=zenith-pharma
 ```
 
 Suivez le lien affiché pour autoriser le serveur dans votre compte Tailscale (https://login.tailscale.com).
@@ -97,7 +97,7 @@ Une fois Tailscale connecté sur le poste client, ouvrez simplement le navigateu
 
 1. Vérifiez que Tailscale est bien connecté (icône verte dans la zone de notification)
 2. Essayez `http://zenith-pharma.local` ou l'IP Tailscale (visible dans l'app Tailscale)
-3. Sur le serveur, vérifiez : `docker exec fullstack_produits-tailscale-1 tailscale status`
+3. Sur le serveur, vérifiez : `docker exec zenith-pharma-tailscale tailscale status`
 
 ### Plusieurs pharmacies avec le même nom
 

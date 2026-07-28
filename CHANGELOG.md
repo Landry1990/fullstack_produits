@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-07-28 (22:55)
+
+### 🐛 Correctifs critiques — Infrastructure
+
+- **Nginx : routage `/api/` cassé** (`frontend/frontend/nginx.conf`)
+  - Cause racine : lorsque `proxy_pass` contient une variable (`$backend_upstream`), nginx **n'ajoute pas** le reste de l'URI automatiquement. Toutes les requêtes `/api/xxx` étaient donc proxifiées vers `backend:8000/api/`, renvoyant la vue racine au lieu de l'endpoint demandé.
+  - Conséquence : page de login vide (« Accès interdit »), combo box des utilisateurs non alimenté, tous les appels API erronés.
+  - Correction : `proxy_pass $backend_upstream$request_uri;` sur les blocs `/api/`, `/ws/` et `/admin/` pour préserver chemin + query string.
+  - Suppression du bloc `location = /api/` (retour 404) devenu inutile.
+
+- **Tokens périmés sur les endpoints publics** (`backend/api/views/users.py`, `backend/api/views/licence.py`)
+  - `users/login_options/` et `licence/` renvoyaient 401 quand le navigateur envoyait un token expiré du localStorage.
+  - `UserViewSet.get_authenticators()` retourne `[]` pour `login_options` (via `_pending_action` calculé dans `dispatch`, car `self.action` n'est pas encore défini à ce stade).
+  - `CustomAuthToken` et `LicenceStatusView` : `authentication_classes = []` pour ignorer tout token invalide.
+  - `get_queryset()` retourne `User.objects.none()` pour les anonymes (au lieu de la liste des actifs).
+
+- **Base de données restaurée** depuis le backup `backup-20260728-172519.sql`, puis **purgée** (voir section suivante).
+  - Un écart de volumétrie avait été interprété à tort comme une perte de données liée au renommage des conteneurs. Il s'agissait en réalité des données du test de charge de 15h26, présentes dans le backup mais absentes de la base courante déjà nettoyée.
+
+- **Conteneurs Docker renommés** en `zenith-pharma-*` (`backend`, `frontend`, `db`, `redis`) avec `container_name` explicite.
+- **Port 8000 du backend n'est plus exposé** sur l'hôte : tout le trafic passe par nginx (port 80).
+
+### 🧹 Purge des données de test de charge
+
+- **Nouvelle commande** `python manage.py purge_loadtest_data` (`backend/api/management/commands/purge_loadtest_data.py`)
+  - Options `--dry-run`, `--confirm`, `--purge-user`.
+  - Filtre sur le **préfixe littéral `[TEST]`** et non sur `%test%` : 10 produits réels du catalogue contiennent « test » dans leur nom (`BB TEST GROSSESSE`, `ETHYLOTEST UU CONTRALCO`, `TUBERTEST SOL INJ`…) et doivent être préservés.
+  - Garde-fou bloquant : interrompt la purge si une facture hors périmètre référence un produit `[TEST]`.
+  - Suppression par lots de 500 via l'ORM pour respecter les cascades et les contraintes `on_delete=PROTECT` (`Facture.client`, `RelevePaiement.client`, `StockAllocation.stock_lot`).
+- **Supprimé** : 20 000 produits, 2 000 clients, 20 551 factures (dont 215 proformas créées par `loadtest` sur de vrais clients) et le compte utilisateur `loadtest`.
+- **Rectification** : la « perte de données » diagnostiquée plus tôt était un faux positif. Le backup de 17h26 contenait le test de charge du jour (15h26) ; la base écrasée était en réalité saine. Les compteurs après purge (4 939 produits, 4 clients) retombent exactement sur l'état d'origine.
+
+---
+
 ## 2026-07-27 (00:58)
 
 ### ✨ Rapports & Statistiques — Améliorations
