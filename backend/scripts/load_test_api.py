@@ -165,6 +165,86 @@ def run_phase(token: str, product_ids: list[int], client_ids: list[int], clients
     print(f"\n⏱️  Durée effective: {elapsed:.1f}s | RPS total: {total/elapsed:.2f}")
 
 
+def run_stress_test(
+    token: str,
+    product_ids: list[int],
+    client_ids: list[int],
+    start_clients: int,
+    step: int,
+    max_clients: int,
+    phase_duration: int,
+    finalize_ratio: float,
+    error_threshold: float,
+    latency_threshold_ms: float,
+    cooldown: int,
+):
+    """
+    Augmente progressivement le nombre de clients simultanés jusqu'à ce que
+    le taux d'erreur ou la latence P95 dépasse un seuil critique.
+    Rapporte le dernier palier "sain" et le palier de rupture.
+    """
+    print("\n" + "=" * 60)
+    print("🧪 TEST DE VOLUMÉTRIE / MONTÉE EN CHARGE PROGRESSIVE")
+    print("=" * 60)
+    print(f"   Départ: {start_clients} clients | Pas: +{step} | Max: {max_clients}")
+    print(f"   Durée par palier: {phase_duration}s | Refroidissement: {cooldown}s")
+    print(f"   Seuils de rupture: erreurs > {error_threshold:.0%} OU P95 > {latency_threshold_ms:.0f} ms")
+
+    last_healthy = None
+    clients = start_clients
+
+    while clients <= max_clients:
+        search_result = LoadTestResult()
+        list_result = LoadTestResult()
+        finalize_result = LoadTestResult()
+
+        print(f"\n🔥 Palier: {clients} clients simultanés / {phase_duration}s")
+        start = time.time()
+        with ThreadPoolExecutor(max_workers=clients) as pool:
+            for _ in range(clients):
+                r = random.random()
+                if r < finalize_ratio:
+                    pool.submit(worker_finalize, token, product_ids, client_ids, phase_duration, finalize_result)
+                elif r < 0.7:
+                    pool.submit(worker_search, token, product_ids, phase_duration, search_result)
+                else:
+                    pool.submit(worker_list_factures, token, phase_duration, list_result)
+        elapsed = time.time() - start
+
+        search_result.summary("Recherche produits")
+        list_result.summary("Liste factures")
+        finalize_result.summary("Finaliser vente")
+
+        all_times = search_result.times + list_result.times + finalize_result.times
+        total = search_result.total + list_result.total + finalize_result.total
+        total_failed = search_result.failed + list_result.failed + finalize_result.failed
+        error_rate = (total_failed / total) if total else 0
+        p95 = sorted(all_times)[int(len(all_times) * 0.95)] * 1000 if all_times else 0
+
+        print(f"⏱️  Palier {clients} clients: RPS={total/elapsed:.2f} | erreurs={error_rate:.1%} | P95={p95:.0f} ms")
+
+        if error_rate > error_threshold or p95 > latency_threshold_ms:
+            print("\n" + "=" * 60)
+            print(f"🛑 SEUIL CRITIQUE ATTEINT à {clients} clients simultanés")
+            print(f"   Taux d'erreur: {error_rate:.1%} (seuil: {error_threshold:.0%})")
+            print(f"   P95: {p95:.0f} ms (seuil: {latency_threshold_ms:.0f} ms)")
+            if last_healthy is not None:
+                print(f"✅ Dernier palier sain: {last_healthy} clients simultanés")
+            print("=" * 60)
+            return
+
+        last_healthy = clients
+        clients += step
+        if clients <= max_clients:
+            print(f"   Refroidissement {cooldown}s avant palier suivant...")
+            time.sleep(cooldown)
+
+    print("\n" + "=" * 60)
+    print(f"✅ Aucune rupture détectée jusqu'à {max_clients} clients simultanés.")
+    print("   Augmentez --max-clients pour continuer à chercher le seuil critique.")
+    print("=" * 60)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--username", default="loadtest")
@@ -173,6 +253,14 @@ def main():
     parser.add_argument("--duration", type=int, default=60)
     parser.add_argument("--finalize-ratio", type=float, default=0.3)
     parser.add_argument("--url", default="http://localhost:8000")
+    parser.add_argument("--stress", action="store_true", help="Active le mode montée en charge progressive jusqu'au seuil critique")
+    parser.add_argument("--start-clients", type=int, default=5, help="[stress] Nombre de clients au premier palier")
+    parser.add_argument("--step", type=int, default=10, help="[stress] Incrément de clients à chaque palier")
+    parser.add_argument("--max-clients", type=int, default=200, help="[stress] Nombre maximal de clients à tester")
+    parser.add_argument("--phase-duration", type=int, default=30, help="[stress] Durée de chaque palier en secondes")
+    parser.add_argument("--error-threshold", type=float, default=0.05, help="[stress] Taux d'erreur déclenchant la rupture (ex: 0.05 = 5%%)")
+    parser.add_argument("--latency-threshold-ms", type=float, default=3000, help="[stress] Latence P95 (ms) déclenchant la rupture")
+    parser.add_argument("--cooldown", type=int, default=5, help="[stress] Pause en secondes entre paliers")
     args = parser.parse_args()
 
     global BASE_URL, AUTH_URL, PRODUITS_URL, FACTURES_URL, FINALISER_URL
@@ -200,7 +288,20 @@ def main():
         sys.exit(1)
     print(f"   {len(product_ids)} produits, {len(client_ids)} clients.")
 
-    run_phase(token, product_ids, client_ids, args.clients, args.duration, args.finalize_ratio)
+    if args.stress:
+        run_stress_test(
+            token, product_ids, client_ids,
+            start_clients=args.start_clients,
+            step=args.step,
+            max_clients=args.max_clients,
+            phase_duration=args.phase_duration,
+            finalize_ratio=args.finalize_ratio,
+            error_threshold=args.error_threshold,
+            latency_threshold_ms=args.latency_threshold_ms,
+            cooldown=args.cooldown,
+        )
+    else:
+        run_phase(token, product_ids, client_ids, args.clients, args.duration, args.finalize_ratio)
 
 
 if __name__ == "__main__":

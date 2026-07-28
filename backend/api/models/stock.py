@@ -84,9 +84,14 @@ def get_next_ticket_session():
 
     try:
         sequence = cache.incr(cache_key)
-        TicketSessionSequence.objects.update_or_create(
-            date=today,
-            defaults={'last_number': sequence}
+        # Différer l'écriture DB (fallback seulement) après le commit de la transaction
+        # en cours, pour ne pas retenir le verrou de ligne (TicketSessionSequence)
+        # pendant toute la durée de finalize_sale (goulot d'étranglement sous charge).
+        transaction.on_commit(
+            lambda: TicketSessionSequence.objects.update_or_create(
+                date=today,
+                defaults={'last_number': sequence}
+            )
         )
         return sequence
     except ValueError:
