@@ -60,7 +60,7 @@ fi
 
 DB_USER="${DB_USER:-fullstack_user}"
 DB_NAME="${DB_NAME:-fullstack_db}"
-CONTAINER="${DB_CONTAINER:-fullstack_produits-db-1}"
+CONTAINER="${DB_CONTAINER:-zenith-pharma-db}"
 
 # Chemin Google Drive depuis .env si non passé en argument
 if [[ -z "$GDRIVE_DIR" && -n "${GDRIVE_DIR:-}" ]]; then

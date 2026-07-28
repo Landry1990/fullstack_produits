@@ -2,7 +2,8 @@ services:
   # Base de données PostgreSQL
   db:
     image: postgres:15-alpine
-    entrypoint: ["/init-db.sh"]
+    container_name: zenith-pharma-db
+    entrypoint: ["bash", "/init-db.sh"]
     command: >-
       postgres
       -c max_connections=300
@@ -48,6 +49,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: zenith-pharma-backend
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput --clear &&
@@ -117,6 +119,7 @@ services:
       dockerfile: Dockerfile.prod
       args:
         GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    container_name: zenith-pharma-frontend
     ports:
       - "${FRONTEND_PORT:-80}:80"
     healthcheck:
@@ -134,6 +137,7 @@ services:
   # Cache Redis
   redis:
     image: redis:7-alpine
+    container_name: zenith-pharma-redis
     command: >
       redis-server
       --maxmemory 384mb
@@ -155,6 +159,7 @@ services:
   # Tunnel Tailscale Funnel pour accès externe sécurisé
   tailscale:
     image: tailscale/tailscale:latest
+    container_name: zenith-pharma-tailscale
     hostname: ${TAILSCALE_HOSTNAME:-zenith-pharma}
     environment:
       - TS_AUTHKEY=${TAILSCALE_AUTHKEY}

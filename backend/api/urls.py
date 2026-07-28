@@ -309,5 +309,7 @@ urlpatterns = [
     path('backups/restore/', RestoreBackupView.as_view(), name='backup-restore'),
     path('backups/<str:filename>/', DeleteBackupView.as_view(), name='backup-delete'),
     
+    # Vue racine /api/ — retourne 200 au lieu du DRF root view (évite le spam 401/404 PWA)
+    path('', lambda request: JsonResponse({'status': 'ok', 'service': 'pharma-backend'}), name='api-root'),
     path('', include(router.urls)),
 ]

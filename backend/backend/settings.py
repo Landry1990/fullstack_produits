@@ -13,8 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 # Configuration Docker et Infrastructure
-DOCKER_DB_CONTAINER = os.getenv('DOCKER_DB_CONTAINER', 'fullstack_produits-db-1')
-DOCKER_BACKEND_CONTAINER = os.getenv('DOCKER_BACKEND_CONTAINER', 'fullstack_produits-backend-1')
+DOCKER_DB_CONTAINER = os.getenv('DOCKER_DB_CONTAINER', 'zenith-pharma-db')
+DOCKER_BACKEND_CONTAINER = os.getenv('DOCKER_BACKEND_CONTAINER', 'zenith-pharma-backend')
 REPORTS_DIR = os.getenv('REPORTS_DIR', str(BASE_DIR / 'rapports'))
 BACKUP_RETENTION_DAYS = int(os.getenv('BACKUP_RETENTION_DAYS', '30'))
 BACKUP_INCREMENTAL_DIR = os.getenv('BACKUP_INCREMENTAL_DIR', '/backup/incremental')

@@ -16,6 +16,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf}'],
         globIgnores: ['**/*tesseract*.wasm*', '**/tesseract*.js'],
+        // Ne pas intercepter les requêtes API — elles doivent toujours atteindre le backend
+        navigateFallbackDenylist: [/^\/api\/.*/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/,
