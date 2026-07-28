@@ -34,7 +34,7 @@ export function LicenceNotifications() {
     try {
       isLoadingRef.current = true;
       const data = await licenceService.getNotifications();
-      notificationsRef.current = data.notifications;
+      notificationsRef.current = data.notifications ?? [];
     } catch (error) {
       console.error('Erreur chargement notifications licence:', error);
     } finally {
@@ -59,7 +59,7 @@ export function LicenceNotifications() {
   useEffect(() => {
     if (isLoadingRef.current) return;
 
-    const activeNotifications = notificationsRef.current.filter(
+    const activeNotifications = (notificationsRef.current ?? []).filter(
       (n: LicenceNotification) => !dismissedIdsRef.current.has(n.id)
     );
 
