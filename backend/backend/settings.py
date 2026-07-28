@@ -235,12 +235,19 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Whitenoise configuration for static files
+# Fallback: si le manifeste staticfiles.json est corrompu/absent, on utilise
+# CompressedStaticFilesStorage (sans manifest) pour éviter le crash au démarrage.
+_staticfiles_storage_backend = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+_manifest_path = STATIC_ROOT / "staticfiles.json"
+if not _manifest_path.exists():
+    _staticfiles_storage_backend = "whitenoise.storage.CompressedStaticFilesStorage"
+
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": _staticfiles_storage_backend,
     },
 }
 

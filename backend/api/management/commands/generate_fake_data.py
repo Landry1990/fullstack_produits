@@ -153,7 +153,7 @@ class Command(BaseCommand):
         for i in range(count):
             facture = Facture(
                 client=random.choice(clients) if clients else None,
-                numero_facture=f"F-TEST-{self.faker.random_number(digits=8, fix_len=True)}",
+                numero_facture=f"F-TEST-{self.faker.uuid4()[:8]}-{i}",
                 status=Facture.Status.VALIDEE,
                 notes='[TEST] Facture générée automatiquement',
                 total_ht=Decimal('0.00'), # Seront recalculés à la fin

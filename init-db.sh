@@ -16,5 +16,5 @@ if [ -f "$PG_HBA" ]; then
     fi
 fi
 
-# Exécuter l'entrypoint original de PostgreSQL
-exec "$@"
+# Exécuter l'entrypoint original de PostgreSQL (gère le passage à l'utilisateur postgres)
+exec /usr/local/bin/docker-entrypoint.sh "$@"
