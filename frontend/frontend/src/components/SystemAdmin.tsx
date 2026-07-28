@@ -4,10 +4,10 @@ import api from '../services/api';
 import {
   Server, Database, RefreshCw, Play, ShieldCheck, ShieldAlert,
   HardDrive, Clock, CheckCircle2, XCircle, AlertTriangle,
-  RotateCcw, Wifi, WifiOff, Upload, Archive, Zap
+  RotateCcw, Wifi, WifiOff, Upload, Archive, Zap, DownloadCloud
 } from 'lucide-react';
 
-type TabId = 'sante' | 'sauvegardes';
+type TabId = 'sante' | 'sauvegardes' | 'mise_a_jour';
 
 interface DockerContainer {
   name: string;
@@ -112,6 +112,28 @@ export default function SystemAdmin() {
   } | null>(null);
   const [loadingBackupSettings, setLoadingBackupSettings] = useState(false);
   const [savingBackupSettings, setSavingBackupSettings] = useState(false);
+
+  // Mise à jour système
+  const [updateStatus, setUpdateStatus] = useState<{
+    update_available: boolean;
+    current_version?: string;
+    latest_version?: string;
+    message: string;
+    error?: string;
+  } | null>(null);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [runningUpdate, setRunningUpdate] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateMessage, setUpdateMessage] = useState<string | null>(null);
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+
+  // Planification mise à jour
+  const [updateTime, setUpdateTime] = useState('02:00');
+  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
+  const [loadingSchedule, setLoadingSchedule] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
 
   const fetchStatus = useCallback(async () => {
     setLoadingStatus(true);
@@ -342,9 +364,86 @@ export default function SystemAdmin() {
     }
   };
 
+  const handleCheckUpdate = useCallback(async () => {
+    setCheckingUpdate(true);
+    setUpdateError(null);
+    setUpdateMessage(null);
+    try {
+      const res = await api.post('/system-admin/check_update/');
+      setUpdateStatus(res.data);
+      setUpdateMessage(res.data.message);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string; message?: string } } };
+      setUpdateError(err?.response?.data?.detail || err?.response?.data?.message || 'Erreur lors de la vérification');
+    } finally {
+      setCheckingUpdate(false);
+    }
+  }, []);
+
+  const handleRunUpdate = async () => {
+    setRunningUpdate(true);
+    setUpdateError(null);
+    setUpdateMessage(null);
+    setShowUpdateConfirm(false);
+    try {
+      const res = await api.post('/system-admin/run_update/');
+      setUpdateMessage(res.data.message);
+      setUpdateStatus(null);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string; message?: string } } };
+      setUpdateError(err?.response?.data?.detail || err?.response?.data?.message || 'Erreur lors du lancement de la mise à jour');
+    } finally {
+      setRunningUpdate(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'mise_a_jour' && !updateStatus && !checkingUpdate) {
+      handleCheckUpdate();
+    }
+  }, [activeTab, updateStatus, checkingUpdate, handleCheckUpdate]);
+
+  const fetchSchedule = useCallback(async () => {
+    setLoadingSchedule(true);
+    try {
+      const res = await api.get('/system-admin/update_schedule/');
+      setUpdateTime(res.data.update_time || '02:00');
+      setAutoUpdateEnabled(res.data.auto_update_enabled !== false);
+    } catch {
+      // valeurs par défaut
+    } finally {
+      setLoadingSchedule(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'mise_a_jour') {
+      fetchSchedule();
+    }
+  }, [activeTab, fetchSchedule]);
+
+  const handleSaveSchedule = async () => {
+    setSavingSchedule(true);
+    setScheduleMessage(null);
+    setScheduleError(null);
+    try {
+      const res = await api.post('/system-admin/set_update_schedule/', {
+        update_time: updateTime,
+        auto_update_enabled: autoUpdateEnabled,
+      });
+      setScheduleMessage(res.data.message);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string; message?: string } } };
+      setScheduleError(err?.response?.data?.detail || err?.response?.data?.message || 'Erreur lors de la sauvegarde');
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
+
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'sante', label: t('tabs.health'), icon: <Server className="w-4 h-4" /> },
     { id: 'sauvegardes', label: t('tabs.backups'), icon: <HardDrive className="w-4 h-4" /> },
+    { id: 'mise_a_jour', label: 'Mise à jour', icon: <DownloadCloud className="w-4 h-4" /> },
   ];
 
   const backupStatusLabel = (status: string, hours: number) => {
@@ -1219,6 +1318,228 @@ export default function SystemAdmin() {
                   <span dangerouslySetInnerHTML={{ __html: t('scheduling.check') }} />
                 </div>
                 <p className="text-xs text-gray-400 mt-2" dangerouslySetInnerHTML={{ __html: t('scheduling.logs') }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ONGLET MISE À JOUR ── */}
+        {activeTab === 'mise_a_jour' && (
+          <div className="space-y-4">
+
+            {/* Carte principale */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-indigo-50 rounded-lg">
+                  <DownloadCloud className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Mise à jour du système</h2>
+                  <p className="text-xs text-gray-500">Vérifiez et installez les dernières mises à jour de Zenith Pharma</p>
+                </div>
+              </div>
+
+              {/* Bouton vérifier */}
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={handleCheckUpdate}
+                  disabled={checkingUpdate}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${checkingUpdate ? 'animate-spin' : ''}`} />
+                  {checkingUpdate ? 'Vérification...' : 'Vérifier les mises à jour'}
+                </button>
+              </div>
+
+              {/* Résultat de la vérification */}
+              {checkingUpdate && (
+                <div className="text-center py-4 text-gray-400">
+                  <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
+                  Vérification des mises à jour sur GitHub...
+                </div>
+              )}
+
+              {updateStatus && !checkingUpdate && (
+                <div className={`p-4 rounded-lg border ${
+                  updateStatus.update_available
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-emerald-50 border-emerald-200'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    {updateStatus.update_available ? (
+                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {updateStatus.message}
+                      </p>
+                      {updateStatus.current_version && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Version actuelle : <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">{updateStatus.current_version}</code>
+                          {updateStatus.latest_version && (
+                            <> → Version disponible : <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">{updateStatus.latest_version}</code></>
+                          )}
+                        </p>
+                      )}
+                      {updateStatus.error && (
+                        <p className="text-xs text-red-600 mt-1">{updateStatus.error}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Bouton mettre à jour */}
+              {updateStatus?.update_available && !showUpdateConfirm && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => setShowUpdateConfirm(true)}
+                    disabled={runningUpdate}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-all disabled:opacity-50"
+                  >
+                    <DownloadCloud className="w-4 h-4" />
+                    Mettre à jour maintenant
+                  </button>
+                </div>
+              )}
+
+              {/* Confirmation */}
+              {showUpdateConfirm && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start gap-3 mb-3">
+                    <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-red-900">⚠ Attention — Lisez avant de continuer</p>
+                      <ul className="text-xs text-red-700 mt-2 space-y-1 list-disc list-inside">
+                        <li>L'application sera <strong>temporairement indisponible</strong> pendant la mise à jour (2 à 10 minutes)</li>
+                        <li>Assurez-vous qu'<strong>aucune vente</strong> n'est en cours sur les autres postes</li>
+                        <li>Une <strong>sauvegarde automatique</strong> de la base de données sera faite avant</li>
+                        <li>Si la mise à jour échoue, le système <strong>revient automatiquement</strong> à la version précédente</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleRunUpdate}
+                      disabled={runningUpdate}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-all disabled:opacity-50"
+                    >
+                      {runningUpdate ? (
+                        <><RefreshCw className="w-4 h-4 animate-spin" /> Mise à jour en cours...</>
+                      ) : (
+                        <><DownloadCloud className="w-4 h-4" /> Oui, lancer la mise à jour</>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setShowUpdateConfirm(false)}
+                      disabled={runningUpdate}
+                      className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Message de succès/erreur */}
+              {updateMessage && !showUpdateConfirm && (
+                <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <p className="text-sm text-emerald-800 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    {updateMessage}
+                  </p>
+                </div>
+              )}
+              {updateError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800 flex items-center gap-2">
+                    <XCircle className="w-4 h-4 text-red-600" />
+                    {updateError}
+                  </p>
+                </div>
+              )}
+
+              {/* Configuration de l'heure de mise à jour */}
+              <div className="mt-6 pt-4 border-t border-gray-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Planification automatique</h3>
+
+                {loadingSchedule ? (
+                  <div className="text-sm text-gray-400 flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Chargement...
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Activer/désactiver */}
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={autoUpdateEnabled}
+                        onChange={(e) => setAutoUpdateEnabled(e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">Mise à jour automatique activée</span>
+                    </label>
+
+                    {/* Heure */}
+                    {autoUpdateEnabled && (
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm text-gray-700">Heure de mise à jour :</label>
+                        <input
+                          type="time"
+                          value={updateTime}
+                          onChange={(e) => setUpdateTime(e.target.value)}
+                          className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        />
+                        <span className="text-xs text-gray-400">(si serveur éteint, rattrapée au prochain démarrage)</span>
+                      </div>
+                    )}
+
+                    {/* Bouton sauvegarder */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleSaveSchedule}
+                        disabled={savingSchedule}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
+                      >
+                        {savingSchedule ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                        {savingSchedule ? 'Sauvegarde...' : 'Enregistrer'}
+                      </button>
+                    </div>
+
+                    {scheduleMessage && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                        <p className="text-sm text-emerald-800 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" /> {scheduleMessage}
+                        </p>
+                      </div>
+                    )}
+                    {scheduleError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-800 flex items-center gap-2">
+                          <XCircle className="w-4 h-4 text-red-600" /> {scheduleError}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Infos */}
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>Si le serveur est éteint, la mise à jour se fait <strong>au prochain démarrage</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>Si pas d'Internet, la mise à jour est <strong>reportée automatiquement</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>Le bouton ci-dessus permet de <strong>forcer une mise à jour immédiate</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

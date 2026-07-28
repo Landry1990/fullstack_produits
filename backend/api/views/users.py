@@ -48,6 +48,9 @@ class CustomAuthToken(ObtainAuthToken):
     """
     Custom auth token view that returns user details along with the token.
     """
+    # Pas d'authentification requise : si un token périmé est envoyé, l'ignorer
+    authentication_classes = []
+    permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
 
     def post(self, request, *args, **kwargs):
@@ -143,8 +146,20 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
     serializer_class = UserSerializer
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
+    def dispatch(self, request, *args, **kwargs):
+        # self.action n'est pas encore défini quand get_authenticators est appelé.
+        # On détermine l'action via action_map (initialisée par as_view).
+        self._pending_action = getattr(self, 'action_map', {}).get(request.method.lower())
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_authenticators(self):
+        # Page de connexion : ignorer un token périmé encore stocké dans le navigateur
+        if getattr(self, '_pending_action', None) == 'login_options':
+            return []
+        return super().get_authenticators()
+
     def get_permissions(self):
-        # login_options est ouvert à tous pour la page de connexion
+        # Page de connexion : login_options est ouvert à tous
         if self.action == 'login_options':
             return [AllowAny()]
         # CRUD utilisateur réservé aux admins; endpoints utilitaires pour utilisateurs authentifiés.
@@ -154,17 +169,19 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def get_throttles(self):
-        # login_options est exempter du throttling (page de connexion)
+        # login_options est exempté du throttling (page de connexion)
         if self.action == 'login_options':
             return []
         return super().get_throttles()
-    
+
     def partial_update(self, request, *args, **kwargs):
         response = super().partial_update(request, *args, **kwargs)
         return response
     
     def get_queryset(self):
         user = self.request.user
+        if not getattr(user, 'is_authenticated', False):
+            return User.objects.none()
         if getattr(user, 'is_superuser', False):
             return User.objects.all().order_by('username')
         return User.objects.filter(id=user.id)

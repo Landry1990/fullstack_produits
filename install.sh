@@ -197,6 +197,7 @@ ok "Variables CPU écrites dans .env"
 # ── 7. Permissions ────────────────────────────────────
 step "7. Permissions des scripts"
 chmod +x auto-deploy.sh deploy.sh rollback.sh backup-db.sh watchdog.sh start-watchdog.sh setup-cron.sh init-db.sh 2>/dev/null || true
+chmod +x nightly-update.sh zenith-update.sh install-desktop-shortcut.sh set-update-time.sh 2>/dev/null || true
 chmod +x webhook-deploy.py 2>/dev/null || true
 mkdir -p logs backups
 ok "Scripts prêts"
@@ -282,6 +283,18 @@ sudo systemctl enable zenith-watchdog 2>/dev/null || warn "zenith-watchdog non i
 sudo systemctl enable zenith-nightly-update.timer 2>/dev/null || warn "zenith-nightly-update non installé"
 sudo systemctl start zenith-nightly-update.timer 2>/dev/null || true
 ok "Services systemd configurés"
+
+# Installer le raccourci "Mettre à jour Zenith Pharma" sur le bureau
+if [ -f install-desktop-shortcut.sh ]; then
+    bash install-desktop-shortcut.sh 2>/dev/null || true
+    ok "Raccourci de mise à jour installé sur le bureau (sans mot de passe)"
+fi
+
+# Règle sudoers pour permettre docker sans mot de passe (sécurisé)
+SUDOERS_FILE="/etc/sudoers.d/zenith-update"
+echo "%docker ALL=(ALL) NOPASSWD: /usr/bin/docker, /usr/bin/docker-compose" | sudo tee "$SUDOERS_FILE" > /dev/null 2>/dev/null || true
+sudo chmod 440 "$SUDOERS_FILE" 2>/dev/null || true
+ok "Règle sudoers : docker sans mot de passe pour le groupe docker"
 
 # ── 12. Portainer (optionnel) ─────────────────────────
 step "12. Installation de Portainer (interface web Docker)"
