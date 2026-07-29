@@ -517,10 +517,14 @@ class SystemAdminViewSet(ViewSet):
                 'message': 'Script de mise à jour introuvable',
             }, status=status.HTTP_404_NOT_FOUND)
 
-        # Vérifier la connexion internet
+        # Vérifier la connexion internet (curl plus fiable que ping)
         try:
-            sp.run(['ping', '-c', '1', 'github.com'],
-                   capture_output=True, timeout=10)
+            result = sp.run(
+                ['curl', '-fsSL', '--connect-timeout', '10', '-o', '/dev/null', 'https://github.com'],
+                capture_output=True, timeout=15,
+            )
+            if result.returncode != 0:
+                raise Exception(f'curl returned {result.returncode}')
         except Exception:
             return Response({
                 'success': False,
