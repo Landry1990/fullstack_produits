@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Rayon, Fournisseur } from '../../types';
 
@@ -24,6 +24,19 @@ export const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
   loading
 }) => {
   const { t } = useTranslation(['products', 'common']);
+  const [openMenu, setOpenMenu] = useState<'rayon' | 'fournisseur' | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenu]);
 
   if (selectedCount === 0) return null;
 
@@ -39,30 +52,42 @@ export const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
           ✕
         </button>
       </div>
-      <div className="flex gap-2 flex-wrap">
-        <div className="relative group">
-          <label tabIndex={0} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-indigo-200 bg-base-100 text-primary hover:bg-primary/10 cursor-pointer transition-colors">
+      <div ref={containerRef} className="flex gap-2 flex-wrap">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpenMenu(openMenu === 'rayon' ? null : 'rayon')}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-indigo-200 bg-base-100 text-primary hover:bg-primary/10 cursor-pointer transition-colors"
+          >
             📁 {t('products:actions.bulk_rayon')} ▼
-          </label>
-          <ul className="absolute bottom-full right-0 z-50 p-1 shadow-xl bg-base-100 rounded-lg w-40 max-h-48 overflow-auto border border-base-200 hidden group-focus-within:block mb-1">
-            {rayons.map(r => (
-              <li key={r.id}>
-                <a onClick={() => onBulkChangeRayon(r.id)} className="text-xs py-2 hover:bg-base-200 text-base-content block">{r.name}</a>
-              </li>
-            ))}
-          </ul>
+          </button>
+          {openMenu === 'rayon' && (
+            <ul className="absolute bottom-full right-0 z-50 p-1 shadow-xl bg-base-100 rounded-lg w-40 max-h-48 overflow-auto border border-base-200 mb-1">
+              {rayons.map(r => (
+                <li key={r.id}>
+                  <a onClick={() => { onBulkChangeRayon(r.id); setOpenMenu(null); }} className="text-xs py-2 hover:bg-base-200 text-base-content block">{r.name}</a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        <div className="relative group">
-          <label tabIndex={0} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-base-300 bg-base-100 text-base-content hover:bg-base-200 cursor-pointer transition-colors">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpenMenu(openMenu === 'fournisseur' ? null : 'fournisseur')}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-base-300 bg-base-100 text-base-content hover:bg-base-200 cursor-pointer transition-colors"
+          >
             🏭 {t('products:actions.bulk_provider')} ▼
-          </label>
-          <ul className="absolute bottom-full right-0 z-50 p-1 shadow-xl bg-base-100 rounded-lg w-48 max-h-48 overflow-auto border border-base-200 hidden group-focus-within:block mb-1">
-            {fournisseurs.map(f => (
-              <li key={f.id}>
-                <a onClick={() => onBulkChangeFournisseur(f.id)} className="text-xs py-2 hover:bg-base-200 text-base-content block">{f.name}</a>
-              </li>
-            ))}
-          </ul>
+          </button>
+          {openMenu === 'fournisseur' && (
+            <ul className="absolute bottom-full right-0 z-50 p-1 shadow-xl bg-base-100 rounded-lg w-48 max-h-48 overflow-auto border border-base-200 mb-1">
+              {fournisseurs.map(f => (
+                <li key={f.id}>
+                  <a onClick={() => { onBulkChangeFournisseur(f.id); setOpenMenu(null); }} className="text-xs py-2 hover:bg-base-200 text-base-content block">{f.name}</a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <button
           className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md text-white bg-error hover:bg-error-focus transition-colors"
