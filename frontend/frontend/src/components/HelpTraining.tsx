@@ -3,6 +3,7 @@ import {
   BookOpen, Play, Search, ShoppingCart, Package,
   TrendingUp, Users, Settings, Truck, Clock, ChevronRight, Keyboard, Lightbulb, Printer, Activity
 } from 'lucide-react';
+import { Button } from './shadcn/button';
 import { useTranslation } from 'react-i18next';
 
 interface Video {
@@ -289,7 +290,7 @@ const HelpTraining = () => {
                       <span>{activeVideo.duration}</span>
                     </div>
                   </div>
-                  <button onClick={() => setActiveVideo(null)} className="btn btn-ghost btn-sm text-xs">{t('help:training.close')}</button>
+                  <Button onClick={() => setActiveVideo(null)} variant="ghost" size="sm" className="text-xs">{t('help:training.close')}</Button>
                 </div>
               </div>
             )}

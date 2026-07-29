@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import UserHeader from './common/UserHeader'
 import Omnisearch from './common/Omnisearch'
+import { Button } from './shadcn/button'
 import TransformationAlertListener from './common/TransformationAlertListener'
 import { SidebarProvider } from '../context/SidebarContext'
 import { useSidebar } from '../hooks/useSidebar'
@@ -35,13 +36,13 @@ function LayoutContent() {
             )}
             {isLoading && <span className="loading loading-spinner loading-xs"></span>}
           </div>
-          <button
+          <Button
             type="button"
             onClick={() => closePoste()}
-            className="btn btn-xs btn-ghost text-white hover:bg-emerald-700"
+            variant="ghost" size="sm" className="text-white hover:bg-emerald-700 h-6 px-2 text-xs"
           >
             Fermer le point
-          </button>
+          </Button>
         </div>
         <main className="flex-1 overflow-hidden">
           <Suspense fallback={

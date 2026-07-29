@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../shadcn/button';
 
 interface PaginationProps {
   currentPage: number;
@@ -38,20 +39,20 @@ const Pagination: React.FC<PaginationProps> = ({
             })}
         </div>
         <div className="flex gap-2">
-            <button 
-                className="btn btn-sm btn-outline hover:btn-primary transition-all duration-200"
+            <Button 
+                variant="outline" size="sm"
                 onClick={onPrev}
                 disabled={currentPage <= 1 || isLoading}
             >
                 {t('common:previous', { defaultValue: 'Précédent' })}
-            </button>
-            <button 
-                className="btn btn-sm btn-outline hover:btn-primary transition-all duration-200"
+            </Button>
+            <Button 
+                variant="outline" size="sm"
                 onClick={onNext}
                 disabled={hasNext === false || currentPage >= totalPages || isLoading}
             >
                 {t('common:next', { defaultValue: 'Suivant' })}
-            </button>
+            </Button>
         </div>
     </div>
   );

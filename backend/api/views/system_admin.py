@@ -496,11 +496,45 @@ class SystemAdminViewSet(ViewSet):
                 'current_version': local_commit[:8] if len(local_commit) >= 8 else local_commit,
                 'message': 'Système déjà à jour',
             })
+
+        # Récupérer les messages de commits entre la version locale et distante
+        changelog_lines = []
+        try:
+            proc = sp.run(
+                ['git', 'log', f'{local_commit}..{remote_commit}', '--oneline', '--no-decorate'],
+                capture_output=True, text=True, timeout=15, cwd=app_dir
+            )
+            if proc.returncode == 0 and proc.stdout.strip():
+                changelog_lines = [
+                    line.strip() for line in proc.stdout.strip().split('\n')
+                    if line.strip()
+                ]
+        except Exception:
+            pass
+
+        # Lire aussi le CHANGELOG.md (dernière section)
+        changelog_md = ''
+        try:
+            cl_path = Path(app_dir) / 'CHANGELOG.md'
+            if not cl_path.exists():
+                cl_path = Path(settings.BASE_DIR).parent / 'CHANGELOG.md'
+            if cl_path.exists():
+                text = cl_path.read_text(encoding='utf-8')
+                sections = text.split('\n## ')
+                for section in sections[1:4]:
+                    section = section.strip()
+                    if section:
+                        changelog_md += '## ' + section + '\n\n'
+        except Exception:
+            pass
+
         return Response({
             'update_available': True,
             'current_version': local_commit[:8] if len(local_commit) >= 8 else local_commit,
             'latest_version': remote_commit[:8] if len(remote_commit) >= 8 else remote_commit,
             'message': 'Une mise à jour est disponible',
+            'changelog': changelog_lines[:20],
+            'changelog_md': changelog_md.strip(),
         })
 
     @action(detail=False, methods=['post'])

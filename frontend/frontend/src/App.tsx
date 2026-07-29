@@ -2,6 +2,7 @@ import { Suspense, useState, useEffect } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useLicenceShortcut } from './hooks/useLicenceShortcut'
+import { useVersionCheck } from './hooks/useVersionCheck'
 import { AuthProvider } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
@@ -137,6 +138,7 @@ function GlobalAlerts() {
 
 export default function App() {
   useLicenceShortcut();
+  useVersionCheck();
 
   return (
     <ErrorBoundary>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
+import { Button } from './shadcn/button';
 import type { Substance } from '../hooks/useSubstances';
 
 interface Interaction {
@@ -195,9 +196,9 @@ export default function InteractionsManager() {
             <option value="PRECAUTION">Précaution</option>
           </select>
         </div>
-        <button className="btn btn-primary btn-sm rounded-xl" onClick={openAddModal}>
+        <Button variant="default" size="sm" className="rounded-xl" onClick={openAddModal}>
           + Ajouter une interaction
-        </button>
+        </Button>
       </div>
 
       {/* CSV Upload */}
@@ -213,13 +214,13 @@ export default function InteractionsManager() {
             onChange={e => { setCsvFile(e.target.files?.[0] || null); setUploadResult(null); }}
             className="file-input file-input-bordered file-input-sm w-full max-w-xs rounded-xl bg-base-200/50 border-none"
           />
-          <button
-            className="btn btn-secondary btn-sm rounded-xl"
+          <Button
+            variant="secondary" size="sm" className="rounded-xl"
             disabled={!csvFile || uploading}
             onClick={handleCsvUpload}
           >
             {uploading ? <span className="loading loading-spinner loading-xs" /> : 'Importer'}
-          </button>
+          </Button>
         </div>
         {uploadResult && (
           <div className="mt-2 text-sm">
@@ -266,8 +267,8 @@ export default function InteractionsManager() {
                     <td className="text-xs text-base-content/70 max-w-md truncate" title={inter.description}>{inter.description}</td>
                     <td>
                       <div className="flex gap-1">
-                        <button className="btn btn-ghost btn-xs" onClick={() => openEditModal(inter)}>Éditer</button>
-                        <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(inter.id)}>Suppr.</button>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => openEditModal(inter)}>Éditer</Button>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-red-500" onClick={() => handleDelete(inter.id)}>Suppr.</Button>
                       </div>
                     </td>
                   </tr>
@@ -279,9 +280,9 @@ export default function InteractionsManager() {
 
         {totalPages > 1 && (
           <div className="flex justify-center gap-2 p-4 border-t border-base-200">
-            <button className="btn btn-xs btn-ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Précédent</button>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Précédent</Button>
             <span className="text-sm py-1 opacity-60 font-medium">Page {page} / {totalPages}</span>
-            <button className="btn btn-xs btn-ghost" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Suivant</button>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Suivant</Button>
           </div>
         )}
       </div>
@@ -342,14 +343,14 @@ export default function InteractionsManager() {
               )}
             </div>
             <div className="flex gap-2 justify-end mt-6">
-              <button className="btn btn-ghost rounded-xl" onClick={() => setShowModal(false)}>Annuler</button>
-              <button
-                className="btn btn-primary rounded-xl"
+              <Button variant="ghost" className="rounded-xl" onClick={() => setShowModal(false)}>Annuler</Button>
+              <Button
+                variant="default" className="rounded-xl"
                 disabled={saving || !formSubA || !formSubB || formSubA === formSubB}
                 onClick={handleSave}
               >
                 {saving ? <span className="loading loading-spinner loading-sm" /> : (editingId ? 'Mettre à jour' : 'Créer')}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import JsBarcode from 'jsbarcode'
 import bwipjs from 'bwip-js'
 import PremiumModal from './common/PremiumModal'
 import { useTranslation } from 'react-i18next'
+import { Button } from './shadcn/button'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Commande, ProduitModel } from '../types'
 
@@ -985,9 +986,9 @@ ${labelsHTML}
               
               {/* Reset button */}
               <div className="pt-1.5 flex justify-end">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-ghost btn-xs text-primary gap-1"
+                  variant="ghost" size="sm" className="text-emerald-600 gap-1 h-6 px-2 text-xs"
                   onClick={() => setFields(FIELD_KEYS.map(f => ({
                     key: f.key,
                     icon: f.icon,
@@ -999,7 +1000,7 @@ ${labelsHTML}
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   {t('common:reset_default', { defaultValue: 'Par défaut' })}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1055,13 +1056,13 @@ ${labelsHTML}
             <div className="flex items-center gap-3 bg-base-100 border border-base-200 p-3 rounded-xl animate-in fade-in slide-in-from-top-1 duration-200">
               <span className="text-sm font-medium flex-1">{t('qty.fixed_count_label', { defaultValue: "Nombre d'étiquettes par produit :" })}</span>
               <div className="flex items-center gap-1">
-                <button 
+                <Button 
                   type="button"
-                  className="btn btn-circle btn-ghost btn-xs"
+                  variant="ghost" size="icon" className="h-6 w-6 rounded-full"
                   onClick={() => setFixedQty(Math.max(0, fixedQty - 1))}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
-                </button>
+                </Button>
                 <input
                   type="number"
                   min="0"
@@ -1069,13 +1070,13 @@ ${labelsHTML}
                   value={fixedQty}
                   onChange={(e) => setFixedQty(Math.max(0, parseInt(e.target.value) || 0))}
                 />
-                <button 
+                <Button 
                   type="button"
-                  className="btn btn-circle btn-ghost btn-xs"
+                  variant="ghost" size="icon" className="h-6 w-6 rounded-full"
                   onClick={() => setFixedQty(fixedQty + 1)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1133,22 +1134,22 @@ ${labelsHTML}
 
         {/* ── Actions ── */}
         <div className="flex justify-end gap-3 pt-1">
-          <button onClick={onClose} className="btn btn-ghost px-6 rounded-xl">
+          <Button onClick={onClose} variant="ghost" className="px-6 rounded-xl">
             {t('cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handlePrintPDF}
-            className="btn btn-secondary px-6 rounded-xl gap-2"
+            variant="secondary" className="px-6 rounded-xl gap-2"
             disabled={labelsData.length === 0}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             PDF
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handlePrint}
-            className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20 gap-2"
+            variant="default" className="px-8 rounded-xl shadow-lg shadow-emerald-600/20 gap-2"
             disabled={printing || labelsData.length === 0}
           >
             {printing ? (
@@ -1164,7 +1165,7 @@ ${labelsHTML}
                 {t('print')} ({labelsData.length})
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </PremiumModal>
