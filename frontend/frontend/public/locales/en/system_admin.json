@@ -186,5 +186,16 @@
   "reminder_question": "Would you like to check now if an update is available?",
   "reminder_yes": "Yes, check",
   "reminder_no": "No, later",
-  "reminder_ok": "OK"
+  "reminder_ok": "OK",
+  "update_step_starting": "Starting update...",
+  "update_step_running": "Update in progress...",
+  "update_step_restarting": "Restarting services...",
+  "update_step_done": "Update complete",
+  "update_started": "Update started — the application will be temporarily unavailable",
+  "update_success": "Update completed successfully",
+  "update_success_title": "✓ Update successful",
+  "update_success_desc": "The system has been updated successfully. You can continue using the application.",
+  "update_ok": "OK",
+  "update_failed": "Update failed",
+  "update_no_update": "No update available — your system is up to date"
 }

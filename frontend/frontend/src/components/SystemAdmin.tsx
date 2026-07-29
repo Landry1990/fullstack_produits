@@ -126,6 +126,9 @@ export default function SystemAdmin() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState(0);
+  const [updateStep, setUpdateStep] = useState('');
+  const [updateDone, setUpdateDone] = useState(false);
 
   // Planification mise à jour
   const [updateTime, setUpdateTime] = useState('02:00');
@@ -385,14 +388,41 @@ export default function SystemAdmin() {
     setUpdateError(null);
     setUpdateMessage(null);
     setShowUpdateConfirm(false);
+    setUpdateProgress(0);
+    setUpdateStep(t('update_step_starting'));
+    setUpdateDone(false);
     try {
-      const res = await api.post('/system-admin/run_update/');
-      setUpdateMessage(res.data.message);
-      setUpdateStatus(null);
+      await api.post('/system-admin/run_update/');
+      setUpdateMessage(t('update_started'));
+      // Poller le statut
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await api.get('/system-admin/update_status/');
+          const s = statusRes.data;
+          if (s.status === 'running') {
+            setUpdateProgress((prev) => Math.min(prev + 5, 90));
+            setUpdateStep(s.step || t('update_step_running'));
+          } else if (s.status === 'done') {
+            setUpdateProgress(100);
+            setUpdateStep(t('update_step_done'));
+            setUpdateDone(true);
+            setUpdateMessage(t('update_success'));
+            setRunningUpdate(false);
+            clearInterval(pollInterval);
+          } else if (s.status === 'failed') {
+            setUpdateError(t('update_failed') + (s.error ? ': ' + s.error : ''));
+            setRunningUpdate(false);
+            clearInterval(pollInterval);
+          }
+        } catch {
+          // Le backend redémarre pendant la mise à jour, c'est normal
+          setUpdateProgress((prev) => Math.min(prev + 3, 95));
+          setUpdateStep(t('update_step_restarting'));
+        }
+      }, 3000);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string; message?: string } } };
       setUpdateError(err?.response?.data?.detail || err?.response?.data?.message || t('update_run_error'));
-    } finally {
       setRunningUpdate(false);
     }
   };
@@ -1390,15 +1420,49 @@ export default function SystemAdmin() {
               )}
 
               {/* Bouton mettre à jour */}
-              {updateStatus?.update_available && !showUpdateConfirm && (
+              {updateStatus?.update_available && !showUpdateConfirm && !runningUpdate && (
                 <div className="mt-4">
                   <button
                     onClick={() => setShowUpdateConfirm(true)}
-                    disabled={runningUpdate}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-all"
                   >
                     <DownloadCloud className="w-4 h-4" />
                     {t('update_now')}
+                  </button>
+                </div>
+              )}
+
+              {/* Barre de progression */}
+              {runningUpdate && (
+                <div className="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
+                    <span className="text-sm font-medium text-indigo-900">{updateStep}</span>
+                  </div>
+                  <div className="w-full bg-indigo-100 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${updateProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-indigo-500 mt-1 text-right">{updateProgress}%</p>
+                </div>
+              )}
+
+              {/* Notification de succès */}
+              {updateDone && !runningUpdate && (
+                <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    <span className="text-sm font-bold text-emerald-900">{t('update_success_title')}</span>
+                  </div>
+                  <p className="text-sm text-emerald-700">{t('update_success_desc')}</p>
+                  <button
+                    onClick={() => { setUpdateDone(false); setUpdateStatus(null); handleCheckUpdate(); }}
+                    className="mt-3 flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    {t('update_ok')}
                   </button>
                 </div>
               )}
