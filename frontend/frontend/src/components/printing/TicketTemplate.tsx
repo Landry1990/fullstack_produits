@@ -79,7 +79,8 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
         <div className="text-[9px] leading-tight">
             {settings.address && <p className="mb-1 font-bold">{settings.address}</p>}
             <div className="font-mono text-[8px]">
-               {settings.phone && <div>{t('invoice.tel')}: {settings.phone}</div>}
+               {(settings.phone || settings.phone2) && <div>{t('invoice.tel')}: {settings.phone}{settings.phone2 ? ` / ${settings.phone2}` : ''}</div>}
+               {settings.email && <div>{t('invoice.email', { defaultValue: 'Email' })}: {settings.email}</div>}
                {settings.niu && <div>{t('invoice.niu')}: {settings.niu}</div>}
                {settings.registre_commerce && <div>{t('invoice.rc')}: {settings.registre_commerce}</div>}
             </div>
