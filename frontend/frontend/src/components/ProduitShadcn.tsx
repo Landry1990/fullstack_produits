@@ -22,6 +22,7 @@ import {
 } from '../hooks/useProduits'
 import { useTVA } from '../hooks/useTVA'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
@@ -32,6 +33,7 @@ import { ProductTabsContent } from './products/ProductTabsContent'
 import ProduitCreateModal from './ProduitFormModal'
 import PasswordConfirmModal from './PasswordConfirmModal'
 import { StockAdjustmentModal } from './products/modals/StockAdjustmentModal'
+import ImportProductsModal from './products/ImportProductsModal'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -77,8 +79,10 @@ export default function ProduitShadcn() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isAdjustOpen, setIsAdjustOpen] = useState(false)
   const [isPasswordOpen, setIsPasswordOpen] = useState(false)
+  const [isImportOpen, setIsImportOpen] = useState(false)
   const [passwordConfig, setPasswordConfig] = useState({ title: '', message: '' })
   const pendingActionRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  const queryClient = useQueryClient()
 
   /* ── Forms ── */
   const [editForm, setEditForm] = useState<Record<string, unknown>>({})
@@ -365,7 +369,14 @@ export default function ProduitShadcn() {
           <Button variant="primary" size="sm" leftIcon={<Package className="size-4" />} onClick={() => setIsCreateOpen(true)}>
             {t('products:actions.new', { defaultValue: 'Nouveau' })}
           </Button>
-          <Button variant="outline" size="sm" leftIcon={<Upload className="size-4" />} onClick={() => {}}>
+          <Button variant="outline" size="sm" leftIcon={<Upload className="size-4" />} onClick={() => {
+            setPasswordConfig({
+              title: t('products:messages.password_confirm_import_title', { defaultValue: 'Confirmation requise' }),
+              message: t('products:messages.password_confirm_import_body', { defaultValue: 'Veuillez saisir votre mot de passe pour importer des produits.' })
+            })
+            pendingActionRef.current = async () => { setIsImportOpen(true) }
+            setIsPasswordOpen(true)
+          }}>
             {t('products:import.title', { defaultValue: 'Importer' })}
           </Button>
         </div>
@@ -656,6 +667,12 @@ export default function ProduitShadcn() {
         formes={formes}
         groupes={groupes as unknown as Groupe[]}
       />
+      {isImportOpen && (
+        <ImportProductsModal
+          onClose={() => setIsImportOpen(false)}
+          onSuccess={() => { queryClient.invalidateQueries({ queryKey: ['produits'] }); setIsImportOpen(false); }}
+        />
+      )}
     </div>
   )
 }
