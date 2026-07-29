@@ -2,6 +2,157 @@
 
 ---
 
+## 2026-07-29 (20:00)
+
+### 🎨 Migration DaisyUI → Tailwind — Catégorie `form-control / label-text` TERMINÉE
+
+- **Catégorie `form-control` / `label` / `label-text` / `label-text-alt` — TERMINÉE** (6 fichiers, 22 occurrences)
+  - `StatistiquesFournisseur.tsx` (2 form-control + 2 label + 2 label-text), `ProductFilters.tsx` (1 form-control), `SimplePrintLabelsModal.tsx` (6 label-text + 6 label cursor-pointer), `ObjectivesSettings.tsx` (4 form-control + 6 label + 4 label-text + 2 label-text-alt), `MergeCommandesModal.tsx` (1 label), `TransferCommandeModal.tsx` (1 label)
+  - `form-control` → `flex flex-col gap-1`
+  - `className="label"` → `flex flex-col`
+  - `label-text` → `text-sm font-medium` (ou `text-sm font-bold`)
+  - `label-text-alt` → `text-xs text-base-content/60`
+  - `label cursor-pointer` → `flex items-center cursor-pointer` (ou `flex items-start cursor-pointer`)
+
+- **Bonus : `radio radio-primary radio-sm` et `select-ref select-bordered` — TERMINÉS**
+  - `SimplePrintLabelsModal.tsx` (6 radio), `FournisseurFormModals.tsx` (1 select-ref), `TransferCommandesModal.tsx` (1 select-ref), `MergeCommandesModal.tsx` (1 select-ref)
+  - `radio radio-primary radio-sm` → `size-4 accent-primary cursor-pointer`
+  - `select-ref select-bordered` → mêmes classes que `select select-bordered`
+
+## 2026-07-29 (19:45)
+
+### 🎨 Migration DaisyUI → Tailwind — Catégorie `tabs` TERMINÉE
+
+- **Catégorie `tabs` / `tab tab-active` — TERMINÉE** (2 fichiers, 10 occurrences)
+  - `StatistiquesFournisseur.tsx` (tabs-boxed + 4 tabs), `ImportDCIPage.tsx` (tabs-bordered + 2 tabs)
+  - `tabs tabs-boxed` → `inline-flex p-1 rounded-lg border gap-1`
+  - `tabs tabs-bordered` → `inline-flex border-b gap-0`
+  - `tab tab-active` → `px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer` + `bg-primary text-primary-content` (active) / `text-base-content/60 hover:bg-base-200` (inactive)
+  - Note : la plupart des autres fichiers utilisaient déjà le composant Tabs shadcn
+
+## 2026-07-29 (19:30)
+
+### 🎨 Migration DaisyUI → Tailwind — Catégories `modal-box` + `input/select-bordered` TERMINÉES
+
+- **Catégorie `modal-box` / `modal-open` — TERMINÉE** (3 fichiers, 6 occurrences)
+  - `PendingSalesDrawer.tsx`, `MergeCommandesModal.tsx`, `TransferCommandeModal.tsx`
+  - `modal modal-open` → overlay fixed + content rounded-2xl
+
+- **Catégorie `input input-bordered` / `select select-bordered` — TERMINÉE** (13 fichiers, 27 occurrences)
+  - `TelegramHistory.tsx` (1 input + 1 select), `StatistiquesFournisseur.tsx` (2 input-sm), `SimplePrintLabelsModal.tsx` (1 input-sm), `ProductFilters.tsx` (1 input-md), `OrdonnanceModal.tsx` (4 input), `LoyaltyConfigModal.tsx` (4 input), `JournalAudit.tsx` (1 select-sm + 2 input-sm), `ImportDCIPage.tsx` (2 input-sm/xs), `FournisseurFormModals.tsx` (2 input-sm), `CatalogDCI.tsx` (1 input), `CatalogDCIAddModal.tsx` (1 input), `HelpTraining.tsx` (1 input), `InteractionsManager.tsx` (1 input-sm + 4 select), `SudoValidationModal.tsx` (1 input avec error/success dynamiques), `ObjectivesSettings.tsx` (3 input + 1 select)
+  - Remplacement : `input input-bordered` → `w-full rounded-lg border border-base-300 bg-base-100 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all`
+  - `input-sm` → `h-9 text-xs px-3`, `input-xs` → `h-8 text-xs px-3`
+  - `select select-bordered` → mêmes classes sur `<select>`
+  - `input-error` → `border-red-300` (SudoValidationModal)
+
+## 2026-07-29 (19:00)
+
+### 🎨 Migration DaisyUI → Tailwind — Catégorie `modal-box` TERMINÉE
+
+- **Catégorie `modal-box` / `modal-open` — TERMINÉE** (3 fichiers, 6 occurrences)
+  - `PendingSalesDrawer.tsx` (2: modal-open + modal-box), `MergeCommandesModal.tsx` (2), `TransferCommandeModal.tsx` (2)
+  - Remplacement : `modal modal-open` → `fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4`, `modal-box` → `bg-base-100 rounded-2xl shadow-2xl border border-base-300 p-6 w-full max-h-[90vh] overflow-y-auto`
+  - Pas de `modal-action` trouvé
+
+## 2026-07-29 (18:45)
+
+### 🎨 Migration DaisyUI → Tailwind — Catégorie `table` TERMINÉE
+
+- **Catégorie `table table-*` — TERMINÉE** (10 fichiers, 12 occurrences)
+  - `SkeletonTable.tsx` (1: table-sm), `TelegramHistory.tsx` (1: table), `StatistiquesFournisseur.tsx` (3: 2× table-zebra + table), `PointageReleveModal.tsx` (1: table-sm table-pin-rows → sticky thead), `OrdonnanceModal.tsx` (1: table-xs), `InteractionsManager.tsx` (1: table), `ImportDCIPage.tsx` (1: table), `BestCashierMetric.tsx` (1: table-xs), `BulkCancelModal.tsx` (1: table-xs), `JournalCaisseTable.tsx` (1: table-sm)
+  - Remplacement : `table` → `w-full border-collapse`, `table-sm` → `text-sm`, `table-xs` → `text-xs`, `table-zebra` → `[&>tbody>tr:nth-child(even)]:bg-base-200/50`, `table-pin-rows` → `sticky top-0 z-10` sur `<thead>`
+
+## 2026-07-29 (18:30)
+
+### 🎨 Migration DaisyUI → Tailwind — Catégorie `alert` TERMINÉE
+
+- **Catégorie `alert alert-*` — TERMINÉE** (7 fichiers, 11 occurrences)
+  - `StatistiquesFournisseur.tsx` (3: info, warning, success), `ClinicalAlerts.tsx` (2: error, warning), `FacturationNotifications.tsx` (2: error, success), `CatalogDCIAddModal.tsx` (1: error), `PointageReleveModal.tsx` (1: error), `SimplePrintLabelsModal.tsx` (1: warning), `SupplierDashboard.tsx` (1: error + `alert-ref`)
+  - Remplacement : `alert alert-X` → `flex items-start gap-3 p-4 rounded-lg` + couleurs Tailwind (light/dark) avec bordures
+  - `alert-ref` (custom) → même mapping que `alert`
+
+## 2026-07-29 (18:00)
+
+### 🎨 Migration DaisyUI → Shadcn/UI — Catégorie `badge` TERMINÉE
+
+- **Catégorie `badge` / `badge-*` — TERMINÉE** (12 fichiers, 23 occurrences)
+  - `TelegramHistory.tsx` (3 badges + `getStatusClass` refactored), `StatistiquesFournisseur.tsx` (1), `SimplePrintLabelsModal.tsx` (2), `PointageReleveModal.tsx` (1), `OrdonnanceModal.tsx` (3), `InteractionsManager.tsx` (1 + `GRAVITY_COLORS` refactored), `ImportDCIPage.tsx` (2), `PendingSalesDrawer.tsx` (1), `ClinicalAlerts.tsx` (2), `CatalogDCI.tsx` (3), `CatalogDCIAddModal.tsx` (2), `BestCashierMetric.tsx` (3)
+  - Remplacement : `<span className="badge badge-X badge-Y">` → `<Badge variant="X" size="Y">`
+  - `badge-xs` → `size="sm" className="h-4 px-1 text-[9px]"` (pas de size xs natif)
+  - `badge-info` → `variant="primary"` (pas de variant info natif)
+  - `badge-white` → `variant="outline"` avec classes custom
+  - Maps dynamiques (`GRAVITY_COLORS`, `getStatusClass`) typés vers les variants du composant `Badge`
+
+## 2026-07-29 (17:00)
+
+### 🎨 Migration DaisyUI → Shadcn/UI (suite — 23 fichiers)
+
+- **Catégorie `progress progress-*` — TERMINÉE** (1 fichier)
+  - `StatistiquesFournisseur.tsx` → composant `Progress` shadcn avec `[&>div]:bg-*` pour les couleurs
+- **Catégorie `dropdown-content` / `menu` / `menu-title` — TERMINÉE** (3 fichiers)
+  - `SelectionHeader.tsx`, `BulkActionsBar.tsx`, `FournisseursList.tsx` → `relative group` + `group-focus-within:block` Tailwind
+- **Catégorie `loading loading-spinner` — TERMINÉE** (23 fichiers, 37 occurrences)
+  - `ActionIcon.tsx`, `TelegramHistory.tsx`, `SubstitutionModal.tsx`, `RouteErrorBoundary.tsx`, `ErrorBoundary.tsx`, `BestCashierMetric.tsx`, `CatalogDCI.tsx`, `CatalogDCIAddModal.tsx`, `Layout.tsx`, `JournalAudit.tsx`, `OrdonnanceModal.tsx`, `PointageReleveModal.tsx`, `SimplePrintLabelsModal.tsx`, `PermissionRoute.tsx`, `RouteGuards.tsx`, `FeedbackModal.tsx`, `SudoValidationModal.tsx`, `DashboardVendeur.tsx`, `ObjectivesSettings.tsx`, `StatistiquesFournisseur.tsx`, `InteractionsManager.tsx`, `LoyaltyConfigModal.tsx`, `ImportDCIPage.tsx`
+  - Remplacement : `<span className="loading loading-spinner loading-xs/sm/md/lg">` → `<Loader2 className="size-3/4/5/8 animate-spin" />`
+
+### 📊 Bilan migration DaisyUI (cumul)
+
+| Catégorie | Statut | Fichiers |
+|-----------|--------|----------|
+| `btn` / `btn-*` | ✅ | 28 |
+| `card` / `card-body` / `card-title` | ✅ | 1 |
+| `radial-progress` | ✅ | 1 |
+| `file-input` | ✅ | 2 |
+| `divider` | ✅ | 3 |
+| `progress progress-*` | ✅ | 1 |
+| `dropdown-content` / `menu` | ✅ | 3 |
+| `loading loading-spinner` | ✅ | 23 |
+| **Total terminé** | | **62 fichiers** |
+| `badge` / `badge-*` | ⬜ | ~80 |
+| `alert alert-*` | ⬜ | ~40 |
+| `table table-*` | ⬜ | ~30 |
+| `modal-box` / `modal-action` | ⬜ | ~30 |
+| `input input-bordered` / `select-bordered` | ⬜ | ~20 |
+| `tabs` / `tab tab-active` | ⬜ | ~20 |
+| `form-control` / `label-text` | ⬜ | ~15 |
+| **Restant** | | **~125 fichiers** |
+
+## 2026-07-29 (16:00)
+
+### 🎨 Migration DaisyUI → Shadcn/UI (suite)
+
+- **Catégorie `btn` / `btn-*` — TERMINÉE** (28 fichiers au total)
+  - Jour 3 : `SudoValidationModal`, `SupplierDashboard`, `ClientDeleteWarningModal`, `BulkDeleteWarningModal`, `TransferCommandeModal`, `MergeCommandesModal`, `HistoriqueClotures`, `StatistiquesFournisseur`
+  - Remplacement de `btn`, `btn-ref`, `btn-ghost`, `btn-success`, `btn-info`, `btn-circle` par composant `Button` shadcn
+- **Catégorie `card` / `card-body` / `card-title` — TERMINÉE** (1 fichier)
+  - `StatistiquesFournisseur.tsx` → `Card`, `CardContent`, `CardTitle`
+- **Catégorie `radial-progress` — TERMINÉE** (1 fichier)
+  - `StatistiquesFournisseur.tsx` → conic-gradient CSS custom
+- **Catégorie `file-input` — TERMINÉE** (2 fichiers)
+  - `InteractionsManager.tsx`, `ImportDCIPage.tsx` → classes `file:` Tailwind natives
+- **Catégorie `divider` — TERMINÉE** (3 fichiers)
+  - `StatistiquesFournisseur.tsx`, `OrdonnanceModal.tsx`, `LoyaltyConfigModal.tsx` → `border-t border-base-200`
+
+### 🐛 Correctifs — Clients
+
+- **Modal création client** (`ClientFormModal.tsx`, `Clients.tsx`)
+  - Auto-focus du curseur dans le champ "Nom" à l'ouverture du modal
+  - "Membre fidélité" décoché par défaut à la création (was: coché)
+  - "Actif" reste coché par défaut
+- **Compteur de clients** (`Clients.tsx`)
+  - `setTotalCount(prev => prev + 1)` ajouté après création pour mise à jour immédiate du badge
+- **Badge fournisseur** (`FournisseursList.tsx`)
+  - Affichage du nombre seul (sans le texte "fournisseurs") à côté du titre
+
+### 🔧 Correctifs ESLint/TypeScript
+
+- Fix des erreurs `err is of type 'unknown'` dans 6 fichiers (casts typés)
+- Fix `Property 'results'/'count' does not exist on type '{}'` dans `CatalogDCI.tsx`
+- Fix `Object is of type 'unknown'` dans `TransferCommandeModal.tsx` (double cast)
+- Fix `Type 'unknown' not assignable to CSSProperties` dans `StatistiquesFournisseur.tsx`
+- Fix `successInfo.status` comparison et `ticketCaisse` dans `FacturationNotifications.tsx`
+- Typage de `ventesEnAttente` avec interface `PendingSale` dans `PendingSalesDrawer.tsx`
+
 ## 2026-07-29 (04:55)
 
 ### 🐛 Correctifs — Affichage et mise à jour

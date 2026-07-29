@@ -26,13 +26,13 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
       <div className="flex items-center justify-between w-full h-8">
         {selectedCount > 0 ? (
           <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2 duration-200">
-            <div className="dropdown">
+            <div className="relative group">
               <Button variant="default" size="sm" className="gap-2">
                 <MoreVertical className="size-4" />
                 {t('common:actions_title', { defaultValue: 'Actions' })}
                 <Badge variant="primary" size="sm">{selectedCount}</Badge>
               </Button>
-              <ul tabIndex={0} className="dropdown-content z-[50] menu p-2 shadow-2xl bg-base-100 rounded-box w-60 border border-base-200 mt-2">
+              <ul className="absolute z-[50] p-2 shadow-2xl bg-base-100 rounded-xl w-60 border border-base-200 mt-2 hidden group-focus-within:block">
                 {actions}
               </ul>
             </div>

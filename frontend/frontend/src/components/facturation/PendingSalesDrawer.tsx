@@ -1,10 +1,22 @@
 import { useTranslation } from 'react-i18next'
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters'
+import { Button } from '../shadcn/button'
+import { Badge } from '../ui/Badge'
+
+interface PendingSale {
+  id: number
+  lignes: { total_ligne: string | number }[]
+  remiseMode: string
+  remise: string | number
+  clientName: string
+  manualClientName: string
+  timestamp: string
+}
 
 interface PendingSalesDrawerProps {
   isOpen: boolean
   onClose: () => void
-  ventesEnAttente: unknown[]
+  ventesEnAttente: PendingSale[]
   onRestore: (id: number) => void
   onDelete: (id: number) => void
 }
@@ -21,11 +33,11 @@ export default function PendingSalesDrawer({
   if (!isOpen) return null
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-base-100 rounded-2xl shadow-2xl border border-base-300 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-lg">{t('facturation:pending_sales.title')}</h3>
-          <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">✕</button>
+          <Button onClick={onClose} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0">✕</Button>
         </div>
 
         {ventesEnAttente.length === 0 ? (
@@ -35,7 +47,7 @@ export default function PendingSalesDrawer({
         ) : (
           <div className="space-y-3">
             {ventesEnAttente.map((vente, idx) => {
-              const total = vente.lignes.reduce((sum: number, ligne: unknown) => sum + (normalizeNumberInput(ligne.total_ligne) || 0), 0)
+              const total = vente.lignes.reduce((sum: number, ligne) => sum + (normalizeNumberInput(ligne.total_ligne) || 0), 0)
               const remiseMontant = vente.remiseMode === 'montant'
                 ? normalizeNumberInput(vente.remise)
                 : total * (normalizeNumberInput(vente.remise) / 100)
@@ -45,7 +57,7 @@ export default function PendingSalesDrawer({
                 <div key={vente.id} className="group hover:bg-base-200/50 transition-all rounded-xl border border-base-200 p-2 sm:p-3 shadow-sm">
                   <div className="flex items-center gap-3 sm:gap-4 w-full">
                     {/* ID Badge */}
-                    <div className="badge badge-info badge-sm shrink-0 font-black">#{idx + 1}</div>
+                    <Badge variant="primary" size="sm" className="shrink-0 font-black">#{idx + 1}</Badge>
                     
                     {/* Client Info */}
                     <div className="flex-1 min-w-0">
@@ -82,20 +94,20 @@ export default function PendingSalesDrawer({
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                      <button
+                      <Button
                         onClick={() => onRestore(vente.id)}
-                        className="btn btn-primary btn-sm h-8 min-h-8 px-3 rounded-lg font-bold shadow-sm"
+                        variant="default" size="sm" className="h-8 px-3 rounded-lg font-bold shadow-sm"
                         title={t('common:restore')}
                       >
                         {t('common:restore')}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => onDelete(vente.id)}
-                        className="btn btn-ghost btn-sm h-8 min-h-8 w-8 p-0 rounded-lg text-error hover:bg-error/10 border-none transition-colors"
+                        variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-50 border-none transition-colors"
                         title={t('common:delete')}
                       >
                          ✕
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

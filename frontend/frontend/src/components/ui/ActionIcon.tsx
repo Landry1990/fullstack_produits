@@ -1,5 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface ActionIconProps {
   icon: LucideIcon;
@@ -68,7 +69,7 @@ const ActionIcon: React.FC<ActionIconProps> = ({
       type="button"
     >
       {loading ? (
-        <span className={`loading loading-spinner loading-xs`} />
+        <Loader2 className="size-3 animate-spin" />
       ) : (
         <Icon size={getIconSize()} strokeWidth={2.5} />
       )}

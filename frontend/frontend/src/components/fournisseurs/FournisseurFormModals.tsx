@@ -135,7 +135,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                   <select
                     value={data.type_reglement}
                     onChange={e => setData((f: unknown) => ({...f, type_reglement: e.target.value as 'FACTURE'|'RELEVE'}))}
-                    className="select-ref select-bordered select-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full h-10 rounded-lg border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                     disabled={isSubmitting}
                   >
                     <option value="FACTURE">{t('providers:form.payment_type_invoice')}</option>
@@ -184,7 +184,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     placeholder="2"
                     value={data.delai_livraison_jours ?? 2}
                     onChange={e => setData((f: unknown) => ({...f, delai_livraison_jours: parseInt(e.target.value) || 2}))}
-                    className="input input-bordered input-sm w-full rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                     disabled={isSubmitting}
                   />
                 </Field>
@@ -199,7 +199,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                   placeholder={t('providers:form.address_placeholder')}
                   value={data.address}
                   onChange={e => setData((f: unknown) => ({...f, address: e.target.value}))}
-                  className="input input-bordered input-sm w-full rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                   disabled={isSubmitting}
                 />
               </Field>

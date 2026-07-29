@@ -5,6 +5,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import type { ProduitModel } from '../types';
 import CatalogDCIAddModal from './CatalogDCIAddModal';
+import { Loader2 } from 'lucide-react';
+import { Button } from './shadcn/button';
+import { Badge } from './ui/Badge';
 
 // Lucide icons simulation (using SVG strings as per skill rules)
 const Icons = {
@@ -69,7 +72,7 @@ export default function CatalogDCI() {
             <input
               type="text"
               placeholder="Rechercher une DCI..."
-              className="input input-bordered w-full pl-12 rounded-2xl bg-base-200/50 border-none focus:ring-2 ring-primary/20"
+              className="w-full pl-12 rounded-2xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:ring-2 ring-primary/20 transition-all"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -117,17 +120,17 @@ export default function CatalogDCI() {
 
         {substancesData && substancesData.count > 0 && (
           <div className="p-4 border-t border-base-200 bg-base-200/20 flex items-center justify-between">
-            <button 
-              className="btn btn-sm btn-ghost" 
+            <Button 
+              variant="ghost" size="sm" 
               disabled={!substancesData.previous}
               onClick={() => setPage(p => p - 1)}
-            >Précédent</button>
+            >Précédent</Button>
             <span className="text-xs font-bold text-base-content/50">Page {page}</span>
-            <button 
-              className="btn btn-sm btn-ghost" 
+            <Button 
+              variant="ghost" size="sm" 
               disabled={!substancesData.next}
               onClick={() => setPage(p => p + 1)}
-            >Suivant</button>
+            >Suivant</Button>
           </div>
         )}
       </div>
@@ -147,13 +150,13 @@ export default function CatalogDCI() {
                 </div>
                 <p className="text-base-content/60 font-medium">Gestion du groupe générique et des substitutions</p>
               </div>
-              <button 
+              <Button 
                 onClick={() => setIsAddModalOpen(true)}
-                className="btn btn-primary rounded-2xl shadow-lg shadow-primary/20 px-8"
+                variant="default" className="rounded-2xl shadow-lg shadow-emerald-600/20 px-8"
               >
                 <Icons.Search />
                 Rechercher et ajouter
-              </button>
+              </Button>
             </div>
 
             <div className={`flex-1 grid gap-6 overflow-hidden ${(refMedsData?.count || 0) > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
@@ -164,38 +167,38 @@ export default function CatalogDCI() {
                     <Icons.Box />
                     Produits en pharmacie
                   </h3>
-                  <span className="badge badge-primary font-bold">{produitsData?.count || 0}</span>
+                  <Badge variant="primary" className="font-bold">{(produitsData as { count?: number })?.count || 0}</Badge>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                   {loadingProduits ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map(i => <div key={i} className="h-24 w-full bg-base-200 animate-pulse rounded-2xl" />)}
                     </div>
-                  ) : produitsData?.results.map((p: ProduitModel) => (
+                  ) : (produitsData as { results?: ProduitModel[] })?.results?.map((p: ProduitModel) => (
                     <div key={p.id} className="p-4 rounded-2xl border border-base-200 hover:border-primary/30 transition-all bg-base-200/20 group relative">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-bold text-sm uppercase group-hover:text-primary transition-colors">{p.name}</h4>
                         <div className="flex items-center gap-2">
                           {p.stock > 0 && (
-                            <span className="badge badge-sm font-bold badge-success">
+                            <Badge variant="success" size="sm" className="font-bold">
                               {p.stock} en stock
-                            </span>
+                            </Badge>
                           )}
-                          <button
+                          <Button
+                            variant="ghost" size="sm" className="h-6 px-2 text-xs text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                             title={t('products:actions.remove_dci')}
                             disabled={deletingProductId === p.id}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteProduct(p.id, selectedSubstance?.id, queryClient, setDeletingProductId, searchTerm, page);
                             }}
-                            className="btn btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             {deletingProductId === p.id ? (
-                              <span className="loading loading-spinner loading-xs"></span>
+                              <Loader2 className="size-3 animate-spin" />
                             ) : (
                               <Icons.Trash />
                             )}
-                          </button>
+                          </Button>
                         </div>
                       </div>
                       <div className="flex items-center justify-between text-xs opacity-60">
@@ -204,7 +207,7 @@ export default function CatalogDCI() {
                       </div>
                     </div>
                   ))}
-                  {produitsData?.results.length === 0 && (
+                  {(produitsData as { results?: { length: number } })?.results?.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center p-12 text-center text-base-content/30">
                       <Icons.Box />
                       <p className="mt-4 font-bold">Aucun produit associé à cette DCI dans votre stock</p>
@@ -221,14 +224,14 @@ export default function CatalogDCI() {
                       <Icons.Search />
                       Références Base ANSM
                     </h3>
-                    <span className="badge badge-secondary font-bold">{refMedsData?.count || 0}</span>
+                    <Badge variant="secondary" className="font-bold">{refMedsData?.count || 0}</Badge>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                     {loadingRef ? (
                       <div className="space-y-3">
                         {[1, 2, 3].map(i => <div key={i} className="h-24 w-full bg-base-200 animate-pulse rounded-2xl" />)}
                       </div>
-                    ) : refMedsData?.results.map((ref: unknown) => (
+                    ) : (refMedsData as { results?: { cis: string; nom: string; forme: string }[] })?.results?.map((ref) => (
                       <div key={ref.cis} className="p-4 rounded-2xl border border-base-200 hover:border-secondary/30 transition-all bg-base-200/5 group">
                         <div className="flex justify-between items-start mb-1">
                           <h4 className="font-bold text-[11px] uppercase group-hover:text-secondary transition-colors leading-tight">{ref.nom}</h4>
@@ -237,7 +240,7 @@ export default function CatalogDCI() {
                         <p className="text-[10px] opacity-60 mb-2">{ref.forme}</p>
                       </div>
                     ))}
-                    {refMedsData?.results.length === 0 && (
+                    {(refMedsData as { results?: { length: number } })?.results?.length === 0 && (
                       <div className="h-full flex flex-col items-center justify-center p-12 text-center text-base-content/30">
                         <Icons.Search />
                         <p className="mt-4 font-bold">Aucune référence trouvée dans la base nationale</p>

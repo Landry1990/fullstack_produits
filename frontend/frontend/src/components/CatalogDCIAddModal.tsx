@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import PremiumModal from './common/PremiumModal';
+import { Loader2 } from 'lucide-react';
+import { Button } from './shadcn/button';
+import { Badge } from './ui/Badge';
 import { useProductSearch } from '../hooks/useProductSearch';
 import type { ProduitModel } from '../types';
 import type { Substance } from '../hooks/useSubstances';
@@ -73,7 +76,8 @@ export default function CatalogDCIAddModal({
         });
         return null;
       } catch (err: unknown) {
-        const msg = err.response?.data?.detail || err.message;
+        const errObj = err as { response?: { data?: { detail?: string } }; message?: string };
+        const msg = errObj?.response?.data?.detail || errObj?.message;
         return `${prod.name}: ${msg}`;
       }
     }));
@@ -102,7 +106,7 @@ export default function CatalogDCIAddModal({
     >
       <div className="p-6 space-y-4">
         {addError && (
-          <div role="alert" className="alert alert-error shadow-sm">
+          <div role="alert" className="flex items-start gap-3 p-4 rounded-lg bg-[#fee2e2] text-[#7f1d1d] dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-sm">
             <span className="text-xs">{addError}</span>
           </div>
         )}
@@ -114,7 +118,7 @@ export default function CatalogDCIAddModal({
           </div>
           <input
             type="text"
-            className="input input-bordered w-full pl-10 rounded-xl bg-base-200/50 border-none focus:ring-2 ring-primary/20"
+            className="w-full pl-10 rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:ring-2 ring-primary/20 transition-all"
             placeholder={t('products:form.search_med_ref') || 'Rechercher un produit...'}
             value={searchQuery}
             onChange={(e) => {
@@ -145,7 +149,7 @@ export default function CatalogDCIAddModal({
           ) : results.length === 0 ? (
             <div className="p-8 text-center opacity-40">
               <p className="text-sm font-medium">
-                {search ? 'Aucun résultat pour cette recherche' : 'Commencez à taper pour rechercher'}
+                {searchQuery ? 'Aucun résultat pour cette recherche' : 'Commencez à taper pour rechercher'}
               </p>
             </div>
           ) : (
@@ -174,14 +178,14 @@ export default function CatalogDCIAddModal({
                     <div className="flex justify-between items-start">
                       <h4 className="font-bold text-sm uppercase leading-tight truncate">{prod.name}</h4>
                       {alreadyLinked && (
-                        <span className="badge badge-sm badge-success font-bold">Déjà associé</span>
+                        <Badge variant="success" size="sm" className="font-bold">Déjà associé</Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs opacity-60">
                       <span>{prod.forme_name || 'Forme inconnue'}</span>
-                      <span className={`badge badge-xs ${prod.stock > 0 ? 'badge-success' : 'badge-error'}`}>
+                      <Badge variant={prod.stock > 0 ? 'success' : 'error'} size="sm" className="h-4 px-1 text-[9px]">
                         {prod.stock} en stock
-                      </span>
+                      </Badge>
                       <span className="font-bold text-primary">{prod.selling_price} F</span>
                     </div>
                   </div>
@@ -193,24 +197,24 @@ export default function CatalogDCIAddModal({
 
         {/* Footer */}
         <div className="flex justify-end gap-3 pt-2 border-t border-base-200">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={adding}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={adding}>
             {t('common:cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn btn-primary shadow-lg shadow-primary/20"
+            variant="default" className="shadow-lg shadow-emerald-600/20"
             disabled={selected.size === 0 || adding}
             onClick={handleAddAll}
           >
             {adding ? (
-              <span className="loading loading-spinner loading-sm" />
+              <Loader2 className="size-4 animate-spin" />
             ) : (
               <>
                 <span>+</span>
                 <span>Associer {selected.size > 0 ? `(${selected.size})` : ''}</span>
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </PremiumModal>

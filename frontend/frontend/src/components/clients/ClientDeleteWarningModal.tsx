@@ -1,6 +1,7 @@
 import { AlertTriangle, X, FileText, DollarSign } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
+import { Button } from '../shadcn/button';
 
 interface Invoice {
   id: number;
@@ -47,12 +48,12 @@ export default function ClientDeleteWarningModal({
                 Ce client a des factures non réglées
               </p>
             </div>
-            <button
+            <Button
               onClick={onClose}
-              className="btn-ref btn-ghost btn-circle btn-sm"
+              variant="ghost" size="icon" className="rounded-full"
             >
               <X className="size-5" />
-            </button>
+            </Button>
           </div>
         </div>
 

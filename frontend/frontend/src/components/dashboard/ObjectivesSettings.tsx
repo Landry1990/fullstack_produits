@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { normalizeNumberInput } from '../../utils/formatters';
-import { X, Save, TrendingUp, Target, Hand } from 'lucide-react';
+import { X, Save, TrendingUp, Target, Hand, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../../utils/formatters';
+import { Button } from '../shadcn/button';
 
 interface ObjectivesConfig {
     id?: number;
@@ -102,19 +103,19 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                             {t('manager_dashboard.settings.subtitle', 'Automatisez et personnalisez le calcul de vos cibles de vente.')}
                         </p>
                     </div>
-                    <button 
+                    <Button 
                         onClick={onClose}
-                        className="btn btn-ghost btn-circle btn-sm hover:rotate-90 transition-transform text-base-content/60 hover:text-base-content"
+                        variant="ghost" size="icon" className="rounded-full hover:rotate-90 transition-transform text-base-content/60 hover:text-base-content"
                     >
                         <X className="size-5" />
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Content */}
                 <div className="p-6 sm:p-8 overflow-y-auto bg-base-50/50 flex-1 space-y-8">
                     {isLoading ? (
                         <div className="flex justify-center items-center py-12">
-                            <span className="loading loading-spinner loading-lg text-primary"></span>
+                            <Loader2 className="size-8 animate-spin text-primary" />
                         </div>
                     ) : (
                         <>
@@ -173,29 +174,29 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                 {config.mode === 'FIXE' && (
                                     <div className="space-y-6 animate-in slide-in-from-top-2 fade-in">
                                         {/* Objectif de marge mensuelle */}
-                                        <div className="form-control">
-                                            <label className="label">
-                                                <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.monthly_margin_label')}</span>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="flex flex-col">
+                                                <span className="text-sm font-bold">{t('manager_dashboard.settings.fixed.monthly_margin_label')}</span>
                                             </label>
                                             <div className="join">
                                                 <input 
                                                     type="number" 
-                                                    className="input input-bordered join-item w-full bg-base-100" 
+                                                    className="w-full bg-base-100 rounded-lg border border-base-300 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                                     value={config.marge_objectif_mensuel}
                                                     onChange={e => setConfig({...config, marge_objectif_mensuel: normalizeNumberInput(e.target.value)})}
                                                 />
-                                                <span className="btn join-item pointer-events-none bg-base-200 border-base-200">{t('common:currency_symbol', 'F')}</span>
+                                                <span className="inline-flex items-center px-3 h-10 rounded-l-xl bg-base-200 border border-base-200 text-sm pointer-events-none">{t('common:currency_symbol', 'F')}</span>
                                             </div>
-                                            <label className="label">
-                                                <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.fixed.ca_auto_calculated')}</span>
+                                            <label className="flex flex-col">
+                                                <span className="text-xs text-base-content/60">{t('manager_dashboard.settings.fixed.ca_auto_calculated')}</span>
                                             </label>
                                         </div>
 
                                         {/* Coefficient multiplicateur */}
                                         <div className="grid sm:grid-cols-2 gap-6">
-                                            <div className="form-control">
-                                                <label className="label">
-                                                    <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.coefficient_label')}</span>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="flex flex-col">
+                                                    <span className="text-sm font-bold">{t('manager_dashboard.settings.fixed.coefficient_label')}</span>
                                                 </label>
                                                 <div className="join">
                                                     <input 
@@ -203,23 +204,23 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                         step="0.01"
                                                         min="1.01"
                                                         max="10"
-                                                        className="input input-bordered join-item w-full bg-base-100" 
+                                                        className="w-full bg-base-100 rounded-lg border border-base-300 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                                         value={config.coefficient_marge}
                                                         onChange={e => setConfig({...config, coefficient_marge: normalizeNumberInput(e.target.value)})}
                                                     />
-                                                    <span className="btn join-item pointer-events-none bg-base-200 border-base-200">×</span>
+                                                    <span className="inline-flex items-center px-3 h-10 rounded-l-xl bg-base-200 border border-base-200 text-sm pointer-events-none">×</span>
                                                 </div>
-                                                <label className="label">
-                                                    <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.fixed.coefficient_help')}</span>
+                                                <label className="flex flex-col">
+                                                    <span className="text-xs text-base-content/60">{t('manager_dashboard.settings.fixed.coefficient_help')}</span>
                                                 </label>
                                             </div>
 
-                                            <div className="form-control">
-                                                <label className="label">
-                                                    <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.days_per_week')}</span>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="flex flex-col">
+                                                    <span className="text-sm font-bold">{t('manager_dashboard.settings.fixed.days_per_week')}</span>
                                                 </label>
                                                 <select 
-                                                    className="select select-bordered w-full bg-base-100"
+                                                    className="w-full bg-base-100 rounded-lg border border-base-300 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                                     value={config.jours_ouverts_semaine}
                                                     onChange={e => setConfig({...config, jours_ouverts_semaine: normalizeNumberInput(e.target.value)})}
                                                 >
@@ -247,22 +248,22 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                 )}
 
                                 {config.mode === 'DYNAMIQUE' && (
-                                    <div className="form-control max-w-xs animate-in slide-in-from-top-2 fade-in">
-                                        <label className="label">
-                                            <span className="label-text font-bold">{t('manager_dashboard.settings.dynamic.growth_label')}</span>
+                                    <div className="flex flex-col gap-1 max-w-xs animate-in slide-in-from-top-2 fade-in">
+                                        <label className="flex flex-col">
+                                            <span className="text-sm font-bold">{t('manager_dashboard.settings.dynamic.growth_label')}</span>
                                         </label>
                                         <div className="join">
                                             <input 
                                                 type="number" 
                                                 step="0.1"
-                                                className="input input-bordered join-item w-full bg-base-100" 
+                                                className="w-full bg-base-100 rounded-lg border border-base-300 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                                 value={config.pourcentage_croissance}
                                                 onChange={e => setConfig({...config, pourcentage_croissance: normalizeNumberInput(e.target.value)})}
                                             />
-                                            <span className="btn join-item pointer-events-none bg-base-200 border-base-200">%</span>
+                                            <span className="inline-flex items-center px-3 h-10 rounded-l-xl bg-base-200 border border-base-200 text-sm pointer-events-none">%</span>
                                         </div>
-                                        <label className="label">
-                                            <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.dynamic.growth_help')}</span>
+                                        <label className="flex flex-col">
+                                            <span className="text-xs text-base-content/60">{t('manager_dashboard.settings.dynamic.growth_help')}</span>
                                         </label>
                                     </div>
                                 )}
@@ -280,27 +281,27 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
 
                 {/* Footer */}
                 <div className="p-6 sm:p-8 border-t border-base-200 bg-base-50 flex justify-end gap-3 mt-auto">
-                    <button 
+                    <Button 
                         onClick={onClose}
-                        className="btn btn-ghost rounded-xl font-bold"
+                        variant="ghost" className="rounded-xl font-bold"
                         disabled={mutation.isPending}
                     >
                         {t('common:cancel')}
-                    </button>
-                    <button 
+                    </Button>
+                    <Button 
                         onClick={handleSave}
-                        className="btn btn-primary rounded-xl font-bold gap-2 min-w-[140px]"
+                        variant="default" className="rounded-xl font-bold gap-2 min-w-[140px]"
                         disabled={mutation.isPending || isLoading}
                     >
                         {mutation.isPending ? (
-                            <span className="loading loading-spinner loading-sm"></span>
+                            <Loader2 className="size-4 animate-spin" />
                         ) : (
                             <>
                                 <Save className="size-4" />
                                 {t('common:save')}
                             </>
                         )}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

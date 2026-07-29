@@ -13,6 +13,7 @@ import {
 import { useRecharts } from '../../hooks/useRecharts';
 import { formatCurrency } from '../../utils/formatters';
 import { useSupplierDashboard } from '../../hooks/useSupplierDashboard';
+import { Button } from '../shadcn/button';
 import { useTranslation } from 'react-i18next';
 
 const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#a855f7', '#64748b'];
@@ -51,10 +52,10 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
 
   if (error || !stats) {
     return (
-      <div className="alert-ref alert-error shadow-lg rounded-2xl">
+      <div className="flex items-start gap-3 p-4 rounded-lg bg-[#fee2e2] text-[#7f1d1d] dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-lg rounded-2xl">
         <AlertCircle className="size-6" />
         <span>{error || t('providers:messages.load_error')}</span>
-        <button className="btn-ref btn-sm btn-ghost" onClick={() => refresh()}>{t('common:retry')}</button>
+        <Button variant="ghost" size="sm" onClick={() => refresh()}>{t('common:retry')}</Button>
       </div>
     );
   }

@@ -1,5 +1,6 @@
 import { Suspense, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import Sidebar from './Sidebar'
 import UserHeader from './common/UserHeader'
 import Omnisearch from './common/Omnisearch'
@@ -34,7 +35,7 @@ function LayoutContent() {
                 {activePoste.nom}
               </span>
             )}
-            {isLoading && <span className="loading loading-spinner loading-xs"></span>}
+            {isLoading && <Loader2 className="size-3 animate-spin" />}
           </div>
           <Button
             type="button"
@@ -47,7 +48,7 @@ function LayoutContent() {
         <main className="flex-1 overflow-hidden">
           <Suspense fallback={
             <div className="flex-1 flex items-center justify-center">
-              <span className="loading loading-spinner loading-lg text-primary"></span>
+              <Loader2 className="size-8 animate-spin text-primary" />
             </div>
           }>
             <Outlet />
@@ -74,7 +75,7 @@ function LayoutContent() {
           {/* Outlet render direct - Suspense pour les composants lazy-loaded */}
           <Suspense fallback={
             <div className="flex-1 flex items-center justify-center">
-              <span className="loading loading-spinner loading-lg text-primary"></span>
+              <Loader2 className="size-8 animate-spin text-primary" />
             </div>
           }>
             <Outlet />

@@ -3,8 +3,9 @@ import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Search, RefreshCcw, CheckCircle2, XCircle, Clock, FileText, User, Hash } from 'lucide-react';
+import { Search, RefreshCcw, CheckCircle2, XCircle, Clock, FileText, User, Hash, Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
+import { Badge } from './ui/Badge';
 
 interface TelegramLog {
     id: number;
@@ -31,12 +32,12 @@ const getStatusIcon = (status: string) => {
     }
 };
 
-const getStatusClass = (status: string) => {
+const getStatusClass = (status: string): 'success' | 'error' | 'primary' | 'warning' => {
     switch (status) {
-        case 'SENT': return 'badge-success';
-        case 'FAILED': return 'badge-error';
-        case 'READ': return 'badge-info';
-        default: return 'badge-warning';
+        case 'SENT': return 'success';
+        case 'FAILED': return 'error';
+        case 'READ': return 'primary';
+        default: return 'warning';
     }
 };
 
@@ -105,13 +106,13 @@ const TelegramHistory: React.FC = () => {
                     <input 
                         type="text" 
                         placeholder="Rechercher par chat ID, nom ou message..." 
-                        className="input input-bordered w-full pl-12 rounded-xl bg-base-100 shadow-sm border-base-200"
+                        className="w-full pl-12 rounded-xl bg-base-100 shadow-sm border border-base-200 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
                 <select 
-                    className="select select-bordered w-full rounded-xl bg-base-100 shadow-sm border-base-200"
+                    className="w-full rounded-xl bg-base-100 shadow-sm border border-base-200 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
                 >
@@ -125,7 +126,7 @@ const TelegramHistory: React.FC = () => {
 
             <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="table w-full">
+                    <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-base-200/50">
                                 <th>Date & Expéditeur</th>
@@ -139,7 +140,7 @@ const TelegramHistory: React.FC = () => {
                             {loading ? (
                                 <tr>
                                     <td colSpan={5} className="text-center py-10">
-                                        <span className="loading loading-spinner loading-lg text-primary"></span>
+                                        <Loader2 className="size-8 animate-spin text-primary" />
                                     </td>
                                 </tr>
                             ) : filteredLogs.length === 0 ? (
@@ -172,20 +173,20 @@ const TelegramHistory: React.FC = () => {
                                         <div className="max-w-md">
                                             <p className="text-sm line-clamp-2" title={log.message}>{log.message}</p>
                                             {log.facture_numero && (
-                                                <span className="badge badge-ghost badge-sm gap-1 mt-1 font-mono whitespace-nowrap">
+                                                <Badge variant="ghost" size="sm" className="gap-1 mt-1 font-mono whitespace-nowrap">
                                                     <FileText className="size-2" /> {log.facture_numero}
-                                                </span>
+                                                </Badge>
                                             )}
                                         </div>
                                     </td>
                                     <td>
-                                        <span className="badge badge-ghost badge-sm font-semibold">{log.type_display}</span>
+                                        <Badge variant="ghost" size="sm" className="font-semibold">{log.type_display}</Badge>
                                     </td>
                                     <td>
-                                        <div className={`badge ${getStatusClass(log.status)} badge-sm gap-1 font-bold text-[10px]`}>
+                                        <Badge variant={getStatusClass(log.status)} size="sm" className="gap-1 font-bold text-[10px]">
                                             {getStatusIcon(log.status)}
                                             {log.status_display}
-                                        </div>
+                                        </Badge>
                                     </td>
                                 </tr>
                             ))}

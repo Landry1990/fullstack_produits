@@ -46,12 +46,12 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
 
   return (
     <div className="p-4 bg-base-100 border-b border-base-200">
-      <div className="form-control w-full">
+      <div className="flex flex-col gap-1 w-full">
         <div className="relative w-full">
           <input
             type="text"
             placeholder={t('products:filters.search_placeholder')}
-            className="input input-bordered w-full input-md bg-base-200 border-base-300 focus:border-primary rounded-lg text-sm pl-10"
+            className="w-full bg-base-200 border border-base-300 focus:border-primary rounded-lg text-sm pl-10 h-10 px-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             autoFocus

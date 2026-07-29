@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { Button } from '../shadcn/button';
 
 interface MergeCommandesModalProps {
     isOpen: boolean;
@@ -80,7 +81,8 @@ export default function MergeCommandesModal({
 
         } catch (err: unknown) {
             console.error('Erreur lors de la fusion:', err);
-            const msg = err.response?.data?.error || t('orders:merge_modal.merge_error');
+            const errObj = err as { response?: { data?: { error?: string } } };
+            const msg = errObj?.response?.data?.error || t('orders:merge_modal.merge_error');
             toast.error(msg);
         }
     };
@@ -91,8 +93,8 @@ export default function MergeCommandesModal({
     const uniqueSuppliers = [...new Set(mergeOrdersDetails.map(c => c.fournisseur))];
 
     return (
-        <div className="modal modal-open">
-            <div className="modal-box max-w-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-base-100 rounded-2xl shadow-2xl border border-base-300 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 {loadingMergeDetails ? (
                     <div className="flex flex-col items-center justify-center py-12">
                         <span className="inline-block size-8 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin mb-4"></span>
@@ -110,11 +112,11 @@ export default function MergeCommandesModal({
 
                         {/* Sélection du fournisseur final */}
                         <div className=" mb-4">
-                            <label className="label">
+                            <label className="flex flex-col">
                                 <span className="text-sm font-medium text-base-content font-semibold">{t('orders:merge_modal.supplier_label')}</span>
                             </label>
                             <select
-                                className="select-ref select-bordered w-full"
+                                className="w-full rounded-lg border border-base-300 bg-base-100 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                 value={mergeTargetOrderId ?? ''}
                                 onChange={(e) => setMergeTargetOrderId(e.target.value ? parseInt(e.target.value) : null)}
                             >
@@ -179,13 +181,13 @@ export default function MergeCommandesModal({
 
                         {/* Actions */}
                         <div className="flex justify-end gap-3 pt-4">
-                            <button 
+                            <Button 
                                 type="button" 
-                                className="btn-ref btn-ghost" 
+                                variant="ghost" 
                                 onClick={onClose}
                             >
                                 {t('orders:merge_modal.cancel')}
-                            </button>
+                            </Button>
                             <button 
                                 type="button" 
                                 className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-gray-800 transition-colors"
