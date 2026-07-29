@@ -425,36 +425,82 @@ class SystemAdminViewSet(ViewSet):
     def check_update(self, request):
         """Vérifie si une mise à jour est disponible sur GitHub."""
         import subprocess as sp
+        import urllib.request
+        import json
 
         app_dir = os.environ.get('APP_DIR', '/opt/zenith-pharma')
-        try:
-            sp.run(['git', 'fetch', 'origin', 'main', '--quiet'],
-                   capture_output=True, timeout=30, cwd=app_dir)
-            local = sp.run(['git', 'rev-parse', 'HEAD'],
-                          capture_output=True, text=True, timeout=10, cwd=app_dir)
-            remote = sp.run(['git', 'rev-parse', 'origin/main'],
-                           capture_output=True, text=True, timeout=10, cwd=app_dir)
-            local_commit = local.stdout.strip()
-            remote_commit = remote.stdout.strip()
+        repo = os.environ.get('GITHUB_REPO', 'Landry1990/fullstack_produits').strip('/')
 
-            if local_commit == remote_commit:
-                return Response({
-                    'update_available': False,
-                    'current_version': local_commit[:8],
-                    'message': 'Système déjà à jour',
-                })
-            return Response({
-                'update_available': True,
-                'current_version': local_commit[:8],
-                'latest_version': remote_commit[:8],
-                'message': 'Une mise à jour est disponible',
-            })
-        except Exception as e:
+        def _get_local_commit():
+            # Essayer git d'abord
+            try:
+                proc = sp.run(['git', 'rev-parse', 'HEAD'],
+                              capture_output=True, text=True, timeout=10, cwd=app_dir)
+                if proc.returncode == 0 and proc.stdout.strip():
+                    return proc.stdout.strip()
+            except Exception:
+                pass
+            # Fallback : lire .git/HEAD
+            head_file = os.path.join(app_dir, '.git', 'HEAD')
+            ref_file = os.path.join(app_dir, '.git', 'refs', 'heads', 'main')
+            if os.path.exists(ref_file):
+                with open(ref_file, 'r') as f:
+                    return f.read().strip()
+            if os.path.exists(head_file):
+                with open(head_file, 'r') as f:
+                    ref = f.read().strip()
+                    if ref.startswith('ref:'):
+                        ref_path = ref.split()[-1]
+                        full_ref = os.path.join(app_dir, '.git', ref_path)
+                        if os.path.exists(full_ref):
+                            with open(full_ref, 'r') as f2:
+                                return f2.read().strip()
+            return 'unknown'
+
+        def _get_remote_commit():
+            # Essayer git fetch + rev-parse
+            try:
+                sp.run(['git', 'fetch', 'origin', 'main', '--quiet'],
+                       capture_output=True, timeout=30, cwd=app_dir)
+                proc = sp.run(['git', 'rev-parse', 'origin/main'],
+                              capture_output=True, text=True, timeout=10, cwd=app_dir)
+                if proc.returncode == 0 and proc.stdout.strip():
+                    return proc.stdout.strip()
+            except Exception:
+                pass
+            # Fallback API GitHub publique
+            try:
+                url = f'https://api.github.com/repos/{repo}/commits/main'
+                req = urllib.request.Request(url, headers={'Accept': 'application/vnd.github+json'})
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    return data.get('sha', '')
+            except Exception:
+                return ''
+
+        local_commit = _get_local_commit()
+        remote_commit = _get_remote_commit()
+
+        if not remote_commit:
             return Response({
                 'update_available': False,
-                'error': str(e),
+                'current_version': local_commit[:8] if len(local_commit) >= 8 else local_commit,
+                'error': 'Impossible de contacter GitHub',
                 'message': 'Impossible de vérifier les mises à jour',
             }, status=status.HTTP_200_OK)
+
+        if local_commit == remote_commit:
+            return Response({
+                'update_available': False,
+                'current_version': local_commit[:8] if len(local_commit) >= 8 else local_commit,
+                'message': 'Système déjà à jour',
+            })
+        return Response({
+            'update_available': True,
+            'current_version': local_commit[:8] if len(local_commit) >= 8 else local_commit,
+            'latest_version': remote_commit[:8] if len(remote_commit) >= 8 else remote_commit,
+            'message': 'Une mise à jour est disponible',
+        })
 
     @action(detail=False, methods=['post'])
     def run_update(self, request):
