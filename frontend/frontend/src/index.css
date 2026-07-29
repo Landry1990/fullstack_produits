@@ -842,16 +842,22 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
 
 /* ── Fonds clairs -> mode nuit ───────────────────── */
 .theme-midnight .bg-white,
-.theme-midnight [class*="bg-white"] {
+.theme-midnight [class*="bg-white\/"] {
   background-color: var(--color-base-100) !important;
 }
 
 .theme-midnight .bg-slate-50,
+.theme-midnight [class*="bg-slate-50\/"],
 .theme-midnight .bg-slate-100,
+.theme-midnight [class*="bg-slate-100\/"],
 .theme-midnight .bg-gray-50,
+.theme-midnight [class*="bg-gray-50\/"],
 .theme-midnight .bg-gray-100,
+.theme-midnight [class*="bg-gray-100\/"],
 .theme-midnight .bg-zinc-50,
+.theme-midnight [class*="bg-zinc-50\/"],
 .theme-midnight .bg-zinc-100,
+.theme-midnight [class*="bg-zinc-100\/"],
 .theme-midnight .bg-neutral-50,
 .theme-midnight .bg-neutral-100,
 .theme-midnight .bg-stone-50,

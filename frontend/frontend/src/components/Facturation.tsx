@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle, Monitor, Store } from 'lucide-react'
+import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle, Monitor, Store, ScanLine } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import { formatDateShort } from '../utils/dateUtils'
 import { Button } from './shadcn/button'
@@ -69,6 +69,7 @@ export default function Facturation() {
   const navigate = useNavigate()
   const forceStockModalRef = useRef<HTMLDivElement>(null)
   const [showOpenPosteModal, setShowOpenPosteModal] = useState(false)
+  const [datamatrixEnabled, setDatamatrixEnabled] = useState(false)
 
   useEffect(() => {
     if (location.state?.openPosteModal) {
@@ -129,6 +130,20 @@ export default function Facturation() {
               )}
             >
               {hook.isMidnightTheme ? <Sun size={16} /> : <Moon size={16} />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDatamatrixEnabled(prev => !prev)}
+              className={cn(
+                "size-8 rounded-lg transition-all",
+                datamatrixEnabled
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              )}
+              title={datamatrixEnabled ? 'Désactiver le scan Data Matrix' : 'Activer le scan Data Matrix'}
+            >
+              <ScanLine size={16} />
             </Button>
           </div>
 
@@ -288,11 +303,11 @@ export default function Facturation() {
                 onQuantityShortcut={hook.handleQuantityShortcut}
                 onCsvImport={hook.handleCsvImport}
                 user={hook.user}
-                scanInput={scan.scanInput}
-                scanStatus={scan.scanStatus}
-                scanLastScanned={scan.lastScanned}
-                onScanChange={scan.handleScanChange}
-                onScanKeyDown={scan.handleScanKeyDown}
+                scanInput={datamatrixEnabled ? scan.scanInput : undefined}
+                scanStatus={datamatrixEnabled ? scan.scanStatus : undefined}
+                scanLastScanned={datamatrixEnabled ? scan.lastScanned : undefined}
+                onScanChange={datamatrixEnabled ? scan.handleScanChange : undefined}
+                onScanKeyDown={datamatrixEnabled ? scan.handleScanKeyDown : undefined}
                 onSelectOutOfStock={(p) => {
                   hook.requireSudo(
                     async () => {
