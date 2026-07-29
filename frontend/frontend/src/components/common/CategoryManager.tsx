@@ -13,6 +13,7 @@ import { useConfirm } from '../../hooks/useConfirm';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import PremiumModal from './PremiumModal';
 import SmartOrganizerModal from './SmartOrganizerModal';
+import { logger } from '../../utils/logger'
 
 
 interface Category {
@@ -93,7 +94,7 @@ export default function CategoryManager({
       const data = res.data.results || res.data;
       setCategories(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(`Error fetching ${type}s:`, err);
+      logger.error(`Error fetching ${type}s:`, err);
       toast.error(t('stock:organisation.category_manager.load_error', { type }));
     } finally {
       setLoading(false);
@@ -114,7 +115,7 @@ export default function CategoryManager({
         setTotalCount(Array.isArray(data) ? data.length : 0);
       }
     } catch (err) {
-      console.error("Error fetching products:", err);
+      logger.error("Error fetching products:", err);
       toast.error(t('common:messages.load_error', { defaultValue: "Erreur lors du chargement des produits" }));
     } finally {
       setProductsLoading(false);
@@ -123,6 +124,7 @@ export default function CategoryManager({
 
   useEffect(() => {
     fetchCategories();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, apiPath]);
 
   useEffect(() => {
@@ -132,6 +134,7 @@ export default function CategoryManager({
       setProducts([]);
       setTotalCount(0);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   useEffect(() => {
@@ -162,7 +165,7 @@ export default function CategoryManager({
       
       toast.success(t('common:export_success'));
     } catch (err) {
-      console.error("Export error:", err);
+      logger.error("Export error:", err);
       toast.error(t('common:export_error'));
     }
   };
@@ -250,7 +253,7 @@ export default function CategoryManager({
       const res = await api.get(`produits/?search=${term}`);
       setSearchResults(res.data.results || res.data);
     } catch (err) {
-      console.error("Search error:", err);
+      logger.error("Search error:", err);
     } finally {
       setIsSearching(false);
     }

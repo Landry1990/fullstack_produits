@@ -56,6 +56,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
     } finally {
       setLoadingCaisses(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpen, isOpen, t])
 
   useEffect(() => {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Search, Calendar, Filter, User, Trash2, RefreshCw, ArrowUpDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
+import { logger } from '../../utils/logger'
 
 interface InventaireFiltersProps {
     filters: {
@@ -41,7 +42,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                 const response = await api.get('users/');
                 setUsers(Array.isArray(response.data) ? response.data : response.data.results || []);
             } catch (error) {
-                console.error("Failed to load users for filter", error);
+                logger.error("Failed to load users for filter", error);
             }
         };
         fetchUsers();

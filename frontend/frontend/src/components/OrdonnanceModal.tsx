@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
+import { logger } from '../utils/logger'
 
 // LigneFacture type for cart items (simplified for compatibility)
 interface LigneFacture {
@@ -96,7 +97,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
     try {
       await onSave(formData);
     } catch (err) {
-      console.error('onSave threw an error:', err);
+      logger.error('onSave threw an error:', err);
       throw err;
     }
   };

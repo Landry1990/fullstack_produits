@@ -71,6 +71,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         navigate(pathname, { replace: true, state: {} });
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listProps, navigate, state, location.state]);
 
   useEffect(() => {

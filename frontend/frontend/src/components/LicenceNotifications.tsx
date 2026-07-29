@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { licenceService, type LicenceNotification } from '../services/licenceService';
 import { useAuth } from '../context/AuthContext';
 import { AlertTriangle, Info, XCircle, X } from 'lucide-react';
+import { logger } from '../utils/logger'
 
 /**
  * Composant qui affiche les notifications d'alerte de licence
@@ -36,7 +37,7 @@ export function LicenceNotifications() {
       const data = await licenceService.getNotifications();
       notificationsRef.current = data.notifications ?? [];
     } catch (error) {
-      console.error('Erreur chargement notifications licence:', error);
+      logger.error('Erreur chargement notifications licence:', error);
     } finally {
       isLoadingRef.current = false;
       setTick(t => t + 1); // Force re-render après chargement

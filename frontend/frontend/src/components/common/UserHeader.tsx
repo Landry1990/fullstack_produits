@@ -8,6 +8,7 @@ import MessagingModal from './MessagingModal';
 import FeedbackModal from './FeedbackModal';
 import { Bell, ChevronDown, LogOut, Moon, Sun, MessageSquare, User as UserIcon, MessageCircle, Key } from 'lucide-react';
 import { playNotificationSound } from '../../utils/audio';
+import { logger } from '../../utils/logger'
 
 export default function UserHeader() {
   const { t, i18n } = useTranslation(['messaging', 'sidebar', 'common']);
@@ -19,6 +20,7 @@ export default function UserHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const prevUnreadCount = useRef<number>(0);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchUnread = async () => {
     if (!user) return;
     try {
@@ -57,7 +59,7 @@ export default function UserHeader() {
       setUnreadCount(newCount);
       prevUnreadCount.current = newCount;
     } catch (error) {
-      console.error("Error fetching unread count", error);
+      logger.error("Error fetching unread count", error);
     }
   };
 

@@ -26,6 +26,7 @@ export const useKeyboardNavigation = ({
         } else if (selectedIndex >= listLength) {
             setSelectedIndex(listLength - 1)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [listLength])
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {

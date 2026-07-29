@@ -325,7 +325,7 @@ class Command(BaseCommand):
                 # Format FR: 1.234,56 -> 1234.56
                 val = val.replace('.', '').replace(',', '.')
             return Decimal(val) if val else None
-        except:
+        except Exception:
             return None
 
     def parse_int(self, value):
@@ -334,5 +334,5 @@ class Command(BaseCommand):
             return None
         try:
             return int(float(str(value).replace(' ', '')))
-        except:
+        except Exception:
             return None

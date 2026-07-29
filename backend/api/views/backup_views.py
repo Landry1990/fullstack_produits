@@ -247,7 +247,7 @@ class RestoreBackupView(APIView):
             try:
                 subprocess.run(['docker', 'stop', settings.DOCKER_BACKEND_CONTAINER], 
                              capture_output=True, timeout=10)
-            except:
+            except Exception:
                 pass
             
             stats = {'factures_restored': 0, 'last_transaction': None}
@@ -265,7 +265,7 @@ class RestoreBackupView(APIView):
                     if result.returncode == 0:
                         with gzip.open(emergency_file, 'wt') as f:
                             f.write(result.stdout)
-                except:
+                except Exception:
                     pass
                 
                 # Recréer la base
@@ -309,14 +309,14 @@ class RestoreBackupView(APIView):
                     if len(parts) >= 2:
                         stats['factures_restored'] = parts[0].strip()
                         stats['last_transaction'] = parts[1].strip()
-            except:
+            except Exception:
                 pass
             
             # Redémarrer le backend
             try:
                 subprocess.run(['docker', 'start', settings.DOCKER_BACKEND_CONTAINER],
                              capture_output=True, timeout=10)
-            except:
+            except Exception:
                 pass
             
             logger.info(f"Restauration réussie: {filename}")
@@ -334,7 +334,7 @@ class RestoreBackupView(APIView):
             try:
                 subprocess.run(['docker', 'start', settings.DOCKER_BACKEND_CONTAINER],
                                capture_output=True)
-            except:
+            except Exception:
                 pass
             
             return Response(

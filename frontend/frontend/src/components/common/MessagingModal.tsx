@@ -10,6 +10,7 @@ import PremiumModal from './PremiumModal';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import toast from 'react-hot-toast';
+import { logger } from '../../utils/logger'
 
 // ── Composer reducer ────────────────────────────────────────────────────────
 interface ComposerState {
@@ -107,7 +108,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
         setAllMessages(allMsgs);
       }
     } catch (error) {
-      console.error("Error loading messaging data", error);
+      logger.error("Error loading messaging data", error);
       toast.error(t('common:error_loading'));
     }
   };
@@ -123,6 +124,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
     return () => {
       if (interval) clearInterval(interval);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const receivedMessages = useMemo(() => 
@@ -136,6 +138,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
   
   const archivedMessages = useMemo(() => 
     messages.filter((m: InternalMessage) => m.is_archived),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [messages, currentUser]
   );
   

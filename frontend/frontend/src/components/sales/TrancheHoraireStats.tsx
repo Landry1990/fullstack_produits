@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import { getLocale } from '../../utils/dateUtils';
 import { getApiErrorDetail } from '../../utils/errorHandling';
+import { logger } from '../../utils/logger'
 
 
 interface TrancheHoraireStatsProps {
@@ -35,7 +36,7 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
             });
             onVerify?.(response.data);
         } catch (err) {
-            console.error("Failed to fetch tranche stats", err);
+            logger.error("Failed to fetch tranche stats", err);
             setError(getApiErrorDetail(err, t('sales:tranche_horaire.error_loading')));
         } finally {
             setLoading(false);

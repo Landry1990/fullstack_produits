@@ -333,6 +333,7 @@ export default function Sidebar() {
     const adminOnlyKeys = ['utilisateurs', 'planning_operateurs', 'user_sessions', 'audit', 'import_dci', 'maintenance', 'corbeille'];
     if (adminOnlyKeys.includes(item.key)) return [];
     return (hasExplicitParent || hasLegacyCategory || allowedSet.has(item.key)) ? [item] : [];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [user, t]);
 
 

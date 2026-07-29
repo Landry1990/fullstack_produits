@@ -18,7 +18,8 @@ import { cn } from '../lib/utils'
 
 registerLocale('fr', fr)
 
-import { 
+import { logger } from '../utils/logger'
+import {
   CheckCircle,
   XCircle,
   Banknote,
@@ -162,10 +163,11 @@ export default function HistoriqueClotures() {
         const isSuperuser = meRes.data?.is_superuser || currentUser?.is_superuser
         setCanViewSessions(isSuperuser || profile?.can_view_cash_sessions || false)
       } catch (err) {
-        console.error('Erreur initialisation HistoriqueClotures:', err)
+        logger.error('Erreur initialisation HistoriqueClotures:', err)
       }
     }
     initPage()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchClotures = useCallback(async (page = currentPage) => {
@@ -188,11 +190,12 @@ export default function HistoriqueClotures() {
       setTotalItems(count || 0)
       setGlobalTotals(totals || null)
     } catch (err) {
-      console.error('Erreur chargement clôtures:', err)
+      logger.error('Erreur chargement clôtures:', err)
       toast.error(t('messages.loading_closures'))
     } finally {
       setLoading(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSize, dateDebut, dateFin, selectedUser, selectedPosteCaisse, t])
 
   // Fetch data whenever filters or page change
@@ -226,11 +229,12 @@ export default function HistoriqueClotures() {
       const data = Array.isArray(response.data) ? response.data : (response.data.results || [])
       setSessions(data)
     } catch (err) {
-      console.error('Erreur chargement sessions:', err)
+      logger.error('Erreur chargement sessions:', err)
       toast.error(t('messages.loading_sessions'))
     } finally {
       setSessionsLoading(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Charger les sessions quand l'onglet est activé

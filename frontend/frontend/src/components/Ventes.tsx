@@ -60,6 +60,7 @@ const Ventes: React.FC = () => {
                 navigate(location.pathname, { replace: true, state: {} });
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.state, filteredFactures, actions, navigate]);
     
     return (

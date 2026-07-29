@@ -7,6 +7,7 @@ import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './Invo
 import InventairePrintTemplate from './InventairePrintTemplate';
 import StockValuationTemplate, { type StockValuationData } from './StockValuationTemplate';
 import AvoirPrintTemplate from './AvoirPrintTemplate';
+import { logger } from '../../utils/logger'
 
 const PrintPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -32,7 +33,7 @@ const PrintPage: React.FC = () => {
             const timeoutMs = isInventaire ? 60000 : 15000;
             const safetyTimeout = setTimeout(() => {
                 if (loading) {
-                    console.error("PrintPage: Fetch timed out");
+                    logger.error("PrintPage: Fetch timed out");
                     setError("Délai d'attente dépassé pour le chargement du document. Le catalogue est peut-être trop volumineux, veuillez utiliser un filtre (rayon/forme/groupe).");
                     setLoading(false);
                 }
@@ -97,13 +98,14 @@ const PrintPage: React.FC = () => {
 
             } catch (err) {
                 clearTimeout(safetyTimeout);
-                console.error("PrintPage: Error fetching print data:", err);
+                logger.error("PrintPage: Error fetching print data:", err);
                 setError("Erreur lors du chargement des données. " + (err instanceof Error ? err.message : String(err)));
                 setLoading(false);
             }
         };
 
         fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, clientNameOverride, type, searchParams]);
 
     const [isPrinting, setIsPrinting] = useState(false);
@@ -118,7 +120,7 @@ const PrintPage: React.FC = () => {
                 window.focus();
                 window.print();
             } catch (err) {
-                console.error("Print execution failed:", err);
+                logger.error("Print execution failed:", err);
                 alert("Impossible de lancer l'impression. Veuillez utiliser le raccourci Ctrl+P.");
             } finally {
                 setIsPrinting(false);

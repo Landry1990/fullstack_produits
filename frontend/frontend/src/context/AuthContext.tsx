@@ -141,6 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // 3. On configure le header Authorization pour les requêtes API
     setAuthToken(userData.token || '');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fonction de déconnexion

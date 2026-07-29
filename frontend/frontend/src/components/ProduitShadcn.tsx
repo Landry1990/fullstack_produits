@@ -132,6 +132,7 @@ export default function ProduitShadcn() {
       else if (searchQuery !== String(pid)) setSearchQuery(String(pid))
       navigate(location.pathname, { replace: true, state: {} })
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productsData])
 
   const { data: rayons = [] } = useRayons()

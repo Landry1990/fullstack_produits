@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import userService, { type SimpleUser } from '../services/userService';
+import { logger } from '../utils/logger'
 
 // Module-level cache: shared across all component instances
 // Persists as long as the app is running (until full page reload)
@@ -56,7 +57,7 @@ export const useUsers = () => {
                     setLoading(false);
                 }
             } catch (error) {
-                console.error("Failed to load users", error);
+                logger.error("Failed to load users", error);
                 if (mountedRef.current) setLoading(false);
             } finally {
                 fetchPromise = null;
@@ -82,7 +83,7 @@ export const useUsers = () => {
                 setLoading(false);
             }
         } catch (error) {
-            console.error("Failed to refresh users", error);
+            logger.error("Failed to refresh users", error);
             if (mountedRef.current) setLoading(false);
         }
     };

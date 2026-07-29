@@ -8,6 +8,7 @@ import fuzzysort from 'fuzzysort';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import type { ProduitModel } from '../../types';
+import { logger } from '../../utils/logger'
 
 interface PrescriptionScannerModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
     if (isOpen && productsRef.current.length === 0) {
       loadProducts();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Create and revoke preview object URL for the selected file
@@ -70,7 +72,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       const results = Array.isArray(response.data) ? response.data : response.data.results;
       productsRef.current = results || [];
     } catch (error) {
-      console.error('Failed to load products for OCR matching', error);
+      logger.error('Failed to load products for OCR matching', error);
       toast.error(t('facturation:prescription_scanner.error_load_products'));
     } finally {
       setLoadingProducts(false);
@@ -178,7 +180,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
         toast.error(t('facturation:prescription_scanner.error_no_products'));
       }
     } catch (err: unknown) {
-      console.error('OCR Error:', err);
+      logger.error('OCR Error:', err);
       const errorMessage = err && typeof err === 'object' && 'message' in err ? err.message : t('facturation:prescription_scanner.error_console');
       toast.error(t('facturation:prescription_scanner.error_ocr', { error: errorMessage }));
     } finally {

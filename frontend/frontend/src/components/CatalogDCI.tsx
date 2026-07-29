@@ -8,6 +8,7 @@ import CatalogDCIAddModal from './CatalogDCIAddModal';
 import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
+import { logger } from '../utils/logger'
 
 // Lucide icons simulation (using SVG strings as per skill rules)
 const Icons = {
@@ -287,6 +288,6 @@ function handleDeleteProduct(produitId: number, substanceId: number | undefined,
       queryClient.invalidateQueries({ queryKey: ['substance-produits', substanceId] });
       queryClient.invalidateQueries({ queryKey: ['substances', { search: searchTerm, page }] });
     })
-    .catch((err) => console.error('Erreur suppression DCI:', err))
+    .catch((err) => logger.error('Erreur suppression DCI:', err))
     .finally(() => setDeletingProductId(null));
 }

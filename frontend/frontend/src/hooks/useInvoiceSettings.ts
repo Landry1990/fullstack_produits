@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { logger } from '../utils/logger'
 
 export interface InvoiceSettings {
     id: number;
@@ -24,7 +25,7 @@ export function useInvoiceSettings() {
             setError(null);
         } catch (err) {
             if (err instanceof Error && err.name === 'CanceledError') return;
-            console.error('Error fetching invoice settings:', err);
+            logger.error('Error fetching invoice settings:', err);
             setError('Erreur lors du chargement des paramètres de facturation');
         } finally {
             setLoading(false);
@@ -38,7 +39,7 @@ export function useInvoiceSettings() {
             toast.success('Paramètres de facturation mis à jour');
             return data;
         } catch (err) {
-            console.error('Error updating invoice settings:', err);
+            logger.error('Error updating invoice settings:', err);
             toast.error('Erreur lors de la mise à jour des paramètres');
             throw err;
         }

@@ -5,6 +5,7 @@ import api from '../services/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLicence } from '../context/LicenceContext';
 import { useTranslation } from 'react-i18next';
+import { logger } from '../utils/logger'
 
 interface PreviewData {
   pharmacie_nom: string;
@@ -39,7 +40,7 @@ const LicenceScreen = () => {
                 }
             })
             .catch((err) => {
-                console.error("Erreur lecture licence", err);
+                logger.error("Erreur lecture licence", err);
                 setHardwareId('UNKNOWN');
             });
     }, [navigate, isUpdateMode]);

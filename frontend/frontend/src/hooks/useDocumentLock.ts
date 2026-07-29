@@ -71,7 +71,7 @@ export function useDocumentLock(
     if (!pk || !model) return;
     if (wsRef.current) disconnect();
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const url = `${WS_BASE}/ws/lock/${model}/${pk}/?token=${token ?? ''}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;

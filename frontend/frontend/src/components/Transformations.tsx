@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { normalizeNumberInput, formatNumber } from '../utils/formatters';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
+import { logger } from '../utils/logger'
 
 // Interfaces
 interface RelationTransformation {
@@ -248,6 +249,7 @@ const Transformations: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchData = async () => {
@@ -264,7 +266,7 @@ const Transformations: React.FC = () => {
       setHistorique(historiqueData);
       setLoading(false);
     } catch (error) {
-      console.error("Erreur fetch:", error);
+      logger.error("Erreur fetch:", error);
       toast.error(t('transformations.messages.load_error'));
       setLoading(false);
     }
@@ -285,7 +287,7 @@ const Transformations: React.FC = () => {
       resetRelationForm();
       fetchData();
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       toast.error(getApiErrorDetail(error, t('transformations.messages.create_error')));
     }
   };
@@ -380,7 +382,7 @@ const Transformations: React.FC = () => {
       });
       setManualLots(initialManual);
     } catch (error) {
-      console.error('Erreur preview transformation:', error);
+      logger.error('Erreur preview transformation:', error);
       setPreview(null);
       setManualLots({});
     }

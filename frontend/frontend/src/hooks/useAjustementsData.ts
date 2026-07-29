@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { StockAdjustment, PaginatedResponse, StockAdjustmentStats } from '../types';
 import { toApiDateEnd } from '../utils/dateUtils';
+import { logger } from '../utils/logger'
 
 export const useAjustementsData = () => {
     const { t } = useTranslation(['common']);
@@ -73,10 +74,11 @@ export const useAjustementsData = () => {
         } catch (err) {
             if (err instanceof Error && err.name === 'AbortError') return;
             toast.error(t('common:messages.error_loading'));
-            console.error(err);
+            logger.error(err);
         } finally {
             setLoading(false);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchQuery, filterReasonType, dateStart, dateEnd]);
 
     useEffect(() => {
@@ -112,8 +114,9 @@ export const useAjustementsData = () => {
             toast.success(t('common:messages.export_success'));
         } catch (err) {
             toast.error(t('common:messages.export_error'));
-            console.error(err);
+            logger.error(err);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchQuery, filterReasonType, dateStart, dateEnd]);
 
     return {

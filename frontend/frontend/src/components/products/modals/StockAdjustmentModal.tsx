@@ -9,6 +9,7 @@ import {
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
+import { logger } from '../../../utils/logger'
 
 interface AdjustFormType {
   new_quantity: string;
@@ -54,7 +55,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           setDynamicReasons(custom);
         }
       } catch (err) {
-        console.error("Error fetching adjustment reasons:", err);
+        logger.error("Error fetching adjustment reasons:", err);
       }
     };
     if (isOpen) fetchReasons();

@@ -30,6 +30,7 @@ import { BulkCancelModal } from './caisse/BulkCancelModal'
 import { CaisseHeader } from './caisse/CaisseHeader'
 import { CaisseStatsCards } from './caisse/CaisseStatsCards'
 import { SessionRecapBar } from './caisse/SessionRecapBar'
+import { logger } from '../utils/logger'
 
 export default function CaisseCentralisee() {
 const _queryClient = useQueryClient()
@@ -102,7 +103,7 @@ const _navigate = useNavigate()
       
       setFacturesEnAttente(facturesList)
     } catch (err) {
-      console.error('Erreur lors du chargement des factures en attente:', err)
+      logger.error('Erreur lors du chargement des factures en attente:', err)
     }
   }, [selectedPosteCaisseId])
 
@@ -211,7 +212,7 @@ const _navigate = useNavigate()
         const hasMultipleActive = myActive.length > 1
         setIsMultiCaisse(hasMultipleActive)
       } catch (err) {
-        console.error('Erreur initialisation page:', err)
+        logger.error('Erreur initialisation page:', err)
       }
     }
     initPage()
@@ -341,7 +342,7 @@ const _navigate = useNavigate()
       })
       toast.success(response.data.detail || t('messages.whatsapp_sent'))
     } catch (err) {
-      console.error('Erreur envoi WhatsApp:', err)
+      logger.error('Erreur envoi WhatsApp:', err)
       toast.error(getApiErrorDetail(err, t('messages.whatsapp_send_error')))
     } finally {
       setLoading(false)
@@ -351,6 +352,7 @@ const _navigate = useNavigate()
 
 
   // Annuler une facture
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleAnnuler = async (facture: Facture) => {
     if (!window.confirm(t('confirm_cancel_invoice', { numero: facture.numero_facture }))) return
 
@@ -359,7 +361,7 @@ const _navigate = useNavigate()
       toast.success(t('messages.cancel_invoice_success'))
       fetchFacturesEnAttente()
     } catch (err) {
-      console.error('Erreur annulation:', err)
+      logger.error('Erreur annulation:', err)
       toast.error(t('messages.cancel_invoice_error'))
     }
   }

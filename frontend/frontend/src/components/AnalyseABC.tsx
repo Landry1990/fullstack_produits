@@ -3,6 +3,7 @@ import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { formatNumber as utilsFormatNumber } from '../utils/formatters'
+import { logger } from '../utils/logger'
 
 interface ProduitABC {
   id: number
@@ -203,7 +204,7 @@ export default function AnalyseABC() {
         setRayons(rayonsRes.data.results || rayonsRes.data || [])
         setFournisseurs(fournisseursRes.data.results || fournisseursRes.data || [])
       } catch (err) {
-        console.error('Erreur chargement filtres:', err)
+        logger.error('Erreur chargement filtres:', err)
       }
     }
     fetchOptions()
@@ -223,12 +224,13 @@ export default function AnalyseABC() {
         setData(response.data)
       } catch (err: unknown) {
         setError(err.response?.data?.detail || t('stock:abc.error_loading'))
-        console.error('Erreur analyse ABC:', err)
+        logger.error('Erreur analyse ABC:', err)
       } finally {
         setLoading(false)
       }
     }
     fetchData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [periode, rayonId, fournisseurId])
 
   const produitsFiltrés = useMemo(() => {
@@ -277,7 +279,7 @@ export default function AnalyseABC() {
         toast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
       })
       .catch((err) => {
-        console.error('Failed to copy:', err)
+        logger.error('Failed to copy:', err)
         toast.error(t('stock:abc.messages.copy_error'))
       })
   }

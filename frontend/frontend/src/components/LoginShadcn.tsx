@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from './shadcn/button';
 import { Card, CardContent } from './shadcn/card';
 import { cn } from '../lib/utils';
+import { logger } from '../utils/logger'
 
 const getDeviceType = () => {
   const ua = navigator.userAgent;
@@ -28,7 +29,7 @@ const handleResetLicence = async () => {
       await api.delete('/licence/');
       window.location.reload();
     } catch (err) {
-      console.error('Error resetting licence:', err);
+      logger.error('Error resetting licence:', err);
     }
   }
 };
@@ -72,7 +73,7 @@ export default function LoginShadcn() {
           setUsers(response.data);
         }
       } catch (err) {
-        console.error('Error fetching users:', err);
+        logger.error('Error fetching users:', err);
       }
     };
     fetchUsers();
@@ -170,7 +171,7 @@ export default function LoginShadcn() {
       login({ username, token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role });
       navigate('/app');
     } catch (err) {
-      console.error('Login error:', err);
+      logger.error('Login error:', err);
       const e = err as { response?: { status: number } };
       if (!e.response) {
         setError(t('common:messages.server_unreachable'));

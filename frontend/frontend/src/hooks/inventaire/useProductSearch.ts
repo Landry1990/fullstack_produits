@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { ProduitModel, LigneInventaire, StockLot } from '../../types';
+import { logger } from '../../utils/logger'
 
 const focusFirstQty = (id?: number) => {
     setTimeout(() => {
@@ -57,7 +58,7 @@ export const useProductSearch = (
                 setSelectedItemIndex(productsList?.length > 0 ? 0 : -1);
             } catch (err) {
                 if (err instanceof Error && err.name === 'CanceledError') return;
-                console.error("Erreur recherche produits", err);
+                logger.error("Erreur recherche produits", err);
                 toast.error(getApiErrorDetail(err, t('common:messages.error_loading', { defaultValue: 'Erreur recherche' })));
             } finally {
                 setLoadingSearch(false);
@@ -112,7 +113,7 @@ export const useProductSearch = (
             });
             setLotQuantities(initialQtys);
         } catch (err) {
-            console.error("Erreur chargement lots", err);
+            logger.error("Erreur chargement lots", err);
             toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
         } finally {
             setLoadingLots(false);

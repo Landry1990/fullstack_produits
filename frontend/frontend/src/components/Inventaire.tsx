@@ -30,6 +30,7 @@ export default function InventaireComponent() {
     // Initial load
     useEffect(() => {
         listLogic.fetchInventaires();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleConfirmCreate = async (options: unknown) => {

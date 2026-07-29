@@ -5,6 +5,7 @@ import api from '../services/api';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
 import type { Substance } from '../hooks/useSubstances';
+import { logger } from '../utils/logger'
 
 interface Interaction {
   id: number;
@@ -75,20 +76,20 @@ export default function InteractionsManager() {
         setInteractions(r.data.results || []);
         setTotalCount(r.data.count || 0);
       })
-      .catch(console.error)
+      .catch(logger.error)
       .finally(() => setLoading(false));
   }, [page, search, gravityFilter]);
 
   const fetchStats = useCallback(() => {
     api.get('interactions/stats/')
       .then(r => setStats(r.data))
-      .catch(console.error);
+      .catch(logger.error);
   }, []);
 
   useEffect(() => {
     api.get('substances/?page_size=9999')
       .then(r => setSubstances(r.data.results || []))
-      .catch(console.error);
+      .catch(logger.error);
   }, []);
 
   useEffect(() => { fetchInteractions(); }, [fetchInteractions]);

@@ -48,6 +48,7 @@ import {
   DropdownMenuSeparator,
 } from './shadcn/dropdown-menu'
 import { cn } from '../lib/utils'
+import { logger } from '../utils/logger'
 
 // Types pour les statistiques
 interface PerimesStats {
@@ -149,6 +150,7 @@ export default function Perimes() {
     fetchStats()
     fetchLots()
     fetchAdjustments()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -157,6 +159,7 @@ export default function Perimes() {
     } else if (activeTab === 'history') {
       fetchAdjustments()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterDays, showExpiredOnly, activeTab, dateDebut, dateFin])
 
   const fetchStats = async () => {
@@ -165,7 +168,7 @@ export default function Perimes() {
       const response = await api.get<PerimesStats>('stock-lots/stats_perimes/')
       setStats(response.data)
     } catch (err) {
-      console.error('Erreur chargement stats:', err)
+      logger.error('Erreur chargement stats:', err)
       toast.error(t('perimes.messages.error_stats'))
     } finally {
       setLoadingStats(false)
@@ -186,7 +189,7 @@ export default function Perimes() {
       const data: unknown = response.data
       setAdjustments(Array.isArray(data) ? data : (data.results || []))
     } catch (err) {
-      console.error('Erreur chargement historiques:', err)
+      logger.error('Erreur chargement historiques:', err)
       toast.error(t('perimes.messages.error_history'))
     } finally {
       setLoadingAdjustments(false)
@@ -220,7 +223,7 @@ export default function Perimes() {
       
       setLots(fetchedLots)
     } catch (err) {
-      console.error('Erreur chargement lots:', err)
+      logger.error('Erreur chargement lots:', err)
       setError(t('perimes.messages.error_loading'))
     } finally {
       setLoading(false)
@@ -251,7 +254,7 @@ export default function Perimes() {
         fetchLots()
         fetchStats() 
       } catch (err) {
-        console.error('Erreur sortie stock:', err);
+        logger.error('Erreur sortie stock:', err);
         toast.error(t('perimes.messages.error_exit') + ': ' + getApiErrorDetail(err, 'Erreur inconnue'))
         throw err;
       } finally {
@@ -279,7 +282,7 @@ export default function Perimes() {
               fetchLots()
               fetchStats()
           } catch (err) {
-              console.error('Erreur sortie groupée:', err)
+              logger.error('Erreur sortie groupée:', err)
               toast.error(getApiErrorDetail(err, t('perimes.messages.error_bulk_exit')))
               throw err;
           } finally {

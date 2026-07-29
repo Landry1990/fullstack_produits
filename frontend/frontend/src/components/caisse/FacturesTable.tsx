@@ -90,6 +90,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
         setPreviewFacture(null)
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedFactures, previewFacture?.id])
 
   if (loading && sortedFactures.length === 0) {

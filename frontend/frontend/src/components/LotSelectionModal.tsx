@@ -69,6 +69,7 @@ export default function LotSelectionModal({
     } else {
       setAllocations([])
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, lots.length, quantity, currentAllocations])
 
   const totalAllocated = useMemo(() => allocations.reduce((sum, a) => sum + (a.quantity || 0), 0), [allocations])

@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
+import { logger } from '../utils/logger'
 
 interface PaymentState {
   selectedFacture: Facture | null
@@ -183,11 +184,12 @@ export const useCaissePayment = ({
       toast.success(successMessage)
       onSuccess?.()
     } catch (err) {
-      console.error('Erreur lors du paiement:', err)
+      logger.error('Erreur lors du paiement:', err)
       toast.error(getApiErrorDetail(err, t('messages.save_payment_error')))
     } finally {
       setLoading(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedFacture,
     couponsParFacture,

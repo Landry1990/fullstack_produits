@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Badge } from './ui/Badge';
 import { formatCurrency } from '../utils/formatters';
+import { logger } from '../utils/logger'
 
 interface CashierPerformance {
     user_id: number;
@@ -32,6 +33,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
 
     useEffect(() => {
         fetchPerformances();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [month, year, userId]);
 
     const fetchPerformances = async () => {
@@ -42,7 +44,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
             const response = await api.get(`clotures-caisse/performances_caissiers/?${params.toString()}`);
             setPerformances(response.data);
         } catch (err) {
-            console.error("Error fetching cashier performances:", err);
+            logger.error("Error fetching cashier performances:", err);
         } finally {
             setLoading(false);
         }

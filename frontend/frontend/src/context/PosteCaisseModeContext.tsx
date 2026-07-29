@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { useAuth } from './AuthContext'
 import { cashSessionService, type PosteVente } from '../services/cashSessionService'
+import { logger } from '../utils/logger'
 
 const POS_TAB_KEY = 'pos_tab_poste_vente_id'
 const POS_MODE_KEY = 'pos_tab_mode'
@@ -53,7 +54,7 @@ export function PosteCaisseModeProvider({ children }: { children: ReactNode }) {
         setActivePoste(null)
       }
     } catch (err) {
-      console.error('Erreur refresh poste actif:', err)
+      logger.error('Erreur refresh poste actif:', err)
     } finally {
       setIsLoading(false)
     }

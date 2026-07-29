@@ -102,6 +102,7 @@ const BMICalculator: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'adult') calculateBMI();
     else calculateChildWeight();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weight, height, age, ageUnit, activeTab]);
 
   const bmiRanges = [

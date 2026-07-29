@@ -1,6 +1,7 @@
 ﻿import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
+import { logger } from '../utils/logger'
 
 interface Props {
   children: ReactNode;
@@ -22,7 +23,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    logger.error('Uncaught error:', error, errorInfo);
 
     // Rechargement automatique si c'est une erreur de chargement de chunk lazy
     const isChunkError = error.message?.includes('dynamically imported module')

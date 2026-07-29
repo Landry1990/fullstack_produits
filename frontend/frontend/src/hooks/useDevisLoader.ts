@@ -105,5 +105,6 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
             }
         }
         loadDevis()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 }

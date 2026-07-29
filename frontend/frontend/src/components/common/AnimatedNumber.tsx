@@ -37,6 +37,7 @@ export const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
         };
 
         requestAnimationFrame(animate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value, duration]);
 
     return <span>{formatValue(displayValue)}</span>;

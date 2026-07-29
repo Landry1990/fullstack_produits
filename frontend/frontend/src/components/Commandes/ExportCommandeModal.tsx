@@ -82,6 +82,7 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
     if (isOpen && commande) {
       loadPreview();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, commande, selectedCip]);
 
   const loadPreview = async () => {

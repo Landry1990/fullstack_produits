@@ -3,6 +3,7 @@ import api from '../services/api'
 import { useTranslation } from 'react-i18next'
 import { normalizeNumberInput } from '../utils/formatters'
 import PremiumModal from './common/PremiumModal'
+import { logger } from '../utils/logger'
 
 interface CashMovementModalProps {
   isOpen: boolean
@@ -50,7 +51,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
       onSuccess()
       onClose()
     } catch (err: unknown) {
-      console.error('Erreur creation mouvement:', err)
+      logger.error('Erreur creation mouvement:', err)
       setError(err.response?.data?.detail || err.message || t('movement_modal.save_error'))
     } finally {
       setLoading(false)

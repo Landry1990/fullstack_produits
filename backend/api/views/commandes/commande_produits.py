@@ -108,7 +108,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 return Decimal(str(default)) if default is not None else None
             try:
                 return Decimal(str(val))
-            except:
+            except Exception:
                 return Decimal(str(default)) if default is not None else None
 
         def parse_expiration(val):

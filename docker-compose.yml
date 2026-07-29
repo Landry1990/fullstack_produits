@@ -41,6 +41,20 @@ services:
     networks:
       - app-network
 
+  # Docker Socket Proxy — limite l'accès au daemon Docker (sécurité)
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+      - EXEC=1
+      - POST=1
+      - LOG=1
+    networks:
+      - app-network
+
   # Cache Redis (pour Django Cache + Channels)
   redis:
     image: redis:7-alpine
@@ -75,18 +89,18 @@ services:
       - ./backend:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-      - /var/run/docker.sock:/var/run/docker.sock
       - ./backup-db.sh:/backup-db.sh
       - ./backups:/backups
       - wal_archive:/wal_archive
     env_file:
       - .env
     environment:
-      - DJANGO_DEBUG=${DJANGO_DEBUG:-True}
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
       - DB_CONN_MAX_AGE=600
       - UVICORN_WORKERS=4
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
     # Port 8000 non exposé — tout le trafic passe par nginx (port 80)
     # Pour debug direct : docker compose exec backend curl http://127.0.0.1:8000/api/health/
     depends_on:
