@@ -42,7 +42,7 @@ export function generateStockValuationPdf(
       .replace(/[\u00A0\u202F]/g, ' ');
   };
 
-  const typeLabel = data.is_pmp ? "Coût d'Achat (PMP)" : 'Prix de Vente (TTC)';
+  const _typeLabel = data.is_pmp ? "Coût d'Achat (PMP)" : 'Prix de Vente (TTC)';
   const docTitle = `Valeur Stock (${data.is_pmp ? 'PMP' : 'VENTE'})`;
 
   // --- Header ---
