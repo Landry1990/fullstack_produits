@@ -180,5 +180,11 @@
   "update_schedule_save_error": "Error saving",
   "update_info_1": "If the server is off, the update will happen <strong>on next boot</strong>",
   "update_info_2": "If no Internet, the update is <strong>automatically postponed</strong>",
-  "update_info_3": "The button above <strong>forces an immediate update</strong>"
+  "update_info_3": "The button above <strong>forces an immediate update</strong>",
+  "reminder_title": "Update Check",
+  "reminder_subtitle": "Zenith Pharma automatically checks if a new version is available.",
+  "reminder_question": "Would you like to check now if an update is available?",
+  "reminder_yes": "Yes, check",
+  "reminder_no": "No, later",
+  "reminder_ok": "OK"
 }

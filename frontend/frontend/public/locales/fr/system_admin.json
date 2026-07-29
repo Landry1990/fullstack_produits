@@ -180,5 +180,11 @@
   "update_schedule_save_error": "Erreur lors de la sauvegarde",
   "update_info_1": "Si le serveur est éteint, la mise à jour se fait <strong>au prochain démarrage</strong>",
   "update_info_2": "Si pas d'Internet, la mise à jour est <strong>reportée automatiquement</strong>",
-  "update_info_3": "Le bouton ci-dessus permet de <strong>forcer une mise à jour immédiate</strong>"
+  "update_info_3": "Le bouton ci-dessus permet de <strong>forcer une mise à jour immédiate</strong>",
+  "reminder_title": "Vérification des mises à jour",
+  "reminder_subtitle": "Zenith Pharma vérifie automatiquement si une nouvelle version est disponible.",
+  "reminder_question": "Voulez-vous vérifier maintenant s'il y a une mise à jour disponible ?",
+  "reminder_yes": "Oui, vérifier",
+  "reminder_no": "Non, plus tard",
+  "reminder_ok": "OK"
 }
