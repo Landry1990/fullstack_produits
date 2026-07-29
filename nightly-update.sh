@@ -30,7 +30,9 @@ COMPOSE_FILE="docker-compose.prod.yml"
 LOG_FILE="$APP_DIR/logs/nightly-update.log"
 HEALTH_TIMEOUT=120
 HEALTH_INTERVAL=5
-BUILD_TIMEOUT=600    # 10 min max pour le build
+BUILD_TIMEOUT=900    # 15 min max pour le build
+MIN_DISK_GB=2        # Espace disque minimum requis (GB)
+MAX_BUILD_RETRIES=2  # Tentatives de build en cas d'échec
 
 mkdir -p "$APP_DIR/logs"
 
@@ -122,18 +124,53 @@ for container in "zenith-pharma-backend" "zenith-pharma-frontend"; do
 done
 ok "Images actuelles taggées :previous"
 
-# ── 5. Build des nouvelles images (sans arrêter l'app) ───────
+# ── 5. Nettoyage Docker + Build des nouvelles images ─────────
 log "🔨 Étape 5/6 — Build des nouvelles images (application toujours en ligne)"
 export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
-# Build avec cache Docker — ne rebuilder que les layers modifiés
-# Si Internet coupe, le build échoue mais l'app tourne toujours
-if ! GIT_COMMIT="$GIT_COMMIT" timeout "$BUILD_TIMEOUT" $DC -f "$COMPOSE_FILE" build 2>>"$LOG_FILE"; then
-    err "docker build a échoué (coupure Internet ou timeout ${BUILD_TIMEOUT}s)"
+# Vérifier l'espace disque disponible
+available_kb=$(df -P /var/lib/docker 2>/dev/null | awk 'NR==2 {print $4}' || df -P / 2>/dev/null | awk 'NR==2 {print $4}')
+available_gb=$((available_kb / 1024 / 1024))
+if [ "$available_gb" -lt "$MIN_DISK_GB" ]; then
+    warn "Espace disque faible (${available_gb}GB < ${MIN_DISK_GB}GB requis) — nettoyage Docker..."
+    docker system prune -a -f --volumes 2>>"$LOG_FILE" || true
+    # Re-vérifier après nettoyage
+    available_kb=$(df -P /var/lib/docker 2>/dev/null | awk 'NR==2 {print $4}' || df -P / 2>/dev/null | awk 'NR==2 {print $4}')
+    available_gb=$((available_kb / 1024 / 1024))
+    if [ "$available_gb" -lt "$MIN_DISK_GB" ]; then
+        err "Espace disque insuffisant (${available_gb}GB) après nettoyage — mise à jour annulée"
+        warn "Les conteneurs actuels continuent de fonctionner — aucune interruption"
+        exit 1
+    fi
+    ok "Espace disque récupéré : ${available_gb}GB disponibles"
+else
+    # Nettoyage léger systématique (images orphelines seulement)
+    docker image prune -f 2>/dev/null || true
+fi
+log "💾 Espace disque : ${available_gb}GB disponibles"
+
+# Build avec retry automatique
+build_success=false
+for attempt in $(seq 1 $MAX_BUILD_RETRIES); do
+    log "🔨 Build tentative $attempt/$MAX_BUILD_RETRIES..."
+    if GIT_COMMIT="$GIT_COMMIT" timeout "$BUILD_TIMEOUT" $DC -f "$COMPOSE_FILE" build 2>>"$LOG_FILE"; then
+        build_success=true
+        break
+    fi
+    warn "Build échoué (tentative $attempt/$MAX_BUILD_RETRIES)"
+    if [ "$attempt" -lt "$MAX_BUILD_RETRIES" ]; then
+        warn "Nettoyage Docker avant retry..."
+        docker builder prune -f 2>/dev/null || true
+        docker image prune -f 2>/dev/null || true
+    fi
+done
+
+if [ "$build_success" != "true" ]; then
+    err "docker build a échoué après $MAX_BUILD_RETRIES tentatives (coupure Internet, espace disque ou timeout ${BUILD_TIMEOUT}s)"
     warn "Les conteneurs actuels continuent de fonctionner — aucune interruption"
     exit 1
 fi
-ok "Nouvelles images construites avec succès (cache Docker utilisé)"
+ok "Nouvelles images construites avec succès"
 
 # ── Basculement : arrêter les anciens conteneurs et démarrer les nouveaux
 log "🔄 Basculement — arrêt des anciens conteneurs et démarrage des nouveaux"
