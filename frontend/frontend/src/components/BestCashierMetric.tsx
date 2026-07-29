@@ -1,6 +1,8 @@
 ﻿import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
+import { Badge } from './ui/Badge';
 import { formatCurrency } from '../utils/formatters';
 
 interface CashierPerformance {
@@ -49,7 +51,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
     if (loading) {
         return (
             <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-8 flex justify-center items-center">
-                <span className="loading loading-spinner loading-md text-primary"></span>
+                <Loader2 className="size-5 animate-spin text-primary" />
             </div>
         );
     }
@@ -115,7 +117,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                     <span className="text-[10px] font-bold opacity-40 bg-base-200 px-2 py-0.5 rounded-full">Top {performances.length}</span>
                 </div>
                 <div className="overflow-x-auto flex-1">
-                    <table className="table table-xs w-full">
+                    <table className="w-full border-collapse text-xs">
                         <thead>
                             <tr className="bg-base-200/40">
                                 <th className="text-[10px] uppercase font-black text-base-content/40 px-3 py-2 tracking-widest">{t('table.rank')}</th>
@@ -130,11 +132,11 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                                 <tr key={perf.user_id} className="hover:bg-primary/5 transition-colors group border-b border-base-100">
                                     <td className="px-3 py-2">
                                         {index === 0 ? (
-                                            <span className="badge badge-xs bg-yellow-400 border-none text-yellow-900 font-black italic px-2">{t('performance.badges.1st')}</span>
+                                            <Badge variant="primary" size="sm" className="bg-yellow-400 border-none text-yellow-900 font-black italic px-2">{t('performance.badges.1st')}</Badge>
                                         ) : index === 1 ? (
-                                            <span className="badge badge-xs bg-slate-300 border-none text-base-content/90 font-black italic px-2">{t('performance.badges.2nd')}</span>
+                                            <Badge variant="primary" size="sm" className="bg-slate-300 border-none text-base-content/90 font-black italic px-2">{t('performance.badges.2nd')}</Badge>
                                         ) : index === 2 ? (
-                                            <span className="badge badge-xs bg-warning border-none text-amber-50 font-black italic px-2">{t('performance.badges.3rd')}</span>
+                                            <Badge variant="warning" size="sm" className="border-none text-amber-50 font-black italic px-2">{t('performance.badges.3rd')}</Badge>
                                         ) : (
                                             <span className="text-base-content/30 font-black text-xs pl-1 font-mono">{index + 1}</span>
                                         )}

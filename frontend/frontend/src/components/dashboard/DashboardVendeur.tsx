@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
     Trophy, TrendingUp, ShoppingCart,
     Target, Clock, Star, BarChart2, Zap,
-    RefreshCw
+    RefreshCw, Loader2
 } from 'lucide-react';
 import { useRecharts } from '../../hooks/useRecharts';
 import { useVendeurStats } from '../../hooks/useDashboard';
@@ -56,7 +56,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center py-24">
-                <div className="loading loading-spinner loading-lg text-indigo-500" />
+                <Loader2 className="size-8 animate-spin text-indigo-500" />
                 <span className="mt-3 text-xs font-black uppercase tracking-widest text-slate-300">{t('vendeur.loading')}</span>
             </div>
         );

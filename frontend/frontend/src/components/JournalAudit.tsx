@@ -7,7 +7,7 @@ import { useAuditLogs, useAuditStats, useUsers } from '../hooks/useAudit';
 import { formatNumber } from '../utils/formatters';
 import {
   ClipboardList, Search, Download, RotateCcw, ChevronDown, ChevronUp,
-  TrendingUp, Clock, Calendar, Shield, PackagePlus, PackageMinus,
+  TrendingUp, Clock, Calendar, Shield, PackagePlus, PackageMinus, Loader2,
   XCircle, Trash2, CheckCircle2, Boxes, ArrowDownToLine,
   BadgeAlert, Edit, LogIn, FileOutput, Settings, AlertTriangle,
   Activity, Filter
@@ -275,7 +275,7 @@ const JournalAudit: React.FC = () => {
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-5 grid grid-cols-2 md:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="flex flex-col gap-1">
                         <label className="text-[10px] font-black uppercase text-slate-400">{t('filters.user_label')}</label>
-                        <select className="select select-bordered select-sm font-bold" value={userFilter} onChange={e => { setUserFilter(e.target.value); setPage(1); }}>
+                        <select className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" value={userFilter} onChange={e => { setUserFilter(e.target.value); setPage(1); }}>
                             <option value="">{t('filters.all_users')}</option>
                             {users.flatMap(u => u.id ? [(
                                 <option key={u.id} value={u.id?.toString()}>
@@ -286,11 +286,11 @@ const JournalAudit: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                         <label className="text-[10px] font-black uppercase text-slate-400">{t('filters.date_from')}</label>
-                        <input type="datetime-local" className="input input-bordered input-sm font-bold" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} />
+                        <input type="datetime-local" className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} />
                     </div>
                     <div className="flex flex-col gap-1">
                         <label className="text-[10px] font-black uppercase text-slate-400">{t('filters.date_to')}</label>
-                        <input type="datetime-local" className="input input-bordered input-sm font-bold" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} />
+                        <input type="datetime-local" className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} />
                     </div>
                     <div className="flex items-end">
                         <button onClick={handleResetFilters} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition-colors w-full justify-center">
@@ -312,7 +312,7 @@ const JournalAudit: React.FC = () => {
             {/* ── Timeline ────────────────────────────────────────────── */}
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-                    <div className="loading loading-spinner loading-lg text-indigo-500" />
+                    <Loader2 className="size-8 animate-spin text-indigo-500" />
                     <span className="mt-4 font-black uppercase text-xs text-slate-300 tracking-widest">{t('view.loading')}</span>
                 </div>
             ) : filteredLogs.length === 0 ? (

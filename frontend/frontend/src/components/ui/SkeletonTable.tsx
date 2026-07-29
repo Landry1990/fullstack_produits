@@ -9,7 +9,7 @@ export default function SkeletonTable({ rows = 5, columns = 5 }: SkeletonTablePr
   return (
     <div className="w-full space-y-4 animate-pulse">
       <div className="overflow-x-auto">
-        <table className="table table-sm w-full">
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-base-200">
               {Array.from({ length: columns }).map((_, i) => (

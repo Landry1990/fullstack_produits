@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import { useProduitSubstituts } from '../hooks/useProduitSubstituts';
 import type { ProduitModel } from '../types/catalog';
 import { Button } from './shadcn/button';
@@ -38,7 +39,7 @@ export function SubstitutionModal({ produitId, produitName, onSelect, onClose }:
 
         {isLoading && (
           <div className="flex justify-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
+            <Loader2 className="size-8 animate-spin" />
           </div>
         )}
 

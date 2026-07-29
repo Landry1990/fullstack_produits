@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { X, Send, Bug, Lightbulb, TrendingUp, HelpCircle, MoreHorizontal } from 'lucide-react';
+import { X, Send, Bug, Lightbulb, TrendingUp, HelpCircle, MoreHorizontal, Loader2 } from 'lucide-react';
 import feedbackService, { type Feedback } from '../../services/feedbackService';
 
 interface FeedbackModalProps {
@@ -193,7 +193,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             >
               {loading ? (
                 <>
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <Loader2 className="size-4 animate-spin" />
                   {t('common.sending', 'Envoi...')}
                 </>
               ) : (

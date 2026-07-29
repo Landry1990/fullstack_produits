@@ -1,4 +1,5 @@
 ﻿import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
 
 interface Props {
@@ -45,7 +46,7 @@ class ErrorBoundary extends Component<Props, State> {
         return (
           <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
             <div className="w-96 bg-base-100 shadow-xl rounded-2xl border border-base-200 p-6 items-center text-center">
-                <span className="loading loading-spinner loading-lg text-primary"></span>
+                <Loader2 className="size-8 animate-spin text-primary" />
                 <h2 className="text-lg font-bold mt-4">Mise à jour détectée</h2>
                 <p className="py-2 text-sm text-base-content/60">Rechargement en cours...</p>
             </div>

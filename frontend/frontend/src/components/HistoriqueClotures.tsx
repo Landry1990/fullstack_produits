@@ -511,14 +511,14 @@ export default function HistoriqueClotures() {
                 </Button>
               )}
 {/* 
-              <button 
+              <Button 
                 onClick={exportExcel}
-                className="btn btn-sm btn-outline btn-success gap-2"
+                variant="outline" size="sm" className="gap-2 text-emerald-600"
                 disabled={loading || clotures.length === 0}
               >
                 <Download className="size-4" />
                 Excel
-              </button> */}
+              </Button> */}
             </div>
           </div>
         </div>

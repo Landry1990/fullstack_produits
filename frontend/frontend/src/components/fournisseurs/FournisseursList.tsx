@@ -36,14 +36,14 @@ export default function FournisseursList({ hook }: Props) {
           <div className="flex justify-between items-center h-10">
             {selectedIds.length > 0 ? (
               <div className="flex items-center gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-200">
-                <div className="dropdown-ref dropdown-ref-bottom-ref">
+                <div className="relative group">
                   <div tabIndex={0} role="button" className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
                     <MoreVertical className="size-4" />
                     {t('common:actions_title', { defaultValue: 'Actions' })}
                     <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs bg-white/20 rounded-full">{selectedIds.length}</span>
                   </div>
-                  <ul tabIndex={0} className="dropdown-ref-content-ref z-[100] menu-ref p-2 shadow-xl bg-white rounded-lg w-52 border border-slate-200 mt-1">
-                    <li className="menu-title px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <ul className="absolute z-[100] p-2 shadow-xl bg-white rounded-lg w-52 border border-slate-200 mt-1 hidden group-focus-within:block">
+                    <li className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                       {t('common:bulk_actions', { defaultValue: 'Actions Groupées' })}
                     </li>
                     <li>
@@ -71,7 +71,7 @@ export default function FournisseursList({ hook }: Props) {
                   </div>
                   <div>
                     <h2 className="font-bold text-base text-slate-800 leading-none">{t('providers:title')}</h2>
-                    <Badge variant="secondary" className="text-[10px] mt-1">{totalCount} {t('common:items', { defaultValue: 'fournisseurs' })}</Badge>
+                    <Badge variant="secondary" className="text-[10px] mt-1">{totalCount}</Badge>
                   </div>
                 </div>
                 <div className="flex gap-1 items-center">

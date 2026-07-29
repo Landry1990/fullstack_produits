@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import type { Substance } from '../hooks/useSubstances';
 import InteractionsManager from './InteractionsManager';
+import { Button } from './shadcn/button';
+import { Badge } from './ui/Badge';
 
 interface StatsData {
   substances: number;
@@ -129,17 +132,17 @@ export default function ImportDCIPage() {
           <h1 className="text-3xl font-black tracking-tight">{t('products:dci_admin.title', 'Gestion DCI & Matching')}</h1>
           <p className="text-sm text-base-content/50 mt-1 font-medium">{t('products:dci_admin.subtitle', 'Import de substances et liaison automatique avec la base ANSM')}</p>
         </div>
-        <button onClick={fetchStats} className="btn btn-ghost btn-sm opacity-60 hover:opacity-100">
+        <Button onClick={fetchStats} variant="ghost" size="sm" className="opacity-60 hover:opacity-100">
           {t('common:refresh', 'Actualiser')}
-        </button>
+        </Button>
       </div>
 
       {/* Tabs */}
-      <div role="tablist" className="tabs tabs-bordered">
-        <a role="tab" className={`tab ${activeTab === 'dci' ? 'tab-active' : ''}`} onClick={() => setActiveTab('dci')}>
+      <div role="tablist" className="inline-flex border-b border-base-200 gap-0">
+        <a role="tab" className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'dci' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('dci')}>
           DCI & Substances
         </a>
-        <a role="tab" className={`tab ${activeTab === 'interactions' ? 'tab-active' : ''}`} onClick={() => setActiveTab('interactions')}>
+        <a role="tab" className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'interactions' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('interactions')}>
           Interactions médicamenteuses
         </a>
       </div>
@@ -193,15 +196,15 @@ export default function ImportDCIPage() {
               type="file"
               accept=".txt"
               onChange={e => { setFile(e.target.files?.[0] || null); setUploadResult(null); }}
-              className="file-input file-input-bordered w-full rounded-xl bg-base-200/50 border-none"
+              className="file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-base-300 file:text-base-content hover:file:bg-base-200 text-sm w-full rounded-xl border border-base-300 bg-base-200/50 px-3 py-2"
             />
-            <button
-              className="btn btn-primary rounded-2xl"
+            <Button
+              variant="default" className="rounded-2xl"
               disabled={!file || uploading}
               onClick={handleUpload}
             >
-              {uploading ? <span className="loading loading-spinner loading-sm" /> : t('common:upload', 'Envoyer')}
-            </button>
+              {uploading ? <Loader2 className="size-4 animate-spin" /> : t('common:upload', 'Envoyer')}
+            </Button>
           </div>
           {uploadResult && (
             <div className="mt-3 text-sm font-medium text-success">
@@ -217,17 +220,17 @@ export default function ImportDCIPage() {
             {t('products:dci_admin.auto_match', 'Matcher automatique')}
           </h2>
           <p className="text-sm text-base-content/50 mb-4">{t('products:dci_admin.match_desc', 'Analyse tous les produits et tente de les lier aux substances par nom')}</p>
-          <button
-            className="btn btn-secondary rounded-2xl w-full"
+          <Button
+            variant="secondary" className="rounded-2xl w-full"
             disabled={matching}
             onClick={handleAutoMatch}
-          >
+            >
             {matching ? (
-              <><span className="loading loading-spinner loading-sm" /> {t('products:dci_admin.matching', 'Analyse en cours...')}</>
+              <><Loader2 className="size-4 animate-spin" /> {t('products:dci_admin.matching', 'Analyse en cours...')}</>
             ) : (
               <>{t('products:dci_admin.run_match', 'Lancer le matching')}</>
             )}
-          </button>
+          </Button>
           {matchResult && (
             <div className={`mt-3 text-sm font-medium ${matchResult.newly_linked > 0 ? 'text-success' : 'text-warning'}`}>
               {matchResult.newly_linked} nouveaux liens créés. Total liés : {matchResult.total_linked} / {matchResult.total_produits} ({matchResult.link_rate}%)
@@ -242,13 +245,13 @@ export default function ImportDCIPage() {
           <h2 className="font-bold text-lg flex items-center gap-2">
             <BoxIcon />
             {t('products:dci_admin.unlinked_products', 'Produits non liés')}
-            <span className="badge badge-sm bg-base-200 text-base-content font-bold">{unlinkedData?.count ?? 0}</span>
+            <Badge variant="secondary" size="sm" className="font-bold">{unlinkedData?.count ?? 0}</Badge>
           </h2>
           <div className="relative">
             <input
               type="text"
               placeholder={t('products:dci_admin.search_product', 'Rechercher un produit...')}
-              className="input input-bordered input-sm w-full md:w-64 rounded-xl bg-base-200/50 border-none"
+              className="w-full md:w-64 rounded-xl bg-base-200/50 border-none h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               value={unlinkedSearch}
               onChange={e => { setUnlinkedSearch(e.target.value); setUnlinkedPage(1); }}
             />
@@ -256,7 +259,7 @@ export default function ImportDCIPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="table w-full">
+          <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-base-200 bg-base-200/30">
                 <th className="text-xs uppercase tracking-wider text-base-content/50 font-bold">{t('products:produit', 'Produit')}</th>
@@ -270,7 +273,7 @@ export default function ImportDCIPage() {
             </thead>
             <tbody>
               {loadingUnlinked ? (
-                <tr><td colSpan={7} className="text-center py-12"><span className="loading loading-spinner loading-md" /></td></tr>
+                <tr><td colSpan={7} className="text-center py-12"><Loader2 className="size-5 animate-spin" /></td></tr>
               ) : unlinkedData?.results.length === 0 ? (
                 <tr><td colSpan={7} className="text-center py-12 opacity-40 font-medium">{t('products:dci_admin.all_linked', 'Tous les produits sont liés !')}</td></tr>
               ) : (
@@ -282,10 +285,10 @@ export default function ImportDCIPage() {
                     <td className="font-mono text-sm font-bold text-primary">{p.selling_price} F</td>
                     <td>
                       {p.suggestion ? (
-                        <span className="badge badge-sm bg-primary/10 text-primary border-none cursor-pointer hover:bg-primary/20 transition-colors"
+                        <Badge variant="outline" size="sm" className="bg-primary/10 text-primary border-none cursor-pointer hover:bg-primary/20 transition-colors"
                           onClick={() => handleManualLink(p.id, p.suggestion!.id)}>
                           {p.suggestion.nom}
-                        </span>
+                        </Badge>
                       ) : (
                         <span className="text-base-content/30 text-xs">-</span>
                       )}
@@ -298,7 +301,7 @@ export default function ImportDCIPage() {
                       />
                     </td>
                     <td>
-                      {linkingId === p.id && <span className="loading loading-spinner loading-xs text-primary" />}
+                      {linkingId === p.id && <Loader2 className="size-3 animate-spin text-primary" />}
                     </td>
                   </tr>
                 ))
@@ -310,17 +313,17 @@ export default function ImportDCIPage() {
         {/* Pagination */}
         {unlinkedData && unlinkedData.count > unlinkedData.page_size && (
           <div className="flex justify-center gap-2 p-4 border-t border-base-200">
-            <button
-              className="btn btn-xs btn-ghost"
+            <Button
+              variant="ghost" size="sm" className="h-6 px-2 text-xs"
               disabled={unlinkedPage <= 1}
               onClick={() => setUnlinkedPage(p => p - 1)}
-            >Précédent</button>
+            >Précédent</Button>
             <span className="text-sm py-1 opacity-60 font-medium">Page {unlinkedPage} / {Math.ceil(unlinkedData.count / unlinkedData.page_size)}</span>
-            <button
-              className="btn btn-xs btn-ghost"
+            <Button
+              variant="ghost" size="sm" className="h-6 px-2 text-xs"
               disabled={unlinkedPage >= Math.ceil(unlinkedData.count / unlinkedData.page_size)}
               onClick={() => setUnlinkedPage(p => p + 1)}
-            >Suivant</button>
+            >Suivant</Button>
           </div>
         )}
       </div>
@@ -413,7 +416,7 @@ function DCISearchCombobox({ placeholder, onSelect, disabled }: DCISearchCombobo
     <div ref={containerRef} className="relative inline-block w-full max-w-[220px]">
       <input
         type="text"
-        className="input input-bordered input-xs w-full rounded-xl bg-base-200/50 border-none"
+        className="w-full rounded-xl bg-base-200/50 border-none h-8 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
         placeholder={placeholder}
         value={query}
         onChange={handleChange}
@@ -432,7 +435,7 @@ function DCISearchCombobox({ placeholder, onSelect, disabled }: DCISearchCombobo
         >
           {loading ? (
             <li className="px-3 py-2 text-xs text-base-content/50 flex items-center gap-2">
-              <span className="loading loading-spinner loading-xs" /> Recherche...
+              <Loader2 className="size-3 animate-spin" /> Recherche...
             </li>
           ) : results.length === 0 ? (
             <li className="px-3 py-2 text-xs text-base-content/40">
@@ -468,7 +471,7 @@ function StatCard({ label, value, loading, icon, sub, accent }: { label: string;
         <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">{label}</span>
       </div>
       <div className="text-3xl font-black tracking-tight">
-        {loading ? <span className="loading loading-spinner loading-md" /> : value}
+        {loading ? <Loader2 className="size-5 animate-spin" /> : value}
       </div>
       {sub && <div className="text-xs font-bold text-success mt-1 opacity-80">{sub}</div>}
     </div>

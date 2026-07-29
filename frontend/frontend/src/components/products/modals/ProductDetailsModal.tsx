@@ -5,6 +5,7 @@ import type { MonthlyStat } from '../../../services/produitService';
 import type { StockMovement } from '../../../hooks/useProduits';
 import PremiumModal from '../../common/PremiumModal';
 import { ProductTabsContent } from '../ProductTabsContent';
+import { Button } from '../../shadcn/button';
 
 interface ProductDetailsModalProps {
   isOpen: boolean;
@@ -90,27 +91,27 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
             {/* Action Buttons Footer */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-base-200">
               <div className="flex gap-2">
-                <button
-                  className="btn btn-warning btn-sm shadow-sm"
+                <Button
+                  variant="default" size="sm" className="shadow-sm bg-amber-500 hover:bg-amber-600 text-white"
                   onClick={onOpenAdjustment}
                 >
                   📊 {t('products:actions.adjust_stock')}
-                </button>
-                <button
-                  className="btn btn-primary btn-sm shadow-sm"
+                </Button>
+                <Button
+                  variant="default" size="sm" className="shadow-sm"
                   onClick={() => onOpenEdit(selectedProduit)}
                 >
                   ✏️ {t('products:actions.edit')}
-                </button>
+                </Button>
               </div>
               <div className="flex gap-2">
-                <button
-                  className="btn btn-ghost btn-sm text-error"
+                <Button
+                  variant="ghost" size="sm" className="text-red-500"
                   onClick={() => onDelete(selectedProduit)}
                 >
                   🗑️ {t('products:actions.delete')}
-                </button>
-                <button className="btn btn-neutral btn-sm px-8" onClick={onClose}>{t('common:actions.close')}</button>
+                </Button>
+                <Button variant="secondary" size="sm" className="px-8" onClick={onClose}>{t('common:actions.close')}</Button>
               </div>
             </div>
           </div>

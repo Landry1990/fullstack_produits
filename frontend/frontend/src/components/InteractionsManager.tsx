@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { Button } from './shadcn/button';
+import { Badge } from './ui/Badge';
 import type { Substance } from '../hooks/useSubstances';
 
 interface Interaction {
@@ -22,11 +24,11 @@ interface InteractionStats {
   total_substances: number;
 }
 
-const GRAVITY_COLORS: Record<string, string> = {
-  CONTRE_INDIQUE: 'badge-error',
-  DECONSEILLE: 'badge-warning',
-  A_PRENDRE_EN_COMPTE: 'badge-info',
-  PRECAUTION: 'badge-ghost',
+const GRAVITY_COLORS: Record<string, 'error' | 'warning' | 'primary' | 'ghost'> = {
+  CONTRE_INDIQUE: 'error',
+  DECONSEILLE: 'warning',
+  A_PRENDRE_EN_COMPTE: 'primary',
+  PRECAUTION: 'ghost',
 };
 
 const GRAVITY_LABELS: Record<string, string> = {
@@ -180,12 +182,12 @@ export default function InteractionsManager() {
           <input
             type="text"
             placeholder="Rechercher une substance..."
-            className="input input-bordered input-sm w-64 rounded-xl bg-base-200/50 border-none"
+            className="w-64 rounded-xl bg-base-200/50 border-none h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
           />
           <select
-            className="select select-bordered select-sm rounded-xl bg-base-200/50 border-none"
+            className="rounded-xl bg-base-200/50 border-none h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
             value={gravityFilter}
             onChange={e => { setGravityFilter(e.target.value); setPage(1); }}
           >
@@ -212,14 +214,14 @@ export default function InteractionsManager() {
             type="file"
             accept=".csv"
             onChange={e => { setCsvFile(e.target.files?.[0] || null); setUploadResult(null); }}
-            className="file-input file-input-bordered file-input-sm w-full max-w-xs rounded-xl bg-base-200/50 border-none"
+            className="file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-base-300 file:text-base-content hover:file:bg-base-200 text-sm w-full max-w-xs rounded-xl border border-base-300 bg-base-200/50 px-3 py-1.5"
           />
           <Button
             variant="secondary" size="sm" className="rounded-xl"
             disabled={!csvFile || uploading}
             onClick={handleCsvUpload}
           >
-            {uploading ? <span className="loading loading-spinner loading-xs" /> : 'Importer'}
+            {uploading ? <Loader2 className="size-3 animate-spin" /> : 'Importer'}
           </Button>
         </div>
         {uploadResult && (
@@ -239,7 +241,7 @@ export default function InteractionsManager() {
       {/* Table */}
       <div className="bg-base-100 rounded-2xl border border-base-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table w-full">
+          <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-base-200 bg-base-200/30">
                 <th className="text-xs uppercase tracking-wider opacity-50 font-bold">Substance A</th>
@@ -251,7 +253,7 @@ export default function InteractionsManager() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="text-center py-12"><span className="loading loading-spinner loading-md" /></td></tr>
+                <tr><td colSpan={5} className="text-center py-12"><Loader2 className="size-5 animate-spin" /></td></tr>
               ) : interactions.length === 0 ? (
                 <tr><td colSpan={5} className="text-center py-12 opacity-40 font-medium">Aucune interaction trouvée</td></tr>
               ) : (
@@ -260,9 +262,9 @@ export default function InteractionsManager() {
                     <td className="font-bold text-sm">{inter.substance_a_nom}</td>
                     <td className="font-bold text-sm">{inter.substance_b_nom}</td>
                     <td>
-                      <span className={`badge badge-sm ${GRAVITY_COLORS[inter.gravity] || 'badge-ghost'}`}>
+                      <Badge variant={GRAVITY_COLORS[inter.gravity] || 'ghost'} size="sm">
                         {GRAVITY_LABELS[inter.gravity] || inter.gravity}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="text-xs text-base-content/70 max-w-md truncate" title={inter.description}>{inter.description}</td>
                     <td>
@@ -296,7 +298,7 @@ export default function InteractionsManager() {
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider opacity-50">Substance A</label>
                 <select
-                  className="select select-bordered w-full rounded-xl bg-base-200/50 border-none mt-1"
+                  className="w-full rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mt-1"
                   value={formSubA}
                   onChange={e => setFormSubA(Number(e.target.value))}
                 >
@@ -307,7 +309,7 @@ export default function InteractionsManager() {
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider opacity-50">Substance B</label>
                 <select
-                  className="select select-bordered w-full rounded-xl bg-base-200/50 border-none mt-1"
+                  className="w-full rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mt-1"
                   value={formSubB}
                   onChange={e => setFormSubB(Number(e.target.value))}
                 >
@@ -318,7 +320,7 @@ export default function InteractionsManager() {
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider opacity-50">Gravité</label>
                 <select
-                  className="select select-bordered w-full rounded-xl bg-base-200/50 border-none mt-1"
+                  className="w-full rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mt-1"
                   value={formGravity}
                   onChange={e => setFormGravity(e.target.value)}
                 >
@@ -349,7 +351,7 @@ export default function InteractionsManager() {
                 disabled={saving || !formSubA || !formSubB || formSubA === formSubB}
                 onClick={handleSave}
               >
-                {saving ? <span className="loading loading-spinner loading-sm" /> : (editingId ? 'Mettre à jour' : 'Créer')}
+                {saving ? <Loader2 className="size-4 animate-spin" /> : (editingId ? 'Mettre à jour' : 'Créer')}
               </Button>
             </div>
           </div>
