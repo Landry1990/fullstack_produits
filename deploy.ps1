@@ -22,9 +22,14 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$BACKEND_CONTAINER = "fullstack_produits-backend-1"
-$FRONTEND_CONTAINER = "fullstack_produits-frontend-1"
 $scriptPath = Split-Path -Parent $PSCommandPath
+
+# Détection automatique du nom des conteneurs (compose default ou container_name)
+$composeFrontend = docker compose -f "$scriptPath/docker-compose.yml" ps -q frontend 2>$null | ForEach-Object { docker inspect --format='{{.Name}}' $_ 2>$null } | ForEach-Object { $_.TrimStart('/') }
+$composeBackend  = docker compose -f "$scriptPath/docker-compose.yml" ps -q backend 2>$null  | ForEach-Object { docker inspect --format='{{.Name}}' $_ 2>$null } | ForEach-Object { $_.TrimStart('/') }
+
+$FRONTEND_CONTAINER = if ($composeFrontend) { $composeFrontend } else { "zenith-pharma-frontend-dev" }
+$BACKEND_CONTAINER  = if ($composeBackend)  { $composeBackend }  else { "zenith-pharma-backend-dev" }
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
