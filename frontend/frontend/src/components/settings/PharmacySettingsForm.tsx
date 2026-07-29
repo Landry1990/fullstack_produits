@@ -510,7 +510,7 @@ export default function PharmacySettingsForm() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div className="flex flex-col gap-1">
                           <label>
                             <span className="text-sm font-bold text-slate-500">{t('labels.phone')}</span>
@@ -521,6 +521,18 @@ export default function PharmacySettingsForm() {
                             onChange={(e) => handleChange('phone', e.target.value)}
                             className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
                             placeholder={t('placeholders.phone')}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label>
+                            <span className="text-sm font-bold text-slate-500">{t('labels.phone2', { defaultValue: 'Téléphone 2' })}</span>
+                          </label>
+                          <Input
+                            type="tel"
+                            value={formData.phone2 || ''}
+                            onChange={(e) => handleChange('phone2', e.target.value)}
+                            className="w-full rounded-xl border border-slate-300 bg-white h-12 px-4 text-sm font-bold focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                            placeholder={t('placeholders.phone2', { defaultValue: 'Numéro secondaire' })}
                           />
                         </div>
                         <div className="flex flex-col gap-1">

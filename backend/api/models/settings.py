@@ -45,6 +45,7 @@ class PharmacySettings(models.Model):
     city = models.CharField(max_length=100, blank=True, default="Douala")
     country = models.CharField(max_length=100, blank=True, default="Cameroun")
     phone = models.CharField(max_length=50, blank=True, default="")
+    phone2 = models.CharField(max_length=50, blank=True, default="", help_text="Second numéro de téléphone")
     email = models.EmailField(blank=True, default="")
     niu = models.CharField(
         max_length=15, blank=True, default="", 
