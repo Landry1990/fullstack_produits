@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { getApiErrorDetail } from '../utils/errorHandling';
-import type { Commande, CommandeProduit, User } from '../types';
+import type { Commande, CommandeProduit, User, PaginatedResponse } from '../types';
 import commandeService, { type SudoCredentials } from '../services/commandeService';
 import { usePharmacySettings } from './usePharmacySettings';
 import { formatDate as formatDateUtil, formatDateTime, getLocale } from '../utils/dateUtils';
@@ -14,6 +15,33 @@ interface UseCommandeActionsProps {
     setViewMode: (mode: 'LIST' | 'CREATE' | 'DETAILS' | 'EDIT') => void;
     confirm: (options: { title?: string; message: string; variant?: 'success' | 'warning' | 'danger' | 'info'; confirmText?: string }) => Promise<boolean>;
     user: User | null;
+}
+
+function removeCommandeFromCache(queryClient: QueryClient, idToRemove: number) {
+    queryClient.setQueriesData({ queryKey: ['commandes'] }, (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        const data = old as PaginatedResponse<Commande>;
+        if (!data || !data.results) return old;
+        return {
+            ...data,
+            results: data.results.filter((c: Commande) => c.id !== idToRemove),
+            count: Math.max(0, (data.count || 0) - 1),
+        };
+    });
+}
+
+function removeCommandesFromCache(queryClient: QueryClient, idsToRemove: number[]) {
+    const idSet = new Set(idsToRemove);
+    queryClient.setQueriesData({ queryKey: ['commandes'] }, (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        const data = old as PaginatedResponse<Commande>;
+        if (!data || !data.results) return old;
+        return {
+            ...data,
+            results: data.results.filter((c: Commande) => !idSet.has(c.id)),
+            count: Math.max(0, (data.count || 0) - idsToRemove.length),
+        };
+    });
 }
 
 export function useCommandeActions({
@@ -113,12 +141,15 @@ export function useCommandeActions({
         }
     }
 
+    const queryClient = useQueryClient();
+
     const handleDeleteCommande = async (commande: Commande, sudoCredentials?: SudoCredentials) => {
         if (executingAction) return;
         setExecutingAction(true);
         try {
             await commandeService.delete(commande.id, sudoCredentials);
             toast.success(t('messages.delete_success'));
+            removeCommandeFromCache(queryClient, commande.id);
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
@@ -501,6 +532,7 @@ export function useCommandeActions({
         try {
             await commandeService.bulkDelete(ids, sudoCredentials);
             toast.success(t('messages.bulk_delete_success', { count: ids.length }));
+            removeCommandesFromCache(queryClient, ids);
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
