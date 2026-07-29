@@ -1,4 +1,5 @@
 ﻿import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Button } from './shadcn/button';
 
 interface Props {
   children: ReactNode;
@@ -43,12 +44,10 @@ class ErrorBoundary extends Component<Props, State> {
       if (isChunkError) {
         return (
           <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
-            <div className="card w-96 bg-base-100 shadow-xl">
-              <div className="card-body items-center text-center">
+            <div className="w-96 bg-base-100 shadow-xl rounded-2xl border border-base-200 p-6 items-center text-center">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
-                <h2 className="card-title mt-4">Mise à jour détectée</h2>
+                <h2 className="text-lg font-bold mt-4">Mise à jour détectée</h2>
                 <p className="py-2 text-sm text-base-content/60">Rechargement en cours...</p>
-              </div>
             </div>
           </div>
         );
@@ -56,32 +55,30 @@ class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-screen flex items-center justify-center bg-base-200 p-4">
-          <div className="card w-96 bg-base-100 shadow-xl">
-            <div className="card-body items-center text-center">
-              <h2 className="card-title text-error">Oups ! Une erreur est survenue.</h2>
+          <div className="w-96 bg-base-100 shadow-xl rounded-2xl border border-base-200 p-6 items-center text-center">
+              <h2 className="text-lg font-bold text-red-500">Oups ! Une erreur est survenue.</h2>
               <p className="py-4 text-sm text-base-content/60">
                 L'application a rencontré un problème inattendu.
               </p>
               {this.state.error && (
-                <div className="alert alert-error text-xs text-left overflow-auto max-h-32 mb-4">
+                <div className="bg-red-50 border border-red-200 text-red-800 text-xs text-left overflow-auto max-h-32 mb-4 p-3 rounded-lg">
                   <code>{this.state.error.toString()}</code>
                 </div>
               )}
-              <div className="card-actions justify-end">
-                <button 
-                  className="btn btn-primary"
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="default"
                   onClick={() => window.location.reload()}
                 >
                   Rafraîchir la page
-                </button>
-                <button 
-                  className="btn btn-ghost"
+                </Button>
+                <Button 
+                  variant="ghost"
                   onClick={() => window.location.href = '/'}
                 >
                   Retour à l'accueil
-                </button>
+                </Button>
               </div>
-            </div>
           </div>
         </div>
       );

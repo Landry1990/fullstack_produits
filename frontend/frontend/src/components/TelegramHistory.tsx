@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Search, RefreshCcw, CheckCircle2, XCircle, Clock, FileText, User, Hash } from 'lucide-react';
+import { Button } from './shadcn/button';
 
 interface TelegramLog {
     id: number;
@@ -88,14 +89,14 @@ const TelegramHistory: React.FC = () => {
                         Consultez tous les messages Telegram envoyés depuis le système (rapports, factures, etc.)
                     </p>
                 </div>
-                <button 
+                <Button 
                     onClick={fetchLogs} 
-                    className="btn btn-outline btn-sm gap-2 rounded-xl"
+                    variant="outline" size="sm" className="gap-2 rounded-xl"
                     disabled={loading}
                 >
                     <RefreshCcw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
                     Actualiser
-                </button>
+                </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

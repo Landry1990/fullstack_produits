@@ -391,11 +391,20 @@ export default function SystemAdmin() {
     setUpdateProgress(0);
     setUpdateStep(t('update_step_starting'));
     setUpdateDone(false);
+    setUpdateStatus(null);
     try {
       await api.post('/system-admin/run_update/');
       setUpdateMessage(t('update_started'));
-      // Poller le statut
+      let pollCount = 0;
+      const maxPolls = 100; // ~5 min à 3s d'intervalle
       const pollInterval = setInterval(async () => {
+        pollCount++;
+        if (pollCount > maxPolls) {
+          clearInterval(pollInterval);
+          setUpdateError(t('update_failed'));
+          setRunningUpdate(false);
+          return;
+        }
         try {
           const statusRes = await api.get('/system-admin/update_status/');
           const s = statusRes.data;
@@ -407,10 +416,20 @@ export default function SystemAdmin() {
             setUpdateStep(t('update_step_done'));
             setUpdateDone(true);
             setUpdateMessage(t('update_success'));
+            setUpdateStatus(null);
             setRunningUpdate(false);
             clearInterval(pollInterval);
           } else if (s.status === 'failed') {
             setUpdateError(t('update_failed') + (s.error ? ': ' + s.error : ''));
+            setRunningUpdate(false);
+            clearInterval(pollInterval);
+          } else if (s.status === 'idle') {
+            // Backend a redémarré et perdu le statut — probablement terminé
+            setUpdateProgress(100);
+            setUpdateStep(t('update_step_done'));
+            setUpdateDone(true);
+            setUpdateMessage(t('update_success'));
+            setUpdateStatus(null);
             setRunningUpdate(false);
             clearInterval(pollInterval);
           }
@@ -428,10 +447,10 @@ export default function SystemAdmin() {
   };
 
   useEffect(() => {
-    if (activeTab === 'mise_a_jour' && !updateStatus && !checkingUpdate) {
+    if (activeTab === 'mise_a_jour' && !updateStatus && !checkingUpdate && !runningUpdate && !updateDone) {
       handleCheckUpdate();
     }
-  }, [activeTab, updateStatus, checkingUpdate, handleCheckUpdate]);
+  }, [activeTab, updateStatus, checkingUpdate, runningUpdate, updateDone, handleCheckUpdate]);
 
   const fetchSchedule = useCallback(async () => {
     setLoadingSchedule(true);

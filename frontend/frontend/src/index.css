@@ -108,7 +108,7 @@ html {
 body {
   font-family: var(--font-sans);
   letter-spacing: -0.01em;
-  background-color: #0c0f14;
+  background-color: var(--color-base-200);
 }
 
 /* Appwrite-like Headings */
@@ -1000,6 +1000,208 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
 
 .theme-midnight ::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--color-base-content), transparent 55%);
+}
+
+/* ── Alertes & fonds colorés pastel ─────────────────── */
+/* Les fonds pastel clairs (bg-amber-50, bg-emerald-50, etc.)
+   deviennent des zones blanches criardes en mode nuit.
+   On les remplace par des versions sombres transparentes. */
+.theme-midnight .bg-amber-50,
+.theme-midnight .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+}
+.theme-midnight .bg-emerald-50,
+.theme-midnight .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+.theme-midnight .bg-red-50,
+.theme-midnight .bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+}
+.theme-midnight .bg-blue-50,
+.theme-midnight .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+}
+.theme-midnight .bg-indigo-50,
+.theme-midnight .bg-indigo-100 {
+  background-color: rgba(99, 102, 241, 0.12) !important;
+}
+.theme-midnight .bg-orange-50,
+.theme-midnight .bg-orange-100 {
+  background-color: rgba(249, 115, 22, 0.12) !important;
+}
+.theme-midnight .bg-purple-50,
+.theme-midnight .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.12) !important;
+}
+.theme-midnight .bg-yellow-50,
+.theme-midnight .bg-yellow-100 {
+  background-color: rgba(234, 179, 8, 0.12) !important;
+}
+.theme-midnight .bg-green-50,
+.theme-midnight .bg-green-100 {
+  background-color: rgba(34, 197, 94, 0.12) !important;
+}
+.theme-midnight .bg-rose-50,
+.theme-midnight .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+}
+.theme-midnight .bg-slate-900,
+.theme-midnight .bg-gray-900,
+.theme-midnight .bg-zinc-900,
+.theme-midnight .bg-neutral-900,
+.theme-midnight .bg-stone-900 {
+  background-color: #020617 !important;
+}
+
+/* ── Bordures colorées pastel ───────────────────────── */
+.theme-midnight .border-amber-200,
+.theme-midnight .border-amber-300 {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+.theme-midnight .border-emerald-200,
+.theme-midnight .border-emerald-300 {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+.theme-midnight .border-red-200,
+.theme-midnight .border-red-300 {
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+.theme-midnight .border-blue-200,
+.theme-midnight .border-blue-300 {
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+.theme-midnight .border-indigo-200,
+.theme-midnight .border-indigo-300 {
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+/* ── Textes colorés — améliorer le contraste ────────── */
+.theme-midnight .text-amber-600,
+.theme-midnight .text-amber-700,
+.theme-midnight .text-amber-800 {
+  color: #fbbf24 !important;
+}
+.theme-midnight .text-amber-900 {
+  color: #fcd34d !important;
+}
+.theme-midnight .text-emerald-600,
+.theme-midnight .text-emerald-700,
+.theme-midnight .text-emerald-800 {
+  color: #34d399 !important;
+}
+.theme-midnight .text-emerald-900 {
+  color: #6ee7b7 !important;
+}
+.theme-midnight .text-red-600,
+.theme-midnight .text-red-700,
+.theme-midnight .text-red-800 {
+  color: #f87171 !important;
+}
+.theme-midnight .text-red-900 {
+  color: #fca5a5 !important;
+}
+.theme-midnight .text-blue-600,
+.theme-midnight .text-blue-700,
+.theme-midnight .text-blue-800 {
+  color: #60a5fa !important;
+}
+.theme-midnight .text-blue-900 {
+  color: #93c5fd !important;
+}
+.theme-midnight .text-indigo-600,
+.theme-midnight .text-indigo-700,
+.theme-midnight .text-indigo-800 {
+  color: #818cf8 !important;
+}
+.theme-midnight .text-indigo-900 {
+  color: #a5b4fc !important;
+}
+.theme-midnight .text-orange-600,
+.theme-midnight .text-orange-700 {
+  color: #fb923c !important;
+}
+.theme-midnight .text-purple-600,
+.theme-midnight .text-purple-700 {
+  color: #c084fc !important;
+}
+
+/* ── Divide & ring colorées ─────────────────────────── */
+.theme-midnight .divide-slate-200 > * + *,
+.theme-midnight .divide-gray-200 > * + * {
+  border-color: var(--color-base-300) !important;
+}
+
+/* ── Shadcn Dialog/Sheet content ────────────────────── */
+.theme-midnight [data-radix-dialog-content],
+.theme-midnight [data-radix-popover-content],
+.theme-midnight [role="dialog"] {
+  background-color: var(--color-base-100) !important;
+  border-color: var(--color-base-300) !important;
+  color: var(--color-base-content) !important;
+}
+
+/* ── Shadcn Select content ──────────────────────────── */
+.theme-midnight [data-radix-select-content],
+.theme-midnight [data-radix-select-viewport] {
+  background-color: var(--color-base-100) !important;
+  color: var(--color-base-content) !important;
+}
+
+/* ── Hover states sur fonds clairs ──────────────────── */
+.theme-midnight .hover\:bg-slate-50:hover,
+.theme-midnight .hover\:bg-slate-100:hover,
+.theme-midnight .hover\:bg-gray-50:hover,
+.theme-midnight .hover\:bg-gray-100:hover,
+.theme-midnight .hover\:bg-zinc-50:hover,
+.theme-midnight .hover\:bg-zinc-100:hover {
+  background-color: var(--color-base-200) !important;
+}
+.theme-midnight .hover\:bg-slate-200:hover,
+.theme-midnight .hover\:bg-gray-200:hover {
+  background-color: var(--color-base-300) !important;
+}
+.theme-midnight .hover\:bg-blue-50:hover,
+.theme-midnight .hover\:bg-indigo-50:hover {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+.theme-midnight .hover\:bg-emerald-50:hover {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+.theme-midnight .hover\:bg-red-50:hover {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+.theme-midnight .hover\:bg-amber-50:hover {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+/* ── Focus ring ─────────────────────────────────────── */
+.theme-midnight .focus\:ring-indigo-500:focus,
+.theme-midnight .focus\:ring-blue-500:focus {
+  --tw-ring-color: rgba(99, 102, 241, 0.4) !important;
+}
+.theme-midnight .focus\:border-indigo-500:focus,
+.theme-midnight .focus\:border-blue-500:focus {
+  border-color: #818cf8 !important;
+}
+
+/* ── Body background fix ────────────────────────────── */
+.theme-midnight body {
+  background-color: #0c0f14 !important;
+}
+
+/* ── Placeholder text ───────────────────────────────── */
+.theme-midnight input::placeholder,
+.theme-midnight textarea::placeholder {
+  color: color-mix(in srgb, var(--color-base-content), transparent 60%) !important;
+}
+
+/* ── File input button ──────────────────────────────── */
+.theme-midnight .file\:bg-indigo-50::file-selector-button,
+.theme-midnight .file\:bg-red-50::file-selector-button,
+.theme-midnight .file\:bg-slate-100::file-selector-button {
+  background-color: var(--color-base-300) !important;
+  color: var(--color-base-content) !important;
 }
 
 /* Impression / templates : forcer le blanc */

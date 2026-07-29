@@ -1,6 +1,8 @@
 import React from 'react';
 import { MoreVertical, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../shadcn/button';
+import { Badge } from './Badge';
 
 interface SelectionHeaderProps {
   selectedCount: number;
@@ -25,22 +27,23 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
         {selectedCount > 0 ? (
           <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2 duration-200">
             <div className="dropdown">
-              <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2">
+              <Button variant="default" size="sm" className="gap-2">
                 <MoreVertical className="size-4" />
                 {t('common:actions_title', { defaultValue: 'Actions' })}
-                <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedCount}</span>
-              </div>
+                <Badge variant="primary" size="sm">{selectedCount}</Badge>
+              </Button>
               <ul tabIndex={0} className="dropdown-content z-[50] menu p-2 shadow-2xl bg-base-100 rounded-box w-60 border border-base-200 mt-2">
                 {actions}
               </ul>
             </div>
-            <button 
+            <Button 
+              variant="ghost" size="sm"
               onClick={onClear}
-              className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content"
+              className="text-base-content/60 hover:text-base-content"
             >
               <X className="size-4" />
               {t('common:actions.cancel', { defaultValue: 'Annuler' })}
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="size-full flex items-center">

@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-07-29 (04:55)
+
+### 🐛 Correctifs — Affichage et mise à jour
+
+- **Arrondi des montants sur bon de livraison et factures** (`InvoiceTemplate.tsx`, `TicketTemplate.tsx`, `ProductDetailsModal.tsx`)
+  - `Math.round()` appliqué sur `total_ht`, `total_tva`, `total_ttc`, `remise`, `part_client`, `part_assurance`
+  - Suppression des décimales/virgules sur tous les totaux affichés
+  - Corrige l'affichage du total TVA après une entrée en stock
+
+- **Barre de progression mise à jour système** (`SystemAdmin.tsx`, `system_admin.py`)
+  - Nouvel endpoint `update_status` pour suivre la progression en temps réel
+  - Bouton "Mettre à jour" vérifie d'abord la disponibilité d'une mise à jour
+  - Barre de progression animée avec étapes (démarrage, en cours, redémarrage)
+  - Notification de succès/échec à la fin de la mise à jour
+  - Remplacement de `ping` par `curl` pour la vérification de connectivité
+
+- **Popup de rappel de mise à jour quotidien** (`UpdateReminderModal.tsx`, `Layout.tsx`)
+  - Affiché une fois par jour pour les administrateurs lors de la première connexion
+  - Vérification automatique de la disponibilité d'une mise à jour
+
+### 📋 À venir
+
+- **Mode nuit (dark mode)** — refonte complète, l'état actuel est illisible
+
+---
+
 ## 2026-07-28 (22:55)
 
 ### 🐛 Correctifs critiques — Infrastructure
