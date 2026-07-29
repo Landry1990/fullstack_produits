@@ -630,7 +630,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const recalcTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   useEffect(() => {
-      if (commandeType === 'DIR' && viewMode === 'CREATE') {
+      if (commandeType === 'DIR' && (viewMode === 'CREATE' || viewMode === 'EDIT')) {
           const rate = normalizeNumberInput(tauxChange || '0');
           const coeff = normalizeNumberInput(fraisCoefficient || '0');
           
@@ -653,12 +653,15 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
                       if (item.prix_euro) {
                           const pEuro = normalizeNumberInput(String(item.prix_euro));
                           if (!isNaN(pEuro)) {
+                              // PA HT = prix_euro * taux (sans coefficient)
                               const priceFCFA = pEuro * rate;
-                              const costPrice = priceFCFA * coeff;
-                              const newPrice = Math.round(costPrice).toString();
+                              const newPrice = Math.round(priceFCFA).toString();
                               
+                              // selling_price = PA_HT * coeff * marge * (1 + TVA)
+                              const costWithFrais = priceFCFA * coeff;
                               const currentMargin = normalizeNumberInput(String(item.marge || 1.3));
-                              const newSelling = Math.round(costPrice * currentMargin).toString();
+                              const currentTva = normalizeNumberInput(String(item.tva || 0));
+                              const newSelling = Math.round(costWithFrais * currentMargin * (1 + currentTva / 100)).toString();
 
                               if (item.price !== newPrice || item.selling_price !== newSelling) {
                                   hasChanges = true;
@@ -974,17 +977,26 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       setSearchProduitQuery('');
       return;
     } else {
+      const dirRate = normalizeNumberInput(tauxChange || '655.957');
+      const dirCoeff = normalizeNumberInput(fraisCoefficient || '1.0');
+      const baseCost = normalizeNumberInput(product.cost_price || '0');
+      // PA HT = cost_price (sans coefficient)
+      const dirPrice = commandeType === 'DIR' ? Math.round(baseCost).toString() : (product.cost_price || '0');
+      const dirMarge = normalizeNumberInput(product.taux_marge || '1.3');
+      const dirTva = normalizeNumberInput(product.tva || '0');
+      // selling_price = PA_HT * coeff * marge * (1 + TVA)
+      const dirSelling = commandeType === 'DIR' ? Math.round(baseCost * dirCoeff * dirMarge * (1 + dirTva / 100)).toString() : (product.selling_price || '0');
       const newCommandeProduit: CommandeProduit = {
         id: Date.now(), 
         produit: product,
         quantity: 1,
         unites_gratuites: 0,  
-        prix_euro: commandeType === 'DIR' ? (product.cost_price ? (normalizeNumberInput(product.cost_price) / normalizeNumberInput(tauxChange)).toFixed(0) : '0') : undefined,
-        price: product.cost_price || '0',
+        prix_euro: commandeType === 'DIR' ? (baseCost > 0 ? (baseCost / dirRate).toFixed(0) : '0') : undefined,
+        price: dirPrice,
         price_cost: product.cost_price || '0',
         tva: product.tva || '0',
         marge: product.taux_marge || '1.3',
-        selling_price: product.selling_price || '0',
+        selling_price: dirSelling,
         lot: '',
         date_expiration: '',
       };
@@ -1008,17 +1020,26 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     if (!pendingDuplicateProduct) return;
     const product = pendingDuplicateProduct;
     setPendingDuplicateProduct(null);
+    const dirRate2 = normalizeNumberInput(tauxChange || '655.957');
+    const dirCoeff2 = normalizeNumberInput(fraisCoefficient || '1.0');
+    const baseCost2 = normalizeNumberInput(product.cost_price || '0');
+    // PA HT = cost_price (sans coefficient)
+    const dirPrice2 = commandeType === 'DIR' ? Math.round(baseCost2).toString() : (product.cost_price || '0');
+    const dirMarge2 = normalizeNumberInput(product.taux_marge || '1.3');
+    const dirTva2 = normalizeNumberInput(product.tva || '0');
+    // selling_price = PA_HT * coeff * marge * (1 + TVA)
+    const dirSelling2 = commandeType === 'DIR' ? Math.round(baseCost2 * dirCoeff2 * dirMarge2 * (1 + dirTva2 / 100)).toString() : (product.selling_price || '0');
     const newCommandeProduit: CommandeProduit = {
       id: Date.now(),
       produit: product,
       quantity: 1,
       unites_gratuites: 0,
-      prix_euro: commandeType === 'DIR' ? (product.cost_price ? (normalizeNumberInput(product.cost_price) / normalizeNumberInput(tauxChange)).toFixed(0) : '0') : undefined,
-      price: product.cost_price || '0',
+      prix_euro: commandeType === 'DIR' ? (baseCost2 > 0 ? (baseCost2 / dirRate2).toFixed(0) : '0') : undefined,
+      price: dirPrice2,
       price_cost: product.cost_price || '0',
       tva: product.tva || '0',
       marge: product.taux_marge || '1.3',
-      selling_price: product.selling_price || '0',
+      selling_price: dirSelling2,
       lot: '',
       date_expiration: '',
     };
@@ -1162,9 +1183,18 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
                const coeff = normalizeNumberInput(fraisCoefficient || '1.0');
 
                if (!isNaN(pEuro) && !isNaN(rate)) {
-                   let priceFCFA = pEuro * rate;
-                   if (!isNaN(coeff)) priceFCFA = priceFCFA * coeff;
+                   // PA HT = prix_euro * taux (sans coefficient)
+                   const priceFCFA = pEuro * rate;
                    newItem.price = Math.round(priceFCFA).toString();
+                   const marge = normalizeNumberInput(String(newItem.marge || 1));
+                   const tva = normalizeNumberInput(String(newItem.tva || 0));
+                   if (priceFCFA > 0 && !isNaN(marge)) {
+                       // selling_price = PA_HT * coeff * marge * (1 + TVA)
+                       const costWithFrais = priceFCFA * coeff;
+                       const sellingHT = costWithFrais * marge;
+                       const sellingTTC = sellingHT * (1 + tva / 100);
+                       newItem.selling_price = Math.round(sellingTTC).toString();
+                   }
                }
           }
 
@@ -1173,7 +1203,11 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
                const marge = normalizeNumberInput(String(newItem.marge || 1));
                const tva = normalizeNumberInput(String(newItem.tva || 0));
                if (!isNaN(price) && !isNaN(marge) && price > 0) {
-                   const sellingHT = price * marge;
+                   // En DIR, le coefficient de frais est appliqué pour le selling_price
+                   const effectiveCost = commandeType === 'DIR'
+                       ? price * normalizeNumberInput(fraisCoefficient || '1.0')
+                       : price;
+                   const sellingHT = effectiveCost * marge;
                    const sellingTTC = sellingHT * (1 + tva / 100);
                    newItem.selling_price = Math.round(sellingTTC).toString();
                }
@@ -1184,7 +1218,12 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
                const tva = normalizeNumberInput(String(newItem.tva || 0));
                if (!isNaN(price) && !isNaN(selling) && price > 0) {
                    const sellingHT = selling / (1 + tva / 100);
-                   newItem.marge = (sellingHT / price).toFixed(4); // Plus de précision
+                   // En DIR, selling_price = PA_HT * coeff * marge * (1 + TVA)
+                   // => marge = sellingHT / (price * coeff)
+                   const divisor = commandeType === 'DIR'
+                       ? price * normalizeNumberInput(fraisCoefficient || '1.0')
+                       : price;
+                   newItem.marge = (sellingHT / divisor).toFixed(4);
                }
           }
             return newItem;
