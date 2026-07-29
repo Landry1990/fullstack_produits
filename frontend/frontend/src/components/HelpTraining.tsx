@@ -145,7 +145,7 @@ const HelpTraining = () => {
               placeholder={t('help:training.search_placeholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="input input-bordered w-full pl-9 text-sm rounded-xl h-10"
+              className="w-full pl-9 text-sm rounded-xl h-10 border border-base-300 bg-base-100 px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
         </div>

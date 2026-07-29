@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { Loader2 } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
 import bwipjs from 'bwip-js'
 import PremiumModal from './common/PremiumModal'
 import { useTranslation } from 'react-i18next'
 import { Button } from './shadcn/button'
+import { Badge } from './ui/Badge'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Commande, ProduitModel } from '../types'
 
@@ -853,29 +855,29 @@ ${labelsHTML}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2.5">{t('format_label')}</label>
           <div className="flex gap-3">
-            <label className={`label cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${labelFormat === '40x20' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
+            <label className={`flex items-center cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${labelFormat === '40x20' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
                 type="radio"
                 name="format"
-                className="radio radio-primary radio-sm"
+                className="size-4 accent-primary cursor-pointer"
                 checked={labelFormat === '40x20'}
                 onChange={() => setLabelFormat('40x20')}
               />
               <div className="flex-1">
-                <span className="label-text font-semibold text-sm">40×20mm</span>
+                <span className="text-sm font-semibold">40×20mm</span>
                 <p className="text-xs text-base-content/50">{t('format_standard')}</p>
               </div>
             </label>
-            <label className={`label cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${labelFormat === '30x15' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
+            <label className={`flex items-center cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${labelFormat === '30x15' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
                 type="radio"
                 name="format"
-                className="radio radio-primary radio-sm"
+                className="size-4 accent-primary cursor-pointer"
                 checked={labelFormat === '30x15'}
                 onChange={() => setLabelFormat('30x15')}
               />
               <div className="flex-1">
-                <span className="label-text font-semibold text-sm">30×15mm</span>
+                <span className="text-sm font-semibold">30×15mm</span>
                 <p className="text-xs text-base-content/50">{t('format_compact')}</p>
               </div>
             </label>
@@ -888,30 +890,30 @@ ${labelsHTML}
             Type de code-barres
           </label>
           <div className="flex gap-3">
-            <label className={`label cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${barcodeType === 'CODE128' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
+            <label className={`flex items-center cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${barcodeType === 'CODE128' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
                 type="radio"
                 name="barcodeType"
-                className="radio radio-primary radio-sm"
+                className="size-4 accent-primary cursor-pointer"
                 checked={barcodeType === 'CODE128'}
                 onChange={() => setBarcodeType('CODE128')}
               />
               <div className="flex-1">
-                <span className="label-text font-semibold text-sm">Code-barres</span>
+                <span className="text-sm font-semibold">Code-barres</span>
                 <p className="text-xs text-base-content/50">CODE128 linéaire</p>
               </div>
             </label>
-            <label className={`label cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${barcodeType === 'DATAMATRIX' ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'hover:bg-base-200'}`}>
+            <label className={`flex items-center cursor-pointer gap-2 border rounded-xl p-3 flex-1 transition-all ${barcodeType === 'DATAMATRIX' ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
                 type="radio"
                 name="barcodeType"
-                className="radio radio-sm"
+                className="size-4 cursor-pointer"
                 style={{ accentColor: '#10b981' }}
                 checked={barcodeType === 'DATAMATRIX'}
                 onChange={() => setBarcodeType('DATAMATRIX')}
               />
               <div className="flex-1">
-                <span className="label-text font-semibold text-sm">Datamatrix</span>
+                <span className="text-sm font-semibold">Datamatrix</span>
                 <p className="text-xs text-base-content/50">GS1 (CIP + lot + exp.)</p>
               </div>
             </label>
@@ -931,7 +933,7 @@ ${labelsHTML}
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <span className="font-bold text-sm">{t('info_title')}</span>
-              <span className="badge badge-primary badge-sm font-mono">{enabledFieldsCount}/{fields.length}</span>
+              <Badge variant="primary" size="sm" className="font-mono">{enabledFieldsCount}/{fields.length}</Badge>
             </div>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1023,30 +1025,30 @@ ${labelsHTML}
           <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40">{t('quantity_label', { defaultValue: 'Quantité d\'étiquettes' })}</label>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <label className={`label cursor-pointer items-start gap-3 border rounded-xl p-3 h-full transition-all ${qtyMode === 'received' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
+            <label className={`flex items-start cursor-pointer gap-3 border rounded-xl p-3 h-full transition-all ${qtyMode === 'received' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
                 type="radio"
                 name="qtyMode"
-                className="radio radio-primary radio-sm mt-1"
+                className="size-4 accent-primary cursor-pointer mt-1"
                 checked={qtyMode === 'received'}
                 onChange={() => setQtyMode('received')}
               />
               <div className="flex-1 min-w-0">
-                <span className="label-text font-bold text-sm block whitespace-normal leading-tight">{t('qty.by_unit')}</span>
+                <span className="text-sm font-bold block whitespace-normal leading-tight">{t('qty.by_unit')}</span>
                 <p className="text-[10px] text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.received_desc', { defaultValue: 'Total unités + gratuits' })}</p>
               </div>
             </label>
 
-            <label className={`label cursor-pointer items-start gap-3 border rounded-xl p-3 h-full transition-all ${qtyMode === 'fixed' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
+            <label className={`flex items-start cursor-pointer gap-3 border rounded-xl p-3 h-full transition-all ${qtyMode === 'fixed' ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-base-200'}`}>
               <input
                 type="radio"
                 name="qtyMode"
-                className="radio radio-primary radio-sm mt-1"
+                className="size-4 accent-primary cursor-pointer mt-1"
                 checked={qtyMode === 'fixed'}
                 onChange={() => setQtyMode('fixed')}
               />
               <div className="flex-1 min-w-0">
-                <span className="label-text font-bold text-sm block whitespace-normal leading-tight">{t('qty.fixed')}</span>
+                <span className="text-sm font-bold block whitespace-normal leading-tight">{t('qty.fixed')}</span>
                 <p className="text-[10px] text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.fixed_desc', { defaultValue: 'Nombre identique par produit' })}</p>
               </div>
             </label>
@@ -1066,7 +1068,7 @@ ${labelsHTML}
                 <input
                   type="number"
                   min="0"
-                  className="input input-bordered input-sm w-16 text-center font-bold"
+                  className="w-16 text-center font-bold rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   value={fixedQty}
                   onChange={(e) => setFixedQty(Math.max(0, parseInt(e.target.value) || 0))}
                 />
@@ -1089,7 +1091,7 @@ ${labelsHTML}
               <label className="text-xs font-bold uppercase tracking-wider text-base-content/40">
                 {t('preview')} ({labelsData.length})
               </label>
-              <div className="badge badge-sm badge-outline text-[10px] text-base-content/50">Zoom 200%</div>
+              <Badge variant="outline" size="sm" className="text-[10px] text-base-content/50">Zoom 200%</Badge>
             </div>
             
             <div className="bg-base-300/30 rounded-2xl p-6 max-h-[400px] overflow-y-auto custom-scrollbar border border-base-content/5">
@@ -1121,7 +1123,7 @@ ${labelsHTML}
 
         {/* ── No data warning ── */}
         {labelsData.length === 0 && (
-          <div className="alert alert-warning rounded-xl">
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-[#fef3c7] text-[#78350f] dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-xl">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-5">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -1154,7 +1156,7 @@ ${labelsHTML}
           >
             {printing ? (
               <>
-                <span className="loading loading-spinner loading-sm"></span>
+                <Loader2 className="size-4 animate-spin" />
                 {t('generating')}
               </>
             ) : (

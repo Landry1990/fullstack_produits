@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { Loader2 } from 'lucide-react';
 import api from '../services/api';
+import { Badge } from './ui/Badge';
 import { formatCurrency } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
 import { useRecharts } from '../hooks/useRecharts';
@@ -9,6 +11,9 @@ import {
   useRepartitionAchats
 } from '../hooks/useFinanceStats';
 import { useTranslation } from 'react-i18next';
+import { Button } from './shadcn/button';
+import { Card, CardContent, CardTitle } from './shadcn/card';
+import { Progress } from './shadcn/progress';
 
 interface StatsFournisseur {
   id: number;
@@ -101,44 +106,44 @@ export default function StatistiquesFournisseur() {
         {/* Date Filter only for Sales Tab currently */}
         {activeTab === 'ventes' && (
             <div className="flex flex-col sm:flex-row sm:items-end gap-2 bg-base-100 p-2 sm:p-3 rounded-lg shadow-sm border border-base-200 w-full md:w-auto">
-            <div className="form-control w-full sm:w-40">
-                <label className="label py-1"><span className="label-text text-xs">{t('filters.from')}</span></label>
+            <div className="flex flex-col gap-1 w-full sm:w-40">
+                <label className="flex flex-col py-1"><span className="text-sm font-medium text-xs">{t('filters.from')}</span></label>
                 <input 
                 type="date"
                 lang={getLocale()}
-                className="input input-bordered input-sm w-full" 
+                className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                 value={dateDebut}
                 onChange={(e) => setDateDebut(e.target.value)}
                 />
             </div>
-            <div className="form-control w-full sm:w-40">
-                <label className="label py-1"><span className="label-text text-xs">{t('filters.to')}</span></label>
+            <div className="flex flex-col gap-1 w-full sm:w-40">
+                <label className="flex flex-col py-1"><span className="text-sm font-medium text-xs">{t('filters.to')}</span></label>
                 <input 
                 type="date"
                 lang={getLocale()}
-                className="input input-bordered input-sm w-full" 
+                className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                 value={dateFin}
                 onChange={(e) => setDateFin(e.target.value)}
                 />
             </div>
-            <button 
-                className="btn btn-primary btn-sm w-full sm:w-auto h-10"
+            <Button 
+                variant="default" size="sm" className="w-full sm:w-auto h-10"
                 onClick={fetchStats}
                 disabled={loading}
             >
-                {loading ? <span className="loading loading-spinner loading-xs"></span> : t('filters.refresh')}
-            </button>
+                {loading ? <Loader2 className="size-3 animate-spin" /> : t('filters.refresh')}
+            </Button>
             </div>
         )}
       </div>
 
       {/* Tabs Navigation */}
       <div className="w-full max-w-full overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
-        <div className="tabs tabs-boxed bg-base-100 p-1 w-max min-w-full sm:min-w-0 sm:w-fit">
-        <a className={`tab whitespace-nowrap ${activeTab === 'ventes' ? 'tab-active' : ''}`} onClick={() => setActiveTab('ventes')}>{t('tabs.sales')}</a>
-        <a className={`tab whitespace-nowrap ${activeTab === 'performance' ? 'tab-active' : ''}`} onClick={() => setActiveTab('performance')}>{t('tabs.performance')}</a>
-        <a className={`tab whitespace-nowrap ${activeTab === 'prix' ? 'tab-active' : ''}`} onClick={() => setActiveTab('prix')}>{t('tabs.price_comparison')}</a>
-        <a className={`tab whitespace-nowrap ${activeTab === 'concentration' ? 'tab-active' : ''}`} onClick={() => setActiveTab('concentration')}>{t('tabs.concentration')}</a>
+        <div className="inline-flex bg-base-100 p-1 rounded-lg border border-base-200 gap-1 w-max min-w-full sm:min-w-0 sm:w-fit">
+        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'ventes' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('ventes')}>{t('tabs.sales')}</a>
+        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'performance' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('performance')}>{t('tabs.performance')}</a>
+        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'prix' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('prix')}>{t('tabs.price_comparison')}</a>
+        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'concentration' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('concentration')}>{t('tabs.concentration')}</a>
         </div>
       </div>
 
@@ -146,7 +151,7 @@ export default function StatistiquesFournisseur() {
       {activeTab === 'ventes' && (
         <div className="space-y-6 animate-fade-in">
            {/* Info Box */}
-            <div className="alert alert-info shadow-sm">
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-sky-50 text-sky-800 dark:bg-sky-900/20 dark:text-sky-400 border border-sky-200 dark:border-sky-800 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-6">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
@@ -160,39 +165,39 @@ export default function StatistiquesFournisseur() {
 
             {/* Cartes Résumé */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="card bg-base-100 shadow-sm border border-base-200">
-                <div className="card-body p-4">
+                <Card className="bg-base-100 shadow-sm border border-base-200">
+                <CardContent className="p-4">
                     <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.total_ca')}</p>
                     <h3 className="text-2xl font-bold text-success">{formatCurrency(Math.round(totaux.ca_ttc), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
-                </div>
-                </div>
-                <div className="card bg-base-100 shadow-sm border border-base-200">
-                <div className="card-body p-4">
+                </CardContent>
+                </Card>
+                <Card className="bg-base-100 shadow-sm border border-base-200">
+                <CardContent className="p-4">
                     <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.purchase_cost')}</p>
                     <h3 className="text-2xl font-bold text-primary">{formatCurrency(Math.round(totaux.cout_achat), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
-                </div>
-                </div>
-                <div className="card bg-base-100 shadow-sm border border-base-200">
-                <div className="card-body p-4">
+                </CardContent>
+                </Card>
+                <Card className="bg-base-100 shadow-sm border border-base-200">
+                <CardContent className="p-4">
                     <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.gross_margin')}</p>
                     <h3 className="text-2xl font-bold text-warning">{formatCurrency(Math.round(totaux.marge_brute), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
                     <p className="text-xs text-base-content/60">
                     {totaux.ca_ttc > 0 ? ((totaux.marge_brute / totaux.ca_ttc) * 100).toFixed(1) : 0} {t('sales_tab.cards.margin_percentage')}
                     </p>
-                </div>
-                </div>
-                <div className="card bg-base-100 shadow-sm border border-base-200">
-                <div className="card-body p-4">
+                </CardContent>
+                </Card>
+                <Card className="bg-base-100 shadow-sm border border-base-200">
+                <CardContent className="p-4">
                     <p className="text-sm font-medium text-base-content/70">{t('sales_tab.cards.units_sold')}</p>
                     <h3 className="text-2xl font-bold text-purple-600">{totaux.quantite_vendue}</h3>
-                </div>
-                </div>
+                </CardContent>
+                </Card>
             </div>
 
             {/* Graphique */}
-            <div className="card bg-base-100 shadow-sm border border-base-200">
-                <div className="card-body p-4">
-                <h2 className="card-title text-lg font-bold mb-4">{t('sales_tab.chart.title')}</h2>
+            <Card className="bg-base-100 shadow-sm border border-base-200">
+                <CardContent className="p-4">
+                <CardTitle className="text-lg font-bold mb-4">{t('sales_tab.chart.title')}</CardTitle>
                 <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={stats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -206,14 +211,14 @@ export default function StatistiquesFournisseur() {
                     </BarChart>
                     </ResponsiveContainer>
                 </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
             {/* Tableau détaillé */}
-            <div className="card bg-base-100 shadow-sm border border-base-200">
-                <div className="card-body p-0">
+            <Card className="bg-base-100 shadow-sm border border-base-200">
+                <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                    <table className="table table-zebra w-full">
+                    <table className="w-full border-collapse [&>tbody>tr:nth-child(even)]:bg-base-200/50">
                     <thead>
                         <tr className="bg-base-200">
                         <th>{t('sales_tab.table.supplier')}</th>
@@ -250,15 +255,15 @@ export default function StatistiquesFournisseur() {
                     </tbody>
                     </table>
                 </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </div>
       )}
 
       {/* TAB 2: PERFORMANCE (Scoring) */}
       {activeTab === 'performance' && (
         <div className="space-y-6 animate-fade-in">
-             <div className="alert alert-warning shadow-sm">
+             <div className="flex items-start gap-3 p-4 rounded-lg bg-[#fef3c7] text-[#78350f] dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 <div>
                 <h3 className="font-bold">{t('performance_tab.alert_title')}</h3>
@@ -268,47 +273,52 @@ export default function StatistiquesFournisseur() {
             
             {loadingAnalysis ? (
                  <div className="h-64 flex items-center justify-center">
-                    <span className="loading loading-spinner loading-lg"></span>
+                    <Loader2 className="size-8 animate-spin" />
                  </div>
             ) : (
                 <div className="grid grid-cols-1 gap-4">
                      {supplierAnalysis?.map((item) => (
-                         <div key={item.id} className="card bg-base-100 shadow-sm border border-base-200">
-                             <div className="card-body p-4">
+                         <Card key={item.id} className="bg-base-100 shadow-sm border border-base-200">
+                             <CardContent className="p-4">
                                  <div className="flex justify-between items-start">
                                      <div>
                                          <h3 className="text-xl font-bold">{item.nom}</h3>
-                                         <div className="badge badge-lg mt-2 badge-outline">Score: {item.score_global}/100</div>
+                                         <Badge variant="outline" size="lg" className="mt-2">Score: {item.score_global}/100</Badge>
                                      </div>
-                                     <div className={`radial-progress font-bold text-lg ${
-                                        item.score_global >= 80 ? 'text-success' : 
+                                     <div className={`relative size-16 flex items-center justify-center font-bold text-lg ${
+                                        item.score_global >= 80 ? 'text-success' :
                                         item.score_global >= 50 ? 'text-warning' : 'text-error'
-                                    }`} style={{ "--value": item.score_global, "--size": "4rem" } as unknown}>
-                                        {item.score_global}
+                                    }`} style={{
+                                        background: `conic-gradient(currentColor ${item.score_global * 3.6}deg, rgba(0,0,0,0.1) ${item.score_global * 3.6}deg)`,
+                                        borderRadius: '50%',
+                                    }}>
+                                        <span className="bg-base-100 rounded-full size-12 flex items-center justify-center">
+                                            {item.score_global}
+                                        </span>
                                     </div>
                                  </div>
                                  
-                                 <div className="divider my-1"></div>
+                                 <div className="border-t border-base-200 my-2"></div>
 
                                  <div className="grid grid-cols-3 gap-4 text-center">
                                      <div>
                                          <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.volume')}</div>
                                           <div className="font-bold text-lg">{formatCurrency(Math.round(item.details.volume.valeur ?? 0), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</div>
-                                         <progress className="progress progress-primary w-full" value={item.details.volume.score} max="100"></progress>
+                                         <Progress value={item.details.volume.score} className="w-full" />
                                      </div>
                                      <div>
                                          <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.quality')}</div>
                                          <div className="font-bold text-lg">{item.details.qualite.incidents} {t('performance_tab.metrics.incidents')}</div>
-                                         <progress className={`progress w-full ${item.details.qualite.score > 80 ? 'progress-success' : 'progress-error'}`} value={item.details.qualite.score} max="100"></progress>
+                                         <Progress value={item.details.qualite.score} className={`w-full ${item.details.qualite.score > 80 ? '[&>div]:bg-emerald-500' : '[&>div]:bg-red-500'}`} />
                                      </div>
                                      <div>
                                          <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.consistency')}</div>
                                          <div className="font-bold text-lg">{item.details.regularite.nb_livraisons} {t('performance_tab.metrics.deliveries')}</div>
-                                         <progress className="progress progress-info w-full" value={item.details.regularite.score} max="100"></progress>
+                                         <Progress value={item.details.regularite.score} className="w-full [&>div]:bg-sky-500" />
                                      </div>
                                  </div>
-                             </div>
-                         </div>
+                             </CardContent>
+                         </Card>
                      ))}
                 </div>
             )}
@@ -318,7 +328,7 @@ export default function StatistiquesFournisseur() {
       {/* TAB 3: COMPARATEUR PRIX */}
       {activeTab === 'prix' && (
         <div className="space-y-6 animate-fade-in">
-             <div className="alert alert-success shadow-sm">
+             <div className="flex items-start gap-3 p-4 rounded-lg bg-[#dcfce7] text-[#14532d] dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <div>
                 <h3 className="font-bold">{t('prices_tab.alert_title')}</h3>
@@ -328,11 +338,11 @@ export default function StatistiquesFournisseur() {
 
             {loadingPrix ? (
                 <div className="h-64 flex items-center justify-center">
-                    <span className="loading loading-spinner loading-lg"></span>
+                    <Loader2 className="size-8 animate-spin" />
                  </div>
             ) : (
-                <div className="overflow-x-auto card bg-base-100 shadow-sm border border-base-200">
-                    <table className="table table-zebra w-full">
+                <Card className="bg-base-100 shadow-sm border border-base-200 overflow-x-auto">
+                    <table className="w-full border-collapse [&>tbody>tr:nth-child(even)]:bg-base-200/50">
                         <thead>
                             <tr>
                                 <th>{t('prices_tab.table.product')}</th>
@@ -374,7 +384,7 @@ export default function StatistiquesFournisseur() {
                             }, [])}
                         </tbody>
                     </table>
-                </div>
+                </Card>
             )}
         </div>
       )}
@@ -382,13 +392,13 @@ export default function StatistiquesFournisseur() {
       {/* TAB 4: CONCENTRATION */}
       {activeTab === 'concentration' && (
         <div className="space-y-6 animate-fade-in">
-             <div className="card bg-base-100 shadow-sm border border-base-200">
-                <div className="card-body">
-                    <h2 className="card-title">{t('concentration_tab.title')}</h2>
+             <Card className="bg-base-100 shadow-sm border border-base-200">
+                <CardContent>
+                    <CardTitle>{t('concentration_tab.title')}</CardTitle>
                     
                     {loadingRepartition ? (
                         <div className="h-64 flex items-center justify-center">
-                            <span className="loading loading-spinner loading-lg"></span>
+                            <Loader2 className="size-8 animate-spin" />
                         </div>
                     ) : (
                         <div className="flex flex-col md:flex-row items-center justify-center gap-8">
@@ -414,7 +424,7 @@ export default function StatistiquesFournisseur() {
                             </div>
                             
                             <div className="flex-1">
-                                <table className="table w-full">
+                                <table className="w-full border-collapse">
                                     <thead>
                                         <tr>
                                             <th>{t('concentration_tab.table.color')}</th>
@@ -439,8 +449,8 @@ export default function StatistiquesFournisseur() {
                             </div>
                         </div>
                     )}
-                </div>
-             </div>
+                </CardContent>
+             </Card>
         </div>
       )}
 

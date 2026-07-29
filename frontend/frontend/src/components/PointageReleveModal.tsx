@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Loader2 } from 'lucide-react';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
+import { Button } from './shadcn/button';
+import { Badge } from './ui/Badge';
 import { formatCurrency } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
 
@@ -120,7 +123,8 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
       });
       setData(data);
     } catch (err: unknown) {
-      setError(err.response?.data?.error || err.message || t('providers:pointage_modal.load_error'));
+      const errObj = err as { response?: { data?: { error?: string } }; message?: string };
+      setError(errObj?.response?.data?.error || errObj?.message || t('providers:pointage_modal.load_error'));
     } finally {
       setLoading(false);
     }
@@ -249,14 +253,14 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
         {/* Contenu */}
         <div className="flex-1 overflow-hidden flex flex-col p-6">
           {error && (
-            <div className="alert alert-error mb-4 shrink-0">
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-[#fee2e2] text-[#7f1d1d] dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800 mb-4 shrink-0">
               <span>{error}</span>
             </div>
           )}
 
           {loading ? (
              <div className="flex justify-center flex-1 items-center">
-               <span className="loading loading-spinner loading-lg text-primary"></span>
+               <Loader2 className="size-8 animate-spin text-primary" />
              </div>
           ) : !selectedFournisseurId ? (
             <div className="text-center flex-1 flex flex-col justify-center items-center bg-base-200/50 rounded-xl border border-slate-100">
@@ -278,10 +282,10 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
               {/* Pointage En Tête */}
               <div className="flex items-center justify-between p-3 border-b bg-base-200/50">
                 <div className="flex items-center gap-3">
-                   <div className="badge badge-primary badge-sm font-bold">{t('providers:pointage_modal.pointed_count', { count: pointedIds.size, total: data.factures.length })}</div>
-                   <button className="btn btn-xs btn-outline rounded-full" onClick={toggleAll}>
+                   <Badge variant="primary" size="sm" className="font-bold">{t('providers:pointage_modal.pointed_count', { count: pointedIds.size, total: data.factures.length })}</Badge>
+                   <Button variant="outline" size="sm" className="h-6 px-3 text-xs rounded-full" onClick={toggleAll}>
                      {pointedIds.size === data.factures.length ? t('providers:pointage_modal.uncheck_all') : t('providers:pointage_modal.check_all')}
-                   </button>
+                   </Button>
                 </div>
                 <div className="text-sm font-bold text-base-content/90">
                   {t('providers:pointage_modal.pointed_sum')} <span className="font-mono text-success bg-success/10 px-2 py-1 rounded ml-1">{formatCurrency(pointageSum)}</span>
@@ -290,8 +294,8 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
 
               {/* Tableau avec scroll */}
               <div className="flex-1 overflow-auto">
-                <table className="table table-sm table-pin-rows w-full">
-                  <thead className="bg-[#f8fafc] text-[#64748b] text-[10px] uppercase">
+                <table className="w-full border-collapse text-sm">
+                  <thead className="sticky top-0 z-10 bg-[#f8fafc] text-[#64748b] text-[10px] uppercase">
                     <tr>
                       <th className="w-10 text-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg></th>
                       <th>{t('providers:pointage_modal.table.date')}</th>
@@ -338,8 +342,8 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                 </table>
               </div>
               <div className="p-4 border-t bg-base-200/50 flex justify-end">
-                <button 
-                  className="btn btn-primary rounded-xl px-8 shadow-lg shadow-primary/20"
+                <Button 
+                  variant="default" className="rounded-xl px-8 shadow-lg shadow-emerald-600/20"
                   disabled={pointedIds.size === 0}
                   onClick={() => {
                      if (selectedFournisseurId) {
@@ -351,7 +355,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {t('providers:pointage_modal.regler_btn', { amount: formatCurrency(pointageSum) })}
-                </button>
+                </Button>
               </div>
             </div>
           )}

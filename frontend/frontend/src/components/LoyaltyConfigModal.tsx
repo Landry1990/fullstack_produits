@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import PremiumModal from './common/PremiumModal'
+import { Button } from './shadcn/button'
 
 interface LoyaltySetting {
     id: number
@@ -110,41 +112,41 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
         >
             <div className="p-6">
                 {loading ? (
-                    <div className="flex justify-center py-8"><span className="loading loading-spinner text-primary"></span></div>
+                    <div className="flex justify-center py-8"><Loader2 className="size-4 animate-spin text-primary" /></div>
                 ) : settings ? (
                     <form onSubmit={handleSave} className="space-y-5">
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('clients:loyalty.amount_per_point')}</label>
                             <input 
                                 type="number" 
-                                className="input input-bordered w-full h-12 rounded-xl"
+                                className="w-full h-12 rounded-xl border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                 value={settings.amount_per_point}
                                 onChange={e => setSettings({...settings, amount_per_point: e.target.value})}
                             />
                             <p className="text-xs text-base-content/40 mt-1">{t('clients:loyalty.amount_per_point_hint')}</p>
                         </div>
 
-                        <div className="divider text-xs uppercase tracking-wider">{t('clients:loyalty.manual_usage')}</div>
+                        <div className="border-t border-base-200 pt-2 mt-2 text-xs uppercase tracking-wider text-base-content/50">{t('clients:loyalty.manual_usage')}</div>
 
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('clients:loyalty.point_value')}</label>
                             <input 
                                 type="number" 
-                                className="input input-bordered w-full h-12 rounded-xl"
+                                className="w-full h-12 rounded-xl border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                 value={settings.point_value}
                                 onChange={e => setSettings({...settings, point_value: e.target.value})}
                             />
                             <p className="text-xs text-base-content/40 mt-1">{t('clients:loyalty.point_value_hint')}</p>
                         </div>
 
-                        <div className="divider text-xs uppercase tracking-wider">{t('clients:loyalty.auto_reward')}</div>
+                        <div className="border-t border-base-200 pt-2 mt-2 text-xs uppercase tracking-wider text-base-content/50">{t('clients:loyalty.auto_reward')}</div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('clients:loyalty.threshold')}</label>
                                 <input 
                                     type="number" 
-                                    className="input input-bordered w-full h-12 rounded-xl"
+                                    className="w-full h-12 rounded-xl border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                     value={settings.auto_reward_threshold}
                                     onChange={e => setSettings({...settings, auto_reward_threshold: parseInt(e.target.value) || 0})}
                                 />
@@ -154,7 +156,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                                 <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('clients:loyalty.discount')}</label>
                                 <input 
                                     type="number" 
-                                    className="input input-bordered w-full h-12 rounded-xl"
+                                    className="w-full h-12 rounded-xl border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                     step="0.01"
                                     value={settings.auto_reward_percent}
                                     onChange={e => setSettings({...settings, auto_reward_percent: e.target.value})}
@@ -164,11 +166,11 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                         </div>
 
                         <div className="flex justify-end gap-3 pt-2">
-                             <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={saving}>{t('common:cancel')}</button>
-                             <button type="submit" className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20" disabled={saving}>
-                                {saving && <span className="loading loading-spinner"></span>}
+                             <Button type="button" variant="ghost" className="px-6 rounded-xl" onClick={onClose} disabled={saving}>{t('common:cancel')}</Button>
+                             <Button type="submit" variant="default" className="px-8 rounded-xl shadow-lg shadow-emerald-600/20" disabled={saving}>
+                                {saving && <Loader2 className="size-4 animate-spin" />}
                                 {t('common:save')}
-                             </button>
+                             </Button>
                         </div>
                     </form>
                 ) : (

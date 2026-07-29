@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { Button } from '../shadcn/button';
 
 interface TransferCommandeModalProps {
     isOpen: boolean;
@@ -155,8 +156,8 @@ export default function TransferCommandeModal({
     if (!isOpen) return null;
 
     return (
-        <div className="modal modal-open">
-            <div className="modal-box max-w-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-base-100 rounded-2xl shadow-2xl border border-base-300 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                     {t('orders:transfer_modal.title')}
                 </h3>
@@ -167,11 +168,11 @@ export default function TransferCommandeModal({
 
                 {/* Sélection du fournisseur */}
                 <div className=" mb-4">
-                    <label className="label">
+                    <label className="flex flex-col">
                         <span className="text-sm font-medium text-base-content font-semibold">{t('orders:transfer_modal.supplier_label')}</span>
                     </label>
                     <select
-                        className="select-ref select-bordered w-full"
+                        className="w-full rounded-lg border border-base-300 bg-base-100 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                         value={transferTargetFournisseur}
                         onChange={handleSupplierChange}
                     >
@@ -191,8 +192,8 @@ export default function TransferCommandeModal({
                             let produitName = '';
                             if (p.produit && typeof p.produit === 'object' && p.produit.name) {
                                 produitName = p.produit.name;
-                            } else if ((p as unknown).produit_nom) {
-                                produitName = (p as unknown).produit_nom;
+                            } else if ((p as unknown as Record<string, unknown>).produit_nom) {
+                                produitName = (p as unknown as Record<string, unknown>).produit_nom as string;
                             } else {
                                 const found = produitsList.find(prod => prod.id === produitId);
                                 produitName = found?.name || `Produit #${produitId}`;
@@ -274,21 +275,21 @@ export default function TransferCommandeModal({
                 )}
 
                 <div className="flex justify-end gap-3 pt-4">
-                    <button
+                    <Button
                         type="button"
-                        className="btn-ref btn-ghost"
+                        variant="ghost"
                         onClick={onClose}
                     >
                         {t('orders:transfer_modal.cancel')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
-                        className="btn-ref btn-info"
+                        variant="default" className="bg-sky-500 hover:bg-sky-600 text-white"
                         onClick={handleTransfer}
                         disabled={!transferTargetFournisseur || loadingCatalogue}
                     >
                         {t('orders:transfer_modal.transfer_btn', { count: selectedProducts.length })}
-                    </button>
+                    </Button>
                 </div>
             </div>
             <div className="modal-backdrop" onClick={onClose}></div>

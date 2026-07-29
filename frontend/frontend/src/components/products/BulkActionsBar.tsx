@@ -40,26 +40,26 @@ export const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
         </button>
       </div>
       <div className="flex gap-2 flex-wrap">
-        <div className="dropdown dropdown-top dropdown-end">
+        <div className="relative group">
           <label tabIndex={0} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-indigo-200 bg-base-100 text-primary hover:bg-primary/10 cursor-pointer transition-colors">
             📁 {t('products:actions.bulk_rayon')} ▼
           </label>
-          <ul tabIndex={0} className="dropdown-content z-50 menu p-1 shadow-xl bg-base-100 rounded-lg w-40 max-h-48 overflow-auto border border-base-200">
+          <ul className="absolute bottom-full right-0 z-50 p-1 shadow-xl bg-base-100 rounded-lg w-40 max-h-48 overflow-auto border border-base-200 hidden group-focus-within:block mb-1">
             {rayons.map(r => (
               <li key={r.id}>
-                <a onClick={() => onBulkChangeRayon(r.id)} className="text-xs py-2 hover:bg-base-200 text-base-content">{r.name}</a>
+                <a onClick={() => onBulkChangeRayon(r.id)} className="text-xs py-2 hover:bg-base-200 text-base-content block">{r.name}</a>
               </li>
             ))}
           </ul>
         </div>
-        <div className="dropdown dropdown-top dropdown-end">
+        <div className="relative group">
           <label tabIndex={0} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-base-300 bg-base-100 text-base-content hover:bg-base-200 cursor-pointer transition-colors">
             🏭 {t('products:actions.bulk_provider')} ▼
           </label>
-          <ul tabIndex={0} className="dropdown-content z-50 menu p-1 shadow-xl bg-base-100 rounded-lg w-48 max-h-48 overflow-auto border border-base-200">
+          <ul className="absolute bottom-full right-0 z-50 p-1 shadow-xl bg-base-100 rounded-lg w-48 max-h-48 overflow-auto border border-base-200 hidden group-focus-within:block mb-1">
             {fournisseurs.map(f => (
               <li key={f.id}>
-                <a onClick={() => onBulkChangeFournisseur(f.id)} className="text-xs py-2 hover:bg-base-200 text-base-content">{f.name}</a>
+                <a onClick={() => onBulkChangeFournisseur(f.id)} className="text-xs py-2 hover:bg-base-200 text-base-content block">{f.name}</a>
               </li>
             ))}
           </ul>

@@ -1,7 +1,10 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import type { Facture, ProduitModel } from '../types';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
+import { Button } from './shadcn/button';
+import { Badge } from './ui/Badge';
 
 // LigneFacture type for cart items (simplified for compatibility)
 interface LigneFacture {
@@ -125,7 +128,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
             <input 
               type="text" 
               required
-              className="input input-bordered w-full h-12 rounded-xl" 
+              className="w-full h-12 rounded-xl border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
               value={formData.patient_nom}
               onChange={e => setFormData({...formData, patient_nom: e.target.value})}
               placeholder={t('modal.patient_placeholder')}
@@ -137,7 +140,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
             <input 
               type="text" 
               required
-              className="input input-bordered w-full h-12 rounded-xl" 
+              className="w-full h-12 rounded-xl border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
               value={formData.prescripteur_nom}
               onChange={e => setFormData({...formData, prescripteur_nom: e.target.value})}
               placeholder={t('modal.prescriber_placeholder')}
@@ -148,7 +151,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
             <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('modal.order_number')}</label>
             <input 
               type="text" 
-              className="input input-bordered w-full h-12 rounded-xl" 
+              className="w-full h-12 rounded-xl border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
               value={formData.numero_ordre || ''}
               onChange={e => setFormData({...formData, numero_ordre: e.target.value})}
               placeholder={t('modal.order_placeholder')}
@@ -159,17 +162,17 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
             <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('modal.prescription_date')}</label>
             <input 
               type="date" 
-              className="input input-bordered w-full h-12 rounded-xl" 
+              className="w-full h-12 rounded-xl border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
               value={formData.date_prescription}
               onChange={e => setFormData({...formData, date_prescription: e.target.value})}
             />
           </div>
         </div>
 
-        <div className="divider text-xs uppercase tracking-wider">{t('modal.affected_products')}</div>
+        <div className="border-t border-base-200 pt-2 mt-2 text-xs uppercase tracking-wider text-base-content/50">{t('modal.affected_products')}</div>
 
         <div className="bg-base-200 rounded-xl p-2 max-h-40 overflow-y-auto">
-           <table className="table table-xs w-full">
+           <table className="w-full border-collapse text-xs">
               <thead>
                   <tr>
                       <th>{t('modal.product_col')}</th>
@@ -183,9 +186,9 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
                           <td className="font-medium">{ligne.produit_nom}</td>
                           <td className="text-right">{ligne.quantite}</td>
                           <td>
-                              {ligne.surveillance_category === 'RENFORCEE' && <span className="badge badge-error badge-xs">{t('modal.surveillance_renforcee')}</span>}
-                              {ligne.surveillance_category === 'STANDARD' && <span className="badge badge-warning badge-xs">{t('modal.surveillance_standard')}</span>}
-                              {(!ligne.surveillance_category || ligne.surveillance_category === 'NONE') && <span className="badge badge-ghost badge-xs">{t('modal.surveillance_ordonnance')}</span>}
+                              {ligne.surveillance_category === 'RENFORCEE' && <Badge variant="error" size="sm" className="h-4 px-1 text-[9px]">{t('modal.surveillance_renforcee')}</Badge>}
+                              {ligne.surveillance_category === 'STANDARD' && <Badge variant="warning" size="sm" className="h-4 px-1 text-[9px]">{t('modal.surveillance_standard')}</Badge>}
+                              {(!ligne.surveillance_category || ligne.surveillance_category === 'NONE') && <Badge variant="ghost" size="sm" className="h-4 px-1 text-[9px]">{t('modal.surveillance_ordonnance')}</Badge>}
                           </td>
                       </tr>
                   ))}
@@ -194,10 +197,10 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" className="btn btn-ghost px-6 rounded-xl text-xs" onClick={onClose}>{t('modal.ignore_btn')}</button>
-          <button type="submit" className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20" disabled={loading}>
-            {loading ? <span className="loading loading-spinner"></span> : t('modal.save_btn')}
-          </button>
+          <Button type="button" variant="ghost" className="px-6 rounded-xl text-xs" onClick={onClose}>{t('modal.ignore_btn')}</Button>
+          <Button type="submit" variant="default" className="px-8 rounded-xl shadow-lg shadow-emerald-600/20" disabled={loading}>
+            {loading ? <Loader2 className="size-4 animate-spin" /> : t('modal.save_btn')}
+          </Button>
         </div>
       </form>
     </PremiumModal>

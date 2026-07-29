@@ -111,7 +111,7 @@ export default function JournalCaisseTable({ state }: Props) {
             </div>
 
             {/* Vue Desktop */}
-            <table className="hidden md:table table-sm w-full border-separate border-spacing-0">
+            <table className="hidden md:table w-full border-collapse text-sm border-separate border-spacing-0">
               <thead className="sticky top-0 z-30 bg-slate-100 opacity-100">
                 <tr className="border-b border-slate-200">
                   <th className="border-b-2 border-slate-200 text-xs font-bold text-slate-500 py-3 pl-6">{t('table.date_time')}</th>

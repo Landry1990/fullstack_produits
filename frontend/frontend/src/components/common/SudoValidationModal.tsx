@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import PremiumModal from './PremiumModal';
+import { Button } from '../shadcn/button';
 
 interface SudoValidationModalProps {
     isOpen: boolean;
@@ -61,7 +63,8 @@ export default function SudoValidationModal({
             verifiedUser = checkRes.data.user;
         } catch (error: unknown) {
             setPassword('');
-            const msg = error?.response?.data?.detail || t('common:sudo.invalid_password');
+            const errObj = error as { response?: { data?: { detail?: string } } };
+            const msg = errObj?.response?.data?.detail || t('common:sudo.invalid_password');
             setPasswordError(msg);
             setTimeout(() => passwordInputRef.current?.focus(), 50);
             return;
@@ -71,7 +74,8 @@ export default function SudoValidationModal({
             await onValidate(verifiedUser.id, password);
         } catch (error: unknown) {
             setPassword('');
-            const msg = error?.response?.data?.detail || error?.response?.data?.error || error?.message || t('common:sudo.invalid_password');
+            const errObj = error as { response?: { data?: { detail?: string; error?: string } }; message?: string };
+            const msg = errObj?.response?.data?.detail || errObj?.response?.data?.error || errObj?.message || t('common:sudo.invalid_password');
             setPasswordError(msg);
             setTimeout(() => passwordInputRef.current?.focus(), 50);
         }
@@ -107,7 +111,7 @@ export default function SudoValidationModal({
                     <input
                         ref={passwordInputRef}
                         type="password"
-                        className={`input input-bordered w-full h-12 rounded-xl focus:ring-2 transition-all ${passwordError ? 'input-error focus:border-error focus:ring-error/20' : 'focus:border-success focus:ring-success/20'}`}
+                        className={`w-full h-12 rounded-xl border bg-base-100 text-sm px-4 outline-none focus:ring-2 transition-all ${passwordError ? 'border-red-300 focus:border-error focus:ring-error/20' : 'border-base-300 focus:border-success focus:ring-success/20'}`}
                         placeholder={t('common:sudo.validate_password')}
                         value={password}
                         onChange={e => { setPassword(e.target.value); setPasswordError(null); }}
@@ -122,16 +126,16 @@ export default function SudoValidationModal({
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2">
-                    <button className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={saving}>
+                    <Button variant="ghost" className="px-6 rounded-xl" onClick={onClose} disabled={saving}>
                         {t('common:sudo.cancel')}
-                    </button>
-                    <button
-                        className="btn btn-success px-8 rounded-xl shadow-lg shadow-success/20"
+                    </Button>
+                    <Button
+                        variant="default" className="px-8 rounded-xl shadow-lg shadow-emerald-600/20 bg-emerald-500 hover:bg-emerald-600"
                         onClick={handleConfirm}
                         disabled={saving || !password}
                     >
-                        {saving ? <span className="loading loading-spinner"></span> : t('common:sudo.confirm')}
-                    </button>
+                        {saving ? <Loader2 className="size-4 animate-spin" /> : t('common:sudo.confirm')}
+                    </Button>
                 </div>
             </div>
         </PremiumModal>

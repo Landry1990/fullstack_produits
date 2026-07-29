@@ -1,5 +1,6 @@
 import { AlertTriangle, X, Users, DollarSign } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
+import { Button } from '../shadcn/button';
 
 interface ClientWithUnpaid {
   id: number;
@@ -45,12 +46,12 @@ export default function BulkDeleteWarningModal({
                 Certains clients ont des factures non réglées
               </p>
             </div>
-            <button
+            <Button
               onClick={onClose}
-              className="btn-ref btn-ghost btn-circle btn-sm"
+              variant="ghost" size="icon" className="rounded-full"
             >
               <X className="size-5" />
-            </button>
+            </Button>
           </div>
         </div>
 

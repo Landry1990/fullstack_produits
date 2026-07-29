@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   X, Plus, Trash2, Save, User, Award, Activity, Mail,
@@ -41,6 +41,14 @@ export default function ClientFormModal({
 }: ClientFormModalProps) {
   const { t } = useTranslation(['clients', 'common']);
   const [tempAD, setTempAD] = useState<AyantDroit>({ matricule: '', nom: '', societe: '' });
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen && !isEdit) {
+      const timer = setTimeout(() => nameInputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, isEdit]);
 
   if (!isOpen) return null;
 
@@ -115,6 +123,7 @@ export default function ClientFormModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label={t('common:name')} icon={User} required>
                 <input
+                  ref={nameInputRef}
                   value={data.name || ''}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
                   required

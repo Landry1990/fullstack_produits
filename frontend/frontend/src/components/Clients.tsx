@@ -48,6 +48,7 @@ const emptyForm: Partial<Client> = {
   majoration_pro_pourcentage: '0',
   ayants_droit: [],
   is_active: true,
+  is_loyalty_member: false,
   is_deposit_enabled: false
 };
 
@@ -235,6 +236,7 @@ export default function Clients() {
         if (formMode === 'create') {
             const created = await clientService.create(cleanData);
             setClients(prev => [created, ...prev]);
+            setTotalCount(prev => prev + 1);
             toast.success(t('clients:messages.create_success'));
         } else if (formData.id) {
             const updated = await clientService.update(formData.id, cleanData);

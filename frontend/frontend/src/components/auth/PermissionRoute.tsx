@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface PermissionRouteProps {
@@ -25,7 +26,7 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
