@@ -152,13 +152,15 @@ class Command(BaseCommand):
         
         # Mapping des colonnes courantes
         code = self.get_value(row, ['code', 'cip', 'cip1', 'code_cip', 'id'])
+        cip2 = self.get_value(row, ['cip2', 'code_cip2'])
+        cip3 = self.get_value(row, ['cip3', 'code_cip3'])
         nom = self.get_value(row, ['nom', 'name', 'libelle', 'produit', 'designation'])
         
         if not code and not nom:
             return None  # Ligne vide
         
-        cost_price = self.parse_decimal(self.get_value(row, ['prix_achat', 'cost_price', 'pa', 'prix_achat_ht']))
-        selling_price = self.parse_decimal(self.get_value(row, ['prix_vente', 'selling_price', 'pv', 'prix_vente_ttc']))
+        cost_price = self.parse_decimal(self.get_value(row, ['prix_achat', 'cost_price', 'pa', 'prix_achat_ht', 'prix_cession', 'cession']))
+        selling_price = self.parse_decimal(self.get_value(row, ['prix_vente', 'selling_price', 'pv', 'prix_vente_ttc', 'prix_public', 'public']))
         stock = self.parse_int(self.get_value(row, ['stock', 'quantite', 'qty', 'quantity']))
         
         # Créer ou récupérer fournisseur
@@ -206,17 +208,50 @@ class Command(BaseCommand):
         if groupe:
             defaults['groupe'] = groupe
         
+        # CIP2 et CIP3
+        if cip2:
+            defaults['cip2'] = cip2
+        if cip3:
+            defaults['cip3'] = cip3
+
         # Champs optionnels
         if 'stock_alert' in row or 'alerte' in row:
             defaults['stock_alert'] = self.parse_int(self.get_value(row, ['stock_alert', 'alerte'])) or 0
         if 'stock_minimum' in row or 'minimum' in row:
             defaults['stock_minimum'] = self.parse_int(self.get_value(row, ['stock_minimum', 'minimum'])) or 0
-        if 'tva' in row:
-            defaults['tva'] = self.parse_decimal(self.get_value(row, ['tva', 'tva%'])) or 0
+        if 'tva' in row or 'tva%' in row or 'tvcode' in row:
+            defaults['tva'] = self.parse_decimal(self.get_value(row, ['tva', 'tva%', 'tvcode'])) or 0
         if 'description' in row or 'descr' in row:
             defaults['description'] = self.get_value(row, ['description', 'descr', 'commentaire'])
         if 'substance_active' in row or 'substance' in row:
             defaults['substance_active'] = self.get_value(row, ['substance_active', 'substance', 'dci'])
+        if 'stock_maximum' in row or 'maximum' in row:
+            defaults['stock_maximum'] = self.parse_int(self.get_value(row, ['stock_maximum', 'maximum'])) or 0
+        if 'expire_date' in row or 'expiration' in row or 'peremption' in row:
+            from datetime import datetime as dt
+            val = self.get_value(row, ['expire_date', 'expiration', 'peremption', 'date_expiration'])
+            if val:
+                try:
+                    defaults['expire_date'] = dt.strptime(val[:10], '%Y-%m-%d').date()
+                except (ValueError, TypeError):
+                    try:
+                        defaults['expire_date'] = dt.strptime(val[:10], '%d/%m/%Y').date()
+                    except (ValueError, TypeError):
+                        pass
+        if 'code_atc' in row or 'atc' in row:
+            defaults['code_atc'] = self.get_value(row, ['code_atc', 'atc'])
+        if 'is_generic' in row or 'generique' in row:
+            val = self.get_value(row, ['is_generic', 'generique'])
+            defaults['is_generic'] = str(val).lower() in ('1', 'true', 'yes', 'oui', 'o')
+        if 'requires_prescription' in row or 'ordonnance' in row:
+            val = self.get_value(row, ['requires_prescription', 'ordonnance'])
+            defaults['requires_prescription'] = str(val).lower() in ('1', 'true', 'yes', 'oui', 'o')
+        if 'surveillance' in row:
+            val = self.get_value(row, ['surveillance'])
+            if val:
+                val_u = val.upper()
+                if val_u in ('NONE', 'STANDARD', 'RENFORCEE'):
+                    defaults['surveillance_category'] = val_u
         
         # Identifier par CIP ou nom
         identifier = code or nom
