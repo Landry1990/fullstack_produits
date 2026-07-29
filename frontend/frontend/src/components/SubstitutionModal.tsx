@@ -1,6 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { useProduitSubstituts } from '../hooks/useProduitSubstituts';
 import type { ProduitModel } from '../types/catalog';
+import { Button } from './shadcn/button';
+import { Badge } from './ui/Badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from './ui/Dialog';
 
 interface SubstitutionModalProps {
   produitId: number | null;
@@ -16,14 +25,16 @@ export function SubstitutionModal({ produitId, produitName, onSelect, onClose }:
   if (!produitId) return null;
 
   return (
-    <div className="modal modal-open z-50">
-      <div className="modal-box max-w-2xl">
-        <h3 className="font-bold text-lg mb-2">
-          {t('substitution.title', { produit: produitName })}
-        </h3>
-        <p className="text-sm text-base-content/70 mb-4">
-          {data?.dci ? t('substitution.dci_label', { dci: data.dci }) : t('substitution.no_dci')}
-        </p>
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-2xl" aria-labelledby="substitution-title">
+        <DialogHeader>
+          <DialogTitle id="substitution-title">
+            {t('substitution.title', { produit: produitName })}
+          </DialogTitle>
+          <DialogDescription>
+            {data?.dci ? t('substitution.dci_label', { dci: data.dci }) : t('substitution.no_dci')}
+          </DialogDescription>
+        </DialogHeader>
 
         {isLoading && (
           <div className="flex justify-center py-8">
@@ -32,39 +43,39 @@ export function SubstitutionModal({ produitId, produitName, onSelect, onClose }:
         )}
 
         {!isLoading && data && data.count === 0 && (
-          <div className="alert alert-warning">
-            <span>{data.message || t('substitution.none_available')}</span>
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+            {data.message || t('substitution.none_available')}
           </div>
         )}
 
         {!isLoading && data && data.count > 0 && (
           <div className="overflow-x-auto max-h-80 overflow-y-auto">
-            <table className="table table-zebra table-sm w-full">
+            <table className="w-full text-sm">
               <thead>
-                <tr>
-                  <th>{t('substitution.product')}</th>
-                  <th>{t('substitution.stock')}</th>
-                  <th>{t('substitution.price')}</th>
+                <tr className="border-b border-base-300">
+                  <th className="text-left py-2 px-3 font-bold">{t('substitution.product')}</th>
+                  <th className="text-left py-2 px-3 font-bold">{t('substitution.stock')}</th>
+                  <th className="text-left py-2 px-3 font-bold">{t('substitution.price')}</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
                 {data.substituts.map((sub) => (
-                  <tr key={sub.id}>
-                    <td>
+                  <tr key={sub.id} className="border-b border-base-200 hover:bg-base-200/50">
+                    <td className="py-2 px-3">
                       <div className="font-medium">{sub.name}</div>
                       {sub.cip1 && <div className="text-xs opacity-60">CIP: {sub.cip1}</div>}
                     </td>
-                    <td>
-                      <span className={`badge ${sub.stock > 10 ? 'badge-success' : sub.stock > 0 ? 'badge-warning' : 'badge-error'}`}>
+                    <td className="py-2 px-3">
+                      <Badge variant={sub.stock > 10 ? 'success' : sub.stock > 0 ? 'warning' : 'error'} size="sm">
                         {sub.stock}
-                      </span>
+                      </Badge>
                     </td>
-                    <td className="font-mono">{sub.selling_price} F</td>
-                    <td>
-                      <button className="btn btn-primary btn-sm" onClick={() => onSelect(sub)}>
+                    <td className="py-2 px-3 font-mono">{sub.selling_price} F</td>
+                    <td className="py-2 px-3">
+                      <Button variant="default" size="sm" onClick={() => onSelect(sub)}>
                         {t('substitution.select')}
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -73,12 +84,12 @@ export function SubstitutionModal({ produitId, produitName, onSelect, onClose }:
           </div>
         )}
 
-        <div className="modal-action">
-          <button className="btn btn-ghost" onClick={onClose}>
+        <div className="flex justify-end pt-2">
+          <Button variant="ghost" onClick={onClose}>
             {t('cancel')}
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

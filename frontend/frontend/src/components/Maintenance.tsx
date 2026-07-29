@@ -206,7 +206,16 @@ export default function Maintenance() {
   // Poll manual update progress
   useEffect(() => {
     if (!updateRunning) return;
+    let pollCount = 0;
+    const maxPolls = 150; // ~5 min à 2s d'intervalle
     const poll = setInterval(async () => {
+      pollCount++;
+      if (pollCount > maxPolls) {
+        clearInterval(poll);
+        setUpdateRunning(false);
+        setUpdateError('Timeout : la mise à jour prend trop de temps.');
+        return;
+      }
       try {
         const res = await api.get('maintenance/update_status/');
         const d = res.data;
@@ -215,6 +224,7 @@ export default function Maintenance() {
         setUpdateLog(d.log || []);
         if (d.status !== 'running') {
           setUpdateRunning(false);
+          clearInterval(poll);
           if (d.status === 'done') {
             toast.success('Mise à jour terminée avec succès.');
           } else if (d.status === 'error') {
@@ -223,8 +233,9 @@ export default function Maintenance() {
           }
         }
       } catch {
-        clearInterval(poll);
-        setUpdateRunning(false);
+        // Backend redémarre pendant la mise à jour — continuer à poller
+        setUpdateProgress((prev) => Math.min(prev + 2, 95));
+        setUpdateStep('Redémarrage du backend en cours...');
       }
     }, 2000);
     return () => clearInterval(poll);
