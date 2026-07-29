@@ -3,6 +3,7 @@ System Administration ViewSet.
 Superadmin-only: Docker health, backup management.
 """
 import os
+import time
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -531,18 +532,35 @@ class SystemAdminViewSet(ViewSet):
                 'message': 'Pas de connexion Internet — mise à jour impossible',
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
+        # Écrire le statut de démarrage
+        status_file = os.path.join(app_dir, 'update_status.json')
+        import json
+        with open(status_file, 'w') as f:
+            json.dump({'status': 'running', 'started_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'step': 'Démarrage...'}, f)
+
         # Lancer le script en arrière-plan (peut prendre plusieurs minutes)
         def _run_update():
             try:
                 os.chmod(script_path, 0o755)
             except Exception:
                 pass
-            sp.run(
+            result = sp.run(
                 ['bash', script_path],
                 capture_output=True,
                 timeout=900,  # 15 min max
                 cwd=app_dir,
             )
+            # Écrire le statut final
+            try:
+                if result.returncode == 0:
+                    status_data = {'status': 'done', 'started_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'finished_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'step': 'Mise à jour terminée avec succès'}
+                else:
+                    stderr_tail = result.stderr.decode()[-500:] if result.stderr else ''
+                    status_data = {'status': 'failed', 'started_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'finished_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'step': 'Échec de la mise à jour', 'error': stderr_tail}
+                with open(status_file, 'w') as f:
+                    json.dump(status_data, f)
+            except Exception:
+                pass
 
         thread = threading.Thread(target=_run_update, daemon=True)
         thread.start()
@@ -551,6 +569,27 @@ class SystemAdminViewSet(ViewSet):
             'success': True,
             'message': 'Mise à jour lancée — l\'application sera temporairement indisponible pendant quelques minutes',
         }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def update_status(self, request):
+        """Retourne le statut de la mise à jour en cours."""
+        import json
+        app_dir = os.environ.get('APP_DIR', '/opt/zenith-pharma')
+        status_file = os.path.join(app_dir, 'update_status.json')
+        if not os.path.exists(status_file):
+            return Response({'status': 'idle'})
+        try:
+            with open(status_file, 'r') as f:
+                data = json.load(f)
+            # Si running depuis plus de 15 min, considérer comme terminé
+            if data.get('status') == 'running':
+                started = time.mktime(time.strptime(data.get('started_at', ''), '%Y-%m-%d %H:%M:%S'))
+                if time.time() - started > 920:
+                    data['status'] = 'done'
+                    data['step'] = 'Mise à jour terminée (timeout)'
+            return Response(data)
+        except Exception:
+            return Response({'status': 'idle'})
 
     @action(detail=False, methods=['get'])
     def update_schedule(self, request):
