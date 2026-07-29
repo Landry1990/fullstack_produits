@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     curl \
+    git \
     tzdata \
     postgresql-client \
     ca-certificates \
