@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { getApiErrorDetail } from '../utils/errorHandling';
@@ -86,6 +87,7 @@ export default function Produit() {
     setPage(1)
   }, [showInStockOnly, showInactive, filterRayon, filterFournisseur])
 
+  const queryClient = useQueryClient();
   const { 
     data: productsData, 
     isLoading: loading, 
@@ -201,7 +203,7 @@ export default function Produit() {
     try {
       await api.post(`produits/${produit.id}/transfer_to_shelf/`, { quantity: qty });
       toast.success(t('products:messages.transfer_success', { count: qty }));
-      refetchProduits();
+      queryClient.invalidateQueries({ queryKey: ['produits'] });
     } catch (err) {
       toast.error(getApiErrorDetail(err, t('products:messages.transfer_error')));
     } finally { setTransferLoading(false); }
@@ -258,7 +260,7 @@ export default function Produit() {
       const isActive = response.data.is_active
       toast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
       setSelectedProduit(prev => prev ? ({ ...prev, is_active: isActive }) : null)
-      refetchProduits()
+      queryClient.invalidateQueries({ queryKey: ['produits'] })
     } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
   }
 
@@ -353,7 +355,7 @@ export default function Produit() {
         try { await api.delete(`produits/${id}/`); return true; } catch { return false; }
       }));
       successCount = results.filter(Boolean).length;
-      if (successCount > 0) { refetchProduits(); setSelectedProductIds([]); toast.success(`${successCount} ${t('products:messages.delete_success')}`); }
+      if (successCount > 0) { queryClient.invalidateQueries({ queryKey: ['produits'] }); setSelectedProductIds([]); toast.success(`${successCount} ${t('products:messages.delete_success')}`); }
     } finally { setActionLoading(false) }
   }
 
@@ -565,7 +567,7 @@ export default function Produit() {
         onSuccess={(updated) => {
           setSelectedProduit(updated);
           setIsEditModalOpen(false);
-          refetchProduits();
+          queryClient.invalidateQueries({ queryKey: ['produits'] });
           toast.success(t('products:messages.update_success'));
         }}
         produitsEndpoint="produits/"
@@ -588,7 +590,7 @@ export default function Produit() {
         open={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreated={(produit) => {
-          refetchProduits();
+          queryClient.invalidateQueries({ queryKey: ['produits'] });
           setIsCreateModalOpen(false);
           setSelectedProduit(produit);
           toast.success(`✅ ${produit.name} — ${t('products:messages.create_success')}`);
@@ -602,7 +604,7 @@ export default function Produit() {
       {isImportModalOpen && (
         <ImportProductsModal 
           onClose={() => setIsImportModalOpen(false)} 
-          onSuccess={() => { refetchProduits(); setIsImportModalOpen(false); }} 
+          onSuccess={() => { queryClient.invalidateQueries({ queryKey: ['produits'] }); setIsImportModalOpen(false); }} 
         />
       )}
       <SalesDetailsModal isOpen={showSalesModal} onClose={() => { setShowSalesModal(false); setSelectedFacture(null); }} facture={selectedFacture} loading={loadingFacture} />

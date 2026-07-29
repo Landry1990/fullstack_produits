@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { useConfirm } from './useConfirm';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -190,6 +191,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const produitsEndpoint = 'produits/for_import/';
   const commandesEndpoint = 'commandes/';
   const fournisseursEndpoint = 'fournisseurs/';
+  const queryClient = useQueryClient();
 
   const { 
     data: commandesData, 
@@ -293,7 +295,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       handleBulkDelete,
       executingAction,
   } = useCommandeActions({
-      fetchCommandes: async () => { await refetchCommandes(); },
+      fetchCommandes: async () => { queryClient.invalidateQueries({ queryKey: ['commandes'] }); },
       setSelectedCommande,
       setViewMode,
       confirm,
@@ -402,7 +404,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
                       validated_by_id: validatorId, 
                       sudo_password: password 
                   });
-                  refetchProduits();
+                  queryClient.invalidateQueries({ queryKey: ['products'] });
               },
               { 
                   permission: 'can_close_commande',
@@ -1127,7 +1129,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   function handleTransferSuccess(_transferredCount: number, _supplierName: string, _newCommandeId: number) {
       setCommandeProduits(prev => prev.filter((_, idx) => !selectedRows.has(idx)));
       setSelectedRows(new Set());
-      refetchCommandes();
+      queryClient.invalidateQueries({ queryKey: ['commandes'] });
       setIsTransferModalOpen(false);
   }
 
@@ -1172,7 +1174,8 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       setIsMergeModalOpen(false);
       setSelectedOrderIds(new Set());
       toast.success(t('orders:messages.merge_success_detailed', { count: mergedCount, id: targetOrderId }), { icon: '🤝' });
-      refetchCommandes();
+      queryClient.invalidateQueries({ queryKey: ['commandes'] });
+      queryClient.invalidateQueries({ queryKey: ['commande'] });
   }
 
   function updateCommandeProduitField(

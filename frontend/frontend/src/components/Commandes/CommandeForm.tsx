@@ -2,7 +2,7 @@ import React, { type FormEvent, type RefObject, useState, useCallback } from 're
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save } from 'lucide-react';
+import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save, ScanLine } from 'lucide-react';
 import CommandeProductTable from './CommandeProductTable';
 import { formatCurrency } from '../../utils/formatters';
 import ExportCommandeModal from './ExportCommandeModal';
@@ -162,6 +162,7 @@ export default function CommandeForm({
 }: CommandeFormProps) {
     const { t } = useTranslation(['orders', 'common']);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [datamatrixEnabled, setDatamatrixEnabled] = useState(false);
 
     const handleNotFound = useCallback(() => {
         searchInputRef.current?.focus();
@@ -200,6 +201,20 @@ export default function CommandeForm({
                   </div>
                 </div>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDatamatrixEnabled(prev => !prev)}
+              className={cn(
+                "size-8 rounded-lg transition-all",
+                datamatrixEnabled
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              )}
+              title={datamatrixEnabled ? 'Désactiver le scan Data Matrix' : 'Activer le scan Data Matrix'}
+            >
+              <ScanLine className="size-4" />
+            </Button>
           </div>
 
 
@@ -430,7 +445,7 @@ export default function CommandeForm({
             onScan={processScan}
             searchInputRef={searchInputRef}
             onClearSearchInput={() => setSearchProduitQuery('')}
-            active={viewMode === 'CREATE' || viewMode === 'EDIT'}
+            active={datamatrixEnabled && (viewMode === 'CREATE' || viewMode === 'EDIT')}
           />
 
           <DuplicateLotModal

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Truck, Search, MoreVertical, X, Calendar, CheckSquare, Trash2, UserPlus, Eye, EyeOff, Phone } from 'lucide-react';
 import type { useFournisseurs } from '../../hooks/useFournisseurs';
 import { formatCurrency } from '../../utils/formatters';
@@ -14,6 +14,16 @@ const getInitials = (name: string) => name.slice(0, 2).toUpperCase();
 
 export default function FournisseursList({ hook }: Props) {
   const { state, actions } = hook;
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
   const {
     t,
     fournisseurs,
@@ -36,13 +46,14 @@ export default function FournisseursList({ hook }: Props) {
           <div className="flex justify-between items-center h-10">
             {selectedIds.length > 0 ? (
               <div className="flex items-center gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-200">
-                <div className="relative group">
-                  <div tabIndex={0} role="button" className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                <div ref={containerRef} className="relative">
+                  <div role="button" onClick={() => setIsOpen(p => !p)} className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer">
                     <MoreVertical className="size-4" />
                     {t('common:actions_title', { defaultValue: 'Actions' })}
                     <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs bg-white/20 rounded-full">{selectedIds.length}</span>
                   </div>
-                  <ul className="absolute z-[100] p-2 shadow-xl bg-white rounded-lg w-52 border border-slate-200 mt-1 hidden group-focus-within:block">
+                  {isOpen && (
+                  <ul className="absolute z-[100] p-2 shadow-xl bg-white rounded-lg w-52 border border-slate-200 mt-1">
                     <li className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                       {t('common:bulk_actions', { defaultValue: 'Actions Groupées' })}
                     </li>
@@ -52,6 +63,7 @@ export default function FournisseursList({ hook }: Props) {
                       </a>
                     </li>
                   </ul>
+                  )}
                 </div>
                 <Button
                   variant="ghost"
