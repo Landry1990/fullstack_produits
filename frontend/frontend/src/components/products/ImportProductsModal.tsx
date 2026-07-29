@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-hot-toast'
-import { Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react'
+import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { logger } from '../../utils/logger'
 
 interface ImportProductsModalProps {
@@ -10,13 +10,24 @@ interface ImportProductsModalProps {
   onSuccess: () => void
 }
 
+interface ImportResult {
+  created: number
+  updated: number
+  errors: number
+  message: string
+  rapport_xlsx?: string | null
+  rapport_txt?: string | null
+}
+
 export default function ImportProductsModal({ onClose, onSuccess }: ImportProductsModalProps) {
   const { t } = useTranslation(['products', 'common'])
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [result, setResult] = useState<{ imported: number; updated: number; errors: string[] } | null>(null)
+  const [statusMessage, setStatusMessage] = useState('')
+  const [result, setResult] = useState<ImportResult | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const jobIdRef = useRef<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -41,27 +52,55 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
 
     setUploading(true)
     setProgress(0)
+    setStatusMessage('Envoi du fichier...')
+    setResult(null)
 
     try {
-      const response = await api.post('products/import/', formData, {
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-             const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-             setProgress(percent)
-          }
-        },
+      const res = await api.post('maintenance/import_produits/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 30000,
       })
+      const jobId = res.data.job_id
+      jobIdRef.current = jobId
+      setStatusMessage('Import démarré en arrière-plan...')
 
-      setResult(response.data)
-      toast.success(t('products:import.success_toast'))
-      onSuccess()
+      const poll = setInterval(async () => {
+        try {
+          const status = await api.get(`maintenance/import_status/?job_id=${jobId}`)
+          const d = status.data
+          setProgress(d.progress || 0)
+          setStatusMessage(d.message || '')
+
+          if (d.status === 'done') {
+            clearInterval(poll)
+            setUploading(false)
+            setResult(d)
+            jobIdRef.current = null
+            toast.success(d.message || 'Import terminé')
+            onSuccess()
+          } else if (d.status === 'error') {
+            clearInterval(poll)
+            setUploading(false)
+            jobIdRef.current = null
+            toast.error(d.message || "Erreur lors de l'import")
+            setResult({ created: 0, updated: 0, errors: 1, message: d.message || 'Erreur' })
+          }
+        } catch {
+          clearInterval(poll)
+          setUploading(false)
+          jobIdRef.current = null
+          toast.error('Erreur de communication avec le serveur')
+        }
+      }, 2000)
+
     } catch (error: unknown) {
       logger.error('Import error:', error)
-      const message = error.response?.data?.error || t('products:import.error_toast')
+      const errData = (error as { response?: { data?: { detail?: string } } })?.response?.data
+      const message = errData?.detail || t('products:import.error_toast')
       toast.error(message)
-      setResult({ imported: 0, updated: 0, errors: [message] })
+      setResult({ created: 0, updated: 0, errors: 1, message })
     } finally {
-      setUploading(false)
+      if (!jobIdRef.current) setUploading(false)
     }
   }
 
@@ -126,7 +165,11 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
                        <li>{t('products:import.col_cip')}</li>
                        <li>{t('products:import.col_tva')}</li>
                        <li>{t('products:import.col_stock')}</li>
+                       <li>{t('products:import.col_fournisseur')}</li>
+                       <li>{t('products:import.col_forme')}</li>
+                       <li>{t('products:import.col_groupe')}</li>
                      </ul>
+                     <p className="mt-2 text-base-content/50">{t('products:import.col_extras')}</p>
                   </div>
                 </div>
               )}
@@ -135,7 +178,10 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
             {uploading && (
               <div className="space-y-2">
                  <div className="flex justify-between text-xs">
-                   <span className="text-base-content/60">{t('products:import.uploading')}</span>
+                   <span className="text-base-content/60 flex items-center gap-1.5">
+                     <Loader2 className="size-3.5 animate-spin" />
+                     {statusMessage || t('products:import.uploading')}
+                   </span>
                    <span className="font-semibold text-base-content">{progress}%</span>
                  </div>
                  <div className="w-full bg-base-200 rounded-full h-2 overflow-hidden">
@@ -164,8 +210,8 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
           </div>
         ) : (
           <div className="space-y-4">
-             <div className={`flex items-start gap-3 p-4 rounded-xl ${result.errors && result.errors.length > 0 ? 'bg-warning/10 border border-amber-100' : 'bg-success/10 border border-emerald-100'}`}>
-                {result.errors && result.errors.length > 0 ? (
+             <div className={`flex items-start gap-3 p-4 rounded-xl ${result.errors > 0 ? 'bg-warning/10 border border-amber-100' : 'bg-success/10 border border-emerald-100'}`}>
+                {result.errors > 0 ? (
                   <AlertCircle className="size-6 text-warning shrink-0 mt-0.5" />
                 ) : (
                   <CheckCircle className="size-6 text-success shrink-0 mt-0.5" />
@@ -173,23 +219,23 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
                 <div>
                   <h3 className="font-semibold text-base-content">{t('products:import.success_title')}</h3>
                   <div className="text-sm text-base-content/70 mt-1">
-                    <p>{t('products:import.created', { count: result.imported !== undefined ? result.imported : (result as unknown).created || 0 })}</p>
+                    <p>{t('products:import.created', { count: result.created })}</p>
                     <p>{t('products:import.updated', { count: result.updated })}</p>
+                    {result.errors > 0 && <p className="text-error">{result.errors} erreur(s)</p>}
                   </div>
                 </div>
              </div>
 
-             {result.errors && result.errors.length > 0 && (
-               <div className="bg-base-200 p-4 rounded-xl max-h-40 overflow-y-auto border border-base-200">
-                 <h4 className="font-semibold text-xs mb-2 text-error">{t('products:import.errors_title')}</h4>
-                 <ul className="list-disc list-inside text-xs space-y-1 text-base-content/70">
-                   {result.errors.slice(0, 10).map((err) => (
-                     <li key={err}>{err}</li>
-                   ))}
-                   {result.errors.length > 10 && (
-                     <li className="italic text-base-content/50">{t('products:import.more_errors', { count: result.errors.length - 10 })}</li>
-                   )}
-                 </ul>
+             {result.rapport_xlsx && (
+               <div className="flex justify-end">
+                 <button
+                   className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                   onClick={() => {
+                     window.open(`/api/maintenance/download_rapport/?file=${result.rapport_xlsx}`, '_blank')
+                   }}
+                 >
+                   📊 Télécharger le rapport Excel
+                 </button>
                </div>
              )}
 
