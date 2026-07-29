@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from './ui/Table';
+import { logger } from '../utils/logger'
 import {
   Dialog,
   DialogContent,
@@ -180,7 +181,7 @@ export default function Maintenance() {
 
     api.get('pharmacy-settings/')
       .then(res => setPharmacySettings(res.data))
-      .catch(() => console.error('Error loading pharmacy settings'));
+      .catch(() => logger.error('Error loading pharmacy settings'));
 
     api.get('maintenance/produits_count/')
       .then(res => setProduitsCount(res.data.count))
@@ -201,6 +202,7 @@ export default function Maintenance() {
         }
       })
       .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Poll manual update progress

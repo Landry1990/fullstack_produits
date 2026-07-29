@@ -764,7 +764,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             
             try:
                 primary_color = HexColor(settings.primary_color) if settings.primary_color else colors.HexColor('#000000')
-            except:
+            except Exception:
                 primary_color = colors.HexColor('#000000')
             
             style_company = ParagraphStyle('Company', parent=styles['Heading2'], fontSize=14, spaceAfter=4, textColor=primary_color)

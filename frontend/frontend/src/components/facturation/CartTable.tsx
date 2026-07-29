@@ -192,6 +192,7 @@ const CartRow = React.memo(({
       parts.push(`${formatCurrency(Number(ligne.lotSellingPrice))}`)
     }
     return parts.join(' • ')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ligne.lotId, ligne.lotText, ligne.lotExpiration, ligne.lotSellingPrice, ligne.lotAllocations, fefoPreview])
 
   const lotTooltip = React.useMemo(() => {

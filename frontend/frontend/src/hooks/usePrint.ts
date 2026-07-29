@@ -4,6 +4,7 @@ import { escHtml, writePrintDocument } from '../utils/print/printHelpers';
 import { usePharmacySettings } from './usePharmacySettings';
 import { formatDateTime } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
+import { logger } from '../utils/logger'
 
 /**
  * Types de documents imprimables
@@ -148,6 +149,7 @@ function usePrint(): UsePrintReturn {
         margin-top: 5px;
       }
     `;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
@@ -181,6 +183,7 @@ function usePrint(): UsePrintReturn {
         </p>
       </div>
     `;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
 
   /**
@@ -202,7 +205,7 @@ function usePrint(): UsePrintReturn {
     const printWindow = window.open('about:blank', '', `height=${height},width=${width}`);
 
     if (!printWindow) {
-      console.error('Impossible d\'ouvrir la fenêtre d\'impression. Vérifiez les paramètres du navigateur.');
+      logger.error('Impossible d\'ouvrir la fenêtre d\'impression. Vérifiez les paramètres du navigateur.');
       return null;
     }
 

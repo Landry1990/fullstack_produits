@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import type { Facture } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
+import { logger } from '../utils/logger'
 
 interface ModificationState {
   setLoading: (loading: boolean) => void
@@ -52,7 +53,7 @@ export const useInvoiceModification = ({
             tva: response.data.tva
           }
         } catch (err) {
-          console.error(`Failed to fetch product ${p.produit}:`, err)
+          logger.error(`Failed to fetch product ${p.produit}:`, err)
           // Fallback avec données minimales
           return {
             id: p.produit,
@@ -81,7 +82,7 @@ export const useInvoiceModification = ({
       })
 
     } catch (err) {
-      console.error('Erreur modification:', err)
+      logger.error('Erreur modification:', err)
       toast.error(t('messages.load_invoice_error'))
     } finally {
       setLoading(false)
@@ -120,7 +121,7 @@ const _response = await api.post(`factures/${factureId}/modifier/`, {
       await fetchFacturesEnAttente()
 
     } catch (err) {
-      console.error('Erreur modification produit:', err)
+      logger.error('Erreur modification produit:', err)
       toast.error(getApiErrorDetail(err, t('messages.modification_error')))
     } finally {
       setLoading(false)
@@ -163,7 +164,7 @@ const _response = await api.post(`factures/${factureId}/modifier/`, {
       await fetchFacturesEnAttente()
 
     } catch (err) {
-      console.error('Erreur suppression produit:', err)
+      logger.error('Erreur suppression produit:', err)
       toast.error(getApiErrorDetail(err, t('messages.modification_error')))
     } finally {
       setLoading(false)

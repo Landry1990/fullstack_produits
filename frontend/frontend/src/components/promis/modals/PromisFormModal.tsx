@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { X, Search } from 'lucide-react';
 import type { ProduitModel, Client } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
+import { logger } from '../../../utils/logger'
 
 interface PromisFormModalProps {
     isOpen: boolean;
@@ -77,7 +78,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
             handleClose();
         } catch (err: unknown) {
             toast.error(err.response?.data?.detail || t('stock:promis.validation.create_error'));
-            console.error(err);
+            logger.error(err);
         } finally {
             setSaving(false);
         }

@@ -30,6 +30,7 @@ import {
   TableHead,
   TableCell,
 } from '../ui/Table';
+import { logger } from '../../utils/logger'
 import {
   Dialog,
   DialogContent,
@@ -72,7 +73,7 @@ export default function ReapproHistory() {
       const results = Array.isArray(data) ? data : (data?.results ?? []);
       setHistory(results as ReapproSession[]);
     } catch (error) {
-      console.error('Error fetching history:', error);
+      logger.error('Error fetching history:', error);
       toast.error("Erreur lors du chargement de l'historique");
     } finally {
       setLoading(false);
@@ -91,7 +92,7 @@ export default function ReapproHistory() {
       );
       toast.success('PDF téléchargé avec succès');
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      logger.error('Error generating PDF:', error);
       toast.error('Erreur lors de la génération du PDF');
     } finally {
       setDownloadingId(null);

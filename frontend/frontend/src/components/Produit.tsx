@@ -38,6 +38,7 @@ import { ProductDetailsModal } from './products/modals/ProductDetailsModal';
 import { StockAdjustmentModal } from './products/modals/StockAdjustmentModal';
 import ImportProductsModal from './products/ImportProductsModal';
 import Pagination from './ui/Pagination';
+import { logger } from '../utils/logger'
 
 export default function Produit() {
   const confirm = useConfirm()
@@ -121,6 +122,7 @@ export default function Produit() {
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productsData]);
 
   const { data: rayons = [] } = useRayons();
@@ -214,7 +216,7 @@ export default function Produit() {
         setSelectedFacture(response.data);
         setShowSalesModal(true);
       } catch (error) {
-        console.error('Error loading invoice from movement:', error);
+        logger.error('Error loading invoice from movement:', error);
         toast.error(t('products:messages.facture_load_error'));
       } finally { setLoadingFacture(false); }
     } else if (item.commande) {

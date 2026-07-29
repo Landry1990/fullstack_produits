@@ -4,6 +4,7 @@ import { Settings, Check, RotateCcw, Info } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { stockHealthSettingsSchema } from '../../schemas/stockSchema';
+import { logger } from '../../utils/logger'
 
 interface StockHealthSettingsModalProps {
     isOpen: boolean;
@@ -44,7 +45,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
             if (onSaved) onSaved();
             onClose();
         } catch (error) {
-            console.error('Failed to save settings:', error);
+            logger.error('Failed to save settings:', error);
         } finally {
             setSaving(false);
         }

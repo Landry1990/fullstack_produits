@@ -4,6 +4,7 @@ import fournisseurService from '../services/fournisseurService';
 import type { PaiementFournisseur, Fournisseur } from '../types';
 import toast from 'react-hot-toast';
 import { useInvalidateSupplierDashboard } from './useSupplierDashboard';
+import { logger } from '../utils/logger'
 
 export function useFinanceFournisseurs() {
     const [paiements, setPaiements] = useState<PaiementFournisseur[]>([]);
@@ -16,7 +17,7 @@ export function useFinanceFournisseurs() {
             const data = await fournisseurService.getAll();
             setFournisseurs(Array.isArray(data) ? data : (data.results || []));
         } catch (error) {
-            console.error('Erreur lors du chargement des fournisseurs:', error);
+            logger.error('Erreur lors du chargement des fournisseurs:', error);
             toast.error('Erreur de chargement des fournisseurs');
         }
     }, []);
@@ -27,7 +28,7 @@ export function useFinanceFournisseurs() {
             const data = await financeService.getPaiements(fournisseurId);
             setPaiements(Array.isArray(data) ? data : (data.results || []));
         } catch (error) {
-            console.error('Erreur lors du chargement des paiements:', error);
+            logger.error('Erreur lors du chargement des paiements:', error);
             toast.error('Erreur de chargement des paiements');
         } finally {
             setLoading(false);
@@ -43,7 +44,7 @@ export function useFinanceFournisseurs() {
             invalidateDashboard();
             return result;
         } catch (error: unknown) {
-            console.error('Erreur lors de l\'enregistrement du paiement:', error);
+            logger.error('Erreur lors de l\'enregistrement du paiement:', error);
             const err = error as { response?: { data?: { detail?: string } } };
             const msg = err.response?.data?.detail || 'Erreur lors de l\'enregistrement';
             toast.error(msg);
@@ -59,7 +60,7 @@ export function useFinanceFournisseurs() {
             fetchFournisseurs();
             invalidateDashboard();
         } catch (error) {
-            console.error('Erreur lors de la suppression du paiement:', error);
+            logger.error('Erreur lors de la suppression du paiement:', error);
             toast.error('Erreur lors de la suppression');
         }
     };

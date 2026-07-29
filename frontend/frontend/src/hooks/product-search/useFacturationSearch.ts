@@ -4,6 +4,7 @@ import api from '../../services/api'
 import { toast } from 'react-hot-toast'
 import type { ProduitModel } from '../../types'
 import type { SearchMode, PackResult, DciResult, SearchResult } from '../../components/common/ProductSearch/types'
+import { logger } from '../../utils/logger'
 
 interface UseFacturationSearchParams {
   searchQuery: string
@@ -55,7 +56,7 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
       const data = response.data
       setPackResults(Array.isArray(data) ? data : data.results || [])
     } catch (e) {
-      console.error('Pack search error', e)
+      logger.error('Pack search error', e)
       toast.error(t('facturation:search.error_search_packs'))
     } finally {
       setPackLoading(false)
@@ -76,7 +77,7 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
       const data = response.data
       setDciResults(Array.isArray(data) ? data : data.results || [])
     } catch (e) {
-      console.error('DCI search error', e)
+      logger.error('DCI search error', e)
     } finally {
       setDciLoading(false)
     }
@@ -92,7 +93,7 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
       const data = response.data
       setDciProducts(Array.isArray(data) ? data : data.results || [])
     } catch (e) {
-      console.error('DCI products error', e)
+      logger.error('DCI products error', e)
     } finally {
       setDciProductsLoading(false)
     }

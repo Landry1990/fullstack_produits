@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 
 import { Label } from './ui/Label';
 import { Select } from './ui/Select';
+import { logger } from '../utils/logger'
 import {
   Table,
   TableBody,
@@ -79,6 +80,7 @@ const UserSessionsShadcn: React.FC = () => {
     } else {
       fetchRecap();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const fetchOperators = async () => {
@@ -86,7 +88,7 @@ const UserSessionsShadcn: React.FC = () => {
       const response = await api.get('users/operators/');
       setOperators(response.data);
     } catch (err) {
-      console.error('Error fetching operators:', err);
+      logger.error('Error fetching operators:', err);
     }
   };
 
@@ -106,7 +108,7 @@ const UserSessionsShadcn: React.FC = () => {
       const sessionData = Array.isArray(response.data) ? response.data : response.data.results;
       setSessions(sessionData || []);
     } catch (err) {
-      console.error('Error fetching sessions:', err);
+      logger.error('Error fetching sessions:', err);
     } finally {
       setLoading(false);
     }
@@ -120,7 +122,7 @@ const UserSessionsShadcn: React.FC = () => {
       );
       setRecapData(response.data);
     } catch (err) {
-      console.error('Error fetching recap:', err);
+      logger.error('Error fetching recap:', err);
     } finally {
       setLoading(false);
     }
@@ -146,7 +148,7 @@ const UserSessionsShadcn: React.FC = () => {
       toast.success(t('sessions.force_logout_success', { username }));
       fetchSessions();
     } catch (err) {
-      console.error('Error during force logout:', err);
+      logger.error('Error during force logout:', err);
       toast.error(t('sessions.force_logout_error'));
     } finally {
       setDisconnectingId(null);

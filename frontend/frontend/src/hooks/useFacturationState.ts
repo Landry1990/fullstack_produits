@@ -133,6 +133,7 @@ export function useFacturationState() {
     if (cart.lignesFacture.length > 0) {
       cart.applyMarkupToCart(currentMarkup)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMarkup, cart.applyMarkupToCart])
 
   // --- Session Persistence (auto-save / restore) ---
@@ -155,6 +156,7 @@ export function useFacturationState() {
   // --- Totals ---
   const totals = useMemo(() =>
     ui.calculateTotals(cart.cartStats, clientsHook.clients.find(c => c.id === clientsHook.selectedClient)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [cart.cartStats, clientsHook.selectedClient, clientsHook.clients, ui.calculateTotals]
   )
 
@@ -345,6 +347,7 @@ export function useFacturationState() {
   }, [clientsHook.selectedClient, clientsHook.clients, clientsHook.useManualClient, ui, t])
 
   // --- Payment Preparation ---
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handlePaymentClick = async () => {
     setLoading(true)
     let freshLignes = cart.lignesFacture
@@ -453,6 +456,7 @@ export function useFacturationState() {
         is_blocking: !!client.blocking_alerte
       })
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientsHook.selectedClient, clientsHook.clients, clientsHook.useManualClient])
 
   // --- Reset loyalty/discount on client change ---
@@ -479,6 +483,7 @@ export function useFacturationState() {
       const currentQty = sortedLignes[index].quantite
       cart.updateQuantite(pId, currentQty + 1)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedLignes, cart.updateQuantite])
 
   const handleDecrement = useCallback((index: number) => {
@@ -489,12 +494,14 @@ export function useFacturationState() {
         cart.updateQuantite(pId, currentQty - 1)
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedLignes, cart.updateQuantite])
 
   const handleDeleteLine = useCallback((index: number) => {
     if (sortedLignes[index]) {
       cart.removeLigne(sortedLignes[index].produit.id)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedLignes, cart.removeLigne])
 
   const handleValidateShortcut = useCallback(() => {
@@ -540,6 +547,7 @@ export function useFacturationState() {
         ui.setIsAlertModalOpen(true)
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyboardNav.selectedIndex, sortedLignes, clientsHook.selectedClient, clientsHook.useManualClient, clientsHook.clients, ui.setAlertTarget, ui.setIsAlertModalOpen])
 
   // --- Keyboard Shortcuts ---

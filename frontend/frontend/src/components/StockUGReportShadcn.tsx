@@ -31,6 +31,7 @@ import {
   DialogClose,
 } from './ui/Dialog';
 import type { UGReportData, FournisseurUGStat } from '../types/ug';
+import { logger } from '../utils/logger'
 
 export default function StockUGReportShadcn() {
   const { t } = useTranslation(['stock', 'common']);
@@ -52,7 +53,7 @@ export default function StockUGReportShadcn() {
       const response = await api.get(`stock-lots/rapport_ug/?${params.toString()}`);
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching UG report:', error);
+      logger.error('Error fetching UG report:', error);
       toast.error(t('common:messages.error_loading'));
     } finally {
       setLoading(false);

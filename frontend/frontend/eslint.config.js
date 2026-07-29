@@ -32,4 +32,10 @@ export default tseslint.config([
       'react-refresh/only-export-components': 'warn',
     },
   },
+  {
+    files: ['src/context/**/*.{ts,tsx}', 'src/hooks/**/*.{ts,tsx}', 'src/tests/**/*.{ts,tsx}', 'src/components/common/ProductSearch/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

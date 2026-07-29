@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Fournisseur, PaginatedResponse } from '../types';
 import { useSudo } from './useSudo';
+import { logger } from '../utils/logger'
 
 export interface CatalogueItem {
   produit_id: number;
@@ -99,6 +100,7 @@ export function useFournisseurs() {
         setSelectedFournisseur(updated);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fournisseurs]); // ✅ Retiré selectedFournisseur des dépendances
 
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
@@ -128,7 +130,7 @@ export function useFournisseurs() {
       setCatalogue(response.data.produits || []);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      console.error('Erreur lors du chargement du catalogue:', err);
+      logger.error('Erreur lors du chargement du catalogue:', err);
       setCatalogue([]);
     } finally {
       setCatalogueLoading(false);
@@ -143,6 +145,7 @@ export function useFournisseurs() {
       setCatalogue([]);
     }
     return () => catalogueControllerRef.current?.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFournisseur?.id, fetchCatalogue]);
 
   const fournisseursControllerRef = useRef<AbortController | null>(null);
@@ -188,12 +191,14 @@ export function useFournisseurs() {
   useEffect(() => {
     fetchFournisseurs();
     return () => fournisseursControllerRef.current?.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showInactive, currentPage, debouncedSearch]); // ✅ Dépendances directes au lieu de la fonction
 
   useEffect(() => {
     if (selectedFournisseur && !fournisseurs.some(f => f.id === selectedFournisseur.id)) {
       setSelectedFournisseur(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fournisseurs]); // ✅ Retiré selectedFournisseur des dépendances
 
   useEffect(() => {
@@ -207,6 +212,7 @@ export function useFournisseurs() {
         window.history.replaceState({}, document.title);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fournisseurs]);
 
   function openAddModal() {
@@ -297,7 +303,7 @@ export function useFournisseurs() {
       } else {
         setError(t('providers:messages.save_error') || "Erreur inconnue lors de l'ajout du fournisseur");
       }
-      console.error("Erreur lors de l'ajout du fournisseur:", err);
+      logger.error("Erreur lors de l'ajout du fournisseur:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -322,7 +328,7 @@ export function useFournisseurs() {
       } else {
         setError(t('providers:messages.save_error') || "Erreur inconnue lors de la modification du fournisseur");
       }
-      console.error('Erreur lors de la modification du fournisseur:', err);
+      logger.error('Erreur lors de la modification du fournisseur:', err);
     }
   }
 
@@ -344,7 +350,7 @@ export function useFournisseurs() {
       } else {
         toast.error(t('providers:messages.delete_error'));
       }
-      console.error('Erreur lors de la suppression du fournisseur:', err);
+      logger.error('Erreur lors de la suppression du fournisseur:', err);
       throw err;
     }
   }
@@ -361,7 +367,7 @@ export function useFournisseurs() {
       toast.success(t('providers:messages.bulk_delete_success', { count: selectedIds.length }));
     } catch (err) {
       toast.error(getApiErrorDetail(err, t('providers:messages.bulk_delete_error')));
-      console.error(err);
+      logger.error(err);
       throw err;
     }
   }
@@ -440,7 +446,7 @@ export function useFournisseurs() {
       fetchFournisseurs();
     } catch (err) {
       toast.error(t('providers:messages.status_change_error'));
-      console.error(err);
+      logger.error(err);
     }
   }
 

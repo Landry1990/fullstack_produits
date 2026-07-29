@@ -3,6 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from './AuthContext';
 import { useLicence } from './LicenceContext';
+import { logger } from '../utils/logger'
 
 export interface PharmacySettings {
   id: number;
@@ -150,7 +151,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
       setSettings(data);
       setError(null);
     } catch (err) {
-      console.error('Error fetching pharmacy settings:', err);
+      logger.error('Error fetching pharmacy settings:', err);
       setError('Erreur lors du chargement des paramètres');
       setSettings(DEFAULT_SETTINGS);
     } finally {
@@ -165,7 +166,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
       toast.success('Paramètres sauvegardés');
       return data;
     } catch (err) {
-      console.error('Error updating pharmacy settings:', err);
+      logger.error('Error updating pharmacy settings:', err);
       toast.error('Erreur lors de la sauvegarde');
       throw err;
     }
@@ -182,7 +183,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
       toast.success('Logo importé avec succès');
       return data;
     } catch (err) {
-      console.error('Error uploading logo:', err);
+      logger.error('Error uploading logo:', err);
       toast.error('Erreur lors de l\'import du logo');
       throw err;
     }
@@ -195,7 +196,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
       toast.success('Logo supprimé');
       return data;
     } catch (err) {
-      console.error('Error removing logo:', err);
+      logger.error('Error removing logo:', err);
       toast.error('Erreur lors de la suppression du logo');
       throw err;
     }
@@ -210,6 +211,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
   }, [fetchSettings, isAuthenticated]);
 
   // On fusionne les paramètres avec le nom de la pharmacie provenant de la licence
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const effectiveSettings = {
     ...settings,
     pharmacy_name: licence?.pharmacie_nom || settings.pharmacy_name

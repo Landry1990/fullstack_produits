@@ -8,6 +8,7 @@ import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight, Fi
 import { formatCurrency } from '../utils/formatters';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
+import { logger } from '../utils/logger'
 
 interface _DailyPurchase {
   date: string;
@@ -80,7 +81,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             const data = response.data;
             setSuppliers(Array.isArray(data) ? data : (data.results || []));
         } catch (error) {
-            console.error('Error fetching suppliers:', error);
+            logger.error('Error fetching suppliers:', error);
         }
     };
     fetchSuppliers();
@@ -114,7 +115,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         setTotalCount(response.data.length);
       }
     } catch (error) {
-      console.error('Error fetching purchase history:', error);
+      logger.error('Error fetching purchase history:', error);
     } finally {
       setLoading(false);
     }
@@ -126,6 +127,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
       setPage(1);
       fetchHistory(1);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateDebut, dateFin, selectedSupplier, user, activeTab, forcedType]);
 
   const handlePageChange = (newPage: number) => {
@@ -175,7 +177,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             title: activeTab === 'summary' ? t('tabs.purchase_summary') : t('tabs.purchase_details'),
         });
     } catch (error) {
-        console.error('Error exporting history:', error);
+        logger.error('Error exporting history:', error);
     } finally {
         setLoading(false);
     }

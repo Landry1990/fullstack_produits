@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
+import { logger } from '../utils/logger'
 
 export interface StockAnalysisItem {
     id: number;
@@ -84,7 +85,7 @@ export const useStockAnalysis = () => {
             setFournisseurs(suppliersData);
         } catch (err) {
             if (err instanceof Error && err.name === 'CanceledError') return;
-            console.error('Erreur chargement fournisseurs:', err);
+            logger.error('Erreur chargement fournisseurs:', err);
             setFournisseurs([]);
         }
     }, []);
@@ -119,7 +120,7 @@ export const useStockAnalysis = () => {
             setData(response.data);
         } catch (err) {
             if (err instanceof Error && err.name === 'CanceledError') return;
-            console.error(err);
+            logger.error(err);
             setError(t('stock:analyse.error'));
         } finally {
             setLoading(false);

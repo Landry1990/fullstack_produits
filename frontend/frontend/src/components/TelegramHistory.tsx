@@ -6,6 +6,7 @@ import { fr } from 'date-fns/locale';
 import { Search, RefreshCcw, CheckCircle2, XCircle, Clock, FileText, User, Hash, Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
+import { logger } from '../utils/logger'
 
 interface TelegramLog {
     id: number;
@@ -57,7 +58,7 @@ const TelegramHistory: React.FC = () => {
             const response = await api.get('telegram-logs/', { params });
             setLogs(Array.isArray(response.data) ? response.data : response.data.results || []);
         } catch (error) {
-            console.error('Erreur lors du chargement de l\'historique Telegram:', error);
+            logger.error('Erreur lors du chargement de l\'historique Telegram:', error);
         } finally {
             setLoading(false);
         }
@@ -65,6 +66,7 @@ const TelegramHistory: React.FC = () => {
 
     useEffect(() => {
         fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterType]);
 
     const filteredLogs = logs.filter(log => 

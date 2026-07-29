@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { cashSessionService, type PosteCaisse, type PosteVente } from '../services/cashSessionService'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
+import { logger } from '../utils/logger'
 
 export type UseMultiCaisseOptions = Record<string, never>
 
@@ -61,7 +62,7 @@ export function useMultiCaisse(_options: UseMultiCaisseOptions = {}): UseMultiCa
 
             await refreshActivePoste()
         } catch (err) {
-            console.error('Erreur chargement postes caisses:', err)
+            logger.error('Erreur chargement postes caisses:', err)
         } finally {
             setMultiCaisseLoading(false)
         }

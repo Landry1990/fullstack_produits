@@ -34,6 +34,7 @@ import {
   DialogFooter,
 } from '../ui/Dialog';
 import { Button } from '../ui/Button';
+import { logger } from '../../utils/logger'
 
 export default function ReapproRayon() {
   const { t } = useTranslation(['stock', 'common']);
@@ -76,7 +77,7 @@ export default function ReapproRayon() {
         setProducts(response.results || []);
         setSelectedIds(new Set());
     } catch (error) {
-      console.error('Error fetching refill needs:', error);
+      logger.error('Error fetching refill needs:', error);
       toast.error(t('reappro.messages.error_loading_products'));
     } finally {
       setLoading(false);
@@ -85,6 +86,7 @@ export default function ReapproRayon() {
 
   useEffect(() => {
     fetchNeedsRefill();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onlyAlerts, selectedRayon]); // We'll handle search with a small delay or button if needed, but for now simple
 
   // Debounce search
@@ -95,6 +97,7 @@ export default function ReapproRayon() {
         }
     }, 500);
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   // Statistics

@@ -26,6 +26,7 @@ import venteService from '../services/venteService';
 import caisseService from '../services/caisseService';
 import promisService from '../services/promisService';
 import ordonnancierService from '../services/ordonnancierService';
+import { logger } from '../utils/logger'
 
 // Local types and helpers removed (moved to types.ts / utils)
 
@@ -324,7 +325,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                         is_paid: !params.centralizedCashRegister
                     });
                 } catch (err: unknown) {
-                    console.error("Erreur génération PDF promis:", err);
+                    logger.error("Erreur génération PDF promis:", err);
                 }
             }
 
@@ -381,7 +382,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             }
 
         } catch (err: unknown) {
-            console.error('Sale Finalization Error:', err);
+            logger.error('Sale Finalization Error:', err);
             const errorMessage = extractErrorMessage(err);
             setError(errorMessage);
             onError?.(errorMessage);
@@ -497,7 +498,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                         });
                         toast.success(t('messages.promis_recorded'));
                     } catch (err) {
-                        console.error("Erreur promis:", err);
+                        logger.error("Erreur promis:", err);
                     }
                 })());
             }
@@ -519,7 +520,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                         });
                         toast.success(t('messages.prescription_recorded'));
                     } catch (err) {
-                        console.error("Erreur ordonnancier:", err);
+                        logger.error("Erreur ordonnancier:", err);
                     }
                 })());
             }
@@ -560,7 +561,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             return result;
 
         } catch (err: unknown) {
-            console.error('Invoice Payment Error:', err);
+            logger.error('Invoice Payment Error:', err);
             const errorMessage = extractErrorMessage(err);
             setError(errorMessage);
             onError?.(errorMessage);

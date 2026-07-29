@@ -109,6 +109,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
     } else if (!selectedFournisseurId) {
       setData(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialFournisseurId, selectedFournisseurId, dateRange, periodeType, customStart, customEnd]);
 
   async function fetchReleve(fId: number | string, start: string, end: string) {

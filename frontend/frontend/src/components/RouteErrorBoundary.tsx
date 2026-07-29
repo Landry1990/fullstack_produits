@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useRouteError, useNavigate, isRouteErrorResponse } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
+import { logger } from '../utils/logger'
 
 export default function RouteErrorBoundary() {
   const error = useRouteError() as unknown;
@@ -25,7 +26,7 @@ export default function RouteErrorBoundary() {
         window.location.reload();
       }
     } else {
-      console.error('Route error caught by RouteErrorBoundary:', error);
+      logger.error('Route error caught by RouteErrorBoundary:', error);
     }
   }, [isChunkError, error, reloadCount]);
 

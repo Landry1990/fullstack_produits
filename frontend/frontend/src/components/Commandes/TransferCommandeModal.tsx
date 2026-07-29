@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
+import { logger } from '../../utils/logger'
 
 interface TransferCommandeModalProps {
     isOpen: boolean;
@@ -61,7 +62,7 @@ export default function TransferCommandeModal({
             });
             setTransferCataloguePrices(priceMap);
         } catch (err) {
-            console.error('Erreur chargement catalogue:', err);
+            logger.error('Erreur chargement catalogue:', err);
             setTransferCataloguePrices(new Map());
         } finally {
             setLoadingCatalogue(false);
@@ -148,7 +149,7 @@ export default function TransferCommandeModal({
             onClose();
 
         } catch (err) {
-            console.error('Erreur lors du transfert:', err);
+            logger.error('Erreur lors du transfert:', err);
             toast.error(t('orders:transfer_modal.transfer_error'));
         }
     };

@@ -13,6 +13,7 @@ import { useEffect, useCallback } from 'react';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { cn } from '../../lib/utils';
+import { logger } from '../../utils/logger'
 
 interface PromotionFormProps {
     onClose: () => void;
@@ -140,7 +141,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                 }));
                 setSelectedProducts(updated);
             } catch (err) {
-                console.error("Failed to resolve product names", err);
+                logger.error("Failed to resolve product names", err);
             }
         };
 
@@ -186,7 +187,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
             onSave();
             onClose();
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             alert(t('promotions:form.save_error'));
         } finally {
             setLoading(false);

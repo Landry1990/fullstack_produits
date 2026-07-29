@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import type { Facture, TicketCaisse, Client, FactureProduit } from '../types';
 import { safeStorage } from '../utils/storage';
 import { PAYMENT_MODES } from '../config/paymentModes';
+import { logger } from '../utils/logger'
 
 interface UseInvoiceActionsProps {
     setFacturesLocal?: React.Dispatch<React.SetStateAction<Facture[]>>; // For optimistic updates
@@ -65,7 +66,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 const response = await api.get(`factures/${facture.id}/`);
                 setSelectedFacture(response.data);
             } catch (error) {
-                console.error("Erreur chargement détails", error);
+                logger.error("Erreur chargement détails", error);
                 toast.error("Impossible de charger le détail.");
             } finally {
                 setDetailsLoading(false);
@@ -119,7 +120,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             printInvoicePDF(pendingPrintFacture.id, clientNameInput);
 
         } catch (error) {
-            console.error('Erreur sauvegarde nom client:', error);
+            logger.error('Erreur sauvegarde nom client:', error);
             toast.error(t('messages.save_error'));
             // Fallback print
             printInvoicePDF(pendingPrintFacture.id, clientNameInput);
@@ -141,7 +142,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 fullFacture = response.data;
                 toast.dismiss(toastId);
             } catch (error) {
-                console.error("Erreur chargement pour ticket", error);
+                logger.error("Erreur chargement pour ticket", error);
                 toast.error("Impossible de charger le détail.");
                 toast.dismiss(toastId);
                 return;
@@ -215,7 +216,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 fullFacture = response.data;
                 toast.dismiss(toastId);
             } catch (error) {
-                console.error("Erreur chargement détails pour modification", error);
+                logger.error("Erreur chargement détails pour modification", error);
                 toast.error("Impossible de charger le détail de la vente.");
                 toast.dismiss(toastId);
                 return;
@@ -241,7 +242,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 fullFacture = response.data;
                 toast.dismiss(toastId);
             } catch (error) {
-                console.error("Erreur chargement détails pour duplication", error);
+                logger.error("Erreur chargement détails pour duplication", error);
                 toast.error("Impossible de charger le détail de la vente à dupliquer.");
                 toast.dismiss(toastId);
                 return;
@@ -306,7 +307,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             navigate('/app/facturation');
 
         } catch (error: unknown) {
-            console.error("Erreur génération avoir", error);
+            logger.error("Erreur génération avoir", error);
             const err = error as { response?: { data?: { detail?: string } } };
             const detail = err.response?.data?.detail;
             toast.error(detail || "Impossible de générer un avoir pour cette vente.");

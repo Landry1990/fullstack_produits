@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
+import { logger } from '../../utils/logger'
 
 interface MergeCommandesModalProps {
     isOpen: boolean;
@@ -34,6 +35,7 @@ export default function MergeCommandesModal({
             fetchMergeDetails();
             setMergeTargetOrderId(null);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, selectedOrderIds]);
 
     const fetchMergeDetails = async () => {
@@ -47,7 +49,7 @@ export default function MergeCommandesModal({
             const responses = await Promise.all(detailsPromises);
             setMergeOrdersDetails(responses.map(r => r.data));
         } catch (err) {
-            console.error('Erreur chargement détails commandes:', err);
+            logger.error('Erreur chargement détails commandes:', err);
             toast.error(t('orders:merge_modal.load_error'));
             onClose(); // Fermer si erreur critique
         } finally {
@@ -80,7 +82,7 @@ export default function MergeCommandesModal({
             onClose();
 
         } catch (err: unknown) {
-            console.error('Erreur lors de la fusion:', err);
+            logger.error('Erreur lors de la fusion:', err);
             const errObj = err as { response?: { data?: { error?: string } } };
             const msg = errObj?.response?.data?.error || t('orders:merge_modal.merge_error');
             toast.error(msg);

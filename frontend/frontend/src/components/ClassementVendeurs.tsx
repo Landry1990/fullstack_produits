@@ -4,6 +4,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatters';
 import { useRecharts } from '../hooks/useRecharts';
+import { logger } from '../utils/logger'
 
 
 interface VendeurRanking {
@@ -84,12 +85,13 @@ export default function ClassementVendeurs() {
         }
       } catch (err) {
         toast.error(t('common:messages.error_loading'));
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }
     };
     fetchRanking();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mois, periode]);
 
   // Fetch global evolution data
@@ -101,7 +103,7 @@ export default function ClassementVendeurs() {
         });
         setEvolutionData(res.data);
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       }
     };
     fetchEvolution();

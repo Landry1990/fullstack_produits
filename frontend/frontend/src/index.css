@@ -891,13 +891,31 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
 
 /* ── Textes ───────────────────────────────────────── */
 .theme-midnight .text-slate-900,
+.theme-midnight .text-slate-800,
+.theme-midnight .text-slate-700,
 .theme-midnight .text-gray-900,
+.theme-midnight .text-gray-800,
+.theme-midnight .text-gray-700,
 .theme-midnight .text-zinc-900,
+.theme-midnight .text-zinc-800,
+.theme-midnight .text-zinc-700,
 .theme-midnight .text-neutral-900,
+.theme-midnight .text-neutral-800,
+.theme-midnight .text-neutral-700,
 .theme-midnight .text-stone-900,
+.theme-midnight .text-stone-800,
+.theme-midnight .text-stone-700,
 .theme-midnight .text-black,
 .theme-midnight .text-base-content {
   color: var(--color-base-content) !important;
+}
+
+.theme-midnight .text-slate-600,
+.theme-midnight .text-gray-600,
+.theme-midnight .text-zinc-600,
+.theme-midnight .text-neutral-600,
+.theme-midnight .text-stone-600 {
+  color: color-mix(in srgb, var(--color-base-content), transparent 20%) !important;
 }
 
 .theme-midnight .text-slate-500,
@@ -917,6 +935,124 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
 .theme-midnight .text-stone-400,
 .theme-midnight .text-base-content\/40 {
   color: color-mix(in srgb, var(--color-base-content), transparent 45%) !important;
+}
+
+.theme-midnight .text-slate-300,
+.theme-midnight .text-gray-300,
+.theme-midnight .text-zinc-300,
+.theme-midnight .text-neutral-300,
+.theme-midnight .text-stone-300 {
+  color: color-mix(in srgb, var(--color-base-content), transparent 55%) !important;
+}
+
+.theme-midnight .text-slate-200,
+.theme-midnight .text-gray-200,
+.theme-midnight .text-zinc-200,
+.theme-midnight .text-neutral-200,
+.theme-midnight .text-stone-200 {
+  color: color-mix(in srgb, var(--color-base-content), transparent 65%) !important;
+}
+
+/* ── Bordures plus foncées ─────────────────────────── */
+.theme-midnight .border-slate-400,
+.theme-midnight .border-slate-500,
+.theme-midnight .border-gray-400,
+.theme-midnight .border-gray-500,
+.theme-midnight .border-zinc-400,
+.theme-midnight .border-zinc-500,
+.theme-midnight .border-neutral-400,
+.theme-midnight .border-neutral-500 {
+  border-color: color-mix(in srgb, var(--color-base-content), transparent 60%) !important;
+}
+
+.theme-midnight .border-slate-700,
+.theme-midnight .border-slate-800,
+.theme-midnight .border-gray-700,
+.theme-midnight .border-gray-800 {
+  border-color: color-mix(in srgb, var(--color-base-content), transparent 30%) !important;
+}
+
+/* ── Fonds slate/gray plus foncés ──────────────────── */
+.theme-midnight .bg-slate-300,
+.theme-midnight .bg-gray-300,
+.theme-midnight .bg-zinc-300,
+.theme-midnight .bg-neutral-300 {
+  background-color: color-mix(in srgb, var(--color-base-content), transparent 75%) !important;
+}
+
+.theme-midnight .bg-slate-400,
+.theme-midnight .bg-gray-400,
+.theme-midnight .bg-zinc-400,
+.theme-midnight .bg-neutral-400 {
+  background-color: color-mix(in srgb, var(--color-base-content), transparent 60%) !important;
+}
+
+.theme-midnight .bg-slate-500,
+.theme-midnight .bg-gray-500,
+.theme-midnight .bg-zinc-500,
+.theme-midnight .bg-neutral-500 {
+  background-color: color-mix(in srgb, var(--color-base-content), transparent 45%) !important;
+}
+
+.theme-midnight .bg-slate-700,
+.theme-midnight .bg-gray-700,
+.theme-midnight .bg-zinc-700,
+.theme-midnight .bg-neutral-700 {
+  background-color: #1e293b !important;
+}
+
+.theme-midnight .bg-slate-800,
+.theme-midnight .bg-gray-800,
+.theme-midnight .bg-zinc-800,
+.theme-midnight .bg-neutral-800 {
+  background-color: #0f172a !important;
+}
+
+/* ── Divide ────────────────────────────────────────── */
+.theme-midnight .divide-slate-100 > * + *,
+.theme-midnight .divide-gray-100 > * + *,
+.theme-midnight .divide-zinc-100 > * + *,
+.theme-midnight .divide-neutral-100 > * + * {
+  border-color: var(--color-base-300) !important;
+}
+
+.theme-midnight .divide-slate-300 > * + *,
+.theme-midnight .divide-gray-300 > * + * {
+  border-color: color-mix(in srgb, var(--color-base-content), transparent 70%) !important;
+}
+
+/* ── Ring ──────────────────────────────────────────── */
+.theme-midnight .ring-slate-200,
+.theme-midnight .ring-gray-200,
+.theme-midnight .ring-slate-300,
+.theme-midnight .ring-gray-300 {
+  --tw-ring-color: var(--color-base-300) !important;
+}
+
+.theme-midnight .ring-slate-900,
+.theme-midnight .ring-gray-900 {
+  --tw-ring-color: color-mix(in srgb, var(--color-base-content), transparent 50%) !important;
+}
+
+.theme-midnight .ring-white {
+  --tw-ring-color: color-mix(in srgb, var(--color-base-content), transparent 70%) !important;
+}
+
+/* ── Texte blanc sur fond coloré (garde le blanc) ──── */
+/* Pas d'override pour text-white : en dark mode le blanc reste blanc,
+   ce qui est correct sur les boutons colorés et badges. */
+
+/* ── Placeholder/hover textes slate ────────────────── */
+.theme-midnight .hover\:text-slate-900:hover,
+.theme-midnight .hover\:text-slate-700:hover,
+.theme-midnight .hover\:text-gray-900:hover,
+.theme-midnight .hover\:text-gray-700:hover {
+  color: var(--color-base-content) !important;
+}
+
+.theme-midnight .hover\:text-slate-500:hover,
+.theme-midnight .hover\:text-gray-500:hover {
+  color: color-mix(in srgb, var(--color-base-content), transparent 35%) !important;
 }
 
 /* ── Tableaux ───────────────────────────────────────── */

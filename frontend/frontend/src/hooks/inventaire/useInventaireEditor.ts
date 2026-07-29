@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire, LigneInventaire, InventoryStats, ProduitModel } from '../../types';
+import { logger } from '../../utils/logger'
 
 interface FocusInfo {
     id: string;
@@ -127,7 +128,7 @@ export const useInventaireEditor = (
 
             return newInv;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             toast.error(t('inventaire.detail.auto_create_error'));
         } finally {
             setSaving(false);
@@ -153,7 +154,7 @@ export const useInventaireEditor = (
             setLignes(fetchedLignes);
             await fetchInventoryStats(inv.id);
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             toast.error(t('common:messages.error_loading'));
         }
     };
@@ -200,7 +201,7 @@ export const useInventaireEditor = (
                 return next;
             });
         } catch (err) {
-            console.error("Auto-save batch error:", err);
+            logger.error("Auto-save batch error:", err);
         } finally {
             setAutoSaving(false);
             restoreFocus(focusInfo);
@@ -240,7 +241,7 @@ export const useInventaireEditor = (
             const res = await api.get(`inventaires/${inv.id}/lignes/`);
             setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
         } catch (err) {
-            console.error("Auto-save local-only lines error:", err);
+            logger.error("Auto-save local-only lines error:", err);
         } finally {
             setAutoSaving(false);
             restoreFocus(focusInfo);
@@ -321,7 +322,7 @@ export const useInventaireEditor = (
                 return next;
             });
         } catch (err) {
-            console.error("Erreur suppression ligne", err);
+            logger.error("Erreur suppression ligne", err);
             toast.error(t('inventaire.lines.delete_error'));
         }
     };
@@ -378,7 +379,7 @@ export const useInventaireEditor = (
             toast.success(t('inventaire.detail.bulk_delete_success', { count: idsToDelete.length }));
 
         } catch (err) {
-            console.error("Erreur suppression bulk", err);
+            logger.error("Erreur suppression bulk", err);
             toast.error(t('inventaire.detail.save_error'));
         } finally {
             setSaving(false);
@@ -390,7 +391,7 @@ export const useInventaireEditor = (
             const res = await api.get(`inventaires/${id}/stats/`);
             setInventoryStats(res.data);
         } catch (error) {
-            console.error("Failed to fetch inventory stats", error);
+            logger.error("Failed to fetch inventory stats", error);
         }
     };
 
@@ -406,7 +407,7 @@ export const useInventaireEditor = (
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('inventaire.validation.error'));
-            console.error(err);
+            logger.error(err);
             throw err;
         } finally {
             setSaving(false);
@@ -425,7 +426,7 @@ export const useInventaireEditor = (
             try {
                 await flushPendingChanges();
             } catch (err) {
-                console.error("Flush before validate failed", err);
+                logger.error("Flush before validate failed", err);
                 toast.error(t('inventaire.detail.save_error'));
                 setSaving(false);
                 return;
@@ -452,7 +453,7 @@ export const useInventaireEditor = (
                 const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
                 setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
             } catch (err) {
-                console.error("Auto-save before validate failed", err);
+                logger.error("Auto-save before validate failed", err);
                 toast.error(t('inventaire.detail.save_error'));
                 setSaving(false);
                 return; // Stop if auto-save fails
@@ -510,7 +511,7 @@ export const useInventaireEditor = (
 
             toast.success(t('common:messages.saved'));
         } catch (error) {
-            console.error("Erreur save manual", error);
+            logger.error("Erreur save manual", error);
             toast.error(t('inventaire.detail.save_error'));
         } finally {
             setSaving(false);
@@ -529,7 +530,7 @@ export const useInventaireEditor = (
             allProducts = Array.isArray(response.data) ? response.data : (response.data.results || []);
         } catch (err) {
             toast.error("Erreur lors du chargement des produits pour l'import");
-            console.error(err);
+            logger.error(err);
             setImporting(false);
             return;
         }
@@ -650,7 +651,7 @@ export const useInventaireEditor = (
                 setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
                 await fetchInventoryStats(activeInventaire.id);
             } catch (error: unknown) {
-                console.error("Erreur lors de l'envoi bulk", error);
+                logger.error("Erreur lors de l'envoi bulk", error);
                 const err = error as { response?: { data?: { detail?: string } } };
                 toast.error(err.response?.data?.detail || "Erreur lors de l'enregistrement des lignes importées.");
             } finally {

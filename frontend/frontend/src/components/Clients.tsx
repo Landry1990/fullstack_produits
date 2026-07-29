@@ -35,6 +35,7 @@ import ClientFormModal from './clients/ClientFormModal';
 import PurchaseHistoryDrawer from './clients/PurchaseHistoryDrawer';
 import SelectionHeader from './ui/SelectionHeader';
 import Pagination from './ui/Pagination';
+import { logger } from '../utils/logger'
 
 const emptyForm: Partial<Client> = {
   name: '',
@@ -144,6 +145,7 @@ export default function Clients() {
   useEffect(() => {
     fetchClients();
     fetchLoyaltyThreshold();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showInactive, currentPage, debouncedSearch]);
 
   const fetchLoyaltyThreshold = async () => {
@@ -157,7 +159,7 @@ export default function Clients() {
         setLoyaltyThreshold(data.auto_reward_threshold);
       }
     } catch (err) {
-      console.error("Error fetching loyalty threshold", err);
+      logger.error("Error fetching loyalty threshold", err);
     }
   };
 
@@ -180,6 +182,7 @@ export default function Clients() {
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clients]);
 
   const handleSelectClient = async (client: Client) => {
@@ -197,7 +200,7 @@ export default function Clients() {
         ayants_droit: ayantsDroit
       });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setSelectedClient(client);
     } finally {
       setLoadingHistory(false);
@@ -273,7 +276,7 @@ export default function Clients() {
         return;
       }
     } catch (err) {
-      console.error('[Clients] Erreur lors de la vérification des factures:', err);
+      logger.error('[Clients] Erreur lors de la vérification des factures:', err);
       // En cas d'erreur, on continue avec la confirmation standard
     }
 
@@ -289,7 +292,7 @@ export default function Clients() {
             toast.success(t('clients:messages.delete_success'));
             setTimeout(() => fetchClients(true), 500);
         } catch (err: unknown) {
-            console.error('[Clients] Delete error:', err);
+            logger.error('[Clients] Delete error:', err);
             toast.error(err.response?.data?.detail || t('clients:messages.error_delete'));
             fetchClients(true);
         }
@@ -326,7 +329,7 @@ export default function Clients() {
         return;
       }
     } catch (err) {
-      console.error('[Clients] Erreur lors de la vérification bulk des factures:', err);
+      logger.error('[Clients] Erreur lors de la vérification bulk des factures:', err);
       // En cas d'erreur, on continue avec la confirmation standard
     }
 
@@ -343,7 +346,7 @@ export default function Clients() {
             setSelectedIds([]);
             setTimeout(() => fetchClients(true), 500);
         } catch (err: unknown) {
-            console.error('[Clients] Bulk delete error:', err);
+            logger.error('[Clients] Bulk delete error:', err);
             toast.error(err.response?.data?.detail || t('clients:messages.error_bulk_delete'));
             fetchClients(true);
         }

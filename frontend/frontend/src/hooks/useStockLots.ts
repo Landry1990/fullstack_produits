@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import type { StockLot } from '../types'
+import { logger } from '../utils/logger'
 
 export function useStockLots(produitId: number | null) {
     const [lots, setLots] = useState<StockLot[]>([])
@@ -27,7 +28,7 @@ export function useStockLots(produitId: number | null) {
                 setLots(data)
             } catch (err) {
                 if (err instanceof Error && err.name === 'AbortError') return;
-                console.error('Error fetching stock lots:', err)
+                logger.error('Error fetching stock lots:', err)
                 setError('Impossible de charger les lots du produit')
             } finally {
                 setLoading(false)

@@ -7,6 +7,7 @@ import creanceService from '../services/creanceService';
 import { usePharmacySettings } from './usePharmacySettings';
 import { generateRelevePdfDraft } from '../utils/print/relevePdfDraft';
 import { generateTicketReglementPdfDraft } from '../utils/print/ticketReglementPdfDraft';
+import { logger } from '../utils/logger'
 
 interface UseCreanceActionsProps {
     refresh: () => void;
@@ -83,12 +84,13 @@ export const useCreanceActions = ({
 
             await new Promise(resolve => setTimeout(resolve, 5000));
         } catch (err: unknown) {
-            console.error('Erreur lors de l\'impression du reçu:', err);
+            logger.error('Erreur lors de l\'impression du reçu:', err);
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('creances:toasts.error_print_receipt'));
         } finally {
             if (blobUrl) window.URL.revokeObjectURL(blobUrl);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handlePrintBulkReceipt = useCallback(async (releveId: number) => {
@@ -111,12 +113,13 @@ export const useCreanceActions = ({
 
             await new Promise(resolve => setTimeout(resolve, 5000));
         } catch (err: unknown) {
-            console.error('Erreur lors de l\'impression du relevé:', err);
+            logger.error('Erreur lors de l\'impression du relevé:', err);
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('creances:toasts.error_print_statement'));
         } finally {
             if (url) window.URL.revokeObjectURL(url);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const performAjouterPaiement = useCallback(async (validatorId: number, password: string) => {
@@ -150,9 +153,10 @@ export const useCreanceActions = ({
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
-            console.error('Erreur:', err);
+            logger.error('Erreur:', err);
             throw err;
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedCreance, montantPaiement, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt, updateLocalCreance]);
 
     const handleAjouterPaiement = () => {
@@ -219,7 +223,7 @@ export const useCreanceActions = ({
                     
                     ticketDoc.save(`ticket_reglement_${data.releve_reference || releveId}.pdf`);
                 } catch (ticketErr) {
-                    console.error('Erreur génération ticket:', ticketErr);
+                    logger.error('Erreur génération ticket:', ticketErr);
                     toast.error('Erreur lors de la génération du ticket de confirmation');
                 }
             }
@@ -230,9 +234,10 @@ export const useCreanceActions = ({
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
-            console.error('Erreur:', err);
+            logger.error('Erreur:', err);
             throw err;
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedIds, modePaiement, referencePaiement, montantTotalBulk, setSelectedIds, refresh, handlePrintBulkReceipt, filteredCreances, pharmacySettings]);
 
     const confirmBulkPayment = () => {
@@ -291,7 +296,7 @@ export const useCreanceActions = ({
             setTimeout(() => window.URL.revokeObjectURL(url), 100);
             toast.success('Export Excel généré avec succès.', { id: loadingToast });
         } catch (err) {
-            console.error('Erreur export Excel:', err);
+            logger.error('Erreur export Excel:', err);
             toast.error('Erreur lors de l\'export Excel.', { id: loadingToast });
         }
     }, []);

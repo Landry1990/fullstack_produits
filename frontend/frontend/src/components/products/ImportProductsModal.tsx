@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-hot-toast'
 import { Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react'
+import { logger } from '../../utils/logger'
 
 interface ImportProductsModalProps {
   onClose: () => void
@@ -55,7 +56,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
       toast.success(t('products:import.success_toast'))
       onSuccess()
     } catch (error: unknown) {
-      console.error('Import error:', error)
+      logger.error('Import error:', error)
       const message = error.response?.data?.error || t('products:import.error_toast')
       toast.error(message)
       setResult({ imported: 0, updated: 0, errors: [message] })

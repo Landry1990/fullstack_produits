@@ -28,6 +28,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../ui/Table';
 import { Skeleton } from '../ui/Skeleton';
+import { logger } from '../../utils/logger'
 
 interface VenteDivers {
   id: number;
@@ -130,11 +131,12 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       setTotalCA(response.data.total_ca);
       setTotalCount(response.data.count);
     } catch (error) {
-      console.error('Error fetching divers sales:', error);
+      logger.error('Error fetching divers sales:', error);
       toast.error(t('divers.error_load_detail'));
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]); // Retirer 'page' pour éviter la boucle
 
   const fetchVentesJournalieres = useCallback(async () => {
@@ -151,11 +153,12 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       setTotalCA(response.data.total_ca);
       setTotalCount(response.data.count);
     } catch (error) {
-      console.error('Error fetching daily divers sales:', error);
+      logger.error('Error fetching daily divers sales:', error);
       toast.error(t('divers.error_load_daily'));
     } finally {
       setDailyLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange.debut, dateRange.fin]);
 
   useEffect(() => {
@@ -194,11 +197,12 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       });
       setStockData(response.data);
     } catch (error) {
-      console.error('Error fetching divers stock:', error);
+      logger.error('Error fetching divers stock:', error);
       toast.error(t('divers.error_load_stock'));
     } finally {
       setStockLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [valorisation]);
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger'
 export interface OcrResult {
   rawText: string;
   lines: string[];
@@ -38,7 +39,7 @@ class PrescriptionOcrService {
         },
       });
     } catch (error) {
-      console.error('Failed to initialize Tesseract worker:', error);
+      logger.error('Failed to initialize Tesseract worker:', error);
       this.worker = null;
       throw error;
     } finally {

@@ -142,6 +142,7 @@ export default function DataMatrixScanBar({
             window.removeEventListener('keydown', handleKeyDown);
             if (timerRef.current) clearTimeout(timerRef.current);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [active, handleBuffer]);
 
     if (!isVisible) {

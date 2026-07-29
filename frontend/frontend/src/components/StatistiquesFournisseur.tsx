@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from './shadcn/button';
 import { Card, CardContent, CardTitle } from './shadcn/card';
 import { Progress } from './shadcn/progress';
+import { logger } from '../utils/logger'
 
 interface StatsFournisseur {
   id: number;
@@ -71,7 +72,7 @@ export default function StatistiquesFournisseur() {
 
       setStats(response.data);
     } catch (error) {
-      console.error("Erreur lors du chargement des statistiques", error);
+      logger.error("Erreur lors du chargement des statistiques", error);
     } finally {
       setLoading(false);
     }
@@ -79,6 +80,7 @@ export default function StatistiquesFournisseur() {
 
   useEffect(() => {
     fetchStats();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
 
   // Totaux Ventes

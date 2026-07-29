@@ -9,6 +9,7 @@ import PasswordConfirmModal from './PasswordConfirmModal';
 import { Checkbox } from './ui/Checkbox';
 import { Input } from './ui/Input';
 import { Mail, User, Lock, Copy } from 'lucide-react';
+import { logger } from '../utils/logger'
 
 
 interface User {
@@ -234,6 +235,7 @@ export default function GestionUtilisateurs() {
 
   useEffect(() => {
     fetchUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchUsers = async () => {
@@ -242,7 +244,7 @@ export default function GestionUtilisateurs() {
       const data: unknown = response.data;
       setUsers(Array.isArray(data) ? data : (Array.isArray((data as { results?: unknown })?.results) ? (data as { results: unknown[] }).results : []));
     } catch (error) {
-      console.error('Error fetching users:', error);
+      logger.error('Error fetching users:', error);
       toast.error(t('messages.load_error'));
     } finally {
       setLoading(false);
@@ -492,7 +494,7 @@ export default function GestionUtilisateurs() {
       toast.success(t('messages.deactivated', { username, defaultValue: `${username} a été désactivé (corbeille).` }));
       fetchUsers();
     } catch (error) {
-      console.error('Error deleting/deactivating user:', error);
+      logger.error('Error deleting/deactivating user:', error);
       toast.error(getApiErrorDetail(error, t('messages.deactivate_error', { defaultValue: 'Erreur lors de la mise à la corbeille.' })));
     }
   };
@@ -529,7 +531,7 @@ export default function GestionUtilisateurs() {
       toast.success(t('messages.restored', { username, defaultValue: `${username} a été restauré avec succès.` }));
       fetchUsers();
     } catch (error) {
-      console.error('Error restoring user:', error);
+      logger.error('Error restoring user:', error);
       toast.error(getApiErrorDetail(error, t('messages.restore_error', { defaultValue: 'Erreur lors de la restauration.' })));
     }
   };
@@ -615,7 +617,7 @@ export default function GestionUtilisateurs() {
       
       setModalOpen(false);
     } catch (error) {
-      console.error('Error saving user:', error);
+      logger.error('Error saving user:', error);
       toast.error(extractErrorMessage(error) || t('messages.save_error'));
     }
   };

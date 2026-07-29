@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import PremiumModal from './common/PremiumModal'
 import { Button } from './shadcn/button'
+import { logger } from '../utils/logger'
 
 interface LoyaltySetting {
     id: number
@@ -28,6 +29,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
         if (isOpen) {
             fetchSettings()
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen])
 
     const fetchSettings = async () => {
@@ -56,7 +58,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                 } as LoyaltySetting)
             }
         } catch (err) {
-            console.error("LoyaltyConfigModal: Fetch error", err)
+            logger.error("LoyaltyConfigModal: Fetch error", err)
             // Even on error, set default settings so the modal isn't empty
             setSettings({
                 id: 0,
@@ -88,7 +90,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
             toast.success(t('common:messages.saved'))
         } catch (err) {
             toast.error(t('common:messages.error_saving'))
-            console.error(err)
+            logger.error(err)
         } finally {
             setSaving(false)
         }

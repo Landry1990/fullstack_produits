@@ -4,6 +4,7 @@ import clientService from '../services/clientService'
 import { toast } from 'react-hot-toast'
 import type { Client, AyantDroit } from '../types'
 import { facturationClientCreateSchema } from '../schemas/clientSchema'
+import { logger } from '../utils/logger'
 
 export function useFacturationClients() {
     const { t } = useTranslation(['facturation', 'common'])
@@ -59,7 +60,7 @@ export function useFacturationClients() {
             const loadedClients = clientsData || []
             setClients(loadedClients)
         } catch (error) {
-            console.error('Erreur chargement clients:', error)
+            logger.error('Erreur chargement clients:', error)
             toast.error('Impossible de charger la liste des clients')
         } finally {
             setLoading(false)
@@ -102,7 +103,7 @@ export function useFacturationClients() {
                     const data = await clientService.getAyantsDroit(selectedClient)
                     setAyantsDroitList(data)
                 } catch (err) {
-                    console.error('Erreur lors du chargement des ayants droit:', err)
+                    logger.error('Erreur lors du chargement des ayants droit:', err)
                     setAyantsDroitList([])
                 }
             } else {
@@ -215,7 +216,7 @@ export function useFacturationClients() {
 
             toast.success(`Client "${createdClient.name}" créé et sélectionné`)
         } catch (err) {
-            console.error('Erreur création client:', err)
+            logger.error('Erreur création client:', err)
             const errorData = (err as unknown)?.response?.data
             if (errorData && typeof errorData === 'object') {
                 const messages = Object.entries(errorData).map(([k, v]) => `${k}: ${v}`).join(', ')

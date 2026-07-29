@@ -2,6 +2,7 @@ import React, { createContext, use, useState, useEffect, useMemo, useCallback, t
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import i18n from '../i18n';
+import { logger } from '../utils/logger'
 
 interface LicenceInfo {
     pharmacie_nom: string;
@@ -81,7 +82,7 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
                 setDaysRemaining(null);
             }
         } catch (err) {
-            console.error("Erreur chargement licence globale", err);
+            logger.error("Erreur chargement licence globale", err);
             // En cas d'erreur réseau, utiliser la dernière licence valide connue
             try {
                 const cached = localStorage.getItem(LICENCE_STORAGE_KEY);
@@ -106,6 +107,7 @@ export const LicenceProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         fetchLicence();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Mémoriser l'objet value pour éviter les re-renders inutiles

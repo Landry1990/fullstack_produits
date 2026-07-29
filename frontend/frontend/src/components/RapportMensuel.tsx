@@ -6,6 +6,7 @@ import { formatDate, getLocale } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 import { usePharmacySettings } from '../context/PharmacySettingsContext';
 import { generateMonthlyReportPdfDraft } from '../utils/print/reportPdfDraft';
+import { logger } from '../utils/logger'
 
 interface RapportData {
   mois: string;
@@ -171,7 +172,7 @@ export default function RapportMensuel() {
       }
       setRapport(response.data);
     } catch (error) {
-      console.error("Erreur lors du chargement du rapport", error);
+      logger.error("Erreur lors du chargement du rapport", error);
       toast.error(t('messages.load_error'));
     } finally {
       setLoading(false);
@@ -227,7 +228,7 @@ export default function RapportMensuel() {
                   await generateMonthlyReportPdfDraft(rapport, settings, periodeLabel, t);
                   toast.success(t('messages.pdf_success', { defaultValue: 'PDF généré avec succès' }));
                 } catch (error) {
-                  console.error('Erreur génération PDF:', error);
+                  logger.error('Erreur génération PDF:', error);
                   toast.error(t('messages.download_error'));
                 } finally {
                   setPdfLoading(false);

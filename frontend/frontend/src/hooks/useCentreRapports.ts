@@ -19,6 +19,7 @@ import {
     isAverageColumn,
     isPercentageColumn 
 } from './reports/utils';
+import { logger } from '../utils/logger'
 import type { 
     QueryDefinition, 
     PaginationData, 
@@ -106,7 +107,7 @@ export function useCentreRapports() {
                 const clientList = data.results || data;
                 setClients(clientList);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') console.error(t('reports.err_load_clients', { defaultValue: 'Erreur chargement clients:' }), err);
+                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports.err_load_clients', { defaultValue: 'Erreur chargement clients:' }), err);
             }
         };
         loadClients();
@@ -116,7 +117,7 @@ export function useCentreRapports() {
                 const { data } = await api.get('rapports/suppliers_with_stock/', { signal });
                 setSuppliers(data);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') console.error(t('reports.err_load_suppliers', { defaultValue: 'Erreur chargement fournisseurs:' }), err);
+                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports.err_load_suppliers', { defaultValue: 'Erreur chargement fournisseurs:' }), err);
             }
         };
         loadSuppliers();
@@ -126,7 +127,7 @@ export function useCentreRapports() {
                 const { data } = await api.get('users/', { signal });
                 setUsers(data.results || data);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') console.error(t('reports.err_load_users', { defaultValue: 'Erreur chargement utilisateurs:' }), err);
+                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports.err_load_users', { defaultValue: 'Erreur chargement utilisateurs:' }), err);
             }
         };
         loadUsers();
@@ -136,7 +137,7 @@ export function useCentreRapports() {
                 const { data } = await api.get('familles/', { signal });
                 setFamilles(data.results || data);
             } catch (err) {
-                if (err instanceof Error && err.name !== 'CanceledError') console.error(t('reports.err_load_families', { defaultValue: 'Erreur chargement familles:' }), err);
+                if (err instanceof Error && err.name !== 'CanceledError') logger.error(t('reports.err_load_families', { defaultValue: 'Erreur chargement familles:' }), err);
             }
         };
         loadFamilles();
@@ -146,6 +147,7 @@ export function useCentreRapports() {
         if (savedPresets) setPresets(JSON.parse(savedPresets));
 
         return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -211,6 +213,7 @@ export function useCentreRapports() {
         setPresets(updated);
         localStorage.setItem('report_presets:v1', JSON.stringify(updated));
         toast.success(t('reports.preset_saved', { defaultValue: 'Configuration enregistrée !' }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedQuery, params, presets]);
 
     const deletePreset = useCallback((id: string) => {
@@ -226,6 +229,7 @@ export function useCentreRapports() {
             setParams(preset.params);
             toast.success(t('reports.preset_loaded', { name: preset.name, defaultValue: `Chargement de : ${preset.name}` }));
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleSelectQuery = useCallback((query: QueryDefinition) => {
@@ -314,7 +318,7 @@ export function useCentreRapports() {
 
             if (!urlOverride) toast.success(t('reports.results.execute_success', { name: selectedQuery.name, defaultValue: `Requête "${selectedQuery.name}" exécutée` }));
         } catch (err) {
-            console.error('Erreur requête:', err);
+            logger.error('Erreur requête:', err);
             setError(getApiErrorDetail(err, err instanceof Error ? err.message : t('reports.results.error_execution', { defaultValue: 'Erreur lors de l\'exécution de la requête' })));
             toast.error(t('reports.results.error_execution_toast', { defaultValue: 'Erreur lors de l\'exécution' }));
         } finally {
@@ -347,7 +351,7 @@ export function useCentreRapports() {
                 downloadBlob(response.data, filename);
                 toast.success(t('results.export_success', { filename }));
             } catch (err) {
-                console.error('Excel download error:', err);
+                logger.error('Excel download error:', err);
                 toast.error("Erreur lors du téléchargement Excel");
             }
             return;

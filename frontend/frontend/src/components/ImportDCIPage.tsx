@@ -6,6 +6,7 @@ import type { Substance } from '../hooks/useSubstances';
 import InteractionsManager from './InteractionsManager';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
+import { logger } from '../utils/logger'
 
 interface StatsData {
   substances: number;
@@ -58,7 +59,7 @@ export default function ImportDCIPage() {
     setLoadingStats(true);
     api.get('dci-admin/stats/')
       .then(r => setStats(r.data))
-      .catch(console.error)
+      .catch(logger.error)
       .finally(() => setLoadingStats(false));
   }, []);
 
@@ -68,7 +69,7 @@ export default function ImportDCIPage() {
       params: { page: unlinkedPage, page_size: 50, search: unlinkedSearch },
     })
       .then(r => setUnlinkedData(r.data))
-      .catch(console.error)
+      .catch(logger.error)
       .finally(() => setLoadingUnlinked(false));
   }, [unlinkedPage, unlinkedSearch]);
 

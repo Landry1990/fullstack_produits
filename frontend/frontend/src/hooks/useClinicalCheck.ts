@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
 import type { ClinicalAlert } from '../components/clinical/ClinicalAlerts'
 import type { LigneFacture } from '../types'
+import { logger } from '../utils/logger'
 
 export function useClinicalCheck(lignesFacture: LigneFacture[]) {
     const [alerts, setAlerts] = useState<ClinicalAlert[]>([])
@@ -24,7 +25,7 @@ export function useClinicalCheck(lignesFacture: LigneFacture[]) {
             })
             setAlerts(response.data.alerts || [])
         } catch (error) {
-            console.error("Clinical check failed", error)
+            logger.error("Clinical check failed", error)
             // Silently fail or minimal log? Don't block sales for this.
         } finally {
             setLoading(false)

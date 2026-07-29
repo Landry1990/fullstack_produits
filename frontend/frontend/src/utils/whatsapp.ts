@@ -1,4 +1,5 @@
 import { getLocale } from './dateUtils';
+import { logger } from '../utils/logger'
 
 export const generateInventorySummaryText = (inventory: unknown, pharmacyName: string): string => {
   const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
@@ -54,7 +55,7 @@ export const openWhatsApp = (phoneNumber: string, message: string): boolean => {
     window.open(url, '_blank');
     return true;
   } catch (error) {
-    console.error('Error opening WhatsApp:', error);
+    logger.error('Error opening WhatsApp:', error);
     return false;
   }
 };

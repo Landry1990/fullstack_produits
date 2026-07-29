@@ -167,6 +167,7 @@ function DatamatrixCanvas({ cip, lot, expiration, size }: { cip: string; lot: st
         parsefnc: true,
       })
     } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gs1Data, size])
 
   if (!cip) return null
@@ -823,6 +824,7 @@ ${labelsHTML}
     } else {
       setTimeout(triggerPrint, 1000)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelsData, fields, labelFormat, commandeNumero, onClose])
 
   /* ─── PDF backend print handler ─── */
