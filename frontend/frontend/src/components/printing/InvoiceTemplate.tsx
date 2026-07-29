@@ -67,6 +67,7 @@ export interface PharmacySettings {
   pharmacy_name: string;
   address: string;
   phone?: string;
+  phone2?: string;
   email?: string;
   ticket_footer_message: string;
   niu?: string;
@@ -121,9 +122,14 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     {settings.address}
                 </div>
                 <div className="flex flex-col gap-0.5 mt-2 font-bold text-base-content/90">
-                    {settings.phone && (
+                    {(settings.phone || settings.phone2) && (
                       <div className="flex items-center gap-1">
-                        <span>{t('invoice.tel')} : {settings.phone} |</span>
+                        <span>{t('invoice.tel')} : {settings.phone}{settings.phone2 ? ` | ${settings.phone2}` : ''}</span>
+                      </div>
+                    )}
+                    {settings.email && (
+                      <div className="flex items-center gap-1">
+                        <span>{t('invoice.email', { defaultValue: 'Email' })} : {settings.email}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-1 uppercase">

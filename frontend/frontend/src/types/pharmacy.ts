@@ -3,6 +3,7 @@ export interface PharmacySettings {
     pharmacy_name: string
     address: string
     phone: string
+    phone2?: string
     email: string
     nif?: string
     rccm?: string

@@ -12,6 +12,7 @@ export interface PharmacySettings {
   city: string;
   country: string;
   phone: string;
+  phone2?: string;
   email: string;
   niu: string;
   registre_commerce: string;
@@ -79,6 +80,7 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   city: 'Douala',
   country: 'Cameroun',
   phone: '',
+  phone2: '',
   email: '',
   niu: '',
   registre_commerce: '',
