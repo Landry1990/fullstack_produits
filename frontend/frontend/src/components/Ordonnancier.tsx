@@ -8,6 +8,7 @@ import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
 import { cn } from '../lib/utils';
 import { FileText, RefreshCw, CalendarDays, Pill, User, Stethoscope, ClipboardList, FileDown, ShieldAlert } from 'lucide-react';
+import { logger } from '../utils/logger'
 
 const OrdonnancierPage: React.FC = () => {
     const { t } = useTranslation(['prescriptions', 'common']);
@@ -28,6 +29,7 @@ const OrdonnancierPage: React.FC = () => {
     useEffect(() => {
         fetchOrdonnancier();
         fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dateDebut, dateFin, filterSurveillance]);
     
     // Debounce search
@@ -36,6 +38,7 @@ const OrdonnancierPage: React.FC = () => {
             fetchOrdonnancier();
         }, 500);
         return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchPatient, searchPrescripteur, searchProduit]);
 
     const fetchOrdonnancier = async () => {
@@ -53,7 +56,7 @@ const OrdonnancierPage: React.FC = () => {
             const data = response.data.results || response.data;
             setOrdonnancier(Array.isArray(data) ? data : []);
         } catch (error: unknown) {
-            console.error('Erreur chargement ordonnancier:', error);
+            logger.error('Erreur chargement ordonnancier:', error);
             toast.error(t('common:messages.error_loading'));
         } finally {
             setLoading(false);
@@ -65,7 +68,7 @@ const OrdonnancierPage: React.FC = () => {
             const response = await api.get('ordonnancier/stats/');
             setStats(response.data);
         } catch (error) {
-            console.error('Erreur chargement stats:', error);
+            logger.error('Erreur chargement stats:', error);
         }
     };
 

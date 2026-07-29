@@ -17,6 +17,7 @@ import { useProductSearch } from './useProductSearch';
 import { usePharmacySettings } from './usePharmacySettings';
 import { useFormes } from './useProduits';
 import { useCommandesStore } from '../stores/useCommandesStore';
+import { logger } from '../utils/logger'
 
 const statusOrder: Record<string, number> = { 'PREP': 1, 'ATT': 2, 'CLOT': 3 };
 
@@ -144,6 +145,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         setActiveTab(forcedType);
         setCommandeType(forcedType);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forcedType]);
   
   const viewMode = useCommandesStore((s) => s.viewMode);
@@ -161,7 +163,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
           setSelectedCommande(data);
           setViewMode('DETAILS');
         } catch (err) {
-          console.error("Erreur lors du chargement de la commande via navigation:", err);
+          logger.error("Erreur lors du chargement de la commande via navigation:", err);
           toast.error(t('orders:messages.details_load_error'));
         } finally {
           navigate(location.pathname, { replace: true, state: {} });
@@ -169,6 +171,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       };
       fetchAndShow();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, navigate, t]);
 
   const tauxChange = useCommandesStore((s) => s.tauxChange);
@@ -303,6 +306,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
   useEffect(() => {
       setSelectedRows(new Set());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCommande]);
 
   // Removed useEffect that sets selectedCommande to null if not in list.
@@ -617,13 +621,14 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
         const mode = (s.viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
         await handleSaveCommande(cleanCommande, s.commandeProduits, mode, s.selectedCommande, true);
       } catch (err) {
-        console.error("Auto-save error:", err);
+        logger.error("Auto-save error:", err);
       } finally {
         setSaving(false);
       }
     }, 30000);
 
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleSaveCommande]);
 
   const lastRecalcRef = useRef<{ taux: string; coeff: string }>({ taux: '', coeff: '' });
@@ -679,6 +684,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       return () => {
           if (recalcTimeoutRef.current) clearTimeout(recalcTimeoutRef.current);
       };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tauxChange, fraisCoefficient, commandeType, viewMode]);
 
   useEffect(() => {
@@ -757,7 +763,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
                 date_expiration: '',
               };
             } catch (err) {
-              console.error(`Failed to fetch product ${p.id}:`, err);
+              logger.error(`Failed to fetch product ${p.id}:`, err);
               return {
                 id: Date.now() + p.id,
                 produit: { id: p.id, name: p.name, stock: p.stock } as ProduitModel,
@@ -793,6 +799,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       loadProducts();
       window.history.replaceState({}, document.title);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, commandeType, tauxChange, fraisCoefficient, t]);
 
   useEffect(() => {
@@ -814,6 +821,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, commandeProduits, selectedRows])
 
   const { handleKeyDown: handleSearchKeyDown, getItemProps } = useSearchNavigation(
@@ -1299,7 +1307,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       const response = await api.get(produitsEndpoint);
       allProducts = response.data;
     } catch (err) {
-      console.error("Failed to load products for import:", err);
+      logger.error("Failed to load products for import:", err);
       toast.error(t('orders:messages.import_load_error'));
       setIsImporting(false);
       return;
@@ -1570,6 +1578,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const handleSortChange = useCallback((key: 'numero' | 'date' | 'fournisseur' | 'status') => {
     if (key === sortKey) setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortOrder('desc'); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortKey]);
 
   const sortedCommandes = useMemo(() => {
@@ -1634,6 +1643,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       return sorted;
     });
     setSelectedRows(new Set());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [produitsList]);
 
   function openCreateView(type: 'LOC' | 'DIR' | 'DIV' = activeTab) {

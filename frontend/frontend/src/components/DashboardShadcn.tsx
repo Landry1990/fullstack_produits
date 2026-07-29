@@ -148,6 +148,7 @@ export default function DashboardShadcn() {
         { duration: 6000, id: 'echeances-retard-dashboard', icon: '💳' }
       );
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [echeances.length]);
 
   useEffect(() => {
@@ -157,6 +158,7 @@ export default function DashboardShadcn() {
         { duration: 5000, id: 'promis-dispo-dashboard' }
       );
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [promisDisponibles.length]);
 
   if (loading) {

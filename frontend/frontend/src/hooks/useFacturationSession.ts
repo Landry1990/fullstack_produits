@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { safeStorage } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
+import { logger } from '../utils/logger'
 
 export interface UseFacturationSessionProps {
     clientsHook: unknown; 
@@ -44,7 +45,7 @@ export function useFacturationSession({
                     if (data.ayantDroitMatricule !== undefined) clientsHook.setAyantDroitMatricule(data.ayantDroitMatricule);
                     if (data.ayantDroitSociete !== undefined) clientsHook.setAyantDroitSociete(data.ayantDroitSociete);
                 } catch (e) {
-                    console.error("Erreur lors de la restauration de la session:", e);
+                    logger.error("Erreur lors de la restauration de la session:", e);
                 }
             }
             hasHydratedContextRef.current = true;

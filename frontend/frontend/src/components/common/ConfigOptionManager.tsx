@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../../hooks/useConfirm';
 import PremiumModal from './PremiumModal';
+import { logger } from '../../utils/logger'
 
 interface ConfigOption {
   id: number;
@@ -57,7 +58,7 @@ export default function ConfigOptionManager({
       const data = res.data.results || res.data;
       setOptions(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(`Error fetching config options:`, err);
+      logger.error(`Error fetching config options:`, err);
       toast.error(t('common:messages.load_error'));
     } finally {
       setLoading(false);
@@ -66,6 +67,7 @@ export default function ConfigOptionManager({
 
   useEffect(() => {
     fetchOptions();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
   const handleSubmit = async (e: React.FormEvent) => {

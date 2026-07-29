@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 import { differenceInDays, parseISO } from 'date-fns'
 import { showExpirationToast } from '../utils/toastUtils'
 import { safeStorage } from '../utils/storage'
+import { logger } from '../utils/logger'
 
 interface UseCartOptions {
     apiBaseUrl?: string
@@ -39,7 +40,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                 }
                 hasHydratedRef.current = true
             } catch (err) {
-                console.error("Failed to hydrate cart:", err)
+                logger.error("Failed to hydrate cart:", err)
             }
             
             // Cleanup: remove old global key if it exists
@@ -193,11 +194,12 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                 showExpirationToast(daysUntilExpiration)
             }
         } catch (err) {
-            console.error('Erreur lors du chargement des détails du produit:', err)
+            logger.error('Erreur lors du chargement des détails du produit:', err)
             toast.error('Impossible de charger les détails complets du produit')
         } finally {
             setLoading(false)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [onRequirePrescription, quantityInputsRef])
 
     const updateQuantite = useCallback((produitId: number, quantite: number, callback?: (err: string) => void) => {
@@ -242,6 +244,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                 ? { ...ligne, remise_produit: remise, total_ligne: calculateLineTotal(ligne.quantite, ligne.prix_unitaire, remise) }
                 : ligne
         ))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [calculateLineTotal])
 
     const updateLineLot = useCallback((produitId: number, lot: StockLot | null) => {

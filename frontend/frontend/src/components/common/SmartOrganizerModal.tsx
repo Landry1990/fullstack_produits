@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Search, Sparkles, AlertCircle, ArrowRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './PremiumModal';
+import { logger } from '../../utils/logger'
 
 interface SmartOrganizerModalProps {
     isOpen: boolean;
@@ -39,6 +40,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
         if (isOpen) {
             fetchAllProducts();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
 
     // Reset exclusions quand les filtres changent
@@ -52,7 +54,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
             const res = await api.get('produits/for_import/');
             setAllProducts(res.data);
         } catch (err) {
-            console.error("Error fetching products for organizer:", err);
+            logger.error("Error fetching products for organizer:", err);
             toast.error(t('stock:organisation.smart_organizer.load_error'));
         } finally {
             setLoading(false);
@@ -114,7 +116,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
             onSuccess();
             onClose();
         } catch (err: unknown) {
-            console.error("Error bulk categorizing:", err);
+            logger.error("Error bulk categorizing:", err);
             toast.error(err.response?.data?.detail || t('stock:organisation.smart_organizer.bulk_error'));
         } finally {
             setProcessing(false);

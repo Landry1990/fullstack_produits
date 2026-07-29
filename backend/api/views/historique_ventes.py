@@ -347,7 +347,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                     continue
                 try:
                     max_length = max(max_length, len(str(cell.value)))
-                except:
+                except Exception:
                     pass
             ws.column_dimensions[column].width = min(25, max(10, max_length + 2))
             

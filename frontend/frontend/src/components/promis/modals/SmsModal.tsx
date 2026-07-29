@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { Send, Phone } from 'lucide-react';
 import type { Promis } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
+import { logger } from '../../../utils/logger'
 
 interface SmsModalProps {
     isOpen: boolean;
@@ -32,6 +33,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
         } else if (!isOpen) {
             setMessage('');
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [promis, isOpen]);
 
     const handleSendSms = async (e: React.FormEvent) => {
@@ -50,7 +52,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
             onClose();
         } catch (err: unknown) {
             toast.error(t('stock:promis.messages.sms_error'));
-            console.error(err);
+            logger.error(err);
         } finally {
             setSendingSms(false);
         }

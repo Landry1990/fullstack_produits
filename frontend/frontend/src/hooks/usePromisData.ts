@@ -6,6 +6,7 @@ import promisService from '../services/promisService';
 import clientService from '../services/clientService';
 import produitService from '../services/produitService';
 import type { Promis, ProduitModel, Client, PaginatedResponse } from '../types';
+import { logger } from '../utils/logger'
 
 export interface UsePromisDataReturn {
     // Data
@@ -88,10 +89,11 @@ export function usePromisData(): UsePromisDataReturn {
             setError(null);
         } catch (err) {
             setError(t('stock:promis.messages.load_error', 'Erreur lors du chargement des promis'));
-            console.error(err);
+            logger.error(err);
         } finally {
             setLoading(false);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchFormData = useCallback(async () => {
@@ -103,7 +105,7 @@ export function usePromisData(): UsePromisDataReturn {
             setClients(Array.isArray(clientsRes) ? clientsRes : (clientsRes as PaginatedResponse<Client>).results || []);
             setProduits(Array.isArray(produitsRes) ? produitsRes : (produitsRes as PaginatedResponse<ProduitModel>).results || []);
         } catch (err) {
-            console.error('Erreur chargement clients/produits (Promis)', err);
+            logger.error('Erreur chargement clients/produits (Promis)', err);
         }
     }, []);
 
@@ -151,7 +153,7 @@ export function usePromisData(): UsePromisDataReturn {
             fetchPromis();
         } catch (err) {
             toast.error(t('stock:promis.messages.deliver_error', 'Erreur lors de la livraison'));
-            console.error(err);
+            logger.error(err);
         }
     };
 
@@ -173,7 +175,7 @@ export function usePromisData(): UsePromisDataReturn {
             fetchPromis();
         } catch (err) {
             toast.error(t('stock:promis.messages.cancel_error', 'Erreur lors de l\'annulation'));
-            console.error(err);
+            logger.error(err);
         }
     };
 
@@ -185,7 +187,7 @@ export function usePromisData(): UsePromisDataReturn {
             if (!w) toast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
             setTimeout(() => window.URL.revokeObjectURL(url), 10000);
         } catch (err) {
-            console.error('Erreur impression ticket:', err);
+            logger.error('Erreur impression ticket:', err);
             toast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
         }
     };
@@ -198,7 +200,7 @@ export function usePromisData(): UsePromisDataReturn {
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
             toast.error(error.response?.data?.detail || t('stock:promis.messages.whatsapp_error', "Erreur lors de l'envoi du rappel WhatsApp"));
-            console.error(err);
+            logger.error(err);
         } finally {
             setLoading(false);
         }
@@ -241,7 +243,7 @@ export function usePromisData(): UsePromisDataReturn {
             fetchPromis();
         } catch (err) {
             toast.error(t('stock:promis.messages.bulk_delivery_error', 'Erreur lors de la livraison multiple'));
-            console.error(err);
+            logger.error(err);
         } finally {
             setBulkLoading(false);
         }
@@ -268,7 +270,7 @@ export function usePromisData(): UsePromisDataReturn {
             fetchPromis();
         } catch (err) {
             toast.error(t('stock:promis.messages.bulk_cancel_error', 'Erreur lors de l\'annulation multiple'));
-            console.error(err);
+            logger.error(err);
         } finally {
             setBulkLoading(false);
         }

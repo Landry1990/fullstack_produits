@@ -3,6 +3,7 @@ import type { Creance, Client } from '../types';
 import { useTranslation } from 'react-i18next';
 import creanceService from '../services/creanceService';
 import clientService from '../services/clientService';
+import { logger } from '../utils/logger'
 
 export interface UseCreancesDataReturn {
     creances: Creance[];
@@ -78,7 +79,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
                 setClients(allClients); 
             }
         } catch (err) {
-            console.error('Erreur chargement clients:', err);
+            logger.error('Erreur chargement clients:', err);
         }
     }, [clients]);
 
@@ -113,7 +114,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
             }
         } catch (err) {
             setError(t('creances:toasts.error_loading'));
-            console.error('Erreur:', err);
+            logger.error('Erreur:', err);
         } finally {
             setLoading(false);
         }

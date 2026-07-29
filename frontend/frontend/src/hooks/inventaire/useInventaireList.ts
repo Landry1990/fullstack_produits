@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { Inventaire } from '../../types';
+import { logger } from '../../utils/logger'
 
 export const useInventaireList = () => {
     const { t } = useTranslation();
@@ -78,7 +79,7 @@ export const useInventaireList = () => {
             }
         } catch (error) {
             if (error instanceof Error && error.name === 'CanceledError') return;
-            console.error(error);
+            logger.error(error);
             toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
         } finally {
             setLoading(false);
@@ -122,7 +123,7 @@ export const useInventaireList = () => {
             setInventaires(prev => prev.filter(inv => inv.id !== id));
             setTotalCount(prev => Math.max(0, prev - 1));
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             toast.error(getApiErrorDetail(error, t('common:messages.error_deleting')));
         } finally {
             setDeleting(false);

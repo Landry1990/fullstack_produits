@@ -10,6 +10,7 @@ import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { escHtml, writePrintDocument } from '../utils/print/printHelpers';
 import { formatDate, formatDateTime, toApiDateTime, toApiDateEnd } from '../utils/dateUtils';
 import { getPaymentModeLabel } from '../config/paymentModes';
+import { logger } from '../utils/logger'
 
 interface ClosingTotalsSource {
   start_date?: string | null;
@@ -198,7 +199,7 @@ export function useJournalCaisse() {
     } catch (err) {
       if (err instanceof Error && err.name === 'CanceledError') return;
       setError(t('table.loading_error') || 'Erreur lors du chargement des données');
-      console.error('Erreur page_init caisse:', err);
+      logger.error('Erreur page_init caisse:', err);
     } finally {
       setLoading(false);
     }
@@ -284,7 +285,7 @@ export function useJournalCaisse() {
         toast(t('messages.no_shift_found', { defaultValue: 'Aucune activité pour ce caissier...' }), { icon: 'ℹ️' });
       }
     } catch (err) {
-      console.error("Erreur détection shift:", err);
+      logger.error("Erreur détection shift:", err);
       setDetectedShift(null);
       toast.error(t('messages.shift_error', { defaultValue: 'Erreur lors de la détection du shift' }));
     } finally {
@@ -310,7 +311,7 @@ export function useJournalCaisse() {
       processTransactionsData(response.data);
     } catch (err) {
       if (err instanceof Error && err.name === 'CanceledError') return;
-      console.error('Erreur:', err);
+      logger.error('Erreur:', err);
       throw err;
     }
   };
@@ -629,7 +630,7 @@ export function useJournalCaisse() {
       setManualMovements([]);
       fetchData();
     } catch (err) {
-      console.error('Erreur clôture:', err);
+      logger.error('Erreur clôture:', err);
       const errorMessage = getApiErrorDetail(err, err instanceof Error ? err.message : 'Erreur inconnue');
       setError(`${t('messages.close_error')}: ${errorMessage}`);
       toast.error(errorMessage);

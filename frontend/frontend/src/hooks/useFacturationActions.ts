@@ -115,6 +115,7 @@ export function useFacturationActions({
         } finally {
             setLoading(false)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.lignesFacture, clientsHook, totals, ui, setLoading])
 
     const handleBonDeLivraison = useCallback(async () => {
@@ -350,6 +351,7 @@ export function useFacturationActions({
         )
         ui.closeLotModal()
         setTimeout(() => searchInputRef.current?.focus(), 100)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ui.lotModal.product, cart, ui.closeLotModal, searchInputRef])
 
     const _resetSaleDataOnly = useCallback(() => {

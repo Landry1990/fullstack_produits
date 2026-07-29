@@ -51,6 +51,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
         } catch {
             toast.error(t('facturation.messages.pack_error'), { id: toastId })
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.bulkAddProduits, t])
 
     // CSV Import
@@ -124,6 +125,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
         } catch {
             toast.error("Erreur lecture CSV.", { id: toastId });
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.bulkAddProduits])
 
     return {

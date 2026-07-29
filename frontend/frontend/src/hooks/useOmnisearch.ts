@@ -5,6 +5,7 @@ import { useDebounce } from 'use-debounce';
 
 import omnisearchService, { type GlobalSearchResponse } from '../services/omnisearchService';
 import type { ProduitModel, Client, Facture, Commande, Fournisseur } from '../types';
+import { logger } from '../utils/logger'
 
 interface CacheEntry {
   data: GlobalSearchResponse;
@@ -152,7 +153,7 @@ export default function useOmnisearch() {
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         if (error.name !== 'AbortError' && !controller.signal.aborted) {
-          console.error('Erreur Omnisearch:', err);
+          logger.error('Erreur Omnisearch:', err);
           setError(t('omnisearch.error', 'Erreur de recherche'));
         }
       } finally {

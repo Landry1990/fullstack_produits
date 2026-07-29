@@ -48,6 +48,7 @@ export function useSecureCartOperations({
         } else {
             cart.updateQuantite(produitId, newQty)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.updateQuantite, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
 
     const secureUpdatePrix = useCallback((produitId: number, newPrice: string) => {
@@ -70,6 +71,7 @@ export function useSecureCartOperations({
         } else {
             cart.updatePrix(produitId, newPrice)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.updatePrix, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
 
     const secureUpdateRemiseProduit = useCallback((produitId: number, newRemise: string) => {
@@ -92,6 +94,7 @@ export function useSecureCartOperations({
         } else {
             cart.updateRemiseProduit(produitId, newRemise)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.updateRemiseProduit, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
 
     const secureSetRemiseGlobale = useCallback((

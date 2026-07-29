@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { X, Send, Bug, Lightbulb, TrendingUp, HelpCircle, MoreHorizontal, Loader2 } from 'lucide-react';
 import feedbackService, { type Feedback } from '../../services/feedbackService';
+import { logger } from '../../utils/logger'
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -63,7 +64,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       });
       onClose();
     } catch (error) {
-      console.error('Error submitting feedback:', error);
+      logger.error('Error submitting feedback:', error);
       toast.error(t('feedback.error', 'Erreur lors de l\'envoi du feedback'));
     } finally {
       setLoading(false);

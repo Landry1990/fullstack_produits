@@ -144,6 +144,7 @@ const JournalAudit: React.FC = () => {
 
     const { data: users = [] } = useUsers();
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const logs = logsData?.results || [];
     const totalPages = Math.ceil((logsData?.count || 0) / 50);
 

@@ -9,6 +9,7 @@ import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { cn } from '../../lib/utils';
 import { Plus, Pencil, Trash2, Tag, CalendarDays } from 'lucide-react';
+import { logger } from '../../utils/logger'
 
 
 const PromotionList: React.FC = () => {
@@ -34,6 +35,7 @@ const PromotionList: React.FC = () => {
 
     useEffect(() => {
         fetchPromotions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const getDiscountLabel = (promo: Promotion) => {
@@ -55,7 +57,7 @@ const PromotionList: React.FC = () => {
             await api.delete(`promotions/${id}/`);
             setPromotions(promotions.filter(p => p.id !== id));
         } catch (error: unknown) {
-            console.error("Delete failed", error);
+            logger.error("Delete failed", error);
             alert(t('promotions:delete_error', { message: error.message || error }));
         }
     };

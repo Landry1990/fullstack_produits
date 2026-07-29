@@ -79,7 +79,7 @@ def log_save(sender, instance, created, **kwargs):
                     object_id=str(instance.pk),
                     details={"error": str(e), "note": "Audit serialization failed"}
                 )
-            except:
+            except Exception:
                 pass
 
 @receiver(post_delete, sender=Produit)

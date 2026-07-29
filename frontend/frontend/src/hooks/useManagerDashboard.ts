@@ -6,6 +6,7 @@ import api from '../services/api';
 import { useManagerStats, useCurrentObjectifs } from './useDashboard';
 import { usePharmacySettings } from './usePharmacySettings';
 import { getLocalDateString } from '../utils/dateUtils';
+import { logger } from '../utils/logger'
 
 export interface EditingObjectif {
     periode: string;
@@ -110,7 +111,7 @@ export const useManagerDashboard = () => {
             window.URL.revokeObjectURL(downloadUrl);
             toast.success(t('common:export_success', 'Export réussi'));
         } catch (error: unknown) {
-            console.error('Export error:', error);
+            logger.error('Export error:', error);
             toast.error(t('common:export_error', 'Erreur lors de l\'export'));
         } finally {
             setExporting(false);

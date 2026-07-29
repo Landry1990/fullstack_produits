@@ -17,6 +17,7 @@ import { Badge } from '../ui/Badge';
 import { Checkbox } from '../ui/Checkbox';
 import SkeletonTable from '../ui/SkeletonTable';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
+import { logger } from '../../utils/logger'
 
 interface CadencierItem {
   produit_id: number;
@@ -86,7 +87,7 @@ const Cadencier: React.FC = () => {
       setRayons(rayonsRes.data.results || rayonsRes.data || []);
       setFournisseurs(fournisseursRes.data.results || fournisseursRes.data || []);
     } catch (error) {
-      console.error('Erreur chargement filtres cadencier:', error);
+      logger.error('Erreur chargement filtres cadencier:', error);
     }
   }, []);
 
@@ -111,7 +112,7 @@ const Cadencier: React.FC = () => {
       setTotalCount(response.data.count || 0);
       setPage(targetPage);
     } catch (error) {
-      console.error('Erreur chargement cadencier:', error);
+      logger.error('Erreur chargement cadencier:', error);
       toast.error(t('stock:cadencier.error_loading', 'Erreur de chargement du cadencier'));
     } finally {
       setLoading(false);

@@ -9,6 +9,7 @@ import avoirService from '../services/avoirService';
 import fournisseurService from '../services/fournisseurService';
 import produitService from '../services/produitService';
 import { useAvoirsStore, type ViewMode } from '../stores/useAvoirsStore';
+import { logger } from '../utils/logger'
 
 export interface UseAvoirsDataReturn {
     // Navigation State
@@ -147,10 +148,11 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             setAvoirs(results);
             setSelectedIds(new Set());
         } catch (err: unknown) {
-            console.error('Error fetching avoirs:', err);
+            logger.error('Error fetching avoirs:', err);
         } finally {
             setLoading(false);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -167,13 +169,14 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 const data = await fournisseurService.getAll({ search: debouncedFournisseurSearch });
                 setFilteredFournisseurs(Array.isArray(data) ? data : (data as PaginatedResponse<Fournisseur>).results || []);
             } catch (error) {
-                console.error("Erreur recherche fournisseur", error);
+                logger.error("Erreur recherche fournisseur", error);
             } finally {
                 setIsSearchingFournisseur(false);
             }
         };
 
         searchFournisseurs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedFournisseurSearch, viewMode]);
 
     const selectFournisseur = (f: Fournisseur) => {
@@ -245,6 +248,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
             window.history.replaceState({}, document.title);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleEdit = (avoir: Avoir) => {

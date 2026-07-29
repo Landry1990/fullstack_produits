@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import type { TVA } from '../types';
+import { logger } from '../utils/logger'
 
 export function useTVA() {
     const [tvaList, setTvaList] = useState<TVA[]>([]);
@@ -17,7 +18,7 @@ export function useTVA() {
             setError(null);
         } catch (err: unknown) {
             if ((err as unknown)?.name === 'CanceledError') return;
-            console.error('Error fetching TVAs:', err);
+            logger.error('Error fetching TVAs:', err);
             setError('Erreur lors du chargement des taux de TVA');
         } finally {
             setLoading(false);
@@ -30,7 +31,7 @@ export function useTVA() {
             await fetchTVAs();
             return { success: true };
         } catch (err: unknown) {
-            console.error('Error adding TVA:', err);
+            logger.error('Error adding TVA:', err);
             let message = 'Erreur lors de l\'ajout de la TVA';
 
             const error = err as { response?: { data?: { taux?: unknown; detail?: string } | string } };
@@ -56,7 +57,7 @@ export function useTVA() {
             await fetchTVAs();
             return true;
         } catch (err: unknown) {
-            console.error('Error updating TVA:', err);
+            logger.error('Error updating TVA:', err);
             setError('Erreur lors de la modification de la TVA');
             return false;
         }
@@ -68,7 +69,7 @@ export function useTVA() {
             await fetchTVAs();
             return true;
         } catch (err: unknown) {
-            console.error('Error deleting TVA:', err);
+            logger.error('Error deleting TVA:', err);
             setError('Erreur lors de la suppression de la TVA');
             return false;
         }

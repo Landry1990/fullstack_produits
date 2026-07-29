@@ -10,6 +10,7 @@ import { Input } from '../../shadcn/input';
 import { Select } from '../../ui/Select';
 import { Checkbox } from '../../shadcn/checkbox';
 import { Badge } from '../../shadcn/badge';
+import { logger } from '../../../utils/logger'
 
 registerLocale('fr', fr);
 
@@ -101,6 +102,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
         };
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     if (selectedQuery.params.length === 0) return null;
@@ -115,7 +117,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             if (!conds) return [];
             return typeof conds === 'string' ? JSON.parse(conds) : conds;
         } catch (e) {
-            console.error(t('reports.err_parse_conditions', { defaultValue: 'Erreur de parsing des conditions:' }), e);
+            logger.error(t('reports.err_parse_conditions', { defaultValue: 'Erreur de parsing des conditions:' }), e);
             return [];
         }
     };

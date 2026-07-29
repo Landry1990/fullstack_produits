@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { logger } from '../../utils/logger'
 
 export interface AuditData {
     top_pertes: Array<{ 
@@ -60,7 +61,7 @@ export const useInventaireAudit = () => {
             setData(response.data);
         } catch (error) {
             if (error instanceof Error && error.name === 'CanceledError') return;
-            console.error("Erreur audit", error);
+            logger.error("Erreur audit", error);
             toast.error(t('common:messages.error_loading'));
         } finally {
             setLoading(false);

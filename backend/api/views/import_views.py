@@ -51,7 +51,7 @@ class ProductImportView(APIView):
                 file_obj.seek(0)
                 try:
                     df = pd.read_csv(file_obj, sep=separator, encoding='utf-8')
-                except:
+                except Exception:
                     file_obj.seek(0)
                     df = pd.read_csv(file_obj, sep=separator, encoding='latin-1')
             elif file_obj.name.lower().endswith(('.xls', '.xlsx')):

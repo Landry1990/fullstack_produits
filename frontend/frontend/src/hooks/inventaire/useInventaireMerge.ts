@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { Inventaire } from '../../types';
+import { logger } from '../../utils/logger'
 
 interface UseInventaireMergeProps {
     viewMode: 'LIST' | 'CREATE' | 'EDIT' | 'AUDIT';
@@ -59,7 +60,7 @@ export const useInventaireMerge = ({
             setMergeCandidates(candidates);
         } catch (err) {
             if (err instanceof Error && err.name === 'CanceledError') return;
-            console.error("Erreur candidats fusion", err);
+            logger.error("Erreur candidats fusion", err);
         } finally {
             setLoadingMergeCandidates(false);
         }
@@ -70,6 +71,7 @@ export const useInventaireMerge = ({
             fetchMergeCandidates();
         }
         return () => mergeControllerRef.current?.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showMergeModal]);
 
     const handleMerge = async () => {
@@ -115,7 +117,7 @@ export const useInventaireMerge = ({
             setShowMergeModal(false);
             setSelectedMergeSource(null);
         } catch (err: unknown) {
-            console.error("Erreur fusion", err);
+            logger.error("Erreur fusion", err);
             toast.error(getApiErrorDetail(err, t('inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' })));
         } finally {
             setMerging(false);

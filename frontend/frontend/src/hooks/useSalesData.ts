@@ -4,6 +4,7 @@ import type { Facture, PaginatedResponse } from '../types';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { getLocalDateString, toApiDateEnd } from '../utils/dateUtils';
+import { logger } from '../utils/logger'
 
 export const useSalesData = () => {
     const { t } = useTranslation(['sales', 'common']);
@@ -70,7 +71,7 @@ export const useSalesData = () => {
             if (data.users) setUsers(data.users);
 
         } catch (error) {
-            console.error('Erreur chargement page_init:', error);
+            logger.error('Erreur chargement page_init:', error);
             toast.error(t('messages.load_error'));
             setFactures([]);
         } finally {
@@ -87,7 +88,7 @@ export const useSalesData = () => {
             const data = await venteService.getFactures(params);
             processFacturesData(data);
         } catch (error) {
-            console.error('Erreur chargement factures:', error);
+            logger.error('Erreur chargement factures:', error);
             toast.error(t('messages.load_error'));
             setFactures([]);
         } finally {
@@ -130,7 +131,7 @@ export const useSalesData = () => {
             toast.success(t('messages.delete_drafts_success'));
             fetchFactures(currentPage);
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             toast.error(t('messages.delete_drafts_error'));
         }
     };
@@ -142,7 +143,7 @@ export const useSalesData = () => {
             toast.success(t('messages.delete_success'));
             fetchFactures(currentPage);
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             toast.error(t('messages.delete_error'));
         }
     };
@@ -154,7 +155,7 @@ export const useSalesData = () => {
             toast.success(t('messages.bulk_delete_success'));
             fetchFactures(currentPage);
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             toast.error(t('messages.bulk_delete_error'));
         }
     };

@@ -8,6 +8,7 @@ import { getApiErrorDetail } from '../utils/errorHandling';
 import { formatCurrency } from '../utils/formatters';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
+import { logger } from '../utils/logger'
 import {
   FileSpreadsheet,
   CalendarDays,
@@ -74,11 +75,12 @@ const HistoriqueVentes = () => {
       setTotalItems(count || 0);
       setGlobalTotals(totals || null);
     } catch (error) {
-      console.error('Error fetching sales history:', error);
+      logger.error('Error fetching sales history:', error);
       toast.error(t('messages.error_loading'));
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.token, dateDebut, dateFin, currentPage, pageSize]);
 
   useEffect(() => {
@@ -107,7 +109,7 @@ const HistoriqueVentes = () => {
       window.URL.revokeObjectURL(url);
       toast.success(t('messages.export_success'));
     } catch (error) {
-      console.error('Export Error:', error);
+      logger.error('Export Error:', error);
       toast.error(t('messages.export_error'));
     } finally {
       setExporting(false);

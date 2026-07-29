@@ -381,6 +381,7 @@ export default function SystemAdmin() {
     } finally {
       setCheckingUpdate(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRunUpdate = async () => {

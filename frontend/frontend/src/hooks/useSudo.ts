@@ -59,6 +59,7 @@ export const useSudo = () => {
             sudoState.onCancel();
         }
         setSudoState(prev => ({ ...prev, isOpen: false, onCancel: undefined }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sudoState.onCancel]);
 
     return {

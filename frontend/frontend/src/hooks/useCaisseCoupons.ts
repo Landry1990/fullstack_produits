@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import type { Facture, CouponMonnaie } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
+import { logger } from '../utils/logger'
 
 interface CouponsState {
   coupons: CouponMonnaie[]
@@ -35,7 +36,7 @@ export const useCaisseCoupons = ({
       const response = await api.get('coupons/', { params: { ordering: '-date_creation', page_size: 50 } })
       setCoupons(response.data.results || response.data || [])
     } catch (err) {
-      console.error('Erreur lors du chargement des coupons:', err)
+      logger.error('Erreur lors du chargement des coupons:', err)
     }
   }, [setCoupons])
 
@@ -67,7 +68,7 @@ export const useCaisseCoupons = ({
       setIsDetailsCouponModalOpen(true)
       onSuccess?.()
     } catch (err) {
-      console.error('Erreur génération coupon:', err)
+      logger.error('Erreur génération coupon:', err)
       toast.error(getApiErrorDetail(err, t('messages.error_generation')))
     } finally {
       setLoading(false)
@@ -92,7 +93,7 @@ export const useCaisseCoupons = ({
         toast.error(t('messages.coupon_not_found'))
       }
     } catch (err) {
-      console.error('Erreur recherche coupon:', err)
+      logger.error('Erreur recherche coupon:', err)
       toast.error(t('messages.search_error'))
     } finally {
       setLoading(false)
@@ -139,7 +140,7 @@ export const useCaisseCoupons = ({
       await api.post(`coupons/${couponId}/utiliser/`, { facture_id: factureId })
       fetchCoupons()
     } catch (err) {
-      console.error('Erreur utilisation coupon:', err)
+      logger.error('Erreur utilisation coupon:', err)
       // Ne pas bloquer - le paiement a réussi
     }
   }, [fetchCoupons])

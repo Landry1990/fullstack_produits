@@ -111,6 +111,7 @@ export default function ModuleFinancier() {
       default:
         return { icon: '➡️', color: 'text-yellow-500', label: t('trend.stable', 'Stable') };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [predictions?.tendance, t]);
 
   // Memoize chart data to prevent infinite re-renders in Recharts

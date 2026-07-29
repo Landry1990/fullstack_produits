@@ -8,6 +8,7 @@ import { formatCurrency, formatDateFr } from '../../utils/formatters'
 import type { Client, DepotClient } from '../../types/crm'
 import { getCaissePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
 import { usePharmacySettings } from '../../hooks/usePharmacySettings'
+import { logger } from '../../utils/logger'
 
 interface Props {
     isOpen: boolean
@@ -32,6 +33,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
         if (isOpen && activeTab === 'history') {
             fetchHistory()
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, activeTab, client.id])
 
     const fetchHistory = async () => {
@@ -40,7 +42,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
             const data = await clientService.getDepotHistory(client.id)
             setHistory(data.results || data)
         } catch (err) {
-            console.error(err)
+            logger.error(err)
             toast.error(t('common:messages.error_loading'))
         } finally {
             setLoadingHistory(false)
@@ -74,7 +76,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
             if (onSuccess) onSuccess()
             setActiveTab('history')
         } catch (err: unknown) {
-            console.error(err)
+            logger.error(err)
             toast.error(err.response?.data?.error || t('common:messages.error_saving'))
         } finally {
             setLoading(false)
