@@ -8,6 +8,7 @@ import { SidebarProvider } from '../context/SidebarContext'
 import { useSidebar } from '../hooks/useSidebar'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
 import LicenceExpirationBanner from './LicenceExpirationBanner'
+import UpdateReminderModal from './UpdateReminderModal'
 
 function LayoutContent() {
   const { isZenithMode, isMidnightTheme } = useSidebar()
@@ -88,6 +89,7 @@ export default function Layout() {
   return (
     <SidebarProvider>
       <TransformationAlertListener />
+      <UpdateReminderModal />
       <LayoutContent />
     </SidebarProvider>
   )
