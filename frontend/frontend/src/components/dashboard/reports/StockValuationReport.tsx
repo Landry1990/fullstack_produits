@@ -37,7 +37,7 @@ const fmt = (v: number | string | undefined | null) => {
 };
 
 const StockValuationReport: React.FC<Props> = ({ data }) => {
-    const { t } = useTranslation(['reports', 'common']);
+    const { t: _t } = useTranslation(['reports', 'common']);
     const d = data as StockValuationData;
     const [downloading, setDownloading] = useState(false);
     const { settings } = usePharmacySettings();
