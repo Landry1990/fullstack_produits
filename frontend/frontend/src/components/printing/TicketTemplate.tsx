@@ -39,8 +39,8 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
 
   const facture = typeof ticket.facture === 'object' ? ticket.facture : null;
   const produits = facture?.produits || [];
-  const totalTTC = Number(ticket.montant || facture?.total_ttc || 0);
-  const totalTVA = facture ? Number(facture.total_tva || 0) : 0;
+  const totalTTC = Math.round(Number(ticket.montant || facture?.total_ttc || 0));
+  const totalTVA = facture ? Math.round(Number(facture.total_tva || 0)) : 0;
   const totalHT = totalTTC - totalTVA;
   const remise = facture ? Number(facture.remise) : 0;
   const ticketWidth = settings.ticket_paper_width || 80;
