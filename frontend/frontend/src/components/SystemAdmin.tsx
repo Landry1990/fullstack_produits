@@ -56,7 +56,7 @@ const backupStatusColor = (status: string) => {
 };
 
 export default function SystemAdmin() {
-  const { t } = useTranslation('system_admin');
+  const { t, i18n } = useTranslation('system_admin');
   const [activeTab, setActiveTab] = useState<TabId>('sante');
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [backupList, setBackupList] = useState<BackupListData | null>(null);
@@ -247,11 +247,11 @@ export default function SystemAdmin() {
     try {
       const res = await api.post('/system-admin/base_backup/');
       setPitrOutput(res.data.output || res.data.message);
-      if (!res.data.success) setPitrError(res.data.error || 'Erreur');
+      if (!res.data.success) setPitrError(res.data.error || t('error_generic'));
       fetchWalStatus();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string; error?: string; message?: string } } };
-      setPitrError(err?.response?.data?.error || err?.response?.data?.detail || err?.response?.data?.message || 'Erreur lors du base backup');
+      setPitrError(err?.response?.data?.error || err?.response?.data?.detail || err?.response?.data?.message || t('error_base_backup'));
     } finally {
       setRunningBaseBackup(false);
     }
@@ -266,9 +266,9 @@ export default function SystemAdmin() {
         target_time: pitrTargetTime || undefined,
       }, { timeout: 180000 });
       setPitrOutput(res.data.output || res.data.message);
-      if (!res.data.success) setPitrError(res.data.error || 'Erreur');
+      if (!res.data.success) setPitrError(res.data.error || t('error_generic'));
     } catch (e: unknown) {
-      setPitrError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erreur lors de la restauration PITR');
+      setPitrError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || t('error_pitr_restore'));
     } finally {
       setRunningPitr(false);
     }
@@ -374,7 +374,7 @@ export default function SystemAdmin() {
       setUpdateMessage(res.data.message);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string; message?: string } } };
-      setUpdateError(err?.response?.data?.detail || err?.response?.data?.message || 'Erreur lors de la vérification');
+      setUpdateError(err?.response?.data?.detail || err?.response?.data?.message || t('update_check_error'));
     } finally {
       setCheckingUpdate(false);
     }
@@ -391,7 +391,7 @@ export default function SystemAdmin() {
       setUpdateStatus(null);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string; message?: string } } };
-      setUpdateError(err?.response?.data?.detail || err?.response?.data?.message || 'Erreur lors du lancement de la mise à jour');
+      setUpdateError(err?.response?.data?.detail || err?.response?.data?.message || t('update_run_error'));
     } finally {
       setRunningUpdate(false);
     }
@@ -434,7 +434,7 @@ export default function SystemAdmin() {
       setScheduleMessage(res.data.message);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string; message?: string } } };
-      setScheduleError(err?.response?.data?.detail || err?.response?.data?.message || 'Erreur lors de la sauvegarde');
+      setScheduleError(err?.response?.data?.detail || err?.response?.data?.message || t('update_schedule_save_error'));
     } finally {
       setSavingSchedule(false);
     }
@@ -443,7 +443,7 @@ export default function SystemAdmin() {
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'sante', label: t('tabs.health'), icon: <Server className="w-4 h-4" /> },
     { id: 'sauvegardes', label: t('tabs.backups'), icon: <HardDrive className="w-4 h-4" /> },
-    { id: 'mise_a_jour', label: 'Mise à jour', icon: <DownloadCloud className="w-4 h-4" /> },
+    { id: 'mise_a_jour', label: t('tabs.update'), icon: <DownloadCloud className="w-4 h-4" /> },
   ];
 
   const backupStatusLabel = (status: string, hours: number) => {
@@ -769,7 +769,7 @@ export default function SystemAdmin() {
                         onChange={(e) => setBackupSettings({ ...backupSettings, backup_interval_minutes: Number(e.target.value) })}
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
                       >
-                        <option value={30}>Toutes les 30 min</option>
+                        <option value={30}>{t('interval_options.30min')}</option>
                         <option value={60}>{t('interval_options.hourly')}</option>
                         <option value={360}>{t('interval_options.6h')}</option>
                         <option value={720}>{t('interval_options.12h')}</option>
@@ -809,34 +809,34 @@ export default function SystemAdmin() {
 
                   {/* Destinations externes (USB, disque dur, réseau) */}
                   <div className="border-t border-gray-100 pt-4 mt-2">
-                    <p className="text-sm font-semibold text-gray-700 mb-1">Destinations externes</p>
-                    <p className="text-xs text-gray-400 mb-3">Clés USB, disques durs, dossiers partagés réseau (SMB/NFS). Le backup sera copié vers chaque destination accessible.</p>
+                    <p className="text-sm font-semibold text-gray-700 mb-1">{t('external_destinations')}</p>
+                    <p className="text-xs text-gray-400 mb-3">{t('external_destinations_desc')}</p>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 1 (ex: /mnt/usb-backup ou \\NAS\backups)</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_1')}</label>
                         <input
                           type="text"
-                          placeholder="Ex: /mnt/usb-backup"
+                          placeholder={t('external_destination_1_placeholder')}
                           value={backupSettings.external_backup_path_1}
                           onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_1: e.target.value })}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 2 (ex: /mnt/nas-backup ou \\192.168.1.50\backups)</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_2')}</label>
                         <input
                           type="text"
-                          placeholder="Ex: /mnt/nas-backup"
+                          placeholder={t('external_destination_2_placeholder')}
                           value={backupSettings.external_backup_path_2}
                           onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_2: e.target.value })}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Destination 3 (ex: autre machine réseau)</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_3')}</label>
                         <input
                           type="text"
-                          placeholder="Ex: /mnt/network-backup"
+                          placeholder={t('external_destination_3_placeholder')}
                           value={backupSettings.external_backup_path_3}
                           onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_3: e.target.value })}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -1110,7 +1110,7 @@ export default function SystemAdmin() {
                         const diffH = Math.round(diffMs / (1000 * 60 * 60));
                         return (
                           <p className="text-xs text-amber-600 mb-4 font-medium">
-                            {t('backup_date', { date: date.toLocaleDateString('fr-FR'), time: date.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) })}
+                            {t('backup_date', { date: date.toLocaleDateString(i18n.language), time: date.toLocaleTimeString(i18n.language, {hour:'2-digit', minute:'2-digit'}) })}
                             {diffH > 0 ? t('data_lost_hours', { hours: diffH }) : t('no_data_lost')}
                           </p>
                         );
@@ -1164,7 +1164,7 @@ export default function SystemAdmin() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
                   <Archive className="w-4 h-4" />
-                  Journal WAL & Récupération Point-in-Time (PITR)
+                  {t('wal_title')}
                 </h3>
                 <button
                   onClick={fetchWalStatus}
@@ -1172,7 +1172,7 @@ export default function SystemAdmin() {
                   className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
                 >
                   <RefreshCw className={`w-3 h-3 ${loadingWal ? 'animate-spin' : ''}`} />
-                  Actualiser
+                  {t('refresh')}
                 </button>
               </div>
 
@@ -1182,11 +1182,11 @@ export default function SystemAdmin() {
                   <div className="flex items-center gap-3">
                     {walStatus.archive_active ? (
                       <span className="flex items-center gap-2 text-sm font-semibold text-emerald-600">
-                        <CheckCircle2 className="w-4 h-4" /> Archivage WAL actif
+                        <CheckCircle2 className="w-4 h-4" /> {t('wal_archive_active')}
                       </span>
                     ) : (
                       <span className="flex items-center gap-2 text-sm font-semibold text-red-600">
-                        <XCircle className="w-4 h-4" /> Archivage WAL inactif
+                        <XCircle className="w-4 h-4" /> {t('wal_archive_inactive')}
                       </span>
                     )}
                   </div>
@@ -1194,19 +1194,19 @@ export default function SystemAdmin() {
                   {/* Stats WAL */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-400">Fichiers WAL</p>
+                      <p className="text-xs text-gray-400">{t('wal_files')}</p>
                       <p className="text-lg font-bold text-gray-700">{walStatus.wal_count}</p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-400">Taille</p>
+                      <p className="text-xs text-gray-400">{t('wal_size')}</p>
                       <p className="text-lg font-bold text-gray-700">{walStatus.wal_size_mb} MB</p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-400">Plus ancien</p>
+                      <p className="text-xs text-gray-400">{t('wal_oldest')}</p>
                       <p className="text-xs font-semibold text-gray-700">{walStatus.oldest_wal || '—'}</p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-400">Plus récent</p>
+                      <p className="text-xs text-gray-400">{t('wal_newest')}</p>
                       <p className="text-xs font-semibold text-gray-700">{walStatus.newest_wal || '—'}</p>
                     </div>
                   </div>
@@ -1215,7 +1215,7 @@ export default function SystemAdmin() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-semibold text-gray-700">
-                        Backups de base: {walStatus.base_backups_count}
+                        {t('wal_base_backups')}: {walStatus.base_backups_count}
                       </p>
                       <button
                         onClick={handleBaseBackup}
@@ -1223,7 +1223,7 @@ export default function SystemAdmin() {
                         className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-60"
                       >
                         <Zap className={`w-3.5 h-3.5 ${runningBaseBackup ? 'animate-pulse' : ''}`} />
-                        {runningBaseBackup ? 'En cours...' : 'Créer un base backup'}
+                        {runningBaseBackup ? t('in_progress') : t('wal_create_base_backup')}
                       </button>
                     </div>
                     {walStatus.base_backups.length > 0 && (
@@ -1249,19 +1249,17 @@ export default function SystemAdmin() {
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
                       <p className="text-xs text-amber-700">
                         <AlertTriangle className="w-3.5 h-3.5 inline mr-1" />
-                        La restauration PITR rejoue le journal WAL jusqu'au timestamp choisi.
-                        Si crash à 14h30 avec backup à 14h00, les transactions jusqu'à 14h29 seront récupérées.
-                        Laisser vide pour récupérer toutes les transactions disponibles.
+                        {t('pitr_description')}
                       </p>
                     </div>
                     <div className="flex items-end gap-3">
                       <div className="flex-1">
                         <label className="block text-xs font-semibold text-gray-500 mb-1">
-                          Timestamp cible (optionnel)
+                          {t('pitr_target_time')}
                         </label>
                         <input
                           type="text"
-                          placeholder="ex: 2026-07-23 14:29:00"
+                          placeholder={t('pitr_target_placeholder')}
                           value={pitrTargetTime}
                           onChange={(e) => setPitrTargetTime(e.target.value)}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
@@ -1273,7 +1271,7 @@ export default function SystemAdmin() {
                         className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all disabled:opacity-60"
                       >
                         <RotateCcw className={`w-3.5 h-3.5 ${runningPitr ? 'animate-spin' : ''}`} />
-                        {runningPitr ? 'Restauration...' : 'Restaurer PITR'}
+                        {runningPitr ? t('pitr_restoring') : t('pitr_restore')}
                       </button>
                     </div>
                     {pitrOutput && (
@@ -1291,12 +1289,12 @@ export default function SystemAdmin() {
               ) : loadingWal ? (
                 <div className="text-center py-4 text-gray-400">
                   <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
-                  Chargement du statut WAL...
+                  {t('wal_loading')}
                 </div>
               ) : (
                 <div className="text-center py-4 text-red-500">
                   <XCircle className="w-5 h-5 mx-auto mb-2" />
-                  Impossible de charger le statut WAL
+                  {t('wal_load_error')}
                 </div>
               )}
             </div>
@@ -1334,8 +1332,8 @@ export default function SystemAdmin() {
                   <DownloadCloud className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">Mise à jour du système</h2>
-                  <p className="text-xs text-gray-500">Vérifiez et installez les dernières mises à jour de Zenith Pharma</p>
+                  <h2 className="text-lg font-bold text-gray-900">{t('update_title')}</h2>
+                  <p className="text-xs text-gray-500">{t('update_subtitle')}</p>
                 </div>
               </div>
 
@@ -1347,7 +1345,7 @@ export default function SystemAdmin() {
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
                 >
                   <RefreshCw className={`w-4 h-4 ${checkingUpdate ? 'animate-spin' : ''}`} />
-                  {checkingUpdate ? 'Vérification...' : 'Vérifier les mises à jour'}
+                  {checkingUpdate ? t('update_checking') : t('update_check')}
                 </button>
               </div>
 
@@ -1355,7 +1353,7 @@ export default function SystemAdmin() {
               {checkingUpdate && (
                 <div className="text-center py-4 text-gray-400">
                   <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
-                  Vérification des mises à jour sur GitHub...
+                  {t('update_checking_github')}
                 </div>
               )}
 
@@ -1377,9 +1375,9 @@ export default function SystemAdmin() {
                       </p>
                       {updateStatus.current_version && (
                         <p className="text-xs text-gray-500 mt-1">
-                          Version actuelle : <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">{updateStatus.current_version}</code>
+                          {t('update_current_version')} : <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">{updateStatus.current_version}</code>
                           {updateStatus.latest_version && (
-                            <> → Version disponible : <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">{updateStatus.latest_version}</code></>
+                            <> → {t('update_latest_version')} : <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">{updateStatus.latest_version}</code></>
                           )}
                         </p>
                       )}
@@ -1400,7 +1398,7 @@ export default function SystemAdmin() {
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-all disabled:opacity-50"
                   >
                     <DownloadCloud className="w-4 h-4" />
-                    Mettre à jour maintenant
+                    {t('update_now')}
                   </button>
                 </div>
               )}
@@ -1411,12 +1409,12 @@ export default function SystemAdmin() {
                   <div className="flex items-start gap-3 mb-3">
                     <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-bold text-red-900">⚠ Attention — Lisez avant de continuer</p>
+                      <p className="text-sm font-bold text-red-900">{t('update_warning_title')}</p>
                       <ul className="text-xs text-red-700 mt-2 space-y-1 list-disc list-inside">
-                        <li>L'application sera <strong>temporairement indisponible</strong> pendant la mise à jour (2 à 10 minutes)</li>
-                        <li>Assurez-vous qu'<strong>aucune vente</strong> n'est en cours sur les autres postes</li>
-                        <li>Une <strong>sauvegarde automatique</strong> de la base de données sera faite avant</li>
-                        <li>Si la mise à jour échoue, le système <strong>revient automatiquement</strong> à la version précédente</li>
+                        <li>{t('update_warning_1')}</li>
+                        <li>{t('update_warning_2')}</li>
+                        <li>{t('update_warning_3')}</li>
+                        <li>{t('update_warning_4')}</li>
                       </ul>
                     </div>
                   </div>
@@ -1427,9 +1425,9 @@ export default function SystemAdmin() {
                       className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-all disabled:opacity-50"
                     >
                       {runningUpdate ? (
-                        <><RefreshCw className="w-4 h-4 animate-spin" /> Mise à jour en cours...</>
+                        <><RefreshCw className="w-4 h-4 animate-spin" /> {t('update_running')}</>
                       ) : (
-                        <><DownloadCloud className="w-4 h-4" /> Oui, lancer la mise à jour</>
+                        <><DownloadCloud className="w-4 h-4" /> {t('update_confirm')}</>
                       )}
                     </button>
                     <button
@@ -1437,7 +1435,7 @@ export default function SystemAdmin() {
                       disabled={runningUpdate}
                       className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
                     >
-                      Annuler
+                      {t('update_cancel')}
                     </button>
                   </div>
                 </div>
@@ -1463,11 +1461,11 @@ export default function SystemAdmin() {
 
               {/* Configuration de l'heure de mise à jour */}
               <div className="mt-6 pt-4 border-t border-gray-100">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Planification automatique</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{t('update_schedule_title')}</h3>
 
                 {loadingSchedule ? (
                   <div className="text-sm text-gray-400 flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4 animate-spin" /> Chargement...
+                    <RefreshCw className="w-4 h-4 animate-spin" /> {t('update_schedule_loading')}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1479,20 +1477,20 @@ export default function SystemAdmin() {
                         onChange={(e) => setAutoUpdateEnabled(e.target.checked)}
                         className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                       />
-                      <span className="text-sm text-gray-700">Mise à jour automatique activée</span>
+                      <span className="text-sm text-gray-700">{t('update_auto_enabled')}</span>
                     </label>
 
                     {/* Heure */}
                     {autoUpdateEnabled && (
                       <div className="flex items-center gap-3">
-                        <label className="text-sm text-gray-700">Heure de mise à jour :</label>
+                        <label className="text-sm text-gray-700">{t('update_time_label')}</label>
                         <input
                           type="time"
                           value={updateTime}
                           onChange={(e) => setUpdateTime(e.target.value)}
                           className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                         />
-                        <span className="text-xs text-gray-400">(si serveur éteint, rattrapée au prochain démarrage)</span>
+                        <span className="text-xs text-gray-400">{t('update_time_hint')}</span>
                       </div>
                     )}
 
@@ -1504,7 +1502,7 @@ export default function SystemAdmin() {
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
                       >
                         {savingSchedule ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                        {savingSchedule ? 'Sauvegarde...' : 'Enregistrer'}
+                        {savingSchedule ? t('update_saving') : t('update_save')}
                       </button>
                     </div>
 
@@ -1527,15 +1525,15 @@ export default function SystemAdmin() {
                     <div className="space-y-2 text-sm text-gray-600">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>Si le serveur est éteint, la mise à jour se fait <strong>au prochain démarrage</strong></span>
+                        <span>{t('update_info_1')}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>Si pas d'Internet, la mise à jour est <strong>reportée automatiquement</strong></span>
+                        <span>{t('update_info_2')}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>Le bouton ci-dessus permet de <strong>forcer une mise à jour immédiate</strong></span>
+                        <span>{t('update_info_3')}</span>
                       </div>
                     </div>
                   </div>
