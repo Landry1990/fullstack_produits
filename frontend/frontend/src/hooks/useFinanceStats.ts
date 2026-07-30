@@ -320,3 +320,59 @@ export const useRepartitionAchats = () => {
         staleTime: 1000 * 60 * 60 * 4, // 4 hours
     });
 };
+
+// ── Marge par Produit ──────────────────────────────────────────
+export interface MargeProduitItem {
+    id: number;
+    nom: string;
+    cip: string;
+    ca: number;
+    marge: number;
+    taux_marge: number;
+    quantite: number;
+}
+
+export interface MargeParProduitData {
+    periode: string;
+    top_20: MargeProduitItem[];
+    bottom_20: MargeProduitItem[];
+    negative_margin: MargeProduitItem[];
+    total_produits: number;
+    total_ca: number;
+    total_marge: number;
+}
+
+export const useMargeParProduit = (periode: string = 'mois') => {
+    return useQuery<MargeParProduitData>({
+        queryKey: ['finance', 'marge-par-produit', periode],
+        queryFn: () => financeService.getMargeParProduit(periode),
+        staleTime: 1000 * 60 * 15,
+    });
+};
+
+// ── Impact Promotions ──────────────────────────────────────────
+export interface ImpactPromotionSegment {
+    ca: number;
+    marge: number;
+    taux_marge: number;
+    quantite: number;
+    nb_lignes: number;
+    pct_ca: number;
+}
+
+export interface ImpactPromotionsData {
+    periode: string;
+    avec_promotion: ImpactPromotionSegment;
+    sans_promotion: ImpactPromotionSegment;
+    ca_perdu_remises: number;
+    ecart_taux_marge: number;
+    total_ca: number;
+}
+
+export const useImpactPromotions = (periode: string = 'mois') => {
+    return useQuery<ImpactPromotionsData>({
+        queryKey: ['finance', 'impact-promotions', periode],
+        queryFn: () => financeService.getImpactPromotions(periode),
+        staleTime: 1000 * 60 * 15,
+    });
+};

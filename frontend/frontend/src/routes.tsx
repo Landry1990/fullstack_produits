@@ -85,6 +85,7 @@ const TelegramHistory = lazyWithRetry(() => import('./components/TelegramHistory
 const OrdonnancierPage = lazyWithRetry(() => import('./components/Ordonnancier'));
 const CentreRapports = lazyWithRetry(() => import('./components/CentreRapports'));
 const AnalyseABC = lazyWithRetry(() => import('./components/AnalyseABC'));
+const AnalyseMargesProduit = lazyWithRetry(() => import('./components/AnalyseMargesProduit'));
 const PromotionList = lazyWithRetry(() => import('./components/Promotions/PromotionList'));
 const ModuleFinancier = lazyWithRetry(() => import('./components/ModuleFinancier'));
 const GestionDivers = lazyWithRetry(() => import('./components/divers/GestionDivers'));
@@ -199,6 +200,7 @@ export const router = createBrowserRouter([
           { path: 'rapports-mensuels', ...perm('statistiques_mensuels', RapportMensuel) },
           { path: 'centre-rapports', ...perm('statistiques_rapports', CentreRapports) },
           { path: 'analyse-abc', ...perm('statistiques_abc', AnalyseABC) },
+          { path: 'analyse-marges-produit', ...perm('statistiques_finances', AnalyseMargesProduit) },
           { path: 'module-financier', ...perm('statistiques_finances', ModuleFinancier) },
           { path: 'classement-vendeurs', ...perm('statistiques_vendeurs', ClassementVendeurs) },
           { path: 'analyse-temporelle', ...perm('statistiques_temporelle', AnalyseTemporelle) },
