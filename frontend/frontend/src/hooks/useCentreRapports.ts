@@ -223,11 +223,12 @@ export function useCentreRapports() {
     }, [presets]);
 
     const applyPreset = useCallback((preset: unknown) => {
-        const query = QUERIES.find(q => q.id === preset.queryId);
+        const p = preset as { queryId: string; params: Record<string, string | number | boolean>; name: string };
+        const query = QUERIES.find(q => q.id === p.queryId);
         if (query) {
             setSelectedQuery(query);
-            setParams(preset.params);
-            toast.success(t('reports.preset_loaded', { name: preset.name, defaultValue: `Chargement de : ${preset.name}` }));
+            setParams(p.params);
+            toast.success(t('reports.preset_loaded', { name: p.name, defaultValue: `Chargement de : ${p.name}` }));
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -390,23 +391,23 @@ export function useCentreRapports() {
                 if (idx === 0) {
                     footerRow[header] = t('reports.footer_total_avg', { defaultValue: 'TOTAL / MOYENNE' });
                 } else if (isAverageColumn(col)) {
-                    const total = results.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
+                    const total = results.reduce((sum: number, r: unknown) => sum + (Number((r as Record<string, unknown>)[col]) || 0), 0);
                     const avg = results.length > 0 ? total / results.length : 0;
                     footerRow[header] = `${Math.round(avg)} ${t('reports.footer_avg_suffix', { defaultValue: '(Moy)' })}`;
                 } else if (isSummableColumn(col)) {
-                    const total = results.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
+                    const total = results.reduce((sum: number, r: unknown) => sum + (Number((r as Record<string, unknown>)[col]) || 0), 0);
                     footerRow[header] = Math.round(total);
                 } else if (isPercentageColumn(col)) {
                     let finalVal: string | number = '';
                     if (col === 'taux_marge') {
-                        const totalMtVente = results.reduce((sum: number, r: unknown) => sum + (Number(r['mt_vente']) || 0), 0);
-                        const totalMarge   = results.reduce((sum: number, r: unknown) => sum + (Number(r['marge']) || 0), 0);
+                        const totalMtVente = results.reduce((sum: number, r: unknown) => sum + (Number((r as Record<string, unknown>)['mt_vente']) || 0), 0);
+                        const totalMarge   = results.reduce((sum: number, r: unknown) => sum + (Number((r as Record<string, unknown>)['marge']) || 0), 0);
                         if (totalMtVente > 0) {
                             finalVal = ((totalMarge / totalMtVente) * 100).toFixed(1) + t('reports.footer_pct_global', { defaultValue: ' % (Global)' });
                         }
                     }
                     if (!finalVal) {
-                        const total = results.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
+                        const total = results.reduce((sum: number, r: unknown) => sum + (Number((r as Record<string, unknown>)[col]) || 0), 0);
                         const avg = results.length > 0 ? (total / results.length) : 0;
                         finalVal = avg.toFixed(1) + t('reports.footer_pct_avg', { defaultValue: ' % (Moy)' });
                     }

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import type { Facture, TicketCaisse, Client, FactureProduit } from '../types';
+import type { Facture, TicketCaisse, Client, FactureProduit, Paiement, PaymentDetails } from '../types';
 import { safeStorage } from '../utils/storage';
 import { PAYMENT_MODES } from '../config/paymentModes';
 import { logger } from '../utils/logger'
@@ -155,14 +155,15 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         
         // Déterminer le mode de paiement principal
         let modePaiement: TicketCaisse['mode_paiement'] = 'especes'; // Defaut
-        if (fullFacture.paiements && fullFacture.paiements.length > 0) {
-            const pm = fullFacture.paiements[0].mode_paiement;
+        const paiements = fullFacture.paiements as unknown as Paiement[] | undefined;
+        if (paiements && paiements.length > 0) {
+            const pm = paiements[0].mode_paiement;
              if (PAYMENT_MODES.some(m => m.value === pm)) {
                  modePaiement = pm as TicketCaisse['mode_paiement'];
              } else {
                  modePaiement = 'Mixte'; // Ou autre logique
              }
-             if (fullFacture.paiements.length > 1) modePaiement = 'Mixte';
+             if (paiements.length > 1) modePaiement = 'Mixte';
         }
 
         // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
@@ -179,13 +180,13 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             mode_paiement: modePaiement,
             montant: fullFacture.total_ttc,
             statut: 'completee',
-            date_paiement: fullFacture.paiements?.[0]?.date_paiement || fullFacture.date,
+            date_paiement: paiements?.[0]?.date_paiement || fullFacture.date,
             montant_verse: fullFacture.montant_verse || fullFacture.total_ttc,
             rendu: fullFacture.montant_rendu || '0',
             reference: null,
             is_duplicate: true,
             user_details: (() => {
-                const paymentUser = fullFacture.paiements?.[0]?.user_details;
+                const paymentUser = paiements?.[0]?.user_details;
                 if (paymentUser) {
                     return {
                         id: paymentUser.id,
@@ -197,7 +198,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                     username: fullFacture.created_by_name || '?'
                 };
             })(),
-            paiements_details: fullFacture.paiements || []
+            paiements_details: (paiements as unknown as PaymentDetails[]) || []
         };
 
         setSelectedTicket(ticket);

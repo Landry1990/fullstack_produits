@@ -910,7 +910,19 @@
             "exclude_zero_stock": "Exclude out-of-stock products",
             "print_btn": "Start printing",
             "print_no_rayon_title": "Print products without shelf",
-            "no_rayon": "Without Shelf"
+            "no_rayon": "Without Shelf",
+            "delete_all_btn": "Delete all",
+            "delete_all_confirm_title": "Delete all?",
+            "delete_all_confirm_msg": "All {{type}}s ({{count}}) will be moved to trash. You can restore them from the Trash page.",
+            "delete_all_confirm_btn": "Move all to trash",
+            "delete_all_success": "{{count}} {{type}}s moved to trash.",
+            "delete_all_error": "Error during bulk deletion.",
+            "delete_all_empty": "No {{type}} to delete.",
+            "add_another_entry": "Add another {{type}}",
+            "remove_entry": "Remove this row",
+            "save_all": "Save all ({{count}})",
+            "bulk_create_success": "{{count}} {{type}}s created successfully",
+            "bulk_create_error": "{{count}} error(s) during creation"
         },
         "smart_organizer": {
             "title": "Smart Organizer",

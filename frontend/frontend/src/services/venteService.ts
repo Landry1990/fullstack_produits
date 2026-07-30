@@ -79,7 +79,7 @@ const venteService = {
         return response.data;
     },
 
-    finaliser: async (data: unknown, idempotencyKey?: string): Promise<Facture> => {
+    finaliser: async (data: Record<string, unknown> & { idempotency_key?: string; image_ordonnance?: File | null }, idempotencyKey?: string): Promise<Facture> => {
         const key = idempotencyKey || data.idempotency_key || generateUUID();
         const headers = { 'Idempotency-Key': key };
 

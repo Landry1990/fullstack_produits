@@ -117,7 +117,14 @@
         "empty_subtitle": "Create your first product or service to get started.",
         "select_all": "Select all",
         "exclusivity": "Exclusivity",
-        "exclusive_badge": "EXCL"
+        "exclusive_badge": "EXCL",
+        "exclusive_badge_full": "Exclusive",
+        "inactive_badge": "Inactive"
+    },
+    "footer": {
+        "global": "Global",
+        "low_stock_title": "Low Stock",
+        "out_of_stock_title": "Out of stock"
     },
     "adjustment": {
         "title": "Adjust Stock",
@@ -312,6 +319,13 @@
         "errors_title": "Errors / Warnings:",
         "more_errors": "... and {{count}} other errors.",
         "success_toast": "Import completed successfully",
-        "error_toast": "Error during import"
+        "error_toast": "Error during import",
+        "sending_file": "Sending file...",
+        "background_started": "Import started in background...",
+        "done": "Import completed",
+        "import_error": "Error during import",
+        "comm_error": "Communication error with server",
+        "errors_count": "{{count}} error(s)",
+        "download_report": "Download Excel report"
     }
 }

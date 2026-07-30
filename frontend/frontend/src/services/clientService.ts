@@ -9,7 +9,7 @@ export interface ClientFilters {
 
 const clientService = {
     getAll: async (filters: ClientFilters = {}, skipCache: boolean = false): Promise<unknown> => {
-        const params: unknown = { ...filters };
+        const params: Record<string, unknown> = { ...filters };
         if (skipCache) {
             params._t = Date.now(); // Timestamp pour éviter le cache
         }

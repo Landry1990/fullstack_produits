@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { type RowInput } from 'jspdf-autotable';
 import { formatCurrency, formatDateFr } from '../formatters';
 import { getLocale } from '../dateUtils';
 import type { PharmacySettings } from '../../context/PharmacySettingsContext';
@@ -179,13 +179,13 @@ export async function generateMonthlyReportPdfDraft(
   autoTable(doc, {
     startY: currentY,
     head: [[t('tva.rate'), t('tva.ht'), t('tva.tax'), t('tva.ttc')]],
-    body: tvaTableBody,
+    body: tvaTableBody as unknown as RowInput[],
     theme: 'plain',
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
     margin: { left: margin, right: margin },
     styles: { fontSize: 8 }
   });
-  currentY = (doc as unknown).lastAutoTable.finalY + 8;
+  currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
 
   // Encaissements
   const encTableBody: unknown[][] = data.encaissements.map(e => [e.mode_label, fmt(e.montant)]);
@@ -197,13 +197,13 @@ export async function generateMonthlyReportPdfDraft(
   autoTable(doc, {
     startY: currentY,
     head: [[t('encaissements.mode'), t('encaissements.amount')]],
-    body: encTableBody,
+    body: encTableBody as unknown as RowInput[],
     theme: 'plain',
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
     margin: { left: margin, right: margin, bottom: 20 },
     styles: { fontSize: 8 }
   });
-  currentY = (doc as unknown).lastAutoTable.finalY + 8;
+  currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
 
   // Fournisseurs
   if (data.achats_par_fournisseur.length > 0) {
@@ -219,13 +219,13 @@ export async function generateMonthlyReportPdfDraft(
     autoTable(doc, {
       startY: currentY,
       head: [[t('suppliers.name'), t('suppliers.orders'), t('suppliers.amount')]],
-      body: supplierBody,
+      body: supplierBody as unknown as RowInput[],
       theme: 'plain',
       headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 8 }
     });
-    currentY = (doc as unknown).lastAutoTable.finalY + 8;
+    currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
   }
 
   // Clients Pro
@@ -243,13 +243,13 @@ export async function generateMonthlyReportPdfDraft(
     autoTable(doc, {
       startY: currentY,
       head: [[t('pro_clients.title'), t('pro_clients.ca_total'), t('pro_clients.paid'), t('pro_clients.balance')]],
-      body: proBody,
+      body: proBody as unknown as RowInput[],
       theme: 'plain',
       headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 8 }
     });
-    currentY = (doc as unknown).lastAutoTable.finalY + 8;
+    currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
   }
 
   // Unites Gratuites
@@ -266,13 +266,13 @@ export async function generateMonthlyReportPdfDraft(
     autoTable(doc, {
       startY: currentY,
       head: [["UNITES GRATUITES (TOP PRODUITS)", t('free_units.qty'), t('free_units.value')]],
-      body: freeBody,
+      body: freeBody as unknown as RowInput[],
       theme: 'plain',
       headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
       margin: { left: margin, right: margin, bottom: 20 },
       styles: { fontSize: 8 }
     });
-    currentY = (doc as unknown).lastAutoTable.finalY + 8;
+    currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
   }
 
   // Mouvements Caisse
@@ -286,7 +286,7 @@ export async function generateMonthlyReportPdfDraft(
         m.type,
         m.motif,
         fmt(m.montant)
-      ]),
+      ]) as unknown as RowInput[],
       theme: 'plain',
       headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
       margin: { left: margin, right: margin, bottom: 20 },
@@ -295,7 +295,7 @@ export async function generateMonthlyReportPdfDraft(
   }
 
   // Footers
-  const pageCount = (doc as unknown).internal.getNumberOfPages();
+  const pageCount = (doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(7);

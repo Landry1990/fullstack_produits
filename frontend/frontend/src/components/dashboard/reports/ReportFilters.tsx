@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { fr } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
-import type { QueryDefinition, Client } from '../../../hooks/useCentreRapports';
-import { Search, User, Truck, Users, Tag, Save, History, Trash2, LayoutPanelTop, Filter, Plus, X } from 'lucide-react';
+import type { QueryDefinition, Client, Supplier, User, Famille } from '../../../hooks/useCentreRapports';
+import { Search, User as UserIcon, Truck, Users, Tag, Save, History, Trash2, LayoutPanelTop, Filter, Plus, X } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../shadcn/input';
 import { Select } from '../../ui/Select';
@@ -13,6 +13,19 @@ import { Badge } from '../../shadcn/badge';
 import { logger } from '../../../utils/logger'
 
 registerLocale('fr', fr);
+
+interface Preset {
+    id: string;
+    queryId: string;
+    name: string;
+    params?: Record<string, unknown>;
+}
+
+interface Condition {
+    field: string;
+    operator: string;
+    value: string;
+}
 
 interface ReportFiltersProps {
     selectedQuery: QueryDefinition;
@@ -32,7 +45,7 @@ interface ReportFiltersProps {
     };
     supplierSearch: {
         query: string;
-        filtered: unknown[];
+        filtered: Supplier[];
         showDropdown: boolean;
         selectedName: string;
     };
@@ -43,7 +56,7 @@ interface ReportFiltersProps {
     };
     userSearch: {
         query: string;
-        filtered: unknown[];
+        filtered: User[];
         showDropdown: boolean;
         selectedName: string;
     };
@@ -54,7 +67,7 @@ interface ReportFiltersProps {
     };
     familleSearch: {
         query: string;
-        filtered: unknown[];
+        filtered: Famille[];
         showDropdown: boolean;
         selectedName: string;
     };
@@ -68,7 +81,7 @@ interface ReportFiltersProps {
         delete: (id: string) => void;
         apply: (preset: unknown) => void;
     };
-    presetList: unknown[];
+    presetList: Record<string, unknown>[];
 }
 
 export const ReportFilters: React.FC<ReportFiltersProps> = ({
@@ -111,11 +124,11 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
         onParamsChange({ ...params, [key]: value });
     };
 
-    const getSafeConditions = () => {
+    const getSafeConditions = (): Condition[] => {
         try {
             const conds = params.conditions;
             if (!conds) return [];
-            return typeof conds === 'string' ? JSON.parse(conds) : conds;
+            return typeof conds === 'string' ? JSON.parse(conds) : conds as Condition[];
         } catch (e) {
             logger.error(t('reports.err_parse_conditions', { defaultValue: 'Erreur de parsing des conditions:' }), e);
             return [];
@@ -142,23 +155,26 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                     <History className="size-3" />
                     {t('reports.my_configs', { defaultValue: 'Mes Configurations :' })}
                 </div>
-                {presetList.flatMap(p => p.queryId === selectedQuery.id ? [(
-                    <div key={p.id} className="group flex items-center gap-1">
+                {presetList.flatMap(p => {
+                    const preset = p as unknown as Preset;
+                    return preset.queryId === selectedQuery.id ? [(
+                    <div key={preset.id} className="group flex items-center gap-1">
                         <Button
                             variant="ghost" size="sm"
-                            onClick={() => presets.apply(p)}
+                            onClick={() => presets.apply(preset)}
                             className="rounded-full bg-slate-100 hover:bg-indigo-600 hover:text-white border-none transition-all px-3"
                         >
-                            {p.name}
+                            {preset.name}
                         </Button>
-                        <button 
-                            onClick={() => presets.delete(p.id)}
+                        <button
+                            onClick={() => presets.delete(preset.id)}
                             className="size-7 p-0 rounded-full opacity-0 group-hover:opacity-100 text-red-600 hover:bg-red-50 transition-all flex items-center justify-center"
                         >
                             <Trash2 className="size-3" />
                         </button>
                     </div>
-                )] : [])}
+                )] : [];
+                })}
                 <Button 
                     variant="outline" size="sm"
                     onClick={() => {
@@ -184,7 +200,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'month' && (
                             <DatePicker
-                                selected={safeDate(params[param.key] ? params[param.key] + '-01' : null)}
+                                selected={safeDate(params[param.key] ? (params[param.key] as string) + '-01' : null)}
                                 onChange={(date: Date | null) => {
                                     if (date) {
                                         const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -239,7 +255,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         {param.type === 'number' && (
                             <Input
                                 type="number"
-                                value={params[param.key] !== undefined && params[param.key] !== null ? params[param.key] : ''}
+                                value={params[param.key] !== undefined && params[param.key] !== null ? (params[param.key] as string | number) : ''}
                                 onChange={e => setParam(param.key, e.target.value === '' ? '' : Number(e.target.value))}
                                 className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             />
@@ -248,7 +264,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         {param.type === 'text' && (
                             <Input
                                 type="text"
-                                value={params[param.key] || ''}
+                                value={(params[param.key] as string) || ''}
                                 onChange={e => setParam(param.key, e.target.value)}
                                 className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             />
@@ -286,7 +302,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                     }}
                                                 >
                                                     <div className="size-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
-                                                        <User className="size-4" />
+                                                        <UserIcon className="size-4" />
                                                     </div>
                                                     <div className="flex-1">
                                                         <div className="font-bold text-sm">{client.name}</div>
@@ -456,7 +472,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'select' && param.options && (
                             <Select
-                                value={params[param.key] || ''}
+                                value={(params[param.key] as string) || ''}
                                 onChange={e => setParam(param.key, e.target.value)}
                                 className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
                             >
@@ -526,7 +542,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         </div>
 
                                         <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                                            {currentConditions.map((cond: unknown, idx: number) => {
+                                            {currentConditions.map((cond: Condition, idx: number) => {
                                                 const showValueInput = !['isnull', 'notnull'].includes(cond.operator);
                                                 
                                                 return (
@@ -590,7 +606,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         <button 
                                                             className="size-7 p-0 rounded-full text-red-600 hover:bg-red-50 ml-auto flex items-center justify-center transition-colors"
                                                             onClick={() => {
-                                                                const newConds = currentConditions.filter((_: unknown, i: number) => i !== idx);
+                                                                const newConds = currentConditions.filter((_: Condition, i: number) => i !== idx);
                                                                 setParam('conditions', JSON.stringify(newConds));
                                                             }}
                                                         >
@@ -621,7 +637,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         <LayoutPanelTop className="size-4" />
                                         <span>{t('dynamic_constructor.select_columns')}</span>
                                         <Badge className="ml-1">
-                                            {(params[param.key] || '').split(',').filter(Boolean).length}
+                                            {((params[param.key] as string) || '').split(',').filter(Boolean).length}
                                         </Badge>
                                     </button>
                                     {fieldsOpen && (
@@ -649,7 +665,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                 return true;
                                             });
                                             return filteredOptions.map(opt => {
-                                                const currentFields = (params[param.key] || '').split(',').filter(Boolean);
+                                                const currentFields = ((params[param.key] as string) || '').split(',').filter(Boolean);
                                                 const isChecked = currentFields.includes(opt.value);
                                                 
                                                 return (

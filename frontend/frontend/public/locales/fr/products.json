@@ -117,7 +117,14 @@
         "empty_subtitle": "Créez votre premier produit ou service pour commencer.",
         "select_all": "Tout sélectionner",
         "exclusivity": "Exclusivité",
-        "exclusive_badge": "EXCLU"
+        "exclusive_badge": "EXCLU",
+        "exclusive_badge_full": "Exclusif",
+        "inactive_badge": "Inactif"
+    },
+    "footer": {
+        "global": "Global",
+        "low_stock_title": "Stock Faible",
+        "out_of_stock_title": "Rupture"
     },
     "adjustment": {
         "title": "Ajuster le Stock",
@@ -316,6 +323,13 @@
         "errors_title": "Erreurs / Avertissements:",
         "more_errors": "... et {{count}} autres erreurs.",
         "success_toast": "Importation terminée avec succès",
-        "error_toast": "Erreur lors de l'importation"
+        "error_toast": "Erreur lors de l'importation",
+        "sending_file": "Envoi du fichier...",
+        "background_started": "Import démarré en arrière-plan...",
+        "done": "Import terminé",
+        "import_error": "Erreur lors de l'import",
+        "comm_error": "Erreur de communication avec le serveur",
+        "errors_count": "{{count}} erreur(s)",
+        "download_report": "Télécharger le rapport Excel"
     }
 }

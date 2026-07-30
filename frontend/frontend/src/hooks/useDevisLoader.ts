@@ -2,7 +2,11 @@ import { useEffect, useRef } from 'react'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { safeStorage } from '../utils/storage'
-import type { ProduitModel, Facture, LigneFacture } from '../types'
+import type { ProduitModel, Facture, FactureProduit, LigneFacture } from '../types'
+
+interface DevisProduit extends FactureProduit {
+    stock_lot?: number | string | null
+}
 
 export interface UseDevisLoaderOptions {
     clientsHook: {
@@ -47,7 +51,7 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                 }
 
                 if (devis.produits && devis.produits.length > 0) {
-                    const lignes: LigneFacture[] = await Promise.all(devis.produits.map(async (p: unknown) => {
+                    const lignes: LigneFacture[] = await Promise.all((devis.produits as DevisProduit[]).map(async (p) => {
                         let produitData: ProduitModel
                         if (typeof p.produit === 'object' && p.produit.stock !== undefined) {
                             produitData = p.produit

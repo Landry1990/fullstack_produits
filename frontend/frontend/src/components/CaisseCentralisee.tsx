@@ -5,7 +5,7 @@ import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
-import type { Facture, TicketCaisse, CouponMonnaie, PosteVente } from '../types'
+import type { Facture, TicketCaisse, CouponMonnaie, PosteVente, PosteCaisse } from '../types'
 import PasswordConfirmModal from './PasswordConfirmModal'
 import { PaymentModal } from './caisse/PaymentModal'
 import { FacturesTable } from './caisse/FacturesTable'
@@ -64,7 +64,7 @@ const _navigate = useNavigate()
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0)
   
   // États pour le multi-caisse et sessions
-  const [postesCaisses, setPostesCaisses] = useState<unknown[]>([])
+  const [postesCaisses, setPostesCaisses] = useState<PosteCaisse[]>([])
   const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<string>('all')
   const [isMultiCaisse, setIsMultiCaisse] = useState(false)
   const [myActivePoste, setMyActivePoste] = useState<PosteVente | null>(null)
@@ -254,7 +254,8 @@ const _navigate = useNavigate()
       setMyActivePoste(null)
       setSessionRecap(null)
     } catch (err: unknown) {
-      toast.error(err.response?.data?.detail || t('cash_session.close_error', { defaultValue: 'Erreur fermeture' }))
+      const axiosErr = err as { response?: { data?: { detail?: string } } }
+      toast.error(axiosErr.response?.data?.detail || t('cash_session.close_error', { defaultValue: 'Erreur fermeture' }))
     }
   }
 
@@ -283,7 +284,7 @@ const _navigate = useNavigate()
         setIsDetailsCouponModalOpen(false)
         setShowTicketPreview(false)
       },
-      canCashOut: (user as unknown)?.can_cash_out || user?.is_superuser || false
+      canCashOut: user?.can_cash_out || user?.is_superuser || false
     },
     {
       sortedFactures,
@@ -328,7 +329,11 @@ const _navigate = useNavigate()
   const handleSendWhatsApp = async () => {
     if (!ticketCaisse || !ticketCaisse.facture || typeof ticketCaisse.facture === 'number') return
     
-    const facture = ticketCaisse.facture as unknown
+    const facture = ticketCaisse.facture as unknown as {
+      id: number;
+      client: number | { phone?: string };
+      client_phone?: string;
+    }
     // Déterminer le numéro (priorité au numéro du client si présent)
     const clientPhone = (typeof facture.client === 'object' ? facture.client?.phone : '') || facture.client_phone
     const phone = window.prompt(t('messages.enter_whatsapp_number') || t('messages.enter_whatsapp_number_desc'), clientPhone || '')
@@ -383,7 +388,7 @@ const _navigate = useNavigate()
     })
   }, [facturesEnAttente])
 
-  const canBulkCancel = user?.is_superuser || (user as unknown)?.can_cancel_invoice || (user as unknown)?.profile?.can_cancel_invoice
+  const canBulkCancel = user?.is_superuser || (user as { can_cancel_invoice?: boolean } | null)?.can_cancel_invoice || (user as { profile?: { can_cancel_invoice?: boolean } } | null)?.profile?.can_cancel_invoice || false
 
   // Ouvrir le modal de confirmation
   const handleBulkCancelClick = () => {

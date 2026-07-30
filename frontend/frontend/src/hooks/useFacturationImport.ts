@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import type { TFunction } from 'i18next'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import type { ProduitModel } from '../types'
@@ -8,7 +9,7 @@ export interface UseFacturationImportOptions {
         bulkAddProduits: (items: { product: ProduitModel; quantity: number; discountPercent: string }[]) => void
     }
     apiBaseUrl: string
-    t: (key: string, options?: unknown) => string
+    t: TFunction
 }
 
 export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {

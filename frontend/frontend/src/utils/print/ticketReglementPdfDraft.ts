@@ -132,7 +132,7 @@ export function generateTicketReglementPdfDraft(data: TicketReglementData): jsPD
         margin: { left: margin, right: margin },
     });
 
-    y = (doc as unknown).lastAutoTable.finalY + 8;
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
 
     // Recap
     doc.setFontSize(11);

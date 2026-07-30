@@ -28,7 +28,8 @@ export interface BulkPaiementPayload {
 const creanceService = {
     getAll: async (params: CreanceFilters = {}): Promise<Creance[]> => {
         const response = await api.get<unknown>('creances/', { params });
-        return Array.isArray(response.data) ? response.data : (response.data.results || []);
+        const data = response.data as Creance[] | { results: Creance[] };
+        return Array.isArray(data) ? data : (data.results || []);
     },
 
     getReleve: async (params: { client_id: string; date_debut?: string; date_fin?: string }): Promise<unknown> => {

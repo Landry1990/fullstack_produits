@@ -122,7 +122,7 @@ export function useDatamatrixScan({
             }
         } catch (err: unknown) {
             setScanStatus('error');
-            const detail = err?.response?.data?.detail || 'Lot ou produit introuvable.';
+            const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Lot ou produit introuvable.';
             toast.error(detail);
         } finally {
             setScanInput('');

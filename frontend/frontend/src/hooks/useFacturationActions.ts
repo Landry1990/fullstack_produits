@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { TFunction } from 'i18next';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
@@ -23,7 +24,7 @@ export interface UseFacturationActionsProps {
     pendingSales: ReturnType<typeof usePendingSales>;
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
-    t: (key: string, options?: Record<string, unknown>) => string;
+    t: TFunction;
     productSearch: ReturnType<typeof useProductSearch>;
     searchInputRef: React.RefObject<HTMLInputElement | null>;
     paymentInputRef: React.RefObject<HTMLInputElement | null>;
@@ -258,7 +259,7 @@ export function useFacturationActions({
 
     const handleSendWhatsApp = useCallback(async () => {
         if (!ui.ticketCaisse || !ui.ticketCaisse.facture || typeof ui.ticketCaisse.facture === 'number') return
-        const facture = ui.ticketCaisse.facture as unknown
+        const facture = ui.ticketCaisse.facture as unknown as { id: number; client: number | { phone?: string }; client_phone?: string }
         const clientPhone = (typeof facture.client === 'object' ? facture.client?.phone : '') || facture.client_phone
         const phone = window.prompt(t('facturation.messages.enter_whatsapp_number') || 'Entrez le numéro WhatsApp', clientPhone || '')
         if (!phone) return

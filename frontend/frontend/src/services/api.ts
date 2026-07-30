@@ -38,12 +38,14 @@ const api = axios.create({
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const isNetworkError = (error: unknown): boolean => {
-    return !error.response && (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.message === 'Network Error');
+    const e = error as Record<string, unknown>;
+    return !e.response && (e.code === 'ERR_NETWORK' || e.code === 'ECONNABORTED' || e.message === 'Network Error');
 };
 
 const isRetryableRequest = (error: unknown): boolean => {
     // Retry sur erreurs réseau (connexion perdue, timeout) et erreurs serveur temporaires
-    const status = error.response?.status;
+    const e = error as { response?: { status?: number } };
+    const status = e.response?.status;
     const isServerTempUnavailable = status === 502 || status === 503 || status === 504;
     return isNetworkError(error) || isServerTempUnavailable;
 };
@@ -137,8 +139,9 @@ api.interceptors.response.use(
         }
         return response;
     },
-    async (error) => {
-        const config = error.config;
+    async (error: unknown) => {
+        const err = error as Record<string, unknown> & { config?: Record<string, unknown> & { _retryCount?: number; method?: string } };
+        const config = err.config;
 
         // Retry automatique sur les GET en cas de coupure réseau (jamais sur POST pour éviter double envoi)
         if (isRetryableRequest(error) && config && config.method?.toLowerCase() !== 'post') {
@@ -164,11 +167,11 @@ api.interceptors.response.use(
                 },
                 iconTheme: { primary: '#fff', secondary: '#dc2626' },
             });
-            return Promise.reject(error);
+            return Promise.reject(err);
         }
 
-        const status = error.response?.status;
-        const requestUrl = String(error.config?.url ?? '');
+        const status = (err.response as { status?: number } | undefined)?.status;
+        const requestUrl = String(err.config?.url ?? '');
 
         if (status === 401) {
             const currentPath = window.location.pathname;
@@ -190,7 +193,8 @@ api.interceptors.response.use(
                 }, 300);
             }
         } else if (status === 403) {
-            if (error.response?.data?.code_erreur === 'LICENCE_INVALIDE') {
+            const responseData = (err.response as { data?: { code_erreur?: string } } | undefined)?.data;
+            if (responseData?.code_erreur === 'LICENCE_INVALIDE') {
                 if (window.location.pathname !== '/licence') {
                     navigationService.navigate('/licence', { replace: true });
                 }
@@ -199,11 +203,11 @@ api.interceptors.response.use(
             }
         } else if (status === 429) {
             toast.error(i18n.t('common:messages.rate_limited', { defaultValue: 'Trop de tentatives. Attendez quelques instants.' }), { id: 'rate-limited', duration: 6000 });
-        } else if (status >= 500) {
+        } else if (status !== undefined && status >= 500) {
             toast.error(t('messages.server_error', 'Erreur serveur. Réessayez plus tard.'), { id: 'server-error' });
         }
 
-        return Promise.reject(error);
+        return Promise.reject(err);
     }
 );
 

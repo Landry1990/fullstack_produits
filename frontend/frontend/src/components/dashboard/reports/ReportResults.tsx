@@ -73,8 +73,8 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                 <div className="flex flex-col items-center justify-center py-20 text-emerald-600 animate-in zoom-in duration-500">
                     <Download className="size-16 mb-4" />
                     <p className="text-lg font-black uppercase tracking-widest">{t('results.export_success_short', { defaultValue: 'Rapport Généré' })}</p>
-                    {results && typeof results === 'object' && (results as unknown).filename && (
-                         <p className="text-xs opacity-60 mt-2">{(results as unknown).filename}</p>
+                    {results && typeof results === 'object' && (results as { filename?: string }).filename && (
+                         <p className="text-xs opacity-60 mt-2">{(results as { filename?: string }).filename}</p>
                     )}
                 </div>
             );
@@ -129,10 +129,11 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             // Certains rapports retournent déjà une ligne total qu'il ne faut pas compter dans le calcul frontend
             const isTotalRow = (r: unknown): boolean => {
                 if (!r || typeof r !== 'object') return false;
+                const row = r as Record<string, unknown>;
                 // Déjà géré pour le rapport multi-annuel
-                if (isMultiYearCAReport && r.Mois === 'total_general') return true;
+                if (isMultiYearCAReport && row['Mois'] === 'total_general') return true;
                 // Détecter les lignes TOTAL (case insensitive) dans n'importe quelle colonne string
-                return Object.values(r).some(val => 
+                return Object.values(row).some(val => 
                     typeof val === 'string' && val.toUpperCase() === 'TOTAL'
                 );
             };
@@ -193,8 +194,8 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: unknown, _idx: number) => (
-                                    <tr key={row.id ?? row.produit_id ?? row.code ?? row['nom'] ?? row['produit_nom']} className={`hover:bg-emerald-50 transition-all group ${
+                                {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: Record<string, unknown>, _idx: number) => (
+                                    <tr key={String(row.id ?? row.produit_id ?? row.code ?? row['nom'] ?? row['produit_nom'])} className={`hover:bg-emerald-50 transition-all group ${
                                         isMargesReport && Number(row['taux_marge'] ?? 0) < 0 ? 'bg-red-50' :
                                         isMargesReport && Number(row['taux_marge'] ?? 0) < 25 ? 'bg-amber-50' : ''
                                     }`}>
@@ -232,7 +233,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                             if (idx === 0) return <td key={col} className="py-4 px-6 text-[10px] tracking-widest">{t('common:total', 'TOTAL / MOYENNE')}</td>;
                                             
                                             if (isAverageColumn(col)) {
-                                                const total = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
+                                                const total = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r[col]) || 0), 0);
                                                 const avg = filteredResults.length > 0 ? total / filteredResults.length : 0;
                                                 return (
                                                     <td key={col} className="py-4 px-4 text-right text-sm">
@@ -245,15 +246,15 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                             }
 
                                             if (isSummableColumn(col)) {
-                                                const total = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
+                                                const total = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r[col]) || 0), 0);
                                                 return <td key={col} className="py-4 px-4 text-right text-sm">{formatValue(col, total, t)}</td>;
                                             }
                                             
                                             if (isPercentageColumn(col)) {
                                                 // Pour taux_marge : calculer le taux global à partir de mt_vente et marge agrégés
                                                 if (col === 'taux_marge') {
-                                                    const totalMtVente = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r['mt_vente']) || 0), 0);
-                                                    const totalMarge   = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r['marge']) || 0), 0);
+                                                    const totalMtVente = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r['mt_vente']) || 0), 0);
+                                                    const totalMarge   = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r['marge']) || 0), 0);
                                                     const tauxGlobal   = totalMtVente > 0 ? (totalMarge / totalMtVente) * 100 : 0;
                                                     return (
                                                         <td key={col} className="py-4 px-4 text-right text-sm">
@@ -264,7 +265,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                         </td>
                                                     );
                                                 }
-                                                const total = filteredResults.reduce((sum: number, r: unknown) => sum + (Number(r[col]) || 0), 0);
+                                                const total = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r[col]) || 0), 0);
                                                 const avg = filteredResults.length > 0 ? (total / filteredResults.length) : 0;
                                                 return <td key={col} className="py-4 px-4 text-right text-sm">{avg.toFixed(1)} %</td>;
                                             }
