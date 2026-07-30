@@ -73,6 +73,7 @@ interface SessionCaisse {
   date_fermeture: string | null
   montant_total_encaisse: string | null
   est_active: boolean
+  est_actif: boolean
   ventilation_paiements: Record<string, number>
 }
 
@@ -401,9 +402,9 @@ export default function HistoriqueClotures() {
                 >
                   <Clock className="size-4" />
                   {t('tabs.sessions')}
-                  {sessions.filter(s => s.est_active).length > 0 && (
+                  {sessions.filter(s => s.est_actif).length > 0 && (
                     <Badge variant="outline" className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-600 border-emerald-200 animate-pulse">
-                      {t('sessions.active_badge', { count: sessions.filter(s => s.est_active).length })}
+                      {t('sessions.active_badge', { count: sessions.filter(s => s.est_actif).length })}
                     </Badge>
                   )}
                 </Button>
@@ -533,7 +534,7 @@ export default function HistoriqueClotures() {
         /* ========== ONGLET SESSIONS DE CAISSE ========== */
         <div className="flex-1 px-3 sm:px-6 py-4 sm:py-6 overflow-hidden flex flex-col gap-4">
           {/* Active Sessions Banner */}
-          {(() => { const activeSessions = sessions.filter(s => s.est_active); return activeSessions.length > 0 ? (
+          {(() => { const activeSessions = sessions.filter(s => s.est_actif); return activeSessions.length > 0 ? (
             <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
               <h3 className="font-bold text-emerald-600 text-sm uppercase tracking-wider flex items-center gap-2 mb-3">
                 <PlayCircle className="size-4 animate-pulse" />
@@ -605,9 +606,9 @@ export default function HistoriqueClotures() {
                     sessionsPaged.map(session => {
                       const totalVentilation = Object.values(session.ventilation_paiements || {}).reduce((s, v) => s + v, 0)
                       return (
-                        <tr key={session.id} className={cn("hover:bg-slate-50 transition-colors", session.est_active ? 'bg-emerald-50/50' : '')}>
+                        <tr key={session.id} className={cn("hover:bg-slate-50 transition-colors", session.est_actif ? 'bg-emerald-50/50' : '')}>
                           <td className="py-3 px-2">
-                            {session.est_active ? (
+                            {session.est_actif ? (
                               <Badge className="bg-emerald-500 text-white gap-1 font-bold text-[10px]">
                                 <PlayCircle className="size-3" />
                                 {t('sessions.status.active')}
@@ -632,8 +633,10 @@ export default function HistoriqueClotures() {
                           <td className="py-3 px-2">
                             {session.date_fermeture ? (
                               <div className="font-semibold text-sm">{formatDate(session.date_fermeture)}</div>
-                            ) : (
+                            ) : session.est_actif ? (
                               <span className="text-emerald-600 font-bold text-xs animate-pulse">{t('sessions.status.in_progress')}</span>
+                            ) : (
+                              <span className="text-slate-400 font-medium text-xs">{t('sessions.status.not_opened', { defaultValue: 'Non ouvert' })}</span>
                             )}
                           </td>
                           <td className="text-right py-3 px-2 font-medium text-slate-700 text-sm">
@@ -1170,7 +1173,7 @@ export default function HistoriqueClotures() {
       {selectedSession && (
         <dialog open aria-labelledby="session-detail-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
           <div className="w-full max-w-lg p-0 overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
-            <div className={cn("p-6 shrink-0", selectedSession.est_active ? 'bg-emerald-600 text-white' : 'bg-emerald-600 text-white')}>
+            <div className={cn("p-6 shrink-0", selectedSession.est_actif ? 'bg-emerald-600 text-white' : 'bg-emerald-600 text-white')}>
               <h3 id="session-detail-title" className="font-bold text-xl flex items-center gap-3">
                 <Clock className="size-6" />
                 {t('sessions.modal.title')}
@@ -1187,7 +1190,7 @@ export default function HistoriqueClotures() {
                   <div className="text-xs uppercase font-bold text-slate-500 mb-1">{t('sessions.modal.opening')}</div>
                   <div className="font-mono text-sm font-bold">{formatDate(selectedSession.date_ouverture)}</div>
                 </div>
-                <div className={cn("p-4 rounded-xl border", selectedSession.est_active ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200')}>
+                <div className={cn("p-4 rounded-xl border", selectedSession.est_actif ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200')}>
                   <div className="text-xs uppercase font-bold text-slate-500 mb-1">{t('sessions.modal.closing')}</div>
                   {selectedSession.date_fermeture ? (
                     <div className="font-mono text-sm font-bold">{formatDate(selectedSession.date_fermeture)}</div>
