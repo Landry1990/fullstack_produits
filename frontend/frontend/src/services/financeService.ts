@@ -4,7 +4,7 @@ import type {
     CAEvolutionData, MargesEvolutionData, PredictionsData, KPIsData,
     TopProductsData, RepartitionData, CategoryAnalysisData, CategoryEvolutionData,
     MarginAnalysisData, SupplierAnalysisItem, ProduitComparaison, RepartitionAchatsData,
-    MarginVarianceData
+    MarginVarianceData, MargeParProduitData, ImpactPromotionsData
 } from '../hooks/useFinanceStats';
 
 const financeService = {
@@ -80,6 +80,20 @@ const financeService = {
     getMarginVarianceAnalysis: async (params?: unknown): Promise<MarginVarianceData> => {
         const response = await api.get('finance-stats/margin_variance_analysis/', { params });
         return response.data as MarginVarianceData;
+    },
+
+    getMargeParProduit: async (periode: string = 'mois'): Promise<MargeParProduitData> => {
+        const response = await api.get('finance-stats/marge_par_produit/', {
+            params: { periode }
+        });
+        return response.data as MargeParProduitData;
+    },
+
+    getImpactPromotions: async (periode: string = 'mois'): Promise<ImpactPromotionsData> => {
+        const response = await api.get('finance-stats/impact_promotions/', {
+            params: { periode }
+        });
+        return response.data as ImpactPromotionsData;
     },
 
     // Supplier Payments
