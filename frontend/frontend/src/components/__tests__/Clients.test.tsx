@@ -45,7 +45,7 @@ describe('Clients Component', () => {
   });
 
   it('filters clients on search', async () => {
-    vi.mocked(clientService.getAll).mockImplementation((params: unknown) => {
+    vi.mocked(clientService.getAll).mockImplementation((params: { search?: string }) => {
       const search = params?.search?.toLowerCase() || '';
       const filtered = mockClients.filter(c => 
         c.name.toLowerCase().includes(search) || 

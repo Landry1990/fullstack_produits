@@ -56,10 +56,17 @@ function composerReducer(state: ComposerState, action: ComposerAction): Composer
 }
 // ────────────────────────────────────────────────────────────────────────────
 
+interface MessagingUser {
+  id?: number;
+  username: string;
+  is_staff?: boolean;
+  is_superuser?: boolean;
+}
+
 interface MessagingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentUser: unknown;
+  currentUser: MessagingUser;
   onMessageRead?: () => void;
 }
 
@@ -94,17 +101,20 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       }
       
       const results = await Promise.all(requests);
-      const [msgRes, tempRes, userRes] = results;
-      
+      const msgRes = results[0] as { data: InternalMessage[] | { results: InternalMessage[] } };
+      const tempRes = results[1] as { data: MessageTemplate[] | { results: MessageTemplate[] } };
+      const userRes = results[2] as SimpleUser[];
+
       const msgs = Array.isArray(msgRes.data) ? msgRes.data : (msgRes.data.results || []);
       const temps = Array.isArray(tempRes.data) ? tempRes.data : (tempRes.data.results || []);
-      
+
       setMessages(msgs);
       setTemplates(temps);
       setUsers(userRes.filter((u: SimpleUser) => u.id !== currentUser?.id));
-      
+
       if (isAdmin && results[3]) {
-        const allMsgs = Array.isArray(results[3].data) ? results[3].data : (results[3].data.results || []);
+        const allMsgsRes = results[3] as { data: InternalMessage[] | { results: InternalMessage[] } };
+        const allMsgs = Array.isArray(allMsgsRes.data) ? allMsgsRes.data : (allMsgsRes.data.results || []);
         setAllMessages(allMsgs);
       }
     } catch (error) {
@@ -114,7 +124,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
   };
 
   useEffect(() => {
-    let interval: unknown;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (isOpen) {
       loadData(); // Initial load
       interval = setInterval(() => {
@@ -610,7 +620,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                       onChange={(e) => dispatchComposer({ type: 'SET_RECIPIENT', payload: e.target.value === '' ? '' : Number(e.target.value) })}
                     >
                       <option value="">{t('new.all')}</option>
-                      {users.map((u: unknown) => (
+                      {users.map((u: SimpleUser) => (
                         <option key={u.id} value={u.id}>{u.username}</option>
                       ))}
                     </select>

@@ -14,7 +14,7 @@ export function useFinanceFournisseurs() {
 
     const fetchFournisseurs = useCallback(async () => {
         try {
-            const data = await fournisseurService.getAll();
+            const data = await fournisseurService.getAll() as unknown as Fournisseur[] | { results?: Fournisseur[] };
             setFournisseurs(Array.isArray(data) ? data : (data.results || []));
         } catch (error) {
             logger.error('Erreur lors du chargement des fournisseurs:', error);
@@ -25,7 +25,7 @@ export function useFinanceFournisseurs() {
     const fetchPaiements = useCallback(async (fournisseurId?: number) => {
         setLoading(true);
         try {
-            const data = await financeService.getPaiements(fournisseurId);
+            const data = await financeService.getPaiements(fournisseurId) as unknown as PaiementFournisseur[] | { results?: PaiementFournisseur[] };
             setPaiements(Array.isArray(data) ? data : (data.results || []));
         } catch (error) {
             logger.error('Erreur lors du chargement des paiements:', error);

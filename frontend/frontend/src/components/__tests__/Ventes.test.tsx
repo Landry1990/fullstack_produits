@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
 import Ventes from '../Ventes';
@@ -22,7 +22,7 @@ vi.mock('axios', () => ({
 }));
 
 // Helper to access mocks
-const mockedAxios = axios as unknown;
+const mockedAxios = axios as unknown as { get: Mock; post: Mock; delete: Mock; isAxiosError: Mock };
 
 // Mock hook
 vi.mock('../hooks/usePharmacySettings', () => ({

@@ -15,11 +15,76 @@ import {
 import { formatCurrency } from '../../../utils/formatters';
 import { Badge } from '../../shadcn/badge';
 
-interface MonthlyReportViewProps {
-    data: unknown;
+interface CAData {
+    ca_ttc?: number;
+    ca_ht?: number;
+    nb_ventes?: number;
 }
 
-const formatMoney = (v: number) => formatCurrency(Math.round(v || 0));
+interface MargeData {
+    marge_pct?: number;
+    marge_brute?: number;
+}
+
+interface CreancesData {
+    total?: number;
+    nb_factures?: number;
+}
+
+interface Encaissement {
+    id?: number;
+    mode_label?: string;
+    mode?: string;
+    montant?: number;
+}
+
+interface TvaEntry {
+    taux?: number;
+    montant_tva?: number;
+}
+
+interface MouvementsCaisse {
+    total_entrees?: number;
+    total_sorties?: number;
+    solde?: number;
+}
+
+interface AchatsFournisseur {
+    fournisseur_id?: number;
+    fournisseur_nom?: string;
+    montant_total?: number;
+}
+
+interface ClientsProfessionnels {
+    ca_total?: number;
+    montant_paye?: number;
+    reste_a_payer?: number;
+    taux_recouvrement_pct?: number;
+}
+
+interface UnitesGratuites {
+    valeur_totale?: number;
+    quantite_totale?: number;
+    pct_du_ca?: number;
+}
+
+interface MonthlyReportData {
+    ca?: CAData;
+    marge?: MargeData;
+    creances?: CreancesData;
+    encaissements?: Encaissement[];
+    ca_par_tva?: TvaEntry[];
+    mouvements_caisse?: MouvementsCaisse;
+    achats_par_fournisseur?: AchatsFournisseur[];
+    clients_professionnels?: ClientsProfessionnels;
+    unites_gratuites?: UnitesGratuites;
+}
+
+interface MonthlyReportViewProps {
+    data: MonthlyReportData;
+}
+
+const formatMoney = (v: number | undefined | null) => formatCurrency(Math.round(v || 0));
 
 export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) => {
     const { t } = useTranslation(['reports', 'common']);
@@ -80,7 +145,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                         </h3>
                     </div>
                     <div className="p-4 space-y-3">
-                        {(data.encaissements || []).map((enc: unknown, _idx: number) => (
+                        {(data.encaissements || []).map((enc: Encaissement, _idx: number) => (
                             <div key={enc.id ?? enc.mode_label ?? enc.mode} className="flex justify-between items-center p-2 rounded-xl border border-slate-200">
                                 <span className="text-xs font-bold text-slate-500 uppercase">{enc.mode_label || enc.mode}</span>
                                 <span className="text-sm font-black text-slate-800">{formatMoney(enc.montant)}</span>
@@ -103,7 +168,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                         </h3>
                     </div>
                     <div className="p-4 space-y-3">
-                        {(data.ca_par_tva || []).map((tva: unknown, _idx: number) => (
+                        {(data.ca_par_tva || []).map((tva: TvaEntry, _idx: number) => (
                             <div key={`tva-${tva.taux}`} className="flex justify-between items-center p-2 rounded-xl border border-slate-200">
                                 <span className="text-xs font-bold text-slate-500 uppercase">TVA {tva.taux}%</span>
                                 <span className="text-sm font-black text-slate-800">{formatMoney(tva.montant_tva)}</span>
@@ -154,7 +219,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                             </h3>
                         </div>
                         <div className="p-4 space-y-2">
-                            {data.achats_par_fournisseur.slice(0, 5).map((f: unknown, _idx: number) => (
+                            {data.achats_par_fournisseur.slice(0, 5).map((f: AchatsFournisseur, _idx: number) => (
                                 <div key={f.fournisseur_id ?? f.fournisseur_nom} className="flex justify-between items-center text-xs">
                                     <span className="font-bold text-slate-500 truncate max-w-[150px] uppercase">{f.fournisseur_nom}</span>
                                     <span className="font-black text-slate-800">{formatMoney(f.montant_total)}</span>
@@ -165,7 +230,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 )}
 
                 {/* Clients Pro */}
-                {data.clients_professionnels && data.clients_professionnels.ca_total > 0 && (
+                {data.clients_professionnels && (data.clients_professionnels.ca_total ?? 0) > 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
                         <div className="p-4 border-b border-slate-200 bg-slate-50/50">
                             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
@@ -195,7 +260,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 )}
 
                 {/* Unités Gratuites */}
-                {data.unites_gratuites && data.unites_gratuites.valeur_totale > 0 && (
+                {data.unites_gratuites && (data.unites_gratuites.valeur_totale ?? 0) > 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
                         <div className="p-4 border-b border-slate-200 bg-slate-50/50">
                             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">

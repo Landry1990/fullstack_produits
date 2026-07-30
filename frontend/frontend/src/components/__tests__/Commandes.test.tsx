@@ -83,7 +83,7 @@ vi.mock('../Commandes/TransferCommandeModal', () => ({ default: () => <div data-
 vi.mock('../Commandes/MergeCommandesModal', () => ({ default: () => <div data-testid="merge-modal" /> }))
 
 vi.mock('../Commandes/CommandeList', () => ({
-  default: ({ onOpenCreateView }: unknown) => (
+  default: ({ onOpenCreateView }: { onOpenCreateView: (type: string) => void }) => (
     <div>
       <div>Liste Mockée</div>
       <button onClick={() => onOpenCreateView('LOC')}>Nouvelle Commande</button>

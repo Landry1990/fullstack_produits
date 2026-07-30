@@ -10,11 +10,13 @@ import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
 import { logger } from '../utils/logger'
 
-interface _DailyPurchase {
+interface DailyPurchase {
   date: string;
   nb_commandes: number;
   total_achat: number;
 }
+
+type PurchaseRow = DailyPurchase | DetailedPurchase;
 
 interface DetailedPurchase {
   produit_id: number;
@@ -36,9 +38,9 @@ interface HistoriqueAchatsProps {
 
 const formatMoney = (amount: number) => formatCurrency(amount);
 
-function normalizeNumber(val: unknown) {
+function normalizeNumber(val: unknown): number {
     if (typeof val === 'string') return parseFloat(val);
-    return val;
+    return val as number;
 }
 
 const handlePrint = () => {
@@ -49,7 +51,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const { t, i18n } = useTranslation('orders');
   const { user } = useAuth();
   const { settings: pharmacySettings } = usePharmacySettings();
-  const [data, setData] = useState<unknown[]>([]);
+  const [data, setData] = useState<PurchaseRow[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -153,15 +155,15 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         const exportData = response.data;
         if (!exportData || exportData.length === 0) return;
 
-        let dataToExport: unknown[] = [];
+        let dataToExport: Record<string, string | number>[] = [];
         if (activeTab === 'summary') {
-            dataToExport = exportData.map((row: unknown) => ({
+            dataToExport = (exportData as DailyPurchase[]).map((row) => ({
                 [t('history.columns.date')]: format(new Date(row.date), 'dd/MM/yyyy'),
                 [t('history.columns.nb_orders')]: row.nb_commandes,
                 [t('history.columns.total_purchase')]: normalizeNumber(row.total_achat)
             }));
         } else {
-            dataToExport = exportData.map((row: unknown) => ({
+            dataToExport = (exportData as DetailedPurchase[]).map((row) => ({
                 [t('history.columns.product')]: row.produit__name,
                 [t('history.columns.cip')]: row.produit__cip1,
                 [t('history.columns.quantity')]: row.total_quantite,
@@ -383,26 +385,29 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                         <span className="size-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin inline-block"></span>
                       </td>
                     </tr>
-                  ) : filteredData.map((row, i) => (
-                    <tr key={activeTab === 'summary' ? row.date : row.produit_id} className="group hover:bg-blue-50/40 transition-colors">
+                  ) : filteredData.map((row, i) => {
+                    const summaryRow = row as DailyPurchase;
+                    const detailRow = row as DetailedPurchase;
+                    return (
+                    <tr key={activeTab === 'summary' ? summaryRow.date : detailRow.produit_id} className="group hover:bg-blue-50/40 transition-colors">
                       {activeTab === 'summary' ? (
                         <>
                           <td className="py-3 pl-8">
                             <div className="flex items-center gap-3">
                               <div className={`size-1.5 rounded-full ${i === 0 ? 'bg-blue-500' : 'bg-slate-200'}`} />
                               <span className="text-sm font-bold text-slate-600">
-                                {row.date ? format(new Date(row.date), 'dd MMMM yyyy', { locale: i18n.language.startsWith('fr') ? fr : undefined }) : '---'}
+                                {summaryRow.date ? format(new Date(summaryRow.date), 'dd MMMM yyyy', { locale: i18n.language.startsWith('fr') ? fr : undefined }) : '---'}
                               </span>
                             </div>
                           </td>
                           <td className="py-3 text-center">
                             <span className="inline-flex items-center justify-center h-7 px-3 rounded-full bg-slate-100 text-slate-600 text-xs font-black group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
-                              {row.nb_commandes}
+                              {summaryRow.nb_commandes}
                             </span>
                           </td>
                           <td className="py-3 text-right pr-8">
                             <span className="text-base font-black text-slate-800 group-hover:text-blue-600 transition-colors">
-                              {formatMoney(normalizeNumber(row.total_achat))}
+                              {formatMoney(normalizeNumber(summaryRow.total_achat))}
                             </span>
                             <span className="text-[10px] font-bold text-slate-400 ml-1">{t('common:currency_symbol')}</span>
                           </td>
@@ -410,27 +415,28 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                       ) : (
                         <>
                           <td className="py-3 pl-8">
-                            <div className="font-bold text-sm text-slate-700 group-hover:text-blue-600 transition-colors">{row.produit__name}</div>
+                            <div className="font-bold text-sm text-slate-700 group-hover:text-blue-600 transition-colors">{detailRow.produit__name}</div>
                           </td>
                           <td className="py-3">
-                            <div className="font-mono text-xs text-slate-400">{row.produit__cip1}</div>
+                            <div className="font-mono text-xs text-slate-400">{detailRow.produit__cip1}</div>
                           </td>
                           <td className="py-3 text-center">
-                            <span className="inline-flex items-center justify-center h-6 px-2.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">{row.total_quantite}</span>
+                            <span className="inline-flex items-center justify-center h-6 px-2.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">{detailRow.total_quantite}</span>
                           </td>
                           <td className="py-3 text-center">
-                            <span className="text-xs font-bold text-slate-500">{row.nb_commandes}</span>
+                            <span className="text-xs font-bold text-slate-500">{detailRow.nb_commandes}</span>
                           </td>
                           <td className="py-3 text-right pr-8">
                             <span className="text-sm font-black text-slate-800">
-                              {formatMoney(normalizeNumber(row.total_achat))}
+                              {formatMoney(normalizeNumber(detailRow.total_achat))}
                             </span>
                             <span className="text-[10px] font-bold text-slate-400 ml-1">{t('common:currency_symbol')}</span>
                           </td>
                         </>
                       )}
                     </tr>
-                  ))}
+                    );
+                  })}
                   {data.length === 0 && !loading && (
                     <tr>
                       <td colSpan={activeTab === 'summary' ? 3 : 5} className="text-center py-24">

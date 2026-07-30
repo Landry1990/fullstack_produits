@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
 import bwipjs from 'bwip-js'
 import PremiumModal from './common/PremiumModal'
-import { useTranslation } from 'react-i18next'
+import { useTranslation, type TFunction } from 'react-i18next'
 import { Button } from './shadcn/button'
 import { Badge } from './ui/Badge'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
@@ -188,7 +188,7 @@ function LabelPreview({
   fields: LabelField[]
   format: '40x20' | '30x15'
   barcodeType: 'CODE128' | 'DATAMATRIX'
-  t: unknown
+  t: TFunction
 }) {
   const isEnabled = (key: string) => fields.find(f => f.key === key)?.enabled ?? false
   const isCompact = format === '30x15'
@@ -356,7 +356,7 @@ function PreviewLabelWrapper({
   fields: LabelField[]
   format: '40x20' | '30x15'
   barcodeType: 'CODE128' | 'DATAMATRIX'
-  t: unknown
+  t: TFunction
   scale?: number
 }) {
   const isCompact = format === '30x15'
@@ -511,12 +511,12 @@ export default function SimplePrintLabelsModal({
       const resolved = produitObj || produitsMap.get(produitId)
 
       const productName =
-        (item as unknown).produit_nom ||
+        item.produit_nom ||
         resolved?.name ||
         `Produit #${produitId}`
 
       const cip =
-        (item as unknown).produit_cip ||
+        item.produit_cip ||
         resolved?.cip1 ||
         resolved?.cip2 ||
         resolved?.cip3 ||
@@ -556,7 +556,7 @@ export default function SimplePrintLabelsModal({
       const pharmacyName = pharmacySettings?.pharmacy_name || 'PHARMACIE'
 
       // Date d'entrée = date de clôture de la commande (réception effective) ou date du jour
-      const refDate = (commande as unknown).date_cloture || commande.date || new Date().toISOString()
+      const refDate = (commande as Commande & { date_cloture?: string }).date_cloture || commande.date || new Date().toISOString()
       const dateEntree = (() => {
         try {
           const d = new Date(refDate)
@@ -568,7 +568,7 @@ export default function SimplePrintLabelsModal({
 
       // Fournisseur
       const fournisseur =
-        (commande as unknown).fournisseur_nom ||
+        commande.fournisseur_nom ||
         resolved?.fournisseur_name ||
         ''
 
@@ -816,8 +816,8 @@ ${labelsHTML}
     }
 
     // Wait for fonts to be ready
-    if ((printWindow.document as unknown).fonts) {
-      (printWindow.document as unknown).fonts.ready.then(() => {
+    if ((printWindow.document as Document & { fonts?: { ready: Promise<void> } }).fonts) {
+      (printWindow.document as Document & { fonts?: { ready: Promise<void> } }).fonts!.ready.then(() => {
         // Small delay to ensure browser layout engine catch up
         setTimeout(triggerPrint, 500)
       })

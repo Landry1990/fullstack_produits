@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger'
+import type { Worker as TesseractWorker } from 'tesseract.js';
 export interface OcrResult {
   rawText: string;
   lines: string[];
@@ -13,7 +14,7 @@ export interface ScannedPrescription {
 }
 
 class PrescriptionOcrService {
-  private worker: unknown | null = null;
+  private worker: TesseractWorker | null = null;
   private isInitializing = false;
 
   async initialize(onProgress?: (progress: number) => void) {

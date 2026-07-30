@@ -95,7 +95,7 @@ export function useCommandeActions({
 
             if (!commandeId) {
                 if (isAutoSave) return;
-                throw new Error("ID de commande manquant");
+                throw new Error(t('messages.missing_id'));
             }
 
             // 2. Gérer les produits via bulk_sync
@@ -135,7 +135,7 @@ export function useCommandeActions({
             }
 
         } catch (err) {
-            toast.error(getApiErrorDetail(err, "Erreur de sauvegarde"));
+            toast.error(getApiErrorDetail(err, t('messages.save_error')));
         } finally {
             if (!isAutoSave) setExecutingAction(false);
         }
@@ -172,7 +172,7 @@ export function useCommandeActions({
             setSelectedCommande(updated);
             setViewMode('DETAILS');
         } catch (err) {
-            toast.error(getApiErrorDetail(err, "Erreur de clôture"));
+            toast.error(getApiErrorDetail(err, t('messages.close_error')));
             throw err;
         } finally {
             setExecutingAction(false);
@@ -191,7 +191,7 @@ export function useCommandeActions({
             setSelectedCommande(updated);
             fetchCommandes();
         } catch (err) {
-            toast.error(getApiErrorDetail(err, "Erreur lors du changement de statut"));
+            toast.error(getApiErrorDetail(err, t('messages.status_change_error')));
         } finally {
             setExecutingAction(false);
         }
@@ -207,7 +207,7 @@ export function useCommandeActions({
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
         } catch (err) {
-            toast.error(getApiErrorDetail(err, "Erreur lors de l'annulation"));
+            toast.error(getApiErrorDetail(err, t('messages.cancel_reception_error')));
             throw err;
         } finally {
             setExecutingAction(false);
@@ -283,7 +283,7 @@ export function useCommandeActions({
 
             const win = window.open('about:blank', '', 'height=800,width=1000');
             if (!win) {
-                toast.error(t('messages.popup_blocked', { defaultValue: 'Le popup d\'impression a été bloqué par le navigateur. Autorisez les popups pour ce site.' }));
+                toast.error(t('messages.popup_blocked'));
                 return;
             }
 
@@ -414,40 +414,40 @@ export function useCommandeActions({
             <h1 class="pharmacy-name">${escHtml(pharmacySettings.pharmacy_name || 'PHARMACIE')}</h1>
             <div class="pharmacy-info">
                 ${escHtml(pharmacySettings.address || '')}<br>
-                Tél: ${escHtml(pharmacySettings.phone || '')} | ${escHtml(pharmacySettings.email || '')}<br>
+                ${t('orders:print.tel')}: ${escHtml(pharmacySettings.phone || '')} | ${escHtml(pharmacySettings.email || '')}<br>
                 <span>NIU: ${escHtml(pharmacySettings.niu || '')} | RC: ${escHtml(pharmacySettings.registre_commerce || '')}</span>
             </div>
         </div>
         <div>
-            <div class="doc-title-box">${t('orders.tabs.delivery', { defaultValue: 'BON DE RÉCEPTION' })}</div>
+            <div class="doc-title-box">${t('orders:print.title')}</div>
             <div style="text-align: right; font-size: 9px; color: #555; margin-top: 4px;">
-                RÉF: ${escHtml(commande.numero_facture || '#' + commande.id)}
+                ${t('orders:print.ref')}: ${escHtml(commande.numero_facture || '#' + commande.id)}
             </div>
         </div>
     </div>
 
     <div class="info-grid">
         <div class="info-card">
-            <div class="card-label">${t('orders.form.provider_label', { defaultValue: 'Fournisseur' })}</div>
+            <div class="card-label">${t('orders:form.provider_label')}</div>
             <div class="provider-name">${escHtml(fournisseurName)}</div>
         </div>
         <div class="info-card">
-            <div class="card-label">${t('orders.product_table.info_row.indicators', { defaultValue: 'Détails de Réception' })}</div>
+            <div class="card-label">${t('orders:print.reception_details')}</div>
             <div class="detail-row">
-                <span>${t('orders.details.date', { defaultValue: 'Date Commande' })}:</span>
+                <span>${t('orders:details.date')}:</span>
                 <span class="detail-value">${formatDate(commande.date)}</span>
             </div>
             <div class="detail-row">
-                <span>${t('common:print_date', { defaultValue: 'Imprimé le' })}:</span>
+                <span>${t('orders:print.print_date')}:</span>
                 <span class="detail-value">${now}</span>
             </div>
             <div class="detail-row" style="border-top: 1px solid #e2e8f0; margin-top: 5px; padding-top: 5px;">
-                <span>${t('orders.details.created_by', { defaultValue: 'Saisie par' })}:</span>
-                <span class="detail-value">${escHtml(commande.created_by_name || 'N/A')}</span>
+                <span>${t('orders:details.created_by')}:</span>
+                <span class="detail-value">${escHtml(commande.created_by_name || t('common:not_available'))}</span>
             </div>
             <div class="detail-row">
-                <span>${t('orders.details.closed_by', { defaultValue: 'Clôturée par' })}:</span>
-                <span class="detail-value operator-name">${escHtml(commande.closed_by_name || 'N/A')}</span>
+                <span>${t('orders:details.closed_by')}:</span>
+                <span class="detail-value operator-name">${escHtml(commande.closed_by_name || t('common:not_available'))}</span>
             </div>
         </div>
     </div>
@@ -455,14 +455,14 @@ export function useCommandeActions({
     <table>
         <thead>
             <tr>
-                <th>${t('orders.product_table.headers.product', { defaultValue: 'Désignation' })}</th>
-                <th style="text-align: center;">${t('orders.product_table.headers.cip', { defaultValue: 'CIP' })}</th>
-                <th style="text-align: center;">${t('orders.product_table.headers.stAnt', { defaultValue: 'stAnt' })}</th>
-                <th style="text-align: center;">${t('orders.product_table.headers.qty', { defaultValue: 'Qté' })}</th>
-                <th style="text-align: center;">${t('orders.product_table.headers.ug', { defaultValue: 'UG' })}</th>
-                <th style="text-align: center;">${t('orders.product_table.headers.stock', { defaultValue: 'Stock' })}</th>
-                <th style="text-align: right;">${t('orders.product_table.headers.buy_price_ht', { defaultValue: 'P.U HT' })}</th>
-                <th style="text-align: right;">${t('orders.product_table.headers.total_ht', { defaultValue: 'Total HT' })}</th>
+                <th>${t('orders:product_table.headers.product')}</th>
+                <th style="text-align: center;">${t('orders:product_table.headers.cip')}</th>
+                <th style="text-align: center;">${t('orders:product_table.headers.stAnt')}</th>
+                <th style="text-align: center;">${t('orders:product_table.headers.qty')}</th>
+                <th style="text-align: center;">${t('orders:product_table.headers.ug')}</th>
+                <th style="text-align: center;">${t('orders:product_table.headers.stock')}</th>
+                <th style="text-align: right;">${t('orders:product_table.headers.buy_price_ht')}</th>
+                <th style="text-align: right;">${t('orders:product_table.headers.total_ht')}</th>
             </tr>
         </thead>
         <tbody>
@@ -473,28 +473,28 @@ export function useCommandeActions({
     <div class="footer-grid">
         <div style="flex: 1;">
             <div class="info-card" style="margin-bottom: 4px;">
-                <div class="card-label">Récapitulatif Articles</div>
+                <div class="card-label">${t('orders:print.recap_title')}</div>
                 <div style="display: flex; gap: 20px; font-size: 9px;">
-                    <div>Lignes: ${produits.length}</div>
-                    <div>Unités: ${totalQty}</div>
-                    <div>Gratuites: ${totalUG}</div>
+                    <div>${t('orders:print.lines')}: ${produits.length}</div>
+                    <div>${t('orders:print.units')}: ${totalQty}</div>
+                    <div>${t('orders:print.free_units')}: ${totalUG}</div>
                 </div>
             </div>
             <div style="font-size: 8px; color: #777; font-style: italic; line-height: 1.2;">
-                Ce document certifie la réception physique des articles mentionnés dans les stocks de l'établissement.
+                ${t('orders:print.cert_text')}
             </div>
         </div>
         <div>
             <div class="totals-card">
                 <div class="detail-row" style="font-size: 9px; margin-bottom: 2px;">
-                    <span>TOTAL HT:</span>
+                    <span>${t('orders:print.total_ht')}:</span>
                     <span>${formatM(totalHT)} F</span>
                 </div>
                 <div class="detail-row" style="font-size: 9px; border-bottom: 0.5px solid #eee; padding-bottom: 3px; margin-bottom: 6px;">
-                    <span>TOTAL TVA:</span>
+                    <span>${t('orders:print.total_tva')}:</span>
                     <span>${formatM(totalTVA)} F</span>
                 </div>
-                <div style="font-size: 9px; margin-bottom: 2px;">Total TTC Réception</div>
+                <div style="font-size: 9px; margin-bottom: 2px;">${t('orders:print.total_ttc_reception')}</div>
                 <div style="font-size: 16px; font-weight: 600; font-family: monospace; display: flex; justify-content: space-between; align-items: baseline;">
                     ${formatM(totalTTC)}
                     <span style="font-size: 9px; margin-left: 5px;">FCFA</span>

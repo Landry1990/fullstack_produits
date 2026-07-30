@@ -5,6 +5,15 @@ import creanceService from '../services/creanceService';
 import clientService from '../services/clientService';
 import { logger } from '../utils/logger'
 
+interface SyntheseClient {
+    id: number;
+    client: string;
+    total_facture: string;
+    montant_paye: string;
+    solde_du: string;
+    nb_factures: number;
+}
+
 export interface UseCreancesDataReturn {
     creances: Creance[];
     clients: Client[];
@@ -49,7 +58,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
     
     // States
     const [creances, setCreances] = useState<Creance[]>([]);
-    const [synthese, setSynthese] = useState<unknown[]>([]);
+    const [synthese, setSynthese] = useState<SyntheseClient[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -93,7 +102,7 @@ export const useCreancesData = (): UseCreancesDataReturn => {
                     date_debut: dateDebut || undefined,
                     date_fin: dateFin || undefined
                 });
-                setSynthese(synData);
+                setSynthese(synData as SyntheseClient[]);
                 setCreances([]);
             } 
             // Mode: Invoice List (History or Specific Client)
@@ -281,10 +290,10 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         selectedIds,
         setSelectedIds,
         updateLocalCreance: (id: number, data: unknown) => {
-            setCreances(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+            setCreances(prev => prev.map(c => c.id === id ? { ...c, ...(data as Partial<Creance>) } : c));
         },
         updateLocalSynthese: (clientId: number, data: unknown) => {
-            setSynthese(prev => prev.map(s => s.id === clientId ? { ...s, ...data } : s));
+            setSynthese(prev => prev.map(s => s.id === clientId ? { ...s, ...(data as Partial<SyntheseClient>) } : s));
         }
     };
 };

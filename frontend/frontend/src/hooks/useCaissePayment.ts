@@ -44,7 +44,15 @@ const processRegularPayments = async (
 
     const montantReel = Math.min(paiement.montant, resteAEnregistrer)
 
-    const paiementPayload: unknown = {
+    const paiementPayload: {
+      facture: number;
+      mode_paiement: string;
+      montant: number;
+      reference: string | null;
+      statut: string;
+      part_patient?: number;
+      part_assurance?: number;
+    } = {
       facture: factureId,
       mode_paiement: paiement.mode,
       montant: montantReel,

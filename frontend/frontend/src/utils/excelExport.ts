@@ -103,15 +103,15 @@ export function exportToExcel(
             right: 0.39,
             header: 0.2,
             footer: 0.2,
-        } as unknown;
+        } as XLSX.MarginInfo;
         // Répétition des lignes d'en-tête à l'impression (ligne de labels = dataStartRow + 1)
         wb.Workbook = wb.Workbook ?? { Views: [], Sheets: [] };
         const sheetIdx = wb.SheetNames.length; // sera 0 après append
         const repeatRow = dataStartRow; // ligne 0-based de l'en-tête des colonnes
         ws['!print'] = { area: undefined } as unknown;
-        (ws as unknown)['!sheetPr'] = { pageSetUpPr: { fitToPage: true } };
+        (ws as Record<string, unknown>)['!sheetPr'] = { pageSetUpPr: { fitToPage: true } };
         wb.Workbook.Sheets = wb.Workbook.Sheets ?? [];
-        wb.Workbook.Sheets[sheetIdx] = { sheetId: sheetIdx + 1 } as unknown;
+        wb.Workbook.Sheets[sheetIdx] = { sheetId: sheetIdx + 1 } as XLSX.SheetProps;
         // rowBreaks : répéter la ligne d'en-tête (via Named range dans le workbook)
         if (!wb.Workbook.Names) wb.Workbook.Names = [];
         (wb.Workbook.Names as unknown[]).push({

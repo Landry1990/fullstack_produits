@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { type RowInput } from 'jspdf-autotable';
 import { formatCurrency } from '../formatters';
 import { getLocale } from '../dateUtils';
 import type { PharmacySettings } from '../../context/PharmacySettingsContext';
@@ -88,13 +88,13 @@ export function generateStockValuationPdf(
 
   autoTable(doc, {
     startY: currentY,
-    body: summaryBody,
+    body: summaryBody as unknown as RowInput[],
     theme: 'plain',
     margin: { left: margin, right: margin },
     styles: { fontSize: 9, lineColor: [200, 200, 200], lineWidth: 0.1 },
     columnStyles: { 0: { cellWidth: 80 }, 1: { halign: 'right' } },
   });
-  currentY = (doc as unknown).lastAutoTable.finalY + 10;
+  currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
 
   // --- TVA Breakdown ---
   doc.setFontSize(11);
@@ -117,7 +117,7 @@ export function generateStockValuationPdf(
   autoTable(doc, {
     startY: currentY,
     head: [['Taux TVA', 'Base HT', 'Montant TVA', 'Total Reconstitué']],
-    body: tvaBody,
+    body: tvaBody as unknown as RowInput[],
     theme: 'plain',
     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
     margin: { left: margin, right: margin },
@@ -129,7 +129,7 @@ export function generateStockValuationPdf(
       3: { halign: 'right' },
     },
   });
-  currentY = (doc as unknown).lastAutoTable.finalY + 10;
+  currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
 
   // --- Group Breakdown (if present) ---
   if (data.group_breakdown && data.group_breakdown.length > 0) {
@@ -160,7 +160,7 @@ export function generateStockValuationPdf(
     autoTable(doc, {
       startY: currentY,
       head: [[groupLabel, 'Base HT', 'Montant TVA', 'Total TTC']],
-      body: groupBody,
+      body: groupBody as unknown as RowInput[],
       theme: 'plain',
       headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'normal' },
       margin: { left: margin, right: margin },
@@ -172,7 +172,7 @@ export function generateStockValuationPdf(
         3: { halign: 'right' },
       },
     });
-    currentY = (doc as unknown).lastAutoTable.finalY + 10;
+    currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
   }
 
   // --- Note ---
@@ -185,7 +185,7 @@ export function generateStockValuationPdf(
   doc.text(noteText, margin, currentY);
 
   // --- Footer on all pages ---
-  const pageCount = (doc as unknown).internal.getNumberOfPages();
+  const pageCount = (doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(7);

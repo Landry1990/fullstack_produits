@@ -126,7 +126,7 @@ export default function Clients() {
         page_size: itemsPerPage,
         // @ts-expect-error - Backend supports include_inactive
         include_inactive: showInactive
-      }, skipCache);
+      }, skipCache) as Client[] | { results: Client[]; count: number };
       
       if (data && 'results' in data) {
         setClients(data.results);
@@ -165,12 +165,13 @@ export default function Clients() {
 
   // Handle incoming redirect from Omnisearch
   useEffect(() => {
-    if (location.state?.action === 'NEW_CLIENT') {
+    const locState = location.state as { action?: string; selectedClientId?: number } | null;
+    if (locState?.action === 'NEW_CLIENT') {
       handleOpenCreate();
       navigate(location.pathname, { replace: true, state: {} });
     }
-    if (location.state?.selectedClientId && clients.length > 0) {
-      const cid = location.state.selectedClientId;
+    if (locState?.selectedClientId && clients.length > 0) {
+      const cid = locState.selectedClientId;
       const found = clients.find((c: Client) => c.id === cid);
       if (found) {
         handleSelectClient(found);
@@ -226,15 +227,15 @@ export default function Clients() {
         // Validation avec Zod
         const validation = clientSchema.safeParse(formData);
         if (!validation.success) {
-            const errorMsg = (validation.error as unknown).errors
-                .map((err: unknown) => `${t(`clients:fields.${err.path[0]}`)}: ${err.message}`)
+            const errorMsg = (validation.error as { errors: Array<{ path: (string | number)[]; message: string }> }).errors
+                .map((err) => `${t(`clients:fields.${err.path[0]}`)}: ${err.message}`)
                 .join('\n');
             toast.error(errorMsg, { duration: 5000 });
             setIsSubmitting(false);
             return;
         }
 
-        const cleanData = validation.data as unknown;
+        const cleanData = validation.data as unknown as Partial<Client>;
 
         if (formMode === 'create') {
             const created = await clientService.create(cleanData);
@@ -251,7 +252,8 @@ export default function Clients() {
         }
         setIsFormModalOpen(false);
     } catch (err: unknown) {
-        toast.error(err.response?.data?.message || t('clients:messages.error_save'));
+        const axiosErr = err as { response?: { data?: { message?: string } } };
+        toast.error(axiosErr.response?.data?.message || t('clients:messages.error_save'));
     } finally {
         setIsSubmitting(false);
     }
@@ -292,8 +294,9 @@ export default function Clients() {
             toast.success(t('clients:messages.delete_success'));
             setTimeout(() => fetchClients(true), 500);
         } catch (err: unknown) {
+            const axiosErr = err as { response?: { data?: { detail?: string } } };
             logger.error('[Clients] Delete error:', err);
-            toast.error(err.response?.data?.detail || t('clients:messages.error_delete'));
+            toast.error(axiosErr.response?.data?.detail || t('clients:messages.error_delete'));
             fetchClients(true);
         }
     }
@@ -346,8 +349,9 @@ export default function Clients() {
             setSelectedIds([]);
             setTimeout(() => fetchClients(true), 500);
         } catch (err: unknown) {
+            const axiosErr = err as { response?: { data?: { detail?: string } } };
             logger.error('[Clients] Bulk delete error:', err);
-            toast.error(err.response?.data?.detail || t('clients:messages.error_bulk_delete'));
+            toast.error(axiosErr.response?.data?.detail || t('clients:messages.error_bulk_delete'));
             fetchClients(true);
         }
     }
@@ -446,10 +450,10 @@ export default function Clients() {
                           </div>
                           <div className="flex items-center justify-between gap-1.5 text-xs text-slate-500">
                              <span className="flex items-center gap-1"><Phone className="size-3" /> {client.phone || '—'}</span>
-                             {client.client_type === 'PROFESSIONNEL' && (client as unknown).ayants_droit_count > 0 && (
+                             {client.client_type === 'PROFESSIONNEL' && ((client as Client & { ayants_droit_count?: number }).ayants_droit_count || 0) > 0 && (
                                <span className="flex items-center gap-0.5 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] font-medium">
                                  <Users className="size-3" />
-                                 {(client as unknown).ayants_droit_count}
+                                 {(client as Client & { ayants_droit_count?: number }).ayants_droit_count}
                                </span>
                              )}
                           </div>

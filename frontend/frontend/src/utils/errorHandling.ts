@@ -34,8 +34,9 @@ export function extractErrorMessage(err: unknown): string {
 
     // 1. Gestion de la réponse API (Axios)
     if (errObj.response) {
-        const status = errObj.response.status;
-        const data = errObj.response.data;
+        const response = errObj.response as Record<string, unknown>;
+        const status = response.status as number;
+        const data = response.data as Record<string, unknown> | string | undefined;
 
         // Cas Erreur Serveur (500)
         if (status >= 500) {
@@ -44,61 +45,63 @@ export function extractErrorMessage(err: unknown): string {
                 return `Erreur Serveur (${status}) : Veuillez contacter le support technique.`;
             }
             // Si l'API renvoie un message JSON explicite même en 500 (rare mais possible)
-            if (data?.detail) return `Erreur Serveur (${status}) : ${data.detail}`;
+            if (data && typeof data === 'object' && 'detail' in data) {
+                return `Erreur Serveur (${status}) : ${data.detail}`;
+            }
 
             return `Erreur Serveur (${status}) : Veuillez réessayer plus tard.`;
         }
 
         // Cas Erreur Client (400, 403, 404...)
-        if (data) {
+        if (data && typeof data === 'object') {
+            const dataObj = data as Record<string, unknown>;
             // Cas standard DRF: { "detail": "Message..." }
-            if (data.detail) {
-                return data.detail;
+            if (dataObj.detail) {
+                return String(dataObj.detail);
             }
 
             // Cas Validation par champ: { "field_name": ["Error 1"], ... }
-            if (typeof data === 'object') {
-                const messages: string[] = [];
+            const messages: string[] = [];
 
-                // Gérer 'non_field_errors' en priorité
-                if (Array.isArray(data.non_field_errors)) {
-                    messages.push(...data.non_field_errors);
+            // Gérer 'non_field_errors' en priorité
+            if (Array.isArray(dataObj.non_field_errors)) {
+                messages.push(...(dataObj.non_field_errors as string[]));
+            }
+
+            // Parcourir les champs
+            Object.keys(dataObj).forEach(key => {
+                if (key === 'non_field_errors' || key === 'detail') return;
+
+                const fieldError = dataObj[key];
+                let fieldMessage = '';
+
+                if (Array.isArray(fieldError)) {
+                    fieldMessage = (fieldError as string[]).join(' ');
+                } else if (typeof fieldError === 'string') {
+                    fieldMessage = fieldError;
                 }
 
-                // Parcourir les champs
-                Object.keys(data).forEach(key => {
-                    if (key === 'non_field_errors' || key === 'detail') return;
-
-                    const fieldError = data[key];
-                    let fieldMessage = '';
-
-                    if (Array.isArray(fieldError)) {
-                        fieldMessage = fieldError.join(' ');
-                    } else if (typeof fieldError === 'string') {
-                        fieldMessage = fieldError;
-                    }
-
-                    if (fieldMessage) {
-                        // Capitaliser la clé pour l'affichage (ex: 'client' -> 'Client')
-                        const fieldName = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
-                        messages.push(`${fieldName}: ${fieldMessage}`);
-                    }
-                });
-
-                if (messages.length > 0) {
-                    // Retourner la première erreur ou une liste
-                    return messages.length === 1 ? messages[0] : messages.join(' | ');
+                if (fieldMessage) {
+                    // Capitaliser la clé pour l'affichage (ex: 'client' -> 'Client')
+                    const fieldName = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+                    messages.push(`${fieldName}: ${fieldMessage}`);
                 }
+            });
+
+            if (messages.length > 0) {
+                // Retourner la première erreur ou une liste
+                return messages.length === 1 ? messages[0] : messages.join(' | ');
             }
         }
     }
 
     // 2. Gestion des erreurs réseau ou sans réponse
     if (errObj.message) {
-        if (errObj.message === 'Network Error') {
+        const msg = String(errObj.message);
+        if (msg === 'Network Error') {
             return "Erreur de connexion : Impossible de joindre le serveur.";
         }
-        return errObj.message;
+        return msg;
     }
 
     // 3. Fallback

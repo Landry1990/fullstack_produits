@@ -96,7 +96,7 @@ export function generateClotureTemplate(
         ${Object.entries(cloture.details_paiement || {}).map(([mode, montant]) =>
     `<div style="display: flex; justify-content: space-between; padding: 2px 0;">
              <span style="font-weight: 600;">${getModeLabel(mode)}</span>
-             <span style="font-weight: 700;">${formatMoney(montant)} F</span>
+             <span style="font-weight: 700;">${formatMoney(montant as string | number)} F</span>
            </div>`
   ).join('')}
       </div>
@@ -104,12 +104,12 @@ export function generateClotureTemplate(
       <div style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 10px 0; margin-bottom: 15px; display: flex; flex-direction: column; gap: 4px;">
         <div style="display: flex; justify-content: space-between; font-size: 10px;">
            <span style="font-weight: 600;">Ventes Pharmacie:</span>
-           <span style="font-weight: 700;">${formatMoney(cloture.total_ca_pharmacie ?? (cloture.details_paiement?.__meta__?.total_ca_pharmacie) ?? cloture.total_ventes)} F</span>
+           <span style="font-weight: 700;">${formatMoney(cloture.total_ca_pharmacie ?? ((cloture.details_paiement?.__meta__ as Record<string, unknown> | undefined)?.total_ca_pharmacie as string | number | undefined) ?? cloture.total_ventes)} F</span>
         </div>
-        ${(cloture.total_ca_divers ?? cloture.details_paiement?.__meta__?.total_ca_divers) > 0 ? `
+        ${((Number(cloture.total_ca_divers ?? (cloture.details_paiement?.__meta__ as Record<string, unknown> | undefined)?.total_ca_divers ?? 0)) > 0) ? `
         <div style="display: flex; justify-content: space-between; font-size: 10px;">
            <span style="font-weight: 600;">Ventes Diverses:</span>
-           <span style="font-weight: 700;">${formatMoney(cloture.total_ca_divers ?? cloture.details_paiement?.__meta__?.total_ca_divers)} F</span>
+           <span style="font-weight: 700;">${formatMoney((cloture.total_ca_divers ?? (cloture.details_paiement?.__meta__ as Record<string, unknown> | undefined)?.total_ca_divers ?? 0) as string | number)} F</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-top: 2px; padding-top: 2px; border-top: 1px dashed #ccc;">
            <span style="font-weight: 600;">Total Ventes:</span>

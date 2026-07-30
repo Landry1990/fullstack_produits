@@ -17,7 +17,7 @@ export function useTVA() {
             setTvaList(Array.isArray(data) ? data : []);
             setError(null);
         } catch (err: unknown) {
-            if ((err as unknown)?.name === 'CanceledError') return;
+            if ((err as { name?: string })?.name === 'CanceledError') return;
             logger.error('Error fetching TVAs:', err);
             setError('Erreur lors du chargement des taux de TVA');
         } finally {

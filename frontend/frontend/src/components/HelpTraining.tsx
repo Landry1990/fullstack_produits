@@ -5,12 +5,13 @@ import {
 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 interface Video {
   id: string;
   title: string;
   duration: string;
-  youtubeId: string; 
+  youtubeId: string;
 }
 
 interface Category {
@@ -22,7 +23,13 @@ interface Category {
   videos: Video[];
 }
 
-const getCategories = (t: unknown): Category[] => [
+interface Shortcut {
+  key: string;
+  label: string;
+  highlight?: boolean;
+}
+
+const getCategories = (t: TFunction): Category[] => [
   {
     id: 'ventes',
     label: t('help:training.categories.ventes'),
@@ -93,7 +100,7 @@ const getCategories = (t: unknown): Category[] => [
   },
 ];
 
-const getShortcuts = (t: unknown) => [
+const getShortcuts = (t: TFunction): Shortcut[] => [
   { key: 'F2', label: t('help:training.shortcuts.f2') },
   { key: '/', label: t('help:training.shortcuts.slash') },
   { key: 'F4', label: t('help:training.shortcuts.f4') },
@@ -184,7 +191,7 @@ const HelpTraining = () => {
                   <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('help:training.shortcuts.title')}</span>
                 </div>
                 <div className="space-y-1.5">
-                  {SHORTCUTS.map((s: unknown) => (
+                  {SHORTCUTS.map((s: Shortcut) => (
                     <div key={s.key} className="flex items-center justify-between px-2 py-1">
                       <span className="text-xs text-base-content/50">{s.label}</span>
                       <kbd className={`kbd kbd-xs text-[10px] ${s.highlight ? 'bg-primary text-white border-primary' : ''}`}>{s.key}</kbd>

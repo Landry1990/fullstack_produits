@@ -3,11 +3,25 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Creance } from '../types';
 import { useSudo } from './useSudo';
-import creanceService from '../services/creanceService';
+import creanceService, { type BulkPaiementPayload } from '../services/creanceService';
 import { usePharmacySettings } from './usePharmacySettings';
 import { generateRelevePdfDraft } from '../utils/print/relevePdfDraft';
 import { generateTicketReglementPdfDraft } from '../utils/print/ticketReglementPdfDraft';
 import { logger } from '../utils/logger'
+
+interface ReleveData {
+    client: { id?: number; name: string };
+    creances: Array<{
+        numero_facture: string;
+        date: string;
+        ayant_droit?: string | null;
+        montant_total: number | string;
+        montant_paye: number | string;
+        reste_a_payer: number | string;
+    }>;
+    totaux: { total_factures: number | string; total_paye: number | string; total_reste: number | string };
+    periode: { date_debut?: string | null; date_fin?: string | null };
+}
 
 interface UseCreanceActionsProps {
     refresh: () => void;
@@ -165,7 +179,7 @@ export const useCreanceActions = ({
 
     const performBulkPayment = useCallback(async (validatorId: number, password: string) => {
         try {
-            const payload: unknown = {
+            const payload: BulkPaiementPayload = {
                 facture_ids: selectedIds,
                 mode_paiement: modePaiement,
                 reference: referencePaiement,
@@ -199,7 +213,7 @@ export const useCreanceActions = ({
                     console.log('Montant réglé:', data.total_amount);
                     console.log('Reste à payer global:', data.reste_a_payer);
                     console.log('=== PAIEMENTS DÉTAIL ===');
-                    data.paiements?.forEach((p: unknown, i: number) => {
+                    data.paiements?.forEach((p, i: number) => {
                         console.log(`  ${i+1}. Facture ${p.numero_facture}:`, {
                             montant_paye: p.montant_paye,
                             reste_avant: p.reste_avant,
@@ -256,7 +270,7 @@ export const useCreanceActions = ({
                 client_id: selectedClient,
                 ...(dateDebut ? { date_debut: dateDebut } : {}),
                 ...(dateFin ? { date_fin: dateFin } : {}),
-            });
+            }) as ReleveData;
 
             const doc = generateRelevePdfDraft({
                 client: releveData.client,

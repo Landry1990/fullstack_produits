@@ -3,9 +3,36 @@ import { safeStorage } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 import { logger } from '../utils/logger'
 
+export interface ClientsHook {
+    setSelectedClient: (v: unknown) => void;
+    setUseManualClient: (v: boolean) => void;
+    setManualClientName: (v: string) => void;
+    selectedClient: number | null;
+    useManualClient: boolean;
+    manualClientName: string;
+    clients: Array<{ id: number; name: string }>;
+    setSelectedAyantDroit: (v: unknown) => void;
+    setAyantDroitNom: (v: string) => void;
+    setAyantDroitMatricule: (v: string) => void;
+    setAyantDroitSociete: (v: string) => void;
+    selectedAyantDroit: unknown;
+    ayantDroitNom: string;
+    ayantDroitMatricule: string;
+    ayantDroitSociete: string;
+}
+
+export interface UIHook {
+    setRemiseGlobale: (v: unknown) => void;
+    setRemiseMode: (v: string) => void;
+    setTempOrdonnanceData: (v: unknown) => void;
+    remiseGlobale: unknown;
+    remiseMode: string;
+    tempOrdonnanceData: unknown;
+}
+
 export interface UseFacturationSessionProps {
-    clientsHook: unknown; 
-    ui: unknown;
+    clientsHook: ClientsHook;
+    ui: UIHook;
     isRetrocession: boolean;
     setIsRetrocession: (v: boolean) => void;
     isFactureA4: boolean;
@@ -71,7 +98,7 @@ export function useFacturationSession({
             ayantDroitSociete: clientsHook.ayantDroitSociete
         };
         
-        const isDefaultClient = !clientsHook.selectedClient || (clientsHook.clients.find((c: unknown) => c.id === clientsHook.selectedClient)?.name.toLowerCase().includes('divers'));
+        const isDefaultClient = !clientsHook.selectedClient || (clientsHook.clients.find((c) => c.id === clientsHook.selectedClient)?.name.toLowerCase().includes('divers'));
         
         if (cartLength > 0 || !isDefaultClient || clientsHook.useManualClient) {
             safeStorage.setItem(contextStorageKey, JSON.stringify(sessionData), 'local');

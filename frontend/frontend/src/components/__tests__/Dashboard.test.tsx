@@ -1,11 +1,14 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
 import Dashboard from '../DashboardShadcn';
 import StockIntelligence from '../dashboard/StockIntelligence';
 import FinancialSummary from '../dashboard/FinancialSummary';
 import * as useDashboardHooks from '../../hooks/useDashboard';
+
+const mockT = ((key: string) => key) as unknown as TFunction;
 
 const createTestQueryClient = () => new QueryClient({
     defaultOptions: { queries: { retry: false } }
@@ -23,14 +26,14 @@ const renderWithProviders = (ui: React.ReactElement) => {
 // Mock useRecharts so chart-dependent dashboard sections render synchronously
 vi.mock('../../hooks/useRecharts', () => ({
     useRecharts: () => ({
-        ResponsiveContainer: ({ children }: unknown) => <div>{children}</div>,
-        BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
+        ResponsiveContainer: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+        BarChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="bar-chart">{children}</div>,
         Bar: () => <div data-testid="bar" />,
-        AreaChart: ({ children }: unknown) => <div data-testid="area-chart">{children}</div>,
+        AreaChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="area-chart">{children}</div>,
         Area: () => <div data-testid="area" />,
-        LineChart: ({ children }: unknown) => <div data-testid="line-chart">{children}</div>,
+        LineChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="line-chart">{children}</div>,
         Line: () => <div data-testid="line" />,
-        PieChart: ({ children }: unknown) => <div data-testid="pie-chart">{children}</div>,
+        PieChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="pie-chart">{children}</div>,
         Pie: () => <div data-testid="pie" />,
         XAxis: () => <div data-testid="x-axis" />,
         YAxis: () => <div data-testid="y-axis" />,
@@ -44,12 +47,12 @@ vi.mock('../../hooks/useRecharts', () => ({
 // Mock recharts
 // Mock recharts
 vi.mock('recharts', () => ({
-    ResponsiveContainer: ({ children }: unknown) => <div style={{ width: 500, height: 300 }}>{children}</div>,
-    BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
+    ResponsiveContainer: ({ children }: { children?: React.ReactNode }) => <div style={{ width: 500, height: 300 }}>{children}</div>,
+    BarChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="bar-chart">{children}</div>,
     Bar: () => <div data-testid="bar" />,
-    AreaChart: ({ children }: unknown) => <div data-testid="area-chart">{children}</div>,
+    AreaChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="area-chart">{children}</div>,
     Area: () => <div data-testid="area" />,
-    LineChart: ({ children }: unknown) => <div data-testid="line-chart">{children}</div>,
+    LineChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="line-chart">{children}</div>,
     Line: () => <div data-testid="line" />,
     XAxis: () => <div data-testid="x-axis" />,
     YAxis: () => <div data-testid="y-axis" />,
@@ -224,37 +227,37 @@ describe('Dashboard Component', () => {
         vi.clearAllMocks();
         
         // Setup default mock implementations
-        (useDashboardHooks.useDashboardStats as unknown).mockReturnValue({
+        (useDashboardHooks.useDashboardStats as unknown as Mock).mockReturnValue({
             data: mockStats, isLoading: false, error: null, refetch: vi.fn()
         });
-        (useDashboardHooks.useRevenueChart as unknown).mockReturnValue({
+        (useDashboardHooks.useRevenueChart as unknown as Mock).mockReturnValue({
             data: mockRevenueChart, isLoading: false, refetch: vi.fn()
         });
-        (useDashboardHooks.useLowStock as unknown).mockReturnValue({
+        (useDashboardHooks.useLowStock as unknown as Mock).mockReturnValue({
             data: mockLowStock, isFetching: false, refetch: vi.fn()
         });
-        (useDashboardHooks.useUgStats as unknown).mockReturnValue({ data: mockUgStats });
-        (useDashboardHooks.usePromisDisponibles as unknown).mockReturnValue({ data: mockPromis });
-        (useDashboardHooks.useExpiringLots as unknown).mockReturnValue({
+        (useDashboardHooks.useUgStats as unknown as Mock).mockReturnValue({ data: mockUgStats });
+        (useDashboardHooks.usePromisDisponibles as unknown as Mock).mockReturnValue({ data: mockPromis });
+        (useDashboardHooks.useExpiringLots as unknown as Mock).mockReturnValue({
             data: mockExpiringLots, refetch: vi.fn()
         });
-        (useDashboardHooks.useHourlyTraffic as unknown).mockReturnValue({ data: mockHourlyTraffic });
-        (useDashboardHooks.useSupplierDebts as unknown).mockReturnValue({
+        (useDashboardHooks.useHourlyTraffic as unknown as Mock).mockReturnValue({ data: mockHourlyTraffic });
+        (useDashboardHooks.useSupplierDebts as unknown as Mock).mockReturnValue({
             data: mockSupplierDebts, refetch: vi.fn(), isRefetching: false
         });
-        (useDashboardHooks.useReapproStats as unknown).mockReturnValue({ data: null });
-        (useDashboardHooks.useEcheances as unknown).mockReturnValue({ data: [] });
-        (useDashboardHooks.useManagerStats as unknown).mockReturnValue({ data: null });
-        (useDashboardHooks.useCurrentObjectifs as unknown).mockReturnValue({ data: null });
-        (useDashboardHooks.useVendeursRanking as unknown).mockReturnValue({ data: null });
-        (useDashboardHooks.useDashboardHeavyStats as unknown).mockReturnValue({ data: null, isLoading: false, error: null });
-        (useDashboardHooks.useFrequentStockouts as unknown).mockReturnValue({ data: null, isLoading: false, error: null });
-        (useDashboardHooks.useVendeurStats as unknown).mockReturnValue({ data: null, isLoading: false, error: null });
+        (useDashboardHooks.useReapproStats as unknown as Mock).mockReturnValue({ data: null });
+        (useDashboardHooks.useEcheances as unknown as Mock).mockReturnValue({ data: [] });
+        (useDashboardHooks.useManagerStats as unknown as Mock).mockReturnValue({ data: null });
+        (useDashboardHooks.useCurrentObjectifs as unknown as Mock).mockReturnValue({ data: null });
+        (useDashboardHooks.useVendeursRanking as unknown as Mock).mockReturnValue({ data: null });
+        (useDashboardHooks.useDashboardHeavyStats as unknown as Mock).mockReturnValue({ data: null, isLoading: false, error: null });
+        (useDashboardHooks.useFrequentStockouts as unknown as Mock).mockReturnValue({ data: null, isLoading: false, error: null });
+        (useDashboardHooks.useVendeurStats as unknown as Mock).mockReturnValue({ data: null, isLoading: false, error: null });
     });
 
     it('renders loading state correctly', () => {
-        (useDashboardHooks.useDashboardStats as unknown).mockReturnValue({ isLoading: true });
-        (useDashboardHooks.useRevenueChart as unknown).mockReturnValue({ isLoading: true });
+        (useDashboardHooks.useDashboardStats as unknown as Mock).mockReturnValue({ isLoading: true });
+        (useDashboardHooks.useRevenueChart as unknown as Mock).mockReturnValue({ isLoading: true });
         
         const { container } = renderWithProviders(<Dashboard />);
         
@@ -264,10 +267,10 @@ describe('Dashboard Component', () => {
     });
 
     it('renders error state correctly', () => {
-        (useDashboardHooks.useDashboardStats as unknown).mockReturnValue({
+        (useDashboardHooks.useDashboardStats as unknown as Mock).mockReturnValue({
             error: new Error('Failed'), isLoading: false
         });
-        (useDashboardHooks.useRevenueChart as unknown).mockReturnValue({ isLoading: false });
+        (useDashboardHooks.useRevenueChart as unknown as Mock).mockReturnValue({ isLoading: false });
         
         renderWithProviders(<Dashboard />);
         
@@ -328,7 +331,7 @@ describe('Dashboard Component', () => {
                         setExpirationMonths={vi.fn()}
                         getServerDate={() => new Date()}
                         reapproStats={undefined}
-                        t={(k: string) => k}
+                        t={mockT}
                         formatCurrencyLocal={(v: number) => String(v)}
                     />
                 </MemoryRouter>
@@ -346,7 +349,7 @@ describe('Dashboard Component', () => {
                         stats={mockStats}
                         ugStats={mockUgStats}
                         echeances={[]}
-                        t={(k: string) => k}
+                        t={mockT}
                         formatCurrencyLocal={(v: number) => String(v)}
                     />
                 </MemoryRouter>
@@ -379,7 +382,7 @@ describe('Dashboard Component', () => {
                         setExpirationMonths={setExpirationMonths}
                         getServerDate={() => new Date()}
                         reapproStats={undefined}
-                        t={(k: string) => k}
+                        t={mockT}
                         formatCurrencyLocal={(v: number) => String(v)}
                     />
                 </MemoryRouter>
@@ -393,10 +396,10 @@ describe('Dashboard Component', () => {
             role: 'VENDEUR',
             user_stats: { sales: 50000, count: 3, avg_basket: 16667 }
         };
-        (useDashboardHooks.useDashboardStats as unknown).mockReturnValue({
+        (useDashboardHooks.useDashboardStats as unknown as Mock).mockReturnValue({
             data: vendeurStats, isLoading: false, error: null, refetch: vi.fn()
         });
-        (useDashboardHooks.useVendeurStats as unknown).mockReturnValue({
+        (useDashboardHooks.useVendeurStats as unknown as Mock).mockReturnValue({
             data: {
                 vendeur: 'Test Vendeur',
                 ca_sem: 0,
@@ -424,7 +427,7 @@ describe('Dashboard Component', () => {
     });
 
     it('does not crash when stats data is undefined (Regression)', () => {
-        (useDashboardHooks.useDashboardStats as unknown).mockReturnValue({
+        (useDashboardHooks.useDashboardStats as unknown as Mock).mockReturnValue({
             data: undefined, isLoading: false, error: null, refetch: vi.fn()
         });
 

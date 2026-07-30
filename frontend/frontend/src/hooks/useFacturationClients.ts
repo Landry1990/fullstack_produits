@@ -55,8 +55,8 @@ export function useFacturationClients() {
     const fetchClients = useCallback(async () => {
         setLoading(true)
         try {
-            const data = await clientService.getAll(debouncedSearch ? { search: debouncedSearch } : {})
-            const clientsData = Array.isArray(data) ? data : data.results
+            const data = await clientService.getAll(debouncedSearch ? { search: debouncedSearch } : {}) as unknown as Client[] | { results?: Client[] }
+            const clientsData = Array.isArray(data) ? data : (data.results || [])
             const loadedClients = clientsData || []
             setClients(loadedClients)
         } catch (error) {
@@ -217,7 +217,7 @@ export function useFacturationClients() {
             toast.success(`Client "${createdClient.name}" créé et sélectionné`)
         } catch (err) {
             logger.error('Erreur création client:', err)
-            const errorData = (err as unknown)?.response?.data
+            const errorData = (err as { response?: { data?: Record<string, unknown> } })?.response?.data
             if (errorData && typeof errorData === 'object') {
                 const messages = Object.entries(errorData).map(([k, v]) => `${k}: ${v}`).join(', ')
                 toast.error(`Erreur: ${messages}`)

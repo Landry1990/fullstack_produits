@@ -68,7 +68,7 @@ export default function CategoryManager({
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState({ name: '', description: '', parent: '' });
+  const [entries, setEntries] = useState<Array<{ name: string; description: string; parent: string }>>([{ name: '', description: '', parent: '' }]);
   
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [productSearchTerm, setProductSearchTerm] = useState('');
@@ -139,7 +139,7 @@ export default function CategoryManager({
 
   useEffect(() => {
     if (isModalOpen && !editingCategory) {
-      setFormData({ name: '', description: '', parent: '' });
+      setEntries([{ name: '', description: '', parent: '' }]);
     }
   }, [isModalOpen, editingCategory]);
 
@@ -172,31 +172,66 @@ export default function CategoryManager({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload: Record<string, unknown> = {};
-    if (type === 'rayon') {
-      payload.name = formData.name;
-      payload.parent = formData.parent ? parseInt(formData.parent) : null;
-    } else {
-      payload.nom = formData.name;
-      payload.description = formData.description;
-    }
+
+    const basePath = apiPath.replace(/^\/api\//, '');
 
     try {
       if (editingCategory) {
-        const { data: updatedCat } = await api.put(`${apiPath.replace(/^\/api\//, '')}${editingCategory.id}/`, payload);
+        // Single edit
+        const entry = entries[0];
+        const payload: Record<string, unknown> = {};
+        if (type === 'rayon') {
+          payload.name = entry.name;
+          payload.parent = entry.parent ? parseInt(entry.parent) : null;
+        } else {
+          payload.nom = entry.name;
+          payload.description = entry.description;
+        }
+        const { data: updatedCat } = await api.put(`${basePath}${editingCategory.id}/`, payload);
         setCategories(prev => prev.map(c => c.id === updatedCat.id ? updatedCat : c));
         if (selectedCategory?.id === updatedCat.id) setSelectedCategory(updatedCat);
         toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       } else {
-        const { data: newCat } = await api.post(apiPath.replace(/^\/api\//, ''), payload);
-        setCategories(prev => [...prev, newCat].slice().sort((a, b) => {
+        // Bulk create: filter out empty names
+        const validEntries = entries.filter(en => en.name.trim() !== '');
+        if (validEntries.length === 0) return;
+
+        const createdCats: Category[] = [];
+        let errorCount = 0;
+
+        for (const entry of validEntries) {
+          const payload: Record<string, unknown> = {};
+          if (type === 'rayon') {
+            payload.name = entry.name;
+            payload.parent = entry.parent ? parseInt(entry.parent) : null;
+          } else {
+            payload.nom = entry.name;
+            payload.description = entry.description;
+          }
+          try {
+            const { data: newCat } = await api.post(basePath, payload);
+            createdCats.push(newCat);
+          } catch {
+            errorCount++;
+          }
+        }
+
+        if (createdCats.length > 0) {
+          setCategories(prev => [...prev, ...createdCats].slice().sort((a, b) => {
             const nameA = a.name || a.nom || '';
             const nameB = b.name || b.nom || '';
             return nameA.localeCompare(nameB);
-        }));
-        toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
+          }));
+          const msgKey = createdCats.length > 1
+            ? t('stock:organisation.category_manager.bulk_create_success', { count: createdCats.length, type: title })
+            : t('stock:organisation.category_manager.success_save', { type: title });
+          toast.success(msgKey);
+        }
+        if (errorCount > 0) {
+          toast.error(t('stock:organisation.category_manager.bulk_create_error', { count: errorCount }));
+        }
       }
-      setFormData({ name: '', description: '', parent: '' });
+      setEntries([{ name: '', description: '', parent: '' }]);
       setIsModalOpen(false);
     } catch {
       toast.error(t('common:messages.error_saving'));
@@ -220,6 +255,45 @@ export default function CategoryManager({
     } catch {
       toast.error(t('common:messages.error_deleting'));
     }
+  };
+
+  const handleDeleteAll = async () => {
+    if (categories.length === 0) {
+      toast.error(t('stock:organisation.category_manager.delete_all_empty', { type }));
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: t('stock:organisation.category_manager.delete_all_confirm_title'),
+      message: t('stock:organisation.category_manager.delete_all_confirm_msg', { type, count: categories.length }),
+      variant: 'danger',
+      confirmText: t('stock:organisation.category_manager.delete_all_confirm_btn')
+    });
+    if (!confirmed) return;
+
+    const basePath = apiPath.replace(/^\/api\//, '');
+    let successCount = 0;
+    let errorCount = 0;
+
+    // Delete sequentially to avoid overwhelming the server
+    for (const cat of categories) {
+      try {
+        await api.delete(`${basePath}${cat.id}/`);
+        successCount++;
+      } catch {
+        errorCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(t('stock:organisation.category_manager.delete_all_success', { count: successCount, type }));
+    }
+    if (errorCount > 0) {
+      toast.error(t('stock:organisation.category_manager.delete_all_error'));
+    }
+
+    setSelectedCategory(null);
+    fetchCategories();
   };
 
   const openPrintModal = (id: number, name: string) => {
@@ -337,11 +411,20 @@ export default function CategoryManager({
                       <Printer size={16} />
                     </button>
                  )}
+                 {categories.length > 0 && (
+                   <button
+                     className="inline-flex items-center justify-center size-7 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                     onClick={handleDeleteAll}
+                     title={t('stock:organisation.category_manager.delete_all_btn', { type })}
+                   >
+                     <Trash2 size={16} />
+                   </button>
+                 )}
                  <button
                    className="inline-flex items-center justify-center size-8 bg-emerald-600 text-white rounded-full text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
                    onClick={() => {
                      setEditingCategory(null);
-                     setFormData({ name: '', description: '', parent: '' });
+                     setEntries([{ name: '', description: '', parent: '' }]);
                      setIsModalOpen(true);
                    }}
                  >
@@ -404,11 +487,11 @@ export default function CategoryManager({
                          onClick={(e) => {
                            e.stopPropagation();
                            setEditingCategory(cat);
-                           setFormData({
+                           setEntries([{
                              name: getCategoryName(cat),
                              description: cat.description || '',
                              parent: cat.parent?.toString() || ''
-                           });
+                           }]);
                            setIsModalOpen(true);
                          }}
                        >
@@ -615,51 +698,85 @@ export default function CategoryManager({
           : t('stock:organisation.category_manager.new_subtitle', { type: title })}
         icon={editingCategory ? <Pencil className="size-5" /> : <Plus className="size-5" />}
       >
-        <form onSubmit={handleSubmit} className="p-6 space-y-5" autoComplete="off">
-           <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.name_label', { type })}</label>
-              <Input
-                type="text"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                value={formData.name}
-                onChange={e => setFormData({...formData, name: e.target.value})}
-                required
-                autoFocus
-                autoComplete="off"
-              />
-           </div>
-
-           {hasHierarchy && (
-              <div>
-                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.parent_label')}</label>
-                 <select
-                   className="w-full rounded-xl border border-slate-200 bg-slate-50 h-12 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                   value={formData.parent}
-                   onChange={e => setFormData({...formData, parent: e.target.value})}
-                 >
-                   <option value="">{t('stock:organisation.category_manager.parent_select_none')}</option>
-                   {categories.flatMap(c => (!c.parent && c.id !== editingCategory?.id) ? [(
-                     <option key={c.id} value={c.id.toString()}>{getCategoryName(c)}</option>
-                   )] : [])}
-                 </select>
-              </div>
-           )}
-
-           {hasDescription && (
-              <div>
-                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.description_label')}</label>
-                 <Textarea
-                   className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 resize-none"
-                   value={formData.description}
-                   onChange={e => setFormData({...formData, description: e.target.value})}
-                   rows={3}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4" autoComplete="off">
+           {entries.map((entry, idx) => (
+              <div key={idx} className="space-y-3 p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+                 <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                       {t('stock:organisation.category_manager.name_label', { type })}
+                       {!editingCategory && entries.length > 1 && (
+                         <span className="ml-1 text-slate-300 normal-case font-normal">#{idx + 1}</span>
+                       )}
+                    </label>
+                    {!editingCategory && entries.length > 1 && (
+                       <button
+                         type="button"
+                         className="inline-flex items-center justify-center size-6 rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
+                         onClick={() => setEntries(prev => prev.filter((_, i) => i !== idx))}
+                         title={t('stock:organisation.category_manager.remove_entry')}
+                       >
+                         ✕
+                       </button>
+                    )}
+                 </div>
+                 <Input
+                    type="text"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 h-12 text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                    value={entry.name}
+                    onChange={e => setEntries(prev => prev.map((en, i) => i === idx ? { ...en, name: e.target.value } : en))}
+                    required={editingCategory ? true : idx === 0}
+                    autoFocus={idx === 0}
+                    autoComplete="off"
                  />
+
+                 {hasHierarchy && (
+                    <div>
+                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.parent_label')}</label>
+                       <select
+                         className="w-full rounded-xl border border-slate-200 bg-white h-12 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                         value={entry.parent}
+                         onChange={e => setEntries(prev => prev.map((en, i) => i === idx ? { ...en, parent: e.target.value } : en))}
+                       >
+                         <option value="">{t('stock:organisation.category_manager.parent_select_none')}</option>
+                         {categories.flatMap(c => (!c.parent && c.id !== editingCategory?.id) ? [(
+                           <option key={c.id} value={c.id.toString()}>{getCategoryName(c)}</option>
+                         )] : [])}
+                       </select>
+                    </div>
+                 )}
+
+                 {hasDescription && (
+                    <div>
+                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.description_label')}</label>
+                       <Textarea
+                         className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 resize-none"
+                         value={entry.description}
+                         onChange={e => setEntries(prev => prev.map((en, i) => i === idx ? { ...en, description: e.target.value } : en))}
+                         rows={2}
+                       />
+                    </div>
+                 )}
               </div>
+           ))}
+
+           {!editingCategory && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-emerald-300 text-emerald-600 text-sm font-bold hover:bg-emerald-50 transition-colors w-full justify-center"
+                onClick={() => setEntries(prev => [...prev, { name: '', description: '', parent: '' }])}
+              >
+                 <Plus size={16} />
+                 {t('stock:organisation.category_manager.add_another_entry', { type })}
+              </button>
            )}
 
            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
               <button type="button" className="inline-flex items-center h-9 px-5 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors" onClick={() => setIsModalOpen(false)}>{t('stock:organisation.category_manager.cancel')}</button>
-              <button type="submit" className="inline-flex items-center justify-center h-9 px-8 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm">{t('stock:organisation.category_manager.save')}</button>
+              <button type="submit" className="inline-flex items-center justify-center h-9 px-8 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm">
+                 {editingCategory
+                   ? t('stock:organisation.category_manager.save')
+                   : t('stock:organisation.category_manager.save_all', { count: entries.filter(e => e.name.trim()).length || entries.length })}
+              </button>
            </div>
         </form>
       </PremiumModal>

@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import type { TFunction } from 'i18next'
 import toast from 'react-hot-toast'
 import type { LigneFacture } from '../types'
 
@@ -15,7 +16,7 @@ export interface UseSecureCartOperationsOptions {
     ) => void
     setActiveSudoCreds: (creds: { validatorId: number; password: string } | null) => void
     activeSudoCreds: { validatorId: number; password: string } | null
-    t: (key: string, options?: unknown) => string
+    t: TFunction
     triggerUiRefresh: () => void
     maxDiscountRate: number
 }

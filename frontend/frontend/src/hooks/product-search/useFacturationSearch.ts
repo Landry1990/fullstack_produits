@@ -188,7 +188,7 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
         return packResults.map(p => ({ ...p, name: p.name })) as SearchResult[]
       case 'dci':
         if (selectedDci) {
-          return dciProducts as SearchResult[]
+          return dciProducts as unknown as SearchResult[]
         } else {
           return dciResults.map(d => ({ ...d, name: d.nom })) as unknown as SearchResult[]
         }

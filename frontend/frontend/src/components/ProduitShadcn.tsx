@@ -171,7 +171,10 @@ export default function ProduitShadcn() {
       confirmText: t('products:actions.delete')
     })
     if (!ok) return
-    setPasswordConfig({ title: 'Confirmation', message: 'Entrez votre mot de passe pour supprimer' })
+    setPasswordConfig({
+      title: t('products:messages.password_confirm_delete_title'),
+      message: t('products:messages.password_confirm_delete_body', { name: produit.name })
+    })
     pendingActionRef.current = async () => {
       await api.delete(`produits/${produit.id}/`)
       setSelectedProduit(null)
@@ -265,7 +268,7 @@ export default function ProduitShadcn() {
     } finally { setTransferLoading(false) }
   }
 
-  const handleMovementClick = async (item: { facture?: number; commande?: number; type?: string }) => {
+  const handleMovementClick = async (item: { facture?: number | null; commande?: number | null; type?: string }) => {
     if (item.facture && (item.type === 'SORTIE' || item.type === 'RETOUR')) {
       try {
         await api.get(`factures/${item.facture}/`)
@@ -443,7 +446,7 @@ export default function ProduitShadcn() {
               <div className="shrink-0 px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <Checkbox size="sm" checked={isAllSelected} indeterminate={isPartial} onChange={() => setSelectedIds(prev => prev.length === produits.length ? [] : produits.map(p => p.id))} />
-                  <span>CIP</span>
+                  <span>{t('products:table.cip')}</span>
                   <span className="ml-6">{t('products:table.product', { defaultValue: 'Produit' })}</span>
                 </div>
               </div>
@@ -498,10 +501,10 @@ export default function ProduitShadcn() {
                                   {produit.name}
                                 </span>
                                 {produit.is_supplier_exclusive && (
-                                  <Badge variant="success" size="sm">EXCLU</Badge>
+                                  <Badge variant="success" size="sm">{t('products:table.exclusive_badge')}</Badge>
                                 )}
                                 {produit.is_active === false && (
-                                  <Badge variant="ghost" size="sm">Inactif</Badge>
+                                  <Badge variant="ghost" size="sm">{t('products:table.inactive_badge')}</Badge>
                                 )}
                               </div>
                             </td>
@@ -516,15 +519,15 @@ export default function ProduitShadcn() {
               {/* Footer stats */}
               <div className="shrink-0 px-4 py-2 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Global</span>
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('products:footer.global')}</span>
                   <Badge variant="primary" size="sm">{totalCount}</Badge>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5" title="Stock Faible">
+                  <div className="flex items-center gap-1.5" title={t('products:footer.low_stock_title')}>
                     <div className="size-2 rounded-full bg-amber-400" />
                     <span className="text-amber-600 font-semibold text-sm">{lowStockCount}</span>
                   </div>
-                  <div className="flex items-center gap-1.5" title="Rupture">
+                  <div className="flex items-center gap-1.5" title={t('products:footer.out_of_stock_title')}>
                     <div className="size-2 rounded-full bg-red-500" />
                     <span className="text-red-600 font-semibold text-sm">{outOfStockCount}</span>
                   </div>
@@ -534,13 +537,13 @@ export default function ProduitShadcn() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="shrink-0 px-4 py-2 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">Page {page} / {totalPages}</span>
+                  <span className="text-xs text-slate-400">{t('common:pagination.page_info', { page, total: totalPages })}</span>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} leftIcon={<ChevronLeft className="size-4" />}>
-                      Précédent
+                      {t('common:pagination.prev')}
                     </Button>
                     <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} rightIcon={<ChevronRight className="size-4" />}>
-                      Suivant
+                      {t('common:pagination.next')}
                     </Button>
                   </div>
                 </div>
@@ -560,22 +563,22 @@ export default function ProduitShadcn() {
                         <h2 className="text-lg font-bold text-slate-900 truncate uppercase" title={selectedProduit.name}>
                           {selectedProduit.name}
                         </h2>
-                        {selectedProduit.is_active === false && <Badge variant="ghost" size="sm">Inactif</Badge>}
-                        {selectedProduit.is_supplier_exclusive && <Badge variant="success" size="sm">Exclusif</Badge>}
+                        {selectedProduit.is_active === false && <Badge variant="ghost" size="sm">{t('products:table.inactive_badge')}</Badge>}
+                        {selectedProduit.is_supplier_exclusive && <Badge variant="success" size="sm">{t('products:table.exclusive_badge_full')}</Badge>}
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${
                           ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= 0 ? 'bg-red-50 text-red-600' :
                           ((selectedProduit.total_stock ?? selectedProduit.stock) ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'bg-amber-50 text-amber-600' :
                           'bg-emerald-50 text-emerald-600'
                         }`}>
                           {selectedProduit.has_reserve_storage ? (
-                            <>Rayon: {selectedProduit.stock ?? 0} / Réserve: {selectedProduit.stock_reserve ?? 0}</>
+                            <>{t('common:rayon')}: {selectedProduit.stock ?? 0} / {t('products:detail.reserve_label')}: {selectedProduit.stock_reserve ?? 0}</>
                           ) : (
-                            <>Stock: {selectedProduit.stock ?? 0}</>
+                            <>{t('common:stock')}: {selectedProduit.stock ?? 0}</>
                           )}
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                        <p className="text-sm text-slate-500 font-mono">CIP: <span className="text-slate-700">{selectedProduit.cip1 || '-'}</span></p>
+                        <p className="text-sm text-slate-500 font-mono">{t('common:cip')}: <span className="text-slate-700">{selectedProduit.cip1 || '-'}</span></p>
                         {selectedProduit.cip2 && <p className="text-sm text-slate-400 font-mono">• <span className="text-slate-600">{selectedProduit.cip2}</span></p>}
                         {selectedProduit.cip3 && <p className="text-sm text-slate-400 font-mono">• <span className="text-slate-600">{selectedProduit.cip3}</span></p>}
                       </div>
@@ -613,7 +616,7 @@ export default function ProduitShadcn() {
                   <ProductTabsContent
                     selectedProduit={selectedProduit}
                     activeTab={activeTab}
-                    setActiveTab={setActiveTab}
+                    setActiveTab={(tab) => setActiveTab(tab as ActiveTab)}
                     lots={lots}
                     monthlyStats={monthlyStats}
                     achats={achats}
@@ -625,7 +628,7 @@ export default function ProduitShadcn() {
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-300">
                   <Package className="size-16 mb-4 opacity-30" />
-                  <p className="text-sm font-medium">{t('products:details.select_product', { defaultValue: 'Sélectionnez un produit pour voir les détails' })}</p>
+                  <p className="text-sm font-medium">{t('products:detail.select_hint')}</p>
                 </div>
               )}
             </Card>

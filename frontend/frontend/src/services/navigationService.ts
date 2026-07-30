@@ -1,10 +1,12 @@
-let router: unknown = null;
+import type { NavigateFunction, NavigateOptions } from 'react-router-dom';
 
-export const setRouter = (r: unknown) => {
+let router: { navigate: NavigateFunction } | null = null;
+
+export const setRouter = (r: { navigate: NavigateFunction }) => {
   router = r;
 };
 
-export const navigate = (path: string, options?: unknown) => {
+export const navigate = (path: string, options?: NavigateOptions) => {
   if (router) {
     router.navigate(path, options);
   } else {
