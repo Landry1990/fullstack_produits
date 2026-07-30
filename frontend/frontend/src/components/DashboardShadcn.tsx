@@ -205,7 +205,7 @@ export default function DashboardShadcn() {
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight truncate">
                   {licence?.pharmacie_nom || t('title')}
                 </h1>
-                {daysRemaining !== null && (
+                {daysRemaining !== null && daysRemaining <= 30 && (
                   <Badge variant={daysRemaining <= 7 ? 'destructive' : daysRemaining <= 30 ? 'default' : 'secondary'}
                     className="text-[10px] shrink-0">
                     {t('licence_days_remaining', { count: daysRemaining })}

@@ -1,20 +1,25 @@
 import { Suspense, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Clock } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import Sidebar from './Sidebar'
 import UserHeader from './common/UserHeader'
 import Omnisearch from './common/Omnisearch'
 import { Button } from './shadcn/button'
+import { Badge } from './shadcn/badge'
 import TransformationAlertListener from './common/TransformationAlertListener'
 import { SidebarProvider } from '../context/SidebarContext'
 import { useSidebar } from '../hooks/useSidebar'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
+import { useLicence } from '../context/LicenceContext'
 import LicenceExpirationBanner from './LicenceExpirationBanner'
 import UpdateReminderModal from './UpdateReminderModal'
 
 function LayoutContent() {
   const { isZenithMode, isMidnightTheme } = useSidebar()
   const { isPosMode, activePoste, closePoste, isLoading } = usePosteCaisseMode()
+  const { daysRemaining } = useLicence()
+  const { t } = useTranslation(['dashboard', 'common'])
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -67,7 +72,17 @@ function LayoutContent() {
         
         <main className={`flex-1 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
           {!isZenithMode && (
-            <div className="sticky top-0 z-40 flex items-center justify-end bg-base-200/80 backdrop-blur-md border-b border-base-300/50 px-2 py-1">
+            <div className="sticky top-0 z-40 flex items-center justify-between bg-base-200/80 backdrop-blur-md border-b border-base-300/50 px-2 py-1">
+              {/* Badge jours restants licence — masqué si > 30 jours */}
+              {daysRemaining !== null && daysRemaining <= 30 && (
+                <Badge
+                  variant={daysRemaining <= 7 ? 'destructive' : daysRemaining <= 30 ? 'default' : 'secondary'}
+                  className="text-[10px] shrink-0 gap-1"
+                >
+                  <Clock className="size-3" />
+                  {t('dashboard:licence_days_remaining', { count: daysRemaining })}
+                </Badge>
+              )}
               <UserHeader />
             </div>
           )}
