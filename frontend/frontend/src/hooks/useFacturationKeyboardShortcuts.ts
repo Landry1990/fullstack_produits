@@ -1,6 +1,7 @@
 import { useEffect, type RefObject } from 'react'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
 import { toast } from 'react-hot-toast'
+import type { Facture } from '../types'
 
 interface UseFacturationKeyboardShortcutsProps {
   searchInputRef: RefObject<HTMLInputElement | null>;
@@ -21,11 +22,11 @@ interface UseFacturationKeyboardShortcutsProps {
   setShowClientCreateModal: (val: boolean) => void;
   showStockResolution: boolean;
   setShowStockResolution: (val: boolean) => void;
-  confirmModal: unknown;
-  setConfirmModal: (val: unknown) => void;
+  confirmModal: { isOpen: boolean; message: string; onConfirm: () => void } | null;
+  setConfirmModal: (val: { isOpen: boolean; message: string; onConfirm: () => void } | null) => void;
   setSearchQuery: (val: string) => void;
-  successInfo?: unknown;
-  setSuccessInfo: (val: unknown) => void;
+  successInfo?: Facture | null;
+  setSuccessInfo: (val: Facture | null) => void;
   setShowHelp: (val: boolean) => void;
   handleSuspendSale: () => void;
   handleAddAlertMessage: () => void;
@@ -91,7 +92,7 @@ export function useFacturationKeyboardShortcuts({
       if (e.key === 'F4') {
         e.preventDefault()
         if (lignesFacture.length > 0) {
-          const lastItem = lignesFacture[lignesFacture.length - 1]
+          const lastItem = lignesFacture[lignesFacture.length - 1] as { produit: { id: number } }
           const input = quantityInputsRef.current?.get(lastItem.produit.id)
           if (input) {
             input.focus()

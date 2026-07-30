@@ -41,7 +41,20 @@ export interface UseSaleCompletionReturn {
     loading: boolean;
     error: string | null;
     lastResult: SaleCompletionResult | null;
-    completeExistingInvoicePayment: (params: unknown) => Promise<SaleCompletionResult>;
+    completeExistingInvoicePayment: (params: {
+        facture: Facture;
+        paiements?: PaymentDetails[];
+        montantPaye: string;
+        modePaiement: string;
+        reference?: string;
+        lignesFacture: LigneFacture[];
+        tempOrdonnanceData: OrdonnanceData | null;
+        promisPhone?: string;
+        promisClientName?: string;
+        useManualClient?: boolean;
+        manualClientName?: string;
+        prescriptionImage?: File | null;
+    }) => Promise<SaleCompletionResult>;
 }
 
 // ============== MAIN HOOK ==============

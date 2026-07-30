@@ -42,6 +42,18 @@ interface Product {
   rayon_name?: string;
 }
 
+interface GestionVitrineProps {
+  products: Product[];
+  isLoading: boolean;
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+  showPublicOnly: boolean;
+  setShowPublicOnly: (value: boolean) => void;
+  toggleVisibility: { mutate: (id: number) => void };
+  updatePrice: { mutate: (args: { id: number; price: number | null }) => void };
+  bulkToggle: { mutate: (args: { ids: number[]; target_status: boolean }) => void };
+}
+
 // --- Composant Gestion (Admin) ---
 function GestionVitrine({
   products,
@@ -53,7 +65,7 @@ function GestionVitrine({
   toggleVisibility,
   updatePrice,
   bulkToggle,
-}: unknown) {
+}: GestionVitrineProps) {
   const { t } = useTranslation(['vitrine', 'common']);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
@@ -288,7 +300,7 @@ function SimulateurClient() {
   const { data: results = [], isLoading } = useQuery({
     queryKey: ['vitrine-simulation', debouncedSearch],
     queryFn: async () => {
-      const params: unknown = { is_public: 'true' };
+      const params: Record<string, string | number> = { is_public: 'true' };
       if (debouncedSearch) {
         params.search = debouncedSearch;
       } else {
@@ -498,7 +510,7 @@ export default function Vitrine() {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['vitrine-products', debouncedSearch, showPublicOnly],
     queryFn: async () => {
-      const params: unknown = { search: debouncedSearch };
+      const params: Record<string, string> = { search: debouncedSearch };
       if (showPublicOnly) params.is_public = 'true';
       const response = await api.get('produits/', { params });
       return response.data.results || response.data;
@@ -515,7 +527,7 @@ export default function Vitrine() {
       const previousProducts = queryClient.getQueryData(['vitrine-products']);
       queryClient.setQueryData(
         ['vitrine-products', debouncedSearch, showPublicOnly],
-        (old: unknown) => {
+        (old: Product[] | { results: Product[] } | undefined) => {
           if (!old) return old;
           const list = Array.isArray(old) ? old : old.results;
           const updatedList = list.map((p: Product) =>

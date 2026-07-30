@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 import {
   PlusCircle, Settings, Calendar, BarChart3, TrendingUp,
   Trophy, Zap, AlertCircle, Target, RefreshCw, Download,
-  ArrowUpRight, _Activity, FileSpreadsheet,
+  ArrowUpRight, Activity, FileSpreadsheet,
   TrendingDown, PackageX, CreditCard, Archive, Clock, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { useManagerDashboard } from '../hooks/useManagerDashboard';
+import { useManagerDashboard, type EditingObjectif } from '../hooks/useManagerDashboard';
+import type { ObjectifCommercial } from '../hooks/useDashboard';
 import { ObjectivesSettings } from './dashboard/ObjectivesSettings';
 
 import { Button } from './shadcn/button';
@@ -18,7 +19,7 @@ import { Progress } from './shadcn/progress';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle, _DialogTrigger,
+  DialogHeader, DialogTitle, DialogTrigger,
 } from './shadcn/dialog';
 
 import { formatCurrency } from '../utils/formatters';
@@ -30,6 +31,18 @@ interface KPIData {
   margin?: number;
   target: number;
   rate: number;
+}
+
+interface DashboardAlert {
+  id?: string | number;
+  type: string;
+  priority?: number;
+  icon?: string;
+  title_key: string;
+  message_key: string;
+  params?: Record<string, unknown>;
+  action_key?: string;
+  action_route?: string;
 }
 
 /* ─── KPI Cards ─── */
@@ -192,7 +205,7 @@ const iconMap: Record<string, React.ReactNode> = {
   trophy: <Trophy className="size-4" />,
 };
 
-function AlertsShadcn({ alerts }: { alerts?: unknown[] }) {
+function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
   const { t } = useTranslation(['dashboard', 'common']);
   const navigate = useNavigate();
 
@@ -230,7 +243,7 @@ function AlertsShadcn({ alerts }: { alerts?: unknown[] }) {
         {sorted.length > 0 ? (
           sorted.map((alert, _idx) => {
             const style = alertStyles[alert.type] || alertStyles.info;
-            const icon = iconMap[alert.icon] || <AlertCircle className="size-4" />;
+            const icon = iconMap[alert.icon ?? ''] || <AlertCircle className="size-4" />;
             return (
               <div
                 key={alert.id ?? alert.title_key}
@@ -270,7 +283,7 @@ function AlertsShadcn({ alerts }: { alerts?: unknown[] }) {
 }
 
 /* ─── Objectives ─── */
-function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: unknown; onEdit: unknown; onRefresh: () => void }) {
+function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jour: ObjectifCommercial | null; semaine: ObjectifCommercial | null; mois: ObjectifCommercial | null } | undefined; onEdit: (periode?: string, objective?: EditingObjectif) => void; onRefresh: () => void }) {
   const { t } = useTranslation(['dashboard', 'common']);
   const fmt = (n: number) => formatCurrency(n, getLocale(), t('common:currency_symbol', 'F'));
 
@@ -300,12 +313,12 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: unkno
       </CardHeader>
       <CardContent className="flex-1 space-y-3">
         {types.map((p) => {
-          const obj = currentObj ? currentObj[p.code.toLowerCase()] : null;
+          const obj = currentObj ? (currentObj as Record<string, ObjectifCommercial | null>)[p.code.toLowerCase()] : null;
           return (
             <div
               key={p.code}
               className="group flex items-center justify-between p-4 rounded-xl bg-slate-50/50 border border-slate-100 hover:bg-white hover:shadow-sm transition-all cursor-pointer"
-              onClick={() => onEdit(p.code, obj)}
+              onClick={() => onEdit(p.code, obj ?? undefined)}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-2.5 h-2.5 rounded-full ${p.dot} shrink-0`} />

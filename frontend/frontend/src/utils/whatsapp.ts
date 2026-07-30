@@ -1,7 +1,29 @@
 import { getLocale } from './dateUtils';
 import { logger } from '../utils/logger'
 
-export const generateInventorySummaryText = (inventory: unknown, pharmacyName: string): string => {
+interface InventoryDiscrepancy {
+  name: string;
+  quantity: number;
+  value: number;
+}
+
+interface Inventory {
+  id: number | string;
+  total_products?: number;
+  discrepancies_count?: number;
+  total_discrepancy_value?: number;
+  discrepancies?: InventoryDiscrepancy[];
+}
+
+interface DashboardStats {
+  revenue?: number;
+  sales_count?: number;
+  stock_count?: number;
+  low_stock_count?: number;
+  expiring_soon_count?: number;
+}
+
+export const generateInventorySummaryText = (inventory: Inventory, pharmacyName: string): string => {
   const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   
   let text = `📦 *RAPPORT INVENTAIRE ${pharmacyName.toUpperCase()}*\n`;
@@ -13,11 +35,11 @@ export const generateInventorySummaryText = (inventory: unknown, pharmacyName: s
   text += `• Écarts détectés: ${inventory.discrepancies_count || 0}\n`;
   text += `• Valeur totale des écarts: ${inventory.total_discrepancy_value?.toLocaleString('fr-FR') || 0} F\n\n`;
   
-  if (inventory.discrepancies_count > 0) {
+  if ((inventory.discrepancies_count ?? 0) > 0) {
     text += `⚠️ *Principaux écarts*\n`;
     // Afficher les 3 plus gros écarts
     const topDiscrepancies = (inventory.discrepancies || []).slice(0, 3);
-    topDiscrepancies.forEach((item: unknown) => {
+    topDiscrepancies.forEach((item) => {
       text += `• ${item.name}: ${item.quantity} (${item.value.toLocaleString('fr-FR')} F)\n`;
     });
   }
@@ -27,7 +49,7 @@ export const generateInventorySummaryText = (inventory: unknown, pharmacyName: s
   return text;
 };
 
-const _generateDashboardFlashText = (stats: unknown, pharmacyName: string): string => {
+const _generateDashboardFlashText = (stats: DashboardStats, pharmacyName: string): string => {
   const date = new Date().toLocaleDateString(getLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   
   let text = `📊 *RAPPORT FLASH ${pharmacyName.toUpperCase()}*\n`;
@@ -38,7 +60,7 @@ const _generateDashboardFlashText = (stats: unknown, pharmacyName: string): stri
   text += `📦 *Produits en stock*: ${stats.stock_count || 0}\n`;
   text += `⚠️ *Alertes stock bas*: ${stats.low_stock_count || 0}\n`;
   
-  if (stats.expiring_soon_count > 0) {
+  if ((stats.expiring_soon_count ?? 0) > 0) {
     text += `🕐 *Produits périmant bientôt*: ${stats.expiring_soon_count}\n`;
   }
   

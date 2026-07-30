@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
-import type { Facture, CouponMonnaie } from '../../types'
+import type { Facture, FactureProduit, CouponMonnaie } from '../../types'
 import {
   Dialog,
   DialogContent,
@@ -35,11 +35,30 @@ interface FacturesTableProps {
   onUpdateProductQuantity: (factureId: number, produitId: number, newQty: number) => void
   onRemoveProduct: (factureId: number, produitId: number) => void
   couponsParFacture: Record<number, CouponMonnaie>
-  user: unknown // Replace with proper User type if available
+  user: FacturesTableUser | null // Replace with proper User type if available
   myActivePoste?: unknown | null // Poste de caisse actif de l'utilisateur courant
   selectedIds?: Set<number>
   onToggleSelect?: (id: number) => void
   onSelectAll?: () => void
+}
+
+interface FacturesTableUser {
+  is_superuser?: boolean
+  can_modify_invoice?: boolean
+  can_cancel_invoice?: boolean
+  can_cash_out?: boolean
+  profile?: {
+    can_modify_invoice?: boolean
+    can_cancel_invoice?: boolean
+    can_cash_out?: boolean
+  }
+}
+
+interface FactureProduitRow extends FactureProduit {
+  produit_name?: string
+  quantite?: number
+  prix_vente?: string | number
+  produit_id?: number
 }
 
 const PAGE_SIZE = 100
@@ -67,10 +86,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   const [previewFacture, setPreviewFacture] = useState<Facture | null>(null)
   const [page, setPage] = useState(1)
 
-  const canModify = user?.is_superuser || (user as unknown)?.can_modify_invoice || user?.profile?.can_modify_invoice
-  const canCancel = user?.is_superuser || (user as unknown)?.can_cancel_invoice || user?.profile?.can_cancel_invoice
+  const canModify = user?.is_superuser || user?.can_modify_invoice || user?.profile?.can_modify_invoice
+  const canCancel = user?.is_superuser || user?.can_cancel_invoice || user?.profile?.can_cancel_invoice
   // Pour encaisser : il faut la permission ET avoir une caisse ouverte (sauf superuser)
-  const hasCashOutPermission = user?.is_superuser || (user as unknown)?.can_cash_out || user?.profile?.can_cash_out
+  const hasCashOutPermission = user?.is_superuser || user?.can_cash_out || user?.profile?.can_cash_out
   const hasActiveCashSession = !!myActivePoste
   const canCashOut = hasCashOutPermission && (user?.is_superuser || hasActiveCashSession)
 
@@ -115,7 +134,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   }
 
   // Helper to get product display name
-  const getProductName = (p: unknown): string => {
+  const getProductName = (p: FactureProduitRow): string => {
     if (typeof p.produit === 'object' && p.produit !== null) {
       return p.produit.name || `#${p.produit.id}`
     }
@@ -185,7 +204,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   }`}
                   onClick={() => onSelectRow(index)}
                   onDoubleClick={() => {
-                    if ((user as unknown)?.can_cash_out || user?.is_superuser) {
+                    if (user?.can_cash_out || user?.is_superuser) {
                       onEncaisser(facture)
                     }
                   }}
@@ -391,11 +410,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {previewFacture.produits.map((p: unknown, _idx: number) => {
+                    {previewFacture.produits.map((p: FactureProduitRow, _idx: number) => {
                       const name = getProductName(p)
                       const qty = p.quantity || p.quantite || 1
                       const price = Number(p.selling_price || p.prix_vente || 0)
-                      const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || (user as unknown)?.can_modify_invoice
+                      const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || user?.can_modify_invoice
 
                       return (
                         <TableRow key={p.id ?? p.produit_id ?? p.produit ?? `row-${name}-${p.lot}`} className="group">
@@ -416,9 +435,9 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       if (qty > 1) {
-                                        onUpdateProductQuantity(previewFacture.id, p.produit, qty - 1);
+                                        onUpdateProductQuantity(previewFacture.id, p.produit as number, qty - 1);
                                       } else if (window.confirm(t('confirm_delete_product', { name }))) {
-                                        onRemoveProduct(previewFacture.id, p.produit);
+                                        onRemoveProduct(previewFacture.id, p.produit as number);
                                       }
                                     }}
                                   >
@@ -431,7 +450,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                     className="size-7 text-emerald-600 hover:bg-emerald-50"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onUpdateProductQuantity(previewFacture.id, p.produit, qty + 1);
+                                      onUpdateProductQuantity(previewFacture.id, p.produit as number, qty + 1);
                                     }}
                                   >
                                     <Plus className="size-3.5" />
@@ -453,7 +472,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (window.confirm(t('confirm_delete_product', { name }))) {
-                                    onRemoveProduct(previewFacture.id, p.produit);
+                                    onRemoveProduct(previewFacture.id, p.produit as number);
                                   }
                                 }}
                               >

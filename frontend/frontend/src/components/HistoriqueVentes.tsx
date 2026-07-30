@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { format } from 'date-fns';
+import type { Locale } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
@@ -39,6 +40,27 @@ interface DailySale {
   en_compte: number;
 }
 
+interface GlobalTotals {
+  ca_ttc: number;
+  especes: number;
+  carte: number;
+  cheque: number;
+  virement: number;
+  om: number;
+  momo: number;
+  coupon: number;
+  en_compte: number;
+  nb_ventes: number;
+  marge: number;
+  remise: number;
+}
+
+interface HistoryResponse {
+  results: DailySale[];
+  count: number;
+  totals: GlobalTotals | null;
+}
+
 const formatMoney = (amount: number) => formatCurrency(amount);
 
 const HistoriqueVentes = () => {
@@ -55,7 +77,7 @@ const HistoriqueVentes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(31);
   const [totalItems, setTotalItems] = useState(0);
-  const [globalTotals, setGlobalTotals] = useState<unknown>(null);
+  const [globalTotals, setGlobalTotals] = useState<GlobalTotals | null>(null);
 
   const fetchHistory = useCallback(async () => {
     if (!user?.token) return;
@@ -68,7 +90,7 @@ const HistoriqueVentes = () => {
       params.append('page', currentPage.toString());
       params.append('page_size', pageSize.toString());
 
-      const response = await api.get(`historique-ventes/?${params.toString()}`);
+      const response = await api.get<HistoryResponse>(`historique-ventes/?${params.toString()}`);
       
       const { results, count, totals } = response.data;
       setData(results || []);
@@ -231,7 +253,7 @@ const HistoriqueVentes = () => {
                       <td className="font-semibold text-slate-700 whitespace-nowrap py-3 px-2">
                         <div className="flex flex-col">
                           <span className="text-sm">{format(new Date(row.date), 'dd/MM/yyyy')}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">{format(new Date(row.date), 'EEEE', { locale: (window as unknown).dateLocale })}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">{format(new Date(row.date), 'EEEE', { locale: (window as unknown as { dateLocale?: Locale }).dateLocale })}</span>
                         </div>
                       </td>
                       <td className="text-right py-3 px-2">

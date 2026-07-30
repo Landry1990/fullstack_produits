@@ -52,7 +52,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
 
     setUploading(true)
     setProgress(0)
-    setStatusMessage('Envoi du fichier...')
+    setStatusMessage(t('products:import.sending_file'))
     setResult(null)
 
     try {
@@ -62,7 +62,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
       })
       const jobId = res.data.job_id
       jobIdRef.current = jobId
-      setStatusMessage('Import démarré en arrière-plan...')
+      setStatusMessage(t('products:import.background_started'))
 
       const poll = setInterval(async () => {
         try {
@@ -76,20 +76,20 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
             setUploading(false)
             setResult(d)
             jobIdRef.current = null
-            toast.success(d.message || 'Import terminé')
+            toast.success(d.message || t('products:import.done'))
             onSuccess()
           } else if (d.status === 'error') {
             clearInterval(poll)
             setUploading(false)
             jobIdRef.current = null
-            toast.error(d.message || "Erreur lors de l'import")
-            setResult({ created: 0, updated: 0, errors: 1, message: d.message || 'Erreur' })
+            toast.error(d.message || t('products:import.import_error'))
+            setResult({ created: 0, updated: 0, errors: 1, message: d.message || t('common:error') })
           }
         } catch {
           clearInterval(poll)
           setUploading(false)
           jobIdRef.current = null
-          toast.error('Erreur de communication avec le serveur')
+          toast.error(t('products:import.comm_error'))
         }
       }, 2000)
 
@@ -221,7 +221,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
                   <div className="text-sm text-base-content/70 mt-1">
                     <p>{t('products:import.created', { count: result.created })}</p>
                     <p>{t('products:import.updated', { count: result.updated })}</p>
-                    {result.errors > 0 && <p className="text-error">{result.errors} erreur(s)</p>}
+                    {result.errors > 0 && <p className="text-error">{t('products:import.errors_count', { count: result.errors })}</p>}
                   </div>
                 </div>
              </div>
@@ -234,13 +234,13 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
                      window.open(`/api/maintenance/download_rapport/?file=${result.rapport_xlsx}`, '_blank')
                    }}
                  >
-                   📊 Télécharger le rapport Excel
+                   📊 {t('products:import.download_report')}
                  </button>
                </div>
              )}
 
              <div className="flex justify-end">
-               <button className="px-6 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-focus transition-colors" onClick={onClose}>Fermer</button>
+               <button className="px-6 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-focus transition-colors" onClick={onClose}>{t('common:close')}</button>
              </div>
           </div>
         )}

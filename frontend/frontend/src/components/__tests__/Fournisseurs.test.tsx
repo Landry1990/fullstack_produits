@@ -1,11 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import Fournisseurs from '../Fournisseurs';
 import axios from 'axios';
 
 // Mock axios globally
-const mockedAxios = axios as unknown;
+const mockedAxios = axios as unknown as { get: Mock; post: Mock; delete: Mock; isAxiosError: Mock };
 
 vi.mock('react-hot-toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() }
@@ -18,14 +18,14 @@ vi.mock('../../context/AuthContext', () => ({
 // Mock useRecharts so the finance modal (ModuleFinancier) renders synchronously
 vi.mock('../../hooks/useRecharts', () => ({
   useRecharts: () => ({
-    ResponsiveContainer: ({ children }: unknown) => <div>{children}</div>,
-    AreaChart: ({ children }: unknown) => <div data-testid="area-chart">{children}</div>,
+    ResponsiveContainer: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+    AreaChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="area-chart">{children}</div>,
     Area: () => <div />,
-    LineChart: ({ children }: unknown) => <div data-testid="line-chart">{children}</div>,
+    LineChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="line-chart">{children}</div>,
     Line: () => <div />,
-    BarChart: ({ children }: unknown) => <div data-testid="bar-chart">{children}</div>,
+    BarChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="bar-chart">{children}</div>,
     Bar: () => <div />,
-    PieChart: ({ children }: unknown) => <div data-testid="pie-chart">{children}</div>,
+    PieChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="pie-chart">{children}</div>,
     Pie: () => <div />,
     XAxis: () => <div />,
     YAxis: () => <div />,
@@ -158,7 +158,7 @@ describe('Fournisseurs Component', () => {
         // Wait for debounce and effect
         await waitFor(() => {
             const calls = mockedAxios.get.mock.calls;
-            const searchCall = calls.find((c: unknown) => c[1]?.params?.search === 'Med');
+            const searchCall = calls.find((c: unknown[]) => (c[1] as { params?: { search?: string } })?.params?.search === 'Med');
             expect(searchCall).toBeDefined();
         }, { timeout: 4000 });
     });

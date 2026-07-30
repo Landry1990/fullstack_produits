@@ -14,6 +14,7 @@ import {
   TrendingUp as TrendingIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import { Card, CardContent } from '../shadcn/card';
 import { Badge } from '../shadcn/badge';
@@ -24,6 +25,12 @@ interface SelectedItem {
   type: string;
   data?: unknown;
   id?: string;
+}
+
+interface ProduitDetail {
+  nom?: string;
+  prix?: string | number;
+  quantite?: number;
 }
 
 interface Props {
@@ -54,7 +61,7 @@ export default function OmnisearchPreview({ selectedItem }: Props) {
 }
 
 /* ==================== PRODUCT PREVIEW ==================== */
-function ProductPreview({ data, t }: { data?: ProduitModel; t: unknown }) {
+function ProductPreview({ data, t }: { data?: ProduitModel; t: TFunction }) {
   if (!data || !data.name) return <EmptyPreview t={t} />;
 
   const stock = data.stock || 0;
@@ -142,7 +149,7 @@ function ProductPreview({ data, t }: { data?: ProduitModel; t: unknown }) {
 }
 
 /* ==================== CLIENT PREVIEW ==================== */
-function ClientPreview({ data, t }: { data?: Client; t: unknown }) {
+function ClientPreview({ data, t }: { data?: Client; t: TFunction }) {
   if (!data || !data.name) return <EmptyPreview t={t} />;
 
   return (
@@ -203,8 +210,9 @@ function ClientPreview({ data, t }: { data?: Client; t: unknown }) {
 }
 
 /* ==================== FACTURE PREVIEW ==================== */
-function FacturePreview({ data, t }: { data?: Facture; t: unknown }) {
+function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
   if (!data) return <EmptyPreview t={t} />;
+  const produitsDetails = (data as Facture & { produits_details?: ProduitDetail[] }).produits_details;
 
   return (
     <div className="p-8 space-y-8 h-full flex flex-col">
@@ -243,13 +251,13 @@ function FacturePreview({ data, t }: { data?: Facture; t: unknown }) {
           </Card>
         </div>
 
-        {(data as unknown).produits_details && (data as unknown).produits_details.length > 0 && (
+        {produitsDetails && produitsDetails.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
-              Produits ({(data as unknown).produits_details.length})
+              Produits ({produitsDetails.length})
             </h4>
             <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
-              {(data as unknown).produits_details.map((p: unknown) => (
+              {produitsDetails.map((p: ProduitDetail) => (
                 <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
@@ -272,8 +280,9 @@ function FacturePreview({ data, t }: { data?: Facture; t: unknown }) {
 }
 
 /* ==================== COMMANDE PREVIEW ==================== */
-function CommandePreview({ data, t }: { data?: Commande; t: unknown }) {
+function CommandePreview({ data, t }: { data?: Commande; t: TFunction }) {
   if (!data) return <EmptyPreview t={t} />;
+  const produitsDetails = (data as Commande & { produits_details?: ProduitDetail[] }).produits_details;
 
   return (
     <div className="p-8 space-y-8 h-full flex flex-col">
@@ -309,13 +318,13 @@ function CommandePreview({ data, t }: { data?: Commande; t: unknown }) {
           </Card>
         </div>
 
-        {(data as unknown).produits_details && (data as unknown).produits_details.length > 0 && (
+        {produitsDetails && produitsDetails.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
-              Articles ({(data as unknown).produits_details.length})
+              Articles ({produitsDetails.length})
             </h4>
             <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
-              {(data as unknown).produits_details.map((p: unknown) => (
+              {produitsDetails.map((p: ProduitDetail) => (
                 <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
@@ -337,7 +346,7 @@ function CommandePreview({ data, t }: { data?: Commande; t: unknown }) {
 }
 
 /* ==================== FOURNISSEUR PREVIEW ==================== */
-function FournisseurPreview({ data, t }: { data?: Fournisseur; t: unknown }) {
+function FournisseurPreview({ data, t }: { data?: Fournisseur; t: TFunction }) {
   if (!data) return <EmptyPreview t={t} />;
 
   return (
@@ -370,7 +379,7 @@ function FournisseurPreview({ data, t }: { data?: Fournisseur; t: unknown }) {
 }
 
 /* ==================== EMPTY PREVIEW ==================== */
-function EmptyPreview({ t }: { t: unknown }) {
+function EmptyPreview({ t }: { t: TFunction }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-300 grayscale scale-95 transition-all">
       <div className="size-24 rounded-full border-4 border-dashed border-slate-500/30 flex items-center justify-center mb-4">

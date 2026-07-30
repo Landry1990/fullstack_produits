@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { type RowInput } from 'jspdf-autotable';
 import type { PharmacySettings } from '../../hooks/usePharmacySettings';
 
 interface ReapproAdjustment {
@@ -120,8 +120,8 @@ export function generateReapproSessionPdfDraft(
       adj.produit_name || 'Produit inconnu',
       adj.lot_num || 'N/A',
       formatExpiry(adj.expiry),
-      { content: `+${adj.quantity_change}`, styles: { halign: 'right' } }
-    ]),
+      { content: `+${adj.quantity_change}`, styles: { halign: 'right' as const } }
+    ]) as unknown as RowInput[],
     theme: 'plain',
     headStyles: {
       fillColor: [255, 255, 255],
@@ -155,7 +155,7 @@ export function generateReapproSessionPdfDraft(
     },
   });
 
-  const finalY = (doc as unknown).lastAutoTable.finalY + 8;
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
   if (finalY < pageHeight - 30) {
     const summaryW = 70;
     const summaryX = pageWidth - margin - summaryW;

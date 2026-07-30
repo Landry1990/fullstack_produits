@@ -5,6 +5,7 @@ import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuditLogs, useAuditStats, useUsers } from '../hooks/useAudit';
 import { formatNumber } from '../utils/formatters';
+import type { AuditLog } from '../types/audit';
 import {
   ClipboardList, Search, Download, RotateCcw, ChevronDown, ChevronUp,
   TrendingUp, Clock, Calendar, Shield, PackagePlus, PackageMinus, Loader2,
@@ -12,6 +13,26 @@ import {
   BadgeAlert, Edit, LogIn, FileOutput, Settings, AlertTriangle,
   Activity, Filter
 } from 'lucide-react';
+
+interface LogDetails {
+  old_price?: number;
+  new_price?: number;
+  produit_nom?: string;
+  old_quantity?: number;
+  new_quantity?: number;
+  ecart?: number;
+  reason?: string;
+  sudo_validation?: boolean;
+  sudo_user?: string;
+  sudo_permission?: string;
+  changes?: Record<string, { old?: string | number; new?: string | number }>;
+  amount?: number;
+  montant?: number;
+  quantity?: number;
+  total_ttc?: number;
+  client_name?: string;
+  [key: string]: unknown;
+}
 
 // ── Config par type d'action ────────────────────────────────────────────────
 const ACTION_CONFIG: Record<string, {
@@ -56,8 +77,8 @@ const QUICK_FILTERS = [
 ];
 
 // ── Formatage lisible des détails ────────────────────────────────────────────
-function buildDetailChips(log: unknown): { label: string; value: string; highlight?: boolean }[] {
-  const d = log.details;
+function buildDetailChips(log: AuditLog): { label: string; value: string; highlight?: boolean }[] {
+  const d = log.details as LogDetails | null;
   if (!d || Object.keys(d).length === 0) return [];
   const chips: { label: string; value: string; highlight?: boolean }[] = [];
 
@@ -74,7 +95,7 @@ function buildDetailChips(log: unknown): { label: string; value: string; highlig
     chips.push({ label: 'Validé par', value: d.sudo_user || '—', highlight: true });
     if (d.sudo_permission) chips.push({ label: 'Permission', value: d.sudo_permission });
   } else if (d.changes && typeof d.changes === 'object') {
-    Object.entries(d.changes).slice(0, 3).forEach(([key, val]: [string, unknown]) => {
+    Object.entries(d.changes).slice(0, 3).forEach(([key, val]) => {
       chips.push({ label: key, value: `${val?.old ?? '—'} → ${val?.new ?? '—'}`, highlight: true });
     });
   } else {
@@ -90,9 +111,9 @@ function buildDetailChips(log: unknown): { label: string; value: string; highlig
 }
 
 // ── Groupage par date ────────────────────────────────────────────────────────
-function groupByDay(logs: unknown[]) {
-  const groups: { label: string; dateKey: string; logs: unknown[] }[] = [];
-  const map = new Map<string, unknown[]>();
+function groupByDay(logs: AuditLog[]) {
+  const groups: { label: string; dateKey: string; logs: AuditLog[] }[] = [];
+  const map = new Map<string, AuditLog[]>();
   logs.forEach(log => {
     const d = parseISO(log.timestamp);
     const key = format(d, 'yyyy-MM-dd');

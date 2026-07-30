@@ -5,11 +5,11 @@ import { Button } from './shadcn/button';
 import { logger } from '../utils/logger'
 
 export default function RouteErrorBoundary() {
-  const error = useRouteError() as unknown;
+  const error = useRouteError() as Record<string, unknown> | null;
   const navigate = useNavigate();
 
-  const errorMessage = error?.message || error?.error?.message || error?.data || '';
-  const errorName = error?.name || error?.error?.name || '';
+  const errorMessage = (error?.message as string) || (error?.error as { message?: string } | undefined)?.message || (error?.data as string) || '';
+  const errorName = (error?.name as string) || (error?.error as { name?: string } | undefined)?.name || '';
   const isChunkError = String(errorMessage).includes('dynamically imported module')
     || String(errorMessage).includes('Failed to fetch dynamically imported module')
     || String(errorMessage).includes('error loading dynamically imported module')
@@ -52,7 +52,7 @@ export default function RouteErrorBoundary() {
   } else if (typeof error === 'string') {
     displayError = error;
   } else if (error?.message) {
-    displayError = error.message;
+    displayError = String(error.message);
   }
 
   return (

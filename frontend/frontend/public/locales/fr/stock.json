@@ -264,7 +264,19 @@
             "print_btn": "Lancer l'impression",
             "print_no_rayon_title": "Imprimer les produits sans rayon",
             "no_rayon": "Sans Rayon",
-            "order_label": "Ordre d'affichage"
+            "order_label": "Ordre d'affichage",
+            "delete_all_btn": "Tout supprimer",
+            "delete_all_confirm_title": "Tout supprimer ?",
+            "delete_all_confirm_msg": "Tous les {{type}}s ({{count}}) seront déplacés en corbeille. Vous pourrez les restaurer depuis la page Corbeille.",
+            "delete_all_confirm_btn": "Tout mettre en corbeille",
+            "delete_all_success": "{{count}} {{type}}s déplacés en corbeille.",
+            "delete_all_error": "Erreur lors de la suppression en bloc.",
+            "delete_all_empty": "Aucun {{type}} à supprimer.",
+            "add_another_entry": "Ajouter un autre {{type}}",
+            "remove_entry": "Retirer cette ligne",
+            "save_all": "Tout enregistrer ({{count}})",
+            "bulk_create_success": "{{count}} {{type}}s créés avec succès",
+            "bulk_create_error": "{{count}} erreur(s) lors de la création"
         },
         "config_option_manager": {
             "title": "Motifs d'ajustement",

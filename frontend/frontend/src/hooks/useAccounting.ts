@@ -170,7 +170,8 @@ export const useAccounting = () => {
             toast.success('Écriture enregistrée avec succès');
         },
         onError: (error: unknown) => {
-            const data = error.response?.data;
+            const e = error as { response?: { data?: { detail?: string; message?: string; [key: string]: unknown } } };
+            const data = e.response?.data;
             if (data && typeof data === 'object') {
                 // Si c'est une erreur de validation DRF (dictionnaire de champs)
                 const firstError = Object.values(data)[0];
@@ -197,7 +198,8 @@ export const useAccounting = () => {
             toast.success('Compte créé avec succès');
         },
         onError: (error: unknown) => {
-            const msg = error.response?.data?.numero?.[0] || error.response?.data?.detail || 'Erreur lors de la création';
+            const e = error as { response?: { data?: { numero?: string[]; detail?: string } } };
+            const msg = e.response?.data?.numero?.[0] || e.response?.data?.detail || 'Erreur lors de la création';
             toast.error(msg);
         }
     });
@@ -209,7 +211,8 @@ export const useAccounting = () => {
             toast.success('Compte modifié avec succès');
         },
         onError: (error: unknown) => {
-            const msg = error.response?.data?.numero?.[0] || error.response?.data?.detail || 'Erreur lors de la modification';
+            const e = error as { response?: { data?: { numero?: string[]; detail?: string } } };
+            const msg = e.response?.data?.numero?.[0] || e.response?.data?.detail || 'Erreur lors de la modification';
             toast.error(msg);
         }
     });
@@ -221,7 +224,8 @@ export const useAccounting = () => {
             toast.success('Compte supprimé');
         },
         onError: (error: unknown) => {
-            const msg = error.response?.data?.detail || 'Impossible de supprimer ce compte (des écritures y sont liées)';
+            const e = error as { response?: { data?: { detail?: string } } };
+            const msg = e.response?.data?.detail || 'Impossible de supprimer ce compte (des écritures y sont liées)';
             toast.error(msg);
         }
     });
