@@ -188,7 +188,19 @@ class DashboardCoreMixin(viewsets.ViewSet):
             ]
     
         user_avg_basket = (user_ca_today / user_sales_count) if user_sales_count > 0 else Decimal(0)
-    
+
+        # Marge du jour (calcul rapide — une seule journée)
+        try:
+            from ...services.margin_service import MarginService
+            margin_stats = MarginService.calculate_period_margin_with_discounts(
+                date_debut=today,
+                date_fin=today + timedelta(days=1),
+                exclude_is_divers=False
+            )
+            margin_today_val = float(margin_stats['marge_brute'])
+        except Exception:
+            margin_today_val = None
+
         # Base response
         response_data = {
             'role': role,
@@ -210,6 +222,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
                 'stock_value': {'value': float(stock_agg['total'] or 0), 'count': stock_agg['count'] or 0},
                 'payment_mix': payment_mix_data,
                 'top_products': top_products_data,
+                'margin_today': margin_today_val,
             })
         
         # Mettre en cache (30s pour les stats temps réel)
@@ -717,7 +730,7 @@ class DashboardCoreMixin(viewsets.ViewSet):
 
         end_date = timezone.localtime(timezone.now())
         start_date = end_date - timedelta(days=6)  # 7 days including today
-    
+
         daily_revenue = Facture.objects.filter(
             date__date__gte=start_date.date(),
             date__date__lte=end_date.date(),
@@ -727,18 +740,6 @@ class DashboardCoreMixin(viewsets.ViewSet):
         ).values('day').annotate(
             total=Coalesce(Sum('total_ttc'), Decimal(0)),
             nb_ventes=Count('id')
-        ).order_by('day')
-
-        # Daily cost and margin via FactureProduit allocations
-        daily_costs = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__date__date__gte=start_date.date(),
-            facture_produit__facture__date__date__lte=end_date.date(),
-            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
-            day=TruncDay('facture_produit__facture__date')
-        ).values('day').annotate(
-            cout_achat=Coalesce(Sum(F('cost_price') * F('quantity')), Decimal(0)),
-            ca_ht=Coalesce(Sum(F('selling_price') * F('quantity')), Decimal(0)),
         ).order_by('day')
 
         # Build the data structure expected by frontend
@@ -751,25 +752,38 @@ class DashboardCoreMixin(viewsets.ViewSet):
         current_date = start_date.date()
         revenue_map = {item['day'].date(): float(item['total']) for item in daily_revenue}
         ventes_map = {item['day'].date(): item['nb_ventes'] for item in daily_revenue}
-        cost_map = {item['day'].date(): float(item['cout_achat']) for item in daily_costs}
-        caht_map = {item['day'].date(): float(item['ca_ht']) for item in daily_costs}
-    
+
+        # Utiliser MarginService pour calculer la marge par jour (cohérent avec margin_today)
+        from ...services.margin_service import MarginService
+
         DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
         while current_date <= end_date.date():
             day_label = DAY_NAMES[current_date.weekday()]
             labels.append(day_label)
             day_ca = revenue_map.get(current_date, 0)
-            day_cout = cost_map.get(current_date, 0)
-            day_caht = caht_map.get(current_date, 0)
-            day_marge = day_caht - day_cout
-            day_marge_pct = round((day_marge / day_caht * 100), 1) if day_caht > 0 else 0
+
+            # Calcul marge du jour via MarginService (même formule que margin_today)
+            try:
+                margin_stats = MarginService.calculate_period_margin_with_discounts(
+                    date_debut=current_date,
+                    date_fin=current_date + timedelta(days=1),
+                    exclude_is_divers=False
+                )
+                day_cout = float(margin_stats['cout_achat_total'])
+                day_marge = float(margin_stats['marge_brute'])
+                day_marge_pct = float(margin_stats['marge_pct'])
+            except Exception:
+                day_cout = 0
+                day_marge = 0
+                day_marge_pct = 0
+
             data.append(day_ca)
             nb_ventes_data.append(ventes_map.get(current_date, 0))
             couts_data.append(round(day_cout, 0))
             marges_data.append(round(day_marge, 0))
-            marges_pct_data.append(day_marge_pct)
+            marges_pct_data.append(round(day_marge_pct, 1))
             current_date += timedelta(days=1)
-    
+
         response_data = {
             'labels': labels,
             'data': data,

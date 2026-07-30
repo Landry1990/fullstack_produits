@@ -84,7 +84,8 @@ export default function DashboardShadcn() {
 
   const mergedStats = stats ? {
     ...stats,
-    margin_today: heavyStats?.margin_today ?? stats.margin_today,
+    // margin_today: prioriser stats (rafraîchi toutes les 15s) sur heavyStats (5 min)
+    margin_today: stats.margin_today ?? heavyStats?.margin_today,
     dormant_stock: heavyStats?.dormant_stock ?? stats.dormant_stock,
   } : stats;
 

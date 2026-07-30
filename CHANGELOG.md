@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-07-30 (20:20)
+
+### ✨ Nouvelle fonctionnalité : Analyse Marges par Produit
+
+- **Nouvelle page `/app/analyse-marges-produit`** (permission `statistiques_finances`)
+  - 4 onglets : Top 20 (marge), Bottom 20 (marge), Marge Négative (produits à perte), Impact Promotions
+  - KPIs résumés : CA total, marge totale, taux marge global, nombre de produits à perte
+  - Sélecteur de période : mois / trimestre / année
+  - Tableaux avec code couleur (rouge = marge négative, ambre = marge faible < 10%, vert = marge saine)
+  - Onglet Promotions : comparaison CA/marge avec vs sans promotion, CA perdu (remises), écart taux marge, barre de répartition visuelle
+  - Menu sidebar : Statistiques → "Marges par Produit"
+
+- **Backend : 2 nouveaux endpoints** `FinanceStatsViewSet`
+  - `GET /api/finance-stats/marge_par_produit/?periode=mois|trimestre|annee` — top 20, bottom 20, produits à marge négative (fusion alloc + unalloc)
+  - `GET /api/finance-stats/impact_promotions/?periode=mois|trimestre|annee` — CA/marge avec vs sans promotion, CA perdu, écart taux marge
+  - Fix `FieldError` (mixed IntegerField/DecimalField) : `Value(0, output_field=DecimalField())` sur toutes les expressions mixtes
+
+### ✨ Création en bloc — CategoryManager (rayons/formes/groupes)
+
+- **Modal multi-inputs** : ajout dynamique de plusieurs catégories d'un coup
+  - Bouton "Ajouter un autre {type}" (pointillés verts) pour ajouter un bloc
+  - Bouton ✕ pour retirer une ligne (sauf si une seule)
+  - Bouton "Tout enregistrer (N)" crée tous les éléments validés en boucle
+  - Mode édition inchangé (single input)
+- **i18n** : 6 nouvelles clés (`add_another_entry`, `remove_entry`, `save_all`, `bulk_create_success`, `bulk_create_error`) dans `fr/stock.json` + `en/stock.json`
+
+### 🔧 Badge licence — affichage global
+
+- **Badge jours restants** ajouté dans la barre supérieure du `Layout` (visible sur toutes les pages, pas seulement le dashboard)
+  - `<= 7 jours` → rouge (`destructive`)
+  - `8 à 30 jours` → orange (`default`)
+  - `> 30 jours` → masqué
+  - Icône horloge devant le texte
+  - Non affiché en mode zenith ni en mode point de vente (POS)
+- Même logique appliquée au `DashboardShadcn` (badge masqué si > 30 jours)
+
+### 🔧 TypeScript — corrections résiduelles
+
+- `MonthlyReportView.tsx` : checks `undefined` sur `ca_total` et `valeur_totale`
+- `FacturesTable.tsx` : type `user: FacturesTableUser | null`
+- `ReportFilters.tsx` : fix import `User` icon conflict
+- `navigationService.ts` : type `Parameters<NavigateFunction>[1]` pour `options`
+- `whatsapp.ts` : nullish coalescing sur `discrepancies_count` et `expiring_soon_count`
+- `printTemplates.ts` : nullish coalescing sur `cloture.total_ca_divers`
+
+---
+
 ## 2026-07-29 (20:00)
 
 ### 🎨 Migration DaisyUI → Tailwind — Catégorie `form-control / label-text` TERMINÉE
