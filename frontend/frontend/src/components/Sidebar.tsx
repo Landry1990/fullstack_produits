@@ -41,6 +41,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   '/app/ordonnancier': () => import('./Ordonnancier'),
   '/app/centre-rapports': () => import('./CentreRapports'),
   '/app/analyse-abc': () => import('./AnalyseABC'),
+  '/app/analyse-marges-produit': () => import('./AnalyseMargesProduit'),
   '/app/promotions': () => import('./Promotions/PromotionList'),
   '/app/module-financier': () => import('./ModuleFinancier'),
   '/app/divers/ca': () => import('./divers/GestionDivers'),
@@ -190,6 +191,7 @@ export default function Sidebar() {
       submenus: [
         { path: '/app/centre-rapports', label: t('statistiques.rapports'), key: 'statistiques_rapports' },
         { path: '/app/analyse-abc', label: t('statistiques.abc'), key: 'statistiques_abc' },
+        { path: '/app/analyse-marges-produit', label: t('statistiques.marges_produit', 'Marges par Produit'), key: 'statistiques_finances' },
         { path: '/app/statistiques-fournisseurs', label: t('statistiques.fournisseurs'), key: 'statistiques_fournisseurs' },
         { path: '/app/rapports-mensuels', label: t('statistiques.mensuel'), key: 'statistiques_mensuels' },
         { path: '/app/module-financier', label: t('statistiques.finances'), key: 'statistiques_finances' },

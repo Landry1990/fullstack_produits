@@ -818,3 +818,231 @@ class FinanceStatsViewSet(viewsets.ViewSet):
                 'margin_pct': {'fr': 'Taux de Marge', 'en': 'Margin Rate'}
             }
         })
+
+    # ── Marge par Produit (top/bottom 20 + négatifs) ──────────────
+    @action(detail=False, methods=['get'])
+    def marge_par_produit(self, request):
+        """
+        Retourne les top 20 et bottom 20 produits par marge,
+        ainsi que les produits vendus à perte (marge négative).
+        Paramètres: periode=mois|trimestre|annee
+        """
+        periode = request.query_params.get('periode', 'mois')
+        today = timezone.localtime(timezone.now()).date()
+
+        if periode == 'trimestre':
+            start_date = today - relativedelta(months=3)
+        elif periode == 'annee':
+            start_date = today.replace(month=1, day=1)
+        else:
+            start_date = today.replace(day=1)
+
+        base_qs = get_validated_invoices_queryset().filter(
+            date__date__gte=start_date, date__date__lte=today
+        )
+
+        # Produits avec allocation de stock (marge précise basée sur cost_price)
+        alloc_stats = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__in=base_qs
+        ).values(
+            'facture_produit__produit__id',
+            'facture_produit__produit__name',
+            'facture_produit__produit__cip1',
+        ).annotate(
+            ca_ht=Sum(
+                (F('quantity') * (F('selling_price') - F('facture_produit__discount')))
+                / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField())),
+                output_field=DecimalField()
+            ),
+            marge=Sum(
+                ((F('selling_price') - F('facture_produit__discount'))
+                 / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField()))
+                 - F('cost_price')) * F('quantity'),
+                output_field=DecimalField()
+            ),
+            quantite=Sum('quantity')
+        )
+
+        # Produits sans allocation (marge basée sur pmp)
+        unalloc_stats = FactureProduit.objects.filter(
+            facture__in=base_qs
+        ).annotate(
+            has_alloc=Exists(
+                FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk'))
+            )
+        ).filter(has_alloc=False).values(
+            'produit__id', 'produit__name', 'produit__cip1'
+        ).annotate(
+            ca_ht=Sum(
+                (F('quantity') * (F('selling_price') - F('discount')))
+                / (1 + Coalesce(F('tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField())),
+                output_field=DecimalField()
+            ),
+            marge=Sum(
+                ((F('selling_price') - F('discount'))
+                 / (1 + Coalesce(F('tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField()))
+                 - Coalesce(F('produit__pmp'), Value(0, output_field=DecimalField())))
+                * F('quantity'),
+                output_field=DecimalField()
+            ),
+            quantite=Sum('quantity')
+        )
+
+        # Fusionner les deux sources
+        merged = {}
+        for item in list(alloc_stats) + list(unalloc_stats):
+            pid = item.get('facture_produit__produit__id') or item.get('produit__id')
+            if pid is None:
+                continue
+            ca = float(item.get('ca_ht') or 0)
+            marge = float(item.get('marge') or 0)
+            qte = float(item.get('quantite') or 0)
+            if pid in merged:
+                merged[pid]['ca'] += ca
+                merged[pid]['marge'] += marge
+                merged[pid]['quantite'] += qte
+            else:
+                merged[pid] = {
+                    'id': pid,
+                    'nom': item.get('facture_produit__produit__name') or item.get('produit__name') or '',
+                    'cip': item.get('facture_produit__produit__cip1') or item.get('produit__cip1') or '',
+                    'ca': ca,
+                    'marge': marge,
+                    'quantite': qte,
+                }
+
+        all_products = list(merged.values())
+        for p in all_products:
+            p['taux_marge'] = round((p['marge'] / p['ca']) * 100, 1) if p['ca'] > 0 else 0
+
+        # Trier par marge décroissante
+        sorted_by_marge = sorted(all_products, key=lambda x: x['marge'], reverse=True)
+        top_20 = sorted_by_marge[:20]
+        bottom_20 = sorted_by_marge[-20:][::-1]  # pires en premier
+        negative_margin = [p for p in all_products if p['marge'] < 0]
+
+        return Response({
+            'periode': periode,
+            'top_20': top_20,
+            'bottom_20': bottom_20,
+            'negative_margin': negative_margin,
+            'total_produits': len(all_products),
+            'total_ca': round(sum(p['ca'] for p in all_products), 2),
+            'total_marge': round(sum(p['marge'] for p in all_products), 2),
+        })
+
+    # ── Impact Promotions sur la Marge ────────────────────────────
+    @action(detail=False, methods=['get'])
+    def impact_promotions(self, request):
+        """
+        Compare le CA et la marge des ventes avec promotion (remise > 0)
+        vs sans promotion.
+        Paramètres: periode=mois|trimestre|annee
+        """
+        periode = request.query_params.get('periode', 'mois')
+        today = timezone.localtime(timezone.now()).date()
+
+        if periode == 'trimestre':
+            start_date = today - relativedelta(months=3)
+        elif periode == 'annee':
+            start_date = today.replace(month=1, day=1)
+        else:
+            start_date = today.replace(day=1)
+
+        base_qs = get_validated_invoices_queryset().filter(
+            date__date__gte=start_date, date__date__lte=today
+        )
+
+        # Ventes avec remise (au niveau facture produit)
+        alloc_qs = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__in=base_qs
+        )
+
+        # Avec promotion = discount > 0 ou facture avec remise globale
+        with_promo = alloc_qs.filter(
+            Q(facture_produit__discount__gt=0) |
+            Q(facture_produit__facture__remise__gt=0)
+        ).aggregate(
+            ca=Coalesce(Sum(
+                (F('quantity') * (F('selling_price') - F('facture_produit__discount')))
+                / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField())),
+                output_field=DecimalField()
+            ), Decimal(0)),
+            marge=Coalesce(Sum(
+                ((F('selling_price') - F('facture_produit__discount'))
+                 / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField()))
+                 - F('cost_price')) * F('quantity'),
+                output_field=DecimalField()
+            ), Decimal(0)),
+            quantite=Coalesce(Sum('quantity'), Value(0)),
+            count=Count('id')
+        )
+
+        without_promo = alloc_qs.filter(
+            ~Q(facture_produit__discount__gt=0) &
+            Q(facture_produit__facture__remise=0) | Q(facture_produit__facture__remise__isnull=True)
+        ).aggregate(
+            ca=Coalesce(Sum(
+                (F('quantity') * F('selling_price'))
+                / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField())),
+                output_field=DecimalField()
+            ), Decimal(0)),
+            marge=Coalesce(Sum(
+                (F('selling_price')
+                 / (1 + Coalesce(F('facture_produit__tva'), Value(0, output_field=DecimalField())) / Value(100, output_field=DecimalField()))
+                 - F('cost_price')) * F('quantity'),
+                output_field=DecimalField()
+            ), Decimal(0)),
+            quantite=Coalesce(Sum('quantity'), Value(0)),
+            count=Count('id')
+        )
+
+        ca_promo = float(with_promo['ca'] or 0)
+        ca_normal = float(without_promo['ca'] or 0)
+        marge_promo = float(with_promo['marge'] or 0)
+        marge_normal = float(without_promo['marge'] or 0)
+        total_ca = ca_promo + ca_normal
+
+        taux_marge_promo = round((marge_promo / ca_promo) * 100, 1) if ca_promo > 0 else 0
+        taux_marge_normal = round((marge_normal / ca_normal) * 100, 1) if ca_normal > 0 else 0
+
+        # CA "perdu" = ce qu'on aurait gagné sans la remise
+        ca_perdu = 0
+        remise_totale = float(
+            alloc_qs.filter(facture_produit__discount__gt=0).aggregate(
+                total=Coalesce(Sum(
+                    F('facture_produit__discount') * F('quantity'),
+                    output_field=DecimalField()
+                ), Decimal(0))
+            )['total'] or 0
+        )
+        # Remise globale des factures avec remise
+        remise_globale = float(
+            base_qs.filter(remise__gt=0).aggregate(
+                total=Coalesce(Sum('remise', output_field=DecimalField()), Decimal(0))
+            )['total'] or 0
+        )
+        ca_perdu = round(remise_totale + remise_globale, 2)
+
+        return Response({
+            'periode': periode,
+            'avec_promotion': {
+                'ca': round(ca_promo, 2),
+                'marge': round(marge_promo, 2),
+                'taux_marge': taux_marge_promo,
+                'quantite': int(with_promo['quantite'] or 0),
+                'nb_lignes': with_promo['count'] or 0,
+                'pct_ca': round((ca_promo / total_ca) * 100, 1) if total_ca > 0 else 0,
+            },
+            'sans_promotion': {
+                'ca': round(ca_normal, 2),
+                'marge': round(marge_normal, 2),
+                'taux_marge': taux_marge_normal,
+                'quantite': int(without_promo['quantite'] or 0),
+                'nb_lignes': without_promo['count'] or 0,
+                'pct_ca': round((ca_normal / total_ca) * 100, 1) if total_ca > 0 else 0,
+            },
+            'ca_perdu_remises': ca_perdu,
+            'ecart_taux_marge': round(taux_marge_normal - taux_marge_promo, 1),
+            'total_ca': round(total_ca, 2),
+        })
