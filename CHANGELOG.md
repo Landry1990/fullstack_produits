@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-07-31
+
+### 🔐 Politique mots de passe assouplie (pharmacie)
+
+- **Longueur minimale** : 8 → **4 caractères** (`MinimumLengthValidator`)
+- **Chiffres autorisés** : retrait du `NumericPasswordValidator` (mots de passe 100% numériques désormais acceptés)
+- Validateurs restants : `MinimumLengthValidator` (4 min), `CommonPasswordValidator` (rejette 1234, 0000, etc.), `UserAttributeSimilarityValidator` (pas trop similaire au username), unicité entre utilisateurs
+- **Messages d'erreur traduits en français** dans `UserSerializer.validate_password` :
+  - "Le mot de passe doit contenir au moins 4 caractères."
+  - "Ce mot de passe est trop courant (ex: 1234, 0000). Choisissez-en un plus original."
+  - "Le mot de passe est trop similaire au nom d'utilisateur ou au prénom/nom."
+  - "Ce mot de passe est déjà utilisé par un autre utilisateur..."
+- **Toast d'erreur étendu à 6s** dans `GestionUtilisateurs.tsx` pour laisser le temps de lire le détail
+
+### 🔧 Login — feedback visuel sur erreur d'authentification
+
+- `LoginShadcn.tsx` : ajout d'un `toast.error()` en backup du message inline `setError()`
+- `defaultValue` ajouté sur toutes les clés de traduction du catch (au cas où i18n n'est pas chargé)
+- L'utilisateur voit maintenant un toast rouge en cas de mot de passe incorrect, serveur injoignable, throttling (429), etc.
+
+### 🔍 Inventaire — recherche par ID produit + zone résultats agrandie
+
+- **Backend** (`centralized_configs.py`) : ajout de `id` aux `CommonSearchFields.product_fields()` → la recherche par ID produit est active (lookup `id__istartswith`)
+- **Frontend** (`InventaireProductSearch.tsx`) :
+  - Zone de résultats agrandie : `max-h-[12vh]` → `max-h-[28vh]` (plus de 2x plus haut)
+  - Affichage du `#ID` produit dans chaque résultat (badge à côté du CIP)
+
+---
+
 ## 2026-07-30 (20:20)
 
 ### ✨ Nouvelle fonctionnalité : Analyse Marges par Produit
