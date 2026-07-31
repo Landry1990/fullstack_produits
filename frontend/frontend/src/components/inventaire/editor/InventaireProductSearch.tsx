@@ -96,7 +96,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
 
             {/* Search Results Dropdown */}
             {searchQuery && (
-              <div className="absolute left-0 top-full mt-1 w-full max-w-md bg-white rounded-xl shadow-xl border border-slate-200 max-h-[12vh] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute left-0 top-full mt-1 w-full max-w-md bg-white rounded-xl shadow-xl border border-slate-200 max-h-[28vh] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
                 {searchResults.length === 0 ? (
                   <div className="text-center py-6 text-slate-400">
                     {loadingSearch ? (
@@ -122,6 +122,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                           <div className="flex-1 min-w-0">
                             <div className="font-bold text-xs truncate">{p.name}</div>
                             <div className={`text-[9px] flex gap-1.5 mt-0.5 ${idx === selectedItemIndex ? 'text-white/80' : 'text-slate-500'}`}>
+                              <span className={`px-1 rounded font-mono ${idx === selectedItemIndex ? 'bg-white/20' : 'bg-slate-100'}`}>#{p.id}</span>
                               <span className="font-mono">{p.cip1}</span>
                               {p.rayon_name && <span>• {p.rayon_name}</span>}
                             </div>

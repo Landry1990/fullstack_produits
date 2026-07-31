@@ -169,7 +169,7 @@ class CommonSearchFields:
     @staticmethod
     def product_fields():
         """Champs de recherche pour produits"""
-        return ['^name', '^cip1', '^cip2', '^cip3', 'description']
+        return ['^name', '^cip1', '^cip2', '^cip3', 'description', 'id']
 
 
 class CommonOrderingFields:
