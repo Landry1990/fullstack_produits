@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useLicence } from '../context/LicenceContext';
 import api from '../services/api';
@@ -173,19 +174,22 @@ export default function LoginShadcn() {
     } catch (err) {
       logger.error('Login error:', err);
       const e = err as { response?: { status: number } };
+      let msg = '';
       if (!e.response) {
-        setError(t('common:messages.server_unreachable'));
+        msg = t('common:messages.server_unreachable', { defaultValue: 'Impossible de joindre le serveur.' });
       } else if (e.response.status === 400 || e.response.status === 401) {
-        setError(t('common:messages.login_invalid'));
+        msg = t('common:messages.login_invalid', { defaultValue: 'Identifiant ou mot de passe incorrect' });
       } else if (e.response.status === 429) {
-        setError('Trop de tentatives de connexion. Attendez 1 minute avant de réessayer.');
+        msg = 'Trop de tentatives de connexion. Attendez 1 minute avant de réessayer.';
       } else if (e.response.status === 403) {
-        setError(t('common:messages.forbidden'));
+        msg = t('common:messages.forbidden', { defaultValue: 'Accès interdit.' });
       } else if (e.response.status >= 500) {
-        setError(t('common:messages.server_error'));
+        msg = t('common:messages.server_error', { defaultValue: 'Erreur serveur.' });
       } else {
-        setError(t('common:messages.error_generic'));
+        msg = t('common:messages.error_generic', { defaultValue: 'Une erreur s\'est produite.' });
       }
+      setError(msg);
+      toast.error(msg, { duration: 5000 });
     } finally {
       setLoading(false);
     }
