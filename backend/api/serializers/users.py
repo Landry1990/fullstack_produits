@@ -42,14 +42,25 @@ class UserSerializer(serializers.ModelSerializer):
             try:
                 password_validation.validate_password(value, user=user)
             except DjangoValidationError as exc:
-                raise serializers.ValidationError(exc.messages)
+                # Traduit les messages Django en français clair pour l'admin
+                fr_messages = []
+                for msg in exc.messages:
+                    if 'at least' in msg and 'characters' in msg:
+                        fr_messages.append(f"Le mot de passe doit contenir au moins 4 caractères.")
+                    elif 'too common' in msg.lower() or 'common password' in msg.lower():
+                        fr_messages.append("Ce mot de passe est trop courant (ex: 1234, 0000). Choisissez-en un plus original.")
+                    elif 'too similar' in msg.lower():
+                        fr_messages.append("Le mot de passe est trop similaire au nom d'utilisateur ou au prénom/nom.")
+                    else:
+                        fr_messages.append(str(msg))
+                raise serializers.ValidationError(fr_messages)
 
             # 2. Vérifie que le mot de passe n'est pas déjà utilisé
             instance = self.instance
             for existing in User.objects.exclude(id=instance.id) if instance else User.objects.all():
                 if existing.check_password(value):
                     raise serializers.ValidationError(
-                        'Ce mot de passe est déjà utilisé. Veuillez en choisir un autre.'
+                        'Ce mot de passe est déjà utilisé par un autre utilisateur. Veuillez en choisir un autre.'
                     )
         return value
 
