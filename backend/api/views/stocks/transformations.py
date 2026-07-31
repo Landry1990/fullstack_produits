@@ -446,3 +446,195 @@ class HistoriqueTransformationViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['produit_source', 'produit_destination']
     ordering_fields = ['date_transformation']
     ordering = ['-date_transformation']
+
+    @action(detail=True, methods=['post'])
+    def reverser(self, request, pk=None):
+        """
+        Annule une transformation : reprend la quantité au produit destination
+        et la restitue au produit source.
+        """
+        hist = self.get_object()
+
+        if hist.reversed:
+            return Response(
+                {'error': 'Cette transformation a déjà été annulée'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if hist.reversed_by is not None:
+            return Response(
+                {'error': 'Cette entrée est une annulation et ne peut pas être annulée'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        source = hist.produit_source
+        destination = hist.produit_destination
+
+        if not source or not destination:
+            return Response(
+                {'error': 'Produit source ou destination introuvable (supprimé)'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        qty_dest = hist.quantite_destination
+        qty_src = hist.quantite_source
+
+        if qty_dest <= 0 or qty_src <= 0:
+            return Response(
+                {'error': 'Quantités invalides dans l\'historique'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        notes = request.data.get('notes', f'Annulation de la transformation #{hist.id}')
+
+        with transaction.atomic():
+            p_ids = [source.pk, destination.pk]
+            locked_prods = {p.id: p for p in Produit.objects.select_for_update().filter(id__in=p_ids).order_by('id')}
+            source = locked_prods.get(source.pk)
+            destination = locked_prods.get(destination.pk)
+
+            if not source or not destination:
+                return Response(
+                    {'error': 'Produit source ou destination introuvable'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if destination.stock < qty_dest:
+                return Response(
+                    {'error': f'Stock insuffisant pour {destination.name} (disponible: {destination.stock}, requis: {qty_dest})'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # --- 1. CONSOMMATION DESTINATION (on reprend ce qui avait été créé) ---
+            consumed_dest_lots = []
+
+            if destination.use_lot_management:
+                lots = destination.stock_lots.filter(
+                    quantity_remaining__gt=0
+                ).select_for_update().order_by('date_expiration', 'created_at')
+                qty_remaining = qty_dest
+
+                for lot in lots:
+                    if qty_remaining <= 0:
+                        break
+                    taken = min(lot.quantity_remaining, qty_remaining)
+                    lot.quantity_remaining -= taken
+                    lot.save()
+
+                    StockAdjustment.objects.create(
+                        produit=destination,
+                        stock_lot=lot,
+                        user=request.user,
+                        quantity_before=lot.quantity_remaining + taken,
+                        quantity_after=lot.quantity_remaining,
+                        quantity_change=-taken,
+                        reason_type=StockAdjustment.ReasonType.USAGE_INTERNE,
+                        reason_detail=f"Annulation transformation #{hist.id} (vers {source.name})"
+                    )
+                    consumed_dest_lots.append({'lot': lot, 'qty': taken})
+                    qty_remaining -= taken
+
+                if qty_remaining > 0:
+                    return Response(
+                        {'error': f'Lots destination insuffisants pour {destination.name} (manquant: {qty_remaining})'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                destination.refresh_from_db()
+            else:
+                destination.stock -= qty_dest
+                destination.version += 1
+                destination.save(update_fields=['stock', 'version'])
+
+            # --- 2. RESTITUTION SOURCE (on rend ce qui avait été consommé) ---
+            if source.use_lot_management:
+                lot_number = f"REV-{hist.id}-{int(time.time())}"
+                new_lot = StockLot.objects.create(
+                    produit=source,
+                    lot=lot_number,
+                    quantity_initial=qty_src,
+                    quantity_remaining=qty_src,
+                    quantity_paid=qty_src,
+                    quantity_free=0,
+                    price_cost=source.cost_price or 0,
+                    selling_price=source.selling_price or 0,
+                    date_expiration=None,
+                    date_reception=timezone.now(),
+                    fournisseur=source.fournisseur
+                )
+                StockAdjustment.objects.create(
+                    produit=source,
+                    stock_lot=new_lot,
+                    user=request.user,
+                    quantity_before=0,
+                    quantity_after=qty_src,
+                    quantity_change=qty_src,
+                    reason_type=StockAdjustment.ReasonType.USAGE_INTERNE,
+                    reason_detail=f"Annulation transformation #{hist.id} (depuis {destination.name})"
+                )
+                source.refresh_from_db()
+            else:
+                source.stock += qty_src
+                source.version += 1
+                source.save(update_fields=['stock', 'version'])
+
+            # --- 3. MOUVEMENTS STOCK ---
+            MouvementStock.objects.create(
+                produit=destination,
+                type_mouvement=MouvementStock.TypeMouvement.TRANSFORMATION_SORTIE,
+                quantite=-qty_dest,
+                stock_apres=destination.total_stock,
+                user=request.user,
+                description=f"Annulation transformation #{hist.id} (vers {source.name}) par {request.user.username}"
+            )
+            MouvementStock.objects.create(
+                produit=source,
+                type_mouvement=MouvementStock.TypeMouvement.TRANSFORMATION_ENTREE,
+                quantite=qty_src,
+                stock_apres=source.total_stock,
+                user=request.user,
+                description=f"Annulation transformation #{hist.id} (depuis {destination.name}) par {request.user.username}"
+            )
+
+            # --- 4. NOUVELLE ENTREE HISTORIQUE (l'annulation) ---
+            reversal_entry = HistoriqueTransformation.objects.create(
+                relation=hist.relation,
+                produit_source=destination,
+                produit_destination=source,
+                produit_source_nom=destination.name,
+                produit_destination_nom=source.name,
+                quantite_source=qty_dest,
+                quantite_destination=qty_src,
+                user=request.user,
+                notes=notes,
+                reversed_by=hist,
+            )
+
+            # --- 5. MARQUER L'ORIGINAL COMME ANNULÉ ---
+            hist.reversed = True
+            hist.save(update_fields=['reversed'])
+
+            # --- 6. AUDIT ---
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.STOCK_ADJUST,
+                model_name='TransformationReversal',
+                object_id=hist.id,
+                description=f"Annulation transformation #{hist.id}: {qty_dest} {destination.name} -> {qty_src} {source.name}",
+                details={
+                    'original_hist_id': hist.id,
+                    'reversal_hist_id': reversal_entry.id,
+                    'source_id': source.id,
+                    'destination_id': destination.id,
+                    'qty_dest_consumed': -qty_dest,
+                    'qty_src_restored': qty_src,
+                },
+                request=request
+            )
+
+        return Response({
+            'success': True,
+            'message': f"Transformation annulée : {qty_dest} {destination.name} -> {qty_src} {source.name}",
+            'stock_source': source.stock,
+            'stock_destination': destination.stock,
+        })

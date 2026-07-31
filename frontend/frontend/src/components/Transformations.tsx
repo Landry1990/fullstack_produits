@@ -10,7 +10,7 @@ import PremiumModal from './common/PremiumModal';
 import { Checkbox } from './ui/Checkbox';
 import type { ProduitModel } from '../types';
 import { 
-  ChevronRight, Trash2, Plus 
+  ChevronRight, Trash2, Plus, Undo2 
 } from 'lucide-react';
 import { normalizeNumberInput, formatNumber } from '../utils/formatters';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
@@ -36,6 +36,8 @@ interface HistoriqueTransformation {
   user_nom: string;
   date_transformation: string;
   notes: string;
+  reversed: boolean;
+  reversed_by: number | null;
 }
 
 // --- Composant Autocomplete Produit ---
@@ -244,6 +246,7 @@ const Transformations: React.FC = () => {
   const [manualLots, setManualLots] = useState<Record<number, number>>({});
 
   const [submitting, setSubmitting] = useState(false);
+  const [reversingId, setReversingId] = useState<number | null>(null);
 
   // URL de base API dynamique
 
@@ -355,6 +358,29 @@ const Transformations: React.FC = () => {
     } catch (error) {
       toast.error(getApiErrorDetail(error, t('transformations.messages.transform_error')));
       setSubmitting(false);
+    }
+  };
+
+  const handleReverser = async (histId: number, hist: HistoriqueTransformation) => {
+    const confirmed = await confirm({
+      title: t('transformations.messages.reverse_confirm_title', { defaultValue: 'Annuler cette transformation' }),
+      message: t('transformations.messages.reverse_confirm_message', { defaultValue: `Annuler la transformation de ${hist.quantite_source} ${hist.produit_source_nom} en ${hist.quantite_destination} ${hist.produit_destination_nom} ? Le stock sera restitué automatiquement.` }),
+      variant: 'danger',
+      confirmText: t('transformations.messages.reverse_confirm_btn', { defaultValue: 'Oui, annuler' })
+    });
+    if (!confirmed) return;
+
+    setReversingId(histId);
+    try {
+      const res = await api.post(`historique-transformation/${histId}/reverser/`, {});
+      if (res.data.success) {
+        toast.success(res.data.message || t('transformations.messages.reverse_success', { defaultValue: 'Transformation annulée avec succès' }));
+        fetchData();
+      }
+    } catch (error) {
+      toast.error(getApiErrorDetail(error, t('transformations.messages.reverse_error', { defaultValue: 'Erreur lors de l\'annulation' })));
+    } finally {
+      setReversingId(null);
     }
   };
 
@@ -570,15 +596,22 @@ const Transformations: React.FC = () => {
                         <th className="px-4 text-left font-black">{t('transformations.table_history.user')}</th>
                         <th className="px-4 text-left font-black">{t('transformations.table_history.transformation')}</th>
                         <th className="px-4 text-left font-black">{t('transformations.table_history.quantities')}</th>
-                        <th className="px-4 pr-6 text-left font-black">{t('transformations.table_history.notes')}</th>
+                        <th className="px-4 text-left font-black">{t('transformations.table_history.notes')}</th>
+                        <th className="px-4 pr-6 text-center font-black">{t('common:actions', { defaultValue: 'Actions' })}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {filteredHistorique.map(hist => (
-                        <tr key={hist.id} className="hover:bg-slate-50 transition-colors group">
+                        <tr key={hist.id} className={`hover:bg-slate-50 transition-colors group ${hist.reversed ? 'opacity-50 line-through' : ''} ${hist.reversed_by ? 'bg-amber-50/50' : ''}`}>
                           <td className="pl-6 py-4">
                              <div className="font-bold text-xs text-slate-800">{formatDate(hist.date_transformation)}</div>
                              <div className="text-[10px] text-slate-400 font-mono uppercase tracking-tighter">{formatDateTime(hist.date_transformation).split(' ').slice(1).join(' ')}</div>
+                             {hist.reversed && (
+                               <span className="inline-block mt-1 text-[9px] font-black uppercase tracking-wider text-red-500 bg-red-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversed', { defaultValue: 'Annulée' })}</span>
+                             )}
+                             {hist.reversed_by && (
+                               <span className="inline-block mt-1 text-[9px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversal', { defaultValue: 'Annulation' })}</span>
+                             )}
                           </td>
                           <td className="px-4 font-black text-xs text-emerald-700">{hist.user_nom}</td>
                           <td className="px-4 max-w-xs">
@@ -595,14 +628,31 @@ const Transformations: React.FC = () => {
                                 <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-black font-mono">+{formatNumber(hist.quantite_destination)}</div>
                              </div>
                           </td>
-                          <td className="px-4 pr-6 italic text-slate-400 text-[11px] max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
+                          <td className="px-4 italic text-slate-400 text-[11px] max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
                              {hist.notes || '-'}
+                          </td>
+                          <td className="px-4 pr-6 text-center">
+                             {!hist.reversed && !hist.reversed_by && (
+                               <button
+                                 className="h-8 px-3 rounded-lg text-xs font-bold text-amber-600 hover:bg-amber-50 transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
+                                 onClick={() => handleReverser(hist.id, hist)}
+                                 disabled={reversingId === hist.id}
+                                 title={t('stock:transformations.labels.reverse_btn', { defaultValue: 'Annuler cette transformation' })}
+                               >
+                                 {reversingId === hist.id ? (
+                                   <span className="size-3.5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></span>
+                                 ) : (
+                                   <Undo2 size={14} />
+                                 )}
+                                 {t('stock:transformations.labels.reverse_btn', { defaultValue: 'Annuler' })}
+                               </button>
+                             )}
                           </td>
                         </tr>
                       ))}
                       {filteredHistorique.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="text-center py-20 text-slate-300 italic font-bold uppercase tracking-widest text-xs">{searchQuery ? t('common:no_results_found', { defaultValue: 'Aucun résultat' }) : t('stock:transformations.table_history.empty')}</td>
+                          <td colSpan={6} className="text-center py-20 text-slate-300 italic font-bold uppercase tracking-widest text-xs">{searchQuery ? t('common:no_results_found', { defaultValue: 'Aucun résultat' }) : t('stock:transformations.table_history.empty')}</td>
                         </tr>
                       )}
                     </tbody>
