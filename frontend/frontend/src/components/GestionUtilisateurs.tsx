@@ -618,7 +618,8 @@ export default function GestionUtilisateurs() {
       setModalOpen(false);
     } catch (error) {
       logger.error('Error saving user:', error);
-      toast.error(extractErrorMessage(error) || t('messages.save_error'));
+      const msg = extractErrorMessage(error) || t('messages.save_error');
+      toast.error(msg, { duration: 6000 });
     }
   };
 
