@@ -183,7 +183,12 @@ class HistoriqueTransformation(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     date_transformation = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True)
-    
+    reversed = models.BooleanField(default=False, help_text="Indique si cette transformation a été annulée")
+    reversed_by = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='reversal_of', help_text="Si cette entrée est une annulation, pointe vers l'entrée originale"
+    )
+
     class Meta:
         ordering = ['-date_transformation']
         verbose_name = "Historique de transformation"
