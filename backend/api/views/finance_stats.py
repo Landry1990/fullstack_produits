@@ -980,7 +980,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
 
         without_promo = alloc_qs.filter(
             ~Q(facture_produit__discount__gt=0) &
-            Q(facture_produit__facture__remise=0) | Q(facture_produit__facture__remise__isnull=True)
+            (Q(facture_produit__facture__remise=0) | Q(facture_produit__facture__remise__isnull=True))
         ).aggregate(
             ca=Coalesce(Sum(
                 (F('quantity') * F('selling_price'))
