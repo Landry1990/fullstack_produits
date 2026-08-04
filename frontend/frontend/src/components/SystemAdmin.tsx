@@ -397,7 +397,7 @@ export default function SystemAdmin() {
       await api.post('/system-admin/run_update/');
       setUpdateMessage(t('update_started'));
       let pollCount = 0;
-      const maxPolls = 100; // ~5 min à 3s d'intervalle
+      const maxPolls = 400; // ~20 min à 3s d'intervalle (un build Docker peut prendre 10-15 min)
       const pollInterval = setInterval(async () => {
         pollCount++;
         if (pollCount > maxPolls) {
@@ -448,10 +448,10 @@ export default function SystemAdmin() {
   };
 
   useEffect(() => {
-    if (activeTab === 'mise_a_jour' && !updateStatus && !checkingUpdate && !runningUpdate && !updateDone) {
+    if (activeTab === 'mise_a_jour' && !updateStatus && !checkingUpdate && !runningUpdate && !updateDone && !updateError) {
       handleCheckUpdate();
     }
-  }, [activeTab, updateStatus, checkingUpdate, runningUpdate, updateDone, handleCheckUpdate]);
+  }, [activeTab, updateStatus, checkingUpdate, runningUpdate, updateDone, updateError, handleCheckUpdate]);
 
   const fetchSchedule = useCallback(async () => {
     setLoadingSchedule(true);

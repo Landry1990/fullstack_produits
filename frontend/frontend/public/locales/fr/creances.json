@@ -50,6 +50,10 @@
         "add_payment": "Ajouter un paiement"
     },
     "print_statement": "Imprimer le Relevé",
+    "print_statement_simple": "Relevé simple",
+    "print_statement_simple_desc": "Liste des factures avec montants",
+    "print_statement_detailed": "Relevé détaillé",
+    "print_statement_detailed_desc": "Factures avec détail des produits",
     "client_label": "Client : {{name}}",
     "payment_modal": {
         "title": "💰 Nouveau Règlement",

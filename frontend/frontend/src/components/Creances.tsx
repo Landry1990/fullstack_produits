@@ -92,10 +92,11 @@ export default function Creances() {
                         showHistory={data.filters.showHistory}
                         onHistoryToggle={data.setFilters.setShowHistory}
                         onRefresh={data.refresh}
-                        onPrintStatement={() => actions.actions.handleImprimerReleve(
+                        onPrintStatement={(includeProducts: boolean) => actions.actions.handleImprimerReleve(
                             data.filters.selectedClient,
                             data.filters.dateDebut,
-                            data.filters.dateFin
+                            data.filters.dateFin,
+                            includeProducts
                         )}
                         onExportExcel={() => actions.actions.handleExportExcel({
                             client_id: data.filters.selectedClient || undefined,

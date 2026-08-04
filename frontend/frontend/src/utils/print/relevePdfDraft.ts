@@ -10,6 +10,17 @@ interface ReleveCreance {
     montant_total: number | string;
     montant_paye: number | string;
     reste_a_payer: number | string;
+    produits?: ReleveProduit[];
+}
+
+interface ReleveProduit {
+    produit_nom: string;
+    produit_cip?: string;
+    quantity: number;
+    selling_price: number;
+    discount: number;
+    tva: number;
+    total_ligne: number;
 }
 
 interface ReleveClient {
@@ -35,6 +46,7 @@ interface RelevePdfData {
         date_fin?: string | null;
     };
     settings: PharmacySettings;
+    includeProducts?: boolean;
 }
 
 export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
@@ -42,6 +54,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
+    const includeProducts = data.includeProducts || false;
 
     const fmt = (val: number | string) =>
         formatNumber(Math.round(Number(val) || 0)).replace(/[\u00A0\u202F]/g, ' ');
@@ -82,7 +95,7 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(15);
     doc.setTextColor(0, 0, 0);
-    doc.text('RELEVE DE FACTURES', pageWidth - margin, 18, { align: 'right' });
+    doc.text(includeProducts ? 'RELEVE DE FACTURES DETAILLE' : 'RELEVE DE FACTURES', pageWidth - margin, 18, { align: 'right' });
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
@@ -142,53 +155,135 @@ export function generateRelevePdfDraft(data: RelevePdfData): jsPDF {
     // Table
     const tableStartY = blockY + blockH + 8;
 
-    const rows = data.creances.map(c => [
-        fmtDate(c.date),
-        c.numero_facture || '-',
-        c.ayant_droit ? c.ayant_droit.toUpperCase() : '-',
-        fmt(c.montant_total),
-        fmt(c.montant_paye),
-        fmt(c.reste_a_payer),
-    ]);
+    if (includeProducts) {
+        // Mode détaillé : une section par facture avec ses produits
+        let currentY = tableStartY;
 
-    autoTable(doc, {
-        startY: tableStartY,
-        head: [['Date', 'N Facture', 'Beneficiaire', 'Total TTC', 'Regle', 'Reste']],
-        body: rows,
-        theme: 'plain',
-        headStyles: {
-            fillColor: [255, 255, 255],
-            textColor: 0,
-            fontStyle: 'normal',
-            fontSize: 8,
-            cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
-        },
-        bodyStyles: {
-            fontSize: 8,
-            textColor: [0, 0, 0],
-            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
-        },
-        alternateRowStyles: { fillColor: [255, 255, 255] },
-        columnStyles: {
-            0: { cellWidth: 22 },
-            1: { cellWidth: 28 },
-            2: { cellWidth: 'auto' },
-            3: { cellWidth: 28, halign: 'right' },
-            4: { cellWidth: 25, halign: 'right' },
-            5: { cellWidth: 25, halign: 'right', fontStyle: 'normal' },
-        },
-        margin: { left: margin, right: margin },
-        didDrawPage: (hookData) => {
-            doc.setFontSize(7);
-            doc.setTextColor(120, 120, 120);
-            doc.text(
-                `Page ${hookData.pageNumber}`,
-                pageWidth - margin,
-                pageHeight - 8,
-                { align: 'right' }
-            );
-        },
-    });
+        data.creances.forEach((creance, idx) => {
+            // En-tête de la facture
+            doc.setFillColor(240, 240, 240);
+            doc.rect(margin, currentY, pageWidth - 2 * margin, 7, 'F');
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            doc.text(`${fmtDate(creance.date)}  ${creance.numero_facture || '-'}  ${creance.ayant_droit ? creance.ayant_droit.toUpperCase() : '-'}`, margin + 3, currentY + 5);
+            doc.text(`TTC: ${fmt(creance.montant_total)}  Regle: ${fmt(creance.montant_paye)}  Reste: ${fmt(creance.reste_a_payer)}`, pageWidth - margin - 3, currentY + 5, { align: 'right' });
+            currentY += 7;
+
+            // Tableau des produits
+            const productRows = (creance.produits || []).map(p => [
+                p.produit_nom || '-',
+                String(p.quantity),
+                fmt(p.selling_price),
+                p.discount > 0 ? fmt(p.discount) : '-',
+                fmt(p.total_ligne),
+            ]);
+
+            if (productRows.length > 0) {
+                autoTable(doc, {
+                    startY: currentY,
+                    head: [['Produit', 'Qté', 'P.U.', 'Remise', 'Total ligne']],
+                    body: productRows,
+                    theme: 'plain',
+                    headStyles: {
+                        fillColor: [255, 255, 255],
+                        textColor: [100, 100, 100],
+                        fontStyle: 'normal',
+                        fontSize: 7,
+                        cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+                    },
+                    bodyStyles: {
+                        fontSize: 7,
+                        textColor: [0, 0, 0],
+                        cellPadding: { top: 1.5, bottom: 1.5, left: 3, right: 3 },
+                    },
+                    alternateRowStyles: { fillColor: [248, 248, 248] },
+                    columnStyles: {
+                        0: { cellWidth: 'auto' },
+                        1: { cellWidth: 15, halign: 'center' },
+                        2: { cellWidth: 22, halign: 'right' },
+                        3: { cellWidth: 20, halign: 'right' },
+                        4: { cellWidth: 25, halign: 'right' },
+                    },
+                    margin: { left: margin + 5, right: margin },
+                    didDrawPage: (hookData) => {
+                        doc.setFontSize(7);
+                        doc.setTextColor(120, 120, 120);
+                        doc.text(`Page ${hookData.pageNumber}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+                    },
+                });
+                currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4;
+            } else {
+                doc.setFontSize(7);
+                doc.setTextColor(150, 150, 150);
+                doc.text('  (aucun produit)', margin + 8, currentY + 4);
+                currentY += 8;
+            }
+
+            // Séparateur entre factures
+            if (idx < data.creances.length - 1) {
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.1);
+                doc.line(margin, currentY, pageWidth - margin, currentY);
+                currentY += 3;
+            }
+
+            // Nouvelle page si nécessaire
+            if (currentY > pageHeight - 60) {
+                doc.addPage();
+                currentY = margin;
+            }
+        });
+    } else {
+        // Mode simple : tableau récapitulatif
+        const rows = data.creances.map(c => [
+            fmtDate(c.date),
+            c.numero_facture || '-',
+            c.ayant_droit ? c.ayant_droit.toUpperCase() : '-',
+            fmt(c.montant_total),
+            fmt(c.montant_paye),
+            fmt(c.reste_a_payer),
+        ]);
+
+        autoTable(doc, {
+            startY: tableStartY,
+            head: [['Date', 'N Facture', 'Beneficiaire', 'Total TTC', 'Regle', 'Reste']],
+            body: rows,
+            theme: 'plain',
+            headStyles: {
+                fillColor: [255, 255, 255],
+                textColor: 0,
+                fontStyle: 'normal',
+                fontSize: 8,
+                cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+            },
+            bodyStyles: {
+                fontSize: 8,
+                textColor: [0, 0, 0],
+                cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+            },
+            alternateRowStyles: { fillColor: [255, 255, 255] },
+            columnStyles: {
+                0: { cellWidth: 22 },
+                1: { cellWidth: 28 },
+                2: { cellWidth: 'auto' },
+                3: { cellWidth: 28, halign: 'right' },
+                4: { cellWidth: 25, halign: 'right' },
+                5: { cellWidth: 25, halign: 'right', fontStyle: 'normal' },
+            },
+            margin: { left: margin, right: margin },
+            didDrawPage: (hookData) => {
+                doc.setFontSize(7);
+                doc.setTextColor(120, 120, 120);
+                doc.text(
+                    `Page ${hookData.pageNumber}`,
+                    pageWidth - margin,
+                    pageHeight - 8,
+                    { align: 'right' }
+                );
+            },
+        });
+    }
 
     const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
 

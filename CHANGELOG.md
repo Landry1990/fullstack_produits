@@ -2,6 +2,88 @@
 
 ---
 
+## 2026-08-05 (3)
+
+### 🐛 Fix "États d'inventaire" — option "D'un inventaire" → "Inventaire à l'aveugle"
+
+- **Symptôme** : dans le menu Stock → États d'inventaire, l'option "D'un inventaire"
+  chargeait la liste des inventaires déjà faits et forçait l'utilisateur à en choisir un.
+  Ce n'était pas le bon comportement : cette option devrait générer un listing **à l'aveugle**
+  (sans stock théorique) pour que le compteur ne voie pas les quantités attendues.
+- **Correction** :
+  - Remplacement de l'option "D'un inventaire" par **"Inventaire à l'aveugle"** avec la
+    description "Listing sans stock théorique (pour comptage)"
+  - Suppression du dropdown de sélection d'inventaire existant (plus besoin)
+  - Suppression du blocage "Veuillez sélectionner un inventaire" — l'export est maintenant
+    immédiatement disponible
+- **Colonnes du listing aveugle** (optimisé pour saisie rapide) :
+  - **ID produit** au lieu de CIP (plus court = saisie plus rapide)
+  - **Forme OU Rayon** (pas les deux) — affiche celui qui n'est pas le critère de
+    regroupement (ex: si group_by=rayon → colonne Forme, si group_by=forme → colonne Rayon)
+  - Désignation, N° Lot, Exp. Lot, Qté Comptée (vide)
+- **Backend** :
+  - `backend/api/views/stocks/inventaire/listing_excel.py` — nouveau paramètre `blind=True`
+    qui génère un listing avec colonnes réduites. Ajout de `produit_id` dans les données
+    `_get_rows_from_stock`. Colonne secondaire (forme/rayon) déterminée dynamiquement selon
+    `group_by`.
+  - `backend/api/views/stocks/inventaire_main.py` — endpoint `listing-excel` accepte
+    `blind=true`
+- **Frontend** : `frontend/frontend/src/components/EtatsInventaire.tsx`
+  - Type `SourceOption` : `'stock' | 'inventaire'` → `'stock' | 'blind'`
+  - Suppression des états `selectedInventaire`, `inventaires`, `loadingInventaires`
+  - Suppression du `useEffect` qui chargeait les inventaires
+  - `buildParams` envoie `blind=true` quand source = 'blind'
+  - Radio card "D'un inventaire" → "Inventaire à l'aveugle"
+  - Suppression du dropdown de sélection d'inventaire et du badge de statut
+  - Nettoyage des imports (`Badge`, `ChevronDown`, `InventaireOption` supprimés)
+
+## 2026-08-05 (2)
+
+### ✨ Relevé de factures — option détaillée avec produits
+
+- **Fonctionnalité** : le bouton "Imprimer le Relevé" propose maintenant deux options via un
+  menu déroulant :
+  1. **Relevé simple** : liste des factures avec montants (comportement existant)
+  2. **Relevé détaillé** : chaque facture est suivie du détail de ses produits (nom, quantité,
+     prix unitaire, remise, total ligne)
+- **Backend** : `backend/api/views/ventes/creances.py` — endpoint `releve` accepte maintenant
+  un paramètre `include_products=true`. Quand activé, prefetch les `FactureProduit` et retourne
+  la liste des produits par facture (nom, CIP, quantité, prix, remise, TVA, total ligne).
+- **Frontend** :
+  - `frontend/frontend/src/services/creanceService.ts` — `getReleve` accepte `include_products`
+  - `frontend/frontend/src/hooks/useCreanceActions.ts` — `handleImprimerReleve` accepte un
+    4e paramètre `includeProducts`, passe le param au service et au générateur PDF
+  - `frontend/frontend/src/utils/print/relevePdfDraft.ts` — nouveau mode détaillé : une section
+    par facture (en-tête grise + tableau des produits), pagination automatique
+  - `frontend/frontend/src/components/creances/CreancesFilters.tsx` — bouton transformé en
+    dropdown avec les deux options (simple / détaillé)
+  - `frontend/frontend/src/components/Creances.tsx` — passe `includeProducts` au handler
+- **i18n** : clés ajoutées dans `fr/creances.json` et `en/creances.json`
+  (`print_statement_simple`, `print_statement_detailed` + descriptions)
+- **Fichiers modifiés** : `backend/api/views/ventes/creances.py`,
+  `frontend/frontend/src/services/creanceService.ts`,
+  `frontend/frontend/src/hooks/useCreanceActions.ts`,
+  `frontend/frontend/src/utils/print/relevePdfDraft.ts`,
+  `frontend/frontend/src/components/creances/CreancesFilters.tsx`,
+  `frontend/frontend/src/components/Creances.tsx`,
+  `frontend/frontend/public/locales/fr/creances.json`,
+  `frontend/frontend/public/locales/en/creances.json`
+
+### 🐛 Fix alignement colonnes TTC/Réglé/Reste dans le tableau des créances
+
+- **Symptôme** : dans la liste des factures (mode invoices), les chiffres des colonnes TTC,
+  Réglé et Reste étaient légèrement décalés par rapport à leurs en-têtes.
+- **Causes** :
+  1. La colonne "Reste" avait un span avec `px-3 py-1.5` (padding de 12px) qui décalait le
+     chiffre vers la gauche, tandis que TTC et Réglé étaient alignés au bord droit de la cellule
+  2. Les en-têtes avaient un `gap-2` entre le texte et l'icône de tri qui décalait le header
+     quand le tri était inactif
+- **Fix** : `frontend/frontend/src/components/creances/CreancesTable.tsx`
+  - Retrait du padding du span "Reste" (alignement cohérent avec TTC et Réglé)
+  - `gap-2` → `gap-1.5` sur les en-têtes
+  - Ajout de `tabular-nums` sur les 3 colonnes → largeur fixe par digit (alignement parfait)
+  - Ajout de `whitespace-nowrap` → empêche les montants de passer à la ligne
+
 ## 2026-08-05
 
 ### 🐛 Fix ticket de caisse — distinction part patient / part assurance (clients pro)
@@ -38,6 +120,33 @@
     disponible avant toute requête API
 - **Impact** : corrige tous les flows d'impression en nouvel onglet (facture A4, BL, proforma,
   avoir, inventaire, valorisation stock)
+
+### 🐛 Fix mise à jour via admin système — docker compose manquant + auto-destruction
+
+- **Symptôme** : la mise à jour démarre (progress bar) puis s'arrête et recheck la mise à jour
+  (boucle). Le fix du `ping` (session précédente) avait révélé ce bug caché.
+- **Causes (3 problèmes)** :
+  1. **`docker compose` indisponible dans le conteneur backend** : le Dockerfile n'installait
+     que le binaire `docker` (CLI), pas le plugin compose v2. Le script `nightly-update.sh`
+     utilise `docker compose build` qui échouait immédiatement avec "docker: 'compose' is not
+     a docker command". Le précédent bug du `ping` masquait ce problème (le script exitait
+     avant d'atteindre les commandes `docker compose`).
+  2. **Auto-destruction** : le script fait `docker compose down` → tue le conteneur backend
+     qui exécute le script → `docker compose up -d` n'a jamais lieu → app complètement down.
+  3. **Timeout frontend** : 5 min de polling (100 × 3s) insuffisant pour un build Docker qui
+     peut prendre 10-15 min. Après timeout, le useEffect auto-recheckait → boucle visuelle.
+- **Correctifs** :
+  - `backend/Dockerfile` : ajout du plugin Docker Compose v2 (v2.29.2) dans l'image backend
+    pour les futurs builds
+  - `nightly-update.sh` : installation à la volée du plugin compose s'il est manquant (pour le
+    conteneur actuel qui n'a pas encore le plugin), avec vérification `docker compose version`
+  - `nightly-update.sh` : remplacement de `docker compose down` + `up -d` par un **conteneur
+    helper détaché** (`docker:latest`) qui fait `docker compose up -d --force-recreate`. Ce
+    conteneur n'appartient pas au projet compose → survit au recreate. Le statut `done` est
+    écrit **avant** le recreate (le script va être tué pendant). Les migrations tournent
+    automatiquement via `entrypoint.sh` du nouveau conteneur backend.
+  - `SystemAdmin.tsx` : timeout polling 5 min → 20 min (400 polls × 3s). Ajout de
+    `!updateError` dans le useEffect pour empêcher l'auto-recheck après un échec.
   - Ajout des clés de traduction `ticket.part_patient_payment` et `ticket.part_assurance_payment`
     dans `fr/printing.json` et `en/printing.json`
 

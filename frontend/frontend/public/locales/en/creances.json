@@ -50,6 +50,10 @@
         "add_payment": "Add payment"
     },
     "print_statement": "Print Statement",
+    "print_statement_simple": "Simple Statement",
+    "print_statement_simple_desc": "Invoice list with amounts",
+    "print_statement_detailed": "Detailed Statement",
+    "print_statement_detailed_desc": "Invoices with product details",
     "client_label": "Client: {{name}}",
     "payment_modal": {
         "title": "💰 New Settlement",

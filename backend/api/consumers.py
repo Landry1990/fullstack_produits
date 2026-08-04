@@ -91,6 +91,39 @@ class PDAConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps(event['payload']))
 
 
+class CaisseCentraliseeConsumer(AsyncWebsocketConsumer):
+    """Consumer WebSocket pour la caisse centralisée : notifications temps réel.
+
+    Notifie la caisse quand une nouvelle facture PROFORMA est créée par un POS,
+    ou quand une facture est payée/annulée, pour un rafraîchissement instantané.
+    """
+
+    async def connect(self):
+        self.group_name = 'caisse_centralisee'
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            return
+        if data.get('type') == 'ping':
+            await self.send(text_data=json.dumps({'type': 'pong'}))
+
+    async def facture_update(self, event):
+        """Reçoit une notification de mise à jour de facture et la transmet à la caisse."""
+        await self.send(text_data=json.dumps({
+            'type': 'facture_update',
+            'action': event.get('action'),  # 'created', 'paid', 'cancelled'
+            'facture_id': event.get('facture_id'),
+            'poste_caisse_id': event.get('poste_caisse_id'),
+        }))
+
+
 class DocumentLockConsumer(AsyncWebsocketConsumer):
     """
     Consumer WebSocket pour le verrouillage pessimiste des documents.

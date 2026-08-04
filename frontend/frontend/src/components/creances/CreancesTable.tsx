@@ -171,14 +171,14 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                         <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors p-4" onClick={() => onSort('ayant_droit')}>
                             <div className="flex items-center gap-2"><Users className="size-3.5" /> {t('creances:invoice_list.beneficiary')} <SortIcon column="ayant_droit" sortConfig={sortConfig} /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer hover:text-emerald-600 transition-colors p-4" onClick={() => onSort('total_ttc')}>
-                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.total')} <SortIcon column="total_ttc" sortConfig={sortConfig} /></div>
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap" onClick={() => onSort('total_ttc')}>
+                            <div className="flex items-center justify-end gap-1.5">{t('creances:invoice_list.total')} <SortIcon column="total_ttc" sortConfig={sortConfig} /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer hover:text-emerald-600 transition-colors p-4" onClick={() => onSort('montant_paye')}>
-                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.paid')} <SortIcon column="montant_paye" sortConfig={sortConfig} /></div>
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap" onClick={() => onSort('montant_paye')}>
+                            <div className="flex items-center justify-end gap-1.5">{t('creances:invoice_list.paid')} <SortIcon column="montant_paye" sortConfig={sortConfig} /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer hover:text-emerald-600 transition-colors p-4" onClick={() => onSort('reste_a_payer')}>
-                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.remaining')} <SortIcon column="reste_a_payer" sortConfig={sortConfig} /></div>
+                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap" onClick={() => onSort('reste_a_payer')}>
+                            <div className="flex items-center justify-end gap-1.5">{t('creances:invoice_list.remaining')} <SortIcon column="reste_a_payer" sortConfig={sortConfig} /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.status')}</th>
                         <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.actions')}</th>
@@ -218,10 +218,10 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     <span className="font-black text-sm text-emerald-600 tracking-tight">{creance.numero_facture || '-'}</span>
                                 </td>
                                 <td className="p-4 font-bold text-sm text-slate-500">{creance.ayant_droit_details?.nom || '-'}</td>
-                                <td className="p-4 text-right font-black text-sm text-slate-800">{formatCurrency(normalizeNumberInput(creance.total_ttc))}</td>
-                                <td className="p-4 text-right text-emerald-600 font-black text-sm">{formatCurrency(normalizeNumberInput(creance.montant_paye))}</td>
+                                <td className="p-4 text-right font-black text-sm text-slate-800 tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.total_ttc))}</td>
+                                <td className="p-4 text-right text-emerald-600 font-black text-sm tabular-nums whitespace-nowrap">{formatCurrency(normalizeNumberInput(creance.montant_paye))}</td>
                                 <td className="p-4 text-right">
-                                    <span className={`${isPaid ? 'text-slate-300' : 'text-amber-600'} font-black text-sm bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 shadow-inner`}>
+                                    <span className={`${isPaid ? 'text-slate-300' : 'text-amber-600'} font-black text-sm tabular-nums whitespace-nowrap`}>
                                         {formatCurrency(remaining)}
                                     </span>
                                 </td>
