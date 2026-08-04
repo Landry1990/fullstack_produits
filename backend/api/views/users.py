@@ -13,6 +13,7 @@ class LoginRateThrottle(AnonRateThrottle):
     THROTTLE_RATES = {'login': '10/min'}
 
 from django.contrib.auth.models import User
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 
 from ..audit_helpers import log_audit
@@ -131,7 +132,7 @@ class CustomAuthToken(ObtainAuthToken):
             'can_sell_negative_stock': can_sell_negative_stock,
             'can_cash_out': can_cash_out,
             'is_terminal_account': is_terminal_account,
-            'server_time': datetime.datetime.now().isoformat(),
+            'server_time': timezone.now().isoformat(),
             'permissions': {
                 'can_delete_invoice': user.is_superuser,
                 'can_view_stats': user.is_superuser or (hasattr(user, 'profile') and user.profile.role == 'manager'),
@@ -185,6 +186,14 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         if getattr(user, 'is_superuser', False):
             return User.objects.all().order_by('username')
         return User.objects.filter(id=user.id)
+
+    @action(detail=False, methods=['get'], url_path='server-time')
+    def server_time(self, request):
+        """Retourne l'heure précise du serveur pour synchronisation des postes clients."""
+        return Response({
+            'server_time': timezone.now().isoformat(),
+            'timestamp': timezone.now().timestamp(),
+        })
 
     def perform_create(self, serializer):
         user = serializer.save()
