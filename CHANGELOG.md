@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-08-04
+
+### 🐛 Fix critique — mise à jour manuelle qui "boucle" (faux succès)
+
+- **Cause** : `nightly-update.sh`, `zenith-update.sh` et `deployment/auto_update.sh` vérifiaient la connexion internet avec `ping -c 1 github.com`. Certains FAI/box bloquent ICMP → le check échouait alors que la connexion fonctionnait (confirmé sur logs client : git pull/curl/docker build OK, mais `ping` KO en boucle)
+- **Symptôme** : le bouton "Mettre à jour" lançait `nightly-update.sh`, qui se terminait aussitôt (`exit 0`, faute d'internet détectée à tort) sans rien faire. Le backend interprétait ce `exit 0` comme un succès (`update_status.json` → "Mise à jour terminée avec succès") alors que rien n'avait été mis à jour → au contrôle suivant, l'app réaffichait "mise à jour disponible"
+- **Correctifs** :
+  - `ping` → `curl -fsSL --connect-timeout 10` dans les 3 scripts
+  - `nightly-update.sh` sort désormais en code **2** (au lieu de 0) quand internet est injoignable, pour distinguer un skip volontaire d'un vrai succès
+  - `system_admin.py` (`run_update`) et `purge.py` (`_run_update_thread`) : gestion explicite du code 2 → statut `failed`/`error` avec message clair, au lieu de faussement rapporter un succès
+- **⚠️ Action manuelle requise sur les serveurs clients déjà déployés** : la vérification internet a lieu *avant* le `git pull` dans `nightly-update.sh` — donc l'ancienne version (buguée) bloque sa propre mise à jour automatique. Il faut forcer un `git pull` (ou `git fetch && git reset --hard origin/main`) manuellement une fois sur chaque serveur client pour débloquer la boucle.
+
+---
+
 ## 2026-07-31
 
 ### 🔐 Politique mots de passe assouplie (pharmacie)
