@@ -20,8 +20,8 @@ echo "║   Mise à jour de Zenith Pharma           ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
-# Vérifier la connexion internet
-if ! ping -c 1 github.com &>/dev/null; then
+# Vérifier la connexion internet (curl : ping est souvent bloqué par la box/le FAI)
+if ! curl -fsSL --connect-timeout 10 -o /dev/null https://github.com; then
     echo "⚠ Pas de connexion Internet. Branchez le câble réseau ou le Wi-Fi, puis relancez cette commande."
     echo ""
     read -p "Appuyez sur Entrée pour quitter..."

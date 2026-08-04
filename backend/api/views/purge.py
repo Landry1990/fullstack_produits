@@ -772,14 +772,20 @@ class PurgeViewSet(ViewSet):
                     append_log(line)
             proc.wait(timeout=600)
             state = cache.get(cache_key) or {}
-            if proc.returncode == 0 and state.get('progress', 0) != 100:
-                state['progress'] = 100
-                state['step'] = 'Terminé'
-            if proc.returncode != 0:
+            # NB : le script sort en code 2 s'il n'a pas pu joindre Internet (skip volontaire,
+            # aucune mise à jour effectuée) — ne pas confondre avec un succès (code 0).
+            if proc.returncode == 2:
+                state['status'] = 'error'
+                state['step'] = 'Pas de connexion Internet détectée — mise à jour non effectuée'
+                state['error_code'] = proc.returncode
+            elif proc.returncode != 0:
                 state['status'] = 'error'
                 state['step'] = 'Échec'
                 state['error_code'] = proc.returncode
             else:
+                if state.get('progress', 0) != 100:
+                    state['progress'] = 100
+                    state['step'] = 'Terminé'
                 state['status'] = 'done'
             state['finished_at'] = timezone.now().isoformat()
             cache.set(cache_key, state, timeout=7200)
