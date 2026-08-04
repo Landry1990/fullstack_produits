@@ -11,6 +11,7 @@ import { LicenceProvider } from './context/LicenceContext'
 import { Toaster } from 'react-hot-toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import { LicenceNotifications } from './components/LicenceNotifications'
+import { ClockSyncAlert } from './components/ClockSyncAlert'
 import { ExpirationAlertToasts } from './components/ExpirationAlertToast'
 import { useAuth } from './context/AuthContext'
 import { router } from './routes'
@@ -148,6 +149,7 @@ export default function App() {
             <ConfirmProvider>
               <Toaster position="top-right" />
               <LicenceNotifications />
+              <ClockSyncAlert />
               <GlobalAlerts />
               <BackendHealthCheck>
                 <Suspense fallback={

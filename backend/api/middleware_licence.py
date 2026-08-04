@@ -27,34 +27,28 @@ class LicenceMiddleware:
 
     def _verifier_licence_rapide(self):
         """
-        Vérification rapide sans DB - utilise uniquement le cache et JWT.
+        Vérification rapide sans DB - utilise uniquement le cache.
         Retourne: (est_valide, message, payload) ou (None, None, None) si re-vérification DB nécessaire
         """
         cached_result = cache.get(LICENCE_CACHE_KEY)
-        
+
         if cached_result is None:
             # Cache vide - re-vérification DB nécessaire
             return None, None, None
-        
-        # Cache présent - vérification JWT légère (sans DB)
+
+        # Vérifier la signature HMAC du cache (anti-empoisonnement Redis)
+        from api.utils_licence import _verify_cache_signature
+        if not _verify_cache_signature(cached_result):
+            logger.warning("[LICENCE] Cache middleware signé incorrectement — possible empoisonnement.")
+            cache.delete(LICENCE_CACHE_KEY)
+            return None, None, None
+
+        # Cache présent et signé correctement
         try:
             payload = cached_result.get('payload')
-            if payload and payload.get('exp'):
-                # Vérifier si le JWT est toujours valide (non expiré)
-                # C'est une vérification locale sans DB
-                exp_timestamp = payload.get('exp')
-                from time import time
-                if exp_timestamp < time():
-                    # Licence expirée depuis le cache - invalider le cache
-                    cache.delete(LICENCE_CACHE_KEY)
-                    return None, None, None
-            
-            # Cache valide et JWT non expiré
             return cached_result.get('est_valide'), cached_result.get('message'), payload
-            
         except Exception as e:
             logger.warning(f"[LICENCE] Erreur vérification rapide: {e!s}")
-            # En cas d'erreur, forcer re-vérification DB
             cache.delete(LICENCE_CACHE_KEY)
             return None, None, None
 
@@ -86,13 +80,15 @@ class LicenceMiddleware:
                     with transaction.atomic():
                         est_valide, message, payload = valider_licence_systeme()
                         
-                    # Mettre en cache le résultat pour 1 heure
+                    # Mettre en cache le résultat pour 1 heure (signé HMAC)
                     if est_valide:
+                        from api.utils_licence import _sign_cache_value
                         result_dict = {
-                            'est_valide': est_valide, 
-                            'message': message, 
+                            'est_valide': est_valide,
+                            'message': message,
                             'payload': payload
                         }
+                        result_dict['_sig'] = _sign_cache_value(result_dict)
                         cache.set(LICENCE_CACHE_KEY, result_dict, timeout=LICENCE_CACHE_TTL)
                         
                 except DatabaseError as e:
