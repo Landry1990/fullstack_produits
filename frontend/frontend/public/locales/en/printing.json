@@ -88,6 +88,8 @@
     "pts": "pts",
     "base_ht": "BASE (excl. VAT)",
     "tva": "VAT",
+    "part_patient_row": "Patient Share - {{mode}}",
+    "part_assurance_row": "Insurance Share - On Account",
     "payment_modes": {
       "especes": "Cash",
       "carte": "Card",

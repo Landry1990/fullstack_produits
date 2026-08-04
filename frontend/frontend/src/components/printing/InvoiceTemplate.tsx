@@ -332,18 +332,18 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     
                     {/* Bloc TOTAL GÉNÉRAL / NET À PAYER */}
                     <div className={`mx-0 rounded-lg py-2.5 shadow-sm transition-all overflow-hidden relative ${
-                      isBonDeLivraison && (data.part_assurance ?? 0) > 0 
-                        ? 'bg-base-200/50 border border-base-200 text-base-content' 
+                      (data.part_assurance ?? 0) > 0
+                        ? 'bg-base-200/50 border border-base-200 text-base-content'
                         : 'bg-slate-900 text-white'
                     }`}>
                         <div className="grid grid-cols-[1fr,115px] items-center px-1">
                           <span className={`text-[8px] uppercase font-black tracking-[0.2em] pl-1 ${
-                            isBonDeLivraison && (data.part_assurance ?? 0) > 0 ? 'text-base-content/40' : 'text-base-content/40'
+                            (data.part_assurance ?? 0) > 0 ? 'text-base-content/40' : 'text-base-content/40'
                           }`}>
-                            {isBonDeLivraison && (data.part_assurance ?? 0) > 0 ? t('invoice.total_general') : t('invoice.net_a_payer')}
+                            {(data.part_assurance ?? 0) > 0 ? t('invoice.total_general') : t('invoice.net_a_payer')}
                           </span>
                           <div className={`text-right font-black font-mono tracking-tighter pr-2 ${
-                             isBonDeLivraison && (data.part_assurance ?? 0) > 0 ? 'text-lg' : 'text-xl'
+                             (data.part_assurance ?? 0) > 0 ? 'text-lg' : 'text-xl'
                           }`}>
                             {formatCurrency(Math.round(Number(data.total_ttc)))}
                           </div>
@@ -351,7 +351,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                     </div>
 
                     {/* Bloc Tiers-Payant (Patient/Assurance) */}
-                    {isBonDeLivraison && (data.part_assurance ?? 0) > 0 && (
+                    {(data.part_assurance ?? 0) > 0 && (
                       <div className="space-y-1.5 pt-1">
                         <div className="grid grid-cols-[1fr,115px] items-center px-1 py-0.5 text-base-content/80">
                           <span className="text-[9px] uppercase font-bold tracking-widest pl-1">{t('invoice.part_patient')}</span>
