@@ -152,6 +152,8 @@ export interface Paiement {
     } | null
     releve_id?: number
     releve_reference?: string
+    part_patient?: number | string | null
+    part_assurance?: number | string | null
 }
 
 export interface CaisseTransaction {

@@ -139,6 +139,7 @@
         "remaining_to_allocate": "Reste à allouer:",
         "mode_label": "Mode",
         "amount_label": "Montant",
+        "part_patient_locked": "Montant calculé automatiquement — non modifiable",
         "caisse_centrale": "Caisse Centrale",
         "en_compte_auto": "En compte (automatique)",
         "payment_mode_label": "Point de caisse",

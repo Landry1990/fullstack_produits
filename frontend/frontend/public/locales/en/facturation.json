@@ -139,6 +139,7 @@
         "remaining_to_allocate": "To be allocated:",
         "mode_label": "Mode",
         "amount_label": "Amount",
+        "part_patient_locked": "Automatically calculated amount — not editable",
         "caisse_centrale": "Main Cash",
         "en_compte_auto": "On account (automatic)",
         "payment_mode_label": "Cash register",

@@ -79,3 +79,36 @@ export const safeStorage = {
         memStorage.clear();
     }
 };
+
+/**
+ * Synchronise la sessionStorage d'un onglet ouvert via window.open() depuis l'onglet parent.
+ * sessionStorage n'est PAS partagé entre onglets → un nouvel onglet (ex: page d'impression)
+ * n'a pas le token d'auth → 401 → redirect login. Cette fonction copie les clés d'auth depuis
+ * l'opener (same-origin uniquement) si la sessionStorage locale est vide.
+ */
+const SESSION_SYNC_KEYS = [
+    'authToken', 'username', 'userId', 'is_superuser', 'allowed_menus',
+    'can_do_returns', 'can_sell_negative_stock', 'can_cash_out',
+    'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur',
+    'can_delete_commande', 'can_close_commande', 'can_generate_coupon',
+    'is_terminal_account', 'role', 'timeOffset',
+];
+
+export const syncSessionFromOpener = (): void => {
+    try {
+        // Déjà un token ? Rien à faire.
+        if (window.sessionStorage.getItem('authToken')) return;
+        const opener = window.opener;
+        if (!opener) return;
+        // Accès cross-origin lève SecurityError → on s'arrête proprement.
+        const openerStorage = opener.sessionStorage;
+        for (const key of SESSION_SYNC_KEYS) {
+            const value = openerStorage.getItem(key);
+            if (value !== null) {
+                window.sessionStorage.setItem(key, value);
+            }
+        }
+    } catch {
+        // Opener cross-origin ou inaccessible : ignore silencieusement.
+    }
+};

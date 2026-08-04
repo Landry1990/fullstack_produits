@@ -198,7 +198,15 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                     username: fullFacture.created_by_name || '?'
                 };
             })(),
-            paiements_details: (paiements as unknown as PaymentDetails[]) || []
+            // Les paiements bruts de la facture utilisent le champ `mode_paiement` (modèle Paiement),
+            // alors que PaymentDetails/TicketTemplate attendent `mode` : on mappe explicitement pour
+            // éviter que le ticket affiche "[N/A]" (le cast direct ne fait pas cette conversion).
+            paiements_details: (paiements || []).map((p): PaymentDetails => ({
+                mode: p.mode_paiement,
+                montant: Number(p.montant),
+                part_patient: p.part_patient != null ? Number(p.part_patient) : null,
+                part_assurance: p.part_assurance != null ? Number(p.part_assurance) : null,
+            }))
         };
 
         setSelectedTicket(ticket);
