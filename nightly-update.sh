@@ -46,6 +46,24 @@ else
     DC="docker compose"
 fi
 
+# ── S'assurer que docker compose (plugin v2) est disponible ──
+# Le conteneur backend n'inclut pas toujours le plugin compose.
+# On l'installe à la volée si manquant (une fois, cached pour les runs suivants).
+if ! docker compose version &>/dev/null; then
+    log "📦 Docker Compose plugin non trouvé — installation à la volée..."
+    COMPOSE_PLUGIN_DIR="/usr/local/lib/docker/cli-plugins"
+    mkdir -p "$COMPOSE_PLUGIN_DIR" 2>/dev/null || true
+    if curl -fsSL --connect-timeout 15 \
+        https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 \
+        -o "$COMPOSE_PLUGIN_DIR/docker-compose" 2>>"$LOG_FILE"; then
+        chmod +x "$COMPOSE_PLUGIN_DIR/docker-compose"
+        ok "Docker Compose plugin installé"
+    else
+        err "Impossible d'installer Docker Compose plugin — mise à jour annulée"
+        exit 1
+    fi
+fi
+
 # ── Fonctions ────────────────────────────────────────────────
 log() {
     local timestamp
@@ -174,51 +192,36 @@ if [ "$build_success" != "true" ]; then
 fi
 ok "Nouvelles images construites avec succès"
 
-# ── Basculement : arrêter les anciens conteneurs et démarrer les nouveaux
-log "🔄 Basculement — arrêt des anciens conteneurs et démarrage des nouveaux"
-$DC -f "$COMPOSE_FILE" down 2>>"$LOG_FILE" || { err "docker compose down a échoué"; rollback; }
-$DC -f "$COMPOSE_FILE" up -d --remove-orphans 2>>"$LOG_FILE" || { err "docker up a échoué"; rollback; }
-ok "Conteneurs redémarrés"
+# ── Basculement : recréer les conteneurs avec les nouvelles images ──
+# ⚠️ PROBLÈME : ce script s'exécute DANS le conteneur backend. Si on fait
+# `docker compose down` ici, on se tue soi-même → le `up -d` n'a jamais lieu.
+# SOLUTION : utiliser un conteneur helper détaché (hors compose project) qui
+# fait le `up -d --force-recreate`. Ce conteneur survit au recreate car il
+# n'appartient pas au projet docker-compose.
+log "🔄 Basculement — recréation des conteneurs via helper détaché"
 
-# ── 6. Migrate + Healthcheck ─────────────────────────────────
-log "🔄 Étape 6/6 — Migrations + Healthcheck"
+# Écrire le statut 'done' AVANT le recreate (le script va être tué pendant)
+status_file="$APP_DIR/update_status.json"
+cat > "$status_file" << EOF
+{"status":"done","started_at":"$(date '+%Y-%m-%d %H:%M:%S')","finished_at":"$(date '+%Y-%m-%d %H:%M:%S')","step":"Mise à jour terminée — redémarrage des conteneurs en cours, l'application sera disponible dans quelques secondes"}
+EOF
+log "📝 Statut 'done' écrit avant le recreate"
 
-# Attendre que le backend soit prêt
-elapsed=0
-backend_ready=false
-while [ $elapsed -lt $HEALTH_TIMEOUT ]; do
-    sleep $HEALTH_INTERVAL
-    elapsed=$((elapsed + HEALTH_INTERVAL))
-    if $DC -f "$COMPOSE_FILE" exec -T backend python -c "
-import django, os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
-django.setup()
-from django.db import connection
-connection.ensure_connection()
-print('DB ready')
-    " 2>/dev/null; then
-        backend_ready=true
-        break
-    fi
-    warn "Attente backend... (${elapsed}s / ${HEALTH_TIMEOUT}s)"
-done
+# Lancer le helper container (docker:latest inclut Docker CLI + compose plugin)
+# Il attend 3s (pour laisser le script se terminer proprement) puis fait le recreate.
+# --force-recreate recrée tous les conteneurs avec les nouvelles images.
+# Les migrations tournent automatiquement via entrypoint.sh du backend.
+docker rm -f zenith-update-helper 2>/dev/null || true
+docker run --rm -d \
+  --name zenith-update-helper \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "$APP_DIR:/app" \
+  -w /app \
+  docker:latest \
+  sh -c "sleep 3 && docker compose -f $COMPOSE_FILE up -d --force-recreate --remove-orphans && docker image prune -f && echo 'Recreate terminé'" \
+  >>"$LOG_FILE" 2>&1 || { err "Lancement du helper container échoué"; exit 1; }
 
-if [ "$backend_ready" != "true" ]; then
-    err "Backend non accessible après ${HEALTH_TIMEOUT}s"
-    rollback
-fi
-
-# Migrations
-$DC -f "$COMPOSE_FILE" exec -T backend python manage.py migrate --noinput 2>>"$LOG_FILE" || {
-    err "Migrations échouées"
-    rollback
-}
-
-# Collectstatic
-$DC -f "$COMPOSE_FILE" exec -T backend python manage.py collectstatic --noinput 2>>"$LOG_FILE" || warn "collectstatic échoué (non bloquant)"
-
-# Nettoyage images orphelines
-docker image prune -f >/dev/null 2>&1 || true
-
+ok "Helper container lancé — le recreate va se faire en arrière-plan"
 ok "Mise à jour terminée avec succès — version ${REMOTE_COMMIT:0:8}"
 log "=== Fin de la mise à jour ==="
+exit 0

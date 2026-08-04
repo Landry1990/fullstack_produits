@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -89,21 +89,27 @@ const _navigate = useNavigate()
   } | null>(null)
 
   // Fonction pour récupérer les factures en attente
+  const fetchingRef = useRef(false)
   const fetchFacturesEnAttente = useCallback(async () => {
+    // Éviter les refetchs concurrents (cause du flash)
+    if (fetchingRef.current) return
+    fetchingRef.current = true
     try {
-      const params: Record<string, unknown> = { 
-        status__in: 'BROU,VAL,PROF', 
+      const params: Record<string, unknown> = {
+        status__in: 'BROU,VAL,PROF',
         include_pending: true,
-        include_details: true 
+        include_details: true
       }
       if (selectedPosteCaisseId !== 'all') params.poste_caisse = selectedPosteCaisseId
 
       const response = await api.get('factures/', { params })
       const facturesList = response.data.results || response.data || []
-      
+
       setFacturesEnAttente(facturesList)
     } catch (err) {
       logger.error('Erreur lors du chargement des factures en attente:', err)
+    } finally {
+      fetchingRef.current = false
     }
   }, [selectedPosteCaisseId])
 
@@ -161,15 +167,78 @@ const _navigate = useNavigate()
     }
   }, [selectedPosteCaisseId])
 
-  // Rafraîchissement automatique - toutes les 5 secondes pour plus de réactivité
+  // Rafraîchissement automatique
+  // 1. WebSocket pour notification temps réel (POS → caisse)
+  // 2. Polling de fallback toutes les 30s (si WebSocket déconnecté)
+  const fetchRef = useRef(fetchFacturesEnAttente)
+  fetchRef.current = fetchFacturesEnAttente
+
   useEffect(() => {
     fetchFacturesEnAttente()
     fetchCoupons()
+
+    // ── WebSocket pour notifications temps réel ──
+    const wsBase = import.meta.env.VITE_WS_URL ?? `ws://${window.location.host}`
+    let ws: WebSocket | null = null
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let pingTimer: ReturnType<typeof setInterval> | null = null
+
+    const connectWs = () => {
+      try {
+        ws = new WebSocket(`${wsBase}/ws/caisse_centralisee/`)
+
+        ws.onopen = () => {
+          logger.info('WebSocket caisse connecté')
+          // Ping toutes les 30s pour garder la connexion alive
+          pingTimer = setInterval(() => {
+            if (ws?.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'ping' }))
+            }
+          }, 30_000)
+        }
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            if (data.type === 'facture_update') {
+              // Notification temps réel : refresh immédiat
+              logger.info('WebSocket: mise à jour facture reçue', data)
+              fetchRef.current()
+              fetchCoupons()
+            }
+          } catch {
+            // ignore malformed messages
+          }
+        }
+
+        ws.onclose = () => {
+          logger.info('WebSocket caisse déconnecté, reconnexion dans 3s')
+          if (pingTimer) { clearInterval(pingTimer); pingTimer = null }
+          reconnectTimer = setTimeout(connectWs, 3_000)
+        }
+
+        ws.onerror = () => {
+          ws?.close()
+        }
+      } catch (err) {
+        logger.error('Erreur WebSocket caisse:', err)
+      }
+    }
+
+    connectWs()
+
+    // ── Polling de fallback (30s au lieu de 5s) ──
     const interval = setInterval(() => {
       fetchFacturesEnAttente()
       fetchCoupons()
-    }, 5000)
-    return () => clearInterval(interval)
+    }, 30_000)
+
+    return () => {
+      clearInterval(interval)
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      if (pingTimer) clearInterval(pingTimer)
+      if (ws) { ws.onclose = null; ws.close() }
+    }
   }, [fetchFacturesEnAttente, fetchCoupons, selectedPosteCaisseId])
 
   // Récap session : toutes les 10 secondes + immédiat sur changement de poste
