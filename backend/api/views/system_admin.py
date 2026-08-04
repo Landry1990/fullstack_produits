@@ -585,9 +585,13 @@ class SystemAdminViewSet(ViewSet):
                 cwd=app_dir,
             )
             # Écrire le statut final
+            # NB : le script sort en code 2 s'il n'a pas pu joindre Internet (skip volontaire,
+            # aucune mise à jour effectuée) — ne pas confondre avec un succès (code 0).
             try:
                 if result.returncode == 0:
                     status_data = {'status': 'done', 'started_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'finished_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'step': 'Mise à jour terminée avec succès'}
+                elif result.returncode == 2:
+                    status_data = {'status': 'failed', 'started_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'finished_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'step': 'Pas de connexion Internet détectée — mise à jour non effectuée'}
                 else:
                     stderr_tail = result.stderr.decode()[-500:] if result.stderr else ''
                     status_data = {'status': 'failed', 'started_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'finished_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'step': 'Échec de la mise à jour', 'error': stderr_tail}

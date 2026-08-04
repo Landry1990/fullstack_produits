@@ -30,7 +30,7 @@ notify_error() {
 # ── Vérification de la connexion internet ─────────────────────────────────────
 log "=== Démarrage de la vérification de mise à jour ==="
 
-if ! ping -c 1 github.com &>/dev/null; then
+if ! curl -fsSL --connect-timeout 10 -o /dev/null https://github.com; then
     log "Pas de connexion internet — mise à jour ignorée"
     exit 0
 fi
