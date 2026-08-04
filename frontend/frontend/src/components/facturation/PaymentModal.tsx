@@ -242,9 +242,10 @@ export default function PaymentModal({
                             <label className="block py-1 text-xs uppercase font-bold text-slate-500">{t('facturation:payment.amount_label')}</label>
                             <input
                                 type="number"
-                                className="w-full h-12 px-3 rounded-lg border border-slate-200 bg-white font-light text-2xl text-center text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                                readOnly
+                                title={t('facturation:payment.part_patient_locked')}
+                                className="w-full h-12 px-3 rounded-lg border border-slate-200 bg-slate-50 font-light text-2xl text-center text-slate-500 cursor-not-allowed outline-none"
                                 value={montantPaye}
-                                onChange={(e) => setMontantPaye(e.target.value)}
                             />
                         </div>
                       </div>

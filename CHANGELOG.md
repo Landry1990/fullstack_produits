@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-08-05
+
+### 🐛 Fix ticket de caisse — distinction part patient / part assurance (clients pro)
+
+- **Symptôme** : pour les clients pro (avec assurance), le ticket de caisse n'affichait pas
+  distinctement ce que le patient paie vs ce qui reste sur compte (part assurance). Le mode de
+  paiement apparaissait "N/A" quand `paiements_details` était utilisé.
+- **Cause** : `useInvoiceActions.tsx` mappait les objets `Paiement` du backend (qui contiennent
+  `part_patient` et `part_assurance`) vers `PaymentDetails` dans l'objet `TicketCaisse`, perdant
+  la distinction. `TicketTemplate.tsx` ne gérait pas l'affichage conditionnel de ces deux parts.
+- **Correctifs** :
+  - `useInvoiceActions.tsx` : mappe désormais `paiements` de la `facture` vers `paiements_details`
+    du `TicketCaisse`, en préservant `part_patient` et `part_assurance`
+  - `frontend/frontend/src/types/finance.ts` : interface `Paiement` mise à jour pour inclure
+    `part_patient` et `part_assurance`
+  - `TicketTemplate.tsx` : affichage conditionnel "Part Patient - {{mode}}" / "Part Assurance -
+    On Account" selon les champs `part_patient`/`part_assurance`
+  - `InvoiceTemplate.tsx` : le bloc Tiers-Payant (Part Patient / Part Assurance + libellé
+    "Total Général" au lieu de "Net à payer") n'est plus limité aux bons de livraison — il
+    s'affiche désormais sur la facture dès que `part_assurance > 0`
+
+### 🐛 Fix page d'impression qui redirige vers la login page
+
+- **Symptôme** : après validation d'une vente, cliquer sur "Facture" (ouvrir la facture A4 dans
+  un nouvel onglet) ouvrait la page de connexion au lieu de la facture
+- **Cause** : le token d'auth est stocké en `sessionStorage`, qui **n'est pas partagé entre
+  onglets**. Le nouvel onglet ouvert via `window.open('/app/print-invoice/...')` n'avait donc
+  pas de token → l'API renvoyait 401 → le interceptor redirigeait vers `/` (login)
+- **Correctif** :
+  - `utils/storage.ts` : nouvelle fonction `syncSessionFromOpener()` qui, au chargement d'un
+    onglet ouvert via `window.open`, copie les clés d'auth depuis le `sessionStorage` de
+    l'onglet parent (same-origin ; ignore silencieusement les openers cross-origin)
+  - `main.tsx` : appel à `syncSessionFromOpener()` avant le rendu React, pour que le token soit
+    disponible avant toute requête API
+- **Impact** : corrige tous les flows d'impression en nouvel onglet (facture A4, BL, proforma,
+  avoir, inventaire, valorisation stock)
+  - Ajout des clés de traduction `ticket.part_patient_payment` et `ticket.part_assurance_payment`
+    dans `fr/printing.json` et `en/printing.json`
+
+---
+
 ## 2026-08-04 (bis)
 
 ### 🧪 Tests calculs de marges + fix précédence opérateurs

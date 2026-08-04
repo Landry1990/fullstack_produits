@@ -1,0 +1,202 @@
+
+══════════════════════════════════════════
+   Zenith Pharma — Déploiement  [frontend]
+══════════════════════════════════════════
+
+🌐 Frontend — vérification conteneur...
+  ✅ fullstack_produits-frontend-1 : running
+    🏷  Tag: fullstack_produits-frontend:previous
+  npm run build...
+
+> frontend@0.0.0 prebuild
+> node scripts/generate-version.mjs
+
+Ô£ô Version generated: 0c32f278 @ 2026-08-04T18:52:07.920Z
+
+> frontend@0.0.0 build
+> vite build
+
+[36mvite v7.3.5 [32mbuilding client environment for production...[36m[39m
+transforming...
+/*! ­ƒî╝ daisyUI 5.0.50 */
+[32mÔ£ô[39m 4256 modules transformed.
+Generated an empty chunk: "vendor-core".
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mregisterSW.js                                        [39m[1m[2m    0.13 kB[22m[1m[22m
+[2mdist/[22m[32mindex.html                                           [39m[1m[2m    2.74 kB[22m[1m[22m[2m Ôöé gzip:   0.94 kB[22m
+[2mdist/[22m[32massets/inter-vietnamese-400-normal-DMkecbls.woff2    [39m[1m[2m    4.97 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-vietnamese-300-normal-Bdr24Bqb.woff2    [39m[1m[2m    5.06 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-vietnamese-600-normal-Cc8MFFhd.woff2    [39m[1m[2m    5.10 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-vietnamese-700-normal-DlLaEgI2.woff2    [39m[1m[2m    5.10 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-vietnamese-500-normal-DOriooB6.woff2    [39m[1m[2m    5.11 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-400-normal-DGGRlc-M.woff2     [39m[1m[2m    5.26 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-300-normal-l2DDyC6M.woff2     [39m[1m[2m    5.35 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-500-normal-C4iEst2y.woff2     [39m[1m[2m    5.43 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-600-normal-DRtmH8MT.woff2     [39m[1m[2m    5.43 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-700-normal-qfdV9bQt.woff2     [39m[1m[2m    5.44 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-vietnamese-400-normal-Bbgyi5SW.woff     [39m[1m[2m    6.50 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-vietnamese-300-normal-DDGmYYdT.woff     [39m[1m[2m    6.59 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-vietnamese-500-normal-mJboJaSs.woff     [39m[1m[2m    6.60 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-vietnamese-700-normal-BZaoP0fm.woff     [39m[1m[2m    6.63 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-vietnamese-600-normal-BuLX-rYi.woff     [39m[1m[2m    6.64 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-400-normal-KugGGMne.woff      [39m[1m[2m    7.06 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-300-normal-DLbbeei1.woff      [39m[1m[2m    7.13 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-500-normal-2j5mBUwD.woff      [39m[1m[2m    7.19 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-600-normal-B8X0CLgF.woff      [39m[1m[2m    7.21 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-ext-700-normal-BoQ6DsYi.woff      [39m[1m[2m    7.22 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-400-normal-obahsSVq.woff2      [39m[1m[2m    7.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-400-normal-B4URO6DV.woff2         [39m[1m[2m    7.78 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-300-normal-BnqRxXuy.woff2      [39m[1m[2m    7.81 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-500-normal-BasfLYem.woff2      [39m[1m[2m    7.90 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-700-normal-CjBOestx.woff2      [39m[1m[2m    7.90 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-500-normal-BIZE56-Y.woff2         [39m[1m[2m    7.92 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-700-normal-C3JjAnD8.woff2         [39m[1m[2m    7.92 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-600-normal-plRanbMR.woff2         [39m[1m[2m    7.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-600-normal-CWCymEST.woff2      [39m[1m[2m    7.97 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-300-normal-DmGD3g_f.woff2         [39m[1m[2m    8.00 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-400-normal-HOLc17fK.woff       [39m[1m[2m    9.78 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-300-normal-LR1W_oT8.woff       [39m[1m[2m    9.82 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-700-normal-DrXBdSj3.woff       [39m[1m[2m    9.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-400-normal-q2sYcFCs.woff          [39m[1m[2m    9.92 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-600-normal-4D_pXhcN.woff       [39m[1m[2m    9.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-500-normal-CxZf_p3X.woff       [39m[1m[2m    9.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-500-normal-Xzm54t5V.woff          [39m[1m[2m    9.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-700-normal-BUv2fZ6O.woff          [39m[1m[2m    9.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-300-normal-BrhSP0vQ.woff          [39m[1m[2m   10.00 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-greek-600-normal-BZpKdvQh.woff          [39m[1m[2m   10.03 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-400-normal-BQZuk6qB.woff2  [39m[1m[2m   10.23 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-300-normal-CgCALhwJ.woff2  [39m[1m[2m   10.36 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-500-normal-B0yAr1jD.woff2  [39m[1m[2m   10.43 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-600-normal-Dfes3d0z.woff2  [39m[1m[2m   10.48 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-700-normal-BjwYoWNd.woff2  [39m[1m[2m   10.50 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-400-normal-DQukG94-.woff   [39m[1m[2m   13.34 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-300-normal-RId2JxDB.woff   [39m[1m[2m   13.40 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-700-normal-LO58E6JB.woff   [39m[1m[2m   13.41 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-500-normal-BmqWE9Dz.woff   [39m[1m[2m   13.45 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-cyrillic-ext-600-normal-Bcila6Z-.woff   [39m[1m[2m   13.46 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-400-normal-C38fXH4l.woff2         [39m[1m[2m   23.66 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-300-normal-BVlfKGgI.woff2         [39m[1m[2m   23.92 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-500-normal-Cerq10X2.woff2         [39m[1m[2m   24.27 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-700-normal-Yt3aPRUw.woff2         [39m[1m[2m   24.36 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-600-normal-LgqL8muc.woff2         [39m[1m[2m   24.45 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-400-normal-CyCys3Eg.woff          [39m[1m[2m   30.70 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-300-normal-i8F0SvXL.woff          [39m[1m[2m   31.01 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-600-normal-CiBQ2DWP.woff          [39m[1m[2m   31.26 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-500-normal-BL9OpVg8.woff          [39m[1m[2m   31.28 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-700-normal-BLAVimhd.woff          [39m[1m[2m   31.32 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-400-normal-C1nco2VV.woff2     [39m[1m[2m   35.00 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-300-normal-CPgO9Ksf.woff2     [39m[1m[2m   35.88 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-500-normal-CV4jyFjo.woff2     [39m[1m[2m   36.02 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-700-normal-Ca8adRJv.woff2     [39m[1m[2m   36.24 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-600-normal-D2bJ5OIk.woff2     [39m[1m[2m   36.26 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-400-normal-77YHD8bZ.woff      [39m[1m[2m   47.56 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-500-normal-BxGbmqWO.woff      [39m[1m[2m   48.49 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-300-normal-Dp1L8vcn.woff      [39m[1m[2m   48.61 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-700-normal-TidjK2hL.woff      [39m[1m[2m   48.63 kB[22m[1m[22m
+[2mdist/[22m[32massets/inter-latin-ext-600-normal-CIVaiw4L.woff      [39m[1m[2m   48.67 kB[22m[1m[22m
+[2mdist/[22m[32massets/worker.min-32WLk7pY.js                        [39m[1m[2m  111.31 kB[22m[1m[22m
+[2mdist/[22m[32massets/tesseract-core.wasm-DJna89ck.js               [39m[1m[2m4,687.94 kB[22m[1m[22m
+[2mdist/[22m[35massets/feature-history-B5U4kmJ6.css                  [39m[1m[2m   22.68 kB[22m[1m[22m[2m Ôöé gzip:   3.19 kB[22m
+[2mdist/[22m[35massets/index-CBU_Q-Zp.css                            [39m[1m[2m  368.89 kB[22m[1m[22m[2m Ôöé gzip:  51.37 kB[22m
+[2mdist/[22m[36massets/vendor-core-l0sNRNKZ.js                       [39m[1m[2m    0.00 kB[22m[1m[22m[2m Ôöé gzip:   0.02 kB[22m
+[2mdist/[22m[36massets/worker.min-AaQKRu4P.js                        [39m[1m[2m    0.06 kB[22m[1m[22m[2m Ôöé gzip:   0.08 kB[22m
+[2mdist/[22m[36massets/tesseract-core.wasm-DE5gkIC_.js               [39m[1m[2m    0.07 kB[22m[1m[22m[2m Ôöé gzip:   0.09 kB[22m
+[2mdist/[22m[36massets/Skeleton-DVHGEF89.js                          [39m[1m[2m    0.25 kB[22m[1m[22m[2m Ôöé gzip:   0.20 kB[22m
+[2mdist/[22m[36massets/Label-DAB1MKnp.js                             [39m[1m[2m    0.41 kB[22m[1m[22m[2m Ôöé gzip:   0.30 kB[22m
+[2mdist/[22m[36massets/react-BaP2g6Qh.js                             [39m[1m[2m    0.66 kB[22m[1m[22m[2m Ôöé gzip:   0.41 kB[22m
+[2mdist/[22m[36massets/useSearchNavigation-DsSDZI0X.js               [39m[1m[2m    0.90 kB[22m[1m[22m[2m Ôöé gzip:   0.53 kB[22m
+[2mdist/[22m[36massets/useProductSearch-CHq8uE8t.js                  [39m[1m[2m    1.11 kB[22m[1m[22m[2m Ôöé gzip:   0.65 kB[22m
+[2mdist/[22m[36massets/Tabs-Blu77L8f.js                              [39m[1m[2m    1.20 kB[22m[1m[22m[2m Ôöé gzip:   0.52 kB[22m
+[2mdist/[22m[36massets/Textarea-D25mns5G.js                          [39m[1m[2m    1.31 kB[22m[1m[22m[2m Ôöé gzip:   0.65 kB[22m
+[2mdist/[22m[36massets/financeService-BLi8pVr7.js                    [39m[1m[2m    1.76 kB[22m[1m[22m[2m Ôöé gzip:   0.52 kB[22m
+[2mdist/[22m[36massets/useFinanceStats-Dabiv1v8.js                   [39m[1m[2m    1.76 kB[22m[1m[22m[2m Ôöé gzip:   0.54 kB[22m
+[2mdist/[22m[36massets/promisPdfDraft-CMbBcEYI.js                    [39m[1m[2m    2.78 kB[22m[1m[22m[2m Ôöé gzip:   1.05 kB[22m
+[2mdist/[22m[36massets/reapproSessionPdfDraft-De8KLwf4.js            [39m[1m[2m    2.80 kB[22m[1m[22m[2m Ôöé gzip:   1.20 kB[22m
+[2mdist/[22m[36massets/TelegramHistory-GEsvXwfq.js                   [39m[1m[2m    6.24 kB[22m[1m[22m[2m Ôöé gzip:   2.37 kB[22m
+[2mdist/[22m[36massets/ReapproHistory-BcEcL3c8.js                    [39m[1m[2m    7.85 kB[22m[1m[22m[2m Ôöé gzip:   2.46 kB[22m
+[2mdist/[22m[36massets/ClassementVendeurs-DrImD-pN.js                [39m[1m[2m    8.42 kB[22m[1m[22m[2m Ôöé gzip:   2.63 kB[22m
+[2mdist/[22m[36massets/UserSessionsShadcn-C3nrMdEv.js                [39m[1m[2m   10.20 kB[22m[1m[22m[2m Ôöé gzip:   2.87 kB[22m
+[2mdist/[22m[36massets/browser-ponyfill-D-JCiitg.js                  [39m[1m[2m   10.30 kB[22m[1m[22m[2m Ôöé gzip:   3.52 kB[22m
+[2mdist/[22m[36massets/BMICalculator-BPYk-t0c.js                     [39m[1m[2m   10.78 kB[22m[1m[22m[2m Ôöé gzip:   2.61 kB[22m
+[2mdist/[22m[36massets/GuideFinancier-C32NW_EM.js                    [39m[1m[2m   10.79 kB[22m[1m[22m[2m Ôöé gzip:   1.77 kB[22m
+[2mdist/[22m[36massets/Ordonnancier-n3gdnpko.js                      [39m[1m[2m   11.76 kB[22m[1m[22m[2m Ôöé gzip:   2.59 kB[22m
+[2mdist/[22m[36massets/Corbeille-C7K_ODZB.js                         [39m[1m[2m   12.16 kB[22m[1m[22m[2m Ôöé gzip:   3.86 kB[22m
+[2mdist/[22m[36massets/AnalyseMargesProduit-tepll7xg.js              [39m[1m[2m   13.07 kB[22m[1m[22m[2m Ôöé gzip:   2.76 kB[22m
+[2mdist/[22m[36massets/AnalyseTemporelle-BJ4V77ez.js                 [39m[1m[2m   13.35 kB[22m[1m[22m[2m Ôöé gzip:   2.99 kB[22m
+[2mdist/[22m[36massets/HelpTraining-DC253OYm.js                      [39m[1m[2m   13.41 kB[22m[1m[22m[2m Ôöé gzip:   3.58 kB[22m
+[2mdist/[22m[36massets/Vitrine-kPkCMH08.js                           [39m[1m[2m   13.49 kB[22m[1m[22m[2m Ôöé gzip:   4.03 kB[22m
+[2mdist/[22m[36massets/Cadencier-CT4AYAAy.js                         [39m[1m[2m   13.67 kB[22m[1m[22m[2m Ôöé gzip:   3.85 kB[22m
+[2mdist/[22m[36massets/GestionDivers-CaA3FpA-.js                     [39m[1m[2m   15.07 kB[22m[1m[22m[2m Ôöé gzip:   3.51 kB[22m
+[2mdist/[22m[36massets/JournalAjustements-CFkFuwr9.js                [39m[1m[2m   15.18 kB[22m[1m[22m[2m Ôöé gzip:   3.63 kB[22m
+[2mdist/[22m[36massets/CatalogDCI-D0HlHCSr.js                        [39m[1m[2m   15.50 kB[22m[1m[22m[2m Ôöé gzip:   4.44 kB[22m
+[2mdist/[22m[36massets/index-CtEiYthP.js                             [39m[1m[2m   15.90 kB[22m[1m[22m[2m Ôöé gzip:   6.87 kB[22m
+[2mdist/[22m[36massets/StatistiquesFournisseur-B4YKCFqt.js           [39m[1m[2m   16.93 kB[22m[1m[22m[2m Ôöé gzip:   4.16 kB[22m
+[2mdist/[22m[36massets/StockUGReportShadcn-CXTXnGie.js               [39m[1m[2m   18.14 kB[22m[1m[22m[2m Ôöé gzip:   4.53 kB[22m
+[2mdist/[22m[36massets/JournalAudit-BuiIerI4.js                      [39m[1m[2m   19.16 kB[22m[1m[22m[2m Ôöé gzip:   5.59 kB[22m
+[2mdist/[22m[36massets/PromotionList-5c7-QW5o.js                     [39m[1m[2m   19.64 kB[22m[1m[22m[2m Ôöé gzip:   4.92 kB[22m
+[2mdist/[22m[36massets/ReapproRayon-C2eGMDHF.js                      [39m[1m[2m   22.23 kB[22m[1m[22m[2m Ôöé gzip:   5.34 kB[22m
+[2mdist/[22m[36massets/purify.es-Bzr520pe.js                         [39m[1m[2m   22.45 kB[22m[1m[22m[2m Ôöé gzip:   8.63 kB[22m
+[2mdist/[22m[36massets/ImportDCIPage-CLhIwG3N.js                     [39m[1m[2m   25.72 kB[22m[1m[22m[2m Ôöé gzip:   6.30 kB[22m
+[2mdist/[22m[36massets/Perimes-BLWWaHr1.js                           [39m[1m[2m   29.40 kB[22m[1m[22m[2m Ôöé gzip:   7.23 kB[22m
+[2mdist/[22m[36massets/ModuleFinancier-DTlgQKbT.js                   [39m[1m[2m   31.31 kB[22m[1m[22m[2m Ôöé gzip:   6.52 kB[22m
+[2mdist/[22m[36massets/PlanningOperateurs-D7oP2-UK.js                [39m[1m[2m   33.11 kB[22m[1m[22m[2m Ôöé gzip:   7.62 kB[22m
+[2mdist/[22m[36massets/Transformations-B9mrKtfw.js                   [39m[1m[2m   33.73 kB[22m[1m[22m[2m Ôöé gzip:   7.26 kB[22m
+[2mdist/[22m[36massets/Promis-Cvy9556y.js                            [39m[1m[2m   33.83 kB[22m[1m[22m[2m Ôöé gzip:   7.94 kB[22m
+[2mdist/[22m[36massets/vendor-query-B3yUKLPa.js                      [39m[1m[2m   35.75 kB[22m[1m[22m[2m Ôöé gzip:  10.65 kB[22m
+[2mdist/[22m[36massets/GestionUtilisateurs-YPlhEsCp.js               [39m[1m[2m   35.77 kB[22m[1m[22m[2m Ôöé gzip:   7.84 kB[22m
+[2mdist/[22m[36massets/Maintenance-BuZesw3n.js                       [39m[1m[2m   36.73 kB[22m[1m[22m[2m Ôöé gzip:   8.32 kB[22m
+[2mdist/[22m[36massets/Comptabilite-BFR_K4ab.js                      [39m[1m[2m   42.41 kB[22m[1m[22m[2m Ôöé gzip:   8.70 kB[22m
+[2mdist/[22m[36massets/Avoirs-DAlQVJ2c.js                            [39m[1m[2m   45.93 kB[22m[1m[22m[2m Ôöé gzip:  11.71 kB[22m
+[2mdist/[22m[36massets/vendor-http-DhXgJQ-f.js                       [39m[1m[2m   46.09 kB[22m[1m[22m[2m Ôöé gzip:  17.77 kB[22m
+[2mdist/[22m[36massets/SystemAdmin-BOZ5K0QC.js                       [39m[1m[2m   46.69 kB[22m[1m[22m[2m Ôöé gzip:   8.12 kB[22m
+[2mdist/[22m[36massets/vendor-dates-Fv3aE4bS.js                      [39m[1m[2m   49.02 kB[22m[1m[22m[2m Ôöé gzip:  12.11 kB[22m
+[2mdist/[22m[36massets/StockAnalysis-BTFsWwBw.js                     [39m[1m[2m   55.54 kB[22m[1m[22m[2m Ôöé gzip:  12.34 kB[22m
+[2mdist/[22m[36massets/Creances-BNR6yO62.js                          [39m[1m[2m   55.71 kB[22m[1m[22m[2m Ôöé gzip:  12.28 kB[22m
+[2mdist/[22m[36massets/vendor-i18n-CETSSIdz.js                       [39m[1m[2m   56.31 kB[22m[1m[22m[2m Ôöé gzip:  18.74 kB[22m
+[2mdist/[22m[36massets/JournalCaisse-BKkJ43ZL.js                     [39m[1m[2m   57.24 kB[22m[1m[22m[2m Ôöé gzip:  13.30 kB[22m
+[2mdist/[22m[36massets/vendor-ui-B8Do3RI1.js                         [39m[1m[2m   59.26 kB[22m[1m[22m[2m Ôöé gzip:  19.84 kB[22m
+[2mdist/[22m[36massets/feature-inventory-states-CdpIQh-j.js          [39m[1m[2m   62.39 kB[22m[1m[22m[2m Ôöé gzip:  14.03 kB[22m
+[2mdist/[22m[36massets/PharmacySettingsForm-C7A9ihPf.js              [39m[1m[2m   65.45 kB[22m[1m[22m[2m Ôöé gzip:   9.88 kB[22m
+[2mdist/[22m[36massets/Clients-CKUh2PqN.js                           [39m[1m[2m   67.54 kB[22m[1m[22m[2m Ôöé gzip:  13.98 kB[22m
+[2mdist/[22m[36massets/Fournisseurs-CAxfjurh.js                      [39m[1m[2m   79.44 kB[22m[1m[22m[2m Ôöé gzip:  18.79 kB[22m
+[2mdist/[22m[36massets/feature-inventory-editor-CAfOtau7.js          [39m[1m[2m   80.27 kB[22m[1m[22m[2m Ôöé gzip:  22.90 kB[22m
+[2mdist/[22m[36massets/vendor-router-DSbJ8FNq.js                     [39m[1m[2m   81.76 kB[22m[1m[22m[2m Ôöé gzip:  27.78 kB[22m
+[2mdist/[22m[36massets/CaisseCentralisee-BceRGj61.js                 [39m[1m[2m   83.26 kB[22m[1m[22m[2m Ôöé gzip:  22.18 kB[22m
+[2mdist/[22m[36massets/feature-inventory-DITyPyHx.js                 [39m[1m[2m  136.20 kB[22m[1m[22m[2m Ôöé gzip:  38.79 kB[22m
+[2mdist/[22m[36massets/feature-reports-dqooy0Rf.js                   [39m[1m[2m  141.32 kB[22m[1m[22m[2m Ôöé gzip:  32.15 kB[22m
+[2mdist/[22m[36massets/index.es-O6HosCEQ.js                          [39m[1m[2m  158.77 kB[22m[1m[22m[2m Ôöé gzip:  53.03 kB[22m
+[2mdist/[22m[36massets/html2canvas.esm-DXEQVQnt.js                   [39m[1m[2m  201.04 kB[22m[1m[22m[2m Ôöé gzip:  47.43 kB[22m
+[2mdist/[22m[36massets/feature-history-Dn3j8-Ca.js                   [39m[1m[2m  227.18 kB[22m[1m[22m[2m Ôöé gzip:  54.84 kB[22m
+[2mdist/[22m[36massets/vendor-xlsx-C2K9OxTh.js                       [39m[1m[2m  282.80 kB[22m[1m[22m[2m Ôöé gzip:  94.93 kB[22m
+[2mdist/[22m[36massets/vendor-pdf-D2tsR1xY.js                        [39m[1m[2m  416.65 kB[22m[1m[22m[2m Ôöé gzip: 135.69 kB[22m
+[2mdist/[22m[36massets/index-BnZr6I_c.js                             [39m[1m[2m  510.50 kB[22m[1m[22m[2m Ôöé gzip: 141.89 kB[22m
+[2mdist/[22m[36massets/index-Bbb8Z-h4.js                             [39m[1m[33m1,057.77 kB[39m[22m[2m Ôöé gzip: 269.69 kB[22m
+[2mdist/[22m[36massets/Commandes-DA4XgnQU.js                         [39m[1m[33m1,154.67 kB[39m[22m[2m Ôöé gzip: 311.68 kB[22m
+
+(!) Some chunks are larger than 600 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[32mÔ£ô built in 26.89s[39m
+
+PWA v1.3.0
+mode      generateSW
+precache  163 entries (7629.34 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-dcde9eb3.js
+  ✅ Build OK
+  docker cp dist/ -> nginx...
+2026/08/04 18:52:49 [notice] 34#34: signal process started
+  ✅ Frontend déployé
+
+══════════════════════════════════════════
+  ✅ Déploiement terminé !
+══════════════════════════════════════════
+
+Commandes utiles:
+  Backup DB :     .\backup-db.ps1
+  Rollback :      .\rollback.ps1
+  Rollback + DB : .\rollback.ps1 -IncludeDB
+

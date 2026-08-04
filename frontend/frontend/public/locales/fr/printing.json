@@ -88,6 +88,8 @@
     "pts": "pts",
     "base_ht": "BASE HT",
     "tva": "TVA",
+    "part_patient_row": "Part Patient - {{mode}}",
+    "part_assurance_row": "Part Assurance - En compte",
     "payment_modes": {
       "especes": "Espèces",
       "carte": "Carte",
