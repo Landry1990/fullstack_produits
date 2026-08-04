@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-08-04 (bis)
+
+### 🧪 Tests calculs de marges + fix précédence opérateurs
+
+- **Nouveaux tests** `backend/api/tests/test_finance_marges.py` pour `FinanceStatsViewSet` :
+  - `marge_par_produit` : fusion allocations (cost_price du lot) + ventes non-allouées (pmp produit), totaux CA/marge, détection marge négative, tri top/bottom 20, exclusion factures hors période
+  - `impact_promotions` : répartition avec/sans remise, `ca_perdu_remises`, `ecart_taux_marge`
+- **Fix** `finance_stats.py` (`impact_promotions`) : bug de précédence d'opérateurs Python (`&` évalué avant `|`) dans le filtre `without_promo` — la clause `remise__isnull=True` pouvait contourner la condition sur `discount__gt=0`. Sans impact observable actuellement (`remise` n'est jamais NULL par défaut) mais corrigé par parenthésage explicite pour robustesse
+
+---
+
 ## 2026-08-04
 
 ### 🐛 Fix critique — mise à jour manuelle qui "boucle" (faux succès)
