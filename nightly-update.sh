@@ -72,9 +72,11 @@ rollback() {
 }
 
 # ── Vérifier la connexion internet ───────────────────────────
-if ! ping -c 1 github.com &>/dev/null; then
+# On utilise curl plutôt que ping : de nombreuses box/FAI bloquent ICMP,
+# ce qui ferait échouer le check même quand la connexion fonctionne bien.
+if ! curl -fsSL --connect-timeout 10 -o /dev/null https://github.com; then
     log "Pas de connexion internet — mise à jour ignorée"
-    exit 0
+    exit 2
 fi
 
 cd "$APP_DIR" || { err "Dossier $APP_DIR introuvable"; exit 1; }
