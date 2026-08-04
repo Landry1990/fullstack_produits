@@ -32,7 +32,7 @@ const creanceService = {
         return Array.isArray(data) ? data : (data.results || []);
     },
 
-    getReleve: async (params: { client_id: string; date_debut?: string; date_fin?: string }): Promise<unknown> => {
+    getReleve: async (params: { client_id: string; date_debut?: string; date_fin?: string; include_products?: boolean }): Promise<unknown> => {
         const response = await api.get('creances/releve/', { params });
         return response.data;
     },

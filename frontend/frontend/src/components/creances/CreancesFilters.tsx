@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, RotateCcw, Printer, History, Users, Calendar, FileSpreadsheet } from 'lucide-react';
+import { Search, RotateCcw, Printer, History, Users, Calendar, FileSpreadsheet, ChevronDown, FileText, List } from 'lucide-react';
 import type { Client } from '../../types';
 
 interface CreancesFiltersProps {
@@ -14,7 +14,7 @@ interface CreancesFiltersProps {
     showHistory: boolean;
     onHistoryToggle: (show: boolean) => void;
     onRefresh: () => void;
-    onPrintStatement: () => void;
+    onPrintStatement: (includeProducts: boolean) => void;
     onExportExcel: () => void;
     loading: boolean;
 }
@@ -35,6 +35,18 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
     loading
 }) => {
     const { t } = useTranslation(['creances', 'common']);
+    const [showPrintMenu, setShowPrintMenu] = useState(false);
+    const printMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (printMenuRef.current && !printMenuRef.current.contains(e.target as Node)) {
+                setShowPrintMenu(false);
+            }
+        };
+        if (showPrintMenu) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showPrintMenu]);
 
     return (
         <div className="p-6 bg-white">
@@ -134,13 +146,41 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         Export Excel
                     </button>
                     {selectedClient && (
-                        <button
-                            onClick={onPrintStatement}
-                            className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-slate-700 text-white gap-2 shadow-md shadow-slate-200 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px] hover:bg-slate-800"
-                        >
-                            <Printer className="size-4" />
-                            {t('creances:print_statement')}
-                        </button>
+                        <div ref={printMenuRef} className="relative">
+                            <button
+                                onClick={() => setShowPrintMenu(!showPrintMenu)}
+                                className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-slate-700 text-white gap-2 shadow-md shadow-slate-200 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px] hover:bg-slate-800"
+                            >
+                                <Printer className="size-4" />
+                                {t('creances:print_statement')}
+                                <ChevronDown className={`size-3 transition-transform ${showPrintMenu ? 'rotate-180' : ''}`} />
+                            </button>
+                            {showPrintMenu && (
+                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
+                                    <button
+                                        onClick={() => { setShowPrintMenu(false); onPrintStatement(false); }}
+                                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                                    >
+                                        <FileText className="size-5 text-slate-600 mt-0.5 shrink-0" />
+                                        <div>
+                                            <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_simple', { defaultValue: 'Relevé simple' })}</div>
+                                            <div className="text-[10px] text-slate-500 mt-0.5">{t('creances:print_statement_simple_desc', { defaultValue: 'Liste des factures avec montants' })}</div>
+                                        </div>
+                                    </button>
+                                    <div className="border-t border-slate-100" />
+                                    <button
+                                        onClick={() => { setShowPrintMenu(false); onPrintStatement(true); }}
+                                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                                    >
+                                        <List className="size-5 text-emerald-600 mt-0.5 shrink-0" />
+                                        <div>
+                                            <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_detailed', { defaultValue: 'Relevé détaillé' })}</div>
+                                            <div className="text-[10px] text-slate-500 mt-0.5">{t('creances:print_statement_detailed_desc', { defaultValue: 'Factures avec détail des produits' })}</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

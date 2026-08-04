@@ -48,6 +48,7 @@ def generate_listing_excel(
     stock_filter: str = 'tous',
     filter_id: int | None = None,
     inventaire_id: int | None = None,
+    blind: bool = False,
 ):
     """
     Génère un fichier Excel du listing de stock courant (Produit.stock).
@@ -58,6 +59,8 @@ def generate_listing_excel(
     stock_filter: 'tous' | 'zero' | 'non_zero'
     filter_id   : id de l'entité de regroupement pour filtrer (optionnel)
     inventaire_id: si fourni, liste les lignes d'un inventaire précis (optionnel)
+    blind       : si True, génère un listing à l'aveugle (sans stock théorique,
+                  juste CIP/Désignation/Lot/Exp + colonne vide "Qté Comptée")
     """
     if not HAS_OPENPYXL:
         return HttpResponse("openpyxl non installé", status=500)
@@ -70,7 +73,7 @@ def generate_listing_excel(
         listing_type = 'inventaire'
     else:
         rows = _get_rows_from_stock(group_by, stock_filter, filter_id)
-        listing_type = 'stock'
+        listing_type = 'blind' if blind else 'stock'
 
     # ------------------------------------------------------------------
     # 2. En-tête pharmacie
@@ -108,7 +111,7 @@ def generate_listing_excel(
     # ------------------------------------------------------------------
     wb = Workbook()
     ws = wb.active
-    ws.title = "Listing Stock (Lots)" if listing_type == 'stock' else "Listing Inventaire"
+    ws.title = "Listing Stock (Lots)" if listing_type == 'stock' else ("Listing Inventaire" if listing_type == 'inventaire' else "Listing Inventaire Aveugle")
 
     thin_border = _make_border('thin')
     medium_border = _make_border('medium')
@@ -134,6 +137,23 @@ def generate_listing_excel(
             ('Écart', 10),
             ('PMP', 12),
             ('Val. Écart', 14),
+        ]
+    elif listing_type == 'blind':
+        # Afficher la colonne (forme ou rayon) qui n'est PAS le critère de regroupement
+        # car le regroupement est déjà dans l'en-tête de section
+        if group_by == 'rayon':
+            secondary_col = ('Forme', 16)
+        elif group_by == 'forme':
+            secondary_col = ('Rayon', 14)
+        else:
+            secondary_col = ('Rayon', 14)
+        columns = [
+            ('ID', 8),
+            ('Désignation', 38),
+            secondary_col,
+            ('N° Lot', 14),
+            ('Exp. Lot', 12),
+            ('Qté Comptée', 14),
         ]
     else:
         columns = [
@@ -191,7 +211,11 @@ def generate_listing_excel(
 
     # Infos du listing
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
-    source_label = 'Stock courant (par lots)' if listing_type == 'stock' else 'Inventaire'
+    source_label = {
+        'stock': 'Stock courant (par lots)',
+        'inventaire': 'Inventaire',
+        'blind': "Inventaire à l'aveugle (sans stock théorique)",
+    }.get(listing_type, 'Stock courant')
     info_text = f"Édité le : {now_str}  |  Source : {source_label}  |  Regroupement : {group_label}  |  Filtre : {stock_label}"
     cell = ws.cell(row=row, column=1, value=info_text)
     cell.font = font_info
@@ -260,6 +284,21 @@ def generate_listing_excel(
                 ]
                 group_total_stock += r.get('quantite_physique', 0)
                 group_total_valeur += r.get('valeur_ecart', 0)
+            elif listing_type == 'blind':
+                # Colonne secondaire : forme si group_by=rayon, rayon sinon
+                if group_by == 'rayon':
+                    secondary_val = r.get('forme', '')
+                else:
+                    secondary_val = r.get('rayon', '')
+                vals = [
+                    r.get('produit_id', ''),
+                    r.get('name', ''),
+                    secondary_val,
+                    r.get('lot_numero', ''),
+                    r.get('lot_expiration', ''),
+                    '',  # Qté Comptée — vide pour saisie manuelle
+                ]
+                # Pas de totaux stock/valeur en mode aveugle
             else:
                 vals = [
                     r.get('cip', ''),
@@ -278,7 +317,12 @@ def generate_listing_excel(
                 group_total_valeur += r.get('valeur_stock', 0)
 
             # Colonnes monétaires selon le mode
-            money_cols = (9, 10, 11) if listing_type == 'stock' else (8, 9)
+            if listing_type == 'stock':
+                money_cols = (9, 10, 11)
+            elif listing_type == 'inventaire':
+                money_cols = (8, 9)
+            else:  # blind : pas de colonnes monétaires
+                money_cols = ()
             for col_idx, val in enumerate(vals, start=1):
                 cell = ws.cell(row=row, column=col_idx, value=val)
                 cell.font = font_data
@@ -311,6 +355,9 @@ def generate_listing_excel(
         if listing_type == 'inventaire':
             qte_col = 6
             val_col = 9
+        elif listing_type == 'blind':
+            qte_col = None  # Pas de total quantité en mode aveugle
+            val_col = None
         else:
             qte_col = 7
             val_col = 10
@@ -321,15 +368,17 @@ def generate_listing_excel(
             c.border = thin_border
             c.font = font_subtotal
 
-        ws.cell(row=row, column=qte_col, value=group_total_stock).number_format = '#,##0'
-        ws.cell(row=row, column=qte_col).font = font_subtotal
-        ws.cell(row=row, column=qte_col).fill = _subtotal_fill()
-        ws.cell(row=row, column=qte_col).alignment = Alignment(horizontal='right')
+        if qte_col:
+            ws.cell(row=row, column=qte_col, value=group_total_stock).number_format = '#,##0'
+            ws.cell(row=row, column=qte_col).font = font_subtotal
+            ws.cell(row=row, column=qte_col).fill = _subtotal_fill()
+            ws.cell(row=row, column=qte_col).alignment = Alignment(horizontal='right')
 
-        ws.cell(row=row, column=val_col, value=group_total_valeur).number_format = '#,##0'
-        ws.cell(row=row, column=val_col).font = font_subtotal
-        ws.cell(row=row, column=val_col).fill = _subtotal_fill()
-        ws.cell(row=row, column=val_col).alignment = Alignment(horizontal='right')
+        if val_col:
+            ws.cell(row=row, column=val_col, value=group_total_valeur).number_format = '#,##0'
+            ws.cell(row=row, column=val_col).font = font_subtotal
+            ws.cell(row=row, column=val_col).fill = _subtotal_fill()
+            ws.cell(row=row, column=val_col).alignment = Alignment(horizontal='right')
 
         row += 1
         # Ligne vide entre groupes
@@ -352,20 +401,24 @@ def generate_listing_excel(
 
     if listing_type == 'inventaire':
         qte_col, val_col = 6, 9
+    elif listing_type == 'blind':
+        qte_col, val_col = None, None
     else:
         qte_col, val_col = 7, 10
 
-    c_stock = ws.cell(row=row, column=qte_col, value=grand_total_stock)
-    c_stock.number_format = '#,##0'
-    c_stock.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
-    c_stock.fill = _header_fill('1F4E79')
-    c_stock.alignment = Alignment(horizontal='right')
+    if qte_col:
+        c_stock = ws.cell(row=row, column=qte_col, value=grand_total_stock)
+        c_stock.number_format = '#,##0'
+        c_stock.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
+        c_stock.fill = _header_fill('1F4E79')
+        c_stock.alignment = Alignment(horizontal='right')
 
-    c_val = ws.cell(row=row, column=val_col, value=grand_total_valeur)
-    c_val.number_format = '#,##0'
-    c_val.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
-    c_val.fill = _header_fill('1F4E79')
-    c_val.alignment = Alignment(horizontal='right')
+    if val_col:
+        c_val = ws.cell(row=row, column=val_col, value=grand_total_valeur)
+        c_val.number_format = '#,##0'
+        c_val.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
+        c_val.fill = _header_fill('1F4E79')
+        c_val.alignment = Alignment(horizontal='right')
 
     ws.row_dimensions[row].height = 20
 
@@ -460,6 +513,7 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None):
             lot_expiration = lot.date_expiration.strftime('%d/%m/%Y')
 
         grouped[group_name].append({
+            'produit_id': p.id,
             'cip': p.cip1 or '',
             'name': p.name,
             'forme': p.forme.nom if p.forme else '',
@@ -581,6 +635,7 @@ def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: s
                 lot_expiration = ligne.stock_lot.date_expiration.strftime('%d/%m/%Y')
 
         grouped[group_name].append({
+            'produit_id': p.id,
             'cip': p.cip1 or '',
             'name': p.name,
             'lot_numero': lot_numero,

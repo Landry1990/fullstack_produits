@@ -21,6 +21,12 @@ RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.
     tar --extract --file docker.tgz --strip-components 1 --directory /usr/local/bin/ docker/docker && \
     rm docker.tgz
 
+# Installer le plugin Docker Compose v2 (nécessaire pour nightly-update.sh qui tourne dans ce conteneur)
+RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
+    curl -fsSL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 \
+    -o /usr/local/lib/docker/cli-plugins/docker-compose && \
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
 # Définir le fuseau horaire local (Africa/Douala = UTC+1)
 ENV TZ=Africa/Douala
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone

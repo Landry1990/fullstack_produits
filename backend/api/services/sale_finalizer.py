@@ -138,6 +138,23 @@ class SaleFinalizer:
             facture.status = Facture.Status.PROFORMA
             facture._skip_audit = True
             facture.save(update_fields=['status'])
+            # Notifier la caisse centralisée en temps réel via WebSocket
+            try:
+                from channels.layers import get_channel_layer
+                from asgiref.sync import async_to_sync
+                channel_layer = get_channel_layer()
+                if channel_layer:
+                    async_to_sync(channel_layer.group_send)(
+                        'caisse_centralisee',
+                        {
+                            'type': 'facture_update',
+                            'action': 'created',
+                            'facture_id': facture.id,
+                            'poste_caisse_id': getattr(facture, 'poste_caisse_id', None),
+                        }
+                    )
+            except Exception as ws_err:
+                logger.warning(f"WebSocket broadcast caisse échoué: {ws_err}")
         else:
             validation_data = {
                 'use_pending_discount': loyalty_data.get('use_pending_discount', False),

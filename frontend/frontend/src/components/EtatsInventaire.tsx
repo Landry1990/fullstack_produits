@@ -2,10 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { cn } from '../lib/utils';
 import { Button } from './shadcn/button';
-import { Badge } from './shadcn/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './shadcn/card';
 import {
-  FileSpreadsheet, Printer, ChevronDown, Layers,
+  FileSpreadsheet, Printer, Layers,
   Package, TrendingUp, AlertCircle, CheckCircle2, BarChart3,
   SlidersHorizontal, Eye, Building2, Tag, FlaskConical,
   Grid3X3, Info
@@ -17,10 +16,9 @@ import { downloadBlob } from '../utils/excelExport';
 
 type GroupByOption = 'rayon' | 'forme' | 'groupe' | 'fournisseur';
 type StockFilterOption = 'tous' | 'zero' | 'non_zero';
-type SourceOption = 'stock' | 'inventaire';
+type SourceOption = 'stock' | 'blind';
 
 interface EntityOption { id: number; name: string; }
-interface InventaireOption { id: number; reference: string; description: string; date: string; status: string; }
 
 // ─── Sous-composant : Sélecteur Radio Card ────────────────────────────────────
 
@@ -111,12 +109,9 @@ export default function EtatsInventaire() {
   const [groupBy, setGroupBy] = useState<GroupByOption>('rayon');
   const [stockFilter, setStockFilter] = useState<StockFilterOption>('tous');
   const [selectedEntity, setSelectedEntity] = useState<number | null>(null);
-  const [selectedInventaire, setSelectedInventaire] = useState<number | null>(null);
 
   const [entities, setEntities] = useState<EntityOption[]>([]);
-  const [inventaires, setInventaires] = useState<InventaireOption[]>([]);
   const [loadingEntities, setLoadingEntities] = useState(false);
-  const [loadingInventaires, setLoadingInventaires] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   // ── Charger les entités selon le regroupement ──────────────────────────────
@@ -137,41 +132,16 @@ export default function EtatsInventaire() {
     fetch();
   }, [groupBy]);
 
-  // ── Charger les inventaires si source = inventaire ─────────────────────────
-  useEffect(() => {
-    if (source !== 'inventaire') return;
-    const fetch = async () => {
-      setLoadingInventaires(true);
-      try {
-        const res = await api.get('inventaires/', { params: { page_size: 100, ordering: '-date' } });
-        const data = res.data.results || res.data;
-        setInventaires(data.map((inv: unknown) => ({
-          id: inv.id,
-          reference: inv.reference || `#${inv.id}`,
-          description: inv.description || '',
-          date: inv.date ? new Date(inv.date).toLocaleDateString('fr-FR') : '',
-          status: inv.status,
-        })));
-      } catch { setInventaires([]); }
-      finally { setLoadingInventaires(false); }
-    };
-    fetch();
-  }, [source]);
-
   // ── Paramètres communs ─────────────────────────────────────────────────────
   const buildParams = useCallback(() => {
     const p: Record<string, string> = { group_by: groupBy, stock_filter: stockFilter };
     if (selectedEntity) p.filter_id = String(selectedEntity);
-    if (source === 'inventaire' && selectedInventaire) p.inventaire_id = String(selectedInventaire);
+    if (source === 'blind') p.blind = 'true';
     return p;
-  }, [groupBy, stockFilter, selectedEntity, source, selectedInventaire]);
+  }, [groupBy, stockFilter, selectedEntity, source]);
 
   // ── Export Excel ───────────────────────────────────────────────────────────
   const handleExportExcel = async () => {
-    if (source === 'inventaire' && !selectedInventaire) {
-      toast.error('Veuillez sélectionner un inventaire');
-      return;
-    }
     setExporting(true);
     try {
       const res = await api.get('inventaires/listing-excel/', {
@@ -192,16 +162,14 @@ export default function EtatsInventaire() {
   const handlePrint = () => {
     const params = buildParams();
     const qs = new URLSearchParams(params).toString();
-    const invId = source === 'inventaire' && selectedInventaire ? selectedInventaire : 0;
-    window.open(`/app/printing/${invId}?type=INVENTAIRE&${qs}`, '_blank');
+    window.open(`/app/printing/0?type=INVENTAIRE&${qs}`, '_blank');
   };
 
   // ── Options ────────────────────────────────────────────────────────────────
 
   const entityLabel = groupByOptions.find(o => o.value === groupBy)?.label.replace('Par ', '') || '';
   const selectedEntityName = entities.find(e => e.id === selectedEntity)?.name;
-  const selectedInvInfo = inventaires.find(i => i.id === selectedInventaire);
-  const canExport = source === 'stock' || (source === 'inventaire' && !!selectedInventaire);
+  const canExport = true;
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
@@ -253,7 +221,7 @@ export default function EtatsInventaire() {
               <Layers className="size-4 text-slate-400" />
               <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Source des données</CardTitle>
             </div>
-            <CardDescription className="text-[11px]">Stock courant ou inventaire précis</CardDescription>
+            <CardDescription className="text-[11px]">Stock courant ou inventaire à l'aveugle</CardDescription>
           </CardHeader>
           <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-3">
             <div className="space-y-1.5">
@@ -267,52 +235,15 @@ export default function EtatsInventaire() {
                 onChange={(v) => setSource(v as SourceOption)}
               />
               <RadioCard
-                value="inventaire"
+                value="blind"
                 current={source}
-                label="D'un inventaire"
-                description="Lignes d'un inventaire enregistré"
+                label="Inventaire à l'aveugle"
+                description="Listing sans stock théorique (pour comptage)"
                 icon={<BarChart3 className="size-4" />}
                 accent="blue"
                 onChange={(v) => setSource(v as SourceOption)}
               />
             </div>
-
-            {source === 'inventaire' && (
-              <div className="space-y-1.5 pt-1 border-t border-slate-100">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 pt-1">Choisir l'inventaire</p>
-                <div className="relative">
-                  <select
-                    className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 pr-8 text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none disabled:opacity-50"
-                    value={selectedInventaire ?? ''}
-                    onChange={(e) => setSelectedInventaire(e.target.value ? Number(e.target.value) : null)}
-                    disabled={loadingInventaires}
-                  >
-                    <option value="">— Sélectionner —</option>
-                    {inventaires.map(inv => (
-                      <option key={inv.id} value={inv.id}>
-                        {inv.reference} • {inv.date} {inv.status === 'VALIDEE' ? '✓' : '⏳'}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                    {loadingInventaires
-                      ? <span className="size-3.5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin inline-block" />
-                      : <ChevronDown className="size-4" />
-                    }
-                  </div>
-                </div>
-                {selectedInvInfo && (
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <Badge variant={selectedInvInfo.status === 'VALIDEE' ? 'default' : 'outline'} className="text-[10px]">
-                      {selectedInvInfo.status === 'VALIDEE' ? 'Validé' : 'En cours'}
-                    </Badge>
-                    {selectedInvInfo.description && (
-                      <span className="text-[11px] text-slate-400 truncate">{selectedInvInfo.description}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
           </CardContent>
         </Card>
 

@@ -74,6 +74,15 @@ class FactureViewSet(BaseViewSetConfig, SimpleListCacheMixin, OptimizedSerialize
     """
     cache_prefix = 'factures'
     cache_ttl = 60  # 60 secondes
+
+    def list(self, request, *args, **kwargs):
+        # Désactiver le cache pour la caisse centralisée (include_pending=true)
+        # La caisse a besoin de données fraîches en temps réel (POS → caisse)
+        include_pending = request.query_params.get('include_pending', 'false').lower() == 'true'
+        if include_pending:
+            # Court-circuiter le cache : appel direct au parent (ModelViewSet.list)
+            return super(SimpleListCacheMixin, self).list(request, *args, **kwargs)
+        return super().list(request, *args, **kwargs)
     
     def get_queryset(self):
         # Base optimization for all views: select related foreign keys

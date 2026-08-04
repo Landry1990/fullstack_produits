@@ -258,7 +258,7 @@ export const useCreanceActions = ({
         requireSudo(performBulkPayment, { permission: 'can_cash_out' });
     };
 
-    const handleImprimerReleve = useCallback(async (selectedClient: string, dateDebut: string, dateFin: string) => {
+    const handleImprimerReleve = useCallback(async (selectedClient: string, dateDebut: string, dateFin: string, includeProducts: boolean = false) => {
         if (!selectedClient) {
             toast.error(t('creances:toasts.select_client_error'));
             return;
@@ -270,6 +270,7 @@ export const useCreanceActions = ({
                 client_id: selectedClient,
                 ...(dateDebut ? { date_debut: dateDebut } : {}),
                 ...(dateFin ? { date_fin: dateFin } : {}),
+                include_products: includeProducts,
             }) as ReleveData;
 
             const doc = generateRelevePdfDraft({
@@ -278,12 +279,14 @@ export const useCreanceActions = ({
                 totaux: releveData.totaux,
                 periode: releveData.periode,
                 settings: pharmacySettings,
+                includeProducts,
             });
 
             const clientSlug = releveData.client?.name
                 ? releveData.client.name.toLowerCase().replace(/\s+/g, '_')
                 : selectedClient;
-            doc.save(`releve_${clientSlug}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            const suffix = includeProducts ? '_detaille' : '';
+            doc.save(`releve_${clientSlug}${suffix}_${new Date().toISOString().slice(0, 10)}.pdf`);
             toast.success('Relevé généré avec succès.', { id: loadingToast });
         } catch {
             toast.error(t('creances:toasts.error_print_statement'), { id: loadingToast });

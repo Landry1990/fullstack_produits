@@ -564,20 +564,26 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         client_id = request.query_params.get('client_id')
         if not client_id:
             return Response({'detail': 'Le paramètre client_id est requis.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        include_products = request.query_params.get('include_products', 'false').lower() in ('true', '1', 'yes')
+
         from django.db.models import OuterRef, Subquery, Sum
         from django.db.models.functions import Coalesce
-        
+
         paid_subquery = Caisse.objects.filter(facture=OuterRef('pk'), statut='completee').exclude(mode_paiement='en_compte').values('facture').annotate(total=Sum('montant')).values('total')[:1]
 
         queryset = self.get_queryset().filter(client_id=client_id).annotate(
             montant_paye_annotated=Coalesce(Subquery(paid_subquery), Value(0, output_field=DecimalField()))
         )
-        
+
+        # Prefetch produits si demandé
+        if include_products:
+            queryset = queryset.prefetch_related('produits__produit')
+
         total_factures = Decimal('0.00')
         total_paye = Decimal('0.00')
         total_reste = Decimal('0.00')
-        
+
         creances_data = []
         for facture in queryset:
             montant_paye = getattr(facture, 'montant_paye_annotated', Decimal('0.00'))
@@ -585,11 +591,28 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             total_factures += facture.total_ttc
             total_paye += montant_paye
             total_reste += reste
-            creances_data.append({
+
+            item = {
                 'numero_facture': facture.numero_facture, 'date': facture.date,
                 'montant_total': facture.total_ttc, 'montant_paye': montant_paye,
                 'reste_a_payer': reste, 'ayant_droit': facture.ayant_droit.nom if facture.ayant_droit else None
-            })
+            }
+
+            if include_products:
+                produits_data = []
+                for fp in facture.produits.all():
+                    produits_data.append({
+                        'produit_nom': fp.produit_nom or (fp.produit.name if fp.produit else 'Produit inconnu'),
+                        'produit_cip': fp.produit.cip1 if fp.produit else '',
+                        'quantity': fp.quantity,
+                        'selling_price': float(fp.selling_price),
+                        'discount': float(fp.discount or 0),
+                        'tva': float(fp.tva or 0),
+                        'total_ligne': float(fp.total_ligne or (fp.quantity * fp.selling_price)),
+                    })
+                item['produits'] = produits_data
+
+            creances_data.append(item)
         
         from ...models import Client
         try:
