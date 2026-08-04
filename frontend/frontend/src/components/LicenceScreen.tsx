@@ -13,6 +13,8 @@ interface PreviewData {
   plan: string;
   exp: number;
   hardware_match: boolean;
+  install_before?: string | null;
+  install_expired?: boolean;
 }
 
 const LicenceScreen = () => {
@@ -22,6 +24,7 @@ const LicenceScreen = () => {
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ is_valid: boolean; message: string; payload?: Record<string, unknown> } | null>(null);
     const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+    const [sudoPassword, setSudoPassword] = useState('');
     const { refreshLicence } = useLicence();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -81,9 +84,22 @@ const LicenceScreen = () => {
 
     const handleConfirmActivation = async () => {
         if (!cle) return;
+        if (!sudoPassword) {
+            toast.error(t('licence.sudo_required', { defaultValue: 'Mot de passe ou code journalier requis' }));
+            return;
+        }
         setLoading(true);
         try {
-            const res = await api.post('/licence/', { cle });
+            // On envoie sudo_password ET keyday — le backend valide l'un ou l'autre.
+            // Si le code fait 6 caractères alphanumériques, c'est probablement un keyday.
+            const isKeyday = /^[A-Z0-9]{6}$/.test(sudoPassword.trim().toUpperCase());
+            const payload: Record<string, string> = { cle };
+            if (isKeyday) {
+                payload.keyday = sudoPassword.trim().toUpperCase();
+            } else {
+                payload.sudo_password = sudoPassword;
+            }
+            const res = await api.post('/licence/', payload);
             toast.success(res.data.detail || t('licence.activate_success'));
             await refreshLicence(); // On rafraîchit les infos globales (nom pharmacie, etc)
             setTimeout(() => {
@@ -208,12 +224,51 @@ const LicenceScreen = () => {
                                     </p>
                                 </div>
                             )}
+
+                            {/* Date limite d'installation (TTL 10 jours) */}
+                            {previewData.install_before && (
+                                <div className={`mt-4 flex items-start gap-3 p-3 rounded-xl ${
+                                    previewData.install_expired
+                                        ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+                                        : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                                }`}>
+                                    <Calendar className="size-5 flex-shrink-0" />
+                                    <p className="text-xs">
+                                        {previewData.install_expired
+                                            ? t('licence.install_expired', {
+                                                defaultValue: `Cette licence a expiré — elle devait être installée avant le ${previewData.install_before}. Demandez une nouvelle licence.`
+                                              })
+                                            : t('licence.install_before_msg', {
+                                                defaultValue: `À installer avant le ${previewData.install_before} (TTL 10 jours après génération)`
+                                              })
+                                        }
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-3">
+                            {/* Mot de passe admin OU code journalier requis pour activation */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                    {t('licence.sudo_label', { defaultValue: 'Mot de passe admin ou code journalier' })}
+                                </label>
+                                <input
+                                    type="password"
+                                    value={sudoPassword}
+                                    onChange={(e) => setSudoPassword(e.target.value)}
+                                    placeholder={t('licence.sudo_placeholder', { defaultValue: 'Mot de passe admin OU code à 6 caractères (support)' })}
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 transition-colors"
+                                    autoComplete="off"
+                                />
+                                <p className="text-[10px] text-slate-500 mt-1">
+                                    {t('licence.sudo_hint', { defaultValue: "Mot de passe admin OU code journalier fourni par le support" })}
+                                </p>
+                            </div>
+
                             <button
                                 onClick={handleConfirmActivation}
-                                disabled={loading || !previewData.hardware_match}
+                                disabled={loading || !previewData.hardware_match || !sudoPassword || previewData.install_expired}
                                 className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20"
                             >
                                 {loading ? <span className="size-6 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : t('licence.confirm_activation')}

@@ -1,4 +1,16 @@
 {
+    "clock_sync": {
+        "title": "Horloge désynchronisée",
+        "subtitle": "Décalage détecté avec le serveur",
+        "drift": "Décalage",
+        "server": "Serveur",
+        "local": "Ce poste",
+        "ahead_msg": "L'horloge de ce poste est en avance. Cela peut causer des erreurs dans les factures, tickets et rapports.",
+        "behind_msg": "L'horloge de ce poste est en retard (pile CMOS ?). Cela peut causer des erreurs dans les factures, tickets et rapports.",
+        "copy_script": "Copier le script de synchro",
+        "copied": "Script copié !",
+        "script_hint": "À exécuter en tant qu'administrateur (PowerShell)"
+    },
     "all": "Tous",
     "loading": "Chargement...",
     "today": "Aujourd'hui",

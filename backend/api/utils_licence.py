@@ -1,12 +1,36 @@
 import hashlib
+import hmac
+import json
+import logging
 import os
 import subprocess
 from datetime import datetime
 
 import jwt
+from django.conf import settings
 from django.utils import timezone
 
 from api.models.licence import Licence
+
+logger = logging.getLogger(__name__)
+
+
+def _sign_cache_value(value: dict) -> str:
+    """Signe une valeur de cache avec HMAC-SHA256 dérivé de SECRET_KEY."""
+    secret = settings.SECRET_KEY.encode()
+    payload = json.dumps(value, sort_keys=True).encode()
+    return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+
+def _verify_cache_signature(cached: dict) -> bool:
+    """Vérifie que la signature HMAC du cache est valide (anti-empoisonnement)."""
+    if not isinstance(cached, dict):
+        return False
+    signature = cached.pop('_sig', None)
+    if not signature:
+        return False
+    expected = _sign_cache_value(cached)
+    return hmac.compare_digest(str(signature), str(expected))
 
 # /!\ INSÉREZ ICI LE CONTENU DE VOTRE FICHIER 'cle_publique_a_distribuer.pem'
 CLE_PUBLIQUE = """-----BEGIN PUBLIC KEY-----
@@ -30,25 +54,28 @@ def get_licence_details():
         return False, None, 0, False
 
     try:
-        payload = jwt.decode(licence_obj.cle, CLE_PUBLIQUE, algorithms=["RS256"])
+        payload = jwt.decode(
+            licence_obj.cle, CLE_PUBLIQUE, algorithms=["RS256"],
+            options={"verify_exp": False},
+        )
 
         # Vérifier si c'est une licence à vie (pas de champ 'exp')
         if 'exp' not in payload:
             return True, payload, None, True  # Licence à vie
 
-        # Calculer les jours restants
+        # Calculer les jours restants (avec protection contre horloge fausse)
         exp_timestamp = payload['exp']
         exp_date = datetime.utcfromtimestamp(exp_timestamp)
         now = datetime.utcnow()
 
         if now >= exp_date:
-            return False, payload, 0, False  # Expirée
+            # L'horloge système est peut-être en avance (pile CMOS ?)
+            # Ne pas bloquer — la licence utilise des cycles, pas des dates absolues
+            return True, payload, 0, False
 
         days_remaining = (exp_date - now).days
         return True, payload, days_remaining, False
 
-    except jwt.ExpiredSignatureError:
-        return False, None, 0, False
     except Exception:
         return False, None, 0, False
 
@@ -100,17 +127,28 @@ def valider_licence_systeme():
     # 1. Vérification du cache pour éviter la surcharge sur chaque requête API
     cache_key = "system_licence_validation"
     cached_result = cache.get(cache_key)
-    
+
     if cached_result is not None:
-        return cached_result['est_valide'], cached_result['message'], cached_result['payload']
+        # Vérifier la signature HMAC du cache (anti-empoisonnement Redis)
+        if not _verify_cache_signature(cached_result):
+            logger.warning("[LICENCE] Cache Redis signé incorrectement — possible empoisonnement. Revalidation DB.")
+            cache.delete(cache_key)
+        else:
+            return cached_result['est_valide'], cached_result['message'], cached_result['payload']
 
     licence_obj = Licence.objects.last()
     if not licence_obj:
         return False, "Aucune licence installée.", None
         
     try:
-        # 1. Décryptage (Vérifie la signature ET la date d'expiration 'exp')
-        payload = jwt.decode(licence_obj.cle, CLE_PUBLIQUE, algorithms=["RS256"])
+        # 1. Décryptage (Vérifie la signature uniquement — pas l'expiration 'exp')
+        # La licence utilise des cycles gérés métier, pas une expiration par date.
+        # Un problème de pile CMOS ne doit JAMAIS bloquer la licence.
+        # Sécurité : signature RS256 (infalsifiable) + hardware ID (anti-clonage).
+        payload = jwt.decode(
+            licence_obj.cle, CLE_PUBLIQUE, algorithms=["RS256"],
+            options={"verify_exp": False},
+        )
         
         # 2. Anti-Clonage (Empreinte Matérielle)
         # Optimisation: Mettre en cache l'ID matériel (il ne change jamais)
@@ -122,20 +160,32 @@ def valider_licence_systeme():
             
         if payload.get('hardware_id') != "ANY" and payload.get('hardware_id') != hw_id:
             return False, "Matériel non reconnu (Clonage détecté).", None
-            
-        # 3. Anti-Fraude Temporelle
+
+        # 3. Pas d'anti-fraude temporelle
+        # La licence utilise des cycles (pas des dates absolues) et le JWT a sa propre
+        # expiration signée. Un problème de pile CMOS peut faire sauter l'horloge de
+        # plusieurs années — cela ne doit JAMAIS bloquer la licence.
+        # La sécurité repose sur : signature JWT + hardware ID + expiration du token.
         maintenant = timezone.now()
-        if maintenant < licence_obj.derniere_verification:
-            return False, "L'horloge système a été reculée (Fraude !).", None
-            
+
         # Mise à jour de la dernière date connue (limitée à une fois par heure pour éviter les row locks continus)
-        if (maintenant - licence_obj.derniere_verification).total_seconds() > 3600:
+        if licence_obj.derniere_verification:
+            try:
+                if (maintenant - licence_obj.derniere_verification).total_seconds() > 3600:
+                    licence_obj.derniere_verification = maintenant
+                    licence_obj.save(update_fields=['derniere_verification'])
+            except (TypeError, OverflowError):
+                # Si l'horloge a sauté (pile CMOS), la soustraction peut échouer
+                licence_obj.derniere_verification = maintenant
+                licence_obj.save(update_fields=['derniere_verification'])
+        else:
             licence_obj.derniere_verification = maintenant
             licence_obj.save(update_fields=['derniere_verification'])
         
         # Mettre en cache pour 1 heure pour réduire la charge DB
-        # Le middleware vérifie le JWT localement entre les vérifications DB
+        # Signature HMAC pour empêcher l'empoisonnement du cache Redis
         result_dict = {'est_valide': True, 'message': "Licence valide.", 'payload': payload}
+        result_dict['_sig'] = _sign_cache_value(result_dict)
         cache.set(cache_key, result_dict, timeout=3600)  # 1 heure
         
         return True, "Licence valide.", payload

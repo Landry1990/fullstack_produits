@@ -1,4 +1,16 @@
 {
+    "clock_sync": {
+        "title": "Clock out of sync",
+        "subtitle": "Time drift detected with server",
+        "drift": "Drift",
+        "server": "Server",
+        "local": "This station",
+        "ahead_msg": "This station's clock is ahead. This may cause errors in invoices, receipts and reports.",
+        "behind_msg": "This station's clock is behind (CMOS battery?). This may cause errors in invoices, receipts and reports.",
+        "copy_script": "Copy sync script",
+        "copied": "Script copied!",
+        "script_hint": "Run as administrator (PowerShell)"
+    },
     "loading": "Loading...",
     "dashboard": "Dashboard",
     "name": "Name",

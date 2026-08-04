@@ -2,6 +2,195 @@
 
 ---
 
+## 2026-08-05 (8)
+
+### ⏰ TTL d'installation de licence (install_before)
+
+- **Problème** : une licence générée mais non installée restait valide indéfiniment.
+  Si une licence "perdue" (envoyée par erreur, volée, oubliée) était retrouvée mois
+  plus tard, elle pouvait encore être installée.
+- **Solution** : ajout d'un champ `install_before` dans le payload JWT. La licence doit
+  être installée dans les **10 jours** suivant sa génération, sinon elle est rejetée.
+- **Générateur** (`generateur_licences/`) :
+  - `generateur.py` (CLI) : `install_before = iat + 10 jours` ajouté au payload
+  - `gui_generateur.py` (GUI) : idem pour la génération ET le renouvellement
+  - Affichage de la date limite d'installation dans la console et la boîte de dialogue
+- **Backend** (`backend/api/views/licence.py`) :
+  - `POST /api/licence/` : vérifie `install_before` **uniquement à l'installation**
+    (pas à la validation normale). Si `now > install_before` → rejet avec message
+    "Cette licence devait être installée avant le JJ/MM/AAAA"
+  - `POST /api/licence/` (preview) : retourne `install_before` et `install_expired`
+    pour que le frontend affiche un avertissement avant la tentative d'installation
+  - Rétrocompatibilité : les licences sans `install_before` (anciennes) ne sont pas
+    affectées — le check est ignoré si le champ est absent
+- **Frontend** (`LicenceScreen.tsx`) :
+  - Le preview affiche la date limite d'installation (icône calendrier)
+  - Si la licence est expirée (install_expired) : message rouge + bouton désactivé
+  - `PreviewData` étendu avec `install_before` et `install_expired`
+- **Fichiers modifiés** :
+  - `generateur_licences/generateur.py` — champ `install_before` + affichage
+  - `generateur_licences/gui_generateur.py` — champ `install_before` (génération + renouvellement)
+  - `backend/api/views/licence.py` — vérification `install_before` à l'installation + preview
+  - `frontend/frontend/src/components/LicenceScreen.tsx` — affichage date limite + blocage
+
+## 2026-08-05 (7)
+
+### 🔑 Système de code journalier (Keyday) pour le support
+
+- **Problème** : pour installer/supprimer une licence, il faut un mot de passe admin
+  Django. Si le pharmacien l'oublie, le support doit se connecter au serveur en SSH.
+  Pas de solution à distance pour débloquer rapidement.
+- **Solution** : système de "keyday" — un code à 6 caractères, valide 24h, généré à
+  partir de la date + `DJANGO_SECRET_KEY`. Le support peut le générer depuis son PC
+  et le donner au pharmacien par téléphone.
+- **Fonctionnement** :
+  - Algorithme : `HMAC-SHA256(date_du_jour + sel, DJANGO_SECRET_KEY)` → 6 premiers
+    caractères en majuscules
+  - Le code change à minuit (tolérance : code du jour + demain acceptés)
+  - Le pharmacien saisit le code dans le champ "Mot de passe admin ou code journalier"
+    de l'écran d'activation de licence
+  - Le frontend détecte automatiquement si c'est un code à 6 caractères (keyday) ou
+    un mot de passe admin, et envoie le bon champ (`keyday` ou `sudo_password`)
+- **Nouveaux fichiers** :
+  - `backend/api/keyday.py` — module keyday (`get_today_keyday()`, `validate_keyday()`)
+  - `backend/keyday_generator.py` — script standalone pour le support (sans Docker) :
+    ```
+    python keyday_generator.py --secret="DJANGO_SECRET_KEY" --date=2026-08-05
+    ```
+- **Fichiers modifiés** :
+  - `backend/api/views/licence.py` — `_validate_admin_sudo()` accepte maintenant 3
+    méthodes : superuser authentifié, `sudo_password`, ou `keyday`
+  - `frontend/frontend/src/components/LicenceScreen.tsx` — label et placeholder
+    mis à jour pour indiquer "Mot de passe admin OU code journalier"
+- **Sécurité** :
+  - Le code keyday ne permet **que** d'installer/supprimer une licence — pas d'accès
+    admin général, pas d'accès aux données
+  - Forger un code keyday nécessite de connaître `DJANGO_SECRET_KEY` (dans `.env`)
+  - Utilisation de `hmac.compare_digest()` pour éviter les timing attacks
+
+## 2026-08-05 (6)
+
+### 🔒 Renforcement sécurité du système de licence
+
+- **Problème** : 3 failles critiques permettaient de contourner la licence :
+  1. `POST/DELETE /api/licence/` sans authentification — n'importe qui sur le réseau
+     pouvait installer une licence forgée ou supprimer la licence active
+  2. Redis sans mot de passe — un attaquant avec accès au port 6379 pouvait injecter
+     un cache `{"est_valide": true}` et contourner la licence
+  3. Cache Redis non signé — même avec mot de passe, un attaquant ayant accès à Redis
+     pouvait empoisonner le cache avec des données arbitraires
+
+- **Faille 1 — Protection POST/DELETE `/api/licence/`** :
+  - `backend/api/views/licence.py` : ajout fonction `_validate_admin_sudo()` qui exige
+    soit un utilisateur authentifié + superuser, soit un `sudo_password` admin
+  - Le POST (installation) et DELETE (suppression) sont maintenant protégés (403 sans auth)
+  - Le GET (statut) et le preview (`preview: true`) restent ouverts (lecture seule)
+  - `frontend/frontend/src/components/LicenceScreen.tsx` : ajout champ "Mot de passe
+    administrateur" dans l'écran d'activation, obligatoire pour confirmer l'installation
+  - Le `sudo_password` est envoyé avec la clé lors du POST
+
+- **Faille 2 — Redis sécurisé par mot de passe** :
+  - `docker-compose.yml` + `docker-compose.prod.yml` : Redis démarre avec
+    `--requirepass ${REDIS_PASSWORD:-pharma_redis_2026}`
+  - `REDIS_URL` passé au backend : `redis://:pharma_redis_2026@redis:6379/0`
+  - Sans mot de passe, Redis répond `NOAUTH Authentication required.`
+  - Django Cache + Channels utilisent automatiquement le mot de passe via `REDIS_URL`
+
+- **Faille 3 — Cache licence signé par HMAC-SHA256** :
+  - `backend/api/utils_licence.py` : ajout `_sign_cache_value()` et
+    `_verify_cache_signature()` — signature HMAC dérivée de `SECRET_KEY` Django
+  - Chaque entrée en cache contient un champ `_sig` (HMAC-SHA256 du contenu)
+  - `valider_licence_systeme()` et `middleware_licence.py` vérifient la signature
+    avant de faire confiance au cache. Si la signature est invalide → revalidation DB
+  - Un attaquant ne peut pas forger le cache sans connaître `SECRET_KEY`
+  - Utilisation de `hmac.compare_digest()` pour éviter les timing attacks
+
+- **Fichiers modifiés** :
+  - `backend/api/views/licence.py` — protection POST/DELETE + `_validate_admin_sudo()`
+  - `backend/api/utils_licence.py` — signature HMAC du cache
+  - `backend/api/middleware_licence.py` — vérification signature cache
+  - `docker-compose.yml` — Redis `--requirepass` + `REDIS_URL` avec password
+  - `docker-compose.prod.yml` — idem en prod
+  - `frontend/frontend/src/components/LicenceScreen.tsx` — champ mot de passe admin
+
+## 2026-08-05 (5)
+
+### 🛡️ Protection contre désynchronisation d'horloge (pile CMOS)
+
+- **Problème** : si un poste a une pile CMOS défaillante, son horloge peut sauter de
+  plusieurs années (20 ans en arrière/avant). Cela bloquait la licence (anti-fraude
+  temporelle), causait des dates de factures incorrectes, et aucun mécanisme ne détectait
+  le problème.
+- **Licence — retrait complet de l'anti-fraude temporelle** :
+  - `backend/api/utils_licence.py` : `jwt.decode()` utilise maintenant
+    `options={"verify_exp": False}` — l'expiration du JWT n'est plus vérifiée
+  - `get_licence_details()` : ne bloque plus si `now >= exp_date` (retourne valide)
+  - `valider_licence_systeme()` : anti-fraude temporelle supprimée complètement,
+    protection `try/except` sur la soustraction de dates (OverflowError si horloge sautée)
+  - `backend/api/middleware_licence.py` : check `exp_timestamp < time()` supprimé du
+    chemin rapide (cache)
+  - **Justification** : la licence utilise des cycles gérés métier, pas des dates absolues.
+    La sécurité repose sur signature RS256 (infalsifiable) + hardware ID (anti-clonage).
+    Un changement de date ne doit JAMAIS bloquer la licence.
+- **Endpoint server-time** :
+  - `backend/api/views/users.py` : nouvel endpoint `GET /api/users/server-time/` qui
+    retourne `timezone.now().isoformat()` + `timestamp` pour synchronisation des postes
+  - `server_time` du login corrigé : `datetime.datetime.now()` → `timezone.now()`
+- **Détection frontend du décalage** :
+  - `frontend/frontend/src/hooks/useClockSync.ts` : hook qui compare l'heure locale avec
+    l'heure du serveur toutes les 5 min. Compensation latence réseau (RTT/2). Seuil de
+    tolérance : 2 minutes.
+  - `frontend/frontend/src/components/ClockSyncAlert.tsx` : popup d'alerte en bas à droite
+    quand le décalage > 2 min. Affiche : décalage (±X min), heure serveur vs heure locale,
+    message d'explication, bouton "Copier le script de synchro" (script PowerShell
+    `w32tm /resync /force` à exécuter en admin). Bouton "Ignorer" (revient si le drift
+    change).
+  - Intégré dans `App.tsx` au même niveau que `LicenceNotifications`
+  - i18n : clés `clock_sync.*` ajoutées dans `fr/common.json` et `en/common.json`
+- **Note** : le navigateur ne peut pas changer l'heure système (sécurité). Le popup propose
+  donc un script PowerShell à copier et exécuter manuellement en tant qu'administrateur.
+- **Fichiers modifiés** :
+  - `backend/api/utils_licence.py` — retrait anti-fraude + `verify_exp: False`
+  - `backend/api/middleware_licence.py` — retrait check exp dans le cache
+  - `backend/api/views/users.py` — endpoint `server-time` + import `timezone`
+  - `frontend/frontend/src/hooks/useClockSync.ts` — nouveau hook
+  - `frontend/frontend/src/components/ClockSyncAlert.tsx` — nouveau composant
+  - `frontend/frontend/src/App.tsx` — intégration du composant
+  - `frontend/frontend/public/locales/fr/common.json` — clés i18n
+  - `frontend/frontend/public/locales/en/common.json` — clés i18n
+
+## 2026-08-05 (4)
+
+### ⚡ Caisse centralisée — affichage temps réel via WebSocket
+
+- **Symptôme** : gros délai entre l'envoi d'une vente du POS vers la facturation et son
+  apparition à la caisse centralisée. De plus, au rafraîchissement, les ventes apparaissaient
+  brièvement puis disparaissaient avant de revenir (effet de "flash").
+- **Causes identifiées** :
+  1. **Pas de notification temps réel** : la caisse pollait toutes les 5s → jusqu'à 5s de délai
+  2. **Cache de 60s** sur l'endpoint `/api/factures/` : race condition entre l'invalidation
+     du cache et le polling → données périmées servies → flash
+  3. **Refetchs concurrents** : deux polls pouvaient se chevaucher et écraser les données
+     fraîches avec des données incomplètes
+- **Solutions** :
+  1. **WebSocket temps réel** : nouveau consumer `CaisseCentraliseeConsumer` sur
+     `ws/caisse_centralisee/`. Quand le POS crée une facture PROFORMA (mode centralisé),
+     un message WebSocket est broadcasté immédiatement à toutes les caisses connectées.
+     La caisse refresh instantanément (plus de délai).
+  2. **Cache désactivé pour la caisse** : l'endpoint `/api/factures/?include_pending=true`
+     (utilisé par la caisse) court-circuite le cache → toujours des données fraîches
+  3. **Anti-refetch concurrent** : guard `fetchingRef` pour éviter les chevauchements
+  4. **Polling de fallback réduit** : 30s au lieu de 5s (le WebSocket couvre le temps réel,
+     le polling est juste un filet de sécurité)
+  5. **Reconnexion automatique** : si le WebSocket se déconnecte, reconnexion après 3s
+  6. **Ping/pong** : keepalive toutes les 30s pour maintenir la connexion
+- **Fichiers modifiés** :
+  - `backend/api/consumers.py` — nouveau `CaisseCentraliseeConsumer`
+  - `backend/api/routing.py` — route `ws/caisse_centralisee/`
+  - `backend/api/services/sale_finalizer.py` — broadcast WebSocket après création PROFORMA
+  - `backend/api/views/ventes/factures.py` — cache désactivé pour `include_pending=true`
+  - `frontend/frontend/src/components/CaisseCentralisee.tsx` — connexion WebSocket + anti-flash
+
 ## 2026-08-05 (3)
 
 ### 🐛 Fix "États d'inventaire" — option "D'un inventaire" → "Inventaire à l'aveugle"
