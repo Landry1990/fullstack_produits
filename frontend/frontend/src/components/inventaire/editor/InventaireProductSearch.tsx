@@ -17,10 +17,10 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
     const {
         searchQuery, setSearchQuery,
         searchResults, loadingSearch,
-        selectedItemIndex, searchInputRef, _focusInput,
+        selectedItemIndex, searchInputRef,
         handleSearchKeyDown, handleProductSelect,
-        showLotModal, _setShowLotModal,
-        selectedProductForLot, _setSelectedProductForLot,
+        showLotModal,
+        selectedProductForLot,
         availableLots, loadingLots, selectedLotIndex, setSelectedLotIndex,
         lotQuantities, setLotQuantities,
         handleLotSelection,
