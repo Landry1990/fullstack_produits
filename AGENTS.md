@@ -109,6 +109,42 @@ démarrage. La compilation Cython n'affecte pas le développement.
 2. Rebuilder l'image Docker : `docker compose -f docker-compose.prod.yml build backend`
 3. Redéployer : `docker compose -f docker-compose.prod.yml up -d backend`
 
+### Limites actuelles & pistes de renforcement (TODO)
+
+Cython est une **barrière**, pas un mur absolu. Ce qui est protégé et ce qui ne l'est pas :
+
+| Attaque | Cython bloque ? |
+|---------|-----------------|
+| Lire la logique de validation | ✅ Oui (code machine illisible) |
+| Lire `SECRET_KEY` / strings | ⚠️ Partiellement (`strings fichier.so` affiche les strings) |
+| Modifier une condition dans le `.so` | ✅ Oui (très difficile en pratique) |
+| **Remplacer le `.so` par un faux `.py`** | ❌ **Non** |
+| Commenter `LicenceMiddleware` | ✅ Oui (si `settings.py` aussi compilé) |
+
+Pour un client pharmacien moyen : protection largement suffisante.
+Pour un client programmeur motivé avec accès SSH : contournable en ~30 min.
+
+**Pistes à implémenter plus tard (par ordre de priorité)** :
+
+1. **Vérification d'intégrité au démarrage** (priorité haute)
+   - Au build, calculer SHA-256 de chaque `.so` et les stocker dans un fichier `integrity.json`
+   - Au démarrage du backend, `entrypoint.sh` recalcule les hashes et compare
+   - Si un `.so` a été remplacé/modifié → refus de démarrer
+   - Bloque la substitution `.so` → faux `.py`
+
+2. **Filesystem read-only** (priorité moyenne)
+   - Monter les fichiers protégés en lecture seule dans `docker-compose.prod.yml`
+   - `read_only: true` + `tmpfs` pour les répertoires d'écriture nécessaires
+
+3. **Restreindre `docker exec`** (priorité basse)
+   - Retirer l'accès shell au container en prod (ou utiliser un utilisateur non-root)
+   - Le `Dockerfile` peut ajouter `USER nonroot` à la fin
+
+4. **Masquer `SECRET_KEY` dans le `.so`** (priorité basse)
+   - Ne pas stocker `SECRET_KEY` en clair dans `settings.py`
+   - La lire depuis une variable d'environnement uniquement (déjà le cas via `os.getenv`)
+   - Mais vérifier qu'elle n'apparaît pas comme string fallback dans le code compilé
+
 ## Code journalier (Keyday) pour le support à distance
 
 Le support peut donner un code à 6 caractères au pharmacien pour installer/supprimer
