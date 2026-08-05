@@ -313,11 +313,6 @@ if REDIS_URL:
                 'SOCKET_CONNECT_TIMEOUT': 5,
                 'SOCKET_TIMEOUT': 5,
                 'RETRY_ON_TIMEOUT': True,
-                # Forcer RESP2 — redis-py 5.1+ utilise RESP3 (HELLO) par défaut
-                # qui échoue quand Redis exige AUTH avant HELLO
-                'CONNECTION_POOL_KWARGS': {
-                    'protocol': 2,
-                },
             }
         }
     }
