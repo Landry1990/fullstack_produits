@@ -9,8 +9,8 @@ django-silk
 whitenoise
 gunicorn
 psycopg2-binary
-django-redis
-redis
+django-redis>=5.4,<6.0
+redis>=5.0,<5.1
 channels>=4.0
 channels-redis>=4.0
 daphne>=4.0
