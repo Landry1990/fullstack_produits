@@ -76,6 +76,39 @@ docker exec -it zenith-pharma-backend python manage.py createsuperuser
 
 En développement, remplacer `zenith-pharma-backend` par `fullstack_produits-backend-1`.
 
+## Compilation Cython (protection anti-modification serveur)
+
+En production, les fichiers Python critiques sont compilés en `.so` binaires avec
+Cython. Le client ne peut pas modifier le code source (les `.py` n'existent pas).
+
+### Fichiers protégés
+
+| Fichier source              | Binaire compilé                                    |
+|-----------------------------|----------------------------------------------------|
+| `backend/settings.py`       | `settings.cpython-311-x86_64-linux-gnu.so`         |
+| `api/middleware_licence.py` | `middleware_licence.cpython-311-x86_64-linux-gnu.so`|
+| `api/utils_licence.py`      | `utils_licence.cpython-311-x86_64-linux-gnu.so`     |
+| `api/views/licence.py`      | `licence.cpython-311-x86_64-linux-gnu.so`           |
+| `api/keyday.py`             | `keyday.cpython-311-x86_64-linux-gnu.so`            |
+
+### Comment ça marche
+
+- Le `Dockerfile` installe Cython et exécute `compile_protected.py` après la copie du code
+- Chaque fichier `.py` est transformé en `.c` (Cython) puis en `.so` (gcc)
+- Le `.py` source et le `.c` sont supprimés
+- Le client reçoit uniquement les `.so` — illisibles et impossibles à modifier
+
+### En développement
+
+Le volume `./backend:/app` dans `docker-compose.yml` remet les `.py` sources à chaque
+démarrage. La compilation Cython n'affecte pas le développement.
+
+### Pour modifier un fichier protégé
+
+1. Modifier le `.py` source dans le repo
+2. Rebuilder l'image Docker : `docker compose -f docker-compose.prod.yml build backend`
+3. Redéployer : `docker compose -f docker-compose.prod.yml up -d backend`
+
 ## Code journalier (Keyday) pour le support à distance
 
 Le support peut donner un code à 6 caractères au pharmacien pour installer/supprimer

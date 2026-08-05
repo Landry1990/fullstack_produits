@@ -36,13 +36,19 @@ COPY requirements.txt .
 
 # Installer les dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install gunicorn python-dotenv
+RUN pip install gunicorn python-dotenv cython
 
 # Clé temporaire pour le build (sera remplacée au runtime)
 ENV DJANGO_SECRET_KEY=build-temp-key-not-for-production
 
 # Copier le reste du code de l'application
 COPY . .
+
+# ── Compilation Cython des fichiers critiques en .so binaires ──
+# Les fichiers protégés (settings.py, middleware_licence.py, utils_licence.py,
+# views/licence.py, keyday.py) sont compilés en .so illisibles.
+# Les .py sources sont supprimés — le client ne peut pas modifier le code.
+RUN python compile_protected.py && rm -f compile_protected.py
 
 # Copier le script d'entrée et le rendre exécutable
 RUN chmod +x entrypoint.sh

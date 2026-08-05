@@ -2,6 +2,64 @@
 
 ---
 
+## 2026-08-05 (9)
+
+### 🐛 Fix page blanche après mise à jour (2 bugs critiques)
+
+- **Problème** : après la dernière mise à jour client, page blanche sur l'écran de
+  login (et toute l'app). Console navigateur :
+  1. `ReferenceError: checkNow is not defined` (crash React au render)
+  2. `InternalError: too much recursion` dans `feature-inventory-editor`
+- **Bug 1 — `checkNow` non défini** (`useClockSync.ts`) :
+  - Le `useCallback` définissait une fonction `check` mais le `return` du hook
+    référençait `checkNow` (shorthand `{ checkNow }`). La variable n'existait
+    pas → `ReferenceError` à chaque render. `ClockSyncAlert` étant monté
+    globalement dans `App.tsx` (hors router), le crash touchait toutes les pages.
+  - **Fix** : renommé `check` → `checkNow` (cohérent avec l'interface
+    `ClockSyncState`).
+- **Bug 2 — récursion infinie dans le logger** (`utils/logger.ts`) :
+  - `logger.error(...args)` appelait `logger.error(...args)` (lui-même) au lieu
+    de `console.error(...args)` → récursion infinie → `InternalError`.
+  - Ce bug était masqué tant qu'aucune erreur n'était levée. Mais dès qu'une
+    erreur survenait (ex. bug 1), l'`ErrorBoundary` appelait `logger.error` →
+    récursion infinie → crash secondaire. **Indépendamment du bug 1**, n'importe
+    quelle erreur dans l'app aurait causé une page blanche via ce logger.
+  - **Fix** : `logger.error` appelle maintenant `console.error`.
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/hooks/useClockSync.ts` — renommage `check` → `checkNow`
+  - `frontend/frontend/src/utils/logger.ts` — `logger.error` → `console.error`
+
+## 2026-08-05 (9)
+
+### 🛡️ Compilation Cython des fichiers critiques (anti-modification serveur)
+
+- **Problème** : un client avec accès au serveur + connaissances en programmation
+  pouvait modifier `settings.py` pour commenter la ligne `LicenceMiddleware` et
+  contourner entièrement le système de licence.
+- **Solution** : compiler les fichiers Python critiques en extensions binaires `.so`
+  avec Cython. Les `.py` sources sont supprimés de l'image Docker — le client ne
+  reçoit que les binaires illisibles.
+- **Fichiers protégés** (compilés en `.so`) :
+  - `backend/settings.py` → `settings.cpython-311-x86_64-linux-gnu.so`
+  - `api/middleware_licence.py` → `middleware_licence.cpython-311-x86_64-linux-gnu.so`
+  - `api/utils_licence.py` → `utils_licence.cpython-311-x86_64-linux-gnu.so`
+  - `api/views/licence.py` → `licence.cpython-311-x86_64-linux-gnu.so`
+  - `api/keyday.py` → `keyday.cpython-311-x86_64-linux-gnu.so`
+- **Ce que le client ne peut plus faire** :
+  - Commenter la ligne `LicenceMiddleware` dans `settings.py` (le fichier n'existe plus)
+  - Modifier `valider_licence_systeme()` pour retourner `True` (binaire illisible)
+  - Modifier le middleware ou le keyday (binaires)
+- **Ce qui reste visible** dans le `.so` : noms de fonctions et docstrings (strings
+  Python stockées en clair). Mais la **logique** (conditions, boucles, algorithmes)
+  est compilée en binaire C — illisible et impossible à modifier.
+- **Nouveaux fichiers** :
+  - `backend/compile_protected.py` — script de compilation (Cython + gcc)
+- **Fichiers modifiés** :
+  - `backend/Dockerfile` — ajout `pip install cython` + étape compilation
+- **Note** : en développement (`docker-compose.yml`), le volume `./backend:/app`
+  remet les `.py` sources (normal pour développer). En production
+  (`docker-compose.prod.yml`), pas de volume — les `.so` restent.
+
 ## 2026-08-05 (8)
 
 ### ⏰ TTL d'installation de licence (install_before)
