@@ -7,7 +7,7 @@ import {
   FileSpreadsheet, Printer, Layers,
   Package, TrendingUp, AlertCircle, CheckCircle2, BarChart3,
   SlidersHorizontal, Eye, Building2, Tag, FlaskConical,
-  Grid3X3, Info
+  Grid3X3, Info, ChevronDown
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { downloadBlob } from '../utils/excelExport';
@@ -17,6 +17,7 @@ import { downloadBlob } from '../utils/excelExport';
 type GroupByOption = 'rayon' | 'forme' | 'groupe' | 'fournisseur';
 type StockFilterOption = 'tous' | 'zero' | 'non_zero';
 type SourceOption = 'stock' | 'blind';
+type StockLocationOption = 'tous' | 'rayon' | 'reserve';
 
 interface EntityOption { id: number; name: string; }
 
@@ -104,10 +105,17 @@ const stockFilterOptions: { value: StockFilterOption; label: string; desc: strin
   { value: 'zero',     label: 'Stocks nuls (= 0)',     desc: 'Ruptures / produits à saisir',  icon: <AlertCircle className="size-4" />,  accent: 'amber' },
 ];
 
+const stockLocationOptions: { value: StockLocationOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = [
+  { value: 'tous',    label: 'Tous (Rayon + Réserve)', desc: 'Tous les emplacements',         icon: <Package className="size-4" />,      accent: 'blue' },
+  { value: 'rayon',   label: 'Stock Rayon',            desc: 'Produits en rayon uniquement',  icon: <TrendingUp className="size-4" />,   accent: 'emerald' },
+  { value: 'reserve', label: 'Stock Réserve',          desc: 'Produits en réserve uniquement', icon: <Layers className="size-4" />,      accent: 'amber' },
+];
+
 export default function EtatsInventaire() {
   const [source, setSource] = useState<SourceOption>('stock');
   const [groupBy, setGroupBy] = useState<GroupByOption>('rayon');
   const [stockFilter, setStockFilter] = useState<StockFilterOption>('tous');
+  const [stockLocation, setStockLocation] = useState<StockLocationOption>('tous');
   const [selectedEntity, setSelectedEntity] = useState<number | null>(null);
 
   const [entities, setEntities] = useState<EntityOption[]>([]);
@@ -137,8 +145,9 @@ export default function EtatsInventaire() {
     const p: Record<string, string> = { group_by: groupBy, stock_filter: stockFilter };
     if (selectedEntity) p.filter_id = String(selectedEntity);
     if (source === 'blind') p.blind = 'true';
+    if (stockLocation !== 'tous') p.stock_location = stockLocation;
     return p;
-  }, [groupBy, stockFilter, selectedEntity, source]);
+  }, [groupBy, stockFilter, selectedEntity, source, stockLocation]);
 
   // ── Export Excel ───────────────────────────────────────────────────────────
   const handleExportExcel = async () => {
@@ -301,6 +310,25 @@ export default function EtatsInventaire() {
                 />
               ))}
             </div>
+
+            {/* Filtre emplacement (rayon / réserve) — visible uniquement en mode stock */}
+            {source === 'stock' && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Emplacement</p>
+                {stockLocationOptions.map(o => (
+                  <RadioCard
+                    key={o.value}
+                    value={o.value}
+                    current={stockLocation}
+                    label={o.label}
+                    description={o.desc}
+                    icon={o.icon}
+                    accent={o.accent}
+                    onChange={(v) => setStockLocation(v as StockLocationOption)}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -317,7 +345,7 @@ export default function EtatsInventaire() {
             <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-2">
               <SummaryLine
                 label="Source"
-                value={source === 'stock' ? 'Stock courant' : selectedInvInfo ? selectedInvInfo.reference : '—'}
+                value={source === 'stock' ? 'Stock courant' : 'Inventaire à l\'aveugle'}
                 color="blue"
               />
               <SummaryLine
@@ -335,14 +363,14 @@ export default function EtatsInventaire() {
                 value={stockFilterOptions.find(o => o.value === stockFilter)?.label || stockFilter}
                 color="emerald"
               />
-
-              {/* Avertissement si inventaire non sélectionné */}
-              {source === 'inventaire' && !selectedInventaire && (
-                <div className="flex items-start gap-2 mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
-                  <AlertCircle className="size-3.5 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-amber-700 font-medium">Sélectionnez un inventaire pour continuer</p>
-                </div>
+              {source === 'stock' && (
+                <SummaryLine
+                  label="Emplacement"
+                  value={stockLocationOptions.find(o => o.value === stockLocation)?.label || stockLocation}
+                  color="amber"
+                />
               )}
+
             </CardContent>
           </Card>
 

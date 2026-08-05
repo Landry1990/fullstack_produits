@@ -539,17 +539,19 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         """
         Génère un fichier Excel configurable du listing de stock.
         Paramètres :
-          - group_by    : rayon | forme | groupe | fournisseur
-          - stock_filter: tous | zero | non_zero
-          - filter_id   : id de l'entité de regroupement (optionnel)
-          - inventaire_id: id d'un inventaire précis (optionnel)
-          - blind       : true pour un listing à l'aveugle (sans stock théorique)
+          - group_by       : rayon | forme | groupe | fournisseur
+          - stock_filter   : tous | zero | non_zero
+          - filter_id      : id de l'entité de regroupement (optionnel)
+          - inventaire_id  : id d'un inventaire précis (optionnel)
+          - blind          : true pour un listing à l'aveugle (sans stock théorique)
+          - stock_location : tous | rayon | reserve (filtre par emplacement de stock)
         """
         group_by = request.query_params.get('group_by', 'rayon')
         stock_filter = request.query_params.get('stock_filter', 'tous')
         filter_id_str = request.query_params.get('filter_id')
         inventaire_id_str = request.query_params.get('inventaire_id')
         blind = request.query_params.get('blind', 'false').lower() in ('true', '1', 'yes')
+        stock_location = request.query_params.get('stock_location', 'tous')
 
         filter_id = int(filter_id_str) if filter_id_str and filter_id_str.isdigit() else None
         inventaire_id = int(inventaire_id_str) if inventaire_id_str and inventaire_id_str.isdigit() else None
@@ -560,6 +562,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             filter_id=filter_id,
             inventaire_id=inventaire_id,
             blind=blind,
+            stock_location=stock_location,
         )
 
 
