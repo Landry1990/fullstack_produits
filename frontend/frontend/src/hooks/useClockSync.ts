@@ -21,7 +21,7 @@ export function useClockSync(): ClockSyncState {
   const [driftMs, setDriftMs] = useState<number | null>(null)
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
 
-  const check = useCallback(async () => {
+  const checkNow = useCallback(async () => {
     try {
       const t0 = Date.now()
       const res = await api.get('users/server-time/')
@@ -40,13 +40,13 @@ export function useClockSync(): ClockSyncState {
 
   useEffect(() => {
     // Vérifier au montage (après un court délai pour laisser l'auth se faire)
-    const initialTimer = setTimeout(check, 3000)
-    const interval = setInterval(check, CHECK_INTERVAL_MS)
+    const initialTimer = setTimeout(checkNow, 3000)
+    const interval = setInterval(checkNow, CHECK_INTERVAL_MS)
     return () => {
       clearTimeout(initialTimer)
       clearInterval(interval)
     }
-  }, [check])
+  }, [checkNow])
 
   return {
     driftMs,
