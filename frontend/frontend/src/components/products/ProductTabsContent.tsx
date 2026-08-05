@@ -379,7 +379,7 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t 
     if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-slate-400 py-8">{t('products:detail.movements.empty')}</p>;
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
             <table className="w-full text-sm">
                 <thead className="bg-white sticky top-0 border-b border-slate-200">
                     <tr className="text-slate-400">
