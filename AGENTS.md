@@ -34,6 +34,60 @@ entrées existantes (titres avec emojis, listes à puces, mention des fichiers m
 - Backend : `cd backend && python manage.py <cmd>` (env virtuel `my_env01/`)
 - Docker (dev) : `docker compose up` (nécessite Docker Desktop lancé)
 
+## Déploiement
+
+### En développement (local, Docker Desktop)
+
+Utiliser `deploy.ps1` (sans rebuild Docker, copie directe dans les conteneurs) :
+
+```powershell
+# Frontend + backend (rapide, usage courant)
+.\deploy.ps1 -Target all
+
+# Frontend + backend + migrations + setup DCI (changements de modèles)
+.\deploy.ps1 -Target all-full
+
+# Frontend seul
+.\deploy.ps1 -Target frontend
+
+# Backend seul (sans migrations)
+.\deploy.ps1 -Target backend
+
+# Backend + migrations + DCI
+.\deploy.ps1 -Target backend-full
+
+# Avec backup DB avant déploiement
+.\deploy.ps1 -Target all -BackupDB
+
+# Rebuild complet des images Docker (changement de requirements.txt, Dockerfile)
+.\deploy.ps1 -Target all -Rebuild
+```
+
+Le script `deploy.ps1` :
+- **Frontend** : `npm run build` → `docker cp dist/` → `nginx -s reload`
+- **Backend** : `docker cp backend/api/` → `docker restart`
+- Détecte automatiquement les noms des conteneurs (dev ou prod)
+- Avec `-Rebuild` : reconstruit les images via `docker compose build`
+
+⚠️ En dev, le volume `./backend:/app` remet les `.py` sources à chaque démarrage.
+La compilation Cython ne s'applique pas en dev — seulement en prod via le build Docker.
+
+### En production (serveur client)
+
+```bash
+cd /opt/zenith-pharma
+git pull
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Le build Docker prod :
+- Compile les fichiers critiques en `.so` via Cython (cf. section Compilation Cython)
+- Le client ne reçoit que les binaires — impossible de modifier le code source
+
+⚠️ Après un déploiement, le client doit faire un **Ctrl+F5** (hard reload) pour
+invalider le cache PWA du navigateur.
+
 ## Noms des containers Docker
 
 ### En développement (`docker-compose.yml`)
