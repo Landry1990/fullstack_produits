@@ -62,7 +62,9 @@ export function CaisseTicketPreviewModal({
 
     let url = `/app/print-invoice/${factureId}`
     if (clientName) url += `?client_name=${encodeURIComponent(clientName)}`
-    window.open(url, '_blank', 'noopener,noreferrer')
+    // Pas de 'noopener' : l'onglet d'impression doit pouvoir accéder à
+    // window.opener.sessionStorage pour récupérer le token d'auth (cf. main.tsx).
+    window.open(url, '_blank', 'noreferrer')
   }, [ticket])
 
   const handleConfirmPrintClientName = useCallback(async (clientNameInput: string) => {
@@ -76,7 +78,9 @@ export function CaisseTicketPreviewModal({
     } finally {
       let url = `/app/print-invoice/${pendingFacture.id}`
       if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`
-      window.open(url, '_blank', 'noopener,noreferrer')
+      // Pas de 'noopener' : l'onglet d'impression doit pouvoir accéder à
+      // window.opener.sessionStorage pour récupérer le token d'auth.
+      window.open(url, '_blank', 'noreferrer')
       setShowClientNameModal(false)
       setPendingFacture(null)
     }

@@ -2,6 +2,51 @@
 
 ---
 
+## 2026-08-05 (12) — Cohérence colonne Marge% / récap commande
+
+### 🐛 Fix affichage marge colonne vs récap (entrée de stock / commandes)
+
+- **Problème** : lors d'une entrée en stock (commande), la colonne "MARGE%"
+  affichait le coefficient `marge` stocké sur la ligne (ex: 1.34) tandis que
+  le récap en bas calculait la marge réelle depuis les prix
+  (`totalSellHT / totalBuyHT`), qui pouvait différer (ex: 1.32) à cause des
+  arrondis du `selling_price` (`Math.round`) ou de lignes chargées depuis une
+  commande existante où `marge` et `selling_price` n'étaient plus parfaitement
+  alignés. L'utilisateur voyait deux valeurs incohérentes.
+- **Fix (Option A)** : la colonne "MARGE%" affiche maintenant la **marge
+  effective calculée** depuis les prix réels de la ligne
+  (`sellHT / buyHT`), exactement la même formule que le récap global.
+  - Au focus (édition), le champ bascule sur la valeur brute `p.marge` pour
+    permettre la saisie du coefficient cible → le `selling_price` est
+    recalculé comme avant.
+  - Au blur, le champ revient à la marge effective calculée, toujours
+    cohérente avec le récap.
+  - Le seuil de couleur (vert/orange) et l'icône `AlertTriangle` utilisent
+    aussi la marge effective calculée.
+- **Fichier** : `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx`
+
+---
+
+## 2026-08-05 (13) — Fix impression facture A4 depuis caisse centralisée
+
+### 🐛 Impression facture A4 depuis caisse centralisée
+
+- **Problème** : cliquer sur "🧾 Facture A4" dans le modal de caisse après un
+  règlement ouvrait un nouvel onglet `/app/print-invoice/:id` avec
+  `noopener,noreferrer`. L'attribut `noopener` empêche l'onglet d'accéder à
+  `window.opener`, donc la fonction `syncSessionFromOpener()` (main.tsx) ne
+  pouvait pas copier le token d'authentification depuis l'onglet parent. Sans
+  token, l'appel API `factures/{id}/print_data/` retournait 401, et la page
+  d'impression affichait une erreur ou redirigeait vers la page de login.
+- **Fix** : retiré `noopener` dans les deux appels `window.open` de
+  `CaisseTicketPreviewModal` (`handlePrintInvoice` et
+  `handleConfirmPrintClientName`). On conserve `noreferrer` pour ne pas envoyer
+  le `Referer`. L'onglet d'impression peut maintenant accéder au
+  `sessionStorage` de l'onglet parent et récupérer le token.
+- **Fichier** : `frontend/frontend/src/components/caisse/CaisseTicketPreviewModal.tsx`
+
+---
+
 ## 2026-08-05 (11) — Session du soir
 
 ### 🔧 Fixes frontend + backend (déploiements locaux multiples)
