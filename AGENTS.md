@@ -85,7 +85,7 @@ Cython. Le client ne peut pas modifier le code source (les `.py` n'existent pas)
 
 | Fichier source              | Binaire compilé                                    |
 |-----------------------------|----------------------------------------------------|
-| `backend/settings.py`       | `settings.cpython-311-x86_64-linux-gnu.so`         |
+| `backend/backend/settings.py` | `settings.cpython-311-x86_64-linux-gnu.so`       |
 | `api/middleware_licence.py` | `middleware_licence.cpython-311-x86_64-linux-gnu.so`|
 | `api/utils_licence.py`      | `utils_licence.cpython-311-x86_64-linux-gnu.so`     |
 | `api/views/licence.py`      | `licence.cpython-311-x86_64-linux-gnu.so`           |
