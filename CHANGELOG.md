@@ -2,6 +2,46 @@
 
 ---
 
+## 2026-08-05 (10)
+
+### 🚑 Restauration des fichiers supprimés par erreur + création compile_protected.py
+
+- **Problème** : le commit `96489420` (compilation Cython) avait :
+  1. **Supprimé du repo** les 5 fichiers Python critiques au lieu de les garder
+     (ils ne devaient être supprimés que **dans l'image Docker**) :
+     - `backend/backend/settings.py`
+     - `backend/api/middleware_licence.py`
+     - `backend/api/utils_licence.py`
+     - `backend/api/views/licence.py`
+     - `backend/api/keyday.py`
+  2. **Committé un `.so` binaire Linux** (`settings.cpython-311-x86_64-linux-gnu.so`)
+     à la place de `settings.py` — inutilisable sur Windows/dev et dans git.
+  3. **Modifié le Dockerfile** pour appeler `compile_protected.py` **sans jamais
+     committer ce script** → build Docker cassé :
+     `python: can't open file '/app/compile_protected.py': No such file or directory`
+- **Conséquence** : le build Docker de production échouait à l'étape 11/12.
+  Même si le build avait réussi, le backend n'aurait eu aucune logique de licence.
+- **Fix** :
+  - Restauration des 5 fichiers `.py` depuis `a7c23502` (état avant le commit fautif)
+  - Suppression du `.so` binaire du repo (`git rm --cached` + suppression disque)
+  - Ajout de `*.so` et `*.c` au `.gitignore` (pour éviter qu'un `.so` soit re-committé)
+  - Création de `backend/compile_protected.py` — script de compilation Cython :
+    - Compile chaque `.py` en `.c` (Cython) puis en `.so` (gcc)
+    - Supprime le `.py` source et le `.c` intermédiaire **dans l'image Docker**
+    - Les `.py` restent dans le repo pour le développement
+  - Correction du chemin dans `AGENTS.md` : `backend/settings.py` → `backend/backend/settings.py`
+- **Fichiers modifiés/créés** :
+  - `backend/backend/settings.py` — restauré
+  - `backend/api/middleware_licence.py` — restauré
+  - `backend/api/utils_licence.py` — restauré
+  - `backend/api/views/licence.py` — restauré
+  - `backend/api/keyday.py` — restauré
+  - `backend/compile_protected.py` — **nouveau** (script de compilation)
+  - `.gitignore` — ajout `*.so`, `*.c`
+  - `AGENTS.md` — correction chemin `backend/backend/settings.py`
+- **Note** : le commit fautif (`96489420`) reste dans l'historique. Les fichiers
+  restaurés + le nouveau script seront dans un commit de correction.
+
 ## 2026-08-05 (9)
 
 ### 🐛 Fix page blanche après mise à jour (2 bugs critiques)

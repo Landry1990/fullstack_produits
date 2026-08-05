@@ -8,6 +8,13 @@ dist/
 build/
 *.egg
 
+# Cython compilés (générés dans l'image Docker, jamais dans le repo)
+*.so
+*.c
+backend/backend/settings.cpython-*.so
+backend/api/*.cpython-*.so
+backend/api/views/*.cpython-*.so
+
 # Virtual environments
 my_env01/
 venv/
