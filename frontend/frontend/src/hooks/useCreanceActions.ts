@@ -238,7 +238,10 @@ export const useCreanceActions = ({
                     ticketDoc.save(`ticket_reglement_${data.releve_reference || releveId}.pdf`);
                 } catch (ticketErr) {
                     logger.error('Erreur génération ticket:', ticketErr);
-                    toast.error('Erreur lors de la génération du ticket de confirmation');
+                    const errMsg = ticketErr instanceof Error
+                        ? `${ticketErr.name}: ${ticketErr.message}`
+                        : String(ticketErr);
+                    toast.error(`Erreur ticket: ${errMsg}`);
                 }
             }
 

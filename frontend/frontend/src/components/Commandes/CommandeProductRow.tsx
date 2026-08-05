@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react';
 import type { CommandeProduit, ProduitModel } from '../../types';
 import { Button } from '../ui/Button';
 import { Input } from '../shadcn/input';
 import { Checkbox } from '../shadcn/checkbox';
+import { normalizeNumberInput } from '../../utils/formatters';
 import {
     type FieldConfig,
     type FieldType,
@@ -56,6 +57,7 @@ export function CommandeProductRow({
     onDeleteProduct,
 }: CommandeProductRowProps) {
     const { t } = useTranslation(['orders', 'common']);
+    const [isMargeFocused, setIsMargeFocused] = useState(false);
 
     const { produitName, isExclusive, supplierName, isDeleted } = resolveProductInfo(p, produitsList, t);
 
@@ -76,6 +78,19 @@ export function CommandeProductRow({
     const _selling = Number(p.selling_price || 0);
     const _tva = Number(p.tva || 0);
     const hasMarginIssue = _price > 0 && _selling > 0 && (_selling / (1 + _tva / 100)) < _price;
+
+    // Marge effective calculée depuis les prix réels (cohérente avec le récap global)
+    // Formule identique à celle du récap : sellHT / buyHT
+    const _buyHT = normalizeNumberInput(String(p.price || 0));
+    const _sellTTC = normalizeNumberInput(String(p.selling_price || 0));
+    const _sellHT = _tva > 0 ? _sellTTC / (1 + _tva / 100) : _sellTTC;
+    const effectiveMarge = _buyHT > 0 ? _sellHT / _buyHT : 0;
+    // Affiche la marge effective (calculée) quand le champ n'est pas édité,
+    // sinon la valeur brute stockée pour permettre l'édition
+    const margeDisplayValue = isMargeFocused
+        ? (p.marge || '')
+        : (_buyHT > 0 && _sellTTC > 0 ? effectiveMarge.toFixed(2) : (p.marge || ''));
+    const margeForComparison = _buyHT > 0 && _sellTTC > 0 ? effectiveMarge : Number(p.marge || 0);
 
     return (
         <React.Fragment key={p.id || `row-${index}`}>
@@ -223,23 +238,26 @@ export function CommandeProductRow({
                     />
                 </td>
 
-                {/* Marge (4) */}
+                {/* Marge (4) — affiche la marge effective calculée depuis les prix réels
+                     (cohérente avec le récap global). Au focus, bascule sur la valeur brute
+                     stockée pour permettre l'édition. */}
                 <td className="text-right py-0.5">
                     <div className="relative flex items-center justify-end">
                         <Input
                             type="text"
                             data-row={index}
                             data-field="marge"
-                            value={p.marge || ''}
+                            value={margeDisplayValue}
                             onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 5 : 4))}
-                            onFocus={handleSelectAll}
-                            className={`h-8 px-2 text-sm w-full text-right font-bold focus:bg-white ${Number(p.marge || 0) >= marginThreshold ? 'text-emerald-600' : 'text-amber-600 bg-amber-50 border-amber-300'} ${!fieldsConfig[4].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                            onFocus={(e) => { handleSelectAll(e); setIsMargeFocused(true); }}
+                            onBlur={() => setIsMargeFocused(false)}
+                            className={`h-8 px-2 text-sm w-full text-right font-bold focus:bg-white ${margeForComparison >= marginThreshold ? 'text-emerald-600' : 'text-amber-600 bg-amber-50 border-amber-300'} ${!fieldsConfig[4].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 4}
                             readOnly={!fieldsConfig[4].editable}
                             tabIndex={!fieldsConfig[4].editable ? -1 : 0}
                         />
-                        {Number(p.marge || 0) > 0 && Number(p.marge || 0) < marginThreshold && (
+                        {margeForComparison > 0 && margeForComparison < marginThreshold && (
                             <div className="absolute right-1 top-1/2 -translate-y-1/2" title={t('orders:product_table.low_margin_tooltip', { threshold: marginThreshold, defaultValue: `Marge faible (seuil: ${marginThreshold})` })}>
                                 <AlertTriangle className="size-3.5 text-amber-600" />
                             </div>
