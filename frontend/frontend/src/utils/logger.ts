@@ -15,7 +15,7 @@ const isDev = import.meta.env?.DEV ?? false;
 
 export const logger = {
   error(...args: unknown[]) {
-    logger.error(...args);
+    console.error(...args);
   },
 
   warn(...args: unknown[]) {
