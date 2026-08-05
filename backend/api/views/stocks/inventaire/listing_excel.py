@@ -49,18 +49,23 @@ def generate_listing_excel(
     filter_id: int | None = None,
     inventaire_id: int | None = None,
     blind: bool = False,
+    stock_location: str = 'tous',
 ):
     """
     Génère un fichier Excel du listing de stock courant (Produit.stock).
 
     Paramètres
     ----------
-    group_by    : 'rayon' | 'forme' | 'groupe' | 'fournisseur'
-    stock_filter: 'tous' | 'zero' | 'non_zero'
-    filter_id   : id de l'entité de regroupement pour filtrer (optionnel)
-    inventaire_id: si fourni, liste les lignes d'un inventaire précis (optionnel)
-    blind       : si True, génère un listing à l'aveugle (sans stock théorique,
-                  juste CIP/Désignation/Lot/Exp + colonne vide "Qté Comptée")
+    group_by       : 'rayon' | 'forme' | 'groupe' | 'fournisseur'
+    stock_filter   : 'tous' | 'zero' | 'non_zero'
+    filter_id      : id de l'entité de regroupement pour filtrer (optionnel)
+    inventaire_id  : si fourni, liste les lignes d'un inventaire précis (optionnel)
+    blind          : si True, génère un listing à l'aveugle (sans stock théorique,
+                     juste CIP/Désignation/Lot/Exp + colonne vide "Qté Comptée")
+    stock_location : 'tous' | 'rayon' | 'reserve'
+                     - 'tous'    : tous les lots (comportement par défaut)
+                     - 'rayon'   : uniquement les lots avec stock rayon (quantity_remaining)
+                     - 'reserve' : uniquement les lots avec stock_reserve > 0
     """
     if not HAS_OPENPYXL:
         return HttpResponse("openpyxl non installé", status=500)
@@ -72,7 +77,7 @@ def generate_listing_excel(
         rows = _get_rows_from_inventaire(inventaire_id, group_by, stock_filter, filter_id)
         listing_type = 'inventaire'
     else:
-        rows = _get_rows_from_stock(group_by, stock_filter, filter_id)
+        rows = _get_rows_from_stock(group_by, stock_filter, filter_id, stock_location=stock_location)
         listing_type = 'blind' if blind else 'stock'
 
     # ------------------------------------------------------------------
@@ -156,15 +161,26 @@ def generate_listing_excel(
             ('Qté Comptée', 14),
         ]
     else:
+        # Colonnes de stock selon l'emplacement choisi :
+        # - 'reserve' : uniquement Stock Rés. (quantity_reserved)
+        # - 'rayon'   : uniquement Stock Rayon (quantity_remaining)
+        # - 'tous'    : les deux colonnes
+        if stock_location == 'reserve':
+            stock_cols = [('Stock Rés.', 12)]
+        elif stock_location == 'rayon':
+            stock_cols = [('Stock Rayon', 12)]
+        else:
+            stock_cols = [('Stock Rayon', 10), ('Stock Rés.', 10)]
+
         columns = [
+            ('ID', 8),
             ('CIP', 14),
             ('Désignation', 38),
             ('Forme', 16),
             ('Rayon', 14),
             ('N° Lot', 14),
             ('Exp. Lot', 12),
-            ('Stock Lot', 10),
-            ('Stock Rés.', 10),
+            *stock_cols,
             ('PMP', 12),
             ('Val. Stock', 14),
             ('Prix Vente', 12),
@@ -300,25 +316,47 @@ def generate_listing_excel(
                 ]
                 # Pas de totaux stock/valeur en mode aveugle
             else:
+                # Colonnes de stock selon l'emplacement choisi
+                if stock_location == 'reserve':
+                    stock_val_for_excel = r.get('stock_reserve', 0)
+                    stock_vals = [stock_val_for_excel]
+                    group_total_stock += stock_val_for_excel
+                    # Valeur basée sur le stock réserve
+                    pmp_val = r.get('pmp', 0)
+                    valeur = stock_val_for_excel * pmp_val
+                    group_total_valeur += valeur
+                elif stock_location == 'rayon':
+                    stock_val_for_excel = r.get('stock', 0)
+                    stock_vals = [stock_val_for_excel]
+                    group_total_stock += stock_val_for_excel
+                    group_total_valeur += r.get('valeur_stock', 0)
+                else:  # 'tous'
+                    stock_vals = [r.get('stock', 0), r.get('stock_reserve', 0)]
+                    group_total_stock += r.get('stock', 0)
+                    group_total_valeur += r.get('valeur_stock', 0)
+
                 vals = [
+                    r.get('produit_id', ''),
                     r.get('cip', ''),
                     r.get('name', ''),
                     r.get('forme', ''),
                     r.get('rayon', ''),
                     r.get('lot_numero', ''),
                     r.get('lot_expiration', ''),
-                    r.get('stock', 0),
-                    r.get('stock_reserve', 0),
+                    *stock_vals,
                     r.get('pmp', 0),
                     r.get('valeur_stock', 0),
                     r.get('prix_vente', 0),
                 ]
-                group_total_stock += r.get('stock', 0)
-                group_total_valeur += r.get('valeur_stock', 0)
 
-            # Colonnes monétaires selon le mode
+            # Colonnes monétaires selon le mode et l'emplacement
             if listing_type == 'stock':
-                money_cols = (9, 10, 11)
+                # Les colonnes monétaires (PMP, Val. Stock, Prix Vente) sont
+                # décalées selon le nombre de colonnes de stock (1 ou 2)
+                nb_stock_cols = len(stock_vals) if listing_type == 'stock' else 0
+                # Position de PMP = 7 (fixes) + nb_stock_cols + 1
+                pmp_col = 8 + nb_stock_cols
+                money_cols = (pmp_col, pmp_col + 1, pmp_col + 2)
             elif listing_type == 'inventaire':
                 money_cols = (8, 9)
             else:  # blind : pas de colonnes monétaires
@@ -448,10 +486,15 @@ def generate_listing_excel(
 # Source de données : Stock courant (Produit)
 # ---------------------------------------------------------------------------
 
-def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None):
+def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock_location: str = 'tous'):
     """
     Construit le dict {group_name: [rows]} à partir des lots de stock (StockLot).
     Une ligne par lot, avec N° lot, date expiration, quantité restante et PMP.
+
+    stock_location:
+      - 'tous'    : tous les lots
+      - 'rayon'   : lots avec quantity_remaining > 0 (stock rayon)
+      - 'reserve' : lots avec quantity_reserved > 0 (stock réserve)
     """
     qs = StockLot.objects.filter(
         produit__isnull=False,
@@ -462,6 +505,15 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None):
         'fournisseur',
     )
 
+    # ── Filtre par emplacement de stock (rayon vs réserve) ──
+    if stock_location == 'reserve':
+        # Uniquement les lots avec stock réserve > 0
+        qs = qs.filter(quantity_reserved__gt=0)
+    elif stock_location == 'rayon':
+        # Uniquement les lots avec stock rayon (quantity_remaining) > 0
+        qs = qs.filter(quantity_remaining__gt=0)
+    # else 'tous' : pas de filtre supplémentaire sur l'emplacement
+
     # Filtre stock (sur quantity_remaining du lot)
     if stock_filter == 'zero':
         qs = qs.filter(quantity_remaining__lte=0)
@@ -469,7 +521,10 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None):
         qs = qs.filter(quantity_remaining__gt=0)
     else:
         # 'tous' : exclure les lots épuisés (quantity_remaining = 0)
-        qs = qs.filter(quantity_remaining__gt=0)
+        # sauf si on est en mode réserve (où quantity_remaining peut être 0
+        # mais quantity_reserved > 0)
+        if stock_location != 'reserve':
+            qs = qs.filter(quantity_remaining__gt=0)
 
     # Filtre entité
     if filter_id:

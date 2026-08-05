@@ -2,6 +2,67 @@
 
 ---
 
+## 2026-08-05 (11) — Session du soir
+
+### 🔧 Fixes frontend + backend (déploiements locaux multiples)
+
+- **`ChevronDown` non défini** dans `EtatsInventaire.tsx` :
+  - Ajout de l'import manquant dans l'import lucide-react
+  - Fichier : `frontend/frontend/src/components/EtatsInventaire.tsx`
+
+- **`selectedInvInfo` / `selectedInventaire` non définis** dans `EtatsInventaire.tsx` :
+  - Code mort référençant un mode "inventaire" qui n'existe pas dans ce composant
+    (seules les sources `stock` et `blind` sont disponibles)
+  - Suppression des références + simplification du récapitulatif "Source"
+  - Fichier : `frontend/frontend/src/components/EtatsInventaire.tsx`
+
+### ✨ Filtre emplacement stock (Rayon / Réserve) dans l'export inventaire
+
+- **Demande** : l'export Excel "Stock courant" doit permettre de choisir entre
+  "Stock Rayon" (quantity_remaining), "Stock Réserve" (quantity_reserved > 0)
+  ou "Tous", et n'afficher que la colonne de stock correspondante
+- **Backend** :
+  - Ajout du paramètre `stock_location` (tous|rayon|reserve) dans
+    `generate_listing_excel()` et la view `listing_excel`
+  - `_get_rows_from_stock()` filtre maintenant par emplacement :
+    - `reserve` → uniquement lots avec `quantity_reserved > 0`
+    - `rayon` → uniquement lots avec `quantity_remaining > 0`
+  - Les colonnes Excel s'adaptent : 1 colonne de stock (rayon OU réserve) ou 2 (tous)
+  - Ajout de la colonne **ID produit** dans le mode stock (était absente)
+  - Fichiers : `backend/api/views/stocks/inventaire/listing_excel.py`,
+    `backend/api/views/stocks/inventaire_main.py`
+- **Frontend** :
+  - Nouveau type `StockLocationOption` + state `stockLocation`
+  - Nouveau sélecteur "Emplacement" (RadioCard) visible uniquement en mode stock
+  - Ajout de `stock_location` dans les paramètres d'export
+  - Ligne "Emplacement" dans le récapitulatif
+  - Fichier : `frontend/frontend/src/components/EtatsInventaire.tsx`
+
+### 🎨 Scroll bar dans l'onglet MVMTS (fiche produit)
+
+- **Problème** : le tableau des mouvements de stock débordait de l'écran
+  quand il y avait beaucoup de lignes
+- **Fix** : ajout de `max-h-[60vh] overflow-y-auto` sur le conteneur du tableau
+  (le header reste sticky grâce à `sticky top-0` déjà présent)
+- Fichier : `frontend/frontend/src/components/products/ProductTabsContent.tsx`
+
+### 📄 Documentation déploiement dans AGENTS.md
+
+- Nouvelle section "Déploiement" documentant :
+  - Les options de `deploy.ps1` (all, all-full, frontend, backend, -BackupDB, -Rebuild)
+  - Le déploiement production (git pull + docker compose build + up -d)
+  - Le rappel Ctrl+F5 pour le cache PWA
+  - La note Cython (dev vs prod)
+- Fichier : `AGENTS.md`
+
+### 🔧 Fix backend `creances.py`
+
+- `fp.total_ligne` → `getattr(fp, 'total_ligne', None)` pour éviter erreur
+  si l'attribut n'existe pas sur certains objets
+- Fichier : `backend/api/views/ventes/creances.py`
+
+---
+
 ## 2026-08-05 (10)
 
 ### 🚑 Restauration des fichiers supprimés par erreur + création compile_protected.py
