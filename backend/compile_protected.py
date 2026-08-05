@@ -68,8 +68,8 @@ def compile_one(py_path: Path) -> None:
     print(f"\n[compile] === {py_path.relative_to(BASE_DIR)} ===")
 
     # 1. Cython : .py -> .c
-    #    --3x force Python 3 syntax
-    run([sys.executable, "-m", "Cython.Build.Cythonize", "--3x", str(py_path)])
+    #    -3 force Python 3 syntax
+    run([sys.executable, "-m", "Cython.Build.Cythonize", "-3", str(py_path)])
 
     c_file = py_path.with_suffix(".c")
     if not c_file.exists():
