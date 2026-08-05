@@ -608,7 +608,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                         'selling_price': float(fp.selling_price),
                         'discount': float(fp.discount or 0),
                         'tva': float(fp.tva or 0),
-                        'total_ligne': float(fp.total_ligne or (fp.quantity * fp.selling_price)),
+                        'total_ligne': float(getattr(fp, 'total_ligne', None) or (fp.quantity * fp.selling_price)),
                     })
                 item['produits'] = produits_data
 

@@ -99,7 +99,13 @@ function Deploy-Frontend {
     Push-Location (Join-Path $scriptPath "frontend/frontend")
     try {
         Write-Host "  npm run build..." -ForegroundColor Yellow
+        # Vite/node émet des warnings sur stderr (ex: "Generated an empty chunk")
+        # qui déclenchent une exception avec ErrorActionPreference=Stop.
+        # On relâche temporairement pour ne pas échouer sur ces warnings.
+        $prevEAP = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
         npm run build
+        $ErrorActionPreference = $prevEAP
         if ($LASTEXITCODE -ne 0) { throw "Build frontend échoué (code $LASTEXITCODE)" }
         Write-Host "  ✅ Build OK" -ForegroundColor Green
 
