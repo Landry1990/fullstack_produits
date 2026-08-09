@@ -14,7 +14,7 @@ interface AvoirLigne {
     est_cloture: boolean;
 }
 
-interface AvoirData {
+export interface AvoirData {
     id: number;
     numero: string;
     date: string;
