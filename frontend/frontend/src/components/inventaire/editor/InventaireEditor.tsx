@@ -42,9 +42,9 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         setSendingTelegram(true);
         try {
             await api.post('telegram/rapport-inventaire/', activeInventaire?.id ? { inventaire_id: activeInventaire.id } : {});
-            toast.success('Rapport inventaire envoyé sur Telegram !', { icon: '📨' });
+            toast.success(t('inventaire.telegram_report_sent'), { icon: '📨' });
         } catch (err: unknown) {
-            toast.error(err?.response?.data?.message || 'Erreur envoi Telegram');
+            toast.error(err?.response?.data?.message || t('common:telegram.send_error'));
         } finally {
             setSendingTelegram(false);
         }
@@ -116,19 +116,19 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         ) : (
                             <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600">
                                 <History className="h-3 w-3" />
-                                {t('common:status.draft', { defaultValue: 'Brouillon' })}
+                                {t('common:status.draft')}
                             </span>
                         )}
                         {autoSaving && (
                             <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 animate-pulse">
                                 <div className="animate-spin rounded-full size-3 border-b-2 border-slate-400"></div>
-                                {t('common:auto_saving', { defaultValue: 'Sauvegarde auto...' })}
+                                {t('common:auto_saving')}
                             </span>
                         )}
                         {activeInventaire?.inventory_type && (
                             <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600">
-                                {activeInventaire.inventory_type === 'RESERVE' ? t('inventaire.types.reserve', 'STOCK RÉSERVE') :
-                                 activeInventaire.inventory_type === 'RAYON' ? t('inventaire.types.rayon', 'STOCK RAYON') : t('inventaire.types.global', 'STOCK GLOBAL')}
+                                {activeInventaire.inventory_type === 'RESERVE' ? t('inventaire.types.reserve') :
+                                 activeInventaire.inventory_type === 'RAYON' ? t('inventaire.types.rayon') : t('inventaire.types.global')}
                             </span>
                         )}
                     </div>
@@ -141,13 +141,13 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'ENTRY' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
                         onClick={() => setActiveTab('ENTRY')}
                       >
-                        {t('inventaire.detail.tab_entry', { defaultValue: 'Saisie' })}
+                        {t('inventaire.detail.tab_entry')}
                       </button>
                       <button
                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'ANALYSIS' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
                         onClick={() => setActiveTab('ANALYSIS')}
                       >
-                        {t('inventaire.detail.tab_analysis', { defaultValue: 'Analyse' })}
+                        {t('inventaire.detail.tab_analysis')}
                       </button>
                   </div>
 
@@ -156,11 +156,11 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                       value={printGroupBy}
                       onChange={(e) => setPrintGroupBy(e.target.value as unknown)}
                       className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-[10px] font-bold uppercase text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
-                      title={t('inventaire.detail.print_group_by', 'Regrouper par')}
+                      title={t('inventaire.detail.print_group_by')}
                     >
-                      <option value="rayon">{t('inventaire.detail.group_rayon', 'Par Rayon')}</option>
-                      <option value="forme">{t('inventaire.detail.group_forme', 'Par Forme')}</option>
-                      <option value="groupe">{t('inventaire.detail.group_groupe', 'Par Groupe')}</option>
+                      <option value="rayon">{t('inventaire.detail.group_rayon')}</option>
+                      <option value="forme">{t('inventaire.detail.group_forme')}</option>
+                      <option value="groupe">{t('inventaire.detail.group_groupe')}</option>
                     </select>
                     <button
                       className="inline-flex items-center justify-center h-10 px-4 rounded-xl gap-2 text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-60"
@@ -174,7 +174,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                       className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#229ED9]/30 text-[#229ED9] hover:bg-[#229ED9]/10 hover:border-[#229ED9] transition-all disabled:opacity-60"
                       onClick={handleSendTelegram}
                       disabled={sendingTelegram || !activeInventaire?.id}
-                      title="Envoyer le rapport d'inventaire sur Telegram"
+                      title={t('common:telegram.inventory_report')}
                     >
                       {sendingTelegram
                         ? <div className="animate-spin rounded-full size-4 border-b-2 border-[#229ED9]"></div>
@@ -205,10 +205,10 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                             className="inline-flex items-center justify-center h-9 px-4 rounded-xl gap-2 text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-60"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={importing || saving}
-                            title={t('inventaire.detail.import_csv_title', 'Importer un fichier CSV (Cip, Quantite)')}
+                            title={t('inventaire.detail.import_csv_title')}
                         >
                             {importing ? <div className="animate-spin rounded-full size-4 border-b-2 border-slate-500"></div> : <Upload className="h-4 w-4" />}
-                            <span className="hidden sm:inline">{t('common:import', 'Importer')}</span>
+                            <span className="hidden sm:inline">{t('common:import')}</span>
                         </button>
 
                         <button

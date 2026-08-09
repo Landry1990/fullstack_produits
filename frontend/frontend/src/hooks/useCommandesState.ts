@@ -1170,12 +1170,14 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     setIsMergeModalOpen(true);
   }
 
-  function handleMergeSuccess(mergedCount: number, targetOrderId: number) {
+  async function handleMergeSuccess(mergedCount: number, targetOrderId: number) {
       setIsMergeModalOpen(false);
       setSelectedOrderIds(new Set());
       toast.success(t('orders:messages.merge_success_detailed', { count: mergedCount, id: targetOrderId }), { icon: '🤝' });
-      queryClient.invalidateQueries({ queryKey: ['commandes'] });
-      queryClient.invalidateQueries({ queryKey: ['commande'] });
+      await queryClient.refetchQueries({ queryKey: ['commandes'] });
+      await queryClient.refetchQueries({ queryKey: ['commande'] });
+      // Naviguer vers la commande fusionnée
+      setViewMode('LIST');
   }
 
   function updateCommandeProduitField(

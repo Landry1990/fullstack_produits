@@ -1,7 +1,7 @@
 import React, { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, AlertTriangle, TrendingUp, PieChart } from 'lucide-react';
-import { formatPrice } from '../../../utils/formatters';
+import { formatCurrency } from '../../../utils/formatters';
 import type { InventoryStats } from '../../../types';
 import api from '../../../services/api';
 import { toast } from 'react-hot-toast';
@@ -35,7 +35,7 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
                 {!data || data.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full py-12 gap-3 text-slate-200">
                         <PieChart className="h-10 w-10" />
-                        <p className="text-sm font-medium text-slate-400">{t('inventaire.analysis.no_data', { defaultValue: 'Aucune donnée' })}</p>
+                        <p className="text-sm font-medium text-slate-400">{t('inventaire.analysis.no_data')}</p>
                     </div>
                 ) : (
                     data.map((p, i) => (
@@ -47,13 +47,13 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
                                 <div className="max-w-[150px] md:max-w-xs">
                                     <div className="font-bold text-sm text-slate-700 group-hover:text-emerald-600 transition-colors truncate">{p.produit_nom}</div>
                                     <div className={`text-[10px] font-bold uppercase tracking-tight mt-0.5 ${colorClass}`}>
-                                        {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short', 'unités')}
+                                        {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short')}
                                     </div>
                                 </div>
                             </div>
                             <div className="text-right">
                                 <div className={`font-mono font-bold ${colorClass}`}>
-                                    {p.valeur > 0 ? '+' : ''}{formatPrice(p.valeur)} F
+                                    {p.valeur > 0 ? '+' : ''}{formatCurrency(p.valeur)}
                                 </div>
                             </div>
                         </div>

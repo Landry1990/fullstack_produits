@@ -54,20 +54,20 @@ export const InventaireList: React.FC<InventaireListProps> = ({
         if (!inventaire) return;
 
         if (!pharmSettings?.pharmacist_whatsapp_number) {
-            toast.error("Le numéro WhatsApp de la pharmacienne n'est pas configuré dans les paramètres.");
+            toast.error(t('inventaire.whatsapp_not_configured'));
             return;
         }
 
         setSharingId(id);
         try {
-            const text = generateInventorySummaryText(inventaire, pharmSettings.pharmacy_name || 'Ma Pharmacie');
+            const text = generateInventorySummaryText(inventaire, pharmSettings.pharmacy_name || t('common:default_pharmacy_name'));
             const success = openWhatsApp(pharmSettings.pharmacist_whatsapp_number, text);
             
             if (success) {
-                toast.success(t('inventaire.whatsapp_prepared', { defaultValue: 'Rapport préparé pour WhatsApp !' }), { icon: '📱' });
+                toast.success(t('inventaire.whatsapp_prepared'), { icon: '📱' });
             }
         } catch {
-            toast.error('Erreur lors de la préparation du partage');
+            toast.error(t('inventaire.whatsapp_share_error'));
         } finally {
             setSharingId(null);
         }
@@ -167,7 +167,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                 {/* Pagination Controls */}
                 <div className="p-4 border-t border-slate-100 flex items-center justify-between shrink-0">
                     <div className="text-sm text-slate-500 font-medium">
-                        {t('common:pagination.page_info', { current: currentPage, total: totalCount, label: t('inventaire.list.title_short', 'inventaires') })}
+                        {t('common:pagination.page_info', { current: currentPage, total: totalCount, label: t('inventaire.list.title_short') })}
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -175,14 +175,14 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                             onClick={() => prevPage && fetchInventaires(prevPage)}
                         >
                             <ChevronLeft className="h-4 w-4" />
-                            {t('common:pagination.prev', 'Précédent')}
+                            {t('common:pagination.prev')}
                         </button>
                         <button
                             className="inline-flex items-center justify-center h-8 px-4 rounded-xl text-sm font-bold border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-all active:scale-95 gap-1 disabled:opacity-50"
                             disabled={!nextPage || loading}
                             onClick={() => nextPage && fetchInventaires(nextPage)}
                         >
-                            {t('common:pagination.next', 'Suivant')}
+                            {t('common:pagination.next')}
                             <ChevronRight className="h-4 w-4" />
                         </button>
                     </div>

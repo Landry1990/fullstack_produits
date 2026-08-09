@@ -203,7 +203,9 @@
         "validate_password": "Mot de passe Sudo",
         "validate_required": "(Requis pour valider)",
         "cancel": "Annuler",
-        "confirm": "Confirmer la validation"
+        "confirm": "Confirmer la validation",
+        "title": "Validation Requise",
+        "message": "Veuillez confirmer cette action."
     },
     "cip": "CIP",
     "not_available": "N/A",
@@ -429,5 +431,29 @@
         "update": "Mettre à jour",
         "expired_title": "LICENCE EXPIRÉE :",
         "expired_message": "L'accès au système sera restreint. Contactez votre administrateur immédiatement."
-    }
+    },
+    "auto_saving": "Sauvegarde auto...",
+    "search": "recherche",
+    "navigate": "naviguer",
+    "select": "sélectionner",
+    "cancel_shortcut": "Annuler (Esc)",
+    "confirm_shortcut": "Valider (Ctrl+Enter)",
+    "keyboard_help": "↑/↓ : naviguer • Tab : champ suivant • Enter : suivant/confirmer • Ctrl+Enter : valider • Esc : annuler",
+    "exp": "Exp",
+    "default_pharmacy_name": "Ma Pharmacie",
+    "printed_on": "Imprimé le ",
+    "option": "Option :",
+    "share_whatsapp": "Partager sur WhatsApp",
+    "export_excel": "Exporter en Excel",
+    "generating": "Génération…",
+    "lot_number": "Numéro de lot",
+    "software_name": "Logiciel ZENITH",
+    "phone_short": "Tél : ",
+    "times": "fois",
+    "selling_price_short": "P.V.",
+    "unsaved": "Modifié",
+    "products": "produits",
+    "id": "ID",
+    "designation": "Désignation",
+    "lot": "Lot"
 }

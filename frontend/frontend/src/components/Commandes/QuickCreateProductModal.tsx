@@ -2,21 +2,20 @@ import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { X, Zap, Loader2 } from 'lucide-react';
+import { X, Zap, Pencil, Loader2 } from 'lucide-react';
 import api from '../../services/api';
 import { useTVA } from '../../hooks/useTVA';
 import { normalizeNumberInput } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
-import type { ProduitModel, Rayon, Fournisseur } from '../../types';
+import type { ProduitModel, Rayon } from '../../types';
 
 interface QuickCreateProductModalProps {
   open: boolean;
   onClose: () => void;
   onCreated: (produit: ProduitModel) => void;
   rayons?: Rayon[];
-  fournisseurs?: Fournisseur[];
-  defaultFournisseurId?: string | number | null;
+  editProduct?: ProduitModel | null;
 }
 
 export default function QuickCreateProductModal({
@@ -24,49 +23,59 @@ export default function QuickCreateProductModal({
   onClose,
   onCreated,
   rayons: rayonsProp,
-  fournisseurs: fournisseursProp,
-  defaultFournisseurId,
+  editProduct,
 }: QuickCreateProductModalProps) {
   const { t } = useTranslation(['orders', 'products', 'common']);
   const { tvaList } = useTVA();
+  const isEditMode = !!editProduct;
 
-  // Auto-fetch rayons/fournisseurs if not provided via props
+  // Auto-fetch rayons if not provided via props
   const [localRayons, setLocalRayons] = useState<Rayon[]>([]);
-  const [localFournisseurs, setLocalFournisseurs] = useState<Fournisseur[]>([]);
 
   useEffect(() => {
     if (open && !rayonsProp?.length) {
       api.get('rayons/').then(res => setLocalRayons(res.data?.results || res.data || [])).catch(() => {});
     }
-    if (open && !fournisseursProp?.length) {
-      api.get('fournisseurs/').then(res => setLocalFournisseurs(res.data?.results || res.data || [])).catch(() => {});
-    }
-  }, [open, rayonsProp?.length, fournisseursProp?.length]);
+  }, [open, rayonsProp?.length]);
 
   const rayons = rayonsProp?.length ? rayonsProp : localRayons;
-  const fournisseurs = fournisseursProp?.length ? fournisseursProp : localFournisseurs;
 
   const [name, setName] = useState('');
   const [costPrice, setCostPrice] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
   const [tva, setTva] = useState('19.25');
   const [rayon, setRayon] = useState('');
-  const [fournisseur, setFournisseur] = useState('');
+  const [cip1, setCip1] = useState('');
+  const [cip2, setCip2] = useState('');
+  const [cip3, setCip3] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
-      setName('');
-      setCostPrice('');
-      setSellingPrice('');
-      setTva(tvaList.find(t => t.taux === '19.25')?.taux || '19.25');
-      setRayon('');
-      setFournisseur(defaultFournisseurId ? String(defaultFournisseurId) : '');
+      if (editProduct) {
+        setName(editProduct.name || '');
+        setCostPrice(editProduct.cost_price || '');
+        setSellingPrice(editProduct.selling_price || '');
+        setTva(String(editProduct.tva ?? '19.25'));
+        setRayon(editProduct.rayon ? String(editProduct.rayon) : '');
+        setCip1(editProduct.cip1 || '');
+        setCip2(editProduct.cip2 || '');
+        setCip3(editProduct.cip3 || '');
+      } else {
+        setName('');
+        setCostPrice('');
+        setSellingPrice('');
+        setTva(tvaList.find(t => t.taux === '19.25')?.taux || '19.25');
+        setRayon('');
+        setCip1('');
+        setCip2('');
+        setCip3('');
+      }
       setError(null);
       setLoading(false);
     }
-  }, [open, defaultFournisseurId, tvaList]);
+  }, [open, editProduct, tvaList]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -96,22 +105,32 @@ export default function QuickCreateProductModal({
 
     setLoading(true);
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         name: trimmedName,
         cost_price: costPrice.trim(),
         selling_price: sellingPrice.trim(),
         tva: tva || '19.25',
         rayon: rayon ? parseInt(rayon, 10) : null,
-        fournisseur: fournisseur ? parseInt(fournisseur, 10) : null,
-        stock: 0,
-        stock_alert: 0,
-        stock_minimum: 0,
-        stock_maximum: 0,
-        use_lot_management: true,
+        cip1: cip1.trim() || null,
+        cip2: cip2.trim() || null,
+        cip3: cip3.trim() || null,
       };
 
-      const { data } = await api.post<ProduitModel>('produits/', payload);
-      toast.success(t('orders:messages.quick_product_created', { name: data.name }));
+      let data: ProduitModel;
+      if (isEditMode && editProduct) {
+        const res = await api.patch<ProduitModel>(`produits/${editProduct.id}/`, payload);
+        data = res.data;
+        toast.success(t('orders:messages.quick_product_updated', { name: data.name, defaultValue: `Produit "${data.name}" modifié` }));
+      } else {
+        payload.stock = 0;
+        payload.stock_alert = 0;
+        payload.stock_minimum = 0;
+        payload.stock_maximum = 0;
+        payload.use_lot_management = true;
+        const res = await api.post<ProduitModel>('produits/', payload);
+        data = res.data;
+        toast.success(t('orders:messages.quick_product_created', { name: data.name }));
+      }
       onCreated(data);
       onClose();
     } catch (err: unknown) {
@@ -134,6 +153,14 @@ export default function QuickCreateProductModal({
 
   if (!open) return null;
 
+  const Icon = isEditMode ? Pencil : Zap;
+  const title = isEditMode
+    ? t('orders:quick_create.edit_title', { defaultValue: 'Modifier le produit' })
+    : t('orders:quick_create.title');
+  const submitLabel = isEditMode
+    ? t('common:save', { defaultValue: 'Enregistrer' })
+    : t('orders:quick_create.submit');
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
@@ -141,11 +168,11 @@ export default function QuickCreateProductModal({
         {/* Header */}
         <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-50 rounded-lg">
-              <Zap className="size-5 text-emerald-600" />
+            <div className={`p-2 rounded-lg ${isEditMode ? 'bg-blue-50' : 'bg-emerald-50'}`}>
+              <Icon className={`size-5 ${isEditMode ? 'text-blue-600' : 'text-emerald-600'}`} />
             </div>
             <h3 className="text-base font-bold text-slate-800">
-              {t('orders:quick_create.title')}
+              {title}
             </h3>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors">
@@ -252,21 +279,44 @@ export default function QuickCreateProductModal({
             </div>
           </div>
 
-          {/* Fournisseur */}
+          {/* CIP1 / CIP2 / CIP3 */}
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-              {t('products:form.fournisseur')}
+              {t('products:form.cip1')}
             </label>
-            <select
-              value={fournisseur}
-              onChange={(e) => setFournisseur(e.target.value)}
-              className="w-full h-11 rounded-lg border border-slate-200 bg-white text-slate-800 px-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
-            >
-              <option value="">{t('products:form.select_fournisseur')}</option>
-              {fournisseurs.map(f => (
-                <option key={f.id} value={f.id}>{f.name}</option>
-              ))}
-            </select>
+            <Input
+              type="text"
+              value={cip1}
+              onChange={(e) => setCip1(e.target.value)}
+              placeholder="Code CIP 1"
+              className="h-11 text-sm font-mono"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                {t('products:form.cip2')}
+              </label>
+              <Input
+                type="text"
+                value={cip2}
+                onChange={(e) => setCip2(e.target.value)}
+                placeholder="CIP 2"
+                className="h-11 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                {t('products:form.cip3')}
+              </label>
+              <Input
+                type="text"
+                value={cip3}
+                onChange={(e) => setCip3(e.target.value)}
+                placeholder="CIP 3"
+                className="h-11 text-sm font-mono"
+              />
+            </div>
           </div>
 
           {/* Actions */}
@@ -277,10 +327,10 @@ export default function QuickCreateProductModal({
             <Button
               type="submit"
               disabled={loading}
-              className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className={`h-10 px-6 text-white ${isEditMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
             >
-              {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Zap className="size-4 mr-2" />}
-              {t('orders:quick_create.submit')}
+              {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Icon className="size-4 mr-2" />}
+              {submitLabel}
             </Button>
           </div>
         </form>

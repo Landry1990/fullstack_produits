@@ -35,6 +35,7 @@ interface CommandeProductRowProps {
     handleSellingPriceBlur?: (index: number) => void;
     onToggleExpand: () => void;
     onDeleteProduct: () => void;
+    onEditProduct?: () => void;
 }
 
 export function CommandeProductRow({
@@ -55,6 +56,7 @@ export function CommandeProductRow({
     handleSellingPriceBlur,
     onToggleExpand,
     onDeleteProduct,
+    onEditProduct,
 }: CommandeProductRowProps) {
     const { t } = useTranslation(['orders', 'common']);
     const [isMargeFocused, setIsMargeFocused] = useState(false);
@@ -108,7 +110,11 @@ export function CommandeProductRow({
                 <td className="pl-2 py-0.5 min-w-[220px]">
                     <div className="font-medium text-sm">
                         <div className="flex items-center gap-1">
-                            <span className={`${isDeleted ? 'italic text-slate-400' : ''} whitespace-nowrap overflow-hidden text-ellipsis`} title={produitName}>
+                            <span
+                                className={`${isDeleted ? 'italic text-slate-400' : ''} whitespace-nowrap overflow-hidden text-ellipsis ${onEditProduct ? 'cursor-pointer hover:text-blue-600 hover:underline' : ''}`}
+                                title={produitName}
+                                onClick={onEditProduct}
+                            >
                                 {produitName}
                             </span>
                             {isExclusive && (
