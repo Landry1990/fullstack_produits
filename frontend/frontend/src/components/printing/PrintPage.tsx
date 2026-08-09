@@ -4,9 +4,9 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useLicence } from '../../context/LicenceContext';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
-import InventairePrintTemplate from './InventairePrintTemplate';
+import InventairePrintTemplate, { type InventairePrintData } from './InventairePrintTemplate';
 import StockValuationTemplate, { type StockValuationData } from './StockValuationTemplate';
-import AvoirPrintTemplate from './AvoirPrintTemplate';
+import AvoirPrintTemplate, { type AvoirData } from './AvoirPrintTemplate';
 import RecapTemplate, { type RecapData } from './RecapTemplate';
 import { logger } from '../../utils/logger'
 
@@ -22,9 +22,9 @@ const PrintPage: React.FC = () => {
     const clientNameOverride = searchParams.get('client_name');
     const type = searchParams.get('type');
 
-    const [inventoryData, setInventoryData] = useState<unknown>(null);
+    const [inventoryData, setInventoryData] = useState<InventairePrintData | null>(null);
     const [stockValuationData, setStockValuationData] = useState<StockValuationData | null>(null);
-    const [avoirData, setAvoirData] = useState<unknown | null>(null);
+    const [avoirData, setAvoirData] = useState<AvoirData | null>(null);
     const [recapData, setRecapData] = useState<RecapData | null>(null);
 
     useEffect(() => {
