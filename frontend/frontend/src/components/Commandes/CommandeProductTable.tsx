@@ -164,7 +164,10 @@ export default function CommandeProductTable({
                                         handleSellingPriceBlur={handleSellingPriceBlur}
                                         onToggleExpand={() => setExpandedRow(expandedRow === index ? null : index)}
                                         onDeleteProduct={() => setProductToDelete(index)}
-                                        onEditProduct={onEditProduct && p.produit ? () => onEditProduct(p.produit as number) : undefined}
+                                        onEditProduct={(() => {
+                                            const produitId = p.produit && typeof p.produit === 'object' ? p.produit.id : p.produit;
+                                            return onEditProduct && produitId ? () => onEditProduct(produitId as number) : undefined;
+                                        })()}
                                     />
                                     {expandedRow === index && (
                                         <CommandeProductExpandedRow p={p} colSpan={colSpan} />

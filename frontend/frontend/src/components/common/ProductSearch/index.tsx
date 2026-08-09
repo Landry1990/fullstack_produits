@@ -44,6 +44,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   onModeChange,
   // Permissions
   user,
+  skipStockCheck = false,
   compact = false
 }) => {
   const { t } = useTranslation(['facturation', 'common'])
@@ -168,7 +169,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     const itemProps = getItemProps?.(idx) || { className: '', style: {} }
     const isActive = itemProps.className?.includes('active')
     const stock = item.stock ?? 0
-    const canSellNegativeStock = user?.is_superuser || user?.profile?.can_sell_negative_stock || user?.can_sell_negative_stock
+    const canSellNegativeStock = skipStockCheck || user?.is_superuser || user?.profile?.can_sell_negative_stock || user?.can_sell_negative_stock
     const isOutOfStock = stock <= 0
     const isBlocked = isOutOfStock && !canSellNegativeStock
     const isNegativeStock = stock < 0

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCommandesState } from '../hooks/useCommandesState';
-import type { Commande } from '../types';
+import { useCommandesStore } from '../stores/useCommandesStore';
+import type { Commande, ProduitModel } from '../types';
 import { ShoppingCart, Store, Truck } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
@@ -32,6 +34,8 @@ interface CommandesProps {
 export default function Commandes({ forcedType }: CommandesProps) {
   const hook = useCommandesState(forcedType);
   const { state, listProps, detailsProps, formProps, modals } = hook;
+  const queryClient = useQueryClient();
+  const setCommandeProduits = useCommandesStore((s) => s.setCommandeProduits);
   const [detailProduitId, setDetailProduitId] = useState<number | null>(null);
   const [detailActiveTab, setDetailActiveTab] = useState('general');
   const [editProductId, setEditProductId] = useState<number | null>(null);
@@ -177,7 +181,22 @@ export default function Commandes({ forcedType }: CommandesProps) {
       <QuickCreateProductModal
         open={!!editProductId && !!editProductData}
         onClose={() => setEditProductId(null)}
-        onCreated={() => {
+        onCreated={(updatedProduit: ProduitModel) => {
+          // Met à jour la ligne de commande concernée sans recharger la page
+          setCommandeProduits((prev) =>
+            prev.map((line) => {
+              const lineProduitId = line.produit && typeof line.produit === 'object' ? line.produit.id : line.produit;
+              if (lineProduitId !== updatedProduit.id) return line;
+              return {
+                ...line,
+                produit: typeof line.produit === 'object' ? { ...line.produit, ...updatedProduit } : updatedProduit,
+              };
+            })
+          );
+          // Rafraîchit les caches React Query concernés (recherche produit, détails, listes)
+          queryClient.setQueryData(['produit', updatedProduit.id], updatedProduit);
+          queryClient.invalidateQueries({ queryKey: ['products', 'search'] });
+          queryClient.invalidateQueries({ queryKey: ['produits'] });
           setEditProductId(null);
         }}
         rayons={modals.rayons}
