@@ -11,10 +11,13 @@
         "title": "Shortcuts:",
         "navigate": "Navigate",
         "cash_in": "Cash In",
+        "view_products": "View products",
         "coupon": "Coupon",
         "refresh": "Refresh",
         "quick_select": "Quick select",
-        "enter_key": "Enter"
+        "enter_key": "Enter",
+        "space_key": "Space",
+        "close": "Close"
     },
     "table": {
         "ticket": "Ticket",

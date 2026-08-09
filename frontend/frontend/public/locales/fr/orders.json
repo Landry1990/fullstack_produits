@@ -403,7 +403,13 @@
         "close_error": "Erreur de clôture",
         "status_change_error": "Erreur lors du changement de statut",
         "cancel_reception_error": "Erreur lors de l'annulation",
-        "missing_id": "ID de commande manquant"
+        "missing_id": "ID de commande manquant",
+        "quick_product_created": "Produit \"{{name}}\" créé et ajouté"
+    },
+    "quick_create": {
+        "title": "Création rapide de produit",
+        "name_placeholder": "Nom du produit...",
+        "submit": "Créer le produit"
     },
     "print": {
         "title": "BON DE RÉCEPTION",

@@ -51,7 +51,11 @@
         "price_margin": "Prix et Marge (HT)",
         "validation": {
             "required_fields": "Veuillez remplir tous les champs obligatoires (*)",
-            "unknown_error": "Une erreur inconnue est survenue"
+            "unknown_error": "Une erreur inconnue est survenue",
+            "name_min": "Le nom doit contenir au moins 2 caractères",
+            "cost_price_negative": "Le prix d'achat ne peut pas être négatif",
+            "selling_price_positive": "Le prix de vente doit être positif",
+            "selling_below_cost": "Le prix de vente doit être supérieur ou égal au prix d'achat"
         }
     },
     "actions": {

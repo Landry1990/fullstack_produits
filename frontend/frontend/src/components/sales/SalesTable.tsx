@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Printer, Trash2, RotateCcw, User, Calendar, Receipt, Clock, Copy, FileDigit, Truck } from 'lucide-react';
+import { Eye, Printer, Trash2, RotateCcw, User, Calendar, Receipt, Clock, Copy, FileDigit, Truck, FileEdit } from 'lucide-react';
 import type { Facture } from '../../types';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate, formatTime } from '../../utils/dateUtils';
@@ -40,10 +40,13 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
                 <li><a onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3"><Receipt className="size-4 text-emerald-600" />Ticket Caisse</a></li>
                 <li><a onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3"><Truck className="size-4 text-emerald-600" />Bon de livraison</a></li>
                 <li><a onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3"><Copy className="size-4 text-blue-500" />{t('common:duplicate', { defaultValue: 'Dupliquer' })}</a></li>
+                {(selectedFacture.status === 'PROF' || selectedFacture.status === 'PROFORMA') && (
+                    <li><a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><FileEdit className="size-4 text-emerald-600" />{t('sales:load_to_facturation', { defaultValue: 'Charger en facturation' })}</a></li>
+                )}
                 {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
                     <li><a onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3"><FileDigit className="size-4 text-emerald-600" />Générer un avoir</a></li>
                 )}
-                {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && (
+                {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && selectedFacture.status !== 'PROF' && selectedFacture.status !== 'PROFORMA' && (
                     <li><a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><RotateCcw className="size-4 text-amber-500" />{t('common:refund', { defaultValue: "Modifier/Retour" })}</a></li>
                 )}
                 <div className="border-t border-slate-200 my-1"></div>
@@ -118,7 +121,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
             case 'VAL': return t('sales:status.validated', 'Validated');
             case 'BROU': return t('sales:status.draft', 'Draft');
             case 'ANN': return t('sales:status.cancelled', 'Cancelled');
-            case 'PROF': return t('sales:status.proforma', 'Proforma');
+            case 'PROF': return t('sales:status.proforma', 'Devis');
             default: return status;
         }
     };

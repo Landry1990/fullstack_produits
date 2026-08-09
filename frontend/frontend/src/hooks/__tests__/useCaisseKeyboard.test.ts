@@ -13,6 +13,7 @@ describe('useCaisseKeyboard Hook', () => {
   const mockHandlers = {
     onEncaisser: vi.fn(),
     onOpenCouponPanel: vi.fn(),
+    onViewProducts: vi.fn(),
     onRefresh: vi.fn(),
     onToggleCouponPanel: vi.fn(),
     onCloseModal: vi.fn(),

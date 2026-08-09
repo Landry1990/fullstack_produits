@@ -4,6 +4,7 @@ import type { Facture } from '../types'
 interface KeyboardHandlers {
   onEncaisser: (facture: Facture) => void
   onOpenCouponPanel: (facture: Facture) => void
+  onViewProducts: (facture: Facture) => void
   onRefresh: () => void
   onToggleCouponPanel: () => void
   onCloseModal: () => void
@@ -89,6 +90,16 @@ export const useCaisseKeyboard = (
           const facture = sortedFactures[selectedRowIndex]
           if (facture) {
             current.onEncaisser(facture)
+          }
+        }
+        break
+
+      case ' ':
+        e.preventDefault()
+        if (sortedFactures.length > 0) {
+          const facture = sortedFactures[selectedRowIndex]
+          if (facture) {
+            current.onViewProducts(facture)
           }
         }
         break

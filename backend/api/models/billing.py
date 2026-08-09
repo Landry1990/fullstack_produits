@@ -733,3 +733,17 @@ def update_facture_totals_on_change(sender, instance, created, **kwargs):
             instance._skip_recalculate = False
 
 
+@receiver(post_save, sender=Facture)
+def auto_generate_devis_number(sender, instance, created, **kwargs):
+    """
+    Génère automatiquement un numéro DEV-XXXXXX pour les devis (statut PROF)
+    qui n'ont pas encore de numéro de facture.
+    Couvre tous les chemins de création (API directe, SaleFinalizer, etc.).
+    """
+    if created and instance.status == Facture.Status.PROFORMA and not instance.numero_facture:
+        numero = f"DEV-{instance.id:06d}"
+        # Update direct pour éviter de re-déclencher les signaux post_save
+        Facture.objects.filter(id=instance.id).update(numero_facture=numero)
+        instance.numero_facture = numero
+
+

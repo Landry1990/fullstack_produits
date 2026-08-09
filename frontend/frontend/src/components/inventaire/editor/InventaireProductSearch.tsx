@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Database, Plus, CheckCircle2 } from 'lucide-react';
 import { useProductSearch } from '../../../hooks/inventaire/useProductSearch';
 import { formatDate } from '../../../utils/dateUtils';
+import QuickCreateProductModal from '../../Commandes/QuickCreateProductModal';
+import type { ProduitModel } from '../../../types';
 
 interface InventaireProductSearchProps {
     searchLogic: ReturnType<typeof useProductSearch>;
@@ -14,6 +16,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
     isReadOnly
 }) => {
     const { t } = useTranslation(['stock', 'common']);
+    const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
     const {
         searchQuery, setSearchQuery,
         searchResults, loadingSearch,
@@ -65,23 +68,33 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-1 overflow-visible relative shrink-0">
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-300" />
-                <input
-                    ref={searchInputRef}
-                    type="text"
-                    className="w-full h-8 pl-10 pr-10 text-sm bg-transparent rounded-lg focus:bg-slate-50/50 outline-none text-slate-700 placeholder:text-slate-300"
-                    placeholder={t('inventaire.detail.search_placeholder')}
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    onKeyDown={handleSearchKeyDown}
-                    autoFocus
-                />
-                {loadingSearch && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <div className="animate-spin rounded-full size-4 border-b-2 border-emerald-500"></div>
-                    </div>
-                )}
+            <div className="relative flex items-center gap-1">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-300" />
+                    <input
+                        ref={searchInputRef}
+                        type="text"
+                        className="w-full h-8 pl-10 pr-10 text-sm bg-transparent rounded-lg focus:bg-slate-50/50 outline-none text-slate-700 placeholder:text-slate-300"
+                        placeholder={t('inventaire.detail.search_placeholder')}
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={handleSearchKeyDown}
+                        autoFocus
+                    />
+                    {loadingSearch && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="animate-spin rounded-full size-4 border-b-2 border-emerald-500"></div>
+                        </div>
+                    )}
+                </div>
+                <button
+                    type="button"
+                    onClick={() => setIsQuickCreateOpen(true)}
+                    className="shrink-0 size-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors"
+                    title={t('inventaire.detail.quick_create_product', { defaultValue: 'Créer un produit rapidement' })}
+                >
+                    <Plus className="size-4" />
+                </button>
             </div>
             <div className="px-2 py-1 text-[10px] text-slate-400 flex items-center gap-2">
                 <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">F3</span>
@@ -315,6 +328,16 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                     </div>
                 </div>
             )}
+
+            {/* Quick Create Product Modal */}
+            <QuickCreateProductModal
+                open={isQuickCreateOpen}
+                onClose={() => setIsQuickCreateOpen(false)}
+                onCreated={(produit: ProduitModel) => {
+                    handleProductSelect(produit);
+                    setIsQuickCreateOpen(false);
+                }}
+            />
         </div>
     );
 };

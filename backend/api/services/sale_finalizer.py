@@ -136,8 +136,11 @@ class SaleFinalizer:
         # 10. Validation or Proforma
         if centralized:
             facture.status = Facture.Status.PROFORMA
+            # Générer un numéro de devis DEV-XXXXXX si pas déjà numéroté
+            if not facture.numero_facture:
+                facture.numero_facture = f"DEV-{facture.id:06d}"
             facture._skip_audit = True
-            facture.save(update_fields=['status'])
+            facture.save(update_fields=['status', 'numero_facture'])
             # Notifier la caisse centralisée en temps réel via WebSocket
             try:
                 from channels.layers import get_channel_layer
@@ -301,7 +304,10 @@ class SaleFinalizer:
             coupon.utilise_par = validation_user
             coupon.save()
         except CouponMonnaie.DoesNotExist:
-            pass
+            # Vérifier si le coupon existe mais n'est pas actif
+            if CouponMonnaie.objects.filter(numero=coupon_numero).exists():
+                raise ValueError(f"Le coupon #{coupon_numero} n'est pas actif (déjà utilisé ou expiré).")
+            raise ValueError(f"Coupon #{coupon_numero} introuvable.")
 
     @staticmethod
     def _handle_promis(facture, produits_data, client_id, client_name_override, validation_user):

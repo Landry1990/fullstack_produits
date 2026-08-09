@@ -402,7 +402,13 @@
         "close_error": "Close error",
         "status_change_error": "Error while changing status",
         "cancel_reception_error": "Error during cancellation",
-        "missing_id": "Missing order ID"
+        "missing_id": "Missing order ID",
+        "quick_product_created": "Product \"{{name}}\" created and added"
+    },
+    "quick_create": {
+        "title": "Quick Product Creation",
+        "name_placeholder": "Product name...",
+        "submit": "Create product"
     },
     "print": {
         "title": "RECEIPT",

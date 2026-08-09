@@ -111,7 +111,13 @@ function Deploy-Frontend {
 
         Write-Host "  docker cp dist/ -> nginx..." -ForegroundColor Yellow
         docker cp dist/. "${FRONTEND_CONTAINER}:/usr/share/nginx/html/"
-        docker exec $FRONTEND_CONTAINER nginx -s reload
+        # nginx -s reload écrit son notice sur stderr ("signal process started"),
+        # ce qui déclenche une exception avec ErrorActionPreference=Stop.
+        $prevEAP = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        docker exec $FRONTEND_CONTAINER nginx -s reload 2>&1 | Out-Null
+        $ErrorActionPreference = $prevEAP
+        if ($LASTEXITCODE -ne 0) { throw "nginx reload échoué (code $LASTEXITCODE)" }
         Write-Host "  ✅ Frontend déployé" -ForegroundColor Green
     } finally { Pop-Location }
 }

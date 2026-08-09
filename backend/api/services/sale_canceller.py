@@ -13,6 +13,7 @@ from django.utils import timezone
 
 from ..models import (
     Caisse,
+    CouponMonnaie,
     DepotClient,
     Facture,
     FactureProduit,
@@ -68,7 +69,10 @@ class SaleCanceller:
             facture.notes = f"{facture.notes or ''}\n[Annulation le {facture.date_annulation.strftime('%d/%m/%Y %H:%M')}] Motif: {motif}".strip()
         facture.save(update_fields=['status', 'notes', 'date_annulation', 'cancelled_by'])
 
-        # 6. Cancel associated payments
+        # 6. Restore coupons used on this invoice
+        SaleCanceller._restore_coupons(facture)
+
+        # 7. Cancel associated payments
         SaleCanceller._cancel_payments(facture, user)
 
         # Cache invalidation
@@ -122,6 +126,20 @@ class SaleCanceller:
                     f"le {timezone.now().strftime('%d/%m/%Y %H:%M')}]"
                 ).strip()
                 promis.save(update_fields=['status', 'date_livraison', 'notes'])
+
+    @staticmethod
+    def _restore_coupons(facture):
+        """Restaure les coupons utilisés sur cette facture en ACTIF."""
+        coupons = CouponMonnaie.objects.filter(
+            facture_utilisation=facture, status=CouponMonnaie.Status.UTILISE
+        )
+        for coupon in coupons:
+            coupon.status = CouponMonnaie.Status.ACTIF
+            coupon.facture_utilisation = None
+            coupon.date_utilisation = None
+            coupon.utilise_par = None
+            coupon.save(update_fields=['status', 'facture_utilisation', 'date_utilisation', 'utilise_par'])
+            logger.info(f"Coupon #{coupon.numero} restauré à ACTIF (annulation facture #{facture.numero_facture or facture.id})")
 
     @staticmethod
     def _cancel_payments(facture, user):
