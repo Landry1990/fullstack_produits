@@ -279,6 +279,7 @@ export default function CommandeForm({
                       loading={false}
                       modes={['products']}
                       compact
+                      skipStockCheck
                       onSelect={(product) => selectProduct(product as ProduitModel)}
                       searchInputRef={searchInputRef}
                       handleKeyDown={handleSearchKeyDown}

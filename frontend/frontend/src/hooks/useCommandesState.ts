@@ -175,6 +175,31 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, navigate, t]);
 
+  // Restaure la vue courante (EDIT/DETAILS d'une commande précise) après un rechargement
+  // de page (F5). L'état est stocké dans l'historique du navigateur (location.state), qui
+  // survit à un reload, contrairement au store en mémoire. On ne lit ceci qu'une seule fois
+  // au montage : les navigations imperatives ultérieures (openEditView/handleViewDetails/
+  // handleBackToList) mettent à jour ce state via navigate(..., { replace: true }).
+  useEffect(() => {
+    const viewState = (location.state as { viewState?: { mode: 'EDIT' | 'DETAILS'; commandeId: number } } | undefined)?.viewState;
+    if (!viewState?.commandeId) return;
+    (async () => {
+      try {
+        const data = await commandeService.getById(viewState.commandeId);
+        if (viewState.mode === 'EDIT') {
+          await openEditView(data);
+        } else {
+          setSelectedCommande(data);
+          setViewMode('DETAILS');
+        }
+      } catch (err) {
+        logger.error("Erreur lors de la restauration de la commande après rechargement:", err);
+        toast.error(t('orders:messages.details_load_error'));
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const tauxChange = useCommandesStore((s) => s.tauxChange);
   const setTauxChange = useCommandesStore((s) => s.setTauxChange);
   const fraisCoefficient = useCommandesStore((s) => s.fraisCoefficient);
@@ -1671,6 +1696,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
     setViewMode('CREATE');
     setSelectedCommande(null);
+    navigate(location.pathname, { replace: true, state: {} });
   }
 
   async function openEditView(commande: Commande) {
@@ -1733,6 +1759,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     setSearchProduitQuery('')
     setSelectedCommande(commande);
     setViewMode('EDIT');
+    navigate(location.pathname, { replace: true, state: { viewState: { mode: 'EDIT', commandeId: commande.id } } });
   }
 
   async function handleViewDetails(commande: Commande) {
@@ -1740,12 +1767,14 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       const data = await commandeService.getById(commande.id);
       setSelectedCommande(data);
       setViewMode('DETAILS');
+      navigate(location.pathname, { replace: true, state: { viewState: { mode: 'DETAILS', commandeId: commande.id } } });
     } catch {
       toast.error(t('orders:messages.details_load_error'));
     }
   }
 
   function handleBackToList() {
+    navigate(location.pathname, { replace: true, state: {} });
     setViewMode('LIST');
     setSelectedCommande(null);
     setCommandeProduits([]); 
