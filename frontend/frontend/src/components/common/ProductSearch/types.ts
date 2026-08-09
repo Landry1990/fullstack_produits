@@ -81,6 +81,7 @@ export interface ProductSearchProps {
 
   // Permissions
   user?: User | null
+  skipStockCheck?: boolean
 }
 
 export interface UseProductSearchOptions {
