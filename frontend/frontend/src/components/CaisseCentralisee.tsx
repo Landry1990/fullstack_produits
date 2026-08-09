@@ -203,10 +203,13 @@ const _navigate = useNavigate()
           try {
             const data = JSON.parse(event.data)
             if (data.type === 'facture_update') {
-              // Notification temps réel : refresh immédiat
-              logger.info('WebSocket: mise à jour facture reçue', data)
-              fetchRef.current()
-              fetchCoupons()
+              // Ne rafraîchir que si la notification concerne notre caisse (ou mode "all")
+              const notifCaisseId = data.poste_caisse_id
+              if (selectedPosteCaisseId === 'all' || String(notifCaisseId) === selectedPosteCaisseId) {
+                logger.info('WebSocket: mise à jour facture reçue', data)
+                fetchRef.current()
+                fetchCoupons()
+              }
             }
           } catch {
             // ignore malformed messages
@@ -259,10 +262,11 @@ const _navigate = useNavigate()
   useEffect(() => {
     const initPage = async () => {
       try {
-        const [settingsRes, postesRes, myActive] = await Promise.all([
+        const [settingsRes, postesRes, myActive, allActivePostes] = await Promise.all([
           api.get('parametres/').catch(() => ({ data: {} })),
           api.get('postes-caisses/').catch(() => ({ data: { results: [] } })),
-          cashSessionService.getMyActivePostesVente().catch(() => [])
+          cashSessionService.getMyActivePostesVente().catch(() => []),
+          cashSessionService.getActivePostesVente().catch(() => [])
         ])
         
         // Charger le paramètre de sécurité caisse
@@ -279,9 +283,9 @@ const _navigate = useNavigate()
           setSelectedPosteCaisseId(String(activePoste.caisse))
         }
 
-        // Détecter si on est en mode multi-caisse
-        const hasMultipleActive = myActive.length > 1
-        setIsMultiCaisse(hasMultipleActive)
+        // Détecter si on est en mode multi-caisse (plusieurs caisses actives globalement)
+        const activeCaisseIds = new Set(allActivePostes.filter((p: PosteVente) => !!p.caisse).map((p: PosteVente) => p.caisse))
+        setIsMultiCaisse(activeCaisseIds.size > 1)
       } catch (err) {
         logger.error('Erreur initialisation page:', err)
       }
