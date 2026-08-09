@@ -73,7 +73,8 @@ const PrintPage: React.FC = () => {
                     });
                 } else if (type === 'INVENTAIRE_REPORT' || type === 'INVENTAIRE_TAKE') {
                     // Specific inventory results (discrepancy report or take sheet)
-                    const res = await api.get(`inventaires/${id}/print_data/`);
+                    const groupBy = searchParams.get('group_by') || 'rayon';
+                    const res = await api.get(`inventaires/${id}/print_data/?group_by=${groupBy}`);
                     setInventoryData(res.data);
                 } else if (type === 'STOCK_VALUATION') {
                     const valorisation = searchParams.get('valorisation') || 'ACHAT';
