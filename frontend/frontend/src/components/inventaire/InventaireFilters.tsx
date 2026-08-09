@@ -49,7 +49,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
     }, []);
 
     return (
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <div className="bg-white p-4 space-y-4">
             {/* Top Row: Search & Dates */}
             <div className="flex flex-col md:flex-row gap-4">
                 {/* Search Bar */}
@@ -60,14 +60,14 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     <input
                         type="text"
                         placeholder={t('inventaire.filters.search_placeholder')}
-                        className="w-full h-10 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+                        className="w-full h-10 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-colors"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
 
                 {/* Date Range */}
-                <div className="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-slate-200 px-3">
+                <div className="flex items-center gap-2 bg-white p-1.5 rounded-md border border-slate-200 px-3">
                     <Calendar className="h-5 w-5 text-slate-400" />
                     <input
                         type="date"
@@ -96,7 +96,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full h-9 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                            className="w-full h-9 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         >
                             <option value="">{t('inventaire.filters.status_all')}</option>
                             <option value="EN_COURS">{t('inventaire.status.draft')}</option>
@@ -112,7 +112,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         <select
                             value={creatorFilter || ''}
                             onChange={(e) => setCreatorFilter(e.target.value)}
-                            className="w-full h-9 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                            className="w-full h-9 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         >
                             <option value="">{t('inventaire.filters.creators_all')}</option>
                             {users.map(u => (
@@ -131,7 +131,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         <select
                             value={ordering}
                             onChange={(e) => setOrdering(e.target.value)}
-                            className="w-full h-9 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                            className="w-full h-9 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         >
                             <option value="-date">{t('inventaire.filters.sort_date_desc')}</option>
                             <option value="date">{t('inventaire.filters.sort_date_asc')}</option>

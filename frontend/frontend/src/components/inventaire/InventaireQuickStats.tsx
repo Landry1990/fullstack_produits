@@ -23,13 +23,13 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             {/* Inventaires En Cours Card */}
-            <div className="bg-gradient-to-br from-amber-50 to-amber-50/50 p-4 rounded-xl border border-amber-200 flex items-center justify-between">
+            <div className="bg-white p-4 rounded-lg border border-slate-200 border-l-4 border-l-amber-500 flex items-center justify-between">
                 <div>
-                    <div className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <ClipboardList className="size-3" /> {t('inventaire.stats.en_cours')}
                     </div>
                     <div>
-                        <div className="text-lg font-bold text-slate-800">{stats.en_cours_count}</div>
+                        <div className="text-lg font-semibold text-slate-800">{stats.en_cours_count}</div>
                         <div className="text-xs text-slate-500">
                             {t('inventaire.stats.to_validate')}
                         </div>
@@ -38,13 +38,13 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
             </div>
 
             {/* Total Valeur Physique Card */}
-            <div className="bg-gradient-to-br from-emerald-50 to-emerald-50/50 p-4 rounded-xl border border-emerald-200 flex items-center justify-between">
+            <div className="bg-white p-4 rounded-lg border border-slate-200 border-l-4 border-l-emerald-500 flex items-center justify-between">
                 <div>
-                    <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <PackageSearch className="size-3" /> {t('inventaire.stats.val_phys')}
                     </div>
                     <div>
-                        <div className="text-lg font-mono font-bold text-slate-800">
+                        <div className="text-lg font-mono font-semibold text-slate-800">
                             {formatCurrency(stats.valeur_physique_totale)}
                         </div>
                         <div className="text-xs text-slate-500">
@@ -55,13 +55,13 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
             </div>
 
             {/* Ecart Global Card */}
-            <div className="bg-gradient-to-br from-slate-50 to-slate-50/50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+            <div className="bg-white p-4 rounded-lg border border-slate-200 border-l-4 border-l-slate-300 flex items-center justify-between">
                  <div>
-                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <TrendingDown className="size-3" /> {t('inventaire.stats.ecart_global')}
                     </div>
                     <div>
-                        <div className={`text-lg font-mono font-bold ${stats.ecart_total < 0 ? 'text-red-500' : stats.ecart_total > 0 ? 'text-emerald-600' : 'text-slate-700'}`}>
+                        <div className={`text-lg font-mono font-semibold ${stats.ecart_total < 0 ? 'text-red-500' : stats.ecart_total > 0 ? 'text-emerald-600' : 'text-slate-700'}`}>
                             {stats.ecart_total > 0 ? '+' : ''}{formatCurrency(stats.ecart_total)}
                         </div>
                         <div className="text-xs text-slate-500">

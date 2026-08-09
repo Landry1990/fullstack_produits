@@ -56,8 +56,8 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
         <div className="overflow-x-auto text-sm">
             <table className="w-full">
                 <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        <th className="px-4 py-4 w-10">
+                    <tr className="bg-slate-50 border-b border-slate-200 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 w-10">
                             <input
                                 type="checkbox"
                                 className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
@@ -65,26 +65,26 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                 onChange={onSelectAll}
                             />
                         </th>
-                        <th className="px-6 py-4 rounded-tl-2xl">
+                        <th className="px-6 py-3">
                             {selectedIds.size > 0 ? (
-                                <span className="text-emerald-600 font-bold normal-case text-sm">
+                                <span className="text-emerald-600 font-semibold normal-case text-sm">
                                     {t('common:selection_count', { count: selectedIds.size })}
                                 </span>
                             ) : t('inventaire.list.date')}
                         </th>
-                        <th className="px-6 py-4">{t('inventaire.list.desc')}</th>
-                        <th className="px-6 py-4 text-right">{t('inventaire.list.val_theo')}</th>
-                        <th className="px-6 py-4 text-right">{t('inventaire.list.val_phys')}</th>
-                        <th className="px-6 py-4 text-right">{t('inventaire.list.ecart')}</th>
-                        <th className="px-6 py-4 text-center">{t('inventaire.list.status')}</th>
-                        <th className="px-6 py-4 text-right rounded-tr-2xl">{t('inventaire.list.actions')}</th>
+                        <th className="px-6 py-3">{t('inventaire.list.desc')}</th>
+                        <th className="px-6 py-3 text-right">{t('inventaire.list.val_theo')}</th>
+                        <th className="px-6 py-3 text-right">{t('inventaire.list.val_phys')}</th>
+                        <th className="px-6 py-3 text-right">{t('inventaire.list.ecart')}</th>
+                        <th className="px-6 py-3 text-center">{t('inventaire.list.status')}</th>
+                        <th className="px-6 py-3 text-right">{t('inventaire.list.actions')}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                     {inventaires.map(inv => (
                         <tr
                             key={inv.id}
-                            className={`group hover:bg-slate-50 transition-colors cursor-pointer ${selectedIds.has(inv.id) ? 'bg-emerald-50/50' : ''}`}
+                            className={`group hover:bg-slate-50 transition-colors cursor-pointer ${selectedIds.has(inv.id) ? 'bg-emerald-50/40' : ''}`}
                             onClick={() => onEdit(inv)}
                         >
                             <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
@@ -97,7 +97,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex flex-col">
-                                    <span className="font-bold text-slate-800 flex items-center gap-2">
+                                    <span className={`font-semibold text-slate-800 flex items-center gap-2`}>
                                          #{inv.id}
                                     </span>
                                     <span className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
@@ -113,14 +113,14 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     {t('inventaire.list.created_by_prefix')} {inv.created_by_name || '-'}
                                 </div>
                             </td>
-                            <td className="px-6 py-4 text-right font-bold text-slate-700">
+                            <td className="px-6 py-4 text-right font-medium text-slate-700">
                                 {formatCurrency(inv.total_valeur_theorique || 0)}
                             </td>
-                            <td className="px-6 py-4 text-right font-bold text-slate-700">
+                            <td className="px-6 py-4 text-right font-medium text-slate-700">
                                 {formatCurrency(inv.total_valeur_physique || 0)}
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-mono font-bold text-sm border shadow-sm transition-all
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md font-mono font-semibold text-sm border
                                     ${(inv.total_ecart_valeur || 0) < 0 ? 'bg-red-50 text-red-500 border-red-200' :
                                       (inv.total_ecart_valeur || 0) > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                       'bg-slate-100 text-slate-400 border-slate-200'}`}
@@ -129,7 +129,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border gap-1.5
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border gap-1.5
                                     ${inv.status === 'VALIDEE' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}
                                 >
                                     {inv.status === 'VALIDEE' ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
@@ -139,7 +139,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                             <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
-                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
                                         onClick={() => onEdit(inv)}
                                         title={t('common:details')}
                                     >
@@ -147,7 +147,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     </button>
                                     {onShareWhatsApp && inv.status === 'VALIDEE' && (
                                         <button
-                                            className="p-2 text-slate-400 hover:text-[#25D366] hover:bg-[#25D366]/10 rounded-lg transition-all"
+                                            className="p-2 text-slate-400 hover:text-[#25D366] hover:bg-[#25D366]/10 rounded-md transition-colors"
                                             onClick={(e) => { e.stopPropagation(); onShareWhatsApp(inv.id); }}
                                             disabled={sharingId === inv.id}
                                             title={t('common:share_whatsapp')}
@@ -158,7 +158,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                         </button>
                                     )}
                                     <button
-                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-40"
+                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40"
                                         onClick={() => onDelete(inv.id)}
                                         disabled={inv.status === 'VALIDEE' || deleting}
                                         title={t('common:delete')}

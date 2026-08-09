@@ -79,12 +79,12 @@ export const InventaireList: React.FC<InventaireListProps> = ({
         <div className="flex flex-col gap-4 animate-in fade-in duration-500 flex-1 overflow-hidden">
             {/* Title & Filters & QuickStats */}
             <div className="w-full space-y-3 shrink-0">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                <div className="bg-white rounded-lg border border-slate-200 flex flex-col">
                     <div className="p-4 border-b border-slate-100">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
-                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-                                    <ClipboardList className="h-6 w-6 text-emerald-600" />
+                                <h1 className="text-xl font-semibold text-slate-800 tracking-tight flex items-center gap-2">
+                                    <ClipboardList className="h-5 w-5 text-emerald-600" />
                                     {t('inventaire.title')}
                                 </h1>
                                 <p className="text-slate-500 text-sm mt-1">
@@ -94,7 +94,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    className="inline-flex items-center justify-center h-9 px-4 rounded-xl gap-2 text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center justify-center h-9 px-4 rounded-md gap-2 text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors disabled:opacity-50"
                                     onClick={onOpenMergeModal}
                                     disabled={!canMerge.canMerge}
                                     title={canMerge.reason || ''}
@@ -104,18 +104,18 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                 </button>
                                 <button
                                     type="button"
-                                    className="inline-flex items-center justify-center h-9 px-4 rounded-xl gap-2 text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors"
+                                    className="inline-flex items-center justify-center h-9 px-4 rounded-md gap-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                                     onClick={onOpenAudit}
                                 >
                                     <BarChart3 className="h-4 w-4" />
                                     {t('inventaire.audit_btn')}
                                 </button>
                                 <button
-                                    className="inline-flex items-center justify-center h-9 px-6 rounded-xl gap-2 text-sm font-black bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                                    className="inline-flex items-center justify-center h-9 px-5 rounded-md gap-2 text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60"
                                     onClick={onCreate}
                                     disabled={listLogic.loading || isSaving}
                                 >
-                                    {isSaving && editorLogic.saving ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div> : <Plus className="h-5 w-5" />}
+                                    {isSaving && editorLogic.saving ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div> : <Plus className="h-4 w-4" />}
                                     {t('inventaire.create_btn')}
                                 </button>
                             </div>
@@ -148,7 +148,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
             </div>
 
             {/* Main Content: Table — scrollable area */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
                 <div className="overflow-y-auto flex-1">
                 <InventaireListTable
                     inventaires={inventaires}
@@ -171,14 +171,14 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                     </div>
                     <div className="flex gap-2">
                         <button
-                            className="inline-flex items-center justify-center h-8 px-4 rounded-xl text-sm font-bold border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-all active:scale-95 gap-1"
+                            className="inline-flex items-center justify-center h-8 px-4 rounded-md text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors gap-1"
                             onClick={() => prevPage && fetchInventaires(prevPage)}
                         >
                             <ChevronLeft className="h-4 w-4" />
                             {t('common:pagination.prev')}
                         </button>
                         <button
-                            className="inline-flex items-center justify-center h-8 px-4 rounded-xl text-sm font-bold border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-all active:scale-95 gap-1 disabled:opacity-50"
+                            className="inline-flex items-center justify-center h-8 px-4 rounded-md text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors gap-1 disabled:opacity-50"
                             disabled={!nextPage || loading}
                             onClick={() => nextPage && fetchInventaires(nextPage)}
                         >

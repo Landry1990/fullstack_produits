@@ -9,6 +9,7 @@ export interface InventaireItem {
     cip1?: string;
     name: string;
     lot_numero?: string;
+    lot_expiration?: string | null;
     stock: number;
     selling_price?: number;
     is_lot_line?: boolean;
@@ -52,6 +53,15 @@ const formatDate = (dateStr: string) => {
 const formatNumber = (num: number | undefined) => {
     if (num === undefined) return '-';
     return formatNumberStandard(num);
+};
+
+const formatExpiration = (dateStr?: string | null) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
 };
 
 const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ settings, data }) => {
@@ -169,6 +179,7 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                                     <th className="py-2 px-2 text-left w-24">{t('common:cip')}</th>
                                     <th className="py-2 px-2 text-left">{t('common:designation')}</th>
                                     <th className="py-2 px-2 text-center w-20">{t('common:lot')}</th>
+                                    <th className="py-2 px-2 text-center w-20">{t('stock:inventaire.detail.col_expiration')}</th>
                                     {data.is_report ? (
                                         <>
                                             <th className="py-2 px-2 text-right w-16">{t('stock:inventaire.detail.col_theo')}</th>
@@ -197,6 +208,9 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                                         </td>
                                         <td className="py-1.5 px-2 text-center font-bold text-slate-900/70 cursor-default" title={t('common:lot_number')}>
                                             {item.lot_numero || '-'}
+                                        </td>
+                                        <td className="py-1.5 px-2 text-center font-medium text-slate-900/70">
+                                            {formatExpiration(item.lot_expiration)}
                                         </td>
                                         {data.is_report ? (
                                             <>

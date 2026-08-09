@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Building2, LayoutDashboard, List } from 'lucide-react';
 import { useFournisseurs } from '../hooks/useFournisseurs';
 import FournisseursList from './fournisseurs/FournisseursList';
@@ -16,8 +17,18 @@ export default function Fournisseurs() {
   const hook = useFournisseurs();
   const { state, actions } = hook;
   const { t } = state;
-  
-  const [activeTab, setActiveTab] = React.useState<'dashboard' | 'management'>('dashboard');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Persiste l'onglet actif dans l'historique du navigateur pour qu'il survive à un F5,
+  // notamment quand un fournisseur est en cours de consultation (onglet "management").
+  const [activeTab, setActiveTabState] = React.useState<'dashboard' | 'management'>(
+    () => (location.state?.selectedSupplierId ? 'management' : (location.state as { activeFournisseurTab?: 'dashboard' | 'management' } | null)?.activeFournisseurTab || 'dashboard')
+  );
+  const setActiveTab = (tab: 'dashboard' | 'management') => {
+    setActiveTabState(tab);
+    navigate(location.pathname, { replace: true, state: { ...(location.state || {}), activeFournisseurTab: tab } });
+  };
   
   return (
     <div className="flex flex-col h-full overflow-hidden bg-slate-50">
