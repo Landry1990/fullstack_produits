@@ -100,8 +100,8 @@ export default function InventaireComponent() {
                 onClose={closeSudo}
                 onValidate={sudoState.onValidate}
                 saving={sudoState.isValidating}
-                title={sudoState.title || t('common:sudo.title', "Validation Requise")}
-                message={sudoState.message || t('common:sudo.message', "Veuillez confirmer cette action.")}
+                title={sudoState.title || t('common:sudo.title')}
+                message={sudoState.message || t('common:sudo.message')}
             />}
         </div>
     );

@@ -99,8 +99,8 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             className="w-full h-9 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                         >
                             <option value="">{t('inventaire.filters.status_all')}</option>
-                            <option value="EN_COURS">{t('inventaire.status.draft', { defaultValue: 'En cours' })}</option>
-                            <option value="VALIDEE">{t('inventaire.status.validated', { defaultValue: 'Validée' })}</option>
+                            <option value="EN_COURS">{t('inventaire.status.draft')}</option>
+                            <option value="VALIDEE">{t('inventaire.status.validated')}</option>
                         </select>
                     </div>
 
@@ -133,12 +133,12 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             onChange={(e) => setOrdering(e.target.value)}
                             className="w-full h-9 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                         >
-                            <option value="-date">{t('inventaire.filters.sort_date_desc', 'Plus récent')}</option>
-                            <option value="date">{t('inventaire.filters.sort_date_asc', 'Plus ancien')}</option>
-                            <option value="-total_ecart_valeur">{t('inventaire.filters.sort_valeur_desc', 'Écart valeur (-)')}</option>
-                            <option value="total_ecart_valeur">{t('inventaire.filters.sort_valeur_asc', 'Écart valeur (+)')}</option>
-                            <option value="-total_ecart_quantite">{t('inventaire.filters.sort_qty_desc', 'Écart qté (-)')}</option>
-                            <option value="total_ecart_quantite">{t('inventaire.filters.sort_qty_asc', 'Écart qté (+)')}</option>
+                            <option value="-date">{t('inventaire.filters.sort_date_desc')}</option>
+                            <option value="date">{t('inventaire.filters.sort_date_asc')}</option>
+                            <option value="-total_ecart_valeur">{t('inventaire.filters.sort_valeur_desc')}</option>
+                            <option value="total_ecart_valeur">{t('inventaire.filters.sort_valeur_asc')}</option>
+                            <option value="-total_ecart_quantite">{t('inventaire.filters.sort_qty_desc')}</option>
+                            <option value="total_ecart_quantite">{t('inventaire.filters.sort_qty_asc')}</option>
                         </select>
                     </div>
 
@@ -150,7 +150,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         <button
                             onClick={onDeleteDrafts}
                             className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                            title={t('inventaire.filters.delete_drafts', { defaultValue: 'Supprimer les brouillons' })}
+                            title={t('inventaire.filters.delete_drafts')}
                         >
                             <Trash2 className="size-5" />
                         </button>
@@ -159,7 +159,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     <button
                         onClick={onRefresh}
                         className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
-                        title={t('common:refresh', { defaultValue: 'Actualiser' })}
+                        title={t('common:refresh')}
                     >
                         <RefreshCw className="size-5" />
                     </button>

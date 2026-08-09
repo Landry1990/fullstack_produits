@@ -1,10 +1,26 @@
 {
     "matrix": {
         "quadrants": {
-            "MOTEUR": { "label": "Engine", "description": "Sells well · well stocked", "impact": "Positive" },
-            "HEMORRAGIE": { "label": "Hemorrhage", "description": "High demand · out of stock", "impact": "Critical" },
-            "SOMNIFERE": { "label": "Sleeping", "description": "Overstock · no sale +90d", "impact": "Penalizing" },
-            "NEUTRE": { "label": "Neutral", "description": "Tight flow · demand-driven", "impact": "Neutral" }
+            "MOTEUR": {
+                "label": "Engine",
+                "description": "Sells well · well stocked",
+                "impact": "Positive"
+            },
+            "HEMORRAGIE": {
+                "label": "Hemorrhage",
+                "description": "High demand · out of stock",
+                "impact": "Critical"
+            },
+            "SOMNIFERE": {
+                "label": "Sleeping",
+                "description": "Overstock · no sale +90d",
+                "impact": "Penalizing"
+            },
+            "NEUTRE": {
+                "label": "Neutral",
+                "description": "Tight flow · demand-driven",
+                "impact": "Neutral"
+            }
         },
         "diagnostic": {
             "excellent": "Excellent! Your stock is healthy, well balanced and turns efficiently.",
@@ -95,12 +111,21 @@
             "message": "Are you sure you want to validate this inventory? This action will update official stock."
         },
         "types": {
-            "global": "GLOBAL STOCK"
+            "global": "GLOBAL STOCK",
+            "reserve": "RESERVE STOCK",
+            "rayon": "SHELF STOCK"
         },
         "filters": {
             "search_placeholder": "Search an inventory...",
             "status_all": "All statuses",
-            "creators_all": "All creators"
+            "creators_all": "All creators",
+            "sort_date_desc": "Newest",
+            "sort_date_asc": "Oldest",
+            "sort_valeur_desc": "Value gap (-)",
+            "sort_valeur_asc": "Value gap (+)",
+            "sort_qty_desc": "Qty gap (-)",
+            "sort_qty_asc": "Qty gap (+)",
+            "delete_drafts": "Delete drafts"
         },
         "status": {
             "draft": "In Progress",
@@ -116,7 +141,9 @@
             "btn": "Merge",
             "success": "Merge successful",
             "success_count": "{{count}} inventory(ies) merged successfully!",
-            "error": "Error during merge"
+            "error": "Error during merge",
+            "inventory_number": "Inventory #{{id}}",
+            "no_description": "No description"
         },
         "list": {
             "title_short": "inventories",
@@ -181,7 +208,15 @@
                 "prix": "Buy Price"
             },
             "col_cmp": "WAP",
-            "lot_label": "Lot"
+            "lot_label": "Lot",
+            "no_ecart_title": "No discrepancy",
+            "no_ecart_desc": "All products match theoretical stock.",
+            "quick_create_product": "Quickly create a product",
+            "print_group_by": "Group by",
+            "group_rayon": "By Shelf",
+            "group_forme": "By Form",
+            "group_groupe": "By Group",
+            "col_phys_qty": "Physical Qty"
         },
         "lines": {
             "selected": "{{count}} line(s) selected",
@@ -222,7 +257,9 @@
             "desc_global": "Add without specifying a lot",
             "btn_new": "New Lot",
             "desc_new": "Create a new lot entry",
-            "loading": "Loading lots..."
+            "loading": "Loading lots...",
+            "no_lots_title": "No lot available",
+            "no_lots_desc": "There is currently no lot in stock for this product."
         },
         "modals": {
             "lot_title": "Select a Lot",
@@ -296,7 +333,66 @@
                 "empty": "No critical data"
             }
         },
-        "audit_btn": "Flash Audit"
+        "audit_btn": "Flash Audit",
+        "whatsapp_not_configured": "The pharmacist's WhatsApp number is not configured in settings.",
+        "whatsapp_prepared": "Report prepared for WhatsApp!",
+        "whatsapp_share_error": "Error preparing share",
+        "telegram_report_sent": "Inventory report sent on Telegram!",
+        "print": {
+            "total_global_gap": "Total Global Discrepancy",
+            "report_legend": "This report details discrepancies between theoretical stock and physical count.",
+            "fill_legend": "Please fill in the 'Physical Qty' column during your count. Unlisted lots should be reported on the back.",
+            "global_gap": "Global Discrepancy"
+        },
+        "etats": {
+            "title": "Inventory listing",
+            "subtitle": "Configurable generation — Excel & Print",
+            "card_grouping": "Grouping",
+            "card_grouping_desc": "Organize listing by…",
+            "card_source": "Data source",
+            "card_source_desc": "Current stock or blind inventory",
+            "card_filters": "Filters",
+            "card_filters_desc": "Refine by entity and stock",
+            "card_summary": "Summary",
+            "source_stock": "Current stock",
+            "source_stock_desc": "Actual quantities on hand",
+            "source_blind": "Blind inventory",
+            "source_blind_desc": "Listing without theoretical stock (for counting)",
+            "group_by_rayon": "By Shelf",
+            "group_by_rayon_desc": "Physical location",
+            "group_by_forme": "By Galenic form",
+            "group_by_forme_desc": "Tablet, syrup, ointment…",
+            "group_by_groupe": "By Therapeutic group",
+            "group_by_groupe_desc": "DCI / ATC classification",
+            "group_by_fournisseur": "By Supplier",
+            "group_by_fournisseur_desc": "Lot supplier",
+            "filter_all": "All products",
+            "filter_all_desc": "Zero and positive stock",
+            "filter_positive": "Positive stock (> 0)",
+            "filter_positive_desc": "Only products in stock",
+            "filter_zero": "Zero stock (= 0)",
+            "filter_zero_desc": "Stockouts / products to count",
+            "location_all": "All (Shelf + Reserve)",
+            "location_all_desc": "All locations",
+            "location_rayon": "Shelf Stock",
+            "location_rayon_desc": "Only shelf products",
+            "location_reserve": "Reserve Stock",
+            "location_reserve_desc": "Only reserve products",
+            "filter_by_entity": "Filter by {{entity}}",
+            "filter_stock_label": "Stock filter",
+            "location_label": "Location",
+            "summary_source": "Source",
+            "summary_grouping": "Grouping",
+            "summary_filter_stock": "Stock filter",
+            "summary_location": "Location",
+            "all_option": "— All —",
+            "export_info": "Excel export is grouped, with subtotals per category and a grand total. For supplier, grouping is done via lots in stock.",
+            "excel_success": "Excel file downloaded!",
+            "excel_error": "Error during Excel export",
+            "generating": "Generating…",
+            "export_excel": "Export to Excel",
+            "print": "Print"
+        }
     },
     "ajustements": {
         "title": "Stock Adjustments",

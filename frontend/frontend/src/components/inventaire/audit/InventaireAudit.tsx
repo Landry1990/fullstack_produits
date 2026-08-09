@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatPrice, formatCurrency } from '../../../utils/formatters';
+import { formatCurrency } from '../../../utils/formatters';
 import {
     TrendingDown, TrendingUp, Package, LayoutDashboard,
     Calendar, ArrowLeft, AlertTriangle, ChevronUp, ChevronDown
@@ -77,7 +77,7 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                     {!data || data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full py-12 gap-3 text-slate-200">
                             <Package className="h-10 w-10" />
-                            <p className="text-sm font-medium text-slate-400">{t('inventaire.analysis.no_data', { defaultValue: 'Aucune donnée' })}</p>
+                            <p className="text-sm font-medium text-slate-400">{t('inventaire.analysis.no_data')}</p>
                         </div>
                     ) : (
                         data.map((p, i) => (
@@ -89,13 +89,13 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                                     <div className="max-w-[150px] md:max-w-xs">
                                         <div className="font-bold text-sm text-slate-700 group-hover:text-emerald-600 transition-colors truncate">{p.produit_nom}</div>
                                         <div className={`text-[10px] font-bold uppercase tracking-tight mt-0.5 ${colorClass}`}>
-                                            {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short', 'unités')}
+                                            {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short')}
                                         </div>
                                     </div>
                                 </div>
                                 <div className="text-right">
                                     <div className={`font-mono font-bold ${colorClass}`}>
-                                        {p.valeur > 0 ? '+' : ''}{formatPrice(p.valeur)} F
+                                        {p.valeur > 0 ? '+' : ''}{formatCurrency(p.valeur)}
                                     </div>
                                 </div>
                             </div>
@@ -243,7 +243,7 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                         <LayoutDashboard className="h-4 w-4 text-emerald-600" />
                     </div>
                     <div className={`text-2xl font-black font-mono ${(stats?.net || 0) < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                        {formatPrice(stats?.net || 0)} F
+                        {formatCurrency(stats?.net || 0)}
                     </div>
                 </div>
 
@@ -266,8 +266,8 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                         <div className="flex items-center gap-2 text-slate-700">
                             <AlertTriangle className="h-5 w-5 text-amber-500" />
                             {metric === 'VALEUR'
-                                ? t('inventaire.audit.chart.title_value', { type: groupBy === 'RAYON' ? 'Rayon' : 'Groupe' })
-                                : t('inventaire.audit.chart.title_freq', { type: groupBy === 'RAYON' ? 'Rayon' : 'Groupe' })}
+                                ? t('inventaire.audit.chart.title_value', { type: groupBy === 'RAYON' ? t('common:rayon') : t('common:groupe') })
+                                : t('inventaire.audit.chart.title_freq', { type: groupBy === 'RAYON' ? t('common:rayon') : t('common:groupe') })}
                         </div>
                         <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{metric} / {groupBy}</span>
                     </h3>
@@ -285,11 +285,11 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                                     type="category" 
                                     tick={{ fontSize: 10, fontWeight: 'bold' }} 
                                     width={120}
-                                    tickFormatter={(val: string) => val || 'N/A'}
+                                    tickFormatter={(val: string) => val || t('common:not_available')}
                                 />
                                 <Tooltip 
                                     formatter={(value: unknown) => [
-                                        metric === 'VALEUR' ? `${formatPrice(Math.abs(value))} F` : `${value} fois`, 
+                                        metric === 'VALEUR' ? formatCurrency(Math.abs(value)) : `${value} ${t('common:times')}`,
                                         metric === 'VALEUR' ? t('inventaire.detail.col_gap') : t('inventaire.audit.table.col_occurrences')
                                     ]}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -10px rgb(0 0 0 / 0.1)' }}
@@ -342,11 +342,11 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                                         <td className="max-w-[150px] truncate font-bold py-2">
                                             <div className="flex flex-col">
                                                 <span className="text-slate-700">{p.produit__name}</span>
-                                                <span className="text-[10px] font-normal text-slate-400">CIP: {p.produit__cip1}</span>
+                                                <span className="text-[10px] font-normal text-slate-400">{t('common:cip')}: {p.produit__cip1}</span>
                                             </div>
                                         </td>
                                         <td className="text-right text-red-500 font-mono">{p.total_quantite > 0 ? `+${p.total_quantite}` : p.total_quantite}</td>
-                                        <td className="text-right font-black text-red-500 font-mono">{formatPrice(Math.abs(p.total_valeur))} F</td>
+                                        <td className="text-right font-black text-red-500 font-mono">{formatCurrency(Math.abs(p.total_valeur))}</td>
                                         <td className="text-center">
                                             <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold ${p.occurrence > 5 ? 'bg-red-50 text-red-500 border border-red-200' : 'bg-slate-100 text-slate-400'}`}>
                                                 {p.occurrence}

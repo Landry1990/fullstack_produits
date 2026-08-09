@@ -119,12 +119,12 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                    <h3 className="text-lg font-bold text-slate-700 mb-1">
                        {lignes.length === 0
                            ? t('inventaire.detail.empty_list_title')
-                           : t('inventaire.detail.no_ecart_title', { defaultValue: 'Aucun écart' })}
+                           : t('inventaire.detail.no_ecart_title')}
                    </h3>
                    <p className="text-sm max-w-sm mx-auto">
                        {lignes.length === 0
                            ? t('inventaire.detail.empty_list')
-                           : t('inventaire.detail.no_ecart_desc', { defaultValue: 'Tous les produits correspondent au stock théorique.' })}
+                           : t('inventaire.detail.no_ecart_desc')}
                    </p>
                 </div>
             </div>
@@ -169,7 +169,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                 <button
                     className="inline-flex items-center justify-center size-8 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    title={sortOrder === 'asc' ? t('common:sort.asc', 'Croissant') : t('common:sort.desc', 'Décroissant')}
+                    title={sortOrder === 'asc' ? t('common:sort.asc') : t('common:sort.desc')}
                 >
                     {sortOrder === 'asc' ? <ArrowUp className="size-4" /> : <ArrowDown className="size-4" />}
                 </button>
@@ -226,7 +226,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                         <div className="font-bold text-xs md:text-sm text-slate-800 truncate pr-1 flex items-center gap-1" title={l.produit_nom || (l.produit as unknown).name}>
                                             {l.produit_nom || (l.produit as unknown).name}
                                             {isDirty && (
-                                                <span className="w-2 h-2 rounded-full bg-blue-400 ml-1" title={t('common:unsaved', 'Modifié')} />
+                                                <span className="w-2 h-2 rounded-full bg-blue-400 ml-1" title={t('common:unsaved')} />
                                             )}
                                         </div>
                                         <div className="text-[10px] md:text-xs font-mono text-slate-400 flex gap-1 md:gap-2 items-center leading-none mt-0.5">
@@ -331,7 +331,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                                 className="inline-flex items-center justify-center size-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
                                                 onClick={() => handleDeleteLine(l.id)}
                                                 disabled={saving}
-                                                title={t('common:remove', 'Retirer')}
+                                                title={t('common:remove')}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </button>

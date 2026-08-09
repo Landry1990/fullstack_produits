@@ -183,7 +183,9 @@
         "validate_password": "Sudo Password",
         "validate_required": "(Required to validate)",
         "cancel": "Cancel",
-        "confirm": "Confirm validation"
+        "confirm": "Confirm validation",
+        "title": "Validation Required",
+        "message": "Please confirm this action."
     },
     "cip": "CIP",
     "not_available": "N/A",
@@ -409,5 +411,30 @@
         "update": "Update",
         "expired_title": "LICENCE EXPIRED:",
         "expired_message": "System access will be restricted. Contact your administrator immediately."
-    }
+    },
+    "auto_saving": "Auto saving...",
+    "search": "search",
+    "navigate": "navigate",
+    "select": "select",
+    "cancel_shortcut": "Cancel (Esc)",
+    "confirm_shortcut": "Confirm (Ctrl+Enter)",
+    "keyboard_help": "↑/↓: navigate • Tab: next field • Enter: next/confirm • Ctrl+Enter: validate • Esc: cancel",
+    "exp": "Exp",
+    "default_pharmacy_name": "My Pharmacy",
+    "printed_on": "Printed on ",
+    "option": "Option:",
+    "share_whatsapp": "Share on WhatsApp",
+    "export_excel": "Export to Excel",
+    "generating": "Generating...",
+    "lot_number": "Lot number",
+    "software_name": "ZENITH Software",
+    "phone_short": "Tel: ",
+    "times": "times",
+    "selling_price_short": "S.P.",
+    "unsaved": "Modified",
+    "all": "All",
+    "products": "products",
+    "id": "ID",
+    "designation": "Designation",
+    "lot": "Lot"
 }

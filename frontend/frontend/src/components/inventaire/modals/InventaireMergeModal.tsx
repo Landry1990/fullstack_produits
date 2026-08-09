@@ -82,7 +82,7 @@ export function InventaireMergeModal({
                                     const inv = inventaires.find(i => i.id === id);
                                     return (
                                         <option key={id} value={id}>
-                                            Inventaire #{id} - {inv?.description || (inv?.date && formatDate(inv.date)) || 'Sans description'}
+                                            {t('inventaire.merge.inventory_number', { id })} - {inv?.description || (inv?.date && formatDate(inv.date)) || t('inventaire.merge.no_description')}
                                         </option>
                                     );
                                 })}
@@ -100,7 +100,7 @@ export function InventaireMergeModal({
                                 ) : (
                                     mergeCandidates.map(c => (
                                         <option key={c.id} value={c.id}>
-                                            Inventaire #{c.id} - {c.description || formatDate(c.date)}
+                                            {t('inventaire.merge.inventory_number', { id: c.id })} - {c.description || formatDate(c.date)}
                                         </option>
                                     ))
                                 )}

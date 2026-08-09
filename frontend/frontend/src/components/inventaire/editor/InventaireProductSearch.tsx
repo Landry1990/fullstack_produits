@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Search, Database, Plus, CheckCircle2 } from 'lucide-react';
 import { useProductSearch } from '../../../hooks/inventaire/useProductSearch';
 import { formatDate } from '../../../utils/dateUtils';
+import { formatCurrency } from '../../../utils/formatters';
 import QuickCreateProductModal from '../../Commandes/QuickCreateProductModal';
 import type { ProduitModel } from '../../../types';
 
@@ -62,8 +63,9 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
 
     const getItemProps = (index: number) => ({
         className: index === selectedItemIndex
-            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 scale-[1.01]'
-            : 'hover:bg-slate-100'
+            ? 'bg-blue-500 text-white shadow-lg shadow-blue-200 scale-[1.01]'
+            : 'hover:bg-slate-100',
+        isActive: index === selectedItemIndex,
     });
 
     return (
@@ -91,20 +93,20 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                     type="button"
                     onClick={() => setIsQuickCreateOpen(true)}
                     className="shrink-0 size-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors"
-                    title={t('inventaire.detail.quick_create_product', { defaultValue: 'Créer un produit rapidement' })}
+                    title={t('inventaire.detail.quick_create_product')}
                 >
                     <Plus className="size-4" />
                 </button>
             </div>
             <div className="px-2 py-1 text-[10px] text-slate-400 flex items-center gap-2">
                 <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">F3</span>
-                <span>recherche</span>
+                <span>{t('common:search')}</span>
                 <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">↑/↓</span>
-                <span>naviguer</span>
+                <span>{t('common:navigate')}</span>
                 <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">Enter</span>
-                <span>sélectionner</span>
+                <span>{t('common:select')}</span>
                 <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">Shift+Del</span>
-                <span>retirer ligne</span>
+                <span>{t('common:remove')}</span>
             </div>
 
             {/* Search Results Dropdown */}
@@ -125,6 +127,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                   <div className="p-1 space-y-0.5">
                     {searchResults.map((p, idx) => {
                       const itemProps = getItemProps(idx);
+                      const active = itemProps.isActive;
                       return (
                         <div
                           key={p.id}
@@ -133,18 +136,18 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                           className={`group flex items-center justify-between py-1.5 px-3 rounded-lg cursor-pointer transition-all ${itemProps.className}`}
                         >
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-xs truncate">{p.name}</div>
-                            <div className={`text-[9px] flex gap-1.5 mt-0.5 ${idx === selectedItemIndex ? 'text-white/80' : 'text-slate-500'}`}>
-                              <span className={`px-1 rounded font-mono ${idx === selectedItemIndex ? 'bg-white/20' : 'bg-slate-100'}`}>#{p.id}</span>
+                            <div className={`font-bold text-xs truncate ${active ? 'text-white' : 'text-slate-800'}`}>{p.name}</div>
+                            <div className={`text-[9px] flex gap-1.5 mt-0.5 ${active ? 'text-blue-100' : 'text-slate-500'}`}>
+                              <span className={`px-1 rounded font-mono ${active ? 'bg-white/20' : 'bg-slate-100'}`}>#{p.id}</span>
                               <span className="font-mono">{p.cip1}</span>
                               {p.rayon_name && <span>• {p.rayon_name}</span>}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className={`text-[9px] font-mono ${idx === selectedItemIndex ? 'text-white/70' : 'text-slate-400'}`}>
-                              {(p.selling_price ?? 0).toLocaleString()} F
+                            <span className={`text-[9px] font-mono ${active ? 'text-white/80' : 'text-slate-400'}`}>
+                              {formatCurrency(p.selling_price ?? 0)}
                             </span>
-                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${idx === selectedItemIndex ? 'bg-white/20 border-white/20 text-white' : (p.stock ?? 0) > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-500 border-red-200'}`}>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${active ? 'bg-white/20 border-white/20 text-white' : (p.stock ?? 0) > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-500 border-red-200'}`}>
                                 {p.stock ?? 0}
                             </span>
                           </div>
@@ -197,7 +200,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                     <div className="size-16 rounded-full bg-white flex items-center justify-center mb-2 shadow-sm border border-slate-200">
                                         <Database className="h-8 w-8 text-slate-200" />
                                     </div>
-                                    <h4 className="font-bold text-slate-700 text-lg">{t('inventaire.lot_modal.no_lots_title', 'Aucun lot disponible')}</h4>
+                                    <h4 className="font-bold text-slate-700 text-lg">{t('inventaire.lot_modal.no_lots_title')}</h4>
                                     <p className="text-sm text-slate-500 max-w-sm">
                                         {t('inventaire.lot_modal.no_lots_desc', "Il n'y a actuellement aucun lot en stock pour ce produit.")}
                                     </p>
@@ -215,7 +218,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-bold font-mono text-base text-slate-800">{lot.lot}</div>
                                                 <div className="text-[10px] text-slate-400 mt-0.5">
-                                                    Exp: {formatDate(lot.date_expiration) !== '-' ? formatDate(lot.date_expiration) : 'N/A'} • {lot.quantity_remaining} u.
+                                                    {t('common:exp')}: {formatDate(lot.date_expiration) !== '-' ? formatDate(lot.date_expiration) : t('common:not_available')} • {lot.quantity_remaining} {t('common:units_short')}.
                                                 </div>
                                             </div>
                                             <div className="w-24">
@@ -298,7 +301,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                     }
                                 }}
                             >
-                                {t('common:cancel')} (Esc)
+                                {t('common:cancel_shortcut')}
                             </button>
                             <button
                                 id="lot-confirm-btn"
@@ -319,11 +322,11 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                 }}
                             >
                                 <CheckCircle2 className="h-5 w-5" />
-                                {t('common:confirm')} (Ctrl+Enter)
+                                {t('common:confirm_shortcut')}
                             </button>
                         </div>
                         <div className="px-4 py-2 bg-slate-100 border-t border-slate-200 text-[10px] text-slate-500 text-center">
-                            ↑/↓ : naviguer • Tab : champ suivant • Enter : suivant/confirm • Ctrl+Enter : valider • Esc : annuler
+                            {t('common:keyboard_help')}
                         </div>
                     </div>
                 </div>
