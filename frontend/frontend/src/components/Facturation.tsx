@@ -465,7 +465,15 @@ export default function Facturation() {
           centralizedCashRegister={hook.centralizedCashRegister}
           postesVenteActifs={hook.activePostesVente}
           selectedPosteVenteId={hook.activePoste?.id ?? null}
-          setSelectedPosteVenteId={() => {}}
+          setSelectedPosteVenteId={(id) => {
+            // Quand le vendeur sélectionne un poste de caisse cible, mettre à jour selectedPosteCaisseId
+            if (id) {
+              const poste = hook.activePostesVente.find(p => p.id === id)
+              if (poste?.caisse) {
+                hook.setSelectedPosteCaisseId(poste.caisse)
+              }
+            }
+          }}
           selectedPosteCaisseId={hook.selectedPosteCaisseId}
         />
       )}
