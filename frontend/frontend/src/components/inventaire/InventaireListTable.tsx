@@ -47,7 +47,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                 <div className="bg-slate-100/50 p-4 rounded-full mb-4">
                     <Package className="size-10 text-slate-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-700 mb-1">{t('inventaire.list.empty', { defaultValue: 'Aucun inventaire trouvé' })}</h3>
+                <h3 className="text-lg font-semibold text-slate-700 mb-1">{t('inventaire.list.empty')}</h3>
             </div>
         );
     }
@@ -68,7 +68,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                         <th className="px-6 py-4 rounded-tl-2xl">
                             {selectedIds.size > 0 ? (
                                 <span className="text-emerald-600 font-bold normal-case text-sm">
-                                    {t('common:selection_count', { count: selectedIds.size, defaultValue: '{{count}} sélectionné(s)' })}
+                                    {t('common:selection_count', { count: selectedIds.size })}
                                 </span>
                             ) : t('inventaire.list.date')}
                         </th>
@@ -110,7 +110,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                 {inv.description || t('inventaire.list.no_description', '-')}
                                 <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
                                     <History className="h-3 w-3" />
-                                    {t('inventaire.list.created_by_prefix', 'Par')} {inv.created_by_name || '-'}
+                                    {t('inventaire.list.created_by_prefix')} {inv.created_by_name || '-'}
                                 </div>
                             </td>
                             <td className="px-6 py-4 text-right font-bold text-slate-700">
@@ -150,7 +150,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                             className="p-2 text-slate-400 hover:text-[#25D366] hover:bg-[#25D366]/10 rounded-lg transition-all"
                                             onClick={(e) => { e.stopPropagation(); onShareWhatsApp(inv.id); }}
                                             disabled={sharingId === inv.id}
-                                            title="Partager sur WhatsApp"
+                                            title={t('common:share_whatsapp')}
                                         >
                                             {sharingId === inv.id
                                                 ? <div className="animate-spin rounded-full size-4 border-b-2 border-[#25D366]"></div>

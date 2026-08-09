@@ -29,6 +29,7 @@ interface CommandeProductTableProps {
     handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
     handleSellingPriceBlur?: (index: number) => void;
     onRemoveProduct: (index: number) => void;
+    onEditProduct?: (produitId: number) => void;
     onCreateAvoir?: () => void;
     commandeSortBy?: SortBy;
     onSortProduits?: (sortBy: SortBy) => void;
@@ -54,6 +55,7 @@ export default function CommandeProductTable({
     handleSellingPriceBlur,
     handleTableFieldKeyDown,
     onRemoveProduct,
+    onEditProduct,
     commandeSortBy,
     onSortProduits,
     highlightedIndex = null,
@@ -143,7 +145,7 @@ export default function CommandeProductTable({
 
                         <tbody>
                             {commandeProduits.map((p, index) => (
-                                <React.Fragment key={p.id || p.produit || `row-${p.cip}-${p.produit_nom}`}>
+                                <React.Fragment key={p.id || (typeof p.produit === 'object' ? p.produit.id : p.produit) || `row-${p.produit_cip}-${p.produit_nom}`}>
                                     <CommandeProductRow
                                         p={p}
                                         index={index}
@@ -162,6 +164,7 @@ export default function CommandeProductTable({
                                         handleSellingPriceBlur={handleSellingPriceBlur}
                                         onToggleExpand={() => setExpandedRow(expandedRow === index ? null : index)}
                                         onDeleteProduct={() => setProductToDelete(index)}
+                                        onEditProduct={onEditProduct && p.produit ? () => onEditProduct(p.produit as number) : undefined}
                                     />
                                     {expandedRow === index && (
                                         <CommandeProductExpandedRow p={p} colSpan={colSpan} />

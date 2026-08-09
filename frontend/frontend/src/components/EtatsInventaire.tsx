@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { cn } from '../lib/utils';
 import { Button } from './shadcn/button';
@@ -92,31 +93,34 @@ function SummaryLine({ label, value, color }: { label: string; value: string; co
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-const groupByOptions: { value: GroupByOption; label: string; desc: string; icon: React.ReactNode }[] = [
-  { value: 'rayon',       label: 'Par Rayon',             desc: 'Emplacement physique',         icon: <Grid3X3 className="size-4" /> },
-  { value: 'forme',       label: 'Par Forme galénique',   desc: 'Comprimé, sirop, pommade…',    icon: <FlaskConical className="size-4" /> },
-  { value: 'groupe',      label: 'Par Groupe thérap.',    desc: 'Classification DCI / ATC',     icon: <Tag className="size-4" /> },
-  { value: 'fournisseur', label: 'Par Fournisseur',       desc: 'Fournisseur des lots',         icon: <Building2 className="size-4" /> },
-];
-
-const stockFilterOptions: { value: StockFilterOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = [
-  { value: 'tous',     label: 'Tous les produits',     desc: 'Stock nul et positif',          icon: <Package className="size-4" />,      accent: 'blue' },
-  { value: 'non_zero', label: 'Stocks positifs (> 0)', desc: 'Produits en stock uniquement',   icon: <CheckCircle2 className="size-4" />, accent: 'emerald' },
-  { value: 'zero',     label: 'Stocks nuls (= 0)',     desc: 'Ruptures / produits à saisir',  icon: <AlertCircle className="size-4" />,  accent: 'amber' },
-];
-
-const stockLocationOptions: { value: StockLocationOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = [
-  { value: 'tous',    label: 'Tous (Rayon + Réserve)', desc: 'Tous les emplacements',         icon: <Package className="size-4" />,      accent: 'blue' },
-  { value: 'rayon',   label: 'Stock Rayon',            desc: 'Produits en rayon uniquement',  icon: <TrendingUp className="size-4" />,   accent: 'emerald' },
-  { value: 'reserve', label: 'Stock Réserve',          desc: 'Produits en réserve uniquement', icon: <Layers className="size-4" />,      accent: 'amber' },
-];
 
 export default function EtatsInventaire() {
+  const { t } = useTranslation(['stock', 'common']);
+
   const [source, setSource] = useState<SourceOption>('stock');
   const [groupBy, setGroupBy] = useState<GroupByOption>('rayon');
   const [stockFilter, setStockFilter] = useState<StockFilterOption>('tous');
   const [stockLocation, setStockLocation] = useState<StockLocationOption>('tous');
   const [selectedEntity, setSelectedEntity] = useState<number | null>(null);
+
+  const groupByOptions: { value: GroupByOption; label: string; desc: string; icon: React.ReactNode }[] = useMemo(() => [
+    { value: 'rayon',       label: t('stock:etats.group_by_rayon'),       desc: t('stock:etats.group_by_rayon_desc'),       icon: <Grid3X3 className="size-4" /> },
+    { value: 'forme',       label: t('stock:etats.group_by_forme'),       desc: t('stock:etats.group_by_forme_desc'),       icon: <FlaskConical className="size-4" /> },
+    { value: 'groupe',      label: t('stock:etats.group_by_groupe'),      desc: t('stock:etats.group_by_groupe_desc'),      icon: <Tag className="size-4" /> },
+    { value: 'fournisseur', label: t('stock:etats.group_by_fournisseur'),  desc: t('stock:etats.group_by_fournisseur_desc'), icon: <Building2 className="size-4" /> },
+  ], [t]);
+
+  const stockFilterOptions: { value: StockFilterOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = useMemo(() => [
+    { value: 'tous',     label: t('stock:etats.filter_all'),      desc: t('stock:etats.filter_all_desc'),      icon: <Package className="size-4" />,      accent: 'blue' },
+    { value: 'non_zero', label: t('stock:etats.filter_positive'), desc: t('stock:etats.filter_positive_desc'), icon: <CheckCircle2 className="size-4" />, accent: 'emerald' },
+    { value: 'zero',     label: t('stock:etats.filter_zero'),     desc: t('stock:etats.filter_zero_desc'),     icon: <AlertCircle className="size-4" />,  accent: 'amber' },
+  ], [t]);
+
+  const stockLocationOptions: { value: StockLocationOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = useMemo(() => [
+    { value: 'tous',    label: t('stock:etats.location_all'),      desc: t('stock:etats.location_all_desc'),      icon: <Package className="size-4" />,   accent: 'blue' },
+    { value: 'rayon',   label: t('stock:etats.location_rayon'),    desc: t('stock:etats.location_rayon_desc'),    icon: <TrendingUp className="size-4" />, accent: 'emerald' },
+    { value: 'reserve', label: t('stock:etats.location_reserve'),  desc: t('stock:etats.location_reserve_desc'),  icon: <Layers className="size-4" />,     accent: 'amber' },
+  ], [t]);
 
   const [entities, setEntities] = useState<EntityOption[]>([]);
   const [loadingEntities, setLoadingEntities] = useState(false);
@@ -159,9 +163,9 @@ export default function EtatsInventaire() {
       });
       const filename = `listing_${source}_${groupBy}_${new Date().toISOString().slice(0, 10)}.xlsx`;
       downloadBlob(res.data, filename);
-      toast.success('Fichier Excel téléchargé !');
+      toast.success(t('stock:etats.excel_success'));
     } catch {
-      toast.error("Erreur lors de l'export Excel");
+      toast.error(t('stock:etats.excel_error'));
     } finally {
       setExporting(false);
     }
@@ -176,7 +180,12 @@ export default function EtatsInventaire() {
 
   // ── Options ────────────────────────────────────────────────────────────────
 
-  const entityLabel = groupByOptions.find(o => o.value === groupBy)?.label.replace('Par ', '') || '';
+  const entityLabel = {
+    rayon: t('common:rayon'),
+    forme: t('common:forme'),
+    groupe: t('common:groupe'),
+    fournisseur: t('common:supplier'),
+  }[groupBy];
   const selectedEntityName = entities.find(e => e.id === selectedEntity)?.name;
   const canExport = true;
 
@@ -190,8 +199,8 @@ export default function EtatsInventaire() {
           <BarChart3 className="size-5 text-white" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-slate-800 tracking-tight">Listing d'inventaire</h1>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Génération configurable — Excel & Impression</p>
+          <h1 className="text-xl font-bold text-slate-800 tracking-tight">{t('stock:etats.title')}</h1>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">{t('stock:etats.subtitle')}</p>
         </div>
       </div>
 
@@ -203,9 +212,9 @@ export default function EtatsInventaire() {
           <CardHeader className="pb-2 lg:pb-3 pt-3 lg:pt-4 px-3 lg:px-4">
             <div className="flex items-center gap-2">
               <SlidersHorizontal className="size-4 text-slate-400" />
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Regroupement</CardTitle>
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_grouping')}</CardTitle>
             </div>
-            <CardDescription className="text-[11px]">Organiser le listing par…</CardDescription>
+            <CardDescription className="text-[11px]">{t('stock:etats.card_grouping_desc')}</CardDescription>
           </CardHeader>
           <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-1.5">
             {groupByOptions.map(o => (
@@ -228,17 +237,17 @@ export default function EtatsInventaire() {
           <CardHeader className="pb-2 lg:pb-3 pt-3 lg:pt-4 px-3 lg:px-4">
             <div className="flex items-center gap-2">
               <Layers className="size-4 text-slate-400" />
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Source des données</CardTitle>
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_source')}</CardTitle>
             </div>
-            <CardDescription className="text-[11px]">Stock courant ou inventaire à l'aveugle</CardDescription>
+            <CardDescription className="text-[11px]">{t('stock:etats.card_source_desc')}</CardDescription>
           </CardHeader>
           <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-3">
             <div className="space-y-1.5">
               <RadioCard
                 value="stock"
                 current={source}
-                label="Stock courant"
-                description="Quantités réelles présentes"
+                label={t('stock:etats.source_stock')}
+                description={t('stock:etats.source_stock_desc')}
                 icon={<TrendingUp className="size-4" />}
                 accent="emerald"
                 onChange={(v) => setSource(v as SourceOption)}
@@ -246,8 +255,8 @@ export default function EtatsInventaire() {
               <RadioCard
                 value="blind"
                 current={source}
-                label="Inventaire à l'aveugle"
-                description="Listing sans stock théorique (pour comptage)"
+                label={t('stock:etats.source_blind')}
+                description={t('stock:etats.source_blind_desc')}
                 icon={<BarChart3 className="size-4" />}
                 accent="blue"
                 onChange={(v) => setSource(v as SourceOption)}
@@ -261,15 +270,15 @@ export default function EtatsInventaire() {
           <CardHeader className="pb-2 lg:pb-3 pt-3 lg:pt-4 px-3 lg:px-4">
             <div className="flex items-center gap-2">
               <Package className="size-4 text-slate-400" />
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Filtres</CardTitle>
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_filters')}</CardTitle>
             </div>
-            <CardDescription className="text-[11px]">Affiner par entité et par stock</CardDescription>
+            <CardDescription className="text-[11px]">{t('stock:etats.card_filters_desc')}</CardDescription>
           </CardHeader>
           <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-4">
             {/* Filtre entité */}
             <div className="space-y-2">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Filtrer par {entityLabel}
+                {t('stock:etats.filter_by_entity', { entity: entityLabel })}
               </p>
               <div className="relative">
                 <select
@@ -278,7 +287,7 @@ export default function EtatsInventaire() {
                   onChange={(e) => setSelectedEntity(e.target.value ? Number(e.target.value) : null)}
                   disabled={loadingEntities}
                 >
-                  <option value="">— Tous —</option>
+                  <option value="">{t('stock:etats.all_option')}</option>
                   {entities.map(ent => (
                     <option key={ent.id} value={ent.id}>{ent.name}</option>
                   ))}
@@ -296,7 +305,7 @@ export default function EtatsInventaire() {
 
             {/* Filtre stock */}
             <div className="space-y-1.5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Filtre stock</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.filter_stock_label')}</p>
               {stockFilterOptions.map(o => (
                 <RadioCard
                   key={o.value}
@@ -314,7 +323,7 @@ export default function EtatsInventaire() {
             {/* Filtre emplacement (rayon / réserve) — visible uniquement en mode stock */}
             {source === 'stock' && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Emplacement</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.location_label')}</p>
                 {stockLocationOptions.map(o => (
                   <RadioCard
                     key={o.value}
@@ -339,33 +348,33 @@ export default function EtatsInventaire() {
             <CardHeader className="pb-2 lg:pb-3 pt-3 lg:pt-4 px-3 lg:px-4">
               <div className="flex items-center gap-2">
                 <Eye className="size-4 text-slate-400" />
-                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Récapitulatif</CardTitle>
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_summary')}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-2">
               <SummaryLine
-                label="Source"
-                value={source === 'stock' ? 'Stock courant' : 'Inventaire à l\'aveugle'}
+                label={t('stock:etats.summary_source')}
+                value={source === 'stock' ? t('stock:etats.source_stock') : t('stock:etats.source_blind')}
                 color="blue"
               />
               <SummaryLine
-                label="Regroupement"
+                label={t('stock:etats.summary_grouping')}
                 value={groupByOptions.find(o => o.value === groupBy)?.label || groupBy}
                 color="violet"
               />
               <SummaryLine
                 label={entityLabel}
-                value={selectedEntityName || 'Tous'}
+                value={selectedEntityName || t('common:all')}
                 color="slate"
               />
               <SummaryLine
-                label="Filtre stock"
+                label={t('stock:etats.summary_filter_stock')}
                 value={stockFilterOptions.find(o => o.value === stockFilter)?.label || stockFilter}
                 color="emerald"
               />
               {source === 'stock' && (
                 <SummaryLine
-                  label="Emplacement"
+                  label={t('stock:etats.summary_location')}
                   value={stockLocationOptions.find(o => o.value === stockLocation)?.label || stockLocation}
                   color="amber"
                 />
@@ -385,7 +394,7 @@ export default function EtatsInventaire() {
                 ? <span className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 : <FileSpreadsheet className="size-5" />
               }
-              {exporting ? 'Génération…' : 'Exporter en Excel'}
+              {exporting ? t('stock:etats.generating') : t('stock:etats.export_excel')}
             </Button>
 
             <Button
@@ -395,7 +404,7 @@ export default function EtatsInventaire() {
               className="w-full h-11"
             >
               <Printer className="size-4" />
-              Imprimer
+              {t('stock:etats.print')}
             </Button>
           </div>
 
@@ -403,7 +412,7 @@ export default function EtatsInventaire() {
           <div className="flex gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
             <Info className="size-4 text-blue-400 shrink-0 mt-0.5" />
             <p className="text-[11px] text-blue-600 leading-relaxed">
-              L'export Excel est groupé, avec sous-totaux par catégorie et total général. Pour le fournisseur, le regroupement s'effectue via les lots en stock.
+              {t('stock:etats.export_info')}
             </p>
           </div>
         </div>

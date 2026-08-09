@@ -83,6 +83,7 @@ interface CommandeFormProps {
     commandeSortBy?: 'chrono' | 'stock' | 'name' | 'qty';
     onSortProduits?: (sortBy: 'chrono' | 'stock' | 'name' | 'qty') => void;
     onViewProductDetails?: (produitId: number) => void;
+    onEditProduct?: (produitId: number) => void;
     // Actions rapides depuis le formulaire
     onCloture?: () => void;
     onMettreEnAttente?: () => void;
@@ -151,6 +152,7 @@ export default function CommandeForm({
     commandeSortBy,
     onSortProduits,
     onViewProductDetails,
+    onEditProduct,
     onCloture,
     onMettreEnAttente,
     executingAction,
@@ -273,7 +275,7 @@ export default function CommandeForm({
                     <ProductSearch
                       searchQuery={searchProduitQuery}
                       setSearchQuery={setSearchProduitQuery}
-                      results={filteredProduits as SearchResult[]}
+                      results={filteredProduits as unknown as SearchResult[]}
                       loading={false}
                       modes={['products']}
                       compact
@@ -348,6 +350,7 @@ export default function CommandeForm({
                 handleSellingPriceBlur={handleSellingPriceBlur}
                 handleTableFieldKeyDown={handleTableFieldKeyDown}
                 onRemoveProduct={onRemoveProduct}
+                onEditProduct={onEditProduct}
                 onViewProductDetails={onViewProductDetails}
                 commandeSortBy={commandeSortBy}
                 onSortProduits={onSortProduits}

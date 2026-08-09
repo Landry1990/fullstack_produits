@@ -1,10 +1,26 @@
 {
     "matrix": {
         "quadrants": {
-            "MOTEUR": { "label": "Moteur", "description": "Se vend bien · bien en stock", "impact": "Positif" },
-            "HEMORRAGIE": { "label": "Hémorragie", "description": "Très demandé · en rupture", "impact": "Critique" },
-            "SOMNIFERE": { "label": "Somnifère", "description": "Surstock · aucune vente +90j", "impact": "Pénalisant" },
-            "NEUTRE": { "label": "Neutre", "description": "Flux tendu · à la demande", "impact": "Neutre" }
+            "MOTEUR": {
+                "label": "Moteur",
+                "description": "Se vend bien · bien en stock",
+                "impact": "Positif"
+            },
+            "HEMORRAGIE": {
+                "label": "Hémorragie",
+                "description": "Très demandé · en rupture",
+                "impact": "Critique"
+            },
+            "SOMNIFERE": {
+                "label": "Somnifère",
+                "description": "Surstock · aucune vente +90j",
+                "impact": "Pénalisant"
+            },
+            "NEUTRE": {
+                "label": "Neutre",
+                "description": "Flux tendu · à la demande",
+                "impact": "Neutre"
+            }
         },
         "diagnostic": {
             "excellent": "Excellent ! Votre stock est sain, bien équilibré et tourne efficacement.",
@@ -439,12 +455,21 @@
             "message": "Êtes-vous sûr de vouloir valider cet inventaire ? Cette action mettra à jour le stock officiel."
         },
         "types": {
-            "global": "STOCK GLOBAL"
+            "global": "STOCK GLOBAL",
+            "reserve": "STOCK RÉSERVE",
+            "rayon": "STOCK RAYON"
         },
         "filters": {
             "search_placeholder": "Rechercher un inventaire...",
             "status_all": "Tous les statuts",
-            "creators_all": "Tous les créateurs"
+            "creators_all": "Tous les créateurs",
+            "sort_date_desc": "Plus récent",
+            "sort_date_asc": "Plus ancien",
+            "sort_valeur_desc": "Écart valeur (-)",
+            "sort_valeur_asc": "Écart valeur (+)",
+            "sort_qty_desc": "Écart qté (-)",
+            "sort_qty_asc": "Écart qté (+)",
+            "delete_drafts": "Supprimer les brouillons"
         },
         "status": {
             "draft": "En cours",
@@ -460,7 +485,9 @@
             "btn": "Fusionner",
             "success": "Fusion effectuée",
             "success_count": "{{count}} inventaire(s) fusionné(s) avec succès !",
-            "error": "Erreur lors de la fusion"
+            "error": "Erreur lors de la fusion",
+            "inventory_number": "Inventaire #{{id}}",
+            "no_description": "Sans description"
         },
         "list": {
             "title_short": "inventaires",
@@ -525,7 +552,15 @@
                 "prix": "Prix Achat"
             },
             "col_cmp": "PMP",
-            "lot_label": "Lot"
+            "lot_label": "Lot",
+            "no_ecart_title": "Aucun écart",
+            "no_ecart_desc": "Tous les produits correspondent au stock théorique.",
+            "quick_create_product": "Créer un produit rapidement",
+            "print_group_by": "Regrouper par",
+            "group_rayon": "Par Rayon",
+            "group_forme": "Par Forme",
+            "group_groupe": "Par Groupe",
+            "col_phys_qty": "Qté Physique"
         },
         "lines": {
             "selected": "{{count}} ligne(s) sélectionnée(s)",
@@ -566,7 +601,9 @@
             "desc_global": "Ajouter sans spécifier de lot",
             "btn_new": "Nouveau Lot",
             "desc_new": "Créer une nouvelle entrée de lot",
-            "loading": "Chargement des lots..."
+            "loading": "Chargement des lots...",
+            "no_lots_title": "Aucun lot disponible",
+            "no_lots_desc": "Il n'y a actuellement aucun lot en stock pour ce produit."
         },
         "modals": {
             "lot_title": "Sélectionner un Lot",
@@ -640,7 +677,66 @@
                 "empty": "Aucune donnée critique"
             }
         },
-        "audit_btn": "Audit Flash"
+        "audit_btn": "Audit Flash",
+        "whatsapp_not_configured": "Le numéro WhatsApp de la pharmacienne n'est pas configuré dans les paramètres.",
+        "whatsapp_prepared": "Rapport préparé pour WhatsApp !",
+        "whatsapp_share_error": "Erreur lors de la préparation du partage",
+        "telegram_report_sent": "Rapport inventaire envoyé sur Telegram !",
+        "print": {
+            "total_global_gap": "Total Global des Écarts",
+            "report_legend": "Ce rapport détaille les écarts constatés entre le stock théorique et le comptage physique.",
+            "fill_legend": "Veuillez remplir la colonne 'Qté Physique' lors de votre comptage. Les lots non listés doivent être signalés au verso.",
+            "global_gap": "Écart Global"
+        },
+        "etats": {
+            "title": "Listing d'inventaire",
+            "subtitle": "Génération configurable — Excel & Impression",
+            "card_grouping": "Regroupement",
+            "card_grouping_desc": "Organiser le listing par…",
+            "card_source": "Source des données",
+            "card_source_desc": "Stock courant ou inventaire à l'aveugle",
+            "card_filters": "Filtres",
+            "card_filters_desc": "Affiner par entité et par stock",
+            "card_summary": "Récapitulatif",
+            "source_stock": "Stock courant",
+            "source_stock_desc": "Quantités réelles présentes",
+            "source_blind": "Inventaire à l'aveugle",
+            "source_blind_desc": "Listing sans stock théorique (pour comptage)",
+            "group_by_rayon": "Par Rayon",
+            "group_by_rayon_desc": "Emplacement physique",
+            "group_by_forme": "Par Forme galénique",
+            "group_by_forme_desc": "Comprimé, sirop, pommade…",
+            "group_by_groupe": "Par Groupe thérap.",
+            "group_by_groupe_desc": "Classification DCI / ATC",
+            "group_by_fournisseur": "Par Fournisseur",
+            "group_by_fournisseur_desc": "Fournisseur des lots",
+            "filter_all": "Tous les produits",
+            "filter_all_desc": "Stock nul et positif",
+            "filter_positive": "Stocks positifs (> 0)",
+            "filter_positive_desc": "Produits en stock uniquement",
+            "filter_zero": "Stocks nuls (= 0)",
+            "filter_zero_desc": "Ruptures / produits à saisir",
+            "location_all": "Tous (Rayon + Réserve)",
+            "location_all_desc": "Tous les emplacements",
+            "location_rayon": "Stock Rayon",
+            "location_rayon_desc": "Produits en rayon uniquement",
+            "location_reserve": "Stock Réserve",
+            "location_reserve_desc": "Produits en réserve uniquement",
+            "filter_by_entity": "Filtrer par {{entity}}",
+            "filter_stock_label": "Filtre stock",
+            "location_label": "Emplacement",
+            "summary_source": "Source",
+            "summary_grouping": "Regroupement",
+            "summary_filter_stock": "Filtre stock",
+            "summary_location": "Emplacement",
+            "all_option": "— Tous —",
+            "export_info": "L'export Excel est groupé, avec sous-totaux par catégorie et total général. Pour le fournisseur, le regroupement s'effectue via les lots en stock.",
+            "excel_success": "Fichier Excel téléchargé !",
+            "excel_error": "Erreur lors de l'export Excel",
+            "generating": "Génération…",
+            "export_excel": "Exporter en Excel",
+            "print": "Imprimer"
+        }
     },
     "ajustements": {
         "title": "Ajustements de Stock",
@@ -770,7 +866,6 @@
             "sudo_confirm_message": "Cette action va modifier le stock (réintégration). Veuillez confirmer votre mot de passe pour continuer."
         }
     },
-
     "abc": {
         "title": "Analyse ABC",
         "subtitle": "Classification des produits par contribution au CA (Pareto 80/20)",

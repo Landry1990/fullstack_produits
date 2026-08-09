@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCommandesState } from '../hooks/useCommandesState';
+import type { Commande } from '../types';
 import { ShoppingCart, Store, Truck } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
@@ -33,7 +34,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const { state, listProps, detailsProps, formProps, modals } = hook;
   const [detailProduitId, setDetailProduitId] = useState<number | null>(null);
   const [detailActiveTab, setDetailActiveTab] = useState('general');
+  const [editProductId, setEditProductId] = useState<number | null>(null);
 
+  const { data: editProductData } = useProduit(editProductId);
   const { data: detailProduit } = useProduit(detailProduitId);
   const { data: detailLots = [] } = useProduitLots(detailProduitId);
   const { data: detailStats = [] } = useProduitStats(detailProduitId);
@@ -57,7 +60,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       navigate(pathname, { replace: true, state: {} });
     } else if (location.state?.selectedCommandeId && listProps.sortedCommandes.length > 0) {
       const cid = location.state.selectedCommandeId;
-      const found = listProps.sortedCommandes.find((c: unknown) => c.id === cid);
+      const found = listProps.sortedCommandes.find((c: Commande) => c.id === cid);
       if (found) {
         listProps.onViewDetails(found);
         navigate(pathname, { replace: true, state: {} });
@@ -65,7 +68,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
     } else if (location.state?.selectedFournisseurId && listProps.sortedCommandes.length > 0) {
       const fid = location.state.selectedFournisseurId;
       // Filtrer les commandes par fournisseur
-      const supplierOrders = listProps.sortedCommandes.filter((c: unknown) => c.fournisseur === fid || c.fournisseur_id === fid);
+      const supplierOrders = listProps.sortedCommandes.filter((c: Commande) => c.fournisseur === fid);
       if (supplierOrders.length > 0) {
         listProps.onViewDetails(supplierOrders[0]);
         navigate(pathname, { replace: true, state: {} });
@@ -140,13 +143,15 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
       {state.viewMode === 'DETAILS' && state.selectedCommande && (
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <CommandeDetails {...(detailsProps as unknown)} />
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <CommandeDetails {...(detailsProps as any)} />
         </div>
       )}
 
       {(state.viewMode === 'CREATE' || state.viewMode === 'EDIT') && (
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <CommandeForm {...(formProps as unknown)} onViewProductDetails={handleViewProductDetails} />
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <CommandeForm {...(formProps as any)} onViewProductDetails={handleViewProductDetails} onEditProduct={(id: number) => setEditProductId(id)} />
         </div>
       )}
 
@@ -167,8 +172,16 @@ export default function Commandes({ forcedType }: CommandesProps) {
         onClose={() => state.setIsCreateProduitModalOpen(false)}
         onCreated={modals.handleProduitCreated}
         rayons={modals.rayons}
-        fournisseurs={modals.fournisseurs}
-        defaultFournisseurId={modals.newCommandeFournisseurId}
+      />
+
+      <QuickCreateProductModal
+        open={!!editProductId && !!editProductData}
+        onClose={() => setEditProductId(null)}
+        onCreated={() => {
+          setEditProductId(null);
+        }}
+        rayons={modals.rayons}
+        editProduct={editProductData || null}
       />
 
       {state.showPrintLabelsModal && state.selectedCommande && (

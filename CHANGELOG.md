@@ -2,6 +2,112 @@
 
 ---
 
+## 2026-08-09 — Suppression des classes DaisyUI du template d'impression inventaire
+
+### 🎨 Migration DaisyUI → shadcn/ui / Tailwind dans `InventairePrintTemplate.tsx`
+
+Audit des composants du module Inventaire : seul `InventairePrintTemplate.tsx`
+contenait encore des classes DaisyUI (`data-theme`, `bg-base-*`, `text-base-content`,
+`text-success`, `text-error`, `border-primary`). Elles ont été remplacées par des
+couleurs Tailwind standard (`bg-white`, `text-slate-900`, `text-emerald-600`,
+`text-red-600`, `border-emerald-500`).
+
+- **Fichier** : `frontend/frontend/src/components/printing/InventairePrintTemplate.tsx`
+
+---
+
+## 2026-08-09 — Traduction des textes en dur de l'inventaire
+
+### 🌐 Traduction des textes hardcodés dans le module Inventaire
+
+De nombreux libellés du module Inventaire étaient écrits en dur en français dans
+les composants React (options de filtres, modals, toasts, template d'impression,
+listing configurable). Tous ces textes sont maintenant passés par i18n avec des
+clés dans les namespaces `stock` et `common`, avec les traductions française et
+anglaise.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/Inventaire.tsx`
+  - `frontend/frontend/src/components/inventaire/InventaireFilters.tsx`
+  - `frontend/frontend/src/components/inventaire/InventaireListTable.tsx`
+  - `frontend/frontend/src/components/inventaire/InventaireList.tsx`
+  - `frontend/frontend/src/components/inventaire/InventaireQuickStats.tsx`
+  - `frontend/frontend/src/components/inventaire/audit/InventaireAudit.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireAnalysisTab.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireDataTab.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireEditor.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireProductSearch.tsx`
+  - `frontend/frontend/src/components/inventaire/modals/InventaireCreateModal.tsx`
+  - `frontend/frontend/src/components/inventaire/modals/InventaireMergeModal.tsx`
+  - `frontend/frontend/src/components/EtatsInventaire.tsx`
+  - `frontend/frontend/src/components/printing/InventairePrintTemplate.tsx`
+  - `frontend/frontend/public/locales/fr/common.json`
+  - `frontend/frontend/public/locales/en/common.json`
+  - `frontend/frontend/public/locales/fr/stock.json`
+  - `frontend/frontend/public/locales/en/stock.json`
+
+---
+
+## 2026-08-09 — Traduction du modal de fusion de commandes
+
+### 🌐 Traductions manquantes du modal "Fusionner les commandes"
+
+Le modal de fusion de commandes affichait ses libellés en français même en mode
+anglais, car les clés `orders:merge_modal.*` n'existaient que dans le fichier
+de traductions français. Ajout de toutes les traductions anglaises.
+
+- **Fichier** : `frontend/frontend/public/locales/en/orders.json`
+
+---
+
+## 2026-08-10 — Bon de réception sans décimales, suppression fournisseur UI, CIP + édition rapide produit
+
+### 🧾 Bon de réception PDF : valeurs arrondies (sans décimales)
+
+Les prix d'achat, prix de vente et montant total dans le bon de réception (PDF backend)
+s'affichaient avec des décimales (ex: "5000.00 F"). Corrigé pour afficher des entiers
+formatés avec séparateur milliers (ex: "5 000 F").
+
+- **Fichier** : `backend/api/views/commandes/commandes.py` (lignes 109, 1148-1156, 1172)
+
+### 🔧 Suppression du champ fournisseur des formulaires produit
+
+Le champ "Fournisseur" et la checkbox "Exclusif fournisseur" ont été retirés de l'UI
+dans le formulaire produit principal et le modal de création rapide.
+
+- **Fichiers** :
+  - `frontend/.../ProduitFormModal.tsx` (champ fournisseur + checkbox supprimés)
+  - `frontend/.../Commandes/QuickCreateProductModal.tsx` (champ fournisseur supprimé)
+  - `frontend/.../Commandes.tsx` (props fournisseur retirées)
+
+### ➕ Ajout des champs CIP1, CIP2, CIP3 au modal de création rapide produit
+
+Les 3 champs CIP (codes barres) ont été ajoutés au modal simplifié de création de produit
+dans les commandes, envoyés au backend lors de la création.
+
+- **Fichier** : `frontend/.../Commandes/QuickCreateProductModal.tsx`
+
+### ✏️ Mode édition produit depuis les lignes de commande
+
+Ajout d'un bouton crayon sur chaque ligne de commande permettant d'ouvrir le modal
+en mode édition pour modifier un produit existant (nom, prix achat, prix vente, TVA,
+rayon, CIP1, CIP2, CIP3). Utilise PATCH au lieu de POST.
+
+- **Fichiers** :
+  - `frontend/.../Commandes/QuickCreateProductModal.tsx` (prop `editProduct`, mode PATCH)
+  - `frontend/.../Commandes/CommandeProductRow.tsx` (bouton crayon, prop `onEditProduct`)
+  - `frontend/.../Commandes/CommandeProductTable.tsx` (prop `onEditProduct` passée)
+  - `frontend/.../Commandes/CommandeForm.tsx` (prop `onEditProduct` passée)
+  - `frontend/.../Commandes.tsx` (state `editProductId`, 2e instance du modal)
+
+### 🖨️ InvoiceTemplate : TVA 0% sans décimale
+
+Le taux TVA exonéré s'affichait "0.0%" au lieu de "0%" dans les bons de livraison.
+
+- **Fichier** : `frontend/.../printing/InvoiceTemplate.tsx`
+
+---
+
 ## 2026-08-09 — Refactoring factures.py en mixins (1117 → 260 lignes)
 
 ### ♻️ Refactoring backend : `factures.py` éclaté en 4 mixins

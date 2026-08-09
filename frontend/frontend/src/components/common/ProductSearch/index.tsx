@@ -166,7 +166,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   
   const renderProductItem = (item: SearchResult, idx: number) => {
     const itemProps = getItemProps?.(idx) || { className: '', style: {} }
-    const isSelected = itemProps.className?.includes('shadow')
+    const isActive = itemProps.className?.includes('active')
     const stock = item.stock ?? 0
     const canSellNegativeStock = user?.is_superuser || user?.profile?.can_sell_negative_stock || user?.can_sell_negative_stock
     const isOutOfStock = stock <= 0
@@ -186,30 +186,34 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     return (
       <div
         key={item.id}
-        {...itemProps}
+        id={itemProps.id}
+        onMouseEnter={itemProps.onMouseEnter}
         onClick={handleClick}
+        style={isActive ? itemProps.style : undefined}
         className={cn(
           "group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all",
-          isSelected ? 'bg-emerald-50 shadow-md border-l-4 border-l-emerald-500' : 'hover:bg-slate-50',
-          isBlocked ? 'text-slate-400 cursor-not-allowed' : ''
+          isActive ? 'bg-blue-500 shadow-md border-l-4 border-l-blue-700' : 'hover:bg-slate-50',
+          isBlocked && !isActive ? 'text-slate-400 cursor-not-allowed' : ''
         )}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <div className={cn(
               "truncate text-sm",
+              isActive ? 'text-white font-bold' :
               isNegativeStock ? 'text-red-600 font-medium' :
               isZeroStock ? 'text-slate-500 font-normal' :
               'text-slate-800 font-bold'
             )}>{item.name}</div>
             {(item.active_promis_count ?? 0) > 0 && (
-              <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200 animate-pulse shrink-0">
+              <Badge variant="secondary" className={cn("text-[9px] h-4 px-1 shrink-0", isActive ? 'bg-blue-400 text-white border-blue-300' : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse')}>
                 PROMIS ({item.active_promis_count})
               </Badge>
             )}
           </div>
           <div className="text-xs flex gap-3 mt-0.5">
             <span className={cn(
+              isActive ? 'text-blue-100 font-semibold' :
               isNegativeStock ? 'text-red-500 font-semibold' :
               isZeroStock ? 'text-slate-400' :
               'text-slate-500'
@@ -218,11 +222,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                 ? t('facturation:search.out_of_stock', { defaultValue: 'Épuisé' })
                 : `${t('facturation:search.stock_label')} ${stock}`}
             </span>
-            <span className="text-slate-600 font-medium">{formatCurrency(Number(item.selling_price))}</span>
+            <span className={cn(isActive ? 'text-white font-semibold' : 'text-slate-600 font-medium')}>{formatCurrency(Number(item.selling_price))}</span>
           </div>
         </div>
         {!isBlocked && (
-          <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100">
+          <Button variant="ghost" size="icon" className={cn("size-8 opacity-0 group-hover:opacity-100", isActive ? 'text-white hover:text-white hover:bg-blue-600' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100')}>
             <Plus className="size-4" />
           </Button>
         )}

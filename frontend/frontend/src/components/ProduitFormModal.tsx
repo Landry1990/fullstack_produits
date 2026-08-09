@@ -306,16 +306,6 @@ export default function ProduitFormModal({
                   })}
                 </Select>
               </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.provider')}</label>
-                <Select className={selectBase} value={form.fournisseur} onChange={(e) => {
-                  const val = e.target.value;
-                  setForm((p) => ({ ...p, fournisseur: val, is_supplier_exclusive: val ? p.is_supplier_exclusive : false }));
-                }}>
-                  <option value="">-</option>
-                  {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                </Select>
-              </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.alert')}</label>
@@ -420,15 +410,6 @@ export default function ProduitFormModal({
               <div>
                 <span className="text-sm font-medium text-slate-800">{t('products:form.requires_prescription')}</span>
                 <p className="text-[10px] text-slate-400">{t('products:form.prescription_desc')}</p>
-              </div>
-            </div>
-            <div className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${form.fournisseur ? 'bg-amber-50 border-amber-100 hover:bg-amber-100' : 'bg-slate-100 text-slate-400 border-slate-200'}`} onClick={() => form.fournisseur && setForm((p) => ({ ...p, is_supplier_exclusive: !p.is_supplier_exclusive }))}>
-              <Checkbox checked={form.is_supplier_exclusive} onCheckedChange={(checked) => setForm((p) => ({ ...p, is_supplier_exclusive: !!checked }))} disabled={!form.fournisseur} />
-              <div>
-                <span className="text-sm font-medium text-slate-800">{t('products:form.supplier_exclusive')}</span>
-                <p className="text-[10px] text-slate-400">
-                  {t('products:form.exclusive_desc', { provider: form.fournisseur ? fournisseurs.find(f => String(f.id) === form.fournisseur)?.name : t('products:form.provider_placeholder_short') })}
-                </p>
               </div>
             </div>
           </div>
