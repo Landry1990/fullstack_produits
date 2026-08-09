@@ -163,7 +163,9 @@ export default function Clients() {
     }
   };
 
-  // Handle incoming redirect from Omnisearch
+  // Handle incoming redirect from Omnisearch, ET restauration après un rechargement de page (F5) :
+  // le client actuellement sélectionné est persisté dans location.state (survit à un reload),
+  // contrairement à un simple useState en mémoire.
   useEffect(() => {
     const locState = location.state as { action?: string; selectedClientId?: number } | null;
     if (locState?.action === 'NEW_CLIENT') {
@@ -174,9 +176,8 @@ export default function Clients() {
       const cid = locState.selectedClientId;
       const found = clients.find((c: Client) => c.id === cid);
       if (found) {
+        // handleSelectClient se charge lui-même de maintenir location.state à jour
         handleSelectClient(found);
-        // Clear state to avoid re-triggering
-        navigate(location.pathname, { replace: true, state: {} });
       } else {
         if (searchTerm !== String(cid)) {
           setSearchTerm(String(cid));
@@ -188,6 +189,7 @@ export default function Clients() {
 
   const handleSelectClient = async (client: Client) => {
     setLoadingHistory(true);
+    navigate(location.pathname, { replace: true, state: { selectedClientId: client.id } });
     try {
       // Fetch full details or at least beneficiaries to ensure the right panel is complete
       const [history, ayantsDroit] = await Promise.all([
@@ -206,6 +208,11 @@ export default function Clients() {
     } finally {
       setLoadingHistory(false);
     }
+  };
+
+  const handleDeselectClient = () => {
+    navigate(location.pathname, { replace: true, state: {} });
+    setSelectedClient(null);
   };
 
   const handleOpenCreate = () => {
@@ -289,7 +296,7 @@ export default function Clients() {
         try {
             setClients(prev => prev.filter(c => c.id !== deletedId));
             setTotalCount(prev => prev - 1);
-            setSelectedClient(null);
+            handleDeselectClient();
             await clientService.delete(deletedId);
             toast.success(t('clients:messages.delete_success'));
             setTimeout(() => fetchClients(true), 500);
@@ -486,7 +493,7 @@ export default function Clients() {
                     variant="ghost"
                     size="icon"
                     className="lg:hidden mr-1"
-                    onClick={() => setSelectedClient(null)}
+                    onClick={handleDeselectClient}
                   >
                     <ArrowLeft className="size-5 text-slate-500" />
                   </Button>

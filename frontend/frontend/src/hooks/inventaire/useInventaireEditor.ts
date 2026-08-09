@@ -176,7 +176,7 @@ export const useInventaireEditor = (
 
 
     // Ref to latest state for use inside async callbacks / intervals
-    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges: async () => {}, syncLocalOnlyLines: async () => {} });
+    const autoSaveInvRef = useRef({ activeInventaire, lignes, saving, flushPendingChanges: async () => {}, syncLocalOnlyLines: async (): Promise<boolean> => true });
 
     const flushPendingChanges = async () => {
         const pending = pendingChangesRef.current;
@@ -208,13 +208,13 @@ export const useInventaireEditor = (
         }
     };
 
-    const syncLocalOnlyLines = async () => {
+    const syncLocalOnlyLines = async (): Promise<boolean> => {
         const { activeInventaire: inv, lignes: currentLignes } = autoSaveInvRef.current;
-        if (!inv) return;
-        if (inv.status === 'VALIDEE') return;
+        if (!inv) return true;
+        if (inv.status === 'VALIDEE') return true;
 
         const linesToSync = currentLignes.filter(l => l.isLocalOnly);
-        if (linesToSync.length === 0) return;
+        if (linesToSync.length === 0) return true;
 
         // Never disturb an active quantity input: defer if the user is typing
         const active = document.activeElement;
@@ -222,7 +222,7 @@ export const useInventaireEditor = (
         if (isTyping) {
             // Reschedule: user is still typing, wait for the next quiet window
             scheduleLocalOnlySync();
-            return;
+            return false;
         }
 
         const focusInfo = preserveFocus();
@@ -240,8 +240,10 @@ export const useInventaireEditor = (
             await api.post(`inventaires/${inv.id}/lignes/bulk/`, payload);
             const res = await api.get(`inventaires/${inv.id}/lignes/`);
             setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
+            return true;
         } catch (err) {
             logger.error("Auto-save local-only lines error:", err);
+            return false;
         } finally {
             setAutoSaving(false);
             restoreFocus(focusInfo);
@@ -338,11 +340,10 @@ export const useInventaireEditor = (
     };
 
     const toggleSelectAll = () => {
-        const ecartLines = lignes.filter(l => (l.quantite_physique || 0) !== (l.stock_theorique || 0));
-        if (selectedLines.size === ecartLines.length && ecartLines.length > 0) {
+        if (selectedLines.size === lignes.length && lignes.length > 0) {
             setSelectedLines(new Set());
         } else {
-            setSelectedLines(new Set(ecartLines.map(l => l.id)));
+            setSelectedLines(new Set(lignes.map(l => l.id)));
         }
     };
 
@@ -712,7 +713,8 @@ export const useInventaireEditor = (
         handleUpdateQuantity, handleDeleteLine,
         toggleSelectLine, toggleSelectAll, handleBulkDelete,
         handleOpenValidateModal,
-        inventoryStats, fetchInventoryStats
+        inventoryStats, fetchInventoryStats,
+        flushPendingChanges, syncLocalOnlyLines, cancelPendingSyncs
     };
 };
 
