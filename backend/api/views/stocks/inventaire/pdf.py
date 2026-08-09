@@ -274,6 +274,11 @@ def get_print_data(inventaire, group_by='rayon', is_report=False):
                 l.stock_lot.lot if l.stock_lot
                 else (l.lot_numero if hasattr(l, 'lot_numero') else '-')
             ),
+            'lot_expiration': (
+                l.stock_lot.date_expiration.isoformat()
+                if l.stock_lot and l.stock_lot.date_expiration
+                else None
+            ),
             'stock': float(l.stock_theorique),
             'stock_theorique': float(l.stock_theorique),
             'quantite_physique': float(l.quantite_physique),

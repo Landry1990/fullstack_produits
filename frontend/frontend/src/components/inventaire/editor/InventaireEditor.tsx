@@ -60,11 +60,33 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         handleSaveHeader, handleManualSave,
         handleUpdateQuantity, handleDeleteLine, handleBulkDelete,
         handleOpenValidateModal, handleImportCSV, importing,
-        inventoryStats
+        inventoryStats,
+        flushPendingChanges, syncLocalOnlyLines, cancelPendingSyncs
     } = editorLogic;
 
     const { generateEtatPDF, generateEcartsPDF } = useInventairePDF();
     const lock = useDocumentLock('inventaire', activeInventaire?.id);
+    const [printing, setPrinting] = useState(false);
+
+    const handlePrintEtat = async () => {
+        if (!activeInventaire) return;
+        setPrinting(true);
+        try {
+            // Ensure any pending quantity edits and newly-added (local-only) lines
+            // are persisted before generating the PDF, otherwise they would be
+            // missing from the printed sheet.
+            cancelPendingSyncs();
+            await flushPendingChanges();
+            const ok = await syncLocalOnlyLines();
+            if (!ok) {
+                toast.error(t('inventaire.detail.save_error'));
+                return;
+            }
+            generateEtatPDF(activeInventaire, printGroupBy);
+        } finally {
+            setPrinting(false);
+        }
+    };
     
     const searchLogic = useProductSearch(
         'lignes-inventaire/',
@@ -164,10 +186,12 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                     </select>
                     <button
                       className="inline-flex items-center justify-center h-10 px-4 rounded-xl gap-2 text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-60"
-                      onClick={() => activeInventaire && generateEtatPDF(activeInventaire, printGroupBy)}
-                      disabled={!activeInventaire?.id}
+                      onClick={handlePrintEtat}
+                      disabled={!activeInventaire?.id || printing}
                     >
-                      <Download className="h-4 w-4" />
+                      {printing
+                        ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
+                        : <Download className="h-4 w-4" />}
                       <span className="hidden sm:inline">{t('inventaire.detail.print')}</span>
                     </button>
                     <button

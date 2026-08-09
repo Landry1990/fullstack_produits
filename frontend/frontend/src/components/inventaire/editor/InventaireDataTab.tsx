@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, PackageX, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters';
+import { formatDate } from '../../../utils/dateUtils';
 import type { LigneInventaire } from '../../../types';
 
 interface InventaireDataTabProps {
@@ -66,10 +67,9 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
         return () => window.removeEventListener('keydown', handler);
     }, [selectedLines, isReadOnly, handleDeleteLine, onQtyEnter]);
 
-    // Sorting + filtering lines (only show lines with ecart != 0)
+    // Sorting lines (show every line in the inventory, no ecart filtering)
     const sortedLines = useMemo(() => {
         return lignes
-            .filter(l => (l.quantite_physique || 0) !== (l.stock_theorique || 0))
             .slice().sort((a, b) => {
             let comparison = 0;
             switch (sortBy) {
@@ -177,10 +177,10 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
             {/* Table Header */}
             <div className="overflow-x-auto overflow-y-auto flex-1 w-full">
-               <div className="min-w-[600px] md:min-w-[800px]">
-                    <div className="grid grid-cols-12 gap-1 md:gap-2 p-2 px-2 md:px-4 border-b border-slate-100 bg-slate-50/50 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-slate-400">
+               <div className="min-w-[640px] md:min-w-[980px]">
+                    <div className={`grid ${!isReadOnly ? "grid-cols-[32px_1fr_70px_60px_60px_50px] md:grid-cols-[36px_minmax(160px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px_44px]" : "grid-cols-[1fr_70px_60px_60px_50px] md:grid-cols-[minmax(180px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px]"} gap-1 md:gap-2 p-2 px-2 md:px-4 border-b border-slate-100 bg-slate-50/50 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-slate-400`}>
                         {!isReadOnly && (
-                            <div className="col-span-1 flex items-center justify-center">
+                            <div className="flex items-center justify-center">
                                 <input
                                     type="checkbox"
                                     className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
@@ -189,13 +189,16 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                 />
                             </div>
                         )}
-                        <div className={!isReadOnly ? "col-span-4 md:col-span-3" : "col-span-5 md:col-span-4"}>{t('inventaire.detail.col_product')}</div>
-                        <div className="hidden md:block col-span-2">{t('inventaire.detail.col_rayon')}</div>
-                        <div className="col-span-2 md:col-span-1 text-right">{t('inventaire.detail.col_cmp')}</div>
-                        <div className="col-span-1.5 text-center">{t('inventaire.detail.col_theo')}</div>
-                        <div className="col-span-1.5 text-center">{t('inventaire.detail.col_phys')}</div>
-                        <div className="col-span-1 text-center">{t('inventaire.detail.col_gap')}</div>
-                        {!isReadOnly && <div className="hidden md:block col-span-1 text-right">{t('inventaire.detail.col_actions')}</div>}
+                        <div>{t('inventaire.detail.col_product')}</div>
+                        <div className="hidden md:block">{t('inventaire.detail.col_cip')}</div>
+                        <div className="hidden md:block">{t('inventaire.detail.col_lot')}</div>
+                        <div className="hidden md:block">{t('inventaire.detail.col_expiration')}</div>
+                        <div className="hidden md:block">{t('inventaire.detail.col_rayon')}</div>
+                        <div className="text-right">{t('inventaire.detail.col_cmp')}</div>
+                        <div className="text-center">{t('inventaire.detail.col_theo')}</div>
+                        <div className="text-center">{t('inventaire.detail.col_phys')}</div>
+                        <div className="text-center">{t('inventaire.detail.col_gap')}</div>
+                        {!isReadOnly && <div className="hidden md:block text-right">{t('inventaire.detail.col_actions')}</div>}
                     </div>
 
                     {/* Grouped Table Body */}
@@ -208,10 +211,13 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                             const rayonName = l.produit_rayon || (l.produit as unknown).rayon_name || '-';
 
                             const isDirty = dirtyLineIds?.has(l.id);
+                            const cip = l.produit_cip || (l.produit as unknown).cip1;
+                            const lotNumero = (l as unknown).lot_numero;
+                            const lotExpiration = (l as unknown).lot_expiration;
                             return (
-                                <div key={l.id} className={`grid grid-cols-12 gap-1 md:gap-2 py-1.5 px-2 md:px-4 items-center hover:bg-slate-50 transition-colors ${l.isLocalOnly ? 'bg-amber-50/50 border-l-[2px] border-l-amber-400' : ''} ${isDirty ? 'bg-blue-50/30 border-l-[2px] border-l-blue-400' : ''}`}>
+                                <div key={l.id} className={`grid ${!isReadOnly ? "grid-cols-[32px_1fr_70px_60px_60px_50px] md:grid-cols-[36px_minmax(160px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px_44px]" : "grid-cols-[1fr_70px_60px_60px_50px] md:grid-cols-[minmax(180px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px]"} gap-1 md:gap-2 py-1.5 px-2 md:px-4 items-center hover:bg-slate-50 transition-colors ${l.isLocalOnly ? 'bg-amber-50/50 border-l-[2px] border-l-amber-400' : ''} ${isDirty ? 'bg-blue-50/30 border-l-[2px] border-l-blue-400' : ''}`}>
                                     {!isReadOnly && (
-                                        <div className="col-span-1 flex items-center justify-center">
+                                        <div className="flex items-center justify-center">
                                             <input
                                                 type="checkbox"
                                                 className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
@@ -221,40 +227,68 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                         </div>
                                     )}
 
-                                    {/* Product Info */}
-                                    <div className={!isReadOnly ? "col-span-4 md:col-span-3" : "col-span-5 md:col-span-4"}>
-                                        <div className="font-bold text-xs md:text-sm text-slate-800 truncate pr-1 flex items-center gap-1" title={l.produit_nom || (l.produit as unknown).name}>
-                                            {l.produit_nom || (l.produit as unknown).name}
+                                    {/* Product Info — nom seul en desktop (CIP/Lot/Péremption en colonnes dédiées), tout inline sur mobile */}
+                                    <div className="min-w-0">
+                                        <div className="md:hidden flex items-baseline gap-2 min-w-0">
+                                            <span className="font-bold text-xs text-slate-800 truncate shrink-0 max-w-[55%]" title={l.produit_nom || (l.produit as unknown).name}>
+                                                {l.produit_nom || (l.produit as unknown).name}
+                                            </span>
                                             {isDirty && (
-                                                <span className="w-2 h-2 rounded-full bg-blue-400 ml-1" title={t('common:unsaved')} />
+                                                <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" title={t('common:unsaved')} />
+                                            )}
+                                            <span className="text-[10px] font-mono text-slate-400 truncate">{cip}</span>
+                                            {lotNumero && (
+                                                <span className="text-[10px] font-mono text-emerald-600 font-bold truncate shrink-0">
+                                                    {t('inventaire.detail.lot_label')} {lotNumero}
+                                                </span>
+                                            )}
+                                            {lotExpiration && (
+                                                <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                                                    {formatDate(lotExpiration)}
+                                                </span>
                                             )}
                                         </div>
-                                        <div className="text-[10px] md:text-xs font-mono text-slate-400 flex gap-1 md:gap-2 items-center leading-none mt-0.5">
-                                            <span>{l.produit_cip || (l.produit as unknown).cip1}</span>
-                                            {(l as unknown).lot_numero && (
-                                                <span className="text-emerald-600 font-bold">{t('inventaire.detail.lot_label')} {(l as unknown).lot_numero}</span>
+                                        <div className="hidden md:flex items-center gap-1 font-bold text-sm text-slate-800 truncate" title={l.produit_nom || (l.produit as unknown).name}>
+                                            <span className="truncate">{l.produit_nom || (l.produit as unknown).name}</span>
+                                            {isDirty && (
+                                                <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" title={t('common:unsaved')} />
                                             )}
                                         </div>
+                                    </div>
+
+                                    {/* CIP Column - hidden on mobile */}
+                                    <div className="hidden md:block truncate text-xs font-mono text-slate-500">
+                                        {cip || '-'}
+                                    </div>
+
+                                    {/* Lot Column - hidden on mobile */}
+                                    <div className="hidden md:block truncate text-xs font-mono font-bold text-emerald-600">
+                                        {lotNumero || '-'}
+                                    </div>
+
+                                    {/* Péremption Column - hidden on mobile */}
+                                    <div className="hidden md:block truncate text-xs font-mono text-slate-500">
+                                        {lotExpiration ? formatDate(lotExpiration) : '-'}
                                     </div>
 
                                     {/* Rayon Column - hidden on mobile */}
-                                    <div className="hidden md:block col-span-2 truncate text-xs font-medium text-slate-500">
+                                    <div className="hidden md:block truncate text-xs font-medium text-slate-500">
                                         {rayonName}
                                     </div>
 
-                                    <div className="col-span-2 md:col-span-1 text-right text-[10px] md:text-xs font-medium text-slate-600">
+                                    <div className="text-right text-[10px] md:text-xs font-medium text-slate-600">
                                         {formatCurrency(normalizeNumberInput(String(l.pmp_snapshot || l.produit_cost_price || '0')))}
                                     </div>
 
                                     {/* Stock Théorique */}
-                                    <div className="col-span-1.5 flex justify-center">
+                                    <div className="flex justify-center">
                                         <div className="bg-slate-50 px-1 md:px-2 py-0.5 rounded border border-slate-200 min-w-[35px] md:min-w-[45px] text-center">
                                             <span className="font-mono font-bold text-[10px] md:text-xs text-slate-400">{l.stock_theorique}</span>
                                         </div>
                                     </div>
 
                                     {/* Stock Physique (Input) */}
-                                    <div className="col-span-1.5 flex justify-center">
+                                    <div className="flex justify-center">
                                         {isReadOnly ? (
                                             <div className="bg-slate-50 px-1 md:px-2 py-1 rounded border border-slate-200 min-w-[35px] md:min-w-[45px] text-center">
                                                 <span className="font-mono font-bold text-[10px] md:text-xs text-slate-700">{l.quantite_physique}</span>
@@ -318,7 +352,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                     </div>
 
                                     {/* Ecart */}
-                                    <div className="col-span-1 flex justify-center">
+                                    <div className="flex justify-center">
                                         <div className={`px-1 md:px-2 py-0.5 rounded border font-mono font-bold text-[10px] md:text-xs min-w-[32px] md:min-w-[40px] text-center ${ecartClass}`}>
                                             {currentEcart > 0 ? '+' : ''}{currentEcart}
                                         </div>
@@ -326,7 +360,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
                                     {/* Actions - hidden on mobile */}
                                     {!isReadOnly && (
-                                        <div className="hidden md:flex col-span-1 justify-end pr-1">
+                                        <div className="hidden md:flex justify-end pr-1">
                                             <button
                                                 className="inline-flex items-center justify-center size-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
                                                 onClick={() => handleDeleteLine(l.id)}

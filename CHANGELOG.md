@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-08-09 (2) — Persistance de la vue après F5 (Commandes, Clients, Fournisseurs)
+
+### 🔄 Reload sans perte de contexte
+
+Auparavant, un rechargement de page (F5) pendant l'édition/consultation d'une commande,
+d'un client ou d'un fournisseur ramenait systématiquement à la liste, car l'état (vue
+active, élément sélectionné) vivait uniquement en mémoire (zustand ou `useState`). Le
+mécanisme utilise maintenant `location.state` (React Router), qui **survit à un F5**
+contrairement à un state en mémoire : chaque sélection met à jour l'historique du
+navigateur, et un effet au montage restaure automatiquement les données depuis le
+backend.
+
+- **Commandes** : `useCommandesState.ts` — `openEditView`/`handleViewDetails` persistent
+  `{ viewState: { mode, commandeId } }` ; restauration au montage ; nettoyage dans
+  `handleBackToList`/`openCreateView`.
+- **Clients** : `Clients.tsx` — `handleSelectClient` persiste `selectedClientId` ;
+  nouvelle fonction `handleDeselectClient` (bouton retour mobile + suppression client).
+- **Fournisseurs** : `useFournisseurs.ts` — `selectFournisseur` persiste
+  `selectedSupplierId` (suppression de l'ancien `window.history.replaceState` qui
+  effaçait cet état) ; `Fournisseurs.tsx` — l'onglet actif (`dashboard`/`management`)
+  est aussi persisté et restauré (bascule automatique sur "management" si un
+  fournisseur était sélectionné).
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/hooks/useCommandesState.ts`
+  - `frontend/frontend/src/components/Clients.tsx`
+  - `frontend/frontend/src/hooks/useFournisseurs.ts`
+  - `frontend/frontend/src/components/Fournisseurs.tsx`
+
+**Limite connue** : une commande en cours de **création** (jamais sauvegardée) ne peut
+pas être restaurée après F5 (rien à récupérer côté serveur).
+
+---
+
 ## 2026-08-09 — Suppression des classes DaisyUI du template d'impression inventaire
 
 ### 🎨 Migration DaisyUI → shadcn/ui / Tailwind dans `InventairePrintTemplate.tsx`

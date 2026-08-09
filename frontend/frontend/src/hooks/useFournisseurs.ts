@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, type FormEvent, useRef, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useConfirm } from './useConfirm';
 import { useAuth } from '../context/AuthContext';
@@ -43,6 +43,7 @@ export const emptyForm: Omit<Fournisseur, 'id'> = {
 export function useFournisseurs() {
   const { t } = useTranslation(['providers', 'common']);
   const location = useLocation();
+  const navigate = useNavigate();
   const confirm = useConfirm()
   const { user } = useAuth();
   
@@ -197,10 +198,14 @@ export function useFournisseurs() {
   useEffect(() => {
     if (selectedFournisseur && !fournisseurs.some(f => f.id === selectedFournisseur.id)) {
       setSelectedFournisseur(null);
+      navigate(location.pathname, { replace: true, state: {} });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fournisseurs]); // ✅ Retiré selectedFournisseur des dépendances
 
+  // Handle incoming redirect (ex: depuis les Commandes), ET restauration après un rechargement de
+  // page (F5) : le fournisseur sélectionné est persisté dans location.state (survit à un reload),
+  // contrairement à un simple useState en mémoire. selectFournisseur() maintient ce state à jour.
   useEffect(() => {
     if (location.state?.selectedSupplierId && fournisseurs.length > 0) {
       const supplier = fournisseurs.find(f => f.id === location.state.selectedSupplierId);
@@ -209,7 +214,6 @@ export function useFournisseurs() {
         if (location.state.openFinance) {
           setFinanceModalState({ isOpen: true });
         }
-        window.history.replaceState({}, document.title);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -254,6 +258,7 @@ export function useFournisseurs() {
     setSelectedFournisseur(fournisseur);
     setSearchTerm('');
     setHighlightedIndex(-1);
+    navigate(location.pathname, { replace: true, state: { selectedSupplierId: fournisseur.id } });
   }
 
   function openEditModal() {
