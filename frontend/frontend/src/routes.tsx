@@ -80,6 +80,7 @@ const Promis = lazyWithRetry(() => import('./components/Promis'));
 const StockAnalysis = lazyWithRetry(() => import('./components/StockAnalysis'));
 const HistoriqueClotures = lazyWithRetry(() => import('./components/HistoriqueClotures'));
 const HistoriqueVentes = lazyWithRetry(() => import('./components/HistoriqueVentes'));
+const RecapClient = lazyWithRetry(() => import('./components/RecapClient'));
 const HistoriqueAchats = lazyWithRetry(() => import('./components/HistoriqueAchats'));
 const TelegramHistory = lazyWithRetry(() => import('./components/TelegramHistory'));
 const OrdonnancierPage = lazyWithRetry(() => import('./components/Ordonnancier'));
@@ -162,6 +163,7 @@ export const router = createBrowserRouter([
           { path: 'caisse-centralisee', ...perm('caisse', CaisseCentralisee) },
           { path: 'promotions', ...perm('ventes_promotions', PromotionList) },
           { path: 'historique-ventes', ...perm('ventes_historique', HistoriqueVentes) },
+          { path: 'recap-client', ...perm('ventes_consultation', RecapClient) },
           { path: 'ordonnancier', ...perm('ventes_ordonnancier', OrdonnancierPage) },
           { path: 'journal-caisse', ...perm('ventes_journal', JournalCaisse) },
           { path: 'historique-clotures', ...perm('ventes_clotures', HistoriqueClotures) },

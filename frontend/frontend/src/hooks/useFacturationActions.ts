@@ -61,6 +61,19 @@ export function useFacturationActions({
     const handleProforma = useCallback(async () => {
         if (cart.lignesFacture.length === 0) return
         setLoading(true)
+
+        // Ouvrir le popup AVANT les appels async pour conserver le contexte du clic utilisateur
+        // et éviter le blocage par le navigateur.
+        let printWindow: Window | null = null
+        try {
+            printWindow = window.open('about:blank', '_blank')
+        } catch { /* ignore */ }
+        if (!printWindow) {
+            toast.error("Popup bloqué. Autorisez les popups pour imprimer.")
+            setLoading(false)
+            return
+        }
+
         try {
             const facturePayload = {
                 client: clientsHook.useManualClient ? null : clientsHook.selectedClient,
@@ -98,11 +111,9 @@ export function useFacturationActions({
 
             await Promise.all(produitsPayload.map((payload) => api.post('facture-produits/', payload)))
 
-            try {
-                const w = window.open(`/app/print-invoice/${createdFacture.id}`, '_blank')
-                if (!w) toast.error("Popup bloqué. Autorisez les popups pour imprimer.")
-                toast.success("Proforma généré avec succès")
-            } catch { /* ignore */ }
+            printWindow.location.href = `/app/print-invoice/${createdFacture.id}?type=proforma`
+            printWindow.focus?.()
+            toast.success("Devis généré avec succès")
 
             cart.setLignesFacture([])
             ui.setMontantPaye('')
@@ -111,8 +122,9 @@ export function useFacturationActions({
             clientsHook.setSelectedClient(null)
             clientsHook.setManualClientName('')
             ui.setTicketCaisse(null)
-        } catch {
-            toast.error("Erreur lors de la création du proforma")
+        } catch (error) {
+            try { printWindow.close() } catch { /* ignore */ }
+            toast.error("Erreur lors de la création du devis")
         } finally {
             setLoading(false)
         }
@@ -131,6 +143,18 @@ export function useFacturationActions({
         }
 
         setLoading(true)
+
+        // Ouvrir le popup AVANT les appels async pour conserver le contexte du clic utilisateur.
+        let printWindow: Window | null = null
+        try {
+            printWindow = window.open('about:blank', '_blank')
+        } catch { /* ignore */ }
+        if (!printWindow) {
+            toast.error("Popup bloqué. Autorisez les popups pour imprimer.")
+            setLoading(false)
+            return
+        }
+
         try {
             const facturePayload = {
                 client: clientsHook.selectedClient || null,
@@ -174,8 +198,8 @@ export function useFacturationActions({
                 api.post('facture-produits/', payload)
             ))
 
-            const blWin = window.open(`/app/print-invoice/${createdFacture.id}?type=BL`, '_blank')
-            if (!blWin) toast.error("Popup bloqué. Autorisez les popups pour imprimer.")
+            printWindow.location.href = `/app/print-invoice/${createdFacture.id}?type=BL`
+            printWindow.focus?.()
 
             ui.setModificationInvoiceId(createdFacture.id)
             ui.setModificationInvoiceStatus('PROF')
@@ -183,6 +207,7 @@ export function useFacturationActions({
 
             toast.success("Bon de livraison généré - Document prêt pour validation")
         } catch (error) {
+            try { printWindow.close() } catch { /* ignore */ }
             toast.error(`Erreur lors de la création du document : ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
         } finally {
             setLoading(false)
@@ -206,19 +231,31 @@ export function useFacturationActions({
 
     const handleConfirmPrintClientName = useCallback(async (clientNameInput: string) => {
         if (!pendingPrintFacture) return;
+
+        // Ouvrir le popup AVANT l'appel API pour conserver le contexte du clic utilisateur.
+        let printWindow: Window | null = null;
+        try {
+            printWindow = window.open('about:blank', '_blank');
+        } catch { /* ignore */ }
+        if (!printWindow) {
+            toast.error("Popup bloqué. Autorisez les popups pour imprimer.");
+            setShowClientNameModal(false);
+            setPendingPrintFacture(null);
+            setTimeout(() => searchInputRef.current?.focus(), 100);
+            return;
+        }
+
         try {
             await api.patch(`factures/${pendingPrintFacture.id}/`,
                 { client_name_override: clientNameInput }
             );
             let url = `/app/print-invoice/${pendingPrintFacture.id}`;
             if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
-            const w1 = window.open(url, '_blank');
-            if (!w1) toast.error("Popup bloqué. Autorisez les popups pour imprimer.");
-        } catch {
-            let url = `/app/print-invoice/${pendingPrintFacture.id}`;
-            if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
-            const w2 = window.open(url, '_blank');
-            if (!w2) toast.error("Popup bloqué. Autorisez les popups pour imprimer.");
+            printWindow.location.href = url;
+            printWindow.focus?.();
+        } catch (err) {
+            try { printWindow.close(); } catch { /* ignore */ }
+            toast.error(getApiErrorDetail(err, "Erreur lors de la mise à jour du client"));
         } finally {
             setShowClientNameModal(false);
             setPendingPrintFacture(null);

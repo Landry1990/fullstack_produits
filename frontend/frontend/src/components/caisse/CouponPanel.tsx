@@ -1,6 +1,6 @@
 ﻿import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Ticket, Plus, Search } from 'lucide-react'
+import { Ticket, Plus, Search, X } from 'lucide-react'
 import { Button } from '../shadcn/button'
 import { Input } from '../shadcn/input'
 import { Badge } from '../shadcn/badge'
@@ -14,6 +14,7 @@ interface CouponPanelProps {
   onSearchChange: (value: string) => void
   onSearch: () => void
   onSelectCoupon: (coupon: CouponMonnaie) => void
+  onClose: () => void
   user: User | null
 }
 
@@ -24,6 +25,7 @@ export const CouponPanel: React.FC<CouponPanelProps> = ({
   onSearchChange,
   onSearch,
   onSelectCoupon,
+  onClose,
   user
 }) => {
   const { t } = useTranslation('caisse')
@@ -37,16 +39,27 @@ export const CouponPanel: React.FC<CouponPanelProps> = ({
             </span>
             {t('coupons.title')}
           </h2>
-          <Button
-            size="sm"
-            variant="default"
-            className="rounded-full size-9 p-0 bg-emerald-600 hover:bg-emerald-700"
-            onClick={onGenerateCoupon}
-            title={user?.is_superuser || user?.profile?.can_generate_coupon ? t('coupons.generate') : t('coupons.permission_required')}
-            disabled={!user?.is_superuser && !user?.profile?.can_generate_coupon}
-          >
-            <Plus className="size-4" />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button
+              size="sm"
+              variant="default"
+              className="rounded-full size-9 p-0 bg-emerald-600 hover:bg-emerald-700"
+              onClick={onGenerateCoupon}
+              title={user?.is_superuser || user?.profile?.can_generate_coupon ? t('coupons.generate') : t('coupons.permission_required')}
+              disabled={!user?.is_superuser && !user?.profile?.can_generate_coupon}
+            >
+              <Plus className="size-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="rounded-full size-9 p-0 text-slate-400 hover:text-slate-700 hover:bg-slate-200"
+              onClick={onClose}
+              title={t('coupons.details_modal.close')}
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 w-full">

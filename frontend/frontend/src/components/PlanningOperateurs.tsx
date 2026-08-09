@@ -47,6 +47,40 @@ function handlePrint() {
   window.print();
 }
 
+const planningPrintStyles = `
+  @media print {
+    body * {
+      visibility: hidden !important;
+    }
+    #planning-print-area,
+    #planning-print-area * {
+      visibility: visible !important;
+    }
+    #planning-print-area {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #fff !important;
+      color: #000 !important;
+      overflow: visible !important;
+    }
+    #planning-print-area table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+    }
+    #planning-print-area th,
+    #planning-print-area td {
+      border: 1px solid #000 !important;
+      padding: 4px !important;
+      color: #000 !important;
+      background: #fff !important;
+    }
+  }
+`;
+
 // ── Config Tab ──
 
 function ConfigTab() {
@@ -996,6 +1030,7 @@ export default function PlanningOperateurs() {
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 gap-4 font-sans">
+      <style dangerouslySetInnerHTML={{ __html: planningPrintStyles }} />
       <Card className="flex flex-col flex-1 min-h-0">
         {/* Header */}
         <div className="p-6 border-b border-slate-100 dark:border-slate-800">

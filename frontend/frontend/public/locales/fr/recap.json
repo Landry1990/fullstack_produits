@@ -1,0 +1,53 @@
+{
+    "title": "Récapitulatif Client",
+    "subtitle": "Générez un récapitulatif à partir des numéros de tickets d'un client",
+    "form": {
+        "client_name": "Nom du client (optionnel)",
+        "client_placeholder": "Nom du client",
+        "ticket_numbers": "Numéros de tickets",
+        "ticket_placeholder": "Saisir un numéro de ticket (ex: FAC-0042)",
+        "hint": "Appuyez sur Entrée ou le bouton + pour ajouter chaque numéro",
+        "search": "Générer le récapitulatif",
+        "print": "Imprimer / PDF"
+    },
+    "errors": {
+        "no_numbers": "Veuillez ajouter au moins un numéro de ticket",
+        "some_not_found": "{{count}} numéro(s) non trouvé(s)",
+        "ticket_not_found": "Ticket {{numero}} introuvable",
+        "ticket_cancelled": "Ticket {{numero}} annulé — sera exclu des totaux",
+        "fetch_error": "Erreur lors de la recherche des factures"
+    },
+    "messages": {
+        "found": "{{count}} facture(s) trouvée(s)"
+    },
+    "status": {
+        "cancelled": "Annulé"
+    },
+    "results": {
+        "summary": "Résumé",
+        "details": "Détail par ticket",
+        "tickets": "Tickets",
+        "total_ht": "Total HT",
+        "total_tva": "Total TVA",
+        "total_ttc": "Total TTC",
+        "not_found_title": "Numéros non trouvés"
+    },
+    "pdf": {
+        "title": "RÉCAPITULATIF DES ACHATS",
+        "client": "Client",
+        "date_generated": "Généré le",
+        "period": "Période",
+        "tickets_count": "Nombre de tickets",
+        "col_ticket": "Ticket",
+        "col_date": "Date",
+        "col_product": "Produit",
+        "col_qty": "Qté",
+        "col_price": "P.U.",
+        "col_total": "Total",
+        "total_ht": "Total HT",
+        "total_tva": "Total TVA",
+        "total_remise": "Remise",
+        "total_ttc": "TOTAL TTC",
+        "footer": "Ce document est un récapitulatif non comptable généré à la demande du client."
+    }
+}

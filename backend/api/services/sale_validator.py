@@ -89,7 +89,9 @@ class SaleValidator:
         # 8. Final updates
         facture.status = Facture.Status.VALIDEE
         facture._skip_audit = True
-        if not facture.numero_facture:
+        # À la validation, remplacer le numéro DEV-XXXXXX par FAC-XXXXXX
+        # (un devis validé devient une facture)
+        if not facture.numero_facture or facture.numero_facture.startswith('DEV-'):
             facture.numero_facture = f"FAC-{facture.id:06d}"
         if not facture.validated_by:
             facture.validated_by = validation_user

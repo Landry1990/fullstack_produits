@@ -11,10 +11,13 @@
         "title": "Raccourcis :",
         "navigate": "Naviguer",
         "cash_in": "Encaisser",
+        "view_products": "Voir produits",
         "coupon": "Coupon",
         "refresh": "Rafraîchir",
         "quick_select": "Sélection rapide",
-        "enter_key": "Entrée"
+        "enter_key": "Entrée",
+        "space_key": "Espace",
+        "close": "Fermer"
     },
     "table": {
         "ticket": "Ticket",

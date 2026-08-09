@@ -15,7 +15,7 @@ import CommandeList from './Commandes/CommandeList';
 import CommandeForm from './Commandes/CommandeForm';
 import CommandeDetails from './Commandes/CommandeDetails';
 
-import ProduitFormModal from './ProduitFormModal';
+import QuickCreateProductModal from './Commandes/QuickCreateProductModal';
 import SimplePrintLabelsModal from './SimplePrintLabelsModal';
 import SudoValidationModal from './common/SudoValidationModal';
 import TransferCommandeModal from './Commandes/TransferCommandeModal';
@@ -162,15 +162,13 @@ export default function Commandes({ forcedType }: CommandesProps) {
         />
       )}
 
-      <ProduitFormModal
+      <QuickCreateProductModal
         open={state.isCreateProduitModalOpen}
         onClose={() => state.setIsCreateProduitModalOpen(false)}
-        produitsEndpoint="produits/"
         onCreated={modals.handleProduitCreated}
         rayons={modals.rayons}
         fournisseurs={modals.fournisseurs}
-        formes={modals.formes}
-        title={modals.t('orders:messages.create_new_product')}
+        defaultFournisseurId={modals.newCommandeFournisseurId}
       />
 
       {state.showPrintLabelsModal && state.selectedCommande && (

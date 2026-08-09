@@ -59,7 +59,8 @@
         "validated": "Validated",
         "draft": "Draft",
         "cancelled": "Cancelled",
-        "proforma": "Proforma",
+        "proforma": "Quote",
+        "load_to_facturation": "Load to billing",
         "validated_by": "Validated by",
         "cancelled_by": "Cancelled by"
     },

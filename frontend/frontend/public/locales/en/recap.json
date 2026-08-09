@@ -1,0 +1,53 @@
+{
+    "title": "Client Recap",
+    "subtitle": "Generate a summary from customer ticket numbers",
+    "form": {
+        "client_name": "Client name (optional)",
+        "client_placeholder": "e.g. Mr. Smith",
+        "ticket_numbers": "Ticket numbers",
+        "ticket_placeholder": "Enter a ticket number (e.g. FAC-0042)",
+        "hint": "Press Enter or the + button to add each number",
+        "search": "Generate recap",
+        "print": "Print / PDF"
+    },
+    "errors": {
+        "no_numbers": "Please add at least one ticket number",
+        "some_not_found": "{{count}} number(s) not found",
+        "ticket_not_found": "Ticket {{numero}} not found",
+        "ticket_cancelled": "Ticket {{numero}} cancelled — will be excluded from totals",
+        "fetch_error": "Error fetching invoices"
+    },
+    "messages": {
+        "found": "{{count}} invoice(s) found"
+    },
+    "status": {
+        "cancelled": "Cancelled"
+    },
+    "results": {
+        "summary": "Summary",
+        "details": "Details by ticket",
+        "tickets": "Tickets",
+        "total_ht": "Subtotal",
+        "total_tva": "Tax",
+        "total_ttc": "Total incl. tax",
+        "not_found_title": "Numbers not found"
+    },
+    "pdf": {
+        "title": "PURCHASE SUMMARY",
+        "client": "Client",
+        "date_generated": "Generated on",
+        "period": "Period",
+        "tickets_count": "Number of tickets",
+        "col_ticket": "Ticket",
+        "col_date": "Date",
+        "col_product": "Product",
+        "col_qty": "Qty",
+        "col_price": "Unit Price",
+        "col_total": "Total",
+        "total_ht": "Subtotal",
+        "total_tva": "Tax",
+        "total_remise": "Discount",
+        "total_ttc": "TOTAL",
+        "footer": "This document is a non-accounting summary generated at the customer's request."
+    }
+}
