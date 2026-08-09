@@ -2,6 +2,247 @@
 
 ---
 
+## 2026-08-09 — Refactoring factures.py en mixins (1117 → 260 lignes)
+
+### ♻️ Refactoring backend : `factures.py` éclaté en 4 mixins
+
+Le fichier `backend/api/views/ventes/factures.py` faisait 1117 lignes avec 23 actions dans une seule classe.
+Refactoring par pattern mixins DRF standard — zéro changement d'URL, zéro impact frontend.
+
+**Nouvelle structure** :
+- `factures.py` (260 lignes) : core ViewSet (`list`, `get_queryset`, `get_serializer_class`, `page_init`, `perform_create`, `destroy`, `perform_destroy`) + `FactureSearchFilter`
+- `facture_mixins/sales_actions.py` : `FactureSalesMixin` (`finaliser`, `valider`, `annuler`, `modifier`, `marquer_payee`, `sync_mobile`)
+- `facture_mixins/bulk_actions.py` : `FactureBulkMixin` (`bulk_delete`, `supprimer_brouillons`, `bulk_cancel`)
+- `facture_mixins/print_actions.py` : `FacturePrintMixin` (`imprimer_facture`, `send_whatsapp`, `print_data`, `generer_avoir`)
+- `facture_mixins/stats_actions.py` : `FactureStatsMixin` (`stats_jour`, `caisse_par_tranche_horaire`, `recap_multi`)
+
+- **Fichiers** :
+  - `backend/api/views/ventes/factures.py` (réduit de 1117 → 260 lignes)
+  - `backend/api/views/ventes/facture_mixins/__init__.py` (nouveau)
+  - `backend/api/views/ventes/facture_mixins/sales_actions.py` (nouveau)
+  - `backend/api/views/ventes/facture_mixins/bulk_actions.py` (nouveau)
+  - `backend/api/views/ventes/facture_mixins/print_actions.py` (nouveau)
+  - `backend/api/views/ventes/facture_mixins/stats_actions.py` (nouveau)
+
+---
+
+## 2026-08-09 (19) — Récapitulatif Client : refonte impression, lot/péremption, gestion annulations
+
+### 🖨️ Refonte complète de l'impression du récapitulatif
+
+Remplacement de jsPDF par le système d'impression HTML/CSS natif utilisé par les factures.
+Le document récapitulatif est désormais visuellement aligné avec les factures classiques.
+
+- Nouveau template React `RecapTemplate.tsx` avec le même design que `InvoiceTemplate` :
+  header pharmacie (logo, nom, adresse, NIU, RC), tableau produits, totaux, zone signature, footer
+- Le titre affiche "RÉCAPITULATIF" au lieu de "FACTURE"
+- Mention "Document non comptable" en bas du tableau
+- Intégration dans `PrintPage.tsx` (type `RECAP`, données via `sessionStorage`)
+
+- **Fichiers** :
+  - `frontend/frontend/src/components/printing/RecapTemplate.tsx` (nouveau)
+  - `frontend/frontend/src/components/printing/PrintPage.tsx` (ajout support RECAP)
+  - `frontend/frontend/src/components/RecapClient.tsx` (remplacement jsPDF par window.open)
+
+### 💊 Lot et date de péremption sur le document
+
+- Chaque ligne produit affiche le numéro de lot et la date d'expiration (format MM/YY)
+  sous le nom du produit, identique au style des factures
+
+### ✅ Vérification en temps réel des tickets à l'ajout
+
+- Dès qu'un numéro est ajouté, appel API pour vérifier son existence
+- Badge vert (trouvé), rouge (introuvable), orange barré (annulé), gris + spinner (en cours)
+- Toast d'erreur immédiat si le ticket n'existe pas ou est annulé
+
+### 🚫 Gestion des tickets annulés
+
+- **Backend** : les factures annulées sont exclues des totaux récapitulatifs (`total_ht`, `total_tva`, `total_ttc`, `total_remise`). Champ `cancelled_count` ajouté à la réponse
+- **Frontend (page)** : les factures annulées apparaissent en opacité réduite avec fond orange, numéro et montant barrés, badge "Annulé"
+- **Frontend (impression)** : lignes annulées grisées et barrées avec mention "ANNULÉ", exclues des totaux
+
+- **Fichiers** :
+  - `backend/api/views/ventes/factures.py` (totaux excluent annulées, `cancelled_count`)
+  - `frontend/frontend/src/components/RecapClient.tsx` (checkNumero, badges statut, affichage annulés)
+  - `frontend/frontend/src/components/printing/RecapTemplate.tsx` (lignes annulées barrées)
+  - `frontend/frontend/public/locales/{fr,en}/recap.json` (clés `ticket_cancelled`, `ticket_not_found`, `status.cancelled`)
+
+---
+
+## 2026-08-08 (18) — Raccourci Espace caisse + Récapitulatif Client multi-tickets
+
+### ⌨️ Raccourci clavier "Voir produits" en caisse centralisée
+
+- Touche `Espace` pour ouvrir le popup de détail produits de la vente sélectionnée
+- `Esc` ferme les modales (géré nativement par Radix Dialog)
+- Légende des raccourcis mise à jour avec les nouvelles touches
+
+- **Fichiers** :
+  - `frontend/frontend/src/hooks/useCaisseKeyboard.ts` (ajout handler `onViewProducts`, case `' '`)
+  - `frontend/frontend/src/hooks/__tests__/useCaisseKeyboard.test.ts` (mock ajouté)
+  - `frontend/frontend/src/components/caisse/FacturesTable.tsx` (props `forcePreviewFactureId`/`onPreviewClosed`)
+  - `frontend/frontend/src/components/CaisseCentralisee.tsx` (state `previewFactureId`, passage des props)
+  - `frontend/frontend/public/locales/{fr,en}/caisse.json` (clés `view_products`, `space_key`, `close`)
+
+### 📄 Récapitulatif Client multi-tickets (nouvelle fonctionnalité)
+
+Permet de générer un récapitulatif PDF des achats d'un client à partir de ses numéros de ticket,
+même si le nom du client n'a pas été enregistré lors de la vente.
+
+**Workflow** : saisie des numéros de tickets → recherche → affichage détaillé → génération PDF A4.
+
+- **Backend** : action `POST /api/factures/recap-multi/` qui accepte `{"numeros": [...], "client_name": "..."}`
+  et retourne les factures détaillées + totaux récapitulatifs
+- **Frontend** : nouvelle page `/app/recap-client` avec :
+  - Saisie intuitive des numéros (Entrée pour ajouter, badges supprimables)
+  - Nom du client optionnel
+  - Affichage résumé (4 KPIs) + détail par ticket avec produits
+  - Génération PDF avec jsPDF + jspdf-autotable (header pharmacie, tableau produits, totaux)
+- **Navigation** : ajouté dans le sous-menu Ventes du Sidebar
+
+- **Fichiers** :
+  - `backend/api/views/ventes/factures.py` (action `recap_multi`)
+  - `frontend/frontend/src/components/RecapClient.tsx` (nouveau composant)
+  - `frontend/frontend/src/routes.tsx` (route + lazy import)
+  - `frontend/frontend/src/components/Sidebar.tsx` (entrée menu + prefetch)
+  - `frontend/frontend/src/i18n.ts` (namespace `recap`)
+  - `frontend/frontend/public/locales/{fr,en}/recap.json` (nouveau)
+  - `frontend/frontend/public/locales/{fr,en}/sidebar.json` (clé `recap_client`)
+
+---
+
+## 2026-08-08 (17) — Fix coupons : restauration à l'annulation, permission backend, erreur explicite
+
+### 🐛 3 correctifs critiques sur le système de coupons
+
+Suite à l'analyse complète du système CouponMonnaie, trois problèmes identifiés et corrigés :
+
+1. **Restauration coupon à l'annulation** : quand une facture avec coupon était annulée,
+   le coupon restait `UTILISE` → perte pour le client. Ajout de `_restore_coupons()` dans
+   `SaleCanceller` : le coupon repasse en `ACTIF` avec remise à zéro de `facture_utilisation`,
+   `date_utilisation` et `utilise_par`.
+2. **Permission `can_generate_coupon` enforcée côté backend** : le `CouponMonnaieViewSet`
+   n'exigeait que `IsAuthenticated`. N'importe quel utilisateur connecté pouvait créer des
+   coupons via l'API. Ajout de la vérification `can_generate_coupon` dans `perform_create()`
+   (les superusers passent toujours).
+3. **Erreur explicite si coupon introuvable** : `SaleFinalizer._handle_coupon()` faisait un
+   `except DoesNotExist: pass` silencieux. Maintenant lève `ValueError` avec message explicite
+   ("Coupon #xxx introuvable" ou "pas actif"), affiché au caissier via toast.
+
+- **Fichiers** :
+  - `backend/api/services/sale_canceller.py` (import `CouponMonnaie`, ajout `_restore_coupons()`)
+  - `backend/api/views/coupons.py` (vérification `can_generate_coupon` dans `perform_create`)
+  - `backend/api/services/sale_finalizer.py` (`_handle_coupon` lève `ValueError` au lieu de `pass`)
+
+### 🔧 Fix deploy.ps1
+
+- `nginx -s reload` écrivait son notice sur stderr, ce qui faisait planter le script
+  avec `ErrorActionPreference=Stop`. Corrigé avec `2>&1 | Out-Null` + relâchement
+  temporaire de `ErrorActionPreference`.
+- **Fichier** : `deploy.ps1`
+
+---
+
+## 2026-08-05 (16) — Feature Devis (numérotation DEV-XXX, rappel en facturation, validation)
+
+### ✨ Devis = Proforma avec cycle de vie complet
+
+- **Demande** : le bouton "Proforma" devient "Devis". Un devis doit avoir son
+  format de numéro `DEV-XXXXXX`, pouvoir être rappelé en facturation pour
+  modification, puis validé et envoyé à la caisse pour règlement.
+- **Cycle de vie** : `Devis (PROF, DEV-XXXXXX)` → `Validée (VAL, FAC-XXXXXX)` → `Payée (PAY)`.
+- **Backend** :
+  - Nouveau signal `auto_generate_devis_number` sur `Facture.post_save` :
+    génère automatiquement `DEV-XXXXXX` quand une facture est créée avec le
+    statut `PROF` (couvre tous les chemins : API directe, SaleFinalizer, etc.).
+  - `SaleFinalizer` : génère aussi `DEV-XXXXXX` en mode caisse centralisée.
+  - `SaleValidator` : à la validation (PROF → VAL), remplace le numéro
+    `DEV-XXXXXX` par `FAC-XXXXXX` (le devis devient une facture).
+  - Fichiers : `backend/api/models/billing.py`,
+    `backend/api/services/sale_finalizer.py`, `backend/api/services/sale_validator.py`
+- **Frontend** :
+  - Renommage "Proforma" → "Devis" dans les traductions (fr/en) pour
+    `facturation.json`, `sales.json`, et ajout de `quote` dans `printing.json`.
+  - `InvoiceTemplate` : affiche "DEVIS" au lieu de "PROFORMA" pour le statut PROF.
+  - `useDevisLoader` : active le mode modification pour les devis (PROF), pas
+    seulement pour les factures validées/payées. Un devis rappelé peut être
+    modifié (lignes, quantités) puis re-validé.
+  - `SalesTable` : nouvelle action "Charger en facturation" pour les devis
+    (statut PROF), qui charge le devis dans la page Facturation en mode
+    modification. L'action "Modifier/Retour" est masquée pour les devis.
+  - `useFacturationActions` : messages toast mis à jour ("Devis généré avec
+    succès", "Erreur lors de la création du devis").
+  - Tests `ActionButtons` mis à jour pour "Devis".
+  - Fichiers : `frontend/frontend/src/hooks/useDevisLoader.ts`,
+    `frontend/frontend/src/components/sales/SalesTable.tsx`,
+    `frontend/frontend/src/components/printing/InvoiceTemplate.tsx`,
+    `frontend/frontend/src/hooks/useFacturationActions.ts`,
+    `frontend/frontend/src/components/facturation/__tests__/ActionButtons.test.tsx`,
+    `frontend/frontend/public/locales/{fr,en}/facturation.json`,
+    `frontend/frontend/public/locales/{fr,en}/sales.json`,
+    `frontend/frontend/public/locales/{fr,en}/printing.json`
+
+### ⚠️ Migration données
+
+Les devis existants (statut PROF sans numéro) recevront automatiquement un
+numéro `DEV-XXXXXX` à leur prochaine sauvegarde. Aucune migration manuelle
+requise — le signal `auto_generate_devis_number` ne s'applique qu'aux nouvelles
+créations, mais les anciens devis peuvent être renumérotés via :
+
+```python
+# Optionnel : renuméroter les devis existants sans numéro
+from api.models import Facture
+for f in Facture.objects.filter(status='PROF', numero_facture__isnull=True):
+    f.numero_facture = f"DEV-{f.id:06d}"
+    f.save(update_fields=['numero_facture'])
+```
+
+---
+
+## 2026-08-05 (15) — Fix bouton Proforma dans Facturation
+
+### 🐛 Proforma : le document ne s'ouvrait pas et ne créait qu'une ligne dans SalesTables
+
+- **Problème** : dans `useFacturationActions.handleProforma`, le popup d'impression
+  était ouvert **après** les appels API `async` (`api.post('factures/')` puis
+  `api.post('facture-produits/')`). Les navigateurs bloquent `window.open()`
+  lorsqu'il n'est pas dans le contexte direct d'un clic utilisateur. Résultat :
+  la facture PROF était bien créée (visible dans SalesTables) mais le document
+  Proforma ne s'affichait pas. Même problème dans `handleBonDeLivraison` et
+  `handleConfirmPrintClientName`.
+- **Fix** : ouvrir une fenêtre `about:blank` **synchronement** au début du
+  gestionnaire, avant les appels API, puis naviguer vers `/app/print-invoice/:id`
+  une fois la facture créée. Si l'API échoue, le popup est fermé.
+- **Fix affichage** : `InvoiceTemplate` affiche maintenant correctement
+  "PROFORMA" quand le statut retourné par le backend est `PROF` (et pas seulement
+  `PROFORMA`).
+- **Fichiers** :
+  - `frontend/frontend/src/hooks/useFacturationActions.ts`
+  - `frontend/frontend/src/components/printing/InvoiceTemplate.tsx`
+
+---
+
+## 2026-08-05 (14) — Fix impression facture A4 blanche depuis SalesTables
+
+### 🐛 Document blanc à l'impression PDF depuis SalesTables
+
+- **Problème** : la règle CSS globale `@media print { body * { visibility: hidden !important; } }`
+  définie dans `index.css` pour l'impression du planning masquait **tous les éléments**
+  lors de l'impression de n'importe quelle page, y compris la page `PrintPage` des
+  factures A4 (`/app/print-invoice/:id`). Seul `#planning-print-area` était rendu
+  visible, ce qui faisait qu'un PDF généré depuis `SalesTable` → "Format A4" était
+  complètement blanc.
+- **Fix** : les styles d'impression du planning ont été déplacés du fichier global
+  `index.css` vers le composant `PlanningOperateurs.tsx`, sous forme d'une balise
+  `<style>` injectée localement. Ainsi, la règle `visibility: hidden` ne s'applique
+  que sur la page planning et n'affecte plus les impressions de factures, avoirs,
+  inventaires ou autres documents.
+- **Fichiers** :
+  - `frontend/frontend/src/index.css`
+  - `frontend/frontend/src/components/PlanningOperateurs.tsx`
+
+---
+
 ## 2026-08-05 (12) — Cohérence colonne Marge% / récap commande
 
 ### 🐛 Fix affichage marge colonne vs récap (entrée de stock / commandes)

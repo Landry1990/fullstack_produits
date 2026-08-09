@@ -90,13 +90,18 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                     ui.setIsAvoirClient(devis.is_avoir_client)
                 }
 
+                const isDevis = devis.status === 'PROF' || devis.status === 'PROFORMA'
                 const isValidatedOrPaid = devis.status === 'VAL' || devis.status === 'PAY'
-                if (isValidatedOrPaid && devis.id) {
+                if ((isDevis || isValidatedOrPaid) && devis.id) {
                     ui.setIsModificationMode(true)
                     ui.setModificationInvoiceId(devis.id)
                     ui.setModificationInvoiceStatus(devis.status || null)
                     ui.setOriginalTotalTtc(Number(devis.total_ttc || 0))
-                    toast.success(`Facture #${devis.numero_facture || devis.id} chargée en mode modification`)
+                    if (isDevis) {
+                        toast.success(`Devis #${devis.numero_facture || devis.id} chargé en modification`)
+                    } else {
+                        toast.success(`Facture #${devis.numero_facture || devis.id} chargée en mode modification`)
+                    }
                 } else if (devis.id) {
                     toast.success(`Devis #${devis.numero_facture || devis.id} chargé`)
                 } else {

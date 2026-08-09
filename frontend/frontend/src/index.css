@@ -1367,35 +1367,3 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
   color: #0f172a !important;
 }
 
-/* === IMPRESSION DU PLANNING === */
-@media print {
-  body * {
-    visibility: hidden !important;
-  }
-  #planning-print-area,
-  #planning-print-area * {
-    visibility: visible !important;
-  }
-  #planning-print-area {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #fff !important;
-    color: #000 !important;
-    overflow: visible !important;
-  }
-  #planning-print-area table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-  }
-  #planning-print-area th,
-  #planning-print-area td {
-    border: 1px solid #000 !important;
-    padding: 4px !important;
-    color: #000 !important;
-    background: #fff !important;
-  }
-}

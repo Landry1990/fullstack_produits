@@ -7,6 +7,7 @@ import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './Invo
 import InventairePrintTemplate from './InventairePrintTemplate';
 import StockValuationTemplate, { type StockValuationData } from './StockValuationTemplate';
 import AvoirPrintTemplate from './AvoirPrintTemplate';
+import RecapTemplate, { type RecapData } from './RecapTemplate';
 import { logger } from '../../utils/logger'
 
 const PrintPage: React.FC = () => {
@@ -24,6 +25,7 @@ const PrintPage: React.FC = () => {
     const [inventoryData, setInventoryData] = useState<unknown>(null);
     const [stockValuationData, setStockValuationData] = useState<StockValuationData | null>(null);
     const [avoirData, setAvoirData] = useState<unknown | null>(null);
+    const [recapData, setRecapData] = useState<RecapData | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -81,6 +83,15 @@ const PrintPage: React.FC = () => {
                 } else if (type === 'AVOIR') {
                     const res = await api.get(`avoirs/${id}/print_data/`);
                     setAvoirData(res.data.avoir);
+                } else if (type === 'RECAP') {
+                    // Recap data is passed via sessionStorage
+                    const stored = sessionStorage.getItem('recap_print_data');
+                    if (stored) {
+                      setRecapData(JSON.parse(stored));
+                      sessionStorage.removeItem('recap_print_data');
+                    } else {
+                      throw new Error('Données du récapitulatif introuvables.');
+                    }
                 } else {
                     // Default to Invoice
                     const invoiceRes = await api.get(`factures/${id}/print_data/`);
@@ -137,7 +148,7 @@ const PrintPage: React.FC = () => {
 
     if (loading) return <div className="flex items-center justify-center h-screen">Chargement du document...</div>;
     if (error) return <div className="flex items-center justify-center h-screen text-error font-bold">{error}</div>;
-    if (!settings || (!invoiceData && !inventoryData && !stockValuationData && !avoirData)) return <div>Données incomplètes</div>;
+    if (!settings || (!invoiceData && !inventoryData && !stockValuationData && !avoirData && !recapData)) return <div>Données incomplètes</div>;
 
     return (
         <div className="print-page bg-base-200 min-h-screen p-8">
@@ -194,6 +205,11 @@ const PrintPage: React.FC = () => {
                 <AvoirPrintTemplate
                     settings={settings}
                     data={avoirData}
+                />
+            ) : recapData ? (
+                <RecapTemplate
+                    settings={settings}
+                    data={recapData}
                 />
             ) : invoiceData ? (
                 <InvoiceTemplate 

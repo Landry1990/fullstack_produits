@@ -51,7 +51,11 @@
         "price_margin": "Price and Margin (HT)",
         "validation": {
             "required_fields": "Please fill in all required fields (*)",
-            "unknown_error": "An unknown error occurred"
+            "unknown_error": "An unknown error occurred",
+            "name_min": "Name must be at least 2 characters",
+            "cost_price_negative": "Cost price cannot be negative",
+            "selling_price_positive": "Selling price must be positive",
+            "selling_below_cost": "Selling price must be greater than or equal to cost price"
         }
     },
     "actions": {

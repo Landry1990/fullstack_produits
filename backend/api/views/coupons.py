@@ -51,14 +51,22 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """
-        Associe l'utilisateur actuel comme créateur et log l'audit.
+        Vérifie la permission can_generate_coupon, associe l'utilisateur
+        actuel comme créateur et log l'audit.
         """
-        coupon = serializer.save(cree_par=self.request.user)
+        user = self.request.user
+        if not user.is_superuser:
+            profile = getattr(user, 'profile', None)
+            if not profile or not getattr(profile, 'can_generate_coupon', False):
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("Vous n'avez pas la permission de générer des coupons.")
+
+        coupon = serializer.save(cree_par=user)
         
         # Log Audit
         log_audit(
-            user=self.request.user,
-            action=AuditLog.Action.OTHER, # We should ideally have a COUPON_CREATE action
+            user=user,
+            action=AuditLog.Action.OTHER,
             model_name='CouponMonnaie',
             object_id=coupon.id,
             description=f"Création coupon #{coupon.numero}: {coupon.montant} F",

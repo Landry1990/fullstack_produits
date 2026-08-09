@@ -40,6 +40,9 @@ interface FacturesTableProps {
   selectedIds?: Set<number>
   onToggleSelect?: (id: number) => void
   onSelectAll?: () => void
+  /** Controlled: when set, opens the product preview for this facture */
+  forcePreviewFactureId?: number | null
+  onPreviewClosed?: () => void
 }
 
 interface FacturesTableUser {
@@ -80,11 +83,21 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   myActivePoste,
   selectedIds,
   onToggleSelect,
-  onSelectAll
+  onSelectAll,
+  forcePreviewFactureId,
+  onPreviewClosed
 }) => {
   const { t } = useTranslation('caisse')
   const [previewFacture, setPreviewFacture] = useState<Facture | null>(null)
   const [page, setPage] = useState(1)
+
+  // Open preview from keyboard shortcut (controlled prop)
+  useEffect(() => {
+    if (forcePreviewFactureId != null) {
+      const facture = sortedFactures.find(f => f.id === forcePreviewFactureId)
+      if (facture) setPreviewFacture(facture)
+    }
+  }, [forcePreviewFactureId, sortedFactures])
 
   const canModify = user?.is_superuser || user?.can_modify_invoice || user?.profile?.can_modify_invoice
   const canCancel = user?.is_superuser || user?.can_cancel_invoice || user?.profile?.can_cancel_invoice
@@ -378,7 +391,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       )}
 
       {/* Products Preview Popup */}
-      <Dialog open={!!previewFacture} onOpenChange={(open) => !open && setPreviewFacture(null)}>
+      <Dialog open={!!previewFacture} onOpenChange={(open) => { if (!open) { setPreviewFacture(null); onPreviewClosed?.(); } }}>
         <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden" aria-labelledby="preview-title" aria-describedby="preview-desc">
           <DialogHeader className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-emerald-50 via-white to-sky-50">
             <div className="flex items-center gap-3">

@@ -62,6 +62,8 @@ const _navigate = useNavigate()
   
   // État pour la navigation clavier (mouse killing)
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0)
+  // État pour ouvrir le preview produits via raccourci clavier
+  const [previewFactureId, setPreviewFactureId] = useState<number | null>(null)
   
   // États pour le multi-caisse et sessions
   const [postesCaisses, setPostesCaisses] = useState<PosteCaisse[]>([])
@@ -338,6 +340,7 @@ const _navigate = useNavigate()
     {
       onEncaisser: handleEncaisser,
       onOpenCouponPanel: openCouponSelectionForFacture,
+      onViewProducts: (facture) => setPreviewFactureId(facture.id),
       onRefresh: () => {
         fetchFacturesEnAttente()
         fetchCoupons()
@@ -620,6 +623,10 @@ const _navigate = useNavigate()
               setCouponTrouve(c)
               setIsDetailsCouponModalOpen(true)
             }}
+            onClose={() => {
+              setIsCouponPanelOpen(false)
+              setFactureForCoupon(null)
+            }}
             user={user}
           />
         )}
@@ -645,6 +652,8 @@ const _navigate = useNavigate()
               selectedIds={selectedFactureIds}
               onToggleSelect={toggleSelectFacture}
               onSelectAll={selectAllFactures}
+              forcePreviewFactureId={previewFactureId}
+              onPreviewClosed={() => setPreviewFactureId(null)}
             />
           </div>
           {/* Keyboard Shortcuts Footer */}
@@ -656,9 +665,11 @@ const _navigate = useNavigate()
             <div className="flex gap-3">
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">↑↓</kbd> {t('shortcuts.navigate')}</span>
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">{t('shortcuts.enter_key', 'Entrée')}</kbd> {t('shortcuts.cash_in')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">{t('shortcuts.space_key', 'Espace')}</kbd> {t('shortcuts.view_products')}</span>
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">C</kbd> {t('shortcuts.coupon')}</span>
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">R</kbd> {t('shortcuts.refresh')}</span>
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">1-9</kbd> {t('shortcuts.quick_select')}</span>
+              <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">Esc</kbd> {t('shortcuts.close')}</span>
             </div>
           </div>
         </div>

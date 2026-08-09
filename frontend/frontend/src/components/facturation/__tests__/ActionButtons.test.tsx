@@ -29,7 +29,7 @@ describe('ActionButtons', () => {
     render(<ActionButtons {...defaultProps} />)
     
     expect(screen.getByRole('button', { name: /Annuler/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Proforma/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Devis/i })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /Valider/i })[0]).toBeInTheDocument()
     // Le bouton "Mettre en attente" a deux versions (desktop et mobile)
     expect(screen.getByRole('button', { name: /Suspendre la vente/i })).toBeInTheDocument()
@@ -51,10 +51,10 @@ describe('ActionButtons', () => {
     expect(mockOnPayment).toHaveBeenCalled()
   })
 
-  it('appelle onProforma au clic sur Proforma', () => {
+  it('appelle onProforma au clic sur Devis', () => {
     render(<ActionButtons {...defaultProps} />)
     
-    fireEvent.click(screen.getByText(/Proforma/i))
+    fireEvent.click(screen.getByText(/Devis/i))
     
     expect(mockOnProforma).toHaveBeenCalled()
   })
@@ -73,7 +73,7 @@ describe('ActionButtons', () => {
     // Le bouton Annuler n'est jamais désactivé
     expect(screen.getByText(/Annuler/i).closest('button')).not.toBeDisabled()
     
-    expect(screen.getByText(/Proforma/i).closest('button')).toBeDisabled()
+    expect(screen.getByText(/Devis/i).closest('button')).toBeDisabled()
     expect(screen.getAllByRole('button', { name: /Valider/i })[0]).toBeDisabled()
     expect(screen.getByText(/Suspendre la vente/i).closest('button')).toBeDisabled()
   })
