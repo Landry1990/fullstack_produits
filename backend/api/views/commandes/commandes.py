@@ -106,7 +106,7 @@ def header_footer(canvas, doc, company_info, commande_info, total_achat):
     # Footer
     footer_texts = [
         f"Page {doc.page}",
-        f"Montant Total: {total_achat} F"
+        f"Montant Total: {int(total_achat):,} F".replace(",", " ")
     ]
     canvas.drawString(margin, 0.75 * inch, footer_texts[0])
     canvas.drawRightString(margin + content_width, 0.75 * inch, footer_texts[1])
@@ -1148,8 +1148,8 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
             data.append([
                 str(produit.id),
                 produit.name,
-                str(item.price),
-                str(prix_vente),
+                f"{int(item.price):,}".replace(",", " "),
+                f"{int(prix_vente):,}".replace(",", " "),
                 str(stock_avant),
                 str(item.quantity),
                 str(stock_apres)
@@ -1169,7 +1169,7 @@ class CommandeViewSet(SimpleListCacheMixin, MultiTermSearchMixin, OptimizedSeria
         story.append(table)
 
         styles = getSampleStyleSheet()
-        total_text = f"<b>Montant d'achat final: {total_achat} F</b>"
+        total_text = f"<b>Montant d'achat final: {int(total_achat):,} F</b>".replace(",", " ")
         p_total = Paragraph(total_text, styles['h3'])
         story.append(p_total)
 

@@ -280,7 +280,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data, isBon
                           ) : (
                             <tr className="text-base-content/90">
                                 <td className="py-1 text-left font-bold">{t('invoice.vat_exo')}</td>
-                                <td className="py-1 text-right">0.0%</td>
+                                <td className="py-1 text-right">0%</td>
                                 <td className="py-1 text-right">{formatNumber(data.total_ht, 0)}</td>
                                 <td className="py-1 text-right font-bold">0</td>
                             </tr>
