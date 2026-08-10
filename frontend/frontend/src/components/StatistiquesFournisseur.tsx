@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, type ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import api from '../services/api';
 import { Badge } from './ui/Badge';
 import { formatCurrency } from '../utils/formatters';
-import { getLocale } from '../utils/dateUtils';
+import { getLocale, formatDate as formatDateDisplay } from '../utils/dateUtils';
 import { useRecharts } from '../hooks/useRecharts';
 import {
   useAnalyseFournisseurs,
@@ -14,7 +15,13 @@ import { useTranslation } from 'react-i18next';
 import { Button } from './shadcn/button';
 import { Card, CardContent, CardTitle } from './shadcn/card';
 import { Progress } from './shadcn/progress';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/Table';
 import { logger } from '../utils/logger'
+import financeService from '../services/financeService';
+import fournisseurService from '../services/fournisseurService';
+import type { Fournisseur, PaiementFournisseur } from '../types';
 
 interface StatsFournisseur {
   id: number;
@@ -83,6 +90,111 @@ export default function StatistiquesFournisseur() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
 
+  // ── TAB PAIEMENTS: Historique généralisé des paiements fournisseurs ──
+  const [paiements, setPaiements] = useState<PaiementFournisseur[]>([]);
+  const [paiementsCount, setPaiementsCount] = useState(0);
+  const [loadingPaiements, setLoadingPaiements] = useState(false);
+  const [exportingPaiements, setExportingPaiements] = useState(false);
+  const [fournisseursList, setFournisseursList] = useState<Fournisseur[]>([]);
+  const [paiementFournisseurFilter, setPaiementFournisseurFilter] = useState<string>('');
+  const [paiementModeFilter, setPaiementModeFilter] = useState<string>('');
+  const [paiementDateDebut, setPaiementDateDebut] = useState<string>('');
+  const [paiementDateFin, setPaiementDateFin] = useState<string>('');
+  const [paiementSearch, setPaiementSearch] = useState<string>('');
+  const [paiementPage, setPaiementPage] = useState(1);
+  const PAIEMENT_PAGE_SIZE = 20;
+
+  useEffect(() => {
+    fournisseurService.getAll({ page_size: 500 }).then((data) => {
+      const list = Array.isArray(data) ? data : (data as { results?: Fournisseur[] })?.results || [];
+      setFournisseursList(list);
+    }).catch((error) => logger.error('Erreur lors du chargement des fournisseurs', error));
+  }, []);
+
+  const fetchPaiementsHistory = async () => {
+    setLoadingPaiements(true);
+    try {
+      const data = await financeService.getPaiementsHistory({
+        fournisseur: paiementFournisseurFilter ? Number(paiementFournisseurFilter) : undefined,
+        mode_paiement: paiementModeFilter || undefined,
+        date_debut: paiementDateDebut || undefined,
+        date_fin: paiementDateFin || undefined,
+        search: paiementSearch || undefined,
+        page: paiementPage,
+        page_size: PAIEMENT_PAGE_SIZE
+      });
+      setPaiements(data.results || []);
+      setPaiementsCount(data.count || 0);
+    } catch (error) {
+      logger.error('Erreur lors du chargement des paiements fournisseurs', error);
+    } finally {
+      setLoadingPaiements(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'paiements') {
+      fetchPaiementsHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, paiementFournisseurFilter, paiementModeFilter, paiementDateDebut, paiementDateFin, paiementPage]);
+
+  const handlePaiementSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPaiementPage(1);
+    fetchPaiementsHistory();
+  };
+
+  const resetPaiementFilters = () => {
+    setPaiementFournisseurFilter('');
+    setPaiementModeFilter('');
+    setPaiementDateDebut('');
+    setPaiementDateFin('');
+    setPaiementSearch('');
+    setPaiementPage(1);
+  };
+
+  const handleExportExcel = async () => {
+    setExportingPaiements(true);
+    try {
+      const all = await financeService.getPaiementsHistoryAll({
+        fournisseur: paiementFournisseurFilter ? Number(paiementFournisseurFilter) : undefined,
+        mode_paiement: paiementModeFilter || undefined,
+        date_debut: paiementDateDebut || undefined,
+        date_fin: paiementDateFin || undefined,
+        search: paiementSearch || undefined,
+        ordering: '-date_paiement'
+      });
+      const rows = all.map((p) => ({
+        [t('payments_tab.export.headers.date')]: formatDateDisplay(p.date_paiement),
+        [t('payments_tab.export.headers.supplier')]: p.fournisseur_name,
+        [t('payments_tab.export.headers.amount')]: Number(p.montant),
+        [t('payments_tab.export.headers.mode')]: t(`payments_tab.modes.${p.mode_paiement}`),
+        [t('payments_tab.export.headers.reference')]: p.reference || '',
+        [t('payments_tab.export.headers.invoices')]: p.commandes_liees && p.commandes_liees.length > 0
+          ? p.commandes_liees.join(', ')
+          : (p.commande_numero || ''),
+        [t('payments_tab.export.headers.created_by')]: p.created_by_name || '',
+        [t('payments_tab.export.headers.notes')]: p.notes || ''
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, t('payments_tab.export.sheet_name'));
+      const filename = `${t('payments_tab.export.filename')}_${formatDate(new Date())}.xlsx`;
+      XLSX.writeFile(wb, filename);
+    } catch (error) {
+      logger.error('Erreur lors de l\'export Excel des paiements', error);
+    } finally {
+      setExportingPaiements(false);
+    }
+  };
+
+  const paiementsTotalMontant = useMemo(() => {
+    return paiements.reduce((acc, p) => acc + Number(p.montant), 0);
+  }, [paiements]);
+
+  const paiementTotalPages = Math.max(1, Math.ceil(paiementsCount / PAIEMENT_PAGE_SIZE));
+
   // Totaux Ventes
   const totaux = useMemo(() => {
     return stats.reduce((acc, curr) => ({
@@ -146,6 +258,7 @@ export default function StatistiquesFournisseur() {
         <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'performance' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('performance')}>{t('tabs.performance')}</a>
         <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'prix' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('prix')}>{t('tabs.price_comparison')}</a>
         <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'concentration' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('concentration')}>{t('tabs.concentration')}</a>
+        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'paiements' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('paiements')}>{t('tabs.payments')}</a>
         </div>
       </div>
 
@@ -453,6 +566,168 @@ export default function StatistiquesFournisseur() {
                     )}
                 </CardContent>
              </Card>
+        </div>
+      )}
+
+      {/* TAB 5: PAIEMENTS FOURNISSEURS (Historique généralisé) */}
+      {activeTab === 'paiements' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Filtres */}
+          <Card className="shadow-sm border border-slate-200">
+            <CardContent className="p-4">
+              <form onSubmit={handlePaiementSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+                <Select
+                  label={t('payments_tab.filters.supplier')}
+                  size="sm"
+                  value={paiementFournisseurFilter}
+                  onChange={(e) => { setPaiementFournisseurFilter(e.target.value); setPaiementPage(1); }}
+                >
+                  <option value="">{t('payments_tab.filters.all_suppliers')}</option>
+                  {fournisseursList.map((f) => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </Select>
+                <Select
+                  label={t('payments_tab.filters.mode')}
+                  size="sm"
+                  value={paiementModeFilter}
+                  onChange={(e) => { setPaiementModeFilter(e.target.value); setPaiementPage(1); }}
+                >
+                  <option value="">{t('payments_tab.filters.all_modes')}</option>
+                  <option value="ESP">{t('payments_tab.modes.ESP')}</option>
+                  <option value="CHQ">{t('payments_tab.modes.CHQ')}</option>
+                  <option value="VIR">{t('payments_tab.modes.VIR')}</option>
+                  <option value="AVOIR">{t('payments_tab.modes.AVOIR')}</option>
+                  <option value="AUTRE">{t('payments_tab.modes.AUTRE')}</option>
+                </Select>
+                <Input
+                  label={t('payments_tab.filters.from')}
+                  type="date"
+                  size="sm"
+                  lang={getLocale()}
+                  value={paiementDateDebut}
+                  onChange={(e) => { setPaiementDateDebut(e.target.value); setPaiementPage(1); }}
+                />
+                <Input
+                  label={t('payments_tab.filters.to')}
+                  type="date"
+                  size="sm"
+                  lang={getLocale()}
+                  value={paiementDateFin}
+                  onChange={(e) => { setPaiementDateFin(e.target.value); setPaiementPage(1); }}
+                />
+                <Input
+                  label={t('payments_tab.filters.search')}
+                  type="search"
+                  size="sm"
+                  value={paiementSearch}
+                  onChange={(e) => setPaiementSearch(e.target.value)}
+                  placeholder={t('payments_tab.filters.search')}
+                />
+                <div className="flex gap-2">
+                  <Button type="submit" variant="default" size="sm" className="h-9 flex-1" disabled={loadingPaiements || exportingPaiements}>
+                    {loadingPaiements ? <Loader2 className="size-3 animate-spin" /> : t('filters.refresh')}
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" className="h-9" onClick={resetPaiementFilters} disabled={exportingPaiements}>
+                    {t('payments_tab.filters.reset')}
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" className="h-9" onClick={handleExportExcel} disabled={exportingPaiements}>
+                    {exportingPaiements ? <Loader2 className="size-3 animate-spin" /> : <Download className="size-3" />}
+                    {t('payments_tab.export.button')}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Cartes Résumé (page courante) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="shadow-sm border border-slate-200">
+              <CardContent className="p-4">
+                <p className="text-sm font-medium text-slate-500">{t('payments_tab.cards.total_paid')}</p>
+                <h3 className="text-2xl font-bold text-emerald-600">{formatCurrency(Math.round(paiementsTotalMontant), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</h3>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm border border-slate-200">
+              <CardContent className="p-4">
+                <p className="text-sm font-medium text-slate-500">{t('payments_tab.cards.payments_count')}</p>
+                <h3 className="text-2xl font-bold text-indigo-600">{paiementsCount}</h3>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tableau */}
+          <Card className="shadow-sm border border-slate-200">
+            <CardContent className="p-0">
+              <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('payments_tab.table.date')}</TableHead>
+                      <TableHead>{t('payments_tab.table.supplier')}</TableHead>
+                      <TableHead className="text-right">{t('payments_tab.table.amount')}</TableHead>
+                      <TableHead>{t('payments_tab.table.mode')}</TableHead>
+                      <TableHead>{t('payments_tab.table.reference')}</TableHead>
+                      <TableHead>{t('payments_tab.table.linked_invoices')}</TableHead>
+                      <TableHead>{t('payments_tab.table.created_by')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loadingPaiements ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8">
+                          <Loader2 className="size-6 animate-spin mx-auto" />
+                        </TableCell>
+                      </TableRow>
+                    ) : paiements.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                          {t('payments_tab.table.no_data')}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paiements.map((p) => (
+                        <TableRow key={p.id} title={p.notes || undefined}>
+                          <TableCell className="whitespace-nowrap text-slate-700">{formatDateDisplay(p.date_paiement)}</TableCell>
+                          <TableCell className="font-medium text-slate-900">{p.fournisseur_name}</TableCell>
+                          <TableCell className="text-right font-bold text-slate-900">{formatCurrency(Math.round(Number(p.montant)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                          <TableCell><Badge variant="outline" size="sm">{t(`payments_tab.modes.${p.mode_paiement}`)}</Badge></TableCell>
+                          <TableCell className="text-xs text-slate-600">{p.reference || '-'}</TableCell>
+                          <TableCell className="text-xs text-slate-600 max-w-xs truncate">
+                            {p.commandes_liees && p.commandes_liees.length > 0
+                              ? p.commandes_liees.join(', ')
+                              : (p.commande_numero || '-')}
+                          </TableCell>
+                          <TableCell className="text-xs text-slate-600">{p.created_by_name || '-'}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+
+              {/* Pagination */}
+              {paiementsCount > PAIEMENT_PAGE_SIZE && (
+                <div className="flex items-center justify-between p-3 border-t border-slate-200">
+                  <Button
+                    variant="outline" size="sm"
+                    disabled={paiementPage <= 1 || loadingPaiements}
+                    onClick={() => setPaiementPage((p) => Math.max(1, p - 1))}
+                  >
+                    <ChevronLeft className="size-4" /> {t('payments_tab.pagination.previous')}
+                  </Button>
+                  <span className="text-xs font-medium text-slate-600">
+                    {t('payments_tab.pagination.page', { page: paiementPage, total: paiementTotalPages })}
+                  </span>
+                  <Button
+                    variant="outline" size="sm"
+                    disabled={paiementPage >= paiementTotalPages || loadingPaiements}
+                    onClick={() => setPaiementPage((p) => Math.min(paiementTotalPages, p + 1))}
+                  >
+                    {t('payments_tab.pagination.next')} <ChevronRight className="size-4" />
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
 
