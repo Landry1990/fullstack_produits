@@ -21,6 +21,16 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
     ordering_fields = ['date_paiement', 'created_at', 'montant']
     ordering = ['-date_paiement', '-created_at']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        date_debut = self.request.query_params.get('date_debut')
+        date_fin = self.request.query_params.get('date_fin')
+        if date_debut:
+            queryset = queryset.filter(date_paiement__gte=date_debut)
+        if date_fin:
+            queryset = queryset.filter(date_paiement__lte=date_fin)
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 

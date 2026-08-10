@@ -10,7 +10,8 @@
         "sales": "Sales & Margins",
         "performance": "Performance (Scoring)",
         "price_comparison": "Price Comparator",
-        "concentration": "Purchase Concentration"
+        "concentration": "Purchase Concentration",
+        "payments": "Payments"
     },
     "sales_tab": {
         "calculation_method": "Method: Net Invoiced Turnover",
@@ -66,6 +67,60 @@
             "supplier": "Supplier",
             "market_share": "Market Share",
             "volume": "Purchase Volume"
+        }
+    },
+    "payments_tab": {
+        "filters": {
+            "supplier": "Supplier",
+            "all_suppliers": "All suppliers",
+            "mode": "Payment mode",
+            "all_modes": "All modes",
+            "from": "From",
+            "to": "To",
+            "search": "Reference, notes...",
+            "reset": "Reset"
+        },
+        "modes": {
+            "ESP": "Cash",
+            "CHQ": "Check",
+            "VIR": "Bank Transfer",
+            "AVOIR": "Credit Note",
+            "AUTRE": "Other"
+        },
+        "cards": {
+            "total_paid": "Total Paid (filtered period)",
+            "payments_count": "Number of Payments"
+        },
+        "table": {
+            "date": "Date",
+            "supplier": "Supplier",
+            "amount": "Amount",
+            "mode": "Mode",
+            "reference": "Reference",
+            "linked_invoices": "Linked Invoices",
+            "created_by": "Recorded By",
+            "notes": "Notes",
+            "no_data": "No payment found for these filters"
+        },
+        "pagination": {
+            "page": "Page {{page}} / {{total}}",
+            "previous": "Previous",
+            "next": "Next"
+        },
+        "export": {
+            "button": "Excel",
+            "filename": "supplier_payments",
+            "sheet_name": "Payments",
+            "headers": {
+                "date": "Date",
+                "supplier": "Supplier",
+                "amount": "Amount",
+                "mode": "Mode",
+                "reference": "Reference",
+                "invoices": "Linked Invoices",
+                "created_by": "Recorded By",
+                "notes": "Notes"
+            }
         }
     }
 }
