@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-08-10 — Export Excel de l'historique des paiements fournisseurs
+
+### 📊 Nouveau bouton d'export dans l'onglet Paiements
+
+L'onglet **Paiements** de `StatistiquesFournisseur` dispose désormais d'un bouton
+**Excel** à côté des filtres. Il télécharge la totalité des paiements fournisseurs
+correspondant aux filtres actifs (fournisseur, mode, période, recherche) sous la
+forme d'un fichier `.xlsx`.
+
+- Le service `financeService.getPaiementsHistoryAll` récupère automatiquement
+toutes les pages de résultats (jusqu'à 500 éléments par appel) selon les mêmes
+critères que l'affichage paginé.
+- Le fichier généré contient les colonnes : Date, Fournisseur, Montant, Mode,
+Référence, Factures liées, Enregistré par et Notes.
+- Les en-têtes et le nom de fichier sont traduits en `fr` et `en`.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/services/financeService.ts`
+  - `frontend/frontend/src/components/StatistiquesFournisseur.tsx`
+  - `frontend/frontend/public/locales/fr/supplier_stats.json`
+  - `frontend/frontend/public/locales/en/supplier_stats.json`
+
+---
+
 ## 2026-08-09 (2) — Persistance de la vue après F5 (Commandes, Clients, Fournisseurs)
 
 ### 🔄 Reload sans perte de contexte

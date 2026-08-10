@@ -103,6 +103,39 @@ const financeService = {
         return response.data as PaiementFournisseur[];
     },
 
+    getPaiementsHistory: async (params: {
+        fournisseur?: number;
+        mode_paiement?: string;
+        date_debut?: string;
+        date_fin?: string;
+        search?: string;
+        ordering?: string;
+        page?: number;
+        page_size?: number;
+    }): Promise<{ count: number; results: PaiementFournisseur[] }> => {
+        const response = await api.get('paiements-fournisseurs/', { params });
+        return response.data as { count: number; results: PaiementFournisseur[] };
+    },
+
+    getPaiementsHistoryAll: async (params: {
+        fournisseur?: number;
+        mode_paiement?: string;
+        date_debut?: string;
+        date_fin?: string;
+        search?: string;
+        ordering?: string;
+    }): Promise<PaiementFournisseur[]> => {
+        const PAGE_SIZE = 500;
+        const first = await financeService.getPaiementsHistory({ ...params, page: 1, page_size: PAGE_SIZE });
+        const all: PaiementFournisseur[] = [...first.results];
+        const totalPages = Math.max(1, Math.ceil(first.count / PAGE_SIZE));
+        for (let page = 2; page <= totalPages; page++) {
+            const next = await financeService.getPaiementsHistory({ ...params, page, page_size: PAGE_SIZE });
+            all.push(...next.results);
+        }
+        return all;
+    },
+
     createPaiement: async (data: Partial<PaiementFournisseur>): Promise<PaiementFournisseur> => {
         const response = await api.post<PaiementFournisseur>('paiements-fournisseurs/', data);
         return response.data;
