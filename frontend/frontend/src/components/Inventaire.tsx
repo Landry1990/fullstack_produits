@@ -48,7 +48,8 @@ export default function InventaireComponent() {
         setSelectedInventaireIds: listLogic.setSelectedInventaireIds,
         fetchInventaires: listLogic.fetchInventaires,
         activeInventaire: editorLogic.activeInventaire,
-        handleEdit: editorLogic.handleEdit
+        handleEdit: editorLogic.handleEdit,
+        confirm
     });
 
     return (

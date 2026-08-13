@@ -75,7 +75,7 @@ export function InventaireMergeModal({
                             <select
                                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                                 value={selectedMergeSource || ''}
-                                onChange={(e) => setSelectedMergeSource(Number(e.target.value))}
+                                onChange={(e) => setSelectedMergeSource(e.target.value ? Number(e.target.value) : null)}
                             >
                                 <option value="" disabled>{t('inventaire.modals.choose_target')}</option>
                                 {Array.from(selectedInventaireIds).map(id => {
@@ -91,7 +91,7 @@ export function InventaireMergeModal({
                             <select
                                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-60"
                                 value={selectedMergeSource || ''}
-                                onChange={(e) => setSelectedMergeSource(Number(e.target.value))}
+                                onChange={(e) => setSelectedMergeSource(e.target.value ? Number(e.target.value) : null)}
                                 disabled={loadingMergeCandidates}
                             >
                                 <option value="" disabled>-- {t('inventaire.merge.choose_placeholder')} --</option>
@@ -111,12 +111,14 @@ export function InventaireMergeModal({
 
                 <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
                     <button
+                        type="button"
                         className="inline-flex items-center justify-center h-9 px-5 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
                         onClick={() => { setShowMergeModal(false); setSelectedMergeSource(null); }}
                     >
                         {t('common:cancel')}
                     </button>
                     <button
+                        type="button"
                         className="inline-flex items-center justify-center h-9 px-6 rounded-xl text-sm font-black bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors gap-2 disabled:opacity-60"
                         onClick={handleMerge}
                         disabled={!selectedMergeSource || merging}

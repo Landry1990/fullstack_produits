@@ -12,6 +12,13 @@ interface InventaireAuditProps {
     onBack: () => void;
 }
 
+interface AuditChartDatum {
+    produit__rayon__name?: string;
+    produit__groupe__name?: string;
+    total_valeur: number;
+    nombre_lignes: number;
+}
+
 // Module-level component to avoid recreation on every render
 const SortIcon = ({ column, sortConfig }: { column: string; sortConfig: { key: string; direction: 'asc' | 'desc' } }) => {
     if (sortConfig.key !== column) return null;
@@ -58,54 +65,6 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
     if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
     const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = Recharts;
 
-const _renderList = (title: string, data: unknown[], type: 'negative' | 'positive') => {
-        const Icon = type === 'negative' ? AlertTriangle : TrendingUp;
-        const colorClass = type === 'negative' ? 'text-red-500' : 'text-emerald-600';
-        const bgColorClass = type === 'negative' ? 'bg-red-50' : 'bg-emerald-50';
-
-        return (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                    <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                        <div className={`p-2 ${bgColorClass} rounded-xl`}>
-                            <Icon className={`h-5 w-5 ${colorClass}`} />
-                        </div>
-                        {title}
-                    </h3>
-                </div>
-                <div className="p-0 flex-1 overflow-y-auto max-h-[60vh]">
-                    {!data || data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full py-12 gap-3 text-slate-200">
-                            <Package className="h-10 w-10" />
-                            <p className="text-sm font-medium text-slate-400">{t('inventaire.analysis.no_data')}</p>
-                        </div>
-                    ) : (
-                        data.map((p, i) => (
-                            <div key={p.produit_id || p.produit_nom} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
-                                <div className="flex items-center gap-4">
-                                    <div className={`size-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400`}>
-                                        {i + 1}
-                                    </div>
-                                    <div className="max-w-[150px] md:max-w-xs">
-                                        <div className="font-bold text-sm text-slate-700 group-hover:text-emerald-600 transition-colors truncate">{p.produit_nom}</div>
-                                        <div className={`text-[10px] font-bold uppercase tracking-tight mt-0.5 ${colorClass}`}>
-                                            {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short')}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <div className={`font-mono font-bold ${colorClass}`}>
-                                        {p.valeur > 0 ? '+' : ''}{formatCurrency(p.valeur)}
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </div>
-        );
-    };
-
     const handleSort = (key: string) => {
         setSortConfig(prev => ({
             key,
@@ -134,10 +93,10 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                         {t('inventaire.audit.error_msg')}
                     </p>
                 </div>
-                <button className="inline-flex items-center justify-center h-9 px-8 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors" onClick={() => window.location.reload()}>
+                <button type="button" className="inline-flex items-center justify-center h-9 px-8 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors" onClick={() => window.location.reload()}>
                     {t('inventaire.audit.retry')}
                 </button>
-                <button className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors" onClick={onBack}>
+                <button type="button" className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors" onClick={onBack}>
                     {t('inventaire.audit.back')}
                 </button>
             </div>
@@ -152,6 +111,7 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
                     <button
+                        type="button"
                         className="inline-flex items-center justify-center size-9 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
                         onClick={onBack}
                     >
@@ -166,12 +126,14 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 flex">
                         <button
+                            type="button"
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${groupBy === 'RAYON' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-slate-400 hover:text-slate-700'}`}
                             onClick={() => setGroupBy('RAYON')}
                         >
                             {t('inventaire.audit.filter_by_rayon')}
                         </button>
                         <button
+                            type="button"
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${groupBy === 'GROUPE' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-slate-400 hover:text-slate-700'}`}
                             onClick={() => setGroupBy('GROUPE')}
                         >
@@ -181,12 +143,14 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
 
                     <div className="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 flex">
                         <button
+                            type="button"
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${metric === 'VALEUR' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-400 hover:text-slate-700'}`}
                             onClick={() => setMetric('VALEUR')}
                         >
                             {t('inventaire.audit.metric_value')}
                         </button>
                         <button
+                            type="button"
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${metric === 'OCCURRENCE' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-400 hover:text-slate-700'}`}
                             onClick={() => setMetric('OCCURRENCE')}
                         >
@@ -288,7 +252,7 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                                     tickFormatter={(val: string) => val || t('common:not_available')}
                                 />
                                 <Tooltip 
-                                    formatter={(value: unknown) => [
+                                    formatter={(value: number) => [
                                         metric === 'VALEUR' ? formatCurrency(Math.abs(value)) : `${value} ${t('common:times')}`,
                                         metric === 'VALEUR' ? t('inventaire.detail.col_gap') : t('inventaire.audit.table.col_occurrences')
                                     ]}
@@ -299,9 +263,9 @@ const _renderList = (title: string, data: unknown[], type: 'negative' | 'positiv
                                     radius={[0, 4, 4, 0]}
                                     animationDuration={1500}
                                 >
-                                    {(groupBy === 'RAYON' ? data?.par_rayon : data?.par_groupe)?.map((entry: unknown, _index: number) => (
+                                    {(groupBy === 'RAYON' ? data?.par_rayon : data?.par_groupe)?.map((entry: AuditChartDatum, index: number) => (
                                         <Cell 
-                                            key={`cell-${entry.label || entry.name}`} 
+                                            key={`cell-${groupBy}-${index}`} 
                                             fill={metric === 'VALEUR' 
                                                 ? (entry.total_valeur < 0 ? '#ff5252' : '#4caf50') 
                                                 : '#2196f3'

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, History, CheckCircle2, AlertCircle, ChevronRight, Trash2, Package, MessageCircle } from 'lucide-react';
+import { useConfirm } from '../../hooks/useConfirm';
 import type { Inventaire } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -31,6 +32,19 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
     sharingId = null
 }) => {
     const { t } = useTranslation(['stock', 'common']);
+    const confirm = useConfirm();
+
+    const handleDelete = async (inv: Inventaire) => {
+        const confirmed = await confirm({
+            title: t('inventaire.list.delete_title'),
+            message: t('inventaire.list.delete_message', { id: inv.id }),
+            variant: 'danger',
+            confirmText: t('common:delete')
+        });
+        if (confirmed) {
+            onDelete(inv.id);
+        }
+    };
 
     if (loading) {
         return (
@@ -139,6 +153,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                             <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
+                                        type="button"
                                         className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
                                         onClick={() => onEdit(inv)}
                                         title={t('common:details')}
@@ -147,6 +162,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     </button>
                                     {onShareWhatsApp && inv.status === 'VALIDEE' && (
                                         <button
+                                            type="button"
                                             className="p-2 text-slate-400 hover:text-[#25D366] hover:bg-[#25D366]/10 rounded-md transition-colors"
                                             onClick={(e) => { e.stopPropagation(); onShareWhatsApp(inv.id); }}
                                             disabled={sharingId === inv.id}
@@ -158,8 +174,9 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                         </button>
                                     )}
                                     <button
+                                        type="button"
                                         className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40"
-                                        onClick={() => onDelete(inv.id)}
+                                        onClick={() => handleDelete(inv)}
                                         disabled={inv.status === 'VALIDEE' || deleting}
                                         title={t('common:delete')}
                                     >

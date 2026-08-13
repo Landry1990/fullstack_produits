@@ -11,11 +11,15 @@ import "@fontsource/inter/700.css";
 
 import './i18n'
 import App from './App.tsx'
-import { syncSessionFromOpener } from './utils/storage'
+import { syncSessionFromOpener, consumePrintAuthSync } from './utils/storage'
 
 // Pour les onglets ouverts via window.open() (ex: page d'impression), sessionStorage n'est pas
 // partagé avec l'onglet parent → on copie les clés d'auth depuis l'opener (same-origin).
 syncSessionFromOpener();
+
+// Fallback pour les onglets ouverts avec `noopener` : on récupère les clés d'auth depuis
+// un localStorage temporaire posé par `preparePrintAuthSync()`.
+consumePrintAuthSync();
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 

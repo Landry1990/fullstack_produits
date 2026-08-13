@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire, LigneInventaire, InventoryStats, ProduitModel } from '../../types';
+import { getProduitId } from '../../types/inventory';
 import { logger } from '../../utils/logger'
 
 interface FocusInfo {
@@ -11,6 +12,16 @@ interface FocusInfo {
     selectionEnd: number | null;
     value: string;
 }
+
+const buildBulkPayload = (lines: LigneInventaire[]) => ({
+    lignes: lines.map(l => ({
+        produit: getProduitId(l.produit),
+        stock_lot: l.stock_lot,
+        quantite_physique: l.quantite_physique,
+        lot_numero: l.lot_numero,
+        lot_expiration: l.lot_expiration
+    }))
+});
 
 function preserveFocus(): FocusInfo | null {
     const active = document.activeElement;
@@ -228,15 +239,7 @@ export const useInventaireEditor = (
         const focusInfo = preserveFocus();
         setAutoSaving(true);
         try {
-            const payload = {
-                lignes: linesToSync.map(l => ({
-                    produit: typeof l.produit === 'object' ? l.produit.id : l.produit,
-                    stock_lot: l.stock_lot,
-                    quantite_physique: l.quantite_physique,
-                    lot_numero: l.lot_numero,
-                    lot_expiration: l.lot_expiration
-                }))
-            };
+            const payload = buildBulkPayload(linesToSync);
             await api.post(`inventaires/${inv.id}/lignes/bulk/`, payload);
             const res = await api.get(`inventaires/${inv.id}/lignes/`);
             setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
@@ -303,10 +306,10 @@ export const useInventaireEditor = (
 
     const handleDeleteLine = async (lineId: number) => {
         const confirmed = await confirm({
-            title: 'Retirer le produit',
-            message: 'Retirer ce produit de l\'inventaire ?',
+            title: t('inventaire.lines.remove_title'),
+            message: t('inventaire.lines.remove_message'),
             variant: 'warning',
-            confirmText: 'Retirer'
+            confirmText: t('inventaire.lines.remove_confirm')
         });
         if (!confirmed) return;
 
@@ -441,15 +444,7 @@ export const useInventaireEditor = (
         if (linesToSync.length > 0) {
             setSaving(true);
             try {
-                const payload = {
-                    lignes: linesToSync.map(l => ({
-                        produit: typeof l.produit === 'object' ? l.produit.id : l.produit,
-                        stock_lot: l.stock_lot,
-                        quantite_physique: l.quantite_physique,
-                        lot_numero: l.lot_numero,
-                        lot_expiration: l.lot_expiration
-                    }))
-                };
+                const payload = buildBulkPayload(linesToSync);
                 await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
                 const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
                 setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
@@ -495,15 +490,7 @@ export const useInventaireEditor = (
             // 3. Sync Lines
             const linesToSync = lignes.filter(l => l.isLocalOnly);
             if (linesToSync.length > 0) {
-                const payload = {
-                    lignes: linesToSync.map(l => ({
-                        produit: typeof l.produit === 'object' ? l.produit.id : l.produit,
-                        stock_lot: l.stock_lot,
-                        quantite_physique: l.quantite_physique,
-                        lot_numero: l.lot_numero,
-                        lot_expiration: l.lot_expiration
-                    }))
-                };
+                const payload = buildBulkPayload(linesToSync);
                 await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
                 const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
                 setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
@@ -530,7 +517,7 @@ export const useInventaireEditor = (
             const response = await api.get('produits/for_import/');
             allProducts = Array.isArray(response.data) ? response.data : (response.data.results || []);
         } catch (err) {
-            toast.error("Erreur lors du chargement des produits pour l'import");
+            toast.error(t('inventaire.import.loading_products_error'));
             logger.error(err);
             setImporting(false);
             return;
@@ -618,17 +605,17 @@ export const useInventaireEditor = (
                 const objectUrl = URL.createObjectURL(blob);
                 const dateStr = new Date().toISOString().slice(0, 10);
                 link.href = objectUrl;
-                link.download = `produits_non_reconnus_inventaire_${dateStr}.txt`;
+                link.download = t('inventaire.import.not_found_download_name', { date: dateStr });
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(objectUrl);
 
-                toast.error(`${notFoundItems.length} produits non reconnus. Fichier rapport téléchargé.`);
+                toast.error(t('inventaire.import.not_found_toast', { count: notFoundItems.length }));
             }
 
             if (importMap.size === 0) {
-                toast.error("Aucun produit valide trouvé dans le fichier.");
+                toast.error(t('inventaire.import.no_valid_product'));
                 setImporting(false);
                 return;
             }
@@ -645,7 +632,7 @@ export const useInventaireEditor = (
 
                 await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
 
-                toast.success(`${importMap.size} produits importés (${productsFoundCount} lignes).`);
+                toast.success(t('inventaire.import.success', { count: importMap.size, lines: productsFoundCount }));
 
                 // Recharger les lignes et stats
                 const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
@@ -654,14 +641,14 @@ export const useInventaireEditor = (
             } catch (error: unknown) {
                 logger.error("Erreur lors de l'envoi bulk", error);
                 const err = error as { response?: { data?: { detail?: string } } };
-                toast.error(err.response?.data?.detail || "Erreur lors de l'enregistrement des lignes importées.");
+                toast.error(err.response?.data?.detail || t('inventaire.import.bulk_send_error'));
             } finally {
                 setImporting(false);
             }
         };
 
         reader.onerror = () => {
-            toast.error("Erreur de lecture du fichier.");
+            toast.error(t('inventaire.import.reader_error'));
             setImporting(false);
         };
 

@@ -1,19 +1,23 @@
 import React, { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, AlertTriangle, TrendingUp, PieChart } from 'lucide-react';
+import { Download, AlertTriangle, TrendingUp, PieChart, Send } from 'lucide-react';
 import { formatCurrency } from '../../../utils/formatters';
 import type { InventoryStats } from '../../../types';
 import api from '../../../services/api';
 import { toast } from 'react-hot-toast';
 
-const EMPTY_ARRAY: never[] = [];
+interface StatsListItem {
+    produit_nom: string;
+    ecart: number;
+    valeur: number;
+}
 
 // Composant séparé pour éviter les re-renders
 interface StatsListProps {
     title: string;
-    data: unknown[];
+    data: StatsListItem[];
     type: 'negative' | 'positive';
-    t: unknown;
+    t: ReturnType<typeof useTranslation>['t'];
 }
 
 const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
@@ -39,7 +43,7 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
                     </div>
                 ) : (
                     data.map((p, i) => (
-                        <div key={p.id ?? p.name} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
+                        <div key={`${type}-${i}-${p.produit_nom}`} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
                             <div className="flex items-center gap-4">
                                 <div className={`size-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:${bgColorClass} group-hover:${colorClass} transition-colors`}>
                                     {i + 1}
@@ -82,7 +86,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
         setSendingTelegram(true);
         try {
             await api.post('telegram/rapport-inventaire/', inventaireId ? { inventaire_id: inventaireId } : {});
-            toast.success(t('common:telegram.send_success'), { icon: '📨' });
+            toast.success(t('common:telegram.send_success'), { icon: <Send className="h-4 w-4 text-[#229ED9]" /> });
         } catch (err: unknown) {
             toast.error(err?.response?.data?.message || t('common:telegram.send_error'));
         } finally {
@@ -95,13 +99,13 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <StatsList
                     title={t('inventaire.analysis.top_losses')}
-                    data={inventoryStats?.top_pertes || EMPTY_ARRAY}
+                    data={inventoryStats?.top_pertes || []}
                     type="negative"
                     t={t}
                 />
                 <StatsList
                     title={t('inventaire.analysis.top_surplus')}
-                    data={inventoryStats?.top_surplus || EMPTY_ARRAY}
+                    data={inventoryStats?.top_surplus || []}
                     type="positive"
                     t={t}
                 />
@@ -111,6 +115,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
             {(inventoryStats?.top_pertes?.length > 0 || inventoryStats?.top_surplus?.length > 0) && (
                 <div className="flex justify-center gap-3">
                     <button
+                        type="button"
                         className="inline-flex items-center justify-center h-10 px-8 rounded-xl gap-2 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-emerald-600 transition-all"
                         onClick={handlePrintEcartsFrontend}
                     >
@@ -118,6 +123,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                         {t('inventaire.analysis.print_report')}
                     </button>
                     <button
+                        type="button"
                         className="inline-flex items-center justify-center h-10 px-8 rounded-xl gap-2 text-sm font-bold text-[#229ED9] border border-[#229ED9]/30 hover:bg-[#229ED9]/10 hover:border-[#229ED9] transition-all disabled:opacity-60"
                         onClick={handleSendTelegram}
                         disabled={sendingTelegram}
@@ -130,7 +136,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                                     <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.67l-2.93-.918c-.638-.196-.65-.638.136-.943l11.434-4.41c.53-.194.995.131.822.943z"/>
                                 </svg>
                             )}
-                        Envoyer sur Telegram
+                        {t('common:telegram.send_report')}
                     </button>
                 </div>
             )}

@@ -28,13 +28,13 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
             } else if (facture.client_name && facture.client_name !== t('common:passerby_client')) {
                 initialName = facture.client_name;
             }
-            setClientNameInput(initialName);
+            setClientNameInput(initialName.toUpperCase());
         }
     }, [isOpen, facture, t]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onConfirm(clientNameInput);
+        onConfirm(clientNameInput.trim());
     };
 
     if (!isOpen || !facture) return null;
@@ -70,7 +70,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                             <input
                                 type="text"
                                 value={clientNameInput}
-                                onChange={(e) => setClientNameInput(e.target.value)}
+                                onChange={(e) => setClientNameInput(e.target.value.toUpperCase())}
                                 className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                                 placeholder={t('clients:sales_modal.print_placeholder')}
                                 autoFocus

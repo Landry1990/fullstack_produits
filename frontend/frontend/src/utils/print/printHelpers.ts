@@ -1,4 +1,5 @@
 import i18next from 'i18next';
+import DOMPurify from 'dompurify';
 import { formatDateTime } from '../dateUtils';
 import { formatNumber } from '../formatters';
 
@@ -123,4 +124,104 @@ export function getModeLabel(mode: string): string {
     en_compte: 'En Compte'
   };
   return fallbacks[mode] || mode?.toUpperCase() || 'N/A';
+}
+
+/**
+ * Génère le document HTML complet pour l'impression d'un ticket de caisse.
+ */
+export function buildTicketPrintHtml(ticketWidth: number, content: string, styleTags: string): string {
+  const safeContent = DOMPurify.sanitize(content, { RETURN_TRUSTED_TYPE: false })
+  const safeStyleTags = DOMPurify.sanitize(styleTags, {
+    ALLOWED_TAGS: ['style', 'link'],
+    ALLOWED_ATTR: ['rel', 'href', 'type', 'media'],
+    RETURN_TRUSTED_TYPE: false,
+  })
+
+  return `<!DOCTYPE html>
+<html data-theme="light" lang="fr">
+<head>
+  <title>Ticket de Caisse</title>
+  <base href="${window.location.origin}/">
+  <!-- Polices système uniquement : évite tout appel réseau (Google Fonts) pour fonctionner offline. -->
+  ${safeStyleTags}
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @media print {
+      @page { 
+        size: ${ticketWidth}mm auto; 
+        margin: 0; 
+      }
+      html, body { 
+        width: ${ticketWidth}mm !important;
+        margin: 0 !important; 
+        padding: 0 !important; 
+        background: white !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+    html, body {
+      width: ${ticketWidth}mm;
+      max-width: ${ticketWidth}mm;
+      margin: 0 auto;
+      padding: 0;
+      background: white !important;
+      color: black !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      overflow: hidden;
+    }
+    #print-root {
+      width: ${ticketWidth}mm;
+      max-width: ${ticketWidth}mm;
+      overflow: hidden;
+    }
+    #ticket-preview {
+      width: ${ticketWidth}mm !important;
+      max-width: ${ticketWidth}mm !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 2mm !important;
+      background: white !important;
+      color: black !important;
+      box-shadow: none !important;
+      outline: none !important;
+      overflow: hidden;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    #ticket-preview * {
+      color: black !important;
+    }
+    #ticket-preview table { table-layout: fixed; width: 100% !important; }
+    #ticket-preview td, #ticket-preview th { overflow: hidden; text-overflow: ellipsis; }
+    :root, [data-theme="light"] {
+      --b1: 100% 0 0;
+      --bc: 0% 0 0;
+      --p: 49.12% 0.3096 275.75;
+      --pc: 89.824% 0.06192 275.75;
+    }
+  </style>
+</head>
+<body>
+  <div id="print-root">
+    ${safeContent}
+  </div>
+  <script>
+    window.onload = () => {
+        const doPrint = () => {
+            window.print();
+            window.close();
+        };
+        if (document.fonts) {
+            document.fonts.ready.then(() => {
+                setTimeout(doPrint, 500);
+            });
+        } else {
+            setTimeout(doPrint, 1500);
+        }
+    };
+  </script>
+</body>
+</html>`
 }

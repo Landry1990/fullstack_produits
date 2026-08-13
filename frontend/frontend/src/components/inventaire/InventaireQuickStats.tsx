@@ -13,10 +13,10 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
 
     const stats = useMemo(() => {
         return {
-            en_cours_count: inventaires.filter((i: unknown) => i.status === 'EN_COURS').length,
-            validees_count: inventaires.filter((i: unknown) => i.status === 'VALIDEE').length,
-            valeur_physique_totale: inventaires.reduce((sum: number, i: unknown) => sum + (parseFloat(i.total_valeur_physique) || 0), 0),
-            ecart_total: inventaires.reduce((sum: number, i: unknown) => sum + (parseFloat(i.total_ecart_valeur) || 0), 0),
+            en_cours_count: inventaires.filter((i) => i.status === 'EN_COURS').length,
+            validees_count: inventaires.filter((i) => i.status === 'VALIDEE').length,
+            valeur_physique_totale: inventaires.reduce((sum, i) => sum + (parseFloat(String(i.total_valeur_physique || 0)) || 0), 0),
+            ecart_total: inventaires.reduce((sum, i) => sum + (parseFloat(String(i.total_ecart_valeur || 0)) || 0), 0),
         };
     }, [inventaires]);
 

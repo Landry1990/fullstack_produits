@@ -478,6 +478,9 @@
         "merge": {
             "modal_title": "Fusionner Inventaires",
             "modal_desc": "Fusionnez l'inventaire actuel avec un autre.",
+            "confirm_title": "Confirmer la fusion",
+            "confirm_message_list": "Les inventaires sélectionnés seront fusionnés dans l'inventaire cible. Les inventaires sources seront supprimés. Continuer ?",
+            "confirm_message_detail": "L'inventaire source sera fusionné dans l'inventaire actuel. Cette action est irréversible. Continuer ?",
             "select_source": "Sélectionnez l'inventaire source",
             "choose_placeholder": "Choisir un inventaire...",
             "confirm_msg": "Fusionner l'inventaire sélectionné dans l'actuel ? L'inventaire source sera supprimé.",
@@ -491,6 +494,8 @@
         },
         "list": {
             "title_short": "inventaires",
+            "delete_title": "Supprimer l'inventaire ?",
+            "delete_message": "L'inventaire #{{id}} sera définitivement supprimé. Cette action est irréversible.",
             "date": "Date",
             "desc": "Description",
             "val_theo": "Val. Théorique",
@@ -567,6 +572,9 @@
         },
         "lines": {
             "selected": "{{count}} ligne(s) sélectionnée(s)",
+            "remove_title": "Retirer le produit",
+            "remove_message": "Retirer ce produit de l'inventaire ?",
+            "remove_confirm": "Retirer",
             "delete_selection": "🗑️ Supprimer sélection",
             "sort_by": "Trier par :",
             "sort_chronological": "Chronologie (Ajout)",
@@ -586,6 +594,16 @@
             "total_gap": "Ecart Valeur",
             "product_added": "Produit ajouté",
             "delete_error": "Impossible de supprimer la ligne."
+        },
+        "import": {
+            "loading_products_error": "Erreur lors du chargement des produits pour l'import",
+            "not_found_download_name": "produits_non_reconnus_inventaire_{{date}}.txt",
+            "not_found_toast_one": "{{count}} produit non reconnu. Fichier rapport téléchargé.",
+            "not_found_toast_other": "{{count}} produits non reconnus. Fichier rapport téléchargé.",
+            "no_valid_product": "Aucun produit valide trouvé dans le fichier.",
+            "bulk_send_error": "Erreur lors de l'enregistrement des lignes importées.",
+            "reader_error": "Erreur de lecture du fichier.",
+            "success": "{{count}} produits importés ({{lines}} lignes)."
         },
         "analysis": {
             "no_data": "Aucune donnée disponible.",
@@ -642,10 +660,10 @@
         },
         "stats": {
             "en_cours": "Inventaires En Cours",
-            "val_phys": "Total Valeur Physique",
-            "ecart_global": "Écart Global",
+            "val_phys": "Valeur physique (page)",
+            "ecart_global": "Écart (page)",
             "to_validate": "A valider",
-            "all_inventories": "Tous les inventaires"
+            "all_inventories": "page affichée"
         },
         "audit": {
             "title": "Audit des Pertes et Écarts",
