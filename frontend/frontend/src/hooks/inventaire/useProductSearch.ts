@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { ProduitModel, LigneInventaire, StockLot } from '../../types';
+import { getProduitId } from '../../types/inventory';
 import { logger } from '../../utils/logger'
+import { useProductSearch as useSearchNav } from '../product-search/useProductSearch';
 
 const focusFirstQty = (id?: number) => {
     setTimeout(() => {
@@ -26,11 +28,18 @@ export const useProductSearch = (
 ) => {
     const { t } = useTranslation(['stock', 'common']);
 
-    const [searchQuery, setSearchQuery] = useState('');
+    // Navigation clavier / sélection partagée avec les autres écrans de recherche produit
+    const {
+        searchQuery, setSearchQuery,
+        selectedIndex: selectedItemIndex, setSelectedIndex: setSelectedItemIndex,
+        searchInputRef,
+        handleKeyDown: handleSearchNavKeyDown,
+        getItemProps,
+        resetSearch
+    } = useSearchNav();
+
     const [searchResults, setSearchResults] = useState<ProduitModel[]>([]);
     const [loadingSearch, setLoadingSearch] = useState(false);
-    const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
-    const searchInputRef = useRef<HTMLInputElement>(null);
 
     // Lot selection modal state
     const [showLotModal, setShowLotModal] = useState(false);
@@ -67,32 +76,23 @@ export const useProductSearch = (
 
         const timeoutId = setTimeout(fetchProducts, 300);
         return () => { clearTimeout(timeoutId); controller.abort(); };
-    }, [searchQuery, t]);
+    }, [searchQuery, t, setSelectedItemIndex]);
 
     const focusInput = () => {
         if (searchInputRef.current) searchInputRef.current.focus();
     };
 
-    const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'ArrowDown') {
+    // Enveloppe le hook clavier commun : Escape vide aussi la recherche (comportement historique),
+    // et Enter s'appuie sur `getItemProps` (attribut `data-search-index`) posé par <ProductSearch />.
+    const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Escape') {
             e.preventDefault();
-            setSelectedItemIndex(prev => Math.min(prev + 1, searchResults.length - 1));
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            setSelectedItemIndex(prev => Math.max(prev - 1, -1));
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (selectedItemIndex >= 0 && selectedItemIndex < searchResults.length) {
-                handleProductSelect(searchResults[selectedItemIndex]);
-            } else if (searchResults.length === 1) {
-                handleProductSelect(searchResults[0]);
-            }
-        } else if (e.key === 'Escape') {
-            setSearchQuery('');
+            resetSearch();
             setSearchResults([]);
-            setSelectedItemIndex(-1);
+            return;
         }
-    };
+        handleSearchNavKeyDown(e, searchResults.length);
+    }, [handleSearchNavKeyDown, resetSearch, searchResults.length]);
 
     const fetchAvailableLots = async (productId: number) => {
         setLoadingLots(true);
@@ -189,7 +189,7 @@ export const useProductSearch = (
                 
                 // Check if already in local lines
                 const exists = lignes.some(l => 
-                    (typeof l.produit === 'object' ? l.produit.id === selectedProductForLot.id : l.produit === selectedProductForLot.id) &&
+                    (getProduitId(l.produit) === selectedProductForLot.id) &&
                     l.stock_lot === lot.id
                 );
 
@@ -241,7 +241,7 @@ export const useProductSearch = (
 
         // Optimistic UI checks: verify if line already exists
         const existsLocally = lignes.some(l =>
-            (typeof l.produit === 'object' ? l.produit.id === product.id : l.produit === product.id) &&
+            (getProduitId(l.produit) === product.id) &&
             (stockLotId ? l.stock_lot === stockLotId : !l.stock_lot)
         );
 
@@ -293,6 +293,7 @@ export const useProductSearch = (
         selectedItemIndex, setSelectedItemIndex,
         searchInputRef, focusInput, focusFirstQty,
         handleSearchKeyDown, handleProductSelect,
+        getItemProps, resetSearch,
 
         // Lot Modal
         showLotModal, setShowLotModal,

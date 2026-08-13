@@ -134,6 +134,9 @@
         "merge": {
             "modal_title": "Merge Inventories",
             "modal_desc": "Merge the current inventory with another one.",
+            "confirm_title": "Confirm merge",
+            "confirm_message_list": "Selected inventories will be merged into the target inventory. Source inventories will be deleted. Continue?",
+            "confirm_message_detail": "The source inventory will be merged into the current inventory. This action is irreversible. Continue?",
             "select_source": "Select the source inventory",
             "choose_placeholder": "Choose an inventory...",
             "confirm_msg": "Merge selected inventory into current one? Source inventory will be deleted.",
@@ -147,6 +150,8 @@
         },
         "list": {
             "title_short": "inventories",
+            "delete_title": "Delete inventory?",
+            "delete_message": "Inventory #{{id}} will be permanently deleted. This action is irreversible.",
             "date": "Date",
             "desc": "Description",
             "val_theo": "Theoretical Val.",
@@ -223,6 +228,9 @@
         },
         "lines": {
             "selected": "{{count}} line(s) selected",
+            "remove_title": "Remove product",
+            "remove_message": "Remove this product from the inventory?",
+            "remove_confirm": "Remove",
             "delete_selection": "🗑️ Delete selection",
             "sort_by": "Sort by:",
             "sort_chronological": "Chronological (Added)",
@@ -242,6 +250,16 @@
             "total_gap": "Value Gap",
             "product_added": "Product added",
             "delete_error": "Cannot delete the line."
+        },
+        "import": {
+            "loading_products_error": "Error loading products for import",
+            "not_found_download_name": "unrecognized_products_inventory_{{date}}.txt",
+            "not_found_toast_one": "{{count}} product not recognized. Report file downloaded.",
+            "not_found_toast_other": "{{count}} products not recognized. Report file downloaded.",
+            "no_valid_product": "No valid product found in the file.",
+            "bulk_send_error": "Error saving imported lines.",
+            "reader_error": "Error reading file.",
+            "success": "{{count}} products imported ({{lines}} lines)."
         },
         "analysis": {
             "no_data": "No data available.",
@@ -298,10 +316,10 @@
         },
         "stats": {
             "en_cours": "Inventories In Progress",
-            "val_phys": "Total Physical Value",
-            "ecart_global": "Global Gap",
+            "val_phys": "Physical value (page)",
+            "ecart_global": "Gap (page)",
             "to_validate": "To validate",
-            "all_inventories": "All inventories"
+            "all_inventories": "current page"
         },
         "audit": {
             "title": "Loss and Discrepancy Audit",

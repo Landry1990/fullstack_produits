@@ -3,7 +3,7 @@ import type { ProduitModel } from './catalog';
 export interface LigneInventaire {
     id: number
     inventaire: number
-    produit: ProduitModel
+    produit: number | ProduitModel
     produit_nom: string
     produit_cip?: string
     produit_rayon?: string
@@ -19,6 +19,20 @@ export interface LigneInventaire {
     lot_expiration?: string | null
     lot_quantity_remaining?: number | null
     isLocalOnly?: boolean
+}
+
+export function isProduitObject(produit: number | ProduitModel | undefined | null): produit is ProduitModel {
+    return typeof produit === 'object' && produit !== null && 'id' in produit;
+}
+
+export function getProduitId(produit: number | ProduitModel): number {
+    if (isProduitObject(produit)) return produit.id;
+    return produit;
+}
+
+export function getProduitName(produit: number | ProduitModel | undefined | null, fallback = ''): string {
+    if (isProduitObject(produit)) return produit.name || fallback;
+    return fallback;
 }
 
 export interface Inventaire {

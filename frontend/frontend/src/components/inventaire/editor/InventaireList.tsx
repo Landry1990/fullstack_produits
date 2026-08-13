@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
-    ChevronLeft, ChevronRight, ClipboardList, Database, Plus, 
+    ClipboardList, Database, Plus, 
     BarChart3 
 } from 'lucide-react';
 import { InventaireFilters } from '../InventaireFilters';
 import { InventaireQuickStats } from '../InventaireQuickStats';
 import { InventaireListTable } from '../InventaireListTable';
+import Pagination from '../../ui/Pagination';
 import { useInventaireList } from '../../../hooks/inventaire/useInventaireList';
 import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
 import { toast } from 'react-hot-toast';
 import { usePharmacySettings } from '../../../hooks/usePharmacySettings';
 import { generateInventorySummaryText, openWhatsApp } from '../../../utils/whatsapp';
+import type { Inventaire } from '../../../types';
 
 interface InventaireListProps {
     listLogic: ReturnType<typeof useInventaireList>;
-    onEdit: (inventaire: unknown) => void;
+    onEdit: (inventaire: Inventaire) => void;
     onCreate: () => void;
     onOpenMergeModal: () => void;
     canMerge: { canMerge: boolean; reason: string | null };
@@ -35,7 +37,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
     const { t } = useTranslation(['stock', 'common']);
     const { settings: pharmSettings } = usePharmacySettings();
     const {
-        inventaires, loading, totalCount, currentPage,
+        inventaires, loading, totalCount, currentPage, totalPages,
         nextPage, prevPage, fetchInventaires, handleDelete,
         filterStartDate, setFilterStartDate,
         filterEndDate, setFilterEndDate,
@@ -64,7 +66,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
             const success = openWhatsApp(pharmSettings.pharmacist_whatsapp_number, text);
             
             if (success) {
-                toast.success(t('inventaire.whatsapp_prepared'), { icon: '📱' });
+                toast.success(t('inventaire.whatsapp_prepared'), { icon: <MessageCircle className="h-4 w-4 text-[#25D366]" /> });
             }
         } catch {
             toast.error(t('inventaire.whatsapp_share_error'));
@@ -111,6 +113,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                     {t('inventaire.audit_btn')}
                                 </button>
                                 <button
+                                    type="button"
                                     className="inline-flex items-center justify-center h-9 px-5 rounded-md gap-2 text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60"
                                     onClick={onCreate}
                                     disabled={listLogic.loading || isSaving}
@@ -165,28 +168,16 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="p-4 border-t border-slate-100 flex items-center justify-between shrink-0">
-                    <div className="text-sm text-slate-500 font-medium">
-                        {t('common:pagination.page_info', { current: currentPage, total: totalCount, label: t('inventaire.list.title_short') })}
-                    </div>
-                    <div className="flex gap-2">
-                        <button
-                            className="inline-flex items-center justify-center h-8 px-4 rounded-md text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors gap-1"
-                            onClick={() => prevPage && fetchInventaires(prevPage)}
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            {t('common:pagination.prev')}
-                        </button>
-                        <button
-                            className="inline-flex items-center justify-center h-8 px-4 rounded-md text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors gap-1 disabled:opacity-50"
-                            disabled={!nextPage || loading}
-                            onClick={() => nextPage && fetchInventaires(nextPage)}
-                        >
-                            {t('common:pagination.next')}
-                            <ChevronRight className="h-4 w-4" />
-                        </button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalCount}
+                    onPrev={() => prevPage && fetchInventaires(prevPage)}
+                    onNext={() => nextPage && fetchInventaires(nextPage)}
+                    hasNext={!!nextPage}
+                    isLoading={loading}
+                    label={t('inventaire.list.title_short')}
+                />
             </div>
         </div>
     );

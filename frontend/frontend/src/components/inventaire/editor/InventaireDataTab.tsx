@@ -4,6 +4,7 @@ import { Trash2, PackageX, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters';
 import { formatDate } from '../../../utils/dateUtils';
 import type { LigneInventaire } from '../../../types';
+import { getProduitName } from '../../../types/inventory';
 
 interface InventaireDataTabProps {
     lignes: LigneInventaire[];
@@ -74,8 +75,8 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             let comparison = 0;
             switch (sortBy) {
                 case 'nom': {
-                    const nameA = a.produit_nom || (a.produit as unknown).name || '';
-                    const nameB = b.produit_nom || (b.produit as unknown).name || '';
+                    const nameA = a.produit_nom || getProduitName(a.produit) || '';
+                    const nameB = b.produit_nom || getProduitName(b.produit) || '';
                     comparison = nameA.localeCompare(nameB);
                     break;
                 }
@@ -102,7 +103,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
     const totalEcartValeur = useMemo(() => {
         return sortedLines.reduce((acc, l) => {
-            const pmp = normalizeNumberInput((l as unknown).produit_pmp || '0')
+            const pmp = normalizeNumberInput(l.produit_pmp || '0')
                 || normalizeNumberInput(l.produit_cost_price || '0');
             const ecart = (l.quantite_physique || 0) - (l.stock_theorique || 0);
             return acc + (ecart * pmp);
@@ -141,6 +142,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                         <span className="text-sm font-medium text-amber-800">{t('inventaire.detail.selected')}</span>
                     </div>
                     <button
+                        type="button"
                         className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-sm font-bold bg-red-500 text-white gap-2 hover:bg-red-600 transition-colors disabled:opacity-60"
                         onClick={handleBulkDelete}
                         disabled={saving}
@@ -159,7 +161,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                 <select
                     className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as unknown)}
+                    onChange={(e) => setSortBy(e.target.value as 'nom' | 'chronologie' | 'ecart' | 'prix')}
                 >
                     <option value="chronologie">{t('inventaire.detail.sort.chronologie')}</option>
                     <option value="nom">{t('inventaire.detail.sort.nom')}</option>
@@ -167,6 +169,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                     <option value="prix">{t('inventaire.detail.sort.prix')}</option>
                 </select>
                 <button
+                    type="button"
                     className="inline-flex items-center justify-center size-8 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                     title={sortOrder === 'asc' ? t('common:sort.asc') : t('common:sort.desc')}
@@ -208,12 +211,12 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                             const ecartClass = currentEcart > 0 ? "text-emerald-600 bg-emerald-50 border-emerald-100"
                                             : currentEcart < 0 ? "text-red-500 bg-red-50 border-red-100"
                                             : "text-slate-300 bg-white border-transparent";
-                            const rayonName = l.produit_rayon || (l.produit as unknown).rayon_name || '-';
+                            const rayonName = l.produit_rayon || '-';
 
                             const isDirty = dirtyLineIds?.has(l.id);
-                            const cip = l.produit_cip || (l.produit as unknown).cip1;
-                            const lotNumero = (l as unknown).lot_numero;
-                            const lotExpiration = (l as unknown).lot_expiration;
+                            const cip = l.produit_cip;
+                            const lotNumero = l.lot_numero;
+                            const lotExpiration = l.lot_expiration;
                             return (
                                 <div key={l.id} className={`grid ${!isReadOnly ? "grid-cols-[32px_1fr_70px_60px_60px_50px] md:grid-cols-[36px_minmax(160px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px_44px]" : "grid-cols-[1fr_70px_60px_60px_50px] md:grid-cols-[minmax(180px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px]"} gap-1 md:gap-2 py-1.5 px-2 md:px-4 items-center hover:bg-slate-50 transition-colors ${l.isLocalOnly ? 'bg-amber-50/50 border-l-[2px] border-l-amber-400' : ''} ${isDirty ? 'bg-blue-50/30 border-l-[2px] border-l-blue-400' : ''}`}>
                                     {!isReadOnly && (
@@ -230,8 +233,8 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                     {/* Product Info — nom seul en desktop (CIP/Lot/Péremption en colonnes dédiées), tout inline sur mobile */}
                                     <div className="min-w-0">
                                         <div className="md:hidden flex items-baseline gap-2 min-w-0">
-                                            <span className="font-bold text-xs text-slate-800 truncate shrink-0 max-w-[55%]" title={l.produit_nom || (l.produit as unknown).name}>
-                                                {l.produit_nom || (l.produit as unknown).name}
+                                            <span className="font-bold text-xs text-slate-800 truncate shrink-0 max-w-[55%]" title={l.produit_nom || getProduitName(l.produit)}>
+                                                {l.produit_nom || getProduitName(l.produit)}
                                             </span>
                                             {isDirty && (
                                                 <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" title={t('common:unsaved')} />
@@ -248,8 +251,8 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="hidden md:flex items-center gap-1 font-bold text-sm text-slate-800 truncate" title={l.produit_nom || (l.produit as unknown).name}>
-                                            <span className="truncate">{l.produit_nom || (l.produit as unknown).name}</span>
+                                        <div className="hidden md:flex items-center gap-1 font-bold text-sm text-slate-800 truncate" title={l.produit_nom || getProduitName(l.produit)}>
+                                            <span className="truncate">{l.produit_nom || getProduitName(l.produit)}</span>
                                             {isDirty && (
                                                 <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" title={t('common:unsaved')} />
                                             )}
@@ -362,6 +365,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                     {!isReadOnly && (
                                         <div className="hidden md:flex justify-end pr-1">
                                             <button
+                                                type="button"
                                                 className="inline-flex items-center justify-center size-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
                                                 onClick={() => handleDeleteLine(l.id)}
                                                 disabled={saving}

@@ -2,6 +2,303 @@
 
 ---
 
+## 2026-08-13 (6) — Inventaire : typage restant
+
+### 🏷️ Typage
+
+- `InventaireList.tsx` : `onEdit` est maintenant typé avec `Inventaire` au lieu de `unknown`.
+- `InventaireFilters.tsx` : typage du state `users` avec `User`.
+- `InventaireAudit.tsx` : typage des données Recharts (`AuditChartDatum`) et suppression des casts `unknown` dans le formatter et le rendu des cellules.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/inventaire/editor/InventaireList.tsx`
+  - `frontend/frontend/src/components/inventaire/InventaireFilters.tsx`
+  - `frontend/frontend/src/components/inventaire/audit/InventaireAudit.tsx`
+  - `CHANGELOG.md`
+
+---
+
+## 2026-08-13 (5) — Inventaire : pagination partagée et libellés stats
+
+### ♻️ Refactoring
+
+- Remplacement de la pagination custom de `InventaireList.tsx` par le composant partagé `Pagination` (`components/ui/Pagination.tsx`) pour uniformiser l'affichage et le comportement.
+
+### 🌍 i18n
+
+- Correction des libellés des quick stats : "Total Valeur Physique" → "Valeur physique (page)" et "Écart Global" → "Écart (page)" pour refléter que les calculs portent sur la page courante.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/inventaire/editor/InventaireList.tsx`
+  - `frontend/frontend/src/components/inventaire/InventaireQuickStats.tsx` (usage via i18n)
+  - `frontend/frontend/public/locales/fr/stock.json`
+  - `frontend/frontend/public/locales/en/stock.json`
+  - `CHANGELOG.md`
+
+---
+
+## 2026-08-13 (4) — Inventaire : nettoyage de l'audit
+
+### ♿ Accessibilité
+
+- Ajout de `type="button"` sur tous les boutons de `InventaireAudit.tsx` (retour, retry, filtres RAYON/GROUPE, métriques VALEUR/OCCURRENCE).
+
+### 🧹 Nettoyage
+
+- Suppression de `_renderList()` mort dans `InventaireAudit.tsx` (code inutilisé typé avec `unknown`).
+
+### 🏷️ Typage
+
+- Suppression du cast `as unknown` sur `data` dans `InventaireAudit.tsx`.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/inventaire/audit/InventaireAudit.tsx`
+  - `CHANGELOG.md`
+
+---
+
+## 2026-08-13 (3) — Inventaire : correction pagination
+
+### 🐛 Corrigé
+
+- L'info de pagination affichait `Page {{page}} sur {{total}}` car les variables passées ne correspondaient pas à la clé i18n.
+- Ajout du calcul de `totalPages` dans `useInventaireList` à partir du `count` et de la taille de page (parse de `page_size` dans les URLs next/previous, fallback 50).
+- Correction de l'extraction de `currentPage` : désormais basée sur l'URL demandée, évitant les dérives quand `data.previous` est `null`.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/hooks/inventaire/useInventaireList.ts`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireList.tsx`
+  - `CHANGELOG.md`
+
+---
+
+## 2026-08-13 (2) — Inventaire : typage et factorisation (P2)
+
+### 🏷️ Typage
+
+- `LigneInventaire.produit` est maintenant typé comme `number | ProduitModel` pour refléter les données réelles (API renvoie parfois l'id, parfois l'objet).
+- Ajout de helpers typés dans `types/inventory.ts` :
+  - `isProduitObject()`
+  - `getProduitId()`
+  - `getProduitName()`
+
+### 🧹 Nettoyage des casts `as unknown`
+
+- `InventaireDataTab.tsx` : suppression des casts sur `produit.name`, `produit.rayon_name`, `produit.cip1`, `produit_pmp`, `lot_numero`, `lot_expiration`.
+- `InventaireQuickStats.tsx` : utilisation du type `Inventaire` au lieu de `unknown`.
+- `InventaireProductSearch.tsx` : cast `as unknown as SearchResult[]` simplifié en `as SearchResult[]`.
+- `InventaireAnalysisTab.tsx` : suppression du hack `EMPTY_ARRAY: never[]` et typage correct de `StatsListProps.data`.
+
+### ♻️ Factorisation
+
+- Extraction de `buildBulkPayload()` dans `useInventaireEditor.ts` pour mutualiser la construction du payload bulk (validate, manual save, sync local-only).
+- `useProductSearch.ts` utilise `getProduitId()` pour les comparaisons de produit.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/types/inventory.ts`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireDataTab.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireAnalysisTab.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireProductSearch.tsx`
+  - `frontend/frontend/src/components/inventaire/InventaireQuickStats.tsx`
+  - `frontend/frontend/src/hooks/inventaire/useInventaireEditor.ts`
+  - `frontend/frontend/src/hooks/inventaire/useProductSearch.ts`
+  - `CHANGELOG.md`
+
+---
+
+## 2026-08-13 — Inventaire : sécurité, i18n et accessibilité (P0/P1)
+
+### 🛡️ Sécurité / Robustesse
+
+- Ajout d'une confirmation avant suppression d'un inventaire dans la liste via `useConfirm`.
+- Remplacement de `window.confirm` par le modal `useConfirm` pour la fusion d'inventaires.
+- Correction du sélecteur de fusion : `Number("")` ne renvoie plus `0` et ne sélectionne pas accidentellement l'inventaire d'id `0`.
+
+### ♿ Accessibilité
+
+- Ajout explicite de `type="button"` sur tous les boutons des composants Inventaire (liste, éditeur, modales, tableau, filtres).
+- Désactivation du bouton "Précédent" de pagination quand aucune page précédente n'existe (`!prevPage || loading`).
+- Ajout d'un `aria-label` sur le bouton retour de l'éditeur d'inventaire.
+
+### 🌍 i18n
+
+- Ajout des clés de traduction manquantes en `fr` et `en` pour :
+  - confirmation de suppression d'un inventaire (`inventaire.list.delete_title`, `delete_message`)
+  - confirmation de fusion (`inventaire.merge.confirm_title`, `confirm_message_list`, `confirm_message_detail`)
+  - retrait d'une ligne (`inventaire.lines.remove_title`, `remove_message`, `remove_confirm`)
+  - messages d'import CSV (`inventaire.import.*`)
+- Remplacement du libellé "Envoyer sur Telegram" codé en dur par `common:telegram.send_report`.
+- Remplacement des emojis dans les toasts WhatsApp/Telegram par des icônes `lucide-react` (`MessageCircle`, `Send`).
+
+### 🏷️ Typage
+
+- Cast `as unknown` du sélecteur de regroupement d'impression remplacé par `as 'rayon' | 'forme' | 'groupe'`.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/Inventaire.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireList.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireEditor.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireDataTab.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireAnalysisTab.tsx`
+  - `frontend/frontend/src/components/inventaire/editor/InventaireProductSearch.tsx`
+  - `frontend/frontend/src/components/inventaire/InventaireListTable.tsx`
+  - `frontend/frontend/src/components/inventaire/InventaireFilters.tsx`
+  - `frontend/frontend/src/components/inventaire/modals/InventaireMergeModal.tsx`
+  - `frontend/frontend/src/hooks/inventaire/useInventaireEditor.ts`
+  - `frontend/frontend/src/hooks/inventaire/useInventaireMerge.ts`
+  - `frontend/frontend/public/locales/fr/stock.json`
+  - `frontend/frontend/public/locales/en/stock.json`
+  - `CHANGELOG.md`
+
+---
+
+## 2026-08-12 — UI/Accessibilité du preview ticket de caisse
+
+### ♿ Améliorations UX dans `CaisseTicketPreviewModal`
+
+- Remplacement des emojis 📄 et 🧾 par des icônes `lucide-react` (`Receipt`, `FileText`) pour cohérence visuelle et accessibilité.
+- Ajout explicite de `type="button"` sur tous les boutons du footer.
+- Gestion de la touche `Esc` déjà assurée par `PremiumModal` ; libellé de fermeture simplifié via `common:close`.
+- Focus trap amélioré dans le footer : navigation flèches + bouclage `Tab`/`Shift+Tab`.
+- Agrandissement de la largeur du modal (`max-w-sm` → `max-w-md`) pour une prévisualisation plus confortable.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/caisse/CaisseTicketPreviewModal.tsx`
+
+---
+
+## 2026-08-12 (2) — Robustesse de l'impression depuis le preview ticket de caisse
+
+### 🛡️ Code / Robustesse `CaisseTicketPreviewModal`
+
+- Gestion du `catch` vide sur `api.patch` : `console.error` + `toast.error(t('common:save_error'))`.
+- Détection des popups bloquées : `window.open` retourne `null` → notification explicite via `common:popup_blocked`.
+- Styles d'impression récupérés via `useMemo` à l'ouverture du modal au lieu d'un `querySelectorAll` à chaque clic.
+- Extraction du gros bloc HTML d'impression vers `buildTicketPrintHtml()` dans `printHelpers.ts`.
+- Ajout des traductions `common:popup_blocked` (fr/en).
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/caisse/CaisseTicketPreviewModal.tsx`
+  - `frontend/frontend/src/utils/print/printHelpers.ts`
+  - `frontend/frontend/public/locales/fr/common.json`
+  - `frontend/frontend/public/locales/en/common.json`
+
+---
+
+## 2026-08-12 (3) — Sécurisation du HTML d'impression ticket de caisse
+
+### 🔒 Sécurité / Qualité `buildTicketPrintHtml`
+
+- Sanitisation du contenu HTML (`content`) et des balises de styles (`styleTags`) avec `DOMPurify` avant injection dans la fenêtre d'impression.
+- Restriction des tags/styles autorisés (`style`, `link`) pour éviter l'injection de scripts ou d'éléments dangereux.
+- Vérification `npx eslint` OK sur les fichiers modifiés.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/utils/print/printHelpers.ts`
+
+---
+
+## 2026-08-12 (6) — Unification de la recherche produit dans l'inventaire
+
+### 🔍 `InventaireProductSearch` aligné sur le composant `ProductSearch` commun
+
+La recherche produit de l'écran Inventaire avait sa propre implémentation (input,
+dropdown, navigation clavier) entièrement dupliquée par rapport à celle utilisée en
+Facturation, Avoirs et Promotions. Elle est maintenant unifiée pour garantir le même
+design et le même comportement partout :
+
+- `components/inventaire/editor/InventaireProductSearch.tsx` utilise désormais
+  `<ProductSearch>` (`components/common/ProductSearch`) au lieu de son propre JSX de
+  dropdown. La modale de sélection de lot (spécifique à l'inventaire) est conservée.
+- `hooks/inventaire/useProductSearch.ts` délègue la navigation clavier (flèches,
+  Enter, Escape, `getItemProps`) au hook commun `hooks/product-search/useProductSearch`
+  au lieu de la réimplémenter.
+- `components/common/ProductSearch` affiche désormais le **CIP** et le **rayon** du
+  produit en sous-titre quand ces champs sont présents (`SearchResult.cip1`,
+  `SearchResult.rayon_name`) — pour ne rien perdre par rapport à l'ancien affichage
+  spécifique à l'inventaire. C'est une amélioration additive qui profite aussi aux
+  autres écrans si ces champs sont présents dans les résultats.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/inventaire/editor/InventaireProductSearch.tsx`
+  - `frontend/frontend/src/hooks/inventaire/useProductSearch.ts`
+  - `frontend/frontend/src/components/common/ProductSearch/index.tsx`
+  - `frontend/frontend/src/components/common/ProductSearch/types.ts`
+
+---
+
+## 2026-08-12 (5) — Impression ticket : polices système offline
+
+### 🖨️ Suppression de la dépendance à Google Fonts
+
+- Suppression du `<link>` Google Fonts dans `buildTicketPrintHtml`.
+- Remplacement par une font-stack système (`-apple-system`, `Segoe UI`, `Roboto`, `Arial`…) pour garantir l'impression hors connexion et éviter les appels réseau depuis la fenêtre d'impression.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/utils/print/printHelpers.ts`
+
+---
+
+## 2026-08-12 (4) — Sécurité : `noopener` sur les fenêtres d'impression
+
+### 🔒 Renforcement de l'ouverture des fenêtres d'impression
+
+- Ajout de `noopener` (avec `noreferrer`) sur les `window.open` d'impression A4 et ticket de caisse.
+- Mise en place d'une synchronisation d'auth via `localStorage` temporaire (`preparePrintAuthSync` / `consumePrintAuthSync`) pour permettre l'auth sans `window.opener`.
+- Mise à jour de `main.tsx` pour consommer la synchronisation d'auth au démarrage.
+- Les clés d'auth sont nettoyées de `localStorage` juste après consommation.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/caisse/CaisseTicketPreviewModal.tsx`
+  - `frontend/frontend/src/utils/storage.ts`
+  - `frontend/frontend/src/main.tsx`
+
+---
+
+## 2026-08-11 (2) — Facture A4 depuis le ticket de caisse : majuscules et ouverture
+
+### 🧾 Bouton Facture A4 de la preview ticket
+
+Dans `CaisseTicketPreviewModal`, le bouton **Facture A4** ouvre le `ClientNameModal`
+pour demander le nom du client avant l'impression A4. Deux problèmes corrigés :
+
+- Le nom saisi dans l'input n'était pas envoyé au backend en majuscules. Le modal
+  force maintenant la saisie en majuscules (`toUpperCase()`), l'initialisation en
+  majuscules, et trim à la confirmation.
+- La facture A4 ne s'ouvrait pas : `window.open` était appelé **après** un `await`
+  (`api.patch`), ce qui le bloquait par le navigateur. La fenêtre d'impression est
+  maintenant ouverte **synchroniquement avant le patch** (sur `about:blank`), puis sa
+  `location.href` est définie après l'appel API.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/sales/modals/ClientNameModal.tsx`
+  - `frontend/frontend/src/components/caisse/CaisseTicketPreviewModal.tsx`
+
+---
+
+## 2026-08-11 — Correction navigation clavier dans la recherche produit de facturation
+
+### 🐛 Flèches haut/bas et validation Enter de nouveau fonctionnelles
+
+Dans le composant `ProductSearch`, la recherche de produit en facturation n'appliquait
+pas les propriétés retournées par `getItemProps` (`data-search-index`, `className`) sur
+les lignes de produits. Conséquence :
+
+- L'index sélectionné n'était pas visible (pas de surbrillance).
+- La touche `Enter` ne pouvait pas déclencher le `click` car le sélecteur
+  `[data-search-index="..."]` ne trouvait aucun élément.
+
+Correction :
+
+- `ProductSearch` propage désormais `itemProps` sur chaque ligne de résultat produit.
+- La détection de l'élément actif est alignée avec les modes Pack et DCI
+  (`className?.includes('shadow')`).
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/common/ProductSearch/index.tsx`
+
+---
+
 ## 2026-08-10 — Export Excel de l'historique des paiements fournisseurs
 
 ### 📊 Nouveau bouton d'export dans l'onglet Paiements
