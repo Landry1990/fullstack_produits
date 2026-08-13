@@ -4,7 +4,7 @@ import { LockBanner } from '../../common/LockBanner';
 import { useTranslation } from 'react-i18next';
 import { 
     ChevronLeft, Plus, FileText, CheckCircle2, History, 
-    Download, Save, Upload
+    Download, Save, Upload, Send
 } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from 'react-hot-toast';
@@ -42,7 +42,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         setSendingTelegram(true);
         try {
             await api.post('telegram/rapport-inventaire/', activeInventaire?.id ? { inventaire_id: activeInventaire.id } : {});
-            toast.success(t('inventaire.telegram_report_sent'), { icon: '📨' });
+            toast.success(t('inventaire.telegram_report_sent'), { icon: <Send className="h-4 w-4 text-[#229ED9]" /> });
         } catch (err: unknown) {
             toast.error(err?.response?.data?.message || t('common:telegram.send_error'));
         } finally {
@@ -110,8 +110,10 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
                   <button
+                    type="button"
                     className="inline-flex items-center justify-center size-9 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
                     onClick={() => setViewMode('LIST')}
+                    aria-label={t('inventaire.detail.back')}
                   >
                     <ChevronLeft className="h-6 w-6" />
                   </button>
@@ -160,12 +162,14 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex">
                       <button
+                        type="button"
                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'ENTRY' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
                         onClick={() => setActiveTab('ENTRY')}
                       >
                         {t('inventaire.detail.tab_entry')}
                       </button>
                       <button
+                        type="button"
                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'ANALYSIS' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
                         onClick={() => setActiveTab('ANALYSIS')}
                       >
@@ -176,7 +180,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                   <div className="flex items-center gap-1">
                     <select
                       value={printGroupBy}
-                      onChange={(e) => setPrintGroupBy(e.target.value as unknown)}
+                      onChange={(e) => setPrintGroupBy(e.target.value as 'rayon' | 'forme' | 'groupe')}
                       className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-[10px] font-bold uppercase text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
                       title={t('inventaire.detail.print_group_by')}
                     >
@@ -185,6 +189,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                       <option value="groupe">{t('inventaire.detail.group_groupe')}</option>
                     </select>
                     <button
+                      type="button"
                       className="inline-flex items-center justify-center h-10 px-4 rounded-xl gap-2 text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-60"
                       onClick={handlePrintEtat}
                       disabled={!activeInventaire?.id || printing}
@@ -195,6 +200,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                       <span className="hidden sm:inline">{t('inventaire.detail.print')}</span>
                     </button>
                     <button
+                      type="button"
                       className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#229ED9]/30 text-[#229ED9] hover:bg-[#229ED9]/10 hover:border-[#229ED9] transition-all disabled:opacity-60"
                       onClick={handleSendTelegram}
                       disabled={sendingTelegram || !activeInventaire?.id}
@@ -226,6 +232,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                             }}
                         />
                         <button
+                            type="button"
                             className="inline-flex items-center justify-center h-9 px-4 rounded-xl gap-2 text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-60"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={importing || saving}
@@ -236,6 +243,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         </button>
 
                         <button
+                            type="button"
                             className="inline-flex items-center justify-center h-9 px-4 rounded-xl gap-2 text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors disabled:opacity-60"
                             onClick={handleManualSave}
                             disabled={saving || importing}
@@ -245,6 +253,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         </button>
 
                         <button
+                            type="button"
                             className="inline-flex items-center justify-center h-9 px-4 rounded-xl gap-2 text-sm font-black bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-60"
                             onClick={handleOpenValidateModal}
                             disabled={saving}

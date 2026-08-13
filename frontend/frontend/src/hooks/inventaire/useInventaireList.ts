@@ -13,8 +13,32 @@ export const useInventaireList = () => {
     const [loading, setLoading] = useState(true);
     const [totalCount, setTotalCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [nextPage, setNextPage] = useState<string | null>(null);
     const [prevPage, setPrevPage] = useState<string | null>(null);
+
+    const extractPageNumber = (url: string | null): number => {
+        if (!url) return 1;
+        try {
+            const page = new URL(url).searchParams.get('page');
+            return page ? parseInt(page, 10) : 1;
+        } catch {
+            return 1;
+        }
+    };
+
+    const extractPageSize = (next: string | null, previous: string | null): number => {
+        const url = next || previous;
+        if (url) {
+            try {
+                const size = new URL(url).searchParams.get('page_size');
+                if (size) return parseInt(size, 10) || 50;
+            } catch {
+                // fallback to default
+            }
+        }
+        return 50;
+    };
 
     // Filters
     const [filterStartDate, setFilterStartDate] = useState('');
@@ -55,27 +79,22 @@ export const useInventaireList = () => {
                 setTotalCount(data.count || 0);
                 setNextPage(data.next);
                 setPrevPage(data.previous);
+                setCurrentPage(extractPageNumber(pageUrl));
 
-                if (pageUrl && data.previous) {
-                    try {
-                        const urlObj = new URL(pageUrl);
-                        const pageParam = urlObj.searchParams.get('page');
-                        setCurrentPage(pageParam ? parseInt(pageParam) : 1);
-                    } catch {
-                        setCurrentPage(1);
-                    }
-                } else if (!pageUrl) {
-                    setCurrentPage(1);
-                }
+                const pageSize = extractPageSize(data.next, data.previous);
+                setTotalPages(pageSize > 0 ? Math.max(1, Math.ceil((data.count || 0) / pageSize)) : 1);
             } else if (Array.isArray(data)) {
                 setInventaires(data);
                 setTotalCount(data.length);
+                setTotalPages(1);
                 setNextPage(null);
                 setPrevPage(null);
                 setCurrentPage(1);
             } else {
                 setInventaires([]);
                 setTotalCount(0);
+                setTotalPages(1);
+                setCurrentPage(1);
             }
         } catch (error) {
             if (error instanceof Error && error.name === 'CanceledError') return;
@@ -136,6 +155,7 @@ export const useInventaireList = () => {
         deleting,
         totalCount,
         currentPage,
+        totalPages,
         nextPage,
         prevPage,
         fetchInventaires,

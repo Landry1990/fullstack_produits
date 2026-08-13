@@ -50,6 +50,25 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   const { t } = useTranslation(['facturation', 'common'])
   const [internalMode, setInternalMode] = React.useState<SearchMode>(modes[0])
   const searchMode = selectedDci ? 'dci' : (controlledMode ?? internalMode)
+  const resultsContainerRef = React.useRef<HTMLDivElement>(null)
+
+  // Garde l'élément sélectionné au clavier visible dans le dropdown (auto-scroll).
+  const activeResultCount = searchMode === 'packs' ? packResults.length :
+    searchMode === 'dci' ? (selectedDci ? dciProducts.length : dciResults.length) :
+    results.length
+  const activeIndex = React.useMemo(() => {
+    if (!getItemProps) return -1
+    for (let i = 0; i < activeResultCount; i++) {
+      if (getItemProps(i).className?.includes('shadow')) return i
+    }
+    return -1
+  }, [getItemProps, activeResultCount])
+
+  React.useEffect(() => {
+    if (activeIndex < 0 || !resultsContainerRef.current) return
+    const el = resultsContainerRef.current.querySelector(`[data-search-index="${activeIndex}"]`)
+    el?.scrollIntoView({ block: 'nearest' })
+  }, [activeIndex])
   
   const handleModeChange = (mode: SearchMode) => {
     if (onModeChange) {
@@ -167,7 +186,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   
   const renderProductItem = (item: SearchResult, idx: number) => {
     const itemProps = getItemProps?.(idx) || { className: '', style: {} }
-    const isActive = itemProps.className?.includes('active')
+    const isActive = itemProps.className?.includes('shadow')
     const stock = item.stock ?? 0
     const canSellNegativeStock = skipStockCheck || user?.is_superuser || user?.profile?.can_sell_negative_stock || user?.can_sell_negative_stock
     const isOutOfStock = stock <= 0
@@ -187,11 +206,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     return (
       <div
         key={item.id}
-        id={itemProps.id}
-        onMouseEnter={itemProps.onMouseEnter}
+        {...itemProps}
         onClick={handleClick}
         style={isActive ? itemProps.style : undefined}
         className={cn(
+          itemProps.className,
           "group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all",
           isActive ? 'bg-blue-500 shadow-md border-l-4 border-l-blue-700' : 'hover:bg-slate-50',
           isBlocked && !isActive ? 'text-slate-400 cursor-not-allowed' : ''
@@ -212,6 +231,15 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
               </Badge>
             )}
           </div>
+          {(item.cip1 || item.rayon_name) && (
+            <div className={cn(
+              "text-[10px] flex gap-1.5 mt-0.5",
+              isActive ? 'text-blue-100' : 'text-slate-400'
+            )}>
+              {item.cip1 && <span className={cn("font-mono px-1 rounded", isActive ? 'bg-white/20' : 'bg-slate-100')}>{item.cip1}</span>}
+              {item.rayon_name && <span>• {item.rayon_name}</span>}
+            </div>
+          )}
           <div className="text-xs flex gap-3 mt-0.5">
             <span className={cn(
               isActive ? 'text-blue-100 font-semibold' :
@@ -387,7 +415,13 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
       {renderSearchInput()}
       
       {hasResults && (
-        <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 max-h-[60vh] overflow-y-auto z-50">
+        <div
+          ref={resultsContainerRef}
+          className={cn(
+            "absolute left-0 top-full mt-2 bg-white rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 max-h-[60vh] overflow-y-auto z-50",
+            compact ? "w-full max-w-xl" : "right-0"
+          )}
+        >
           {renderResults()}
         </div>
       )}

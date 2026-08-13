@@ -14,6 +14,7 @@ interface UseInventaireMergeProps {
     fetchInventaires: () => void;
     activeInventaire: Inventaire | null;
     handleEdit: (inv: Inventaire) => void;
+    confirm: (options: { title?: string; message: string; variant?: 'success' | 'warning' | 'danger' | 'info'; confirmText?: string }) => Promise<boolean>;
 }
 
 export const useInventaireMerge = ({
@@ -23,7 +24,8 @@ export const useInventaireMerge = ({
     setSelectedInventaireIds,
     fetchInventaires,
     activeInventaire,
-    handleEdit
+    handleEdit,
+    confirm
 }: UseInventaireMergeProps) => {
     const { t } = useTranslation(['stock', 'common']);
     const [showMergeModal, setShowMergeModal] = useState(false);
@@ -80,12 +82,14 @@ export const useInventaireMerge = ({
 
         if (!targetId) return;
 
-        // Confirmation is currently mocked, ideally use useConfirm from hook
-        const confirmed = window.confirm(
-            isListMode
-                ? t('inventaire.modals.merge_warning_list_plain', { defaultValue: 'Les inventaires sélectionnés seront fusionnés DANS l\'inventaire cible. Êtes-vous sûr ?' })
-                : t('inventaire.merge.confirm_msg', { defaultValue: 'L\'inventaire source sera fusionné dans l\'inventaire actuel. Confirmer ?' })
-        );
+        const confirmed = await confirm({
+            title: t('inventaire.merge.confirm_title'),
+            message: isListMode
+                ? t('inventaire.merge.confirm_message_list')
+                : t('inventaire.merge.confirm_message_detail'),
+            variant: 'warning',
+            confirmText: t('inventaire.merge.btn')
+        });
         if (!confirmed) return;
 
         setMerging(true);

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Search, Calendar, Filter, User, Trash2, RefreshCw, ArrowUpDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
-import { logger } from '../../utils/logger'
+import { logger } from '../../utils/logger';
+import type { User as UserModel } from '../../types';
 
 interface InventaireFiltersProps {
     filters: {
@@ -34,7 +35,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
         ordering, setOrdering
     } = filters;
 
-    const [users, setUsers] = useState<unknown[]>([]);
+    const [users, setUsers] = useState<UserModel[]>([]);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -148,6 +149,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                 <div className="flex gap-2 shrink-0 border-l border-slate-200 pl-4">
                     {onDeleteDrafts && (
                         <button
+                            type="button"
                             onClick={onDeleteDrafts}
                             className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                             title={t('inventaire.filters.delete_drafts')}
@@ -157,6 +159,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     )}
 
                     <button
+                        type="button"
                         onClick={onRefresh}
                         className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
                         title={t('common:refresh')}
