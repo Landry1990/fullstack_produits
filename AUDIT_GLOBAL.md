@@ -175,11 +175,11 @@
 
 | # | Action | Impact | Effort | Statut |
 |---|--------|--------|--------|--------|
-| 1 | Sécuriser `login_options` (throttle + limiter champs) + monter `min_length` à 8 + lockout compte | Critique | Moyen | ☐ À faire |
-| 2 | Lazy-load `tesseract.js` (dynamic import à l'usage) + splitter `bwip-js` | Haute | Faible | ☐ À faire |
-| 3 | Découper `PharmacySettingsForm` et `SystemAdmin` en sous-composants | Haute | Moyen | ☐ À faire |
-| 4 | Ajouter tests E2E (Playwright) sur flow vente + caisse + clôture | Haute | Élevé | ☐ À faire |
-| 5 | Ranger la racine du repo (temp files, .md, scripts) + supprimer branches mortes + ajouter ruff | Moyenne | Faible | ☐ À faire |
+| 1 | ~~Sécuriser `login_options` (throttle + limiter champs) + monter `min_length` à 8 + lockout compte~~ | Critique | Moyen | ✅ Fait (2026-08-14) |
+| 2 | ~~Lazy-load `tesseract.js` (dynamic import à l'usage) + splitter `bwip-js`~~ | Haute | Faible | ✅ Fait (2026-08-14) |
+| 3 | ~~Découper `PharmacySettingsForm` et `SystemAdmin` en sous-composants~~ | Haute | Moyen | ✅ Fait (2026-08-14) |
+| 4 | ~~Ajouter tests E2E (Playwright) sur flow vente + caisse + clôture~~ | Haute | Élevé | ✅ Fait (2026-08-14) |
+| 5 | ~~Ranger la racine du repo (temp files, .md, scripts) + supprimer branches mortes + ajouter ruff~~ | Moyenne | Faible | ✅ Fait (2026-08-14) |
 
 ---
 
