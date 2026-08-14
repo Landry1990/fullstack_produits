@@ -26,6 +26,7 @@ from ...models import (
     FactureProduit,
     FactureProduitAllocation,
     MouvementStock,
+    PaiementFournisseur,
     Produit,
     Promis,
     StockLot,
@@ -396,14 +397,37 @@ class CommandeClotureMixin:
                     if commande.numero_facture == 'REASSORT_AUTO':
                         commande.numero_facture = f"REASSORT_{commande.date_cloture.strftime('%Y%m%d_%H%M')}_{commande.id}"
 
-                    # Calcul de l'échéance
-                    if commande.fournisseur and commande.fournisseur.type_reglement == 'FACTURE':
-                        if commande.fournisseur.delai_paiement_jours > 0:
-                            commande.date_echeance = commande.date_cloture.date() + timedelta(days=commande.fournisseur.delai_paiement_jours)
-                        else:
-                            commande.date_echeance = commande.date_cloture.date()
+                    # Calcul de l'échéance (gère aussi les achats de mise en place
+                    # à condition négociée, cf. Commande.compute_date_echeance)
+                    commande.date_echeance = commande.compute_date_echeance()
 
                     commande.save(update_fields=['status', 'date_cloture', 'date', 'date_echeance', 'numero_facture', 'closed_by'])
+
+                    # Achat de mise en place réglé au comptant : enregistrer automatiquement
+                    # le paiement fournisseur pour le montant total (certains grossistes ne
+                    # font pas crédit du tout, la commande est réglée avant/à la clôture).
+                    # Idempotent : on ne crée le paiement que s'il n'en existe déjà un pour
+                    # cette commande (évite les doublons en cas de re-clôture après annulation
+                    # de réception ou de retry de l'optimistic locking).
+                    if commande.is_mise_en_place and commande.paye_a_la_cloture and commande.fournisseur:
+                        existing_auto = PaiementFournisseur.objects.filter(
+                            commandes=commande,
+                            notes__startswith=f"Paiement automatique - achat au comptant / mise en place (Commande #{commande.id})"
+                        ).exists()
+                        if not existing_auto:
+                            total_cost = CommandeProduit.objects.filter(commande=commande).aggregate(
+                                total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
+                            )['total'] or Decimal('0.00')
+                            if total_cost > 0:
+                                paiement = PaiementFournisseur.objects.create(
+                                    fournisseur=commande.fournisseur,
+                                    montant=total_cost,
+                                    date_paiement=commande.date_cloture.date(),
+                                    mode_paiement='ESP',
+                                    created_by=request.user,
+                                    notes=f"Paiement automatique - achat au comptant / mise en place (Commande #{commande.id})"
+                                )
+                                paiement.commandes.add(commande)
                     
                     # 2.4 Mettre à jour la date de dernier achat
                     today = date.today()
@@ -573,6 +597,16 @@ class CommandeClotureMixin:
         commande.status = Commande.Status.EN_PREPARATION
         commande.date_cloture = None
         commande.save(update_fields=['status', 'date_cloture'])
+
+        # Supprimer le paiement automatique créé à la clôture si la commande
+        # était un achat au comptant (paye_a_la_cloture). On identifie le
+        # paiement par sa note, ce qui évite de supprimer un paiement manuel.
+        if commande.is_mise_en_place and commande.paye_a_la_cloture:
+            auto_paiements = PaiementFournisseur.objects.filter(
+                commandes=commande,
+                notes__startswith=f"Paiement automatique - achat au comptant / mise en place (Commande #{commande.id})"
+            )
+            auto_paiements.delete()
         
         # Log audit
         # Log audit

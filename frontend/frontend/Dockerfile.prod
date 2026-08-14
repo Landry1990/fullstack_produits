@@ -9,7 +9,10 @@ ENV GIT_COMMIT=${GIT_COMMIT}
 
 # Copier package.json
 COPY package*.json ./
-RUN npm config set fetch-retries 5 && \
+# --mount=type=cache : le cache npm persiste sur l'hôte entre les builds,
+# évitant de tout re-télécharger depuis npm à chaque rebuild.
+RUN --mount=type=cache,target=/root/.npm \
+    npm config set fetch-retries 5 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
     npm install --legacy-peer-deps

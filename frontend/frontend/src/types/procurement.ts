@@ -80,6 +80,10 @@ export interface Commande {
     created_by_name?: string
     closed_by_name?: string
     items_count?: number
+    date_echeance?: string | null
+    is_mise_en_place?: boolean
+    delai_paiement_negocie_jours?: number | null
+    paye_a_la_cloture?: boolean
 }
 
 export interface PaiementFournisseur {

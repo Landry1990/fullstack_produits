@@ -15,6 +15,9 @@ interface CommandesStoreState {
   page: number;
   filterStatus: string;
   numeroFacture: string;
+  isMiseEnPlace: boolean;
+  delaiPaiementNegocieJours: string;
+  payeALaCloture: boolean;
   commandeProduits: CommandeProduit[];
   commandeSortBy: 'chrono' | 'stock' | 'name' | 'qty';
   selectedRows: Set<number>;
@@ -44,6 +47,9 @@ interface CommandesStoreActions {
   setPage: (value: number) => void;
   setFilterStatus: (value: string) => void;
   setNumeroFacture: (value: string) => void;
+  setIsMiseEnPlace: (value: boolean) => void;
+  setDelaiPaiementNegocieJours: (value: string) => void;
+  setPayeALaCloture: (value: boolean) => void;
   setCommandeProduits: (updater: CommandeProduit[] | ((prev: CommandeProduit[]) => CommandeProduit[])) => void;
   setCommandeSortBy: (value: 'chrono' | 'stock' | 'name' | 'qty') => void;
   setSelectedRows: (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => void;
@@ -76,6 +82,9 @@ const createInitialState = (): CommandesStoreState => ({
   page: 1,
   filterStatus: 'ALL',
   numeroFacture: '',
+  isMiseEnPlace: false,
+  delaiPaiementNegocieJours: '',
+  payeALaCloture: false,
   commandeProduits: [],
   commandeSortBy: 'chrono',
   selectedRows: new Set<number>(),
@@ -94,7 +103,7 @@ const createInitialState = (): CommandesStoreState => ({
   searchQuery: '',
 });
 
-export const useCommandesStore = create<CommandesStore>((set) => ({
+export const useCommandesStore = create<CommandesStore>((set, get) => ({
   ...createInitialState(),
   setSelectedCommande: (value) => set({ selectedCommande: value }),
   setActiveTab: (value) => set({ activeTab: value }),
@@ -106,6 +115,9 @@ export const useCommandesStore = create<CommandesStore>((set) => ({
   setPage: (value) => set({ page: value }),
   setFilterStatus: (value) => set({ filterStatus: value }),
   setNumeroFacture: (value) => set({ numeroFacture: value }),
+  setIsMiseEnPlace: (value) => set({ isMiseEnPlace: value, delaiPaiementNegocieJours: value ? get().delaiPaiementNegocieJours : '' }),
+  setDelaiPaiementNegocieJours: (value) => set({ delaiPaiementNegocieJours: value }),
+  setPayeALaCloture: (value) => set({ payeALaCloture: value }),
   setCommandeProduits: (updater) =>
     set((state) => ({
       commandeProduits: typeof updater === 'function' ? updater(state.commandeProduits) : updater,
@@ -140,6 +152,9 @@ export const useCommandesStore = create<CommandesStore>((set) => ({
       selectedCommande: null,
       commandeType: type,
       numeroFacture: '',
+      isMiseEnPlace: false,
+      delaiPaiementNegocieJours: '',
+      payeALaCloture: false,
       commandeProduits: [],
       selectedRows: new Set<number>(),
       newCommandeFournisseurId: '',
