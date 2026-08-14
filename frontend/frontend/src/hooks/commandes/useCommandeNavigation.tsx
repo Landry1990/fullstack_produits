@@ -55,6 +55,9 @@ export function useCommandeNavigation({
   const setSelectedCommande = useCommandesStore((s) => s.setSelectedCommande);
   const setNewCommandeFournisseurId = useCommandesStore((s) => s.setNewCommandeFournisseurId);
   const setNumeroFacture = useCommandesStore((s) => s.setNumeroFacture);
+  const setIsMiseEnPlace = useCommandesStore((s) => s.setIsMiseEnPlace);
+  const setDelaiPaiementNegocieJours = useCommandesStore((s) => s.setDelaiPaiementNegocieJours);
+  const setPayeALaCloture = useCommandesStore((s) => s.setPayeALaCloture);
   const tauxChange = useCommandesStore((s) => s.tauxChange);
   const setTauxChange = useCommandesStore((s) => s.setTauxChange);
   const fraisCoefficient = useCommandesStore((s) => s.fraisCoefficient);
@@ -226,6 +229,9 @@ export function useCommandeNavigation({
     setCommandeProduits(newLines);
     setNewCommandeFournisseurId(supplierId);
     setNumeroFacture('');
+    setIsMiseEnPlace(false);
+    setDelaiPaiementNegocieJours('');
+    setPayeALaCloture(false);
     setIsSuggestionModalOpen(false);
     setViewMode('CREATE');
   }
@@ -237,6 +243,9 @@ export function useCommandeNavigation({
 
     setNewCommandeFournisseurId(fournisseursForType.length > 0 ? String(fournisseursForType[0].id) : '');
     setNumeroFacture('');
+    setIsMiseEnPlace(false);
+    setDelaiPaiementNegocieJours('');
+    setPayeALaCloture(false);
     setCommandeProduits([]);
     setSearchProduitQuery('');
     setCommandeType(type);
@@ -254,6 +263,9 @@ export function useCommandeNavigation({
   async function openEditView(commande: Commande) {
     setNewCommandeFournisseurId(commande.fournisseur ? String(commande.fournisseur) : '');
     setNumeroFacture(commande.numero_facture || '');
+    setIsMiseEnPlace(commande.is_mise_en_place || false);
+    setDelaiPaiementNegocieJours(commande.delai_paiement_negocie_jours != null ? String(commande.delai_paiement_negocie_jours) : '');
+    setPayeALaCloture(commande.paye_a_la_cloture || false);
     setCommandeType((commande.type as 'LOC' | 'DIR') || 'LOC');
 
     if (commande.type === 'DIR') {

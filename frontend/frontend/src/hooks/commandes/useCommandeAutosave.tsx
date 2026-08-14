@@ -7,6 +7,9 @@ export interface UseCommandeAutosaveState {
   commandeProduits: CommandeProduit[];
   newCommandeFournisseurId: string;
   numeroFacture: string;
+  isMiseEnPlace: boolean;
+  delaiPaiementNegocieJours: string;
+  payeALaCloture: boolean;
   commandeType: 'LOC' | 'DIR' | 'DIV';
   tauxChange: string;
   fraisCoefficient: string;
@@ -40,6 +43,9 @@ export function useCommandeAutosave({ state, setSaving, handleSaveCommande }: Us
       if (s.isImporting) return;
       if (s.viewMode !== 'CREATE' && s.viewMode !== 'EDIT') return;
       if (s.commandeProduits.length === 0 || !s.newCommandeFournisseurId) return;
+      // Ne pas autosauvegarder une mise en place sans délai renseigné (backend rejette)
+      // sauf si elle est réglée au comptant (paye_a_la_cloture) — pas de délai requis.
+      if (s.isMiseEnPlace && !s.payeALaCloture && !s.delaiPaiementNegocieJours.trim()) return;
 
       setSaving(true);
       try {
@@ -49,6 +55,11 @@ export function useCommandeAutosave({ state, setSaving, handleSaveCommande }: Us
           type: s.commandeType,
           taux_change: s.commandeType === 'DIR' ? s.tauxChange : undefined,
           frais_coefficient: s.commandeType === 'DIR' ? s.fraisCoefficient : undefined,
+          is_mise_en_place: s.isMiseEnPlace,
+          delai_paiement_negocie_jours: s.isMiseEnPlace && s.delaiPaiementNegocieJours.trim()
+            ? Number(s.delaiPaiementNegocieJours)
+            : null,
+          paye_a_la_cloture: s.isMiseEnPlace && s.payeALaCloture,
         };
         const mode = (s.viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
         await handleSaveCommande(cleanCommande, s.commandeProduits, mode, s.selectedCommande, true);

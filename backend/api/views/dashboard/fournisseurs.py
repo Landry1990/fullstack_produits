@@ -110,7 +110,14 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
     
             # Répartition FIFO des paiements globaux sur les commandes (du plus ancien au plus récent).
             # Cela gère correctement les réglements sans FK commande (champ déprécié).
-            budget_restant = payments_by_supplier.get(supplier.id, Decimal('0.00'))
+            # Les achats au comptant (paye_a_la_cloture) sont entièrement réglés
+            # par leur paiement automatique : on les exclut du budget FIFO pour
+            # ne pas fausser la répartition sur les autres commandes.
+            auto_paid_total = sum(
+                o.total_annotated for o in orders
+                if o.is_mise_en_place and o.paye_a_la_cloture
+            )
+            budget_restant = payments_by_supplier.get(supplier.id, Decimal('0.00')) - auto_paid_total
             remainings: dict[int, Decimal] = {}
             for order in orders:
                 order_total = order.total_annotated
@@ -118,9 +125,43 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
                 remainings[order.id] = order_total - applique
                 budget_restant -= applique
     
+            # Les achats de mise en place à condition négociée ont toujours une
+            # échéance individuelle (jamais regroupée en relevé), quel que soit
+            # le mode de règlement habituel du fournisseur.
+            mise_en_place_orders = [o for o in orders if o.is_mise_en_place]
+            releve_orders = [o for o in orders if not o.is_mise_en_place]
+
+            for order in mise_en_place_orders:
+                # Achat au comptant : entièrement réglé à la clôture, pas de dette.
+                if order.paye_a_la_cloture:
+                    continue
+                remaining = remainings.get(order.id, order.total_annotated)
+
+                if remaining > 0:
+                    due_date = order.date_echeance
+                    if not due_date:
+                        # Fallback: délai négocié si présent, sinon délai fournisseur
+                        base_date = order.date_cloture.date() if order.date_cloture else order.date.date()
+                        delai = order.delai_paiement_negocie_jours if order.delai_paiement_negocie_jours is not None else supplier.delai_paiement_jours
+                        due_date = base_date + timedelta(days=delai)
+
+                    is_overdue = due_date < today
+                    days_diff = (today - due_date).days
+
+                    supplier_items.append({
+                        'id': order.id,
+                        'type': 'MISE_EN_PLACE',
+                        'label': order.numero_facture or f'Cmd #{order.id}',
+                        'amount': float(remaining),
+                        'due_date': due_date.isoformat(),
+                        'is_overdue': is_overdue,
+                        'days_overdue': days_diff if is_overdue else None,
+                        'days_remaining': -days_diff if not is_overdue else None,
+                    })
+
             if supplier.type_reglement == 'FACTURE':
                 # Individual invoices
-                for order in orders:
+                for order in releve_orders:
                     remaining = remainings.get(order.id, order.total_annotated)
     
                     if remaining > 0:
@@ -151,7 +192,7 @@ class DashboardFournisseursMixin(viewsets.ViewSet):
                 from typing import Any
                 periods: dict[str, dict[str, Any]] = {}
     
-                for order in orders:
+                for order in releve_orders:
                     remaining = remainings.get(order.id, order.total_annotated)
     
                     if remaining > 0:

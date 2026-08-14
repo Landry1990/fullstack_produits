@@ -1,7 +1,7 @@
 """
 Order-related models: Commande, CommandeProduit, Avoir, LigneAvoir.
 """
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -53,6 +53,20 @@ class Commande(models.Model):
     date_echeance = models.DateField(
         null=True, blank=True, 
         help_text="Calculée automatiquement selon le délai du fournisseur."
+    )
+    is_mise_en_place = models.BooleanField(
+        default=False,
+        help_text="Achat de mise en place / condition négociée avec le grossiste (délai de paiement propre à cette commande, différent du délai standard du fournisseur)."
+    )
+    delai_paiement_negocie_jours = models.IntegerField(
+        null=True, blank=True,
+        help_text="Délai de paiement négocié en jours pour cette commande (utilisé uniquement si is_mise_en_place=True, remplace le délai standard du fournisseur)."
+    )
+    paye_a_la_cloture = models.BooleanField(
+        default=False,
+        help_text="Achat payé intégralement au comptant (certains grossistes ne font pas crédit). "
+                   "Utilisé uniquement si is_mise_en_place=True : un paiement fournisseur pour le "
+                   "montant total est enregistré automatiquement à la clôture de la commande."
     )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.EN_PREPARATION, db_index=True)
     
@@ -106,10 +120,45 @@ class Commande(models.Model):
             except Exception:
                 pass  # Fallback silencieux sur le default du modèle
 
+        # Recalcule l'échéance si la commande est déjà clôturée et que les
+        # conditions négociées (mise en place) ont été modifiées après coup,
+        # ou si le fournisseur applique une échéance individuelle (FACTURE).
+        if self.status == self.Status.CLOTUREE and self.date_cloture:
+            self.date_echeance = self.compute_date_echeance()
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Commande {self.id}"
+
+    def compute_date_echeance(self):
+        """
+        Calcule la date d'échéance de paiement de cette commande.
+        - Si is_mise_en_place=True et paye_a_la_cloture=True : échéance = date de
+          clôture (achat au comptant, réglé immédiatement — certains grossistes ne
+          font pas crédit du tout).
+        - Si is_mise_en_place=True et un délai négocié est renseigné : ce délai
+          prévaut toujours, quel que soit le mode de règlement du fournisseur
+          (ces achats ont une échéance individuelle, jamais regroupée en relevé).
+        - Sinon, pour un fournisseur en mode FACTURE : délai standard du fournisseur.
+        - Sinon (RELEVE non négocié) : None, l'échéance est calculée dynamiquement
+          par tranche de relevé (cf. api/services/supplier_finance.py).
+        """
+        if not self.date_cloture:
+            return None
+        base_date = self.date_cloture.date()
+
+        if self.is_mise_en_place:
+            if self.paye_a_la_cloture:
+                return base_date
+            if self.delai_paiement_negocie_jours is not None:
+                return base_date + timedelta(days=self.delai_paiement_negocie_jours)
+
+        if self.fournisseur and self.fournisseur.type_reglement == 'FACTURE':
+            delai = self.fournisseur.delai_paiement_jours
+            return base_date + timedelta(days=delai) if delai > 0 else base_date
+
+        return None
     
     @property
     def total(self):

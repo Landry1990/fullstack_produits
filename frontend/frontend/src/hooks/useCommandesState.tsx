@@ -109,6 +109,12 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
   const numeroFacture = useCommandesStore((s) => s.numeroFacture);
   const setNumeroFacture = useCommandesStore((s) => s.setNumeroFacture);
+  const isMiseEnPlace = useCommandesStore((s) => s.isMiseEnPlace);
+  const setIsMiseEnPlace = useCommandesStore((s) => s.setIsMiseEnPlace);
+  const delaiPaiementNegocieJours = useCommandesStore((s) => s.delaiPaiementNegocieJours);
+  const setDelaiPaiementNegocieJours = useCommandesStore((s) => s.setDelaiPaiementNegocieJours);
+  const payeALaCloture = useCommandesStore((s) => s.payeALaCloture);
+  const setPayeALaCloture = useCommandesStore((s) => s.setPayeALaCloture);
   const setCommandeProduits = useCommandesStore((s) => s.setCommandeProduits);
   const commandeSortBy = useCommandesStore((s) => s.commandeSortBy);
 
@@ -255,12 +261,21 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
           toast.error(t('orders:messages.add_at_least_one'));
           return;
       }
+      if (isMiseEnPlace && !payeALaCloture && !delaiPaiementNegocieJours.trim()) {
+          toast.error(t('orders:messages.mise_en_place_delai_required'));
+          return;
+      }
       const cleanCommande: Partial<Commande> = {
            fournisseur: newCommandeFournisseurId ? normalizeNumberInput(newCommandeFournisseurId) : undefined,
            numero_facture: numeroFacture,
            type: commandeType,
            taux_change: commandeType === 'DIR' ? tauxChange : undefined,
            frais_coefficient: commandeType === 'DIR' ? fraisCoefficient : undefined,
+           is_mise_en_place: isMiseEnPlace,
+           delai_paiement_negocie_jours: isMiseEnPlace && delaiPaiementNegocieJours.trim()
+             ? Number(delaiPaiementNegocieJours)
+             : null,
+           paye_a_la_cloture: isMiseEnPlace && payeALaCloture,
       };
       const mode = (viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
       handleSaveCommande(cleanCommande, commandeProduits, mode, selectedCommande);
@@ -311,6 +326,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       commandeProduits,
       newCommandeFournisseurId,
       numeroFacture,
+      isMiseEnPlace,
+      delaiPaiementNegocieJours,
+      payeALaCloture,
       commandeType,
       tauxChange,
       fraisCoefficient,
@@ -471,6 +489,12 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       setNewCommandeFournisseurId,
       numeroFacture,
       setNumeroFacture,
+      isMiseEnPlace,
+      setIsMiseEnPlace,
+      delaiPaiementNegocieJours,
+      setDelaiPaiementNegocieJours,
+      payeALaCloture,
+      setPayeALaCloture,
       commandeType,
       tauxChange,
       setTauxChange,
