@@ -6,6 +6,7 @@ import { normalizeNumberInput } from '../../utils/formatters';
 import { toApiDateTime, toApiDateEnd } from '../../utils/dateUtils';
 import { logger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
+import type { ClosingPrintData } from './useJournalCaissePrinting';
 
 interface ClosingTotalsSource {
   start_date?: string | null;
@@ -58,7 +59,7 @@ interface UseJournalCaisseClosingParams {
   selectedUser: string;
   users: UserInfo[];
   fetchData: () => Promise<void>;
-  onPrint: (data?: unknown) => void;
+  onPrint: (data?: ClosingPrintData) => void;
 }
 
 /**

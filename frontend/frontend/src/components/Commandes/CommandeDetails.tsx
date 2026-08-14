@@ -341,32 +341,32 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         <div className="flex flex-wrap gap-3 items-center">
           {/* PRIX A HT */}
           <div className="flex flex-col items-end">
-            <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">PRIX A HT</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">PRIX A HT</span>
             <span className="text-sm font-bold text-slate-700">{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
           </div>
           {/* TVA A */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">TVA A</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">TVA A</span>
             <span className="text-sm font-bold text-slate-500">{formatCurrency((orderTotals?.totalBuyTTC || 0) - (orderTotals?.totalBuyHT || 0))}</span>
           </div>
           {/* PRIX A TTC */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">PRIX A TTC</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">PRIX A TTC</span>
             <span className="text-lg font-black leading-none text-slate-800">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
           </div>
           {/* PRIX V TTC */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[9px] uppercase font-bold text-emerald-600 -mb-1">PRIX V TTC</span>
+            <span className="text-[10px] uppercase font-bold text-emerald-600 -mb-1">PRIX V TTC</span>
             <span className={cn("text-lg font-black leading-none", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalTTC || 0)}</span>
           </div>
           {/* MARGE */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">MARGE</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">MARGE</span>
             <span className={cn("text-sm font-bold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
           </div>
           {/* COEFF */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[9px] uppercase font-bold text-slate-400 -mb-1">COEFF</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">COEFF</span>
             <div className="flex items-baseline gap-1">
               <span className={cn("text-sm font-bold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>x{orderTotals?.globalMargin || '1.00'}</span>
               <span className={cn("text-[10px] font-semibold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-500' : 'text-amber-500')}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
@@ -375,7 +375,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
           {/* PRÉCOMPTE */}
           {Number(selectedCommande.precompte) > 0 && (
             <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-              <span className="text-[9px] uppercase font-bold text-rose-500 -mb-1">PRÉCOMPTE ({selectedCommande.taux_precompte}%)</span>
+              <span className="text-[10px] uppercase font-bold text-rose-500 -mb-1">PRÉCOMPTE ({selectedCommande.taux_precompte}%)</span>
               <span className="text-sm font-bold text-rose-600">{formatCurrency(Number(selectedCommande.precompte) || 0)}</span>
             </div>
           )}

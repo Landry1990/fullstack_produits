@@ -1328,7 +1328,7 @@ export default function Maintenance() {
 
       {/* Confirmation Modal */}
       <Dialog open={showConfirmModal} onOpenChange={(open) => { if (!open) { setShowConfirmModal(false); setPassword(''); } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-red-100">
@@ -1447,7 +1447,7 @@ export default function Maintenance() {
 
       {/* Modal Purge Produits */}
       <Dialog open={showPurgeModal} onOpenChange={(open) => { if (!open) { setShowPurgeModal(false); setPurgePassword(''); } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-red-100">
@@ -1503,7 +1503,7 @@ export default function Maintenance() {
 
       {/* Modal Mise à jour manuelle */}
       <Dialog open={showUpdateConfirm} onOpenChange={(open) => { if (!open) { setShowUpdateConfirm(false); setUpdatePassword(''); } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-emerald-100">

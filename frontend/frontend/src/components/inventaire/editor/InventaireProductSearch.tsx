@@ -79,13 +79,13 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                 </button>
             </div>
             <div className="px-2 py-1 text-[10px] text-slate-400 flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">F3</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">F3</span>
                 <span>{t('common:search')}</span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">↑/↓</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">↑/↓</span>
                 <span>{t('common:navigate')}</span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">Enter</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">Enter</span>
                 <span>{t('common:select')}</span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[9px]">Shift+Del</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[10px]">Shift+Del</span>
                 <span>{t('common:remove')}</span>
             </div>
 

@@ -508,7 +508,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         )}
                                     </button>
                                     {conditionsOpen && (
-                                    <div className="absolute z-[100] left-0 top-full p-6 shadow-2xl bg-white rounded-3xl border border-slate-200 w-[320px] sm:w-[580px] mt-2 animate-in slide-in-from-top-2 duration-300">
+                                    <div className="absolute z-[100] left-0 top-full p-6 shadow-2xl bg-white rounded-3xl border border-slate-200 w-[min(90vw,580px)] mt-2 animate-in slide-in-from-top-2 duration-300">
                                         <div className="flex items-center justify-between mb-6">
                                             <div className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
                                                 <Filter className="size-3" />
@@ -641,7 +641,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                         </Badge>
                                     </button>
                                     {fieldsOpen && (
-                                    <div className="absolute z-[100] right-0 top-full p-4 shadow-2xl bg-white rounded-2xl border border-slate-200 w-[300px] sm:w-[450px] mt-2 animate-in slide-in-from-top-2 duration-300">
+                                    <div className="absolute z-[100] right-0 top-full p-4 shadow-2xl bg-white rounded-2xl border border-slate-200 w-[min(90vw,450px)] mt-2 animate-in slide-in-from-top-2 duration-300">
                                         <div className="text-xs font-black uppercase tracking-widest text-slate-300 mb-4 flex items-center gap-2">
                                             <LayoutPanelTop className="size-3" />
                                             {t('dynamic_constructor.table_composition')}

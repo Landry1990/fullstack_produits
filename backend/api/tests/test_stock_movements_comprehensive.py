@@ -384,16 +384,17 @@ class StockMovementsComprehensiveTestCase(TestCase):
         self.assertEqual(mvt.stock_apres, 92)
 
     # ------------------------------------------------------------------
-    # 14. Proforma centralisée -> aucun mouvement de stock
+    # 14. Facture centralisée -> mouvement de stock immédiat
     # ------------------------------------------------------------------
-    def test_proforma_centralisee_ne_mouvemente_pas_le_stock(self):
+    def test_facture_centralisee_mouvemente_le_stock(self):
         produit = self.factory.create_produit(stock=50)
         self.factory.create_stock_lot(produit=produit, quantity=50, lot_name="LOT-PROF")
         facture = self._make_sale(produit, quantity=3, centralized=True)
-        self.assertEqual(facture.status, Facture.Status.PROFORMA)
+        self.assertEqual(facture.status, Facture.Status.VALIDEE)
+        self.assertTrue(facture.numero_facture.startswith('FAC-'))
 
         produit.refresh_from_db()
-        self.assertEqual(produit.stock, 50)
-        self.assertFalse(
+        self.assertEqual(produit.stock, 47)
+        self.assertTrue(
             MouvementStock.objects.filter(produit=produit, facture=facture).exists()
         )

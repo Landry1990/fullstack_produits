@@ -392,7 +392,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
       {/* Products Preview Popup */}
       <Dialog open={!!previewFacture} onOpenChange={(open) => { if (!open) { setPreviewFacture(null); onPreviewClosed?.(); } }}>
-        <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden" aria-labelledby="preview-title" aria-describedby="preview-desc">
+        <DialogContent className="max-w-full sm:max-w-2xl p-0 gap-0 overflow-hidden" aria-labelledby="preview-title" aria-describedby="preview-desc">
           <DialogHeader className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-emerald-50 via-white to-sky-50">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-emerald-600">

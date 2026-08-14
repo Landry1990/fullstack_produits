@@ -91,8 +91,8 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
         <div className="flex flex-col items-end shrink-0">
           <span className="text-xs font-medium text-slate-500">{formatDateShort(new Date())}</span>
           <div className="hidden sm:flex gap-3 text-[10px] text-slate-400 mt-0.5 uppercase font-semibold tracking-wider">
-            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[9px]">/</kbd> {hook.t('facturation:shortcuts.search')}</span>
-            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[9px]">F9</kbd> {hook.t('facturation:shortcuts.pay')}</span>
+            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[10px]">/</kbd> {hook.t('facturation:shortcuts.search')}</span>
+            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[10px]">F9</kbd> {hook.t('facturation:shortcuts.pay')}</span>
           </div>
         </div>
       </div>
