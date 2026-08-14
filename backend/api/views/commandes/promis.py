@@ -251,6 +251,9 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         locked_products = {p.id: p for p in Produit.objects.filter(id__in=product_ids).select_for_update().order_by('id')} if product_ids else {}
 
         reintegrated = []
+        mouvements_to_create = []
+        produits_to_save = {}
+
         for promis in promis_list:
             produit = locked_products.get(promis.produit_id) if promis.produit_id else None
             stock_reintegre = 0
@@ -258,35 +261,45 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             # Réintégrer le stock (uniquement si le produit n'est pas géré par lots)
             if produit and not produit.use_lot_management:
                 produit.stock += promis.quantite
-                produit.save(update_fields=['stock'])
+                produits_to_save[produit.id] = produit
                 stock_reintegre = promis.quantite
 
             # Mouvement de traçabilité
             final_stock = produit.total_stock if produit else 0
             if produit and produit.use_lot_management:
-                MouvementStock.objects.create(
+                mouvements_to_create.append(MouvementStock(
                     produit=produit,
                     type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
                     quantite=0,
                     stock_apres=final_stock,
                     user=request.user,
                     description=f"Annulation promis #{promis.id} - pas de réintégration (gestion par lots) (Client: {promis.client_display})"
-                )
+                ))
             else:
-                MouvementStock.objects.create(
+                mouvements_to_create.append(MouvementStock(
                     produit=produit,
                     type_mouvement=MouvementStock.TypeMouvement.RETOUR,
                     quantite=promis.quantite,
                     stock_apres=final_stock,
                     user=request.user,
                     description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
-                )
+                ))
 
             reintegrated.append({
                 'id': promis.id,
                 'produit': produit.name if produit else 'Produit inconnu',
                 'quantite': stock_reintegre
             })
+
+        # Bulk save products (1 query instead of N)
+        if produits_to_save:
+            Produit.objects.bulk_update(
+                list(produits_to_save.values()), ['stock'], batch_size=100
+            )
+
+        # Bulk create mouvements (1 query instead of N)
+        if mouvements_to_create:
+            MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
 
         # Bulk update status
         Promis.objects.filter(id__in=ids).update(

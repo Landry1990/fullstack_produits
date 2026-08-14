@@ -147,14 +147,14 @@ class Produit(models.Model):
         stock_lots: models.Manager[StockLot]
         adjustments: models.Manager[StockAdjustment]
         mouvements_stock: models.Manager[MouvementStock]
-    rayon = models.ForeignKey('Rayon', on_delete=models.SET_NULL, null=True, blank=True)
+    rayon = models.ForeignKey('Rayon', on_delete=models.SET_NULL, null=True, blank=True, db_index=True)
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True)
     is_supplier_exclusive = models.BooleanField(
         default=False,
         help_text="Si activé, ce produit ne peut être commandé que chez ce fournisseur."
     )
-    forme = models.ForeignKey('Forme', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits')
-    groupe = models.ForeignKey('Groupe', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits')
+    forme = models.ForeignKey('Forme', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits', db_index=True)
+    groupe = models.ForeignKey('Groupe', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits', db_index=True)
     famille_risque = models.ForeignKey(
         'FamilleRisque', on_delete=models.SET_NULL, null=True, blank=True, 
         related_name='produits', help_text="Famille pour contrôle interactions (ex: AINS)"
@@ -262,7 +262,7 @@ class Produit(models.Model):
         help_text="Produit visible sur la vitrine en ligne"
     )
     is_active = models.BooleanField(
-        default=True,
+        default=True, db_index=True,
         help_text="Produit actif (visible dans les recherches)"
     )
     deleted_by = models.ForeignKey(

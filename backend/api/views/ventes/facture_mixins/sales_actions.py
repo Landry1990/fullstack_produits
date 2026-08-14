@@ -23,38 +23,35 @@ logger = logging.getLogger(__name__)
 class FactureSalesMixin:
     """Actions de vente : finaliser, valider, annuler, modifier, marquer_payee, sync_mobile."""
 
-    @action(detail=False, methods=['post'])
-    @transaction.atomic
-    @idempotent_action
-    def finaliser(self, request):
-        """
-        Action ATOMIQUE pour finaliser une vente complète via SalesService.
-        """
+    MAX_PRODUCTS_PER_INVOICE = 500
+
+    # ------------------------------------------------------------------
+    # Helpers privés pour finaliser()
+    # ------------------------------------------------------------------
+
+    def _parse_finaliser_data(self, request):
+        """Extrait les données de la requête (JSON ou multipart)."""
         import json
 
-        # Determine if data came in as JSON or FormData
         if 'multipart/form-data' in request.content_type:
-            # Reconstruct data from 'json_data' field if present, otherwise use request.data
             json_str = request.data.get('json_data')
             if json_str:
-                data = json.loads(json_str)
-            else:
-                # Fallback: maybe they just sent a flat multipart
-                data = request.data
-        else:
-            data = request.data
+                return json.loads(json_str), request.FILES.get('image_ordonnance')
+            return request.data, request.FILES.get('image_ordonnance')
+        return request.data, request.FILES.get('image_ordonnance')
 
-        user = request.user
-        centralized = data.get('centralized_cash_register', True)
-
-        image_file = request.FILES.get('image_ordonnance')
-
-        # --- Early data validation (before Sudo check) ---
+    def _validate_products(self, data):
+        """Valide la liste des produits et calcule la somme rapide. Retourne (produits_data, temp_sum, remise_globale) ou (None, error_response, None)."""
         produits_data = data.get('produits')
         if not isinstance(produits_data, list) or not produits_data:
-            return Response({'detail': "La liste des produits ne peut pas être vide."}, status=status.HTTP_400_BAD_REQUEST)
+            return None, Response({'detail': "La liste des produits ne peut pas être vide."}, status=status.HTTP_400_BAD_REQUEST), None
 
-        # Validate selling_price format and compute quick sum
+        if len(produits_data) > self.MAX_PRODUCTS_PER_INVOICE:
+            return None, Response(
+                {'detail': f"Trop de produits dans la facture (max {self.MAX_PRODUCTS_PER_INVOICE}). Veuillez réduire le nombre de lignes."},
+                status=status.HTTP_400_BAD_REQUEST
+            ), None
+
         try:
             temp_sum = Decimal(0)
             for p in produits_data:
@@ -63,7 +60,7 @@ class FactureSalesMixin:
                 rem = Decimal(str(p.get('discount', 0)))
                 temp_sum += (q * pr) - rem
         except (InvalidOperation, ValueError, TypeError):
-            return Response({'detail': "Données de produit invalides (prix ou quantité non numérique)."}, status=status.HTTP_400_BAD_REQUEST)
+            return None, Response({'detail': "Données de produit invalides (prix ou quantité non numérique)."}, status=status.HTTP_400_BAD_REQUEST), None
 
         try:
             remise_globale = Decimal(str(data.get('remise', 0) or 0))
@@ -71,34 +68,17 @@ class FactureSalesMixin:
             remise_globale = Decimal(0)
 
         if remise_globale > temp_sum:
-            return Response({'detail': f"La remise globale ({remise_globale} F) ne peut pas être supérieure au total des produits ({temp_sum} F)."}, status=status.HTTP_400_BAD_REQUEST)
+            return None, Response(
+                {'detail': f"La remise globale ({remise_globale} F) ne peut pas être supérieure au total des produits ({temp_sum} F)."},
+                status=status.HTTP_400_BAD_REQUEST
+            ), None
 
-        # Enforce Sudo for non-positive amounts
-        # Robust total TTC extraction
-        totals_obj = data.get('totals') if isinstance(data.get('totals'), dict) else {}
-        try:
-            total_ttc = Decimal(str(totals_obj.get('totalTtc', 0)))
-        except (ValueError, InvalidOperation):
-            total_ttc = Decimal(0)
+        return produits_data, temp_sum, remise_globale
 
-        # If total is 0 but we have products, use the quick sum already computed
-        if total_ttc <= 0 and produits_data:
-            total_ttc = temp_sum - remise_globale
-
-        validation_user = user
+    def _compute_required_permissions(self, data, produits_data, temp_sum, remise_globale, total_ttc, centralized, poste_vente_id):
+        """Détermine les permissions Sudo requises pour la vente."""
         is_avoir_client = data.get('is_avoir_client', False)
-        poste_vente_id = data.get('poste_vente_id')
 
-        # En mode caisse centrale, une caisse physique doit être ouverte avant toute vente
-        if centralized:
-            from ....models import PosteVente
-            if not PosteVente.objects.filter(est_actif=True, caisse__isnull=False).exists():
-                return Response(
-                    {'detail': "Aucun point de caisse n'est ouvert. Veuillez ouvrir un point de caisse avant de réaliser une vente."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-        # Every privileged override is authorized by the sudo validator's profile.
         product_prices = {
             product.id: product.selling_price
             for product in Produit.objects.filter(id__in=[p.get('produit') for p in produits_data])
@@ -119,6 +99,7 @@ class FactureSalesMixin:
             quantity > 0 and products.get(product_id) is not None and quantity > products[product_id].stock
             for product_id, quantity in requested_quantities.items()
         )
+
         required_permissions = []
         if centralized or poste_vente_id:
             required_permissions.append('can_cash_out')
@@ -129,6 +110,54 @@ class FactureSalesMixin:
         if requires_negative_stock_sale:
             required_permissions.append('can_sell_negative_stock')
 
+        return required_permissions
+
+    # ------------------------------------------------------------------
+    # Action principale : finaliser()
+    # ------------------------------------------------------------------
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    @idempotent_action
+    def finaliser(self, request):
+        """Action ATOMIQUE pour finaliser une vente complète via SalesService."""
+        data, image_file = self._parse_finaliser_data(request)
+
+        user = request.user
+        centralized = data.get('centralized_cash_register', True)
+        poste_vente_id = data.get('poste_vente_id')
+
+        # --- Validation des produits ---
+        produits_data, result_or_sum, remise_globale = self._validate_products(data)
+        if produits_data is None:
+            return result_or_sum  # error response
+        temp_sum = result_or_sum
+
+        # --- Extraction du total TTC ---
+        totals_obj = data.get('totals') if isinstance(data.get('totals'), dict) else {}
+        try:
+            total_ttc = Decimal(str(totals_obj.get('totalTtc', 0)))
+        except (ValueError, InvalidOperation):
+            total_ttc = Decimal(0)
+
+        if total_ttc <= 0 and produits_data:
+            total_ttc = temp_sum - remise_globale
+
+        # --- Vérification du point de caisse en mode centralisé ---
+        if centralized:
+            from ....models import PosteVente
+            if not PosteVente.objects.filter(est_actif=True, caisse__isnull=False).exists():
+                return Response(
+                    {'detail': "Aucun point de caisse n'est ouvert. Veuillez ouvrir un point de caisse avant de réaliser une vente."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # --- Détermination des permissions Sudo requises ---
+        required_permissions = self._compute_required_permissions(
+            data, produits_data, temp_sum, remise_globale, total_ttc, centralized, poste_vente_id
+        )
+
+        validation_user = user
         if required_permissions:
             try:
                 validation_user, error_res = validate_sudo_mode(
@@ -139,19 +168,17 @@ class FactureSalesMixin:
                 if error_res:
                     return error_res
             except (DatabaseError, InvalidOperation, TypeError, ValueError) as e:
-                # Si une erreur DB survient pendant la validation Sudo, on rollback et retourne une erreur propre
                 transaction.set_rollback(True)
                 logger.error(f"[VENTE] Erreur DB lors de la validation Sudo: {e!s}", exc_info=True)
                 return Response({'detail': "Erreur de base de données lors de la validation. Veuillez réessayer."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        # --- Finalisation via SalesService ---
         try:
-            # Transfer validation user to data for SalesService
             if validation_user and 'validation_user' not in data:
-                 data['validation_user'] = validation_user
+                data['validation_user'] = validation_user
 
             facture = SalesService.finalize_sale(user, data, centralized=centralized, image_file=image_file)
 
-            # Log d'audit - Safe formatting for Decimal
             total_display = float(facture.total_ttc)
             log_audit(
                 user=request.user,
@@ -170,7 +197,6 @@ class FactureSalesMixin:
             serializer = self.get_serializer(facture)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except DatabaseError as e:
-            # Gestion explicite des erreurs de base de données
             transaction.set_rollback(True)
             logger.error(f"[VENTE] Erreur DB lors de la finalisation: {e!s}", exc_info=True)
             return Response({'detail': "Erreur de base de données. La transaction a été annulée."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

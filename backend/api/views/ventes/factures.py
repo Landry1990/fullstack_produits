@@ -216,7 +216,7 @@ class FactureViewSet(
 
         try:
             # 1. Si la facture est VALIDEE ou PAYEE, INTERDICTION de suppression physique (Traçabilité comptable)
-            if status_initial in [Facture.Status.VALIDEE, Facture.Status.PAYEE, 'PAY', 'VAL']:
+            if status_initial in [Facture.Status.VALIDEE, Facture.Status.PAYEE]:
                  return Response({
                      'detail': 'Une facture validée ou payée ne peut pas être supprimée physiquement pour garantir la traçabilité comptable. Veuillez l\'annuler si nécessaire.'
                  }, status=status.HTTP_400_BAD_REQUEST)
@@ -239,7 +239,7 @@ class FactureViewSet(
                     'numero': numero,
                     'amount': float(montant),
                     'client': client_nom,
-                    'reintegrated_stock': status_initial in [Facture.Status.VALIDEE, Facture.Status.PAYEE, 'PAY', 'VAL', 'EN_COMPTE']
+                    'reintegrated_stock': status_initial in [Facture.Status.VALIDEE, Facture.Status.PAYEE, 'EN_COMPTE']
                 },
                 request=request
             )

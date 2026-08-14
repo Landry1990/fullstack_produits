@@ -1,19 +1,17 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
-import type { Facture, TicketCaisse, CouponMonnaie, PosteVente, PosteCaisse } from '../types'
+import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
 import PasswordConfirmModal from './PasswordConfirmModal'
-import { PaymentModal } from './caisse/PaymentModal'
 import { FacturesTable } from './caisse/FacturesTable'
 import { CouponPanel } from './caisse/CouponPanel'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { Keyboard } from 'lucide-react'
-import { OpenCashSessionModal } from './caisse/OpenCashSessionModal'
 import { cashSessionService } from '../services/cashSessionService'
 import { useCaisseKeyboard } from '../hooks/useCaisseKeyboard'
 import { useCaissePayment } from '../hooks/useCaissePayment'
@@ -21,16 +19,22 @@ import { useCaisseCoupons } from '../hooks/useCaisseCoupons'
 import { useCaisseStats } from '../hooks/useCaisseStats'
 import { useInvoiceModification } from '../hooks/useInvoiceModification'
 import { useSudo } from '../hooks/useSudo'
+import { useCaisseRealtime } from '../hooks/caisse/useCaisseRealtime'
+import { useCaisseSession } from '../hooks/caisse/useCaisseSession'
 import SudoValidationModal from './common/SudoValidationModal'
-import { CaisseTicketPreviewModal } from './caisse/CaisseTicketPreviewModal'
-import { CouponGenerateModal } from './caisse/CouponGenerateModal'
-import { CouponDetailsModal } from './caisse/CouponDetailsModal'
-import { ClosingReportModal } from './caisse/ClosingReportModal'
-import { BulkCancelModal } from './caisse/BulkCancelModal'
 import { CaisseHeader } from './caisse/CaisseHeader'
 import { CaisseStatsCards } from './caisse/CaisseStatsCards'
 import { SessionRecapBar } from './caisse/SessionRecapBar'
 import { logger } from '../utils/logger'
+
+// Lazy-load des modals lourds (rarement ouverts)
+const PaymentModal = lazy(() => import('./caisse/PaymentModal').then(m => ({ default: m.PaymentModal })))
+const CaisseTicketPreviewModal = lazy(() => import('./caisse/CaisseTicketPreviewModal').then(m => ({ default: m.CaisseTicketPreviewModal })))
+const CouponDetailsModal = lazy(() => import('./caisse/CouponDetailsModal').then(m => ({ default: m.CouponDetailsModal })))
+const OpenCashSessionModal = lazy(() => import('./caisse/OpenCashSessionModal').then(m => ({ default: m.OpenCashSessionModal })))
+const ClosingReportModal = lazy(() => import('./caisse/ClosingReportModal').then(m => ({ default: m.ClosingReportModal })))
+const BulkCancelModal = lazy(() => import('./caisse/BulkCancelModal').then(m => ({ default: m.BulkCancelModal })))
+const CouponGenerateModal = lazy(() => import('./caisse/CouponGenerateModal').then(m => ({ default: m.CouponGenerateModal })))
 
 export default function CaisseCentralisee() {
 const _queryClient = useQueryClient()
@@ -65,30 +69,29 @@ const _navigate = useNavigate()
   // État pour ouvrir le preview produits via raccourci clavier
   const [previewFactureId, setPreviewFactureId] = useState<number | null>(null)
   
-  // États pour le multi-caisse et sessions
-  const [postesCaisses, setPostesCaisses] = useState<PosteCaisse[]>([])
-  const [selectedPosteCaisseId, setSelectedPosteCaisseId] = useState<string>('all')
-  const [isMultiCaisse, setIsMultiCaisse] = useState(false)
-  const [myActivePoste, setMyActivePoste] = useState<PosteVente | null>(null)
+  // États pour le multi-caisse et sessions — gérés par useCaisseSession
+  const {
+    postesCaisses,
+    selectedPosteCaisseId,
+    setSelectedPosteCaisseId,
+    isMultiCaisse,
+    myActivePoste,
+    setMyActivePoste,
+    hideAmounts,
+    setHideAmounts,
+    sessionRecap,
+    setSessionRecap,
+    fetchSessionRecap,
+  } = useCaisseSession()
+
   const [showOpenSessionModal, setShowOpenSessionModal] = useState(false)
   const [closingReport, setClosingReport] = useState<unknown>(null)
   const [showClosingReport, setShowClosingReport] = useState(false)
-  const [hideAmounts, setHideAmounts] = useState(false) // Mode sécurité: masquer les montants aux caissiers
   const [selectedFactureIds, setSelectedFactureIds] = useState<Set<number>>(new Set())
   const [showBulkCancelModal, setShowBulkCancelModal] = useState(false)
   const [bulkCancelLoading, setBulkCancelLoading] = useState(false)
   const [bulkProgress, setBulkProgress] = useState<{ processed: number; total: number } | null>(null)
   const { sudoState, requireSudo, closeSudo } = useSudo()
-  const [sessionRecap, setSessionRecap] = useState<{
-    has_session: boolean
-    poste_nom?: string
-    date_ouverture?: string
-    fond_de_caisse?: number
-    total_encaisse?: number
-    total_avec_fond?: number
-    nb_transactions?: number
-    details_par_mode?: Record<string, number>
-  } | null>(null)
 
   // Fonction pour récupérer les factures en attente
   const fetchingRef = useRef(false)
@@ -158,140 +161,17 @@ const _navigate = useNavigate()
     handleRetirerCouponDeFacture(factureId, t)
   }, [handleRetirerCouponDeFacture, t])
 
-  const fetchSessionRecap = useCallback(async () => {
-    try {
-      const params: Record<string, string> = {}
-      if (selectedPosteCaisseId !== 'all') params.poste_caisse = selectedPosteCaisseId
-      const res = await api.get('postes-caisses/recap_session/', { params })
-      setSessionRecap(res.data)
-    } catch {
-      // silencieux si pas de session
-    }
-  }, [selectedPosteCaisseId])
-
-  // Rafraîchissement automatique
-  // 1. WebSocket pour notification temps réel (POS → caisse)
-  // 2. Polling de fallback toutes les 30s (si WebSocket déconnecté)
-  const fetchRef = useRef(fetchFacturesEnAttente)
-  fetchRef.current = fetchFacturesEnAttente
-
-  useEffect(() => {
-    fetchFacturesEnAttente()
-    fetchCoupons()
-
-    // ── WebSocket pour notifications temps réel ──
-    const wsBase = import.meta.env.VITE_WS_URL ?? `ws://${window.location.host}`
-    let ws: WebSocket | null = null
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
-    let pingTimer: ReturnType<typeof setInterval> | null = null
-
-    const connectWs = () => {
-      try {
-        ws = new WebSocket(`${wsBase}/ws/caisse_centralisee/`)
-
-        ws.onopen = () => {
-          logger.info('WebSocket caisse connecté')
-          // Ping toutes les 30s pour garder la connexion alive
-          pingTimer = setInterval(() => {
-            if (ws?.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'ping' }))
-            }
-          }, 30_000)
-        }
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data)
-            if (data.type === 'facture_update') {
-              // Ne rafraîchir que si la notification concerne notre caisse (ou mode "all")
-              const notifCaisseId = data.poste_caisse_id
-              if (selectedPosteCaisseId === 'all' || String(notifCaisseId) === selectedPosteCaisseId) {
-                logger.info('WebSocket: mise à jour facture reçue', data)
-                fetchRef.current()
-                fetchCoupons()
-              }
-            }
-          } catch {
-            // ignore malformed messages
-          }
-        }
-
-        ws.onclose = () => {
-          logger.info('WebSocket caisse déconnecté, reconnexion dans 3s')
-          if (pingTimer) { clearInterval(pingTimer); pingTimer = null }
-          reconnectTimer = setTimeout(connectWs, 3_000)
-        }
-
-        ws.onerror = () => {
-          ws?.close()
-        }
-      } catch (err) {
-        logger.error('Erreur WebSocket caisse:', err)
-      }
-    }
-
-    connectWs()
-
-    // ── Polling de fallback (30s au lieu de 5s) ──
-    const interval = setInterval(() => {
-      fetchFacturesEnAttente()
-      fetchCoupons()
-    }, 30_000)
-
-    return () => {
-      clearInterval(interval)
-      if (reconnectTimer) clearTimeout(reconnectTimer)
-      if (pingTimer) clearInterval(pingTimer)
-      if (ws) { ws.onclose = null; ws.close() }
-    }
-  }, [fetchFacturesEnAttente, fetchCoupons, selectedPosteCaisseId])
-
-  // Récap session : toutes les 10 secondes + immédiat sur changement de poste
-  useEffect(() => {
-    fetchSessionRecap()
-    const interval = setInterval(fetchSessionRecap, 10000)
-    return () => clearInterval(interval)
-  }, [fetchSessionRecap])
+  // Rafraîchissement automatique via WebSocket + polling de fallback
+  const { refresh: refreshFromRealtime } = useCaisseRealtime({
+    selectedPosteCaisseId,
+    fetchFacturesEnAttente,
+    fetchCoupons,
+  })
 
   // Wrapper pour la génération de coupon
   const handleGenererCouponWrapper = useCallback(async () => {
     await handleGenererCoupon(nouveauCouponMontant, nouveauCouponNotes, selectedFacture?.id || null, t)
   }, [handleGenererCoupon, nouveauCouponMontant, nouveauCouponNotes, selectedFacture, t])
-
-  // Charger les postes de caisse et réglages
-  useEffect(() => {
-    const initPage = async () => {
-      try {
-        const [settingsRes, postesRes, myActive, allActivePostes] = await Promise.all([
-          api.get('parametres/').catch(() => ({ data: {} })),
-          api.get('postes-caisses/').catch(() => ({ data: { results: [] } })),
-          cashSessionService.getMyActivePostesVente().catch(() => []),
-          cashSessionService.getActivePostesVente().catch(() => [])
-        ])
-        
-        // Charger le paramètre de sécurité caisse
-        const settings = settingsRes.data
-        if (settings.hide_cash_totals) {
-          setHideAmounts(true)
-        }
-        
-        const postesList = postesRes.data.results || postesRes.data || []
-        const activePoste = myActive.length > 0 ? myActive[0] : null
-        setPostesCaisses(postesList)
-        setMyActivePoste(activePoste)
-        if (activePoste) {
-          setSelectedPosteCaisseId(String(activePoste.caisse))
-        }
-
-        // Détecter si on est en mode multi-caisse (plusieurs caisses actives globalement)
-        const activeCaisseIds = new Set(allActivePostes.filter((p: PosteVente) => !!p.caisse).map((p: PosteVente) => p.caisse))
-        setIsMultiCaisse(activeCaisseIds.size > 1)
-      } catch (err) {
-        logger.error('Erreur initialisation page:', err)
-      }
-    }
-    initPage()
-  }, [])
 
   // Ouvrir le panneau pour sélectionner un coupon pour une facture
   const openCouponSelectionForFacture = (facture: Facture) => {
@@ -346,8 +226,7 @@ const _navigate = useNavigate()
       onOpenCouponPanel: openCouponSelectionForFacture,
       onViewProducts: (facture) => setPreviewFactureId(facture.id),
       onRefresh: () => {
-        fetchFacturesEnAttente()
-        fetchCoupons()
+        refreshFromRealtime()
         toast.success(t('messages.refreshed'))
       },
       onToggleCouponPanel: () => {
@@ -688,6 +567,7 @@ const _navigate = useNavigate()
 
       {/* Modal de paiement */}
       {isPaymentModalOpen && selectedFacture && (
+        <Suspense fallback={null}>
         <PaymentModal
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
@@ -696,28 +576,37 @@ const _navigate = useNavigate()
           onConfirm={enregistrerPaiement}
           loading={paymentLoading}
         />
+        </Suspense>
       )}
 
-      <CaisseTicketPreviewModal
-        isOpen={showTicketPreview}
-        onClose={() => setShowTicketPreview(false)}
-        ticket={ticketCaisse}
-        settings={pharmacySettings}
-        onSendWhatsApp={handleSendWhatsApp}
-        loading={loading}
-      />
+      {showTicketPreview && (
+        <Suspense fallback={null}>
+        <CaisseTicketPreviewModal
+          isOpen={showTicketPreview}
+          onClose={() => setShowTicketPreview(false)}
+          ticket={ticketCaisse}
+          settings={pharmacySettings}
+          onSendWhatsApp={handleSendWhatsApp}
+          loading={loading}
+        />
+        </Suspense>
+      )}
 
       {/* Modals pour les Coupons */}
-      <CouponGenerateModal
-        isOpen={isGenererCouponModalOpen}
-        onClose={() => setIsGenererCouponModalOpen(false)}
-        montant={nouveauCouponMontant}
-        onMontantChange={setNouveauCouponMontant}
-        notes={nouveauCouponNotes}
-        onNotesChange={setNouveauCouponNotes}
-        onSubmit={() => setIsSudoModalOpen(true)}
-        loading={loading}
-      />
+      {isGenererCouponModalOpen && (
+        <Suspense fallback={null}>
+        <CouponGenerateModal
+          isOpen={isGenererCouponModalOpen}
+          onClose={() => setIsGenererCouponModalOpen(false)}
+          montant={nouveauCouponMontant}
+          onMontantChange={setNouveauCouponMontant}
+          notes={nouveauCouponNotes}
+          onNotesChange={setNouveauCouponNotes}
+          onSubmit={() => setIsSudoModalOpen(true)}
+          loading={loading}
+        />
+        </Suspense>
+      )}
 
       {/* Modal Confirmation Sudo pour Coupon */}
       <PasswordConfirmModal
@@ -729,53 +618,69 @@ const _navigate = useNavigate()
       />
 
       {/* Modal Détails Coupon */}
-      <CouponDetailsModal
-        isOpen={isDetailsCouponModalOpen}
-        onClose={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}
-        coupon={couponTrouve}
-        factureForCoupon={factureForCoupon}
-        onAppliquer={handleAppliquerCouponAFacture}
-        settings={pharmacySettings}
-      />
+      {isDetailsCouponModalOpen && (
+        <Suspense fallback={null}>
+        <CouponDetailsModal
+          isOpen={isDetailsCouponModalOpen}
+          onClose={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}
+          coupon={couponTrouve}
+          factureForCoupon={factureForCoupon}
+          onAppliquer={handleAppliquerCouponAFacture}
+          settings={pharmacySettings}
+        />
+        </Suspense>
+      )}
 
       {/* Modal Ouvrir Caisse */}
-      <OpenCashSessionModal
-        isOpen={showOpenSessionModal}
-        onClose={() => setShowOpenSessionModal(false)}
-        onSessionOpened={async (poste) => {
-          if (poste) {
-            setMyActivePoste(poste)
-            if (poste.caisse) {
-              setSelectedPosteCaisseId(String(poste.caisse))
+      {showOpenSessionModal && (
+        <Suspense fallback={null}>
+        <OpenCashSessionModal
+          isOpen={showOpenSessionModal}
+          onClose={() => setShowOpenSessionModal(false)}
+          onSessionOpened={async (poste) => {
+            if (poste) {
+              setMyActivePoste(poste)
+              if (poste.caisse) {
+                setSelectedPosteCaisseId(String(poste.caisse))
+              }
+            } else {
+              const myActive = await cashSessionService.getMyActivePostesVente().catch(() => [])
+              const activePoste = myActive.length > 0 ? myActive[0] : null
+              setMyActivePoste(activePoste)
+              if (activePoste?.caisse) {
+                setSelectedPosteCaisseId(String(activePoste.caisse))
+              }
             }
-          } else {
-            const myActive = await cashSessionService.getMyActivePostesVente().catch(() => [])
-            const activePoste = myActive.length > 0 ? myActive[0] : null
-            setMyActivePoste(activePoste)
-            if (activePoste?.caisse) {
-              setSelectedPosteCaisseId(String(activePoste.caisse))
-            }
-          }
-        }}
-      />
+          }}
+        />
+        </Suspense>
+      )}
 
       {/* Modal Rapport de Clôture */}
-      <ClosingReportModal
-        isOpen={showClosingReport}
-        onClose={() => setShowClosingReport(false)}
-        report={closingReport}
-      />
+      {showClosingReport && (
+        <Suspense fallback={null}>
+        <ClosingReportModal
+          isOpen={showClosingReport}
+          onClose={() => setShowClosingReport(false)}
+          report={closingReport}
+        />
+        </Suspense>
+      )}
 
       {/* Modal de confirmation — Vidange caisse */}
-      <BulkCancelModal
-        isOpen={showBulkCancelModal}
-        onClose={() => setShowBulkCancelModal(false)}
-        onConfirm={handleConfirmBulkCancel}
-        facturesEnAttente={facturesEnAttente}
-        selectedFactureIds={selectedFactureIds}
-        loading={bulkCancelLoading}
-        progress={bulkProgress}
-      />
+      {showBulkCancelModal && (
+        <Suspense fallback={null}>
+        <BulkCancelModal
+          isOpen={showBulkCancelModal}
+          onClose={() => setShowBulkCancelModal(false)}
+          onConfirm={handleConfirmBulkCancel}
+          facturesEnAttente={facturesEnAttente}
+          selectedFactureIds={selectedFactureIds}
+          loading={bulkCancelLoading}
+          progress={bulkProgress}
+        />
+        </Suspense>
+      )}
 
       {/* Modal Sudo pour la vidange */}
       <SudoValidationModal

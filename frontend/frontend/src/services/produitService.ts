@@ -71,6 +71,18 @@ const produitService = {
         return response.data;
     },
 
+    getByIds: async (ids: number[]): Promise<ProduitModel[]> => {
+        if (ids.length === 0) return [];
+        const response = await api.post<ProduitModel[]>('produits/bulk-by-ids/', { ids });
+        return response.data;
+    },
+
+    getByCips: async (cips: string[]): Promise<ProduitModel[]> => {
+        if (cips.length === 0) return [];
+        const response = await api.post<ProduitModel[]>('produits/by-cips/', { cips });
+        return response.data;
+    },
+
     getRayons: async (): Promise<Rayon[]> => {
         const response = await api.get<Rayon[] | { results: Rayon[] }>('categories/', { params: { page_size: 1000 } });
         return Array.isArray(response.data) ? response.data : response.data.results;

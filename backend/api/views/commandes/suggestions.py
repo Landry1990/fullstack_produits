@@ -668,7 +668,7 @@ def calculer_reapprovisionnement_cumulatif(fournisseur_id, periode_fallback=30, 
     
     produits = Produit.objects.filter(
         Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
-    )
+    ).select_related('fournisseur')
     
     # Annoter avec les ventes depuis la date de début
     produits = produits.annotate(

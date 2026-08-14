@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from ...audit_helpers import log_audit
 from ...cache_utils import SearchCache
 from ...models import AuditLog, Produit
+from ...serializers_optimized import ProduitListSerializer
+from django.db.models import Q
 
 
 class ProduitBulkMixin:
@@ -33,6 +35,48 @@ class ProduitBulkMixin:
             })
             
         return Response(data)
+
+    @action(detail=False, methods=['post'], url_path='bulk-by-ids')
+    def bulk_by_ids(self, request):
+        product_ids = request.data.get('ids', [])
+        if not product_ids:
+            return Response({'detail': 'Liste d\'IDs requise'}, status=status.HTTP_400_BAD_REQUEST)
+
+        produits = self.get_queryset().filter(id__in=product_ids)
+        serializer = ProduitListSerializer(produits, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'], url_path='by-cips')
+    def by_cips(self, request):
+        cips = request.data.get('cips', [])
+        if not cips or not isinstance(cips, list):
+            return Response({'detail': 'Liste de CIPs requise'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Normaliser les CIPs reçus
+        normalized_cips = []
+        numeric_cips = []
+        for cip in cips:
+            if not cip:
+                continue
+            norm = str(cip).strip().upper().replace(' ', '').replace('-', '').replace('.', '')
+            if norm:
+                normalized_cips.append(norm)
+                numeric = norm.lstrip('0')
+                if numeric:
+                    numeric_cips.append(numeric)
+
+        if not normalized_cips:
+            return Response([])
+
+        q = Q()
+        for cip in normalized_cips:
+            q |= Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip)
+        for cip in numeric_cips:
+            q |= Q(cip1=cip) | Q(cip2=cip) | Q(cip3=cip)
+
+        produits = self.get_queryset().filter(q)
+        serializer = ProduitListSerializer(produits, many=True, context={'request': request})
+        return Response(serializer.data)
 
     @action(detail=False, methods=['post'])
     def bulk_toggle_public(self, request):

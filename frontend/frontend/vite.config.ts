@@ -86,6 +86,12 @@ export default defineConfig({
           'feature-reports': ['./src/components/RapportMensuel', './src/components/CentreRapports', './src/components/AnalyseABC'],
           // History
           'feature-history': ['./src/components/HistoriqueVentes', './src/components/HistoriqueAchats', './src/components/HistoriqueClotures'],
+          // Caisse & cash register
+          'feature-caisse': ['./src/components/CaisseCentralisee', './src/components/JournalCaisse'],
+          // Settings & admin
+          'feature-settings': ['./src/components/settings/PharmacySettingsForm', './src/components/GestionUtilisateurs', './src/components/SystemAdmin'],
+          // Dashboard
+          'feature-dashboard': ['./src/components/DashboardManagerShadcn', './src/components/DashboardShadcn'],
           // Heavy libs - isolated so they don't bloat the main chunk
           'vendor-pdf': ['jspdf', 'jspdf-autotable'],
           'vendor-xlsx': ['xlsx'],

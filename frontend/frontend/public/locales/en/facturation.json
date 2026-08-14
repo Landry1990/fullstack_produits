@@ -204,6 +204,10 @@
         "select_client": "Please select a client",
         "add_product": "Please add at least one product"
     },
+    "pending": {
+        "replace_title": "Replace cart?",
+        "replace_message": "The current cart is not empty. Do you want to replace it with the pending sale?"
+    },
     "modification_mode": {
         "title": "Invoice Modification Mode",
         "original_total": "Initial Total",

@@ -41,7 +41,7 @@ export default function ProduitFormModal({
   initialData,
   title,
   rayons = EMPTY_ARRAY,
-  fournisseurs = EMPTY_ARRAY,
+  _fournisseurs = EMPTY_ARRAY,
   formes = EMPTY_ARRAY,
   groupes = EMPTY_ARRAY,
 }: ProduitFormModalProps) {

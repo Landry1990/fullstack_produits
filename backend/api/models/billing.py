@@ -120,7 +120,7 @@ class Facture(models.Model):
         ANNULEE = 'ANN', 'Annulée'
 
     id = models.AutoField(primary_key=True)
-    client = models.ForeignKey('Client', on_delete=models.PROTECT, null=True, blank=True)
+    client = models.ForeignKey('Client', on_delete=models.PROTECT, null=True, blank=True, db_index=True)
     client_name_override = models.CharField(max_length=100, blank=True, null=True)
     ayant_droit = models.ForeignKey(
         'AyantDroit', on_delete=models.SET_NULL, null=True, blank=True, 
@@ -130,12 +130,12 @@ class Facture(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     poste_caisse = models.ForeignKey(
         'PosteCaisse', on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='factures_assignees',
+        related_name='factures_assignees', db_index=True,
         help_text="Caisse physique auquel cette facture est assignée"
     )
     poste_vente = models.ForeignKey(
         'PosteVente', on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='factures',
+        related_name='factures', db_index=True,
         help_text="Poste de vente (session) ayant généré cette facture"
     )
     status = models.CharField(
@@ -165,8 +165,8 @@ class Facture(models.Model):
     )
     
     created_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True, 
-        related_name='factures_created', 
+        User, on_delete=models.SET_NULL, null=True, blank=True, db_index=True,
+        related_name='factures_created',
         help_text="Utilisateur qui a créé la facture"
     )
     
@@ -232,19 +232,14 @@ class Facture(models.Model):
         # Calcul de la répartition TVA (on garde la boucle ici mais optimisée avec values() pour éviter de charger les objets)
         total_ht = Decimal('0.00')
         total_tva = Decimal('0.00')
-        
+
         lignes_data = self.produits.values('quantity', 'selling_price', 'discount', 'tva')
         for ligne in lignes_data:
-            ttc_ligne = Decimal(str(ligne['quantity'])) * (ligne['selling_price'] - ligne['discount'])
-            if ttc_ligne > 0:
-                tva_taux = ligne['tva']
-                if tva_taux > 0:
-                    # Utilisation de l'arrondi à l'entier pour le HT en FCFA
-                    ht = (ttc_ligne / (1 + tva_taux / 100)).quantize(Decimal(1), rounding=ROUND_HALF_UP)
-                    total_ht += ht
-                    total_tva += (ttc_ligne - ht)
-                else:
-                    total_ht += ttc_ligne
+            ht, tva = self._compute_line_tva(
+                ligne['quantity'], ligne['selling_price'], ligne['discount'], ligne['tva']
+            )
+            total_ht += ht
+            total_tva += tva
 
         # Application de la remise globale au prorata
         remise_globale = Decimal(str(self.remise))
@@ -274,35 +269,38 @@ class Facture(models.Model):
             # Crucial: update_fields évite de déclencher post_save inutilement sur d'autres colonnes
             self.save(update_fields=['total_ht', 'total_tva', 'total_ttc', 'part_client'])
 
+    def _compute_line_tva(self, quantity, selling_price, discount, tva_taux):
+        """Calcule le HT et TVA d'une ligne (méthode partagée entre calculate_totals et get_tva_analysis)."""
+        ttc_ligne = Decimal(str(quantity)) * (selling_price - discount)
+        if ttc_ligne > 0 and tva_taux > 0:
+            ht = (ttc_ligne / (1 + tva_taux / Decimal('100.00'))).quantize(Decimal(1), rounding=ROUND_HALF_UP)
+            tva = ttc_ligne - ht
+        else:
+            ht = ttc_ligne if ttc_ligne > 0 else Decimal('0.00')
+            tva = Decimal('0.00')
+        return ht, tva
+
     def get_tva_analysis(self):
-        """Calcule la répartition par taux de TVA."""
+        """Calcule la répartition par taux de TVA (optimisé avec values())."""
         analysis = {}
-        
-        for ligne in self.produits.all():
-            taux = ligne.tva
+
+        for ligne in self.produits.values('quantity', 'selling_price', 'discount', 'tva'):
+            taux = ligne['tva']
             if taux not in analysis:
                 analysis[taux] = {'base_ht': Decimal('0.00'), 'montant_tva': Decimal('0.00')}
-            
-            pu_ttc_net = ligne.selling_price - ligne.discount
-            total_ttc_ligne = pu_ttc_net * ligne.quantity
-            
-            if taux > 0:
-                # Arrondi à l'entier pour le FCFA
-                ht_ligne = (total_ttc_ligne / (1 + taux / Decimal('100.00'))).quantize(Decimal(1), rounding=ROUND_HALF_UP)
-                tva_ligne = total_ttc_ligne - ht_ligne
-            else:
-                ht_ligne = total_ttc_ligne
-                tva_ligne = Decimal('0.00')
-                
+
+            ht_ligne, tva_ligne = self._compute_line_tva(
+                ligne['quantity'], ligne['selling_price'], ligne['discount'], taux
+            )
             analysis[taux]['base_ht'] += ht_ligne
             analysis[taux]['montant_tva'] += tva_ligne
 
         total_ttc_brut = sum(data['base_ht'] + data['montant_tva'] for data in analysis.values())
-        
+
         if total_ttc_brut > 0 and self.remise > 0:
             total_ttc_net = total_ttc_brut - self.remise
             ratio = total_ttc_net / total_ttc_brut
-            
+
             for taux, data in analysis.items():
                 data['montant_tva'] = (data['montant_tva'] * ratio).quantize(Decimal(1), rounding=ROUND_HALF_UP)
                 data['base_ht'] = (data['base_ht'] * ratio).quantize(Decimal(1), rounding=ROUND_HALF_UP)
@@ -365,6 +363,9 @@ class Facture(models.Model):
             models.Index(fields=['-date']),
             models.Index(fields=['is_active', 'status', '-date']),
             GinIndex(fields=['numero_facture'], name='facture_num_trgm_idx', opclasses=['gin_trgm_ops']),
+            # P2: index composites pour les requêtes fréquentes
+            models.Index(fields=['poste_caisse', 'status', '-date'], name='facture_poste_status_idx'),
+            models.Index(fields=['created_by', '-date'], name='facture_creator_date_idx'),
         ]
 
 
@@ -393,7 +394,7 @@ class FactureProduit(models.Model):
     )
     lot = models.CharField(max_length=20, blank=True, null=True)
     stock_lot = models.ForeignKey(
-        'StockLot', on_delete=models.SET_NULL, null=True, blank=True,
+        'StockLot', on_delete=models.SET_NULL, null=True, blank=True, db_index=True,
         help_text="Lot spécifique choisi manuellement"
     )
     stock_lot_id: int | None
@@ -489,18 +490,18 @@ class Caisse(models.Model):
         ('annulee', 'Annulée'),
     ]
     
-    facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='paiements')
+    facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='paiements', db_index=True)
     mode_paiement = models.CharField(max_length=50)
     montant = models.DecimalField(max_digits=10, decimal_places=2)
     reference = models.CharField(max_length=100, blank=True, null=True)
     statut = models.CharField(max_length=20, choices=STATUTS, default='en_attente')
     date_paiement = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
-        User, on_delete=models.PROTECT, null=True, blank=True, 
+        User, on_delete=models.PROTECT, null=True, blank=True, db_index=True,
         related_name='transactions_caisse'
     )
     releve = models.ForeignKey(
-        RelevePaiement, on_delete=models.SET_NULL, null=True, blank=True, 
+        RelevePaiement, on_delete=models.SET_NULL, null=True, blank=True, db_index=True,
         related_name='paiements_caisse'
     )
     part_patient = models.DecimalField(

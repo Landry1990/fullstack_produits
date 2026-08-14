@@ -25,7 +25,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 
 
-interface CommandeDetailsProps {
+export interface CommandeDetailsProps {
 
   commande: Commande;
 
