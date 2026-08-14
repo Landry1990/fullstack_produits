@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.urls import include, path
+from django.views.decorators.cache import cache_page
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.routers import DefaultRouter
@@ -130,7 +131,7 @@ from .views import (
     WhatsAppTestView,
     generer_suggestions_commande,
 )
-from .views.auth import verify_password
+from .views.auth import verify_password, menu_hierarchy
 from .views.backup_views import (
     BackupListView,
     CreateBackupView,
@@ -273,13 +274,15 @@ urlpatterns = [
     path('auth/token/', CustomAuthToken.as_view(), name='token-auth'),
     path('auth/logout/', UserViewSet.as_view({'post': 'logout'}), name='auth-logout'),
     path('verify-password/', verify_password, name='verify-password'),
-    path('categories/', CategoriesListView.as_view(), name='categories-list'),
+    # Endpoints stables cachés (TTL 5 min) — pas de cache sur stock/produits
+    path('menu-hierarchy/', cache_page(300)(menu_hierarchy), name='menu-hierarchy'),
+    path('categories/', cache_page(300)(CategoriesListView.as_view()), name='categories-list'),
     path('categories/<int:pk>/', CategoriesDetailView.as_view(), name='categories-detail'),
     path('stock-analysis/unsold/', StockAnalysisUnsoldView.as_view(), name='stock-analysis-unsold'),
     path('stock-analysis/overstock/', StockAnalysisOverstockView.as_view(), name='stock-analysis-overstock'),
     path('stock-analysis/shortage/', StockAnalysisShortageView.as_view(), name='stock-analysis-shortage'),
-    path('invoice-settings/', InvoiceConfigurationView.as_view(), name='invoice-settings'),
-    path('pharmacy-settings/', PharmacySettingsView.as_view(), name='pharmacy-settings'),
+    path('invoice-settings/', cache_page(300)(InvoiceConfigurationView.as_view()), name='invoice-settings'),
+    path('pharmacy-settings/', cache_page(300)(PharmacySettingsView.as_view()), name='pharmacy-settings'),
     path('products/import/', ProductImportView.as_view(), name='product-import'),
     path('generer-suggestions/', generer_suggestions_commande, name='generer-suggestions'),
     path('produits/etat-inventaire/pdf/', EtatInventairePDFView.as_view(), name='etat-inventaire-pdf'),

@@ -35,9 +35,9 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['is_superuser']
 
     def validate_password(self, value):
-        """Valide le mot de passe lors de is_valid() — longueur et unicité."""
+        """Valide le mot de passe lors de is_valid() — longueur mini et unicité."""
         if value:
-            # 1. Applique les AUTH_PASSWORD_VALIDATORS (longueur mini, etc.)
+            # 1. Applique les AUTH_PASSWORD_VALIDATORS (longueur mini uniquement)
             user = self.instance or User()
             try:
                 password_validation.validate_password(value, user=user)
@@ -46,11 +46,7 @@ class UserSerializer(serializers.ModelSerializer):
                 fr_messages = []
                 for msg in exc.messages:
                     if 'at least' in msg and 'characters' in msg:
-                        fr_messages.append(f"Le mot de passe doit contenir au moins 4 caractères.")
-                    elif 'too common' in msg.lower() or 'common password' in msg.lower():
-                        fr_messages.append("Ce mot de passe est trop courant (ex: 1234, 0000). Choisissez-en un plus original.")
-                    elif 'too similar' in msg.lower():
-                        fr_messages.append("Le mot de passe est trop similaire au nom d'utilisateur ou au prénom/nom.")
+                        fr_messages.append("Le mot de passe doit contenir au moins 4 caractères.")
                     else:
                         fr_messages.append(str(msg))
                 raise serializers.ValidationError(fr_messages)

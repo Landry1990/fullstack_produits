@@ -108,6 +108,7 @@ export default function SudoValidationModal({
                         {t('common:sudo.validate_password')}
                         <span className="text-error ml-2 normal-case">{t('common:sudo.validate_required')}</span>
                     </label>
+                    <p className="text-[11px] text-base-content/40 mb-2">{t('common:sudo.validate_hint', { defaultValue: 'Saisissez le mot de passe du titulaire/pharmacien' })}</p>
                     <input
                         ref={passwordInputRef}
                         type="password"

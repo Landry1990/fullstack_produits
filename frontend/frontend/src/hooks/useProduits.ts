@@ -13,6 +13,8 @@ export const useProduits = (filters: ProduitFilters) => {
         queryKey: ['produits', filters],
         queryFn: () => produitService.getAll(filters),
         placeholderData: (previousData: ProduitsResponse | undefined) => previousData,
+        staleTime: 0, // Stock temps réel — toujours refetch
+        refetchOnWindowFocus: true, // Refetch au retour sur l'onglet (stock critique)
     });
 };
 

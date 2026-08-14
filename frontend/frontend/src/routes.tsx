@@ -43,17 +43,17 @@ function lazyWithRetry<T extends ComponentType>(
 // ── Eager-loaded (critical path - toujours chargees) ──
 import Login from './components/LoginShadcn';
 import Layout from './components/Layout';
-import PrintPage from './components/printing/PrintPage';
 import LicenceScreen from './components/LicenceScreen';
 
-// Routes principales - eager loaded pour performance (premier écran)
+// Dashboard eager pour premier écran rapide
 import Dashboard from './components/DashboardShadcn';
-import DashboardManager from './components/DashboardManagerShadcn';
-import Produit from './components/ProduitShadcn';
-import Ventes from './components/Ventes';
-import Facturation from './components/Facturation';
 
 // ── Lazy-loaded pages (routes secondaires) ──
+const PrintPage = lazyWithRetry(() => import('./components/printing/PrintPage'));
+const DashboardManager = lazyWithRetry(() => import('./components/DashboardManagerShadcn'));
+const Produit = lazyWithRetry(() => import('./components/ProduitShadcn'));
+const Ventes = lazyWithRetry(() => import('./components/Ventes'));
+const Facturation = lazyWithRetry(() => import('./components/Facturation'));
 const Commandes = lazyWithRetry(() => import('./components/Commandes'));
 const CatalogDCI = lazyWithRetry(() => import('./components/CatalogDCI'));
 const Fournisseurs = lazyWithRetry(() => import('./components/Fournisseurs'));

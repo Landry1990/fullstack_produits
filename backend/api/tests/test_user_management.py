@@ -53,17 +53,6 @@ class UserManagementTest(TestCase):
         self.assertIn('password', response.data)
         self.assertFalse(User.objects.filter(username='shortpw').exists())
 
-    def test_create_user_common_password_rejected(self):
-        """Un mot de passe trop courant (ex: 1234) doit être rejeté."""
-        url = reverse('user-list')
-        data = {
-            'username': 'commonpw',
-            'password': '1234',
-        }
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
-
     def test_create_user_without_password_rejected(self):
         """La création sans mot de passe doit échouer."""
         url = reverse('user-list')

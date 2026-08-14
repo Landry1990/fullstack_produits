@@ -26,10 +26,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: true, // Rafraîchit quand l'utilisateur revient sur la fenêtre
+      // Désactivé par défaut : évite de refetch TOUTES les queries au switch d'onglet.
+      // Les hooks critiques (stock, caisse) activent refetchOnWindowFocus: true localement.
+      refetchOnWindowFocus: false,
       refetchOnMount: true,       // S'assure que les données sont fraîches au montage
       refetchOnReconnect: true,   // Rafraîchit si la connexion réseau coupe puis revient
-      staleTime: 1000 * 30,       // 30 secondes de cache avant de considérer les données comme périmées
+      staleTime: 1000 * 60,       // 60 secondes de cache avant de considérer les données comme périmées
       refetchInterval: false,     // Pas de polling global — les hooks spécifiques peuvent l'activer
     },
   },
