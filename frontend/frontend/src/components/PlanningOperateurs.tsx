@@ -378,7 +378,7 @@ function TeamsTab() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={showForm} onOpenChange={(open) => !open && resetForm()}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingTeam ? t('teams.edit') : t('teams.add')}</DialogTitle>
             <DialogDescription>{t('teams.form_desc')}</DialogDescription>
@@ -806,7 +806,7 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Edit Assignment Dialog */}
       <Dialog open={!!editingCell} onOpenChange={(open) => !open && setEditingCell(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-full sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{t('planning.edit_assignment')}</DialogTitle>
             <DialogDescription>
@@ -925,7 +925,7 @@ function LeavesTab({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Leave form dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('leaves.new_request_title')}</DialogTitle>
             <DialogDescription>{t('leaves.new_request_desc')}</DialogDescription>

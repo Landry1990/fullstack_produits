@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
-import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
+import type { Facture, TicketCaisse, CouponMonnaie, PaymentDetails } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { logger } from '../utils/logger'
 
@@ -92,7 +92,13 @@ const createTicketData = (
     statut: 'completee',
     date_paiement: new Date().toISOString(),
     client_name: clientName,
-    paiements_details: (facture as unknown).paiements || [],
+    paiements_details: ((facture as unknown as { paiements?: Array<{ mode_paiement?: string; montant: string | number; part_patient?: string | number | null; part_assurance?: string | number | null }> }).paiements || [])
+      .map((p): PaymentDetails => ({
+        mode: p.mode_paiement ?? '',
+        montant: Number(p.montant),
+        part_patient: p.part_patient != null ? Number(p.part_patient) : null,
+        part_assurance: p.part_assurance != null ? Number(p.part_assurance) : null,
+      })),
     user_details: user,
     reference: null
   } as TicketCaisse

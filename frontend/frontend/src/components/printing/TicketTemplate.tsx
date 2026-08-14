@@ -37,20 +37,22 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
       return t(`ticket.payment_modes.${mode}`, { defaultValue: mode?.toUpperCase() || 'N/A' });
   };
 
-  // Pour les ventes en tiers payant, on distingue explicitement ce que le client règle
-  // (part patient) de ce qui reste à la charge de l'assurance (part assurance, en compte),
-  // plutôt que d'afficher uniquement le mode de paiement brut.
+  const facture = typeof ticket.facture === 'object' ? ticket.facture : null;
+
+  // Pour les ventes en tiers payant (client professionnel), on distingue explicitement
+  // ce que le client règle (part patient) de ce qui reste à la charge de l'assurance
+  // (part assurance, en compte), plutôt que d'afficher uniquement le mode de paiement brut.
+  const isTiersPayant = facture?.client_type === 'PROFESSIONNEL';
+
   const getPaymentRowLabel = (paiement: PaymentDetails) => {
-      if (paiement.part_assurance != null && Number(paiement.part_assurance) > 0) {
+      if (isTiersPayant && paiement.part_assurance != null && Number(paiement.part_assurance) > 0) {
           return t('ticket.part_assurance_row', { mode: getModeLabel(paiement.mode) });
       }
-      if (paiement.part_patient != null && Number(paiement.part_patient) > 0) {
+      if (isTiersPayant && paiement.part_patient != null && Number(paiement.part_patient) > 0) {
           return t('ticket.part_patient_row', { mode: getModeLabel(paiement.mode) });
       }
       return getModeLabel(paiement.mode);
   };
-
-  const facture = typeof ticket.facture === 'object' ? ticket.facture : null;
   const produits = facture?.produits || [];
   const totalTTC = Math.round(Number(ticket.montant || facture?.total_ttc || 0));
   const totalTVA = facture ? Math.round(Number(facture.total_tva || 0)) : 0;

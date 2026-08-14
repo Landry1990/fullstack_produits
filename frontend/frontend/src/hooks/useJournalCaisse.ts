@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
 import type { CaisseTransaction, MouvementCaisse } from '../types';
 import { usePharmacySettings } from './usePharmacySettings';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { normalizeNumberInput } from '../utils/formatters';
 import { toApiDateTime, toApiDateEnd } from '../utils/dateUtils';
 import { logger } from '../utils/logger';
-import { useJournalCaissePrinting } from './caisse/useJournalCaissePrinting';
+import { useJournalCaissePrinting, type ClosingPrintData } from './caisse/useJournalCaissePrinting';
 import { useJournalCaisseClosing } from './caisse/useJournalCaisseClosing';
 import { useJournalCaisseShift } from './caisse/useJournalCaisseShift';
 
@@ -154,6 +153,24 @@ export function useJournalCaisse() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  // ── Shift detection hook ──
+  const {
+    detectedShift,
+    isDetectingShift,
+    handleUserShiftDetection,
+    resetShift,
+  } = useJournalCaisseShift({
+    getServerDate,
+    onShiftDetected: (start, end) => {
+      setDateDebut(start);
+      setDateFin(end);
+    },
+    onNoShift: (todayStart, todayEnd) => {
+      setDateDebut(todayStart);
+      setDateFin(todayEnd);
+    },
+  });
+
   // Fetch quand les dates changent (sélection manuelle ou détection shift terminée)
   useEffect(() => {
     if (isInitialMount.current) {
@@ -169,26 +186,6 @@ export function useJournalCaisse() {
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateDebut, dateFin, isDetectingShift, selectedUser]);
-
-  // ── Shift detection hook ──
-  const {
-    detectedShift,
-    setDetectedShift,
-    isDetectingShift,
-    setIsDetectingShift,
-    handleUserShiftDetection,
-    resetShift,
-  } = useJournalCaisseShift({
-    getServerDate,
-    onShiftDetected: (start, end) => {
-      setDateDebut(start);
-      setDateFin(end);
-    },
-    onNoShift: (todayStart, todayEnd) => {
-      setDateDebut(todayStart);
-      setDateFin(todayEnd);
-    },
-  });
 
   useEffect(() => {
     if (selectedUser) {
@@ -343,10 +340,15 @@ export function useJournalCaisse() {
   }, [serverTotals]);
 
   // ── Printing hook ──
+  // Utilise des refs pour actualAmount et closingTotals afin d'éviter
+  // les dépendances circulaires avec le closing hook.
+  const actualAmountRef = useRef('');
+  const closingTotalsRef = useRef<ClosingPrintData | null>(null);
+
   const { handleImprimerCloture, formatCurrencyLocal, currentLocale } = useJournalCaissePrinting({
     pharmacySettings,
-    actualAmount: '', // Sera mis à jour par le closing hook ci-dessous
-    closingTotals: null,
+    actualAmountRef,
+    closingTotalsRef,
   });
 
   // ── Closing hook ──
@@ -354,7 +356,6 @@ export function useJournalCaisse() {
     isClosingModalOpen,
     setIsClosingModalOpen,
     closingTotals,
-    setClosingTotals,
     actualAmount,
     setActualAmount,
     manualMovements,
@@ -374,6 +375,10 @@ export function useJournalCaisse() {
     fetchData,
     onPrint: handleImprimerCloture,
   });
+
+  // Synchroniser les refs pour le printing hook
+  actualAmountRef.current = actualAmount;
+  closingTotalsRef.current = closingTotals;
 
   const setTodayDateRange = () => {
     const today = getServerDate();
