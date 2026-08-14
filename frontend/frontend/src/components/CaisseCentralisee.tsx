@@ -472,6 +472,7 @@ const _navigate = useNavigate()
         myActivePoste={myActivePoste}
         hideAmounts={hideAmounts}
         onHideAmountsChange={setHideAmounts}
+        canManageSecurity={!!user?.is_superuser}
         onCloseSession={handleCloseSession}
         onOpenSession={() => setShowOpenSessionModal(true)}
         isCouponPanelOpen={isCouponPanelOpen}
@@ -558,7 +559,7 @@ const _navigate = useNavigate()
         </div>
       </div>
 
-      {/* Récap Session Live — visible selon paramètre hide_cash_totals */}
+      {/* Récap Session Live — visible selon le paramètre global hide_cash_totals (titulaire), sauf superuser */}
       {sessionRecap?.has_session && (user?.is_superuser || !pharmacySettings?.hide_cash_totals) && (
         <SessionRecapBar sessionRecap={sessionRecap} />
       )}
