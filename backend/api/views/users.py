@@ -12,6 +12,18 @@ class LoginRateThrottle(AnonRateThrottle):
     scope = 'login'
     THROTTLE_RATES = {'login': '10/min'}
 
+
+class SudoRateThrottle(AnonRateThrottle):
+    """Throttle renforcé pour le mode sudo (verify_password)."""
+    scope = 'sudo'
+    THROTTLE_RATES = {'sudo': '5/min'}
+
+
+class LoginOptionsRateThrottle(AnonRateThrottle):
+    """Throttle pour login_options : limite l'énumération de usernames."""
+    scope = 'login_options'
+    THROTTLE_RATES = {'login_options': '10/min'}
+
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -170,12 +182,22 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def get_throttles(self):
-        # login_options est exempté du throttling (page de connexion)
+        # Throttle renforcé pour verify_password (mode sudo)
+        if self.action == 'verify_password':
+            return [SudoRateThrottle()]
+        # Throttle pour login_options : limite l'énumération de usernames
         if self.action == 'login_options':
-            return []
+            return [LoginOptionsRateThrottle()]
         return super().get_throttles()
 
     def partial_update(self, request, *args, **kwargs):
+        # Sécurité : seul un superuser peut modifier le flag is_superuser
+        if 'is_superuser' in request.data:
+            if not getattr(request.user, 'is_superuser', False):
+                return Response(
+                    {'detail': 'Seul un superuser peut modifier le flag is_superuser.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
         response = super().partial_update(request, *args, **kwargs)
         return response
     
@@ -257,13 +279,18 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
         Vérifie le mot de passe (mode sudo) et identifie automatiquement l'utilisateur.
         POST { "password": "xxx" }
         Retourne l'utilisateur correspondant si le mot de passe est valide.
+
+        Sécurité :
+        - Seuls les superusers (titulaires/admins) sont éligibles au mode sudo.
+        - Throttle renforcé pour limiter les attaques par force brute.
         """
         password = request.data.get('password')
-        
+
         if not password:
             return Response({'valid': False, 'detail': 'password requis.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        for target_user in User.objects.filter(is_active=True):
+
+        # Sécurité : ne vérifier que les superusers actifs (pas tous les users)
+        for target_user in User.objects.filter(is_active=True, is_superuser=True):
             if target_user.check_password(password):
                 return Response({
                     'valid': True,
@@ -274,7 +301,7 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                         'last_name': target_user.last_name,
                     }
                 })
-        
+
         return Response({'valid': False, 'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
 
     @action(detail=False, methods=['get'])

@@ -85,11 +85,13 @@ MIDDLEWARE += [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.middleware.http.ConditionalGetMiddleware',  # ETag/304 Not Modified
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'api.middleware_licence.LicenceMiddleware',   # Vigile de la Licence système
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'api.middleware_cache.CacheControlMiddleware',  # Headers Cache-Control sur API
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -131,6 +133,8 @@ REST_FRAMEWORK = {
         'anon': os.getenv('DJANGO_THROTTLE_ANON', '10000/day'),
         'user': os.getenv('DJANGO_THROTTLE_USER', '5000/hour'),
         'login': os.getenv('DJANGO_THROTTLE_LOGIN', '30/min'),
+        'sudo': os.getenv('DJANGO_THROTTLE_SUDO', '5/min'),
+        'login_options': os.getenv('DJANGO_THROTTLE_LOGIN_OPTIONS', '10/min'),
     },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
@@ -196,14 +200,8 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {'min_length': 4},
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
 ]
 
@@ -313,6 +311,8 @@ if REDIS_URL:
                 'SOCKET_CONNECT_TIMEOUT': 5,
                 'SOCKET_TIMEOUT': 5,
                 'RETRY_ON_TIMEOUT': True,
+                # Compression zlib : réduit la taille des valeurs cachées de 50-70%
+                'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
             }
         }
     }

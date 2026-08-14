@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { getApiErrorDetail, extractErrorMessage } from '../utils/errorHandling';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
+import { useMenuHierarchy, getAllMenuKeysFromHierarchy, getMenuLabel as getMenuLabelFromHierarchy, type MenuItem } from '../hooks/useMenuHierarchy';
 import PasswordConfirmModal from './PasswordConfirmModal';
 import { Checkbox } from './ui/Checkbox';
 import { Input } from './ui/Input';
@@ -44,11 +45,11 @@ interface User {
   };
 }
 
-const MENU_HIERARCHY = [
+const MENU_HIERARCHY_FALLBACK: MenuItem[] = [
   { key: 'dashboard', labelKey: 'sidebar:dashboard' },
   { key: 'manager_sidebar', labelKey: 'sidebar:manager_sidebar' },
-  { 
-    key: 'ventes', 
+  {
+    key: 'ventes',
     labelKey: 'sidebar:ventes.title',
     submenus: [
       { key: 'ventes_consultation', labelKey: 'sidebar:ventes.consultation' },
@@ -63,16 +64,16 @@ const MENU_HIERARCHY = [
   { key: 'facturation', labelKey: 'sidebar:facturation' },
   { key: 'produits', labelKey: 'sidebar:produits' },
   { key: 'vitrine', labelKey: 'sidebar:vitrine' },
-  { 
-    key: 'commandes_loc', 
+  {
+    key: 'commandes_loc',
     labelKey: 'sidebar:commandes.local_title',
     submenus: [
       { key: 'commandes_loc_current', labelKey: 'sidebar:commandes.new_current' },
       { key: 'commandes_loc_history', labelKey: 'sidebar:commandes.history' }
     ]
   },
-  { 
-    key: 'commandes_dir', 
+  {
+    key: 'commandes_dir',
     labelKey: 'sidebar:commandes.direct_title',
     submenus: [
       { key: 'commandes_dir_current', labelKey: 'sidebar:commandes.new_current' },
@@ -82,8 +83,8 @@ const MENU_HIERARCHY = [
   { key: 'fournisseurs', labelKey: 'sidebar:fournisseurs.title' },
   { key: 'clients', labelKey: 'sidebar:clients' },
   { key: 'creances', labelKey: 'sidebar:creances' },
-  { 
-    key: 'inventaire', 
+  {
+    key: 'inventaire',
     labelKey: 'sidebar:stock.title',
     submenus: [
       { key: 'inventaire_saisie', labelKey: 'sidebar:stock.inventaire.title' },
@@ -99,8 +100,8 @@ const MENU_HIERARCHY = [
       { key: 'inventaire_rapport_ug', labelKey: 'sidebar:stock.rapport_ug' }
     ]
   },
-  { 
-    key: 'statistiques', 
+  {
+    key: 'statistiques',
     labelKey: 'sidebar:statistiques.title',
     submenus: [
       { key: 'statistiques_rapports', labelKey: 'sidebar:statistiques.rapports' },
@@ -148,33 +149,6 @@ const MENU_HIERARCHY = [
   { key: 'commandes', labelKey: 'sidebar:commandes.title' }
 ];
 
-const getAllMenuKeys = () => {
-    const keys: string[] = [];
-    MENU_HIERARCHY.forEach(menu => {
-        keys.push(menu.key);
-        if (menu.submenus) {
-            menu.submenus.forEach(sub => keys.push(sub.key));
-        }
-    });
-    return keys;
-};
-
-const getMenuLabel = (key: string, t: (key: string, options?: { defaultValue: string }) => string): string => {
-  for (const menu of MENU_HIERARCHY) {
-    if (menu.key === key) {
-      return t(menu.labelKey, { defaultValue: key });
-    }
-    if (menu.submenus) {
-      for (const sub of menu.submenus) {
-        if (sub.key === key) {
-          return t(sub.labelKey, { defaultValue: key });
-        }
-      }
-    }
-  }
-  return key;
-};
-
 const ROLES = [
   { value: 'PHARMACIEN', labelKey: 'roles.pharmacist' },
   { value: 'COMPTABLE', labelKey: 'roles.accountant' },
@@ -184,6 +158,10 @@ const ROLES = [
 
 export default function GestionUtilisateurs() {
   const { t } = useTranslation(['users', 'sidebar', 'common']);
+  const { data: menuData } = useMenuHierarchy();
+  const MENU_HIERARCHY = menuData?.hierarchy ?? MENU_HIERARCHY_FALLBACK;
+  const getAllMenuKeys = () => getAllMenuKeysFromHierarchy(MENU_HIERARCHY);
+  const getMenuLabel = (key: string, tFn: (key: string, options?: { defaultValue: string }) => string) => getMenuLabelFromHierarchy(MENU_HIERARCHY, key, tFn);
   const confirm = useConfirm();
   const [users, setUsers] = useState<User[]>([]);
   const [, setLoading] = useState(true);

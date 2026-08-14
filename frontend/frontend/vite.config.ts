@@ -34,6 +34,25 @@ export default defineConfig({
               cacheName: 'google-fonts-webfonts',
               expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }
             }
+          },
+          // Images statiques (logos, photos produits) — CacheFirst 30 jours
+          {
+            urlPattern: /\/media\/.*\.(?:png|jpg|jpeg|webp|svg|gif|ico)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'media-images',
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 }
+            }
+          },
+          // Health check — NetworkFirst (ne pas masquer un backend down)
+          {
+            urlPattern: /\/api\/health\//,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-health',
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 1, maxAgeSeconds: 60 }
+            }
           }
         ]
       },
@@ -92,6 +111,15 @@ export default defineConfig({
           'feature-settings': ['./src/components/settings/PharmacySettingsForm', './src/components/GestionUtilisateurs', './src/components/SystemAdmin'],
           // Dashboard
           'feature-dashboard': ['./src/components/DashboardManagerShadcn', './src/components/DashboardShadcn'],
+          // Produits & facturation (pages principales mais lazy-loaded)
+          'feature-produits': ['./src/components/ProduitShadcn'],
+          'feature-ventes': ['./src/components/Ventes', './src/components/Facturation'],
+          // Commandes
+          'feature-commandes': ['./src/components/Commandes'],
+          // Compta
+          'feature-compta': ['./src/components/compta/Comptabilite'],
+          // Printing
+          'feature-printing': ['./src/components/printing/PrintPage'],
           // Heavy libs - isolated so they don't bloat the main chunk
           'vendor-pdf': ['jspdf', 'jspdf-autotable'],
           'vendor-xlsx': ['xlsx'],

@@ -2,6 +2,353 @@
 
 ---
 
+## 2026-08-14 (41) — Optimisation cache : React Query + Redis + PWA + HTTP headers
+
+### 🔧 Problème
+
+Multiples inefficiences de cache sur toutes les couches :
+- React Query refetchait **toutes** les queries au switch d'onglet navigateur
+- Aucun cache HTTP sur les endpoints stables (categories, TVA, menu-hierarchy)
+- Pas de cache PWA pour les images `/media/`
+- Pas de compression Redis
+- Pas de headers `Cache-Control` sur les réponses API
+
+### Solution
+
+**Frontend — React Query** (`main.tsx`) :
+- `refetchOnWindowFocus: false` par défaut (était `true`)
+- `staleTime: 60s` global (était `30s`)
+- `useProduits` : `staleTime: 0` + `refetchOnWindowFocus: true` — **stock instantané**
+
+**Backend — cache_page** (`urls.py`) :
+- `cache_page(300)` sur : `menu-hierarchy`, `categories`, `invoice-settings`, `pharmacy-settings`
+- **Pas de cache sur** : produits, stock, ventes, caisse, factures, commandes
+
+**Backend — Middleware Cache-Control** (`api/middleware_cache.py`) :
+- Endpoints stables → `Cache-Control: public, max-age=300`
+- Endpoints sensibles (stock, ventes, caisse) → `Cache-Control: no-store`
+- Autres API → `Cache-Control: no-cache`
+- Vérifié : `categories` = `max-age=300`, `produits` = `no-store` ✅
+
+**Backend — Redis** (`settings.py`) :
+- Compression `ZlibCompressor` sur django-redis (réduit taille cache 50-70%)
+- `ConditionalGetMiddleware` pour ETag/304 Not Modified
+
+**PWA — runtimeCaching** (`vite.config.ts`) :
+- `CacheFirst` pour `/media/` images (logos, photos) — 30 jours, max 100 entries
+- `NetworkFirst` pour `/api/health/` — ne masque pas un backend down
+
+### ⚠️ Règle critique respectée
+
+**Stock = instantané** : `useProduits` a `staleTime: 0` + `refetchOnWindowFocus: true`,
+et les endpoints `/api/produits` ont `Cache-Control: no-store`. Aucun cache sur le stock.
+
+### ✅ Vérifications
+
+- Lint frontend : 0 erreur
+- Build frontend : OK (21.22s)
+- Backend : middleware chargé, headers vérifiés via Django shell
+- Déploiement all (frontend + backend) Docker : OK
+
+### Fichiers créés
+
+- `backend/api/middleware_cache.py` — middleware Cache-Control
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/main.tsx` — QueryClient defaults
+- `frontend/frontend/src/hooks/useProduits.ts` — staleTime: 0 + refetchOnWindowFocus
+- `frontend/frontend/vite.config.ts` — runtimeCaching /media/ + /api/health/
+- `backend/api/urls.py` — cache_page sur endpoints stables
+- `backend/backend/settings.py` — ZlibCompressor + ConditionalGetMiddleware + CacheControlMiddleware
+
+---
+
+## 2026-08-14 (40) — Code-splitting : index chunk 786KB → 348KB (-55%) + feature chunks
+
+### 🔧 Problème
+
+Le chunk `index` principal faisait **786KB** — chargé à chaque page, y compris la
+page de login. `bwip-js` (941KB) était déjà en dynamic import mais d'autres
+composants critiques étaient eager-loaded inutilement.
+
+### Solution
+
+**Routes lazy-loaded** (`routes.tsx`) :
+- `PrintPage` → lazy (utilisé seulement pour impression)
+- `DashboardManager` → lazy (manager seulement)
+- `Produit` → lazy (page produits)
+- `Ventes` → lazy (historique ventes)
+- `Facturation` → lazy (page facturation)
+- Seuls `Login`, `Layout`, `LicenceScreen`, `Dashboard` restent eager (critical path)
+
+**Nouveaux feature chunks** (`vite.config.ts`) :
+- `feature-produits` — ProduitShadcn (144KB)
+- `feature-ventes` — Ventes + Facturation (319KB)
+- `feature-commandes` — Commandes (135KB)
+- `feature-compta` — Comptabilite
+- `feature-printing` — PrintPage
+
+### 📊 Résultats
+
+| Chunk | Avant | Après | Variation |
+|-------|-------|-------|-----------|
+| `index` (entry, initial load) | 786 KB | 348 KB | **-55%** |
+| `bwip-js` (dynamic, labels only) | 941 KB | 941 KB | inchangé (déjà dynamic) |
+| `feature-ventes` (lazy) | — | 319 KB | nouveau |
+| `feature-produits` (lazy) | — | 144 KB | nouveau |
+| `feature-commandes` (lazy) | — | 135 KB | nouveau |
+
+L'initial load est passé de **786KB → 348KB**. Les feature chunks ne se chargent
+que lors de la navigation vers la route correspondante.
+
+### ✅ Vérifications
+
+- Lint : 0 erreur
+- Build : OK (4290 modules, 21.96s)
+- Déploiement frontend Docker : OK
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/routes.tsx` — 5 composants eager → lazy
+- `frontend/frontend/vite.config.ts` — 5 nouveaux feature chunks
+
+---
+
+## 2026-08-14 (39) — MENU_HIERARCHY partagée frontend/backend via endpoint dédié
+
+### 🔧 Problème
+
+`MENU_HIERARCHY` était hardcodée dans `GestionUtilisateurs.tsx` (frontend).
+Le backend stockait `allowed_menus` sans connaître la liste des menus valides,
+ce qui rendait impossible la validation côté serveur.
+
+### Solution
+
+**Backend** :
+- Nouveau fichier `api/menu_hierarchy.py` — source de vérité de la hiérarchie
+  - 19 menus parents, 61 clés au total
+  - `get_all_menu_keys()`, `get_admin_only_keys()`, `is_valid_menu_key()`
+- Nouvel endpoint `GET /api/menu-hierarchy/` (auth requis)
+  - Retourne `{ hierarchy, allKeys, adminOnlyKeys }`
+- Vue `menu_hierarchy` dans `api/views/auth.py`
+
+**Frontend** :
+- Nouveau hook `useMenuHierarchy` (`src/hooks/useMenuHierarchy.ts`)
+  - React Query, staleTime 30 min, cacheTime 1h
+  - Helpers : `getAllMenuKeysFromHierarchy`, `getMenuLabel`
+- `GestionUtilisateurs.tsx` :
+  - Utilise `useMenuHierarchy()` au lieu du `MENU_HIERARCHY` hardcodé
+  - Fallback statique `MENU_HIERARCHY_FALLBACK` si l'endpoint échoue
+  - `getAllMenuKeys` et `getMenuLabel` délèguent aux helpers du hook
+
+### ✅ Vérifications
+
+- Lint : 0 erreur
+- Build : OK (4304 modules, 20.33s)
+- Backend : 19 menus, 61 clés chargés
+- Déploiement all (frontend + backend) Docker : OK
+
+### Fichiers créés
+
+- `backend/api/menu_hierarchy.py`
+- `frontend/frontend/src/hooks/useMenuHierarchy.ts`
+
+### Fichiers modifiés
+
+- `backend/api/views/auth.py` — ajout vue `menu_hierarchy`
+- `backend/api/urls.py` — route `menu-hierarchy/`
+- `frontend/frontend/src/components/GestionUtilisateurs.tsx` — utilisation du hook + fallback
+
+---
+
+## 2026-08-14 (38) — Tests E2E Playwright : auth, vente, caisse, clôture, navigation
+
+### 🔧 Problème
+
+Aucun test E2E n'existait. Un flow de vente/caisse qui casse = incident client
+sans détection précoce.
+
+### Solution
+
+Mise en place de **Playwright** avec 5 suites de tests E2E :
+
+| Suite | Couverture |
+|-------|------------|
+| `auth.spec.ts` | Login valide, mauvais mot de passe, déconnexion, token localStorage |
+| `vente.spec.ts` | Page facturation, recherche produit, ajout panier |
+| `caisse.spec.ts` | Page caisse, factures en attente, SessionRecapBar |
+| `cloture.spec.ts` | Historique clôtures, bouton fermer session |
+| `navigation.spec.ts` | 13 pages principales se chargent sans erreur |
+
+**Fichiers créés** :
+- `playwright.config.ts` — config (chromium, baseURL localhost:8080, fr-FR, Africa/Douala)
+- `e2e/helpers.ts` — login/logout/navigateTo partagés
+- `e2e/auth.spec.ts` — 3 tests d'authentification
+- `e2e/vente.spec.ts` — 3 tests de vente
+- `e2e/caisse.spec.ts` — 3 tests de caisse
+- `e2e/cloture.spec.ts` — 3 tests de clôture
+- `e2e/navigation.spec.ts` — 13 tests de navigation
+- `e2e/README.md` — documentation d'utilisation
+
+**Dépendance ajoutée** :
+- `@playwright/test` (devDependency)
+- Script `npm run test:e2e`
+
+**Variables d'environnement** :
+- `E2E_BASE_URL` (défaut: `http://localhost:8080`)
+- `E2E_USERNAME` (défaut: `admin`)
+- `E2E_PASSWORD` (défaut: `admin`)
+
+### ⚠️ Prérequis pour exécuter
+
+1. Docker démarré (`docker compose up -d`)
+2. `npx playwright install chromium` (1ère fois)
+3. Utilisateur `admin` existant en DB
+
+### ✅ Vérifications
+
+- Lint : 0 erreur
+- Build : OK (les fichiers E2E ne sont pas inclus dans le bundle production)
+
+---
+
+## 2026-08-14 (37) — Refactor : découpage PharmacySettingsForm (1664→344) et SystemAdmin (1632→551)
+
+### 🔧 Problème
+
+Deux des plus gros composants frontend étaient des "god components" :
+- `PharmacySettingsForm.tsx` : **1664 lignes**, 8 onglets inline
+- `SystemAdmin.tsx` : **1632 lignes**, 3 onglets inline, 42 useState
+
+### Solution
+
+**PharmacySettingsForm.tsx** (1664 → 344 lignes) :
+- Extraction de 9 sous-composants dans `components/settings/` :
+  - `types.ts` — interfaces partagées (SettingsTabProps, GeneralTabProps, etc.)
+  - `TVAComponents.tsx` — TVARow, TVATable, TVAForm
+  - `GeneralTab.tsx` — identité, contact, devise, modes de paiement
+  - `PrintingTab.tsx` — messages ticket, format, multi-postes
+  - `StocksTab.tsx` — alertes, sécurité caisse, commandes
+  - `TVATab.tsx` — gestion TVA
+  - `FiscalTab.tsx` — régime fiscal, acompte, précompte, marge
+  - `NotificationsTab.tsx` — WhatsApp, Telegram
+  - `ReportsTab.tsx` — config rapport mensuel, items
+- State et handlers conservés dans le composant parent
+- `t` passé en prop (pas de re-import useTranslation)
+
+**SystemAdmin.tsx** (1632 → 551 lignes) :
+- Extraction de 5 sous-composants dans `components/systemadmin/` :
+  - `types.ts` — interfaces (DockerContainer, BackupInfo, SystemStatus, etc.)
+  - `RestoreOverlay.tsx` — overlay de progression restauration
+  - `SystemHealthTab.tsx` — santé Docker, backup, restart policy
+  - `BackupsTab.tsx` — config backup, restore, WAL/PITR
+  - `UpdateTab.tsx` — mise à jour, planning
+- 42 useState conservés dans le parent, passés en props
+
+### ✅ Vérifications
+
+- Lint : 0 erreur (1 fix mineur : `restoreProgress` → `_restoreProgress`)
+- Build : OK (4290 modules, 32.84s)
+- Déploiement frontend Docker : OK
+
+### Fichiers créés
+
+- `frontend/frontend/src/components/settings/types.ts`
+- `frontend/frontend/src/components/settings/TVAComponents.tsx`
+- `frontend/frontend/src/components/settings/GeneralTab.tsx`
+- `frontend/frontend/src/components/settings/PrintingTab.tsx`
+- `frontend/frontend/src/components/settings/StocksTab.tsx`
+- `frontend/frontend/src/components/settings/TVATab.tsx`
+- `frontend/frontend/src/components/settings/FiscalTab.tsx`
+- `frontend/frontend/src/components/settings/NotificationsTab.tsx`
+- `frontend/frontend/src/components/settings/ReportsTab.tsx`
+- `frontend/frontend/src/components/systemadmin/types.ts`
+- `frontend/frontend/src/components/systemadmin/RestoreOverlay.tsx`
+- `frontend/frontend/src/components/systemadmin/SystemHealthTab.tsx`
+- `frontend/frontend/src/components/systemadmin/BackupsTab.tsx`
+- `frontend/frontend/src/components/systemadmin/UpdateTab.tsx`
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/settings/PharmacySettingsForm.tsx` (1664 → 344 lignes)
+- `frontend/frontend/src/components/SystemAdmin.tsx` (1632 → 551 lignes)
+
+---
+
+## 2026-08-14 (36) — Simplification politique mot de passe (min 4 caractères uniquement)
+
+### 🔧 Changement
+
+- **`settings.py`** : `AUTH_PASSWORD_VALIDATORS` réduit à `MinimumLengthValidator`
+  avec `min_length=4`. Suppression de `UserAttributeSimilarityValidator`,
+  `CommonPasswordValidator`, `NumericPasswordValidator`, `UppercaseValidator`,
+  `DigitValidator`, `SpecialCharValidator`.
+- **`api/password_validators.py`** : fichier supprimé (validateurs custom devenus
+  inutilisés — code mort).
+- **`api/serializers/users.py`** : `validate_password` simplifié — ne traduit plus
+  que le message de longueur (les autres cas ne peuvent plus se produire).
+- **`api/tests/test_user_management.py`** : suppression de
+  `test_create_user_common_password_rejected` (le validateur correspondant n'existe plus).
+
+### 📁 Fichiers modifiés
+
+- `backend/backend/settings.py`
+- `backend/api/password_validators.py` (supprimé)
+- `backend/api/serializers/users.py`
+- `backend/api/tests/test_user_management.py`
+
+---
+
+## 2026-08-14 (35) — Sécurité : politique mot de passe + verify_password + login_options + anti-escalation
+
+### 🔒 Problème
+
+1. **Politique mot de passe trop faible** : `min_length=4`, pas de validateur numérique,
+   pas d'exigence majuscule/caractère spécial.
+2. **`verify_password` (mode sudo) itérait TOUS les users** : timing attack + énumération
+   de comptes. Un caissier pouvait tester le mot de passe de n'importe quel utilisateur.
+3. **`login_options` sans throttle** : énumération illimitée de usernames depuis la page
+   de connexion.
+4. **`is_superuser` settable via PATCH** : un admin non-superuser pouvait se promouvoir.
+
+### 🔧 Solution
+
+- **Politique mot de passe** (`settings.py`) :
+  - `min_length` : 4 → 8
+  - Ajout `NumericPasswordValidator`
+  - Ajout validateurs custom : `UppercaseValidator`, `DigitValidator`, `SpecialCharValidator`
+  - Nouveau fichier : `api/password_validators.py`
+- **`verify_password`** (`users.py`) :
+  - N'itère plus que les `is_superuser=True` (titulaires uniquement)
+  - Throttle `sudo` : 5/min
+- **`login_options`** (`users.py`) :
+  - Throttle `login_options` : 10/min (au lieu de 0)
+- **Anti-escalation** (`users.py`) :
+  - `partial_update` : seul un superuser peut modifier `is_superuser`
+  - Retourne 403 sinon
+- **Frontend** :
+  - `SudoValidationModal` : hint "Saisissez le mot de passe du titulaire/pharmacien"
+  - Traductions fr/en mises à jour
+
+### ✅ Vérifications
+
+- Lint frontend : 0 erreur
+- Build frontend : OK
+- Backend : validateurs chargés avec succès (`python manage.py shell`)
+- Déploiement all (frontend + backend) Docker : OK
+
+### Fichiers modifiés
+
+- `backend/backend/settings.py` — validateurs + throttle rates
+- `backend/api/password_validators.py` — nouveau fichier (3 validateurs custom)
+- `backend/api/views/users.py` — verify_password limité aux superusers + throttles + anti-escalation
+- `frontend/frontend/src/components/common/SudoValidationModal.tsx` — hint
+- `frontend/frontend/public/locales/fr/common.json` — traductions sudo
+- `frontend/frontend/public/locales/en/common.json` — traductions sudo
+
+---
+
 ## 2026-08-14 (34) — Gestion utilisateurs : suppression de l'onglet Corbeille locale
 
 ### 🐛 Problème
