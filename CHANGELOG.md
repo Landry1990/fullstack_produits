@@ -2,13 +2,47 @@
 
 ---
 
-## 2026-08-14 (33) — Fix ticket caisse : masquer "part-patient" pour clients non professionnels
+## 2026-08-14 (34) — Gestion utilisateurs : suppression de l'onglet Corbeille locale
 
 ### 🐛 Problème
 
-Sur **tous les tickets de caisse**, la ligne de paiement affichait le label
+La page **Gestion des utilisateurs** avait sa propre corbeille intégrée (onglet
+"Actifs / Corbeille"), ce qui créait une duplication avec le menu **Corbeille**
+global de la sidebar. Un admin devait gérer deux endroits différents pour les
+soft-deletes.
+
+### 🔧 Solution
+
+- Suppression de l'onglet "Corbeille" et du toggle Actifs/Corbeille de
+  `GestionUtilisateurs.tsx`.
+- La page n'affiche plus que les **utilisateurs actifs**.
+- L'action "Désactiver" (soft-delete `is_active=false`) reste disponible et
+  envoie l'utilisateur vers le menu **Corbeille** global de la sidebar.
+- La restauration et la suppression définitive se font depuis `Corbeille.tsx`
+  (endpoint `/api/corbeille/` qui gère déjà le type `user`).
+- Suppression de `handleRestoreUser`, `executeRestoreUser`, et `showTrash`.
+
+### ✅ Vérifications
+
+- Lint : 0 erreur
+- Build : OK
+- Déploiement frontend Docker : OK
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/GestionUtilisateurs.tsx`
+
+---
+
+## 2026-08-14 (33) — Fix ticket caisse : masquer "part-patient" pour non-pros + N/A modes de règlement
+
+### 🐛 Problème
+
+1. Sur **tous les tickets de caisse**, la ligne de paiement affichait le label
 `part-patient` dès que `part_patient > 0`, alors que ce wording ne concerne que
 les ventes en **tiers payant (clients professionnels)**.
+2. Après correction, les modes de règlement sur le ticket affichaient `N/A` au lieu
+des libellés (`Espèces`, `Carte`, etc.).
 
 ### 🔍 Cause
 
@@ -18,9 +52,11 @@ client. Le `Facture` expose pourtant `client_type: 'PARTICULIER' | 'PROFESSIONNE
 
 ### ✅ Correction
 
-- Ajout de `isTiersPayant = facture?.client_type === 'PROFESSIONNEL'`.
-- `getPaymentRowLabel` n'affiche `part_patient` / `part_assurance` que si
+- `TicketTemplate` : ajout de `isTiersPayant = facture?.client_type === 'PROFESSIONNEL'`.
+  `getPaymentRowLabel` n'affiche `part_patient` / `part_assurance` que si
   `isTiersPayant` est vrai. Sinon, seul le libellé du mode de paiement s'affiche.
+- `useCaissePayment` : mapping de `facture.paiements` (champ backend `mode_paiement`)
+  vers `PaymentDetails.mode` attendu par `TicketTemplate`, pour éviter les `N/A`.
 
 ### ✅ Vérifications
 
@@ -28,9 +64,10 @@ client. Le `Facture` expose pourtant `client_type: 'PARTICULIER' | 'PROFESSIONNE
 - Build : OK
 - Déploiement frontend Docker : OK
 
-### Fichier modifié
+### Fichiers modifiés
 
 - `frontend/frontend/src/components/printing/TicketTemplate.tsx`
+- `frontend/frontend/src/hooks/useCaissePayment.ts`
 
 ---
 

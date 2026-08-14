@@ -20,6 +20,7 @@ interface CaisseHeaderProps {
   facturesCount: number
   selectedFactureIds: Set<number>
   onBulkCancelClick: () => void
+  canManageSecurity?: boolean
 }
 
 export function CaisseHeader({
@@ -39,7 +40,8 @@ export function CaisseHeader({
   canBulkCancel,
   facturesCount,
   selectedFactureIds,
-  onBulkCancelClick
+  onBulkCancelClick,
+  canManageSecurity = false
 }: CaisseHeaderProps) {
   const { t } = useTranslation('caisse')
 
@@ -71,8 +73,8 @@ export function CaisseHeader({
         )}
 
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Toggle Mode Sécurité (masquer les montants) */}
-          {myActivePoste && (
+          {/* Toggle Mode Sécurité (masquer les montants) — réservé au titulaire/admin */}
+          {myActivePoste && canManageSecurity && (
             <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors" title={t('cash_session.security_mode', { defaultValue: 'Mode sécurité: masquer les montants aux caissiers' })}>
               <input
                 type="checkbox"

@@ -199,8 +199,8 @@ export default function GestionUtilisateurs() {
   // Copy permissions from user
   const [copyFromUserId, setCopyFromUserId] = useState<number | ''>('');
 
-  // Filter state for active/trash view
-  const [showTrash, setShowTrash] = useState(false);
+  // La corbeille des utilisateurs est gérée centrally via le menu Corbeille de la sidebar
+  // (composant Corbeille.tsx + endpoint /api/corbeille/). Plus d'onglet local ici.
 
   // Form State
   const [formData, setFormData] = useState({
@@ -491,11 +491,11 @@ export default function GestionUtilisateurs() {
   const executeDeleteUser = async (userId: number, username: string) => {
     try {
       await api.patch(`users/${userId}/`, { is_active: false });
-      toast.success(t('messages.deactivated', { username, defaultValue: `${username} a été désactivé (corbeille).` }));
+      toast.success(t('messages.deactivated', { username, defaultValue: `${username} a été désactivé. Vous pouvez le restaurer depuis le menu Corbeille.` }));
       fetchUsers();
     } catch (error) {
       logger.error('Error deleting/deactivating user:', error);
-      toast.error(getApiErrorDetail(error, t('messages.deactivate_error', { defaultValue: 'Erreur lors de la mise à la corbeille.' })));
+      toast.error(getApiErrorDetail(error, t('messages.deactivate_error', { defaultValue: 'Erreur lors de la désactivation.' })));
     }
   };
 
@@ -509,8 +509,8 @@ export default function GestionUtilisateurs() {
 
   const handleDeleteUser = async (userId: number, username: string) => {
     const confirmed = await confirm({
-      title: t('messages.deactivate_confirm_title', { defaultValue: 'Mettre à la corbeille ?' }),
-      message: t('messages.deactivate_confirm', { username, defaultValue: `Voulez-vous désactiver l'utilisateur ${username} et le placer dans la corbeille ?` }),
+      title: t('messages.deactivate_confirm_title', { defaultValue: 'Désactiver l\'utilisateur ?' }),
+      message: t('messages.deactivate_confirm', { username, defaultValue: `Voulez-vous désactiver l'utilisateur ${username} ? Il sera déplacé vers le menu Corbeille et pourra être restauré depuis là-bas.` }),
       variant: 'danger',
       confirmText: t('messages.deactivate_btn', { defaultValue: 'Désactiver' })
     });
@@ -525,34 +525,7 @@ export default function GestionUtilisateurs() {
     }
   };
 
-  const executeRestoreUser = async (userId: number, username: string) => {
-    try {
-      await api.patch(`users/${userId}/`, { is_active: true });
-      toast.success(t('messages.restored', { username, defaultValue: `${username} a été restauré avec succès.` }));
-      fetchUsers();
-    } catch (error) {
-      logger.error('Error restoring user:', error);
-      toast.error(getApiErrorDetail(error, t('messages.restore_error', { defaultValue: 'Erreur lors de la restauration.' })));
-    }
-  };
-
-  const handleRestoreUser = async (userId: number, username: string) => {
-    const confirmed = await confirm({
-      title: t('messages.restore_confirm_title', { defaultValue: 'Restaurer l\'utilisateur ?' }),
-      message: t('messages.restore_confirm', { username, defaultValue: `Voulez-vous restaurer l'utilisateur ${username} ?` }),
-      variant: 'success',
-      confirmText: t('messages.restore_btn', { defaultValue: 'Restaurer' })
-    });
-    
-    if (confirmed) {
-      setPasswordModalConfig({
-        title: t('messages.sudo_title'),
-        message: t('messages.sudo_message')
-      });
-      pendingActionRef.current = () => executeRestoreUser(userId, username);
-      setIsPasswordModalOpen(true);
-    }
-  };
+  // La restauration se fait depuis le menu Corbeille global (Corbeille.tsx)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -632,31 +605,16 @@ export default function GestionUtilisateurs() {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-slate-800">{t('title')}</h1>
-          <div className="flex bg-slate-100 rounded-xl p-1">
-            <button
-              onClick={() => setShowTrash(false)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${!showTrash ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              {t('tabs.active', 'Actifs')}
-              <span className="ml-2 text-xs bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full">{users.filter(u => u.is_active).length}</span>
-            </button>
-            <button
-              onClick={() => setShowTrash(true)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${showTrash ? 'bg-white text-red-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              {t('tabs.trash', 'Corbeille')}
-              <span className="ml-2 text-xs bg-red-100 text-red-500 px-1.5 py-0.5 rounded-full">{users.filter(u => !u.is_active).length}</span>
-            </button>
-          </div>
+          <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-bold">
+            {users.filter(u => u.is_active).length} {t('tabs.active', 'Actifs')}
+          </span>
         </div>
-        {!showTrash && (
-          <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm" onClick={() => handleOpenModal()}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            {t('new_user')}
-          </button>
-        )}
+        <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm" onClick={() => handleOpenModal()}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          {t('new_user')}
+        </button>
       </div>
 
       <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-sm">
@@ -670,22 +628,18 @@ export default function GestionUtilisateurs() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {users.reduce<User[]>((acc, u) => {
-              if (showTrash ? !u.is_active : u.is_active) acc.push(u);
-              return acc;
-            }, []).map(user => (
-              <tr key={user.id} className={`hover:bg-slate-50 transition-colors ${!user.is_active ? 'bg-red-50/30' : ''}`}>
+            {users.filter(u => u.is_active).map(user => (
+              <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-4 py-3">
                   <div className="flex items-center space-x-3">
                     <div className="inline-flex items-center justify-center">
-                      <div className={`text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm ${!user.is_active ? 'bg-slate-400' : 'bg-slate-700'}`}>
+                      <div className="text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm bg-slate-700">
                         {user.username.charAt(0).toUpperCase()}
                       </div>
                     </div>
                     <div>
                       <div className="font-bold flex items-center gap-2 text-slate-800">
                         {user.username}
-                        {!user.is_active && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 text-red-500 uppercase">{t('badges.inactive', 'Inactif')}</span>}
                       </div>
                       <div className="text-sm text-slate-400">{user.first_name} {user.last_name}</div>
                       <div className="text-xs text-slate-400">{user.email}</div>
@@ -769,34 +723,20 @@ export default function GestionUtilisateurs() {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {showTrash ? (
-                    // Trash view - show restore button
-                    <button 
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg text-sm font-medium transition-colors"
-                      onClick={() => handleRestoreUser(user.id, user.username)}
+                  <button
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-slate-500 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors"
+                    onClick={() => handleOpenModal(user)}
+                  >
+                    {t('actions.edit')}
+                  </button>
+                  {currentUser?.username !== user.username && (
+                    <button
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+                      onClick={() => handleDeleteUser(user.id, user.username)}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                      {t('actions.restore', 'Restaurer')}
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      {t('actions.deactivate', 'Désactiver')}
                     </button>
-                  ) : (
-                    // Active view - show edit and deactivate buttons
-                    <>
-                      <button 
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-slate-500 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors"
-                        onClick={() => handleOpenModal(user)}
-                      >
-                        {t('actions.edit')}
-                      </button>
-                      {currentUser?.username !== user.username && (
-                        <button 
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
-                          onClick={() => handleDeleteUser(user.id, user.username)}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                          {t('actions.deactivate', 'Corbeille')}
-                        </button>
-                      )}
-                    </>
                   )}
                 </td>
               </tr>
