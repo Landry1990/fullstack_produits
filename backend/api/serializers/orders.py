@@ -193,7 +193,9 @@ class CommandeSerializer(serializers.ModelSerializer):
         model = Commande
         fields = '__all__'
         # Supprimé 'status' des champs en lecture seule pour permettre les transitions PREP <-> ATT
-        read_only_fields = ['date', 'closed_by', 'is_active']
+        # date_echeance est calculée automatiquement (à la clôture, ou en fonction de
+        # is_mise_en_place / delai_paiement_negocie_jours) : jamais éditable directement.
+        read_only_fields = ['date', 'closed_by', 'is_active', 'date_echeance']
         extra_kwargs = {
             'fournisseur': {
                 'required': False,
@@ -225,6 +227,35 @@ class CommandeSerializer(serializers.ModelSerializer):
                 "Utilisez l'action de clôture dédiée."
             )
         return value
+
+    def validate_delai_paiement_negocie_jours(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError(
+                "Le délai de paiement négocié ne peut pas être négatif."
+            )
+        return value
+
+    def validate(self, attrs):
+        # is_mise_en_place peut être partiellement mis à jour (PATCH) : on résout
+        # la valeur finale en tenant compte de l'instance existante.
+        is_mise_en_place = attrs.get(
+            'is_mise_en_place',
+            getattr(self.instance, 'is_mise_en_place', False)
+        )
+        delai_negocie = attrs.get(
+            'delai_paiement_negocie_jours',
+            getattr(self.instance, 'delai_paiement_negocie_jours', None)
+        )
+        paye_a_la_cloture = attrs.get(
+            'paye_a_la_cloture',
+            getattr(self.instance, 'paye_a_la_cloture', False)
+        )
+        # Achat au comptant : pas besoin de délai négocié (le paiement est enregistré à la clôture).
+        if is_mise_en_place and not paye_a_la_cloture and delai_negocie is None:
+            raise serializers.ValidationError({
+                'delai_paiement_negocie_jours': "Le délai de paiement négocié est obligatoire pour un achat de mise en place (sauf si réglé au comptant)."
+            })
+        return attrs
 
 
 class OrderScheduleSerializer(serializers.ModelSerializer):

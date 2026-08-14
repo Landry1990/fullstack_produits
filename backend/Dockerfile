@@ -35,8 +35,11 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 COPY requirements.txt .
 
 # Installer les dépendances Python
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install gunicorn python-dotenv cython
+# --mount=type=cache : le cache pip persiste sur l'hôte entre les builds,
+# évitant de tout re-télécharger depuis PyPI à chaque rebuild (utile si
+# la connexion internet du serveur est instable).
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip install gunicorn python-dotenv cython
 
 # Clé temporaire pour le build (sera remplacée au runtime)
 ENV DJANGO_SECRET_KEY=build-temp-key-not-for-production

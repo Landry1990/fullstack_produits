@@ -2,6 +2,117 @@
 
 ---
 
+## 2026-08-15 (43) — Achats de mise en place : paiement au comptant à la clôture
+
+### 🔧 Problème
+
+Certains grossistes ne font **pas crédit** du tout : la commande est intégralement
+réglée avant (ou au moment de) la mise en stock. Sans prise en charge spécifique,
+ces achats apparaissaient en dette fournisseur / impayés dans le dashboard, alors
+qu'ils sont déjà payés.
+
+### Solution
+
+**Backend** :
+- `Commande` (`api/models/orders.py`) : nouveau champ `paye_a_la_cloture`
+  (booléen, défaut `False`). `compute_date_echeance()` renvoie la date de clôture
+  pour un achat au comptant (pas de crédit = pas d'échéance future).
+- `cloture_mixin.py` : à la clôture d'un achat `is_mise_en_place` +
+  `paye_a_la_cloture`, un `PaiementFournisseur` du montant total
+  (`quantity × price_cost`) est créé automatiquement et lié à la commande via
+  `commandes` (M2M). Idempotent : vérifie qu'aucun paiement automatique n'existe
+  déjà pour cette commande (identifié par le préfixe de la note).
+- `annuler_reception` : supprime le paiement automatique correspondant si on
+  annule la réception (évite les paiements orphelins).
+- `dashboard/fournisseurs.py` et `services/supplier_finance.py` : les achats au
+  comptant sont exclus du budget FIFO et des items de dette (ils sont entièrement
+  réglés par leur paiement automatique). Les mises en place à crédit restent
+  affichées normalement.
+- `serializers/orders.py` : le délai négocié n'est plus obligatoire si
+  `paye_a_la_cloture=True` (un achat au comptant n'a pas de délai de paiement).
+- Migration `0233_commande_paye_a_la_cloture.py`.
+
+**Frontend** :
+- `CommandeForm.tsx` : case à cocher "Payé au comptant" (verte) affichée
+  uniquement si "Mise en place" est cochée. Le champ délai négocié devient
+  facultatif quand l'achat est au comptant.
+- État propagé dans `useCommandesStore.ts`, `useCommandeNavigation.tsx`
+  (reset + populate en édition), `useCommandesState.tsx` (payload + validation),
+  `useCommandeAutosave.tsx` (payload autosave + skip si pas de délai et pas
+  payé).
+- Types (`types/procurement.ts`) et traductions fr/en
+  (`public/locales/{fr,en}/orders.json` : `paye_a_la_cloture_label` +
+  `paye_a_la_cloture_help`).
+
+### Fichiers modifiés
+
+- `backend/api/models/orders.py`
+- `backend/api/serializers/orders.py`
+- `backend/api/views/commandes/cloture_mixin.py`
+- `backend/api/views/dashboard/fournisseurs.py`
+- `backend/api/services/supplier_finance.py`
+- `backend/api/migrations/0233_commande_paye_a_la_cloture.py`
+- `backend/api/tests/test_mise_en_place.py` (nouveau, 11 tests)
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx`
+- `frontend/frontend/src/components/__tests__/CommandeToAvoir.test.tsx`
+- `frontend/frontend/src/hooks/commandes/useCommandeAutosave.tsx`
+- `frontend/frontend/src/hooks/commandes/useCommandeNavigation.tsx`
+- `frontend/frontend/src/hooks/useCommandesState.tsx`
+- `frontend/frontend/src/stores/useCommandesStore.ts`
+- `frontend/frontend/src/types/procurement.ts`
+- `frontend/frontend/public/locales/fr/orders.json`
+- `frontend/frontend/public/locales/en/orders.json`
+
+### Tests
+
+- Backend : 219 tests passent (11 nouveaux), 3 skipped.
+- Frontend : 267 tests passent, 7 skipped.
+
+---
+
+## 2026-08-14 (42) — Achats de mise en place : délai de paiement négocié par commande
+
+### 🔧 Problème
+
+Le délai de paiement (`delai_paiement_jours`, `type_reglement`) est défini uniquement au
+niveau du `Fournisseur` et s'applique uniformément à toutes ses commandes. Or, à l'ouverture
+d'une nouvelle pharmacie, les "achats de mise en place" (stock initial) ont souvent des
+conditions de paiement négociées avec le grossiste, différentes de la règle standard
+(10/15 jours). Sans traitement spécifique, ces commandes apparaissaient à tort comme
+"impayées"/en retard dans le dashboard fournisseurs.
+
+### Solution
+
+**Backend** :
+- `Commande` (`api/models/orders.py`) : nouveaux champs `is_mise_en_place` (décoché par
+  défaut) et `delai_paiement_negocie_jours`. Nouvelle méthode `compute_date_echeance()`
+  qui priorise ce délai négocié sur le délai standard du fournisseur, et bypass le
+  regroupement par tranche de relevé (l'achat garde une échéance individuelle même chez
+  un fournisseur en mode RELEVE). Recalcul automatique de `date_echeance` dans `save()` si
+  la commande est déjà clôturée et que ces champs sont modifiés après coup.
+- `cloture_mixin.py` : le calcul d'échéance à la clôture utilise désormais
+  `compute_date_echeance()`.
+- `dashboard/fournisseurs.py` et `services/supplier_finance.py` : les commandes
+  `is_mise_en_place=True` sont isolées et affichées avec leur échéance individuelle
+  (même liste que les autres factures/relevés, pas de section séparée), le reste des
+  commandes du fournisseur continuant à utiliser la logique existante (FACTURE/RELEVE).
+- `serializers/orders.py` : `date_echeance` passe en lecture seule (calculé
+  automatiquement) ; validation : délai négocié obligatoire si `is_mise_en_place=True`,
+  et ne peut pas être négatif.
+- Migration `0232_commande_mise_en_place.py`.
+
+**Frontend** :
+- `CommandeForm.tsx` : case à cocher "Mise en place / condition négociée" (décochée par
+  défaut) + champ délai en jours affiché uniquement si cochée.
+- État ajouté dans `useCommandesStore.ts`, `useCommandeNavigation.tsx` (création/édition),
+  `useCommandesState.tsx` (payload de sauvegarde + validation) et `useCommandeAutosave.tsx`.
+- Types (`types/procurement.ts`) et traductions fr/en (`public/locales/{fr,en}/orders.json`).
+
+Le délai négocié reste modifiable après clôture de la commande (recalcul automatique de
+l'échéance à la sauvegarde).
+
+---
+
 ## 2026-08-14 (41) — Optimisation cache : React Query + Redis + PWA + HTTP headers
 
 ### 🔧 Problème

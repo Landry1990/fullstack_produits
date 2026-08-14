@@ -32,6 +32,12 @@ export interface CommandeFormProps {
     setNewCommandeFournisseurId: (id: string) => void;
     numeroFacture: string;
     setNumeroFacture: (num: string) => void;
+    isMiseEnPlace: boolean;
+    setIsMiseEnPlace: (value: boolean) => void;
+    delaiPaiementNegocieJours: string;
+    setDelaiPaiementNegocieJours: (value: string) => void;
+    payeALaCloture: boolean;
+    setPayeALaCloture: (value: boolean) => void;
     
     // Direct Orders
     commandeType: 'LOC' | 'DIR';
@@ -114,6 +120,12 @@ export default function CommandeForm({
     setNewCommandeFournisseurId,
     numeroFacture,
     setNumeroFacture,
+    isMiseEnPlace,
+    setIsMiseEnPlace,
+    delaiPaiementNegocieJours,
+    setDelaiPaiementNegocieJours,
+    payeALaCloture,
+    setPayeALaCloture,
     commandeType,
     tauxChange,
     setTauxChange,
@@ -255,6 +267,51 @@ export default function CommandeForm({
                       value={numeroFacture}
                       onChange={(e) => setNumeroFacture(e.target.value.toUpperCase())}
                     />
+                  </div>
+
+                  {/* Achat de mise en place / condition négociée */}
+                  <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
+                    <label className="flex items-center gap-1.5 h-9 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={isMiseEnPlace}
+                        onChange={(e) => setIsMiseEnPlace(e.target.checked)}
+                        className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
+                        {t('orders:form.mise_en_place_label')}
+                      </span>
+                    </label>
+                    {isMiseEnPlace && (
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-semibold text-indigo-600 uppercase">
+                          {t('orders:form.delai_negocie_label')}
+                        </span>
+                        <Input
+                          type="number"
+                          min={0}
+                          step="1"
+                          required={!payeALaCloture}
+                          placeholder={t('orders:form.delai_negocie_placeholder')}
+                          className="w-24 h-7 text-sm px-2"
+                          value={delaiPaiementNegocieJours}
+                          onChange={(e) => setDelaiPaiementNegocieJours(e.target.value)}
+                        />
+                      </div>
+                    )}
+                    {isMiseEnPlace && (
+                      <label className="flex items-center gap-1.5 h-9 cursor-pointer select-none" title={t('orders:form.paye_a_la_cloture_help')}>
+                        <input
+                          type="checkbox"
+                          checked={payeALaCloture}
+                          onChange={(e) => setPayeALaCloture(e.target.checked)}
+                          className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-xs font-semibold text-emerald-700 whitespace-nowrap">
+                          {t('orders:form.paye_a_la_cloture_label')}
+                        </span>
+                      </label>
+                    )}
                   </div>
 
                   {/* Paramètres Commande Directe */}
