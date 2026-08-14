@@ -226,7 +226,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
               'text-slate-800 font-bold'
             )}>{item.name}</div>
             {(item.active_promis_count ?? 0) > 0 && (
-              <Badge variant="secondary" className={cn("text-[9px] h-4 px-1 shrink-0", isActive ? 'bg-blue-400 text-white border-blue-300' : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse')}>
+              <Badge variant="secondary" className={cn("text-[10px] h-4 px-1 shrink-0", isActive ? 'bg-blue-400 text-white border-blue-300' : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse')}>
                 PROMIS ({item.active_promis_count})
               </Badge>
             )}

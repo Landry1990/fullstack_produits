@@ -181,7 +181,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             {/* Table Header */}
             <div className="overflow-x-auto overflow-y-auto flex-1 w-full">
                <div className="min-w-[640px] md:min-w-[980px]">
-                    <div className={`grid ${!isReadOnly ? "grid-cols-[32px_1fr_70px_60px_60px_50px] md:grid-cols-[36px_minmax(160px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px_44px]" : "grid-cols-[1fr_70px_60px_60px_50px] md:grid-cols-[minmax(180px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px]"} gap-1 md:gap-2 p-2 px-2 md:px-4 border-b border-slate-100 bg-slate-50/50 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-slate-400`}>
+                    <div className={`grid ${!isReadOnly ? "grid-cols-[32px_1fr_70px_60px_60px_50px] md:grid-cols-[36px_minmax(160px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px_44px]" : "grid-cols-[1fr_70px_60px_60px_50px] md:grid-cols-[minmax(180px,1.4fr)_100px_90px_100px_minmax(90px,1fr)_85px_65px_65px_60px]"} gap-1 md:gap-2 p-2 px-2 md:px-4 border-b border-slate-100 bg-slate-50/50 text-[10px] md:text-xs font-bold uppercase tracking-wider text-slate-400`}>
                         {!isReadOnly && (
                             <div className="flex items-center justify-center">
                                 <input
@@ -386,14 +386,14 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             <div className="bg-slate-100/80 backdrop-blur-md p-2 md:p-3 px-3 md:px-6 border-t border-slate-200 flex justify-between items-center sticky bottom-0 z-10">
                 <div className="flex gap-3 md:gap-6">
                     <div className="flex flex-col">
-                        <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-400 leading-none mb-1">{t('inventaire.detail.items_count')}</span>
+                        <span className="text-[10px] md:text-xs uppercase font-bold text-slate-400 leading-none mb-1">{t('inventaire.detail.items_count')}</span>
                         <span className="font-bold text-xs md:text-sm text-slate-700">{sortedLines.length}</span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-4">
                     <div className="text-right">
-                        <div className="text-[9px] md:text-[10px] uppercase font-bold text-slate-400 leading-none mb-1">{t('inventaire.detail.total_gap_value')}</div>
+                        <div className="text-[10px] md:text-xs uppercase font-bold text-slate-400 leading-none mb-1">{t('inventaire.detail.total_gap_value')}</div>
                         <div className={`text-base md:text-lg font-black font-mono ${totalEcartValeur > 0 ? "text-emerald-600" : totalEcartValeur < 0 ? "text-red-500" : "text-slate-400"}`}>
                             {totalEcartValeur > 0 ? '+' : ''}{formatCurrency(totalEcartValeur)}
                         </div>

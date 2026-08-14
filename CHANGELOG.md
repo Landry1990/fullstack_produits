@@ -2,6 +2,207 @@
 
 ---
 
+## 2026-08-14 (33) — Fix ticket caisse : masquer "part-patient" pour clients non professionnels
+
+### 🐛 Problème
+
+Sur **tous les tickets de caisse**, la ligne de paiement affichait le label
+`part-patient` dès que `part_patient > 0`, alors que ce wording ne concerne que
+les ventes en **tiers payant (clients professionnels)**.
+
+### 🔍 Cause
+
+`TicketTemplate.tsx` testait uniquement `paiement.part_patient > 0` et
+`paiement.part_assurance > 0` pour décider du libellé, sans vérifier le type de
+client. Le `Facture` expose pourtant `client_type: 'PARTICULIER' | 'PROFESSIONNEL'`.
+
+### ✅ Correction
+
+- Ajout de `isTiersPayant = facture?.client_type === 'PROFESSIONNEL'`.
+- `getPaymentRowLabel` n'affiche `part_patient` / `part_assurance` que si
+  `isTiersPayant` est vrai. Sinon, seul le libellé du mode de paiement s'affiche.
+
+### ✅ Vérifications
+
+- Lint : 0 erreur
+- Build : OK
+- Déploiement frontend Docker : OK
+
+### Fichier modifié
+
+- `frontend/frontend/src/components/printing/TicketTemplate.tsx`
+
+---
+
+## 2026-08-14 (32) — Retour au numéro FAC-XXXXXX à l'envoi à la caisse
+
+### 🐛 Problème
+
+L'envoi d'une vente à la caisse centralisée générait un numéro `DEV-XXXXXX` (devis)
+au lieu du numéro de facture `FAC-XXXXXX` attendu par les utilisateurs.
+
+### 🔍 Cause
+
+La feature Devis avait modifié `SaleFinalizer` pour créer une facture en statut
+`PROFORMA` avec le préfixe `DEV-` en mode centralisé. Le numéro `FAC-` n'était
+généré qu'à la validation ultérieure en caisse.
+
+### ✅ Correction
+
+`SaleFinalizer.finalize_sale` valide désormais la facture immédiatement en mode
+centralisé, comme en mode direct. Le numéro `FAC-XXXXXX` est attribué dès
+l'envoi à la caisse, le stock est décrémenté et le mouvement de stock est créé.
+Les paiements restent enregistrés au moment de l'encaissement en caisse.
+
+### ✅ Vérifications
+
+- Tests backend `test_facturation.py` mis à jour
+- Tests backend `test_stock_movements_comprehensive.py` mis à jour
+- `SaleFinalizer` : mode centralisé `VALIDEE` + `FAC-`
+- `SaleValidator` : inchangé, continue de gérer le remplacement `DEV-` vers `FAC-`
+
+### Fichiers modifiés
+
+- `backend/api/services/sale_finalizer.py`
+- `backend/api/tests/test_facturation.py`
+- `backend/api/tests/test_stock_movements_comprehensive.py`
+
+---
+
+## 2026-08-14 (31) — Responsive : fix modales, popovers, textes [9px], tables
+
+### 🐛 Problèmes détectés lors de l'autopsie responsive
+
+- **Textes microscopiques** : 24 occurrences de `text-[9px]` dans les composants utilisateur,
+  difficiles à lire sur mobile.
+- **Modales trop larges** : `max-w-2xl`, `max-w-7xl`, `max-w-md`, `max-w-sm` sans `max-w-full`,
+  ce qui provoque un débordement sur écrans < 640px.
+- **Popovers fixes** : `w-[320px] sm:w-[580px]` et `w-[300px] sm:w-[450px]` dans les filtres
+  de rapports → overflow horizontal sur mobile.
+- **Tables OK** : la plupart des tables larges (`InventaireDataTab`, `CommandeProductTable`)
+  sont déjà dans un wrapper `overflow-x-auto`. Seuls quelques `min-w` sont conservés pour
+  la lisibilité.
+
+### ✅ Corrections appliquées
+
+- **Textes** : `text-[9px]` → `text-[10px]` dans 6 composants utilisateur (CommandeForm,
+  CommandeDetails, SidebarCartRow, FacturationHeader/LeftPanel, InventaireProductSearch,
+  ProductSearch).
+- **Modales** :
+  - `FacturesTable` : `max-w-2xl` → `max-w-full sm:max-w-2xl`
+  - `StockUGReportShadcn` : `max-w-7xl` → `max-w-full sm:max-w-4xl lg:max-w-6xl`
+  - `PlanningOperateurs` : `max-w-md` / `max-w-sm` → `max-w-full sm:max-w-...`
+  - `Maintenance` : `max-w-md` → `max-w-full sm:max-w-md`
+- **Popovers** : `w-[320px] sm:w-[580px]` → `w-[min(90vw,580px)]`, et `w-[300px] sm:w-[450px]`
+  → `w-[min(90vw,450px)]` dans `ReportFilters`.
+- **InventaireDataTab** : `text-[9px] md:text-[10px]` → `text-[10px] md:text-xs`.
+
+### ✅ Vérifications
+
+- Lint frontend : 0 erreurs (3 warnings coverage connus)
+- Build frontend : OK
+- Déploiement frontend Docker : OK
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx`
+- `frontend/frontend/src/components/facturation/SidebarCartRow.tsx`
+- `frontend/frontend/src/components/facturation/FacturationHeader.tsx`
+- `frontend/frontend/src/components/facturation/FacturationLeftPanel.tsx`
+- `frontend/frontend/src/components/inventaire/editor/InventaireProductSearch.tsx`
+- `frontend/frontend/src/components/common/ProductSearch/index.tsx`
+- `frontend/frontend/src/components/inventaire/editor/InventaireDataTab.tsx`
+- `frontend/frontend/src/components/caisse/FacturesTable.tsx`
+- `frontend/frontend/src/components/StockUGReportShadcn.tsx`
+- `frontend/frontend/src/components/PlanningOperateurs.tsx`
+- `frontend/frontend/src/components/Maintenance.tsx`
+- `frontend/frontend/src/components/dashboard/reports/ReportFilters.tsx`
+
+---
+
+## 2026-08-14 (30) — Fix traductions page états-inventaires
+
+### 🐛 Problème
+
+La page `États d'inventaire` (`/etats-inventaire`) affichait les **clés de traduction brutes**
+(`stock:etats.title`, `stock:etats.export_excel`, etc.) au lieu du texte traduit.
+
+### 🔍 Cause
+
+Les 47 clés de traduction du bloc `etats` étaient imbriquées dans :
+
+- `fr/stock.json > inventaire > etats`
+- `en/stock.json > inventaire > etats`
+
+Mais le composant `EtatsInventaire.tsx` appelle `t('stock:etats.xxx')` — i18n ne
+retrouvait pas les clés et affichait les strings d'entrée.
+
+### ✅ Correction
+
+Déplacement du bloc `etats` à la racine de `stock.json` pour les deux langues
+(47 clés chacun).
+
+### ✅ Vérifications
+
+- `etats.title` = "Listing d'inventaire" (fr) / "Inventory listing" (en)
+- Build frontend OK
+- Déploiement frontend Docker OK
+
+### Fichiers modifiés
+
+- `frontend/frontend/public/locales/fr/stock.json` (bloc `etats` remonté à la racine)
+- `frontend/frontend/public/locales/en/stock.json` (bloc `etats` remonté à la racine)
+
+---
+
+## 2026-08-14 (29) — Optimisation useJournalCaisse : extraction 3 hooks (711 → 447 lignes, -37%)
+
+### 🧩 Frontend : Extraction useJournalCaissePrinting (222 lignes)
+
+La logique d'impression du rapport de clôture (~140 lignes de template HTML) extraite vers
+`hooks/caisse/useJournalCaissePrinting.ts`. Gère :
+- Génération du HTML du ticket de clôture (80mm)
+- Détails par mode de paiement, mouvements manuels + existants
+- Calcul écart (réel - théorique)
+- Utilise des refs pour `actualAmount` et `closingTotals` afin d'éviter les dépendances
+  circulaires avec le closing hook
+
+### 🧩 Frontend : Extraction useJournalCaisseClosing (183 lignes)
+
+La logique de clôture de caisse extraite vers `hooks/caisse/useJournalCaisseClosing.ts`. Gère :
+- `openClosingModal` : préparation des totaux depuis `serverTotals` ou `totauxParMode`
+- `handleCloseCaisse` : POST `caisse/cloturer/` + impression automatique
+- `manualMovements`, `fondDeCaisse`, `computedTheorique` (useMemo)
+- États : `isClosingModalOpen`, `closingTotals`, `actualAmount`
+
+### 🧩 Frontend : Extraction useJournalCaisseShift (87 lignes)
+
+La détection de shift caissier extraite vers `hooks/caisse/useJournalCaisseShift.ts`. Gère :
+- Appel `caisse/get_user_shift/` pour détecter l'activité du caissier
+- Callbacks `onShiftDetected` / `onNoShift` pour notifier le parent
+- États : `detectedShift`, `isDetectingShift`
+
+### 📊 Résultat
+
+`useJournalCaisse.ts` : 711 → 447 lignes (-37%). Il reste la logique de données/filtres
+(fetch, pagination, filteredItems, groupedItems, totauxParMode) qui est cohérente.
+
+### ✅ Vérifications
+
+- Lint frontend : 0 erreurs
+- Build frontend : OK (PaymentModal désormais en chunk séparé 11.50 kB)
+- Déploiement frontend Docker OK
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useJournalCaisse.ts` (711 → 447 lignes, délégation 3 hooks)
+- `frontend/frontend/src/hooks/caisse/useJournalCaissePrinting.ts` (nouveau, 222 lignes)
+- `frontend/frontend/src/hooks/caisse/useJournalCaisseClosing.ts` (nouveau, 183 lignes)
+- `frontend/frontend/src/hooks/caisse/useJournalCaisseShift.ts` (nouveau, 87 lignes)
+
+---
+
 ## 2026-08-14 (28) — Optimisation caisse backend + frontend : split mixins, bulk_create, lazy-load, hooks
 
 ### 🏗️ Backend : Split caisse.py en mixins (813 → 222 lignes, -73%)

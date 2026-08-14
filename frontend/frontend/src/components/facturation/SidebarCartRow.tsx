@@ -67,7 +67,7 @@ export default React.memo(function SidebarCartRow({
              <h4 className={`text-sm font-semibold truncate leading-tight ${isReturn ? 'text-red-600' : 'text-slate-800'}`} title={ligne.produit.name}>
                {ligne.produit.name}
              </h4>
-             {ligne.isPromis && <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200">{t('facturation:cart_extra.promis')}</Badge>}
+             {ligne.isPromis && <Badge variant="secondary" className="text-[10px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200">{t('facturation:cart_extra.promis')}</Badge>}
            </div>
            {ligne.produit.stock !== undefined && (
               <div className={`text-[10px] leading-none mt-1 ${ligne.produit.stock <= 0 ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>

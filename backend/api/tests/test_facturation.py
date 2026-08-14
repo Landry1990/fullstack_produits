@@ -74,11 +74,11 @@ class FinaliserVenteTests(APITestCase):
         self.assertEqual(lines.count(), 1)
         self.assertEqual(lines.first().quantity, 3)
 
-    def test_finaliser_centralized_creates_proforma(self):
+    def test_finaliser_centralized_validates(self):
         """
-        With centralized_cash_register=True, finaliser creates a PROFORMA
-        facture waiting for the central cashier. No stock decrement and no
-        payment should happen at this stage.
+        With centralized_cash_register=True, finaliser validates the invoice
+        immediately and generates a FAC-XXXXXX number. Stock is decremented but
+        payment is recorded later at the central caisse.
         """
         # Create a stock lot for FIFO allocation
         TestDataFactory.create_stock_lot(
@@ -95,12 +95,13 @@ class FinaliserVenteTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         facture = Facture.objects.order_by('-id').first()
-        # Facture should be PROFORMA until encashed at the central caisse
-        self.assertEqual(facture.status, Facture.Status.PROFORMA)
+        # Facture is validated immediately with a FAC-XXXXXX number
+        self.assertEqual(facture.status, Facture.Status.VALIDEE)
+        self.assertTrue(facture.numero_facture.startswith('FAC-'))
 
-        # Stock is NOT decremented immediately in centralized mode
+        # Stock is decremented in centralized mode
         self.produit.refresh_from_db()
-        self.assertEqual(self.produit.stock, initial_stock)
+        self.assertEqual(self.produit.stock, initial_stock - 3)
 
         # No payment should be recorded at the point of sale
         self.assertEqual(Caisse.objects.filter(facture=facture).count(), 0)

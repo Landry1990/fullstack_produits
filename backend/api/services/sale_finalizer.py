@@ -23,6 +23,7 @@ from ..models import (
     Promis,
     get_next_ticket_session,
 )
+from .sale_validator import SaleValidator
 
 logger = logging.getLogger(__name__)
 
@@ -133,14 +134,16 @@ class SaleFinalizer:
             if (montant_verse is not None or montant_rendu is not None) else None
         )
 
-        # 10. Validation or Proforma
+        # 10. Validation (caisse centralisée ou directe)
+        validation_data = {
+            'use_pending_discount': loyalty_data.get('use_pending_discount', False),
+            'points_to_use': loyalty_data.get('points_to_use', 0),
+            'paiement_immediat': sum(Decimal(str(p['montant'])) for p in paiements_data),
+            'mode_paiement': data.get('mode_paiement')
+        }
+        SaleValidator.validate_invoice(facture, validation_user, validation_data)
+
         if centralized:
-            facture.status = Facture.Status.PROFORMA
-            # Générer un numéro de devis DEV-XXXXXX si pas déjà numéroté
-            if not facture.numero_facture:
-                facture.numero_facture = f"DEV-{facture.id:06d}"
-            facture._skip_audit = True
-            facture.save(update_fields=['status', 'numero_facture'])
             # Notifier la caisse centralisée en temps réel via WebSocket
             try:
                 from channels.layers import get_channel_layer
@@ -158,15 +161,6 @@ class SaleFinalizer:
                     )
             except Exception as ws_err:
                 logger.warning(f"WebSocket broadcast caisse échoué: {ws_err}")
-        else:
-            validation_data = {
-                'use_pending_discount': loyalty_data.get('use_pending_discount', False),
-                'points_to_use': loyalty_data.get('points_to_use', 0),
-                'paiement_immediat': sum(Decimal(str(p['montant'])) for p in paiements_data),
-                'mode_paiement': data.get('mode_paiement')
-            }
-            from .sale_validator import SaleValidator
-            SaleValidator.validate_invoice(facture, validation_user, validation_data)
 
         # 11. Payments (direct mode only)
         if not centralized and paiements_data:

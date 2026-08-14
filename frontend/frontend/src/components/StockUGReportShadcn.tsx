@@ -442,7 +442,7 @@ export default function StockUGReportShadcn() {
 
       {/* Supplier Details Dialog */}
       <Dialog open={!!selectedSupplier} onOpenChange={() => setSelectedSupplier(null)}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-full sm:max-w-4xl lg:max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedSupplier?.fournisseur_nom}

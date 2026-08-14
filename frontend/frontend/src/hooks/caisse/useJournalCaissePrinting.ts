@@ -6,7 +6,7 @@ import { formatDate, formatDateTime } from '../../utils/dateUtils';
 import { getPaymentModeLabel } from '../../config/paymentModes';
 import type { PharmacySettings } from '../../types';
 
-interface ClosingPrintData {
+export interface ClosingPrintData {
   date_debut?: string | null;
   start_date?: string | null;
   date_fin?: string | null;
@@ -36,18 +36,23 @@ interface MovementPrintItem {
 
 interface UseJournalCaissePrintingParams {
   pharmacySettings: PharmacySettings | null | undefined;
-  actualAmount: string;
-  closingTotals: ClosingPrintData | null;
+  /** Ref vers actualAmount (string) — mis à jour par le closing hook */
+  actualAmountRef: React.MutableRefObject<string>;
+  /** Ref vers closingTotals — mis à jour par le closing hook */
+  closingTotalsRef: React.MutableRefObject<ClosingPrintData | null>;
 }
 
 /**
  * Gère l'impression du rapport de clôture de caisse.
  * Extrait de useJournalCaisse.ts (~140 lignes de HTML/template).
+ *
+ * Utilise des refs pour actualAmount et closingTotals afin d'éviter
+ * les dépendances circulaires avec le closing hook.
  */
 export function useJournalCaissePrinting({
   pharmacySettings,
-  actualAmount,
-  closingTotals,
+  actualAmountRef,
+  closingTotalsRef,
 }: UseJournalCaissePrintingParams) {
   const { t } = useTranslation(['cash_journal', 'common']);
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
@@ -60,7 +65,7 @@ export function useJournalCaissePrinting({
 
   const handleImprimerCloture = useCallback(
     (dataToPrint?: ClosingPrintData) => {
-      const data: ClosingPrintData = dataToPrint || closingTotals || {};
+      const data: ClosingPrintData = dataToPrint || closingTotalsRef.current || {};
 
       const win = window.open('about:blank', '_blank', 'width=800,height=600');
       if (win) {
@@ -72,7 +77,7 @@ export function useJournalCaissePrinting({
           : '--';
 
         const totalTheorique = data.montant_theorique ?? data.total_theorique ?? 0;
-        const montantReel = data.montant_reel != null ? Number(data.montant_reel) : normalizeNumberInput(actualAmount);
+        const montantReel = data.montant_reel != null ? Number(data.montant_reel) : normalizeNumberInput(actualAmountRef.current);
         // Solde à justifier = théorique backend (inclut recouvrements + fond + entrées - sorties)
         const soldeOp = totalTheorique;
 
@@ -206,7 +211,7 @@ export function useJournalCaissePrinting({
         win.print();
       }
     },
-    [pharmacySettings, actualAmount, closingTotals, currentLocale, currencySymbol, t, formatCurrencyLocal]
+    [pharmacySettings, actualAmountRef, closingTotalsRef, currentLocale, t, formatCurrencyLocal]
   );
 
   return {
