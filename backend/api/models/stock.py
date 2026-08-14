@@ -123,7 +123,7 @@ class StockLot(models.Model):
         help_text="Référence à la ligne de commande (si applicable)"
     )
     fournisseur = models.ForeignKey(
-        'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True
+        'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True, db_index=True
     )
     fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
     quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")

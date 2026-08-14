@@ -218,11 +218,12 @@ class FactureSerializer(serializers.ModelSerializer):
     def get_is_remise_auto(self, obj):
         if not obj.remise or obj.remise <= 0:
             return False
-        for fp in obj.produits.all():
-            # free_quantity tracks promotion-given free units; promotion_applied field does not exist
-            if getattr(fp, 'promotion_applied', False) or (fp.free_quantity or 0) > 0:
-                return True
-        return False
+        # Use annotated value if available (set by the view's prefetch), else fall back to a single query
+        has_promo = getattr(obj, '_has_promo_lines', None)
+        if has_promo is not None:
+            return has_promo
+        # Single aggregate query instead of loading all lines
+        return obj.produits.filter(free_quantity__gt=0).exists()
 
 
 class FacturePrintSerializer(serializers.ModelSerializer):
@@ -273,25 +274,32 @@ class FacturePrintSerializer(serializers.ModelSerializer):
         return ''
 
     def get_montant_recu(self, obj):
-        return sum(p.montant for p in obj.paiements.all())
+        total = obj.paiements.aggregate(total=Sum('montant'))['total']
+        return total or Decimal('0.00')
 
     def get_montant_rendu(self, obj):
         return Decimal('0.00')
 
     def get_mode_reglement(self, obj):
-        paiements = obj.paiements.all()
-        if not paiements:
+        # Use values_list to avoid loading full Caisse objects
+        modes_raw = list(obj.paiements.values_list('mode_paiement', flat=True))
+        if not modes_raw:
             return 'Non réglé'
+
+        # Map of mode_paiement codes to display names (from Caisse model choices)
+        from ..models import Caisse
+        mode_choices = dict(Caisse._meta.get_field('mode_paiement').choices) if Caisse._meta.get_field('mode_paiement').choices else {}
+
         modes = set()
-        for p in paiements:
-            display = p.get_mode_paiement_display()
+        for raw in modes_raw:
+            display = mode_choices.get(raw)
             if display:
                 modes.add(str(display))
-            elif p.mode_paiement:
-                modes.add(str(p.mode_paiement))
+            elif raw:
+                modes.add(str(raw))
             else:
                 modes.add('Inconnu')
-        return ', '.join(modes)
+        return ', '.join(sorted(modes))
 
     def get_tva_analysis(self, obj):
         analysis = obj.get_tva_analysis()

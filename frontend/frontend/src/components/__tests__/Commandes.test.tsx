@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Commandes from '../Commandes'
 
 // Mock des libs externes
@@ -121,17 +122,26 @@ vi.mock('../../hooks/useSearchNavigation', () => ({
   })
 }))
 
+const renderWithContext = (ui: React.ReactElement) => {
+    const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } }
+    });
+    return render(
+        <QueryClientProvider client={queryClient}>
+            <MemoryRouter>
+                {ui}
+            </MemoryRouter>
+        </QueryClientProvider>
+    );
+};
+
 describe('Commandes Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('renders correctly and displays command list', () => {
-    render(
-      <MemoryRouter>
-        <Commandes />
-      </MemoryRouter>
-    )
+    renderWithContext(<Commandes />)
 
     // Vérifier que le titre est affiché
     expect(screen.getByText(/Gestion des Commandes/i)).toBeInTheDocument()
@@ -141,11 +151,7 @@ describe('Commandes Component', () => {
   })
   
   it('shows "Nouvelle Commande" button', () => {
-    render(
-      <MemoryRouter>
-        <Commandes />
-      </MemoryRouter>
-    )
+    renderWithContext(<Commandes />)
     
     const newBtn = screen.getByRole('button', { name: /Nouvelle Commande/i })
     expect(newBtn).toBeInTheDocument()

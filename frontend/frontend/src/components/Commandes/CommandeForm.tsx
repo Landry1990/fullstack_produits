@@ -1,11 +1,10 @@
-import React, { type FormEvent, type RefObject, useState, useCallback } from 'react';
+import React, { type FormEvent, type RefObject, useState, useCallback, lazy, Suspense } from 'react';
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save, ScanLine } from 'lucide-react';
+import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save, ScanLine, AlertTriangle } from 'lucide-react';
 import CommandeProductTable from './CommandeProductTable';
 import { formatCurrency } from '../../utils/formatters';
-import ExportCommandeModal from './ExportCommandeModal';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
 import { Select } from '../ui/Select';
@@ -13,14 +12,16 @@ import { ProductSearch, type SearchResult } from '../common/ProductSearch';
 import { cn } from '../../lib/utils';
 import { useDataMatrixScanner } from '../../hooks/useDataMatrixScanner';
 import DataMatrixScanBar from './DataMatrixScanBar';
-import DuplicateLotModal from './DuplicateLotModal';
+
+const ExportCommandeModal = lazy(() => import('./ExportCommandeModal'));
+const DuplicateLotModal = lazy(() => import('./DuplicateLotModal'));
 
 interface FieldConfig {
     name: string;
     editable: boolean;
 }
 
-interface CommandeFormProps {
+export interface CommandeFormProps {
     // View State
     viewMode: 'CREATE' | 'EDIT' | 'DETAILS';
     selectedCommande: Commande | null;
@@ -297,7 +298,7 @@ export default function CommandeForm({
                       className="size-9 text-slate-500"
                       onClick={() => {
                         if (commandeProduits.length === 0) {
-                          toast(t('orders:messages.csv_empty_order'), { icon: '⚠️' });
+                          toast(t('orders:messages.csv_empty_order'), { icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> });
                           return;
                         }
                         setIsExportModalOpen(true);
@@ -452,23 +453,31 @@ export default function CommandeForm({
             active={datamatrixEnabled && (viewMode === 'CREATE' || viewMode === 'EDIT')}
           />
 
-          <DuplicateLotModal
-            isOpen={!!pendingDuplicateProduct}
-            product={pendingDuplicateProduct ?? null}
-            existingLines={commandeProduits.filter(cp =>
-              (typeof cp.produit === 'object' ? cp.produit?.id : cp.produit) === pendingDuplicateProduct?.id
-            )}
-            onAddNewLine={() => handleDuplicateAddNewLine?.()}
-            onIncrementExisting={(i) => handleDuplicateIncrementExisting?.(i)}
-            onCancel={() => setPendingDuplicateProduct?.(null)}
-          />
+          {pendingDuplicateProduct && (
+            <Suspense fallback={null}>
+              <DuplicateLotModal
+                isOpen={!!pendingDuplicateProduct}
+                product={pendingDuplicateProduct ?? null}
+                existingLines={commandeProduits.filter(cp =>
+                  (typeof cp.produit === 'object' ? cp.produit?.id : cp.produit) === pendingDuplicateProduct?.id
+                )}
+                onAddNewLine={() => handleDuplicateAddNewLine?.()}
+                onIncrementExisting={(i) => handleDuplicateIncrementExisting?.(i)}
+                onCancel={() => setPendingDuplicateProduct?.(null)}
+              />
+            </Suspense>
+          )}
 
           {/* Modal d'export */}
-          <ExportCommandeModal
-            isOpen={isExportModalOpen}
-            onClose={() => setIsExportModalOpen(false)}
-            commande={selectedCommande}
-          />
+          {isExportModalOpen && (
+            <Suspense fallback={null}>
+              <ExportCommandeModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                commande={selectedCommande}
+              />
+            </Suspense>
+          )}
         </div>
     );
 }

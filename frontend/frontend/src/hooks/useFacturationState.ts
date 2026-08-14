@@ -25,6 +25,8 @@ import { useSecureCartOperations } from './useSecureCartOperations'
 import { useDevisLoader } from './useDevisLoader'
 import { useFacturationImport } from './useFacturationImport'
 
+export type FacturationState = ReturnType<typeof useFacturationState>
+
 export function useFacturationState() {
   const { t } = useTranslation(['prescriptions', 'common', 'facturation', 'sales'])
   const queryClient = useQueryClient()

@@ -205,6 +205,10 @@
         "select_client": "Veuillez sélectionner un client",
         "add_product": "Veuillez ajouter au moins un produit"
     },
+    "pending": {
+        "replace_title": "Remplacer le panier ?",
+        "replace_message": "Le panier actuel n'est pas vide. Voulez-vous le remplacer par la vente en attente ?"
+    },
     "modification_mode": {
         "title": "Mode Modification de Facture",
         "original_total": "Total Initial",
