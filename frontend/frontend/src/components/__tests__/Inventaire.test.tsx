@@ -26,6 +26,7 @@ vi.mock('../../hooks/inventaire/useInventaireList', () => ({
         loading: false,
         totalCount: 1,
         currentPage: 1,
+        totalPages: 1,
         nextPage: null,
         prevPage: null,
         fetchInventaires: vi.fn(),

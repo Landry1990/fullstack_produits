@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   PlusCircle, Settings, Calendar, BarChart3, TrendingUp,
   Trophy, Zap, AlertCircle, Target, RefreshCw, Download,
-  ArrowUpRight, Activity, FileSpreadsheet,
+  ArrowUpRight, FileSpreadsheet,
   TrendingDown, PackageX, CreditCard, Archive, Clock, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +19,7 @@ import { Progress } from './shadcn/progress';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle, DialogTrigger,
+  DialogHeader, DialogTitle,
 } from './shadcn/dialog';
 
 import { formatCurrency } from '../utils/formatters';

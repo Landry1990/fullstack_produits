@@ -2,6 +2,818 @@
 
 ---
 
+## 2026-08-14 (28) — Optimisation caisse backend + frontend : split mixins, bulk_create, lazy-load, hooks
+
+### 🏗️ Backend : Split caisse.py en mixins (813 → 222 lignes, -73%)
+
+`caisse.py` (813 lignes) était un god view. Les actions métier complexes sont désormais
+dans des mixins dédiés :
+
+| Fichier | Lignes | Responsabilité |
+|---|---|---|
+| `caisse_mixins/reporting_mixin.py` | 385 | `ventes_diverses`, `get_totals`, `page_init`, `get_user_shift`, `_serialize_allocation` |
+| `caisse_mixins/cloture_mixin.py` | 268 | `cloturer` (clôture caisse, mouvements manuels, audit, fermeture poste) |
+| `caisse.py` | 222 | ViewSet de base : queryset, `create`, `perform_create` + `ClotureCaisseViewSet` |
+
+`CaisseViewSet` hérite désormais de `CaisseReportingMixin, CaisseClotureMixin`. Toutes les
+routes `@action` sont préservées via héritage.
+
+### ⚡ Backend : bulk_create + agrégations combinées dans cloturer
+
+- **Mouvements manuels** : `MouvementCaisse.objects.create()` en boucle → `bulk_create()` (1 requête au lieu de N)
+- **Ventes + recouvrement** : 2 requêtes `aggregate(Sum)` séparées → 1 requête avec `filter=Q()` conditionnel
+- **Entrées + sorties** : 2 requêtes `aggregate(Sum)` séparées → 1 requête avec `filter=Q()` conditionnel
+- **Recalcul après mouvements manuels** : même optimisation appliquée au recalcul
+
+Sur une clôture avec 5 mouvements manuels : ~12 requêtes → ~6 requêtes.
+
+### ⚡ Backend : get_totals — élimination requête GROUP BY redondante
+
+`modes_globaux` (breakdown par mode global) était une 3e requête GROUP BY sur `transactions`,
+mais `details_ventes` + `details_recouv` contiennent les mêmes données. Désormais `details`
+est dérivé en Python par fusion des deux dicts → 1 requête GROUP BY en moins.
+
+### ⚡ Backend : page_init — .values() pour les users
+
+La boucle sur `AuthUser.objects.filter(is_active=True)` instanciait un objet User par ligne
+pour n'en extraire que 4 champs. Remplacé par `.values('id', 'username', 'first_name', 'last_name')`
+→ évite l'instanciation des modèles.
+
+### ⚡ Backend : caisse_poste.py — déduplication queryset + agrégation combinée
+
+- `fermer()` : le queryset `Caisse.objects.filter(...)` était construit 2 fois (montant total
+  + détails par mode). Désormais défini une seule fois et réutilisé.
+- `recap_session()` (poste unique) : `aggregate(Sum)` + `values('facture').distinct().count()`
+  → combinés en un seul `aggregate(total=Sum, count=Count(distinct))`.
+
+### 📦 Frontend : Lazy-load de 7 modals caisse
+
+Les modals suivants étaient importés statiquement dans `CaisseCentralisee.tsx`, gonflant le
+chunk caisse même quand les modals n'étaient pas ouverts. Désormais lazy-loadés avec
+`React.lazy()` + `Suspense` + rendu conditionnel :
+
+- `PaymentModal` (333 lignes)
+- `CouponDetailsModal` (303 lignes)
+- `OpenCashSessionModal` (235 lignes)
+- `CaisseTicketPreviewModal` (234 lignes)
+- `ClosingReportModal` (124 lignes)
+- `BulkCancelModal` (117 lignes)
+- `CouponGenerateModal` (79 lignes)
+
+Les modals ne sont plus montés dans le DOM tant qu'ils ne sont pas ouverts.
+
+### 🧩 Frontend : Extraction useCaisseRealtime hook
+
+La logique WebSocket + polling de fallback (~75 lignes) extraite de `CaisseCentralisee.tsx`
+vers `hooks/caisse/useCaisseRealtime.ts`. Gère :
+- Connexion WebSocket `/ws/caisse_centralisee/` avec ping 30s et reconnexion 3s
+- Polling de fallback toutes les 30s
+- Filtre par `poste_caisse_id` via ref (évite stale closure)
+- Expose `refresh()` pour le raccourci clavier R
+
+### 🧩 Frontend : Extraction useCaisseSession hook
+
+L'initialisation multi-caisse + le polling du récap session (~65 lignes) extraits vers
+`hooks/caisse/useCaisseSession.ts`. Gère :
+- Chargement initial : `parametres/`, `postes-caisses/`, postes actifs (moi + tous)
+- Détection mode multi-caisse
+- Polling `recap_session/` toutes les 10s
+- Possède l'état `selectedPosteCaisseId` (source de vérité)
+
+`CaisseCentralisee.tsx` est passé de 793 à ~580 lignes (-27%).
+
+### ✅ Vérifications
+
+- Lint frontend : 0 erreurs (3 warnings connus sur coverage/)
+- Build frontend : OK (chunk caisse 287.75 kB / gzip 78.75 kB)
+- Tests backend caisse : 6 tests OK (test_caisse_integrity + test_cash_closure)
+- Déploiement frontend + backend Docker OK
+- Imports backend vérifiés : CaisseViewSet avec 5 actions, caisse_poste OK
+
+### Fichiers modifiés
+
+- `backend/api/views/ventes/caisse.py` (813 → 222 lignes, mixins + nettoyage imports)
+- `backend/api/views/ventes/caisse_mixins/__init__.py` (nouveau)
+- `backend/api/views/ventes/caisse_mixins/reporting_mixin.py` (nouveau, 385 lignes)
+- `backend/api/views/ventes/caisse_mixins/cloture_mixin.py` (nouveau, 268 lignes)
+- `backend/api/views/ventes/caisse_poste.py` (dédup queryset + agrégation combinée)
+- `frontend/frontend/src/components/CaisseCentralisee.tsx` (lazy-load 7 modals + 2 hooks extraits)
+- `frontend/frontend/src/hooks/caisse/useCaisseRealtime.ts` (nouveau, 110 lignes)
+- `frontend/frontend/src/hooks/caisse/useCaisseSession.ts` (nouveau, 102 lignes)
+
+---
+
+## 2026-08-13 (27) — Optimisation commandes P3 : lazy-load modals, Map mémoïsé, N+1 suggestions/promis
+
+### 📦 Frontend P1 : Lazy-load ExportCommandeModal + DuplicateLotModal
+
+Les deux modals étaient importés statiquement dans `CommandeForm.tsx`, gonflant le chunk
+Commandes même quand les modals n'étaient pas ouverts. Ils sont désormais lazy-loadés avec
+`React.lazy()` + `Suspense`.
+
+**Impact** : chunk `Commandes` 142 kB → 131.69 kB (-7.3%, -2 kB gzip).
+
+### ⚡ Frontend perf : Map mémoïsé pour tri par fournisseur
+
+Le tri de la liste des commandes par fournisseur faisait `fournisseurs.find(f => f.id === x)`
+pour chaque comparaison — O(n) par comparaison, soit O(n² log n) au total.
+
+Remplacé par un `Map<number, string>` mémoïsé avec `useMemo` — O(1) par comparaison.
+
+### ⚡ Backend : Fix N+1 dans suggestions.py
+
+`suggestions.py:669` — le queryset `Produit.objects.filter(...)` manquait
+`select_related('fournisseur')`, mais la boucle accédait à `produit.fournisseur.id` et
+`produit.fournisseur.name` (lignes 713, 714, 728) → N+1 sur le FK fournisseur.
+
+**Fix** : ajout de `.select_related('fournisseur')` → 1 requête au lieu de N+1.
+
+### ⚡ Backend : Fix N+1 dans promis.py (bulk_annuler)
+
+`promis.py:254-283` — la méthode `bulk_annuler` créait les `MouvementStock` individuellement
+dans une boucle avec `MouvementStock.objects.create()` → N requêtes INSERT.
+
+**Fix** : accumulation dans une liste + `MouvementStock.objects.bulk_create()` → 1 requête.
+Bonus : `produit.save()` individuels → `Produit.objects.bulk_update()` → 1 requête.
+
+Sur une annulation de 20 promis : ~40 requêtes → ~2 requêtes.
+
+### ✅ Vérifications
+
+- Lint frontend : 0 erreurs
+- Build frontend : OK (chunk Commandes 131.69 kB / gzip 33.31 kB)
+- Tests backend : 211 tests, 0 échec lié aux changements
+- Déploiement frontend + backend OK
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx` (lazy-load 2 modals + Suspense)
+- `frontend/frontend/src/hooks/useCommandesState.tsx` (fournisseurNameMap useMemo)
+- `backend/api/views/commandes/suggestions.py` (select_related('fournisseur'))
+- `backend/api/views/commandes/promis.py` (bulk_create + bulk_update dans bulk_annuler)
+
+---
+
+## 2026-08-13 (26) — Split backend commandes.py en mixins (1066 → 264 lignes, -75%)
+
+### 🏗️ P1 : Extraction en mixins
+
+`commandes.py` (1066 lignes après extraction PDF) était encore un god view. Les méthodes
+métier complexes sont désormais dans des mixins dédiés :
+
+| Fichier | Lignes | Responsabilité |
+|---|---|---|
+| `commandes/cloture_mixin.py` | 562 | `cloturer()` (optimistic locking, stock, PMP, lots, promis) + `annuler_reception()` |
+| `commandes/bulk_actions_mixin.py` | 314 | `ajouter_produit_auto()`, `ajouter_produits_bulk()`, `bulk_delete()`, `merge()` |
+| `commandes/commandes.py` | 264 | ViewSet de base : queryset, list, CRUD, lock/unlock, imprimer (délégation PDF) |
+| `commandes/pdf_generation.py` | 344 | (déjà extrait à l'étape 24) |
+
+`CommandeViewSet` hérite désormais de `CommandeClotureMixin, CommandeBulkActionsMixin` en plus
+des mixins existants. Toutes les routes `@action` sont préservées via héritage.
+
+### 🧹 Nettoyage imports
+
+`commandes.py` : imports nettoyés — supprimé `io`, `datetime`, `Decimal`, `transaction`,
+`HttpResponse`, `audit_helpers`, `idempotent_action`, `sudo_utils`, et les models non utilisés
+(`AuditLog`, `FactureProduit`, `MouvementStock`, `Produit`, `Promis`).
+
+### ✅ Vérifications
+
+- Import Python OK : toutes les méthodes présentes via `dir(CommandeViewSet)`.
+- Tests backend : 211 tests, 0 échec lié aux changements.
+- Logs de test : "Cloture OK" et "Bulk delete" depuis les mixins.
+- Déploiement backend OK.
+
+### Fichiers créés
+
+- `backend/api/views/commandes/cloture_mixin.py` (562 lignes)
+- `backend/api/views/commandes/bulk_actions_mixin.py` (314 lignes)
+
+### Fichiers modifiés
+
+- `backend/api/views/commandes/commandes.py` (1066 → 264 lignes)
+
+---
+
+## 2026-08-13 (25) — Refactor frontend : extraction hooks useCommandesState (handlers, recalc, keyboard)
+
+### 🔧 Extraction de 3 hooks depuis `useCommandesState.tsx`
+
+Le hook `useCommandesState.tsx` (~750 lignes) contenait des handlers d'actions, un useEffect de
+recalcul des prix et un useEffect de gestion clavier inline. Ces responsabilités sont désormais
+dans des hooks dédiés :
+
+| Fichier | Responsabilité |
+|---|---|
+| `hooks/commandes/useCommandeHandlers.ts` | `onCloture`, `onDelete`, `onMettreEnAttente`, `onAnnulerReception`, `onImprimer`, `onBulkDelete`, `handleCreateAvoirFromCommande` |
+| `hooks/commandes/useCommandeRecalc.ts` | useEffect de recalcul des prix DIR (debounce 500ms sur tauxChange/fraisCoefficient) |
+| `hooks/commandes/useCommandeKeyboard.ts` | useEffect de gestion clavier globale (touche Delete sur lignes sélectionnées) |
+
+`useCommandesState.tsx` importe et délègue désormais aux 3 nouveaux hooks. Le return object
+et tous les comportements (validation, confirmations, sudo, navigation, traductions) sont
+préservés exactement. Les imports inutiles (`CommandeProduit`) ont été nettoyés.
+
+---
+
+## 2026-08-13 (24) — Optimisation commandes backend : extraction PDF + fix N+1
+
+### 🏗️ P1 : Extraction PDF generation (commandes.py 1435 → 1066 lignes, -26%)
+
+Le code de génération PDF (bon de réception + étiquettes) était inline dans `commandes.py`.
+Il est désormais dans un module dédié :
+
+| Fichier | Lignes | Responsabilité |
+|---|---|---|
+| `commandes/pdf_generation.py` | 344 | `generate_reception_pdf()`, `generate_labels_pdf()`, `_header_footer()` |
+| `commandes/commandes.py` | 1066 | ViewSet métier (CRUD, clôture, merge, annulation) |
+
+Les méthodes `imprimer_reception` et `imprimer_etiquettes` du ViewSet ne sont plus que des
+délégations de 2-3 lignes vers le module PDF.
+
+### ⚡ P0 : Fix N+1 queries (3 hotspots)
+
+#### 1. `cloturer()` — 4 × `Produit.objects.get()` par produit remplacés par 2 batch queries
+
+**Avant** : Après chaque `Produit.objects.filter().update()`, le code faisait
+`Produit.objects.get(id=pid)` pour chaque produit resyncé → N requêtes.
+
+**Après** : Une seule `Produit.objects.filter(id__in=...).values_list('id', 'stock')`
+récupère toutes les valeurs en une fois → 2 requêtes au lieu de 2N.
+
+#### 2. `bulk_delete()` — lot check par commande remplacé par batch query
+
+**Avant** : Pour chaque commande, `StockLot.filter(commande_produit__commande=cmd)` +
+`FactureProduitAllocation.filter(stock_lot__in=lots).exists()` → 2N requêtes.
+
+**Après** : Une seule query récupère tous les lots utilisés, puis un set lookup en mémoire
+détermine les commandes protégées → 2 requêtes au lieu de 2N.
+
+#### 3. `ajouter_produits_bulk()` — fournisseur lookup par produit remplacé par batch
+
+**Avant** : Pour chaque produit sans fournisseur, `CommandeProduit.filter(produit=p)
+.order_by('-commande__date').first()` → N requêtes.
+
+**Après** : Une seule query récupère tous les `CommandeProduit` avec `select_related
+('commande__fournisseur')` pour les produits concernés → 1 requête au lieu de N.
+
+### 📦 Prefetch PDF (bonus)
+
+`generate_reception_pdf()` et `generate_labels_pdf()` utilisent désormais
+`commande.produits.select_related('produit').all()` au lieu de `commande.produits.all()`
+pour éviter les N+1 sur `item.produit` lors de la génération PDF.
+
+### ✅ Vérifications
+
+- Import Python OK : `CommandeViewSet` + `pdf_generation` chargés avec succès.
+- Tests backend : 211 tests, 0 échec lié aux changements (2 erreurs pré-existantes `pytest`).
+- Logs de clôture : "Cloture OK" pour toutes les commandes de test.
+- Logs de bulk delete : "Soft delete refused" et "Bulk delete failed" fonctionnent.
+- Déploiement backend OK.
+
+### Fichiers créés
+
+- `backend/api/views/commandes/pdf_generation.py` (344 lignes)
+
+### Fichiers modifiés
+
+- `backend/api/views/commandes/commandes.py` (1435 → 1066 lignes)
+  - Imports nettoyés (reportlab retiré, pdf_generation ajouté)
+  - `header_footer()` supprimé (déplacé vers pdf_generation.py)
+  - `imprimer_reception()` : 90 lignes → 3 lignes (délégation)
+  - `imprimer_etiquettes()` : 280 lignes → 4 lignes (délégation)
+  - `cloturer()` : 4 N+1 `Produit.objects.get()` → 2 batch queries
+  - `bulk_delete()` : N+1 lot check → batch query unique
+  - `ajouter_produits_bulk()` : N+1 fournisseur lookup → batch query unique
+
+---
+
+## 2026-08-13 (23) — P2 : Split CartRow, extraction ClientSection, index DB, Vite manualChunks
+
+### 🏗️ P2-1 : Split CartRow.tsx en SidebarCartRow + TableCartRow
+
+`CartRow.tsx` (353 lignes) est désormais un dispatcher de 38 lignes qui délègue à deux composants spécialisés :
+
+| Fichier | Lignes | Responsabilité |
+|---|---|---|
+| `facturation/SidebarCartRow.tsx` | 177 | Rendu sidebar (layout vertical, inputs condensés) |
+| `facturation/TableCartRow.tsx` | 187 | Rendu table (TableRow, TableCell, inputs pleine largeur) |
+| `hooks/useCartRowState.ts` | 81 | Hook partagé : localQty, localPrice, localRemise, handlers |
+| `facturation/CartRow.tsx` | 38 | Dispatcher : `isSidebarStyle ? <SidebarCartRow/> : <TableCartRow/>` |
+
+### 🏗️ P2-4 : Extraction ClientSection.tsx (379 → 283 lignes, -25%)
+
+| Fichier | Lignes | Responsabilité |
+|---|---|---|
+| `facturation/AyantDroitSection.tsx` | 102 | Section ayant-droit (nouveau / sélection existant) |
+| `facturation/ClientInfoBadges.tsx` | 67 | Badges : solde dépôt, fidélité, récompense |
+| `facturation/ClientSection.tsx` | 283 | Orchestrateur (recherche, dropdown, keyboard nav) |
+
+### 🗄️ P2-2 : Index DB backend (migration `0231_p2_db_indexes`)
+
+Ajout de `db_index=True` sur 15 champs fréquemment filtrés :
+
+**Facture** : `client`, `poste_caisse`, `poste_vente`, `created_by` + 2 index composites (`poste_caisse, status, -date` et `created_by, -date`)
+
+**Caisse** : `facture`, `user`, `releve`
+
+**FactureProduit** : `stock_lot`
+
+**Produit** : `is_active`, `rayon`, `forme`, `groupe`
+
+**StockLot** : `fournisseur`
+
+**Commande** : `fournisseur`, `status`, `is_active`
+
+**CommandeProduit** : `commande`, `produit`
+
+**Client** : `is_active`, `client_type`
+
+**Fournisseur** : `is_active`
+
+Impact estimé : 30-70% d'accélération sur les requêtes de listing, caisse, rapports.
+
+### 📦 P2-3 : Vite manualChunks — main chunk 1,006 → 510 kB (-49%)
+
+Nouveaux chunks ajoutés dans `vite.config.ts` :
+
+| Chunk | Taille | Contenu |
+|---|---|---|
+| `feature-caisse` | 406 kB | CaisseCentralisee, JournalCaisse |
+| `feature-dashboard` | 218 kB | DashboardManagerShadcn, DashboardShadcn |
+| `feature-settings` | 151 kB | PharmacySettingsForm, GestionUtilisateurs, SystemAdmin |
+
+**Évolution du main chunk** : 1,066 kB → 1,006 kB (P0) → **510 kB** (P2)
+
+### ✅ Vérifications
+
+- `npm run lint` OK (0 erreurs).
+- `CartTable.test.tsx` : 9 tests OK.
+- `Facturation.test.tsx` : 3 tests OK (1 skipped).
+- `npm run build` OK (0 circular chunks).
+- Migration `0231_p2_db_indexes` appliquée avec succès.
+- Déploiement `all-full` OK (frontend + backend + migrations).
+
+### Fichiers créés (frontend)
+
+- `frontend/frontend/src/components/facturation/SidebarCartRow.tsx`
+- `frontend/frontend/src/components/facturation/TableCartRow.tsx`
+- `frontend/frontend/src/components/facturation/AyantDroitSection.tsx`
+- `frontend/frontend/src/components/facturation/ClientInfoBadges.tsx`
+- `frontend/frontend/src/hooks/useCartRowState.ts`
+
+### Fichiers modifiés (frontend)
+
+- `frontend/frontend/src/components/facturation/CartRow.tsx` (353 → 38 lignes, dispatcher)
+- `frontend/frontend/src/components/facturation/ClientSection.tsx` (379 → 283 lignes)
+- `frontend/frontend/vite.config.ts` (manualChunks étendus)
+
+### Fichiers modifiés (backend)
+
+- `backend/api/models/billing.py` (db_index + index composites)
+- `backend/api/models/products.py` (db_index)
+- `backend/api/models/stock.py` (db_index)
+- `backend/api/models/orders.py` (db_index)
+- `backend/api/models/clients.py` (db_index)
+- `backend/api/migrations/0231_p2_db_indexes.py` (nouvelle migration)
+
+---
+
+## 2026-08-13 (22) — Facturation frontend P1 : extraction Header/LeftPanel/RightPanel + CartRow/useLotDisplay/fefo
+
+### 🏗️ Extraction de `Facturation.tsx` (363 → 47 lignes, -87%)
+
+`Facturation.tsx` ne contient plus que l'orchestration de haut niveau. Tout le rendu est délégué à 3 nouveaux composants :
+
+| Composant | Lignes | Responsabilité |
+|---|---|---|
+| `facturation/FacturationHeader.tsx` | 165 | Header, bannière point de vente, mode modification, verrou, notifications |
+| `facturation/FacturationLeftPanel.tsx` | 109 | Client section, recherche produit, zone raccourcis |
+| `facturation/FacturationRightPanel.tsx` | 85 | Panier : header, alertes cliniques, CartTable, totaux, actions |
+| `Facturation.tsx` | 47 | Orchestration + layout + modales |
+
+### 🏗️ Extraction de `CartTable.tsx` (556 → 132 lignes, -76%)
+
+`CartTable.tsx` ne contient plus que l'orchestration (table header + map). La logique métier est déléguée :
+
+| Fichier | Lignes | Responsabilité |
+|---|---|---|
+| `facturation/CartRow.tsx` | 353 | Rendu d'une ligne (sidebar + table), inputs qty/price/remise, bouton lot |
+| `hooks/useLotDisplay.ts` | 87 | Hook : `lotDisplayText` + `lotTooltip` (FEFO, allocations manuelles, lot unique) |
+| `utils/fefo.ts` | 37 | Fonction pure `getFEFOPreview()` (tri par expiration + réception) |
+| `facturation/CartTable.tsx` | 132 | Orchestration : empty state + table header + map CartRow |
+
+### ✅ Vérifications
+
+- `npm run lint` OK (0 erreurs, 3 warnings sur `coverage/`).
+- `CartTable.test.tsx` : 9 tests OK.
+- `Facturation.test.tsx` : 3 tests OK (1 skipped).
+- `npm run build` OK.
+- Déploiement frontend OK.
+
+### Fichiers créés
+
+- `frontend/frontend/src/components/facturation/FacturationHeader.tsx`
+- `frontend/frontend/src/components/facturation/FacturationLeftPanel.tsx`
+- `frontend/frontend/src/components/facturation/FacturationRightPanel.tsx`
+- `frontend/frontend/src/components/facturation/CartRow.tsx`
+- `frontend/frontend/src/hooks/useLotDisplay.ts`
+- `frontend/frontend/src/utils/fefo.ts`
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Facturation.tsx` (réécrit : 363 → 47 lignes)
+- `frontend/frontend/src/components/facturation/CartTable.tsx` (réécrit : 556 → 132 lignes)
+- `frontend/frontend/src/components/__tests__/Facturation.test.tsx` (mocks nouveaux composants)
+
+---
+
+## 2026-08-13 (21) — Facturation frontend P0 : lazy-load modales, useConfirm, suppression casts `as unknown`
+
+### ⚡ Lazy-loading des modales
+
+8 modales de `FacturationModals.tsx` sont maintenant chargées à la demande (`React.lazy` + `Suspense`) :
+
+| Modale | Chunk séparé | Taille |
+|---|---|---|
+| `PaymentModal` | ✅ | 11.46 kB |
+| `PrescriptionScannerModal` | ✅ | 20.05 kB |
+| `StockResolutionHandler` | ✅ | 9.27 kB |
+| `OpenPointDeVenteModal` | ✅ | 7.28 kB |
+| `LotSelectionModal` | ✅ | 6.97 kB |
+| `OrdonnanceModal` | ✅ | 5.64 kB |
+| `SubstitutionModal` | ✅ | 2.86 kB |
+| `TicketPreviewModal` | ⚠️ | Reste dans le main chunk (import statique par `Ventes.tsx`) |
+
+### 📊 Impact sur le bundle
+
+| Chunk | Avant | Après | Réduction |
+|---|---|---|---|
+| Main `index-*.js` | 1,066.38 kB | **1,006.23 kB** | -60 kB (-5.6%) |
+
+### 🔧 Remplacement de `window.confirm()`
+
+- `useFacturationActions.ts` : `restaurerVente()` utilise maintenant `useConfirm()` (modal shadcn) au lieu de `window.confirm()`.
+- Clés i18n ajoutées : `facturation:pending.replace_title` et `facturation:pending.replace_message` (fr + en).
+- Tests `Facturation.test.tsx` mis à jour pour wrapper avec `ConfirmProvider`.
+
+### 🔧 Suppression des casts `as unknown`
+
+- `Facturation.tsx` : 2 occurrences `(hook as unknown).currentMarkup` → `hook.currentMarkup` (la propriété est déjà exportée par le hook).
+- `FacturationModals.tsx` : 1 occurrence `hook.setLignesFacture as unknown` → `hook.setLignesFacture` (le type correspond déjà).
+
+### ✅ Vérifications
+
+- `npm run lint` OK.
+- `Facturation.test.tsx` : 3 tests OK (1 skipped).
+- `npm run build` OK.
+- Déploiement frontend OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/facturation/FacturationModals.tsx` (lazy imports + Suspense)
+- `frontend/frontend/src/components/Facturation.tsx` (suppression casts)
+- `frontend/frontend/src/hooks/useFacturationActions.ts` (useConfirm)
+- `frontend/frontend/src/components/__tests__/Facturation.test.tsx` (ConfirmProvider + mocks)
+- `frontend/frontend/public/locales/fr/facturation.json` (clés i18n)
+- `frontend/frontend/public/locales/en/facturation.json` (clés i18n)
+
+---
+
+## 2026-08-13 (20) — Facturation backend P1 : refactoring calculate_totals, finaliser, magic strings
+
+### 🔧 Refactoring
+
+- **`Facture.calculate_totals()`** : la logique de calcul HT/TVA par ligne est extraite dans une méthode partagée `_compute_line_tva()`. Évite la duplication avec `get_tva_analysis()`.
+- **`Facture.get_tva_analysis()`** : utilise maintenant `values()` au lieu de `produits.all()` (ne charge plus les objets complets en mémoire) et appelle `_compute_line_tva()`.
+- **`FactureSalesMixin.finaliser()`** : divisé en 3 méthodes privées :
+  - `_parse_finaliser_data()` — extraction JSON/multipart
+  - `_validate_products()` — validation liste produits + somme rapide + remise
+  - `_compute_required_permissions()` — détermination des permissions Sudo
+  - Le corps de `finaliser()` passe de ~157 à ~60 lignes.
+- **`factures.py` destroy()** : suppression des magic strings `'PAY'`/`'VAL'` redondantes (déjà couvertes par `Facture.Status.VALIDEE`/`PAYEE`).
+
+### ✅ Vérifications
+
+- `python manage.py check` OK.
+- `api.tests.test_facturation` : 28 tests OK.
+- Déploiement backend OK.
+
+### Fichiers modifiés
+
+- `backend/api/models/billing.py`
+- `backend/api/views/ventes/facture_mixins/sales_actions.py`
+- `backend/api/views/ventes/factures.py`
+
+---
+
+## 2026-08-13 (19) — Facturation frontend P1 : extraction des modales et composants inline
+
+### 🔧 Refactoring
+
+- **`Facturation.tsx`** : extraction de 3 sous-composants pour réduire la taille du god component.
+  - `PosteRequisOverlay` (35 lignes) → `./facturation/PosteRequisOverlay.tsx` — overlay quand aucun poste de vente n'est actif.
+  - `ForceStockModal` (70 lignes) → `./facturation/ForceStockModal.tsx` — modal de confirmation de vente hors stock, avec navigation clavier.
+  - `FacturationModals` (345 lignes) → `./facturation/FacturationModals.tsx` — regroupe les 17 modales (PaymentModal, TicketPreview, StockResolution, PendingSales, Confirmation, Lot, ClientCreate, Ordonnance, ClientName, Help, Sudo, AlertMessage, DisplayAlert, Scanner, ForceStock, Substitution, OpenPointDeVente).
+- **`useFacturationState.ts`** : export du type `FacturationState` via `ReturnType<typeof useFacturationState>` pour permettre le typage des sous-composants.
+
+### 📊 Impact
+
+| Fichier | Avant | Après | Réduction |
+|---------|-------|-------|-----------|
+| `Facturation.tsx` | 817 lignes | 363 lignes | -56% |
+
+### ✅ Vérifications
+
+- `Facturation.test.tsx` : 3 tests OK (1 skipped).
+- `facturation/__tests__/` : 29 tests OK (4 fichiers).
+- `npm run lint` OK.
+- `npm run build` OK.
+- Déploiement frontend OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Facturation.tsx` (réécrit)
+- `frontend/frontend/src/components/facturation/PosteRequisOverlay.tsx` (nouveau)
+- `frontend/frontend/src/components/facturation/ForceStockModal.tsx` (nouveau)
+- `frontend/frontend/src/components/facturation/FacturationModals.tsx` (nouveau)
+- `frontend/frontend/src/hooks/useFacturationState.ts` (export type)
+
+---
+
+## 2026-08-13 (18) — Facturation backend P0 : N+1 queries et protection DoS
+
+### ⚡ Performance
+
+- **`FactureSerializer.get_is_remise_auto()`** : remplace la boucle Python sur `obj.produits.all()` par une seule requête `obj.produits.filter(free_quantity__gt=0).exists()`. Évite 1 query par facture sérialisée.
+- **`FacturePrintSerializer.get_montant_recu()`** : remplace la boucle Python `sum(p.montant for p in obj.paiements.all())` par un aggregate SQL `Sum('montant')`.
+- **`FacturePrintSerializer.get_mode_reglement()`** : remplace l'itération sur les objets Caisse par `values_list('mode_paiement', flat=True)` — ne charge plus les objets complets en mémoire.
+
+### 🔒 Sécurité
+
+- **`bulk_delete`** : limite à `MAX_BULK_DELETE = 1000` factures par appel (anti-DoS).
+- **`bulk_cancel`** :
+  - Limite à `MAX_BULK_CANCEL = 1000` factures par appel.
+  - Si `all_pending=true` sans `batch_size` et > 1000 factures → erreur 400 avec message explicite.
+  - Si `facture_ids` contient > 1000 IDs → erreur 400.
+- **`finaliser`** : limite à `MAX_PRODUCTS_PER_INVOICE = 500` lignes produits par facture (anti-DoS mémoire).
+
+### ✅ Vérifications
+
+- `python manage.py check` OK.
+- `api.tests.test_facturation` : 28 tests OK.
+- Déploiement backend OK.
+
+### Fichiers modifiés
+
+- `backend/api/serializers/billing.py`
+- `backend/api/views/ventes/facture_mixins/bulk_actions.py`
+- `backend/api/views/ventes/facture_mixins/sales_actions.py`
+
+---
+
+## 2026-08-13 (17) — Bundle : lazy-load de QuickCreateProductModal et ProductDetailsModal
+
+### ⚡ Performance
+
+- `QuickCreateProductModal` et `ProductDetailsModal` ne sont plus importés statiquement dans `Commandes.tsx`.
+- Ils sont maintenant chargés à la demande via `React.lazy()` + `<Suspense>`.
+- Le chunk `Commandes` passe de **142.54 kB à 140.54 kB**.
+- Bonus : les warnings `act(...)` dans `Commandes.test.tsx` disparaissent (le modal n'est plus rendu eagerly pendant les tests).
+
+### ✅ Vérifications
+
+- `Commandes.test.tsx` OK (2 tests passent, **0 warning act**).
+- `npm run lint` OK.
+- `npm run build` OK.
+- Déploiement frontend OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes.tsx`
+
+---
+
+## 2026-08-13 (16) — Bundle : lazy-load de bwip-js dans SimplePrintLabelsModal
+
+### ⚡ Performance
+
+- `bwip-js` (~963 kB) n'est plus chargé statiquement dans `SimplePrintLabelsModal`.
+- Import dynamique uniquement quand l'utilisateur choisit le code-barres DATAMATRIX.
+- Le chunk `SimplePrintLabelsModal` passe de **986 kB à 28 kB** (-97%).
+- `bwip-js` devient un chunk séparé chargé à la demande.
+
+### ✅ Vérifications
+
+- `Commandes.test.tsx` OK.
+- `npm run lint` OK.
+- `npm run build` OK.
+- Déploiement frontend OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/SimplePrintLabelsModal.tsx`
+
+---
+
+## 2026-08-13 (15) — Commandes : extraction de la navigation dans un hook dédié
+
+### ♻️ Refactoring
+
+- Extraction de la logique de navigation / changement de vue depuis `useCommandesState.tsx` vers `useCommandeNavigation.tsx`.
+- Gère : `openCreateView`, `openEditView`, `handleViewDetails`, `handleBackToList`, `handleApplySuggestions`, restauration F5, cadencier/alerts, forcedType, openDetailsId.
+- `useCommandesState.tsx` passe de **~1028 à ~748 lignes**.
+
+### ✅ Vérifications
+
+- `Commandes.test.tsx` OK (2 tests passent).
+- `npm run lint` OK.
+- `npm run build` OK.
+- Déploiement frontend OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useCommandesState.tsx`
+- `frontend/frontend/src/hooks/commandes/useCommandeNavigation.tsx` (nouveau)
+
+---
+
+## 2026-08-13 (14) — Commandes : extraction de l'auto-save dans un hook dédié
+
+### ♻️ Refactoring
+
+- Extraction de l'auto-save toutes les 30 secondes depuis `useCommandesState.tsx` vers `useCommandeAutosave.tsx`.
+- Le hook encapsule le `setInterval`, la gestion du `autoSaveStateRef` et la logique d'appel à `handleSaveCommande` en arrière-plan.
+- `useCommandesState.tsx` passe de **~1066 à ~1028 lignes**.
+
+### ✅ Vérifications
+
+- `Commandes.test.tsx` OK (2 tests passent).
+- `npm run lint` OK.
+- `npm run build` OK.
+- Déploiement frontend OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useCommandesState.tsx`
+- `frontend/frontend/src/hooks/commandes/useCommandeAutosave.tsx` (nouveau)
+
+---
+
+## 2026-08-13 (13) — Commandes : extraction des lignes produit dans un hook dédié
+
+### ♻️ Refactoring
+
+- Extraction de la gestion des lignes produit depuis `useCommandesState.tsx` vers `useCommandeProductLines.tsx`.
+- Gère : sélection, ajout, suppression, doublons, sélection multiple, tri, navigation clavier, prix/marge/TVA, modal transfert.
+- `useCommandesState.tsx` passe de **~1489 lignes à ~1066 lignes**.
+
+### ✅ Vérifications
+
+- `Commandes.test.tsx` OK (2 tests passent).
+- `npm run lint` OK (seuls les warnings coverage restent).
+- `npm run build` OK.
+- Déploiement frontend OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useCommandesState.tsx`
+- `frontend/frontend/src/hooks/commandes/useCommandeProductLines.tsx` (nouveau)
+
+---
+
+## 2026-08-13 (12) — Commandes : lazy-load des modales et réduction du bundle
+
+### ⚡ Performance / Bundle
+
+- Lazy-loading des modales `SuggestionCommandeModal`, `TransferCommandeModal`, `MergeCommandesModal` et `SimplePrintLabelsModal` dans `Commandes.tsx`.
+- Résultat : le chunk `Commandes` passe de **1 156 kB à 140 kB** (gzippé ~35 kB).
+- Les modales ne sont chargées que lors de leur ouverture.
+
+### ♻️ Refactoring
+
+- Utilisation de `React.lazy` + `Suspense` avec fallback `null` pour les modales optionnelles.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/Commandes.tsx`
+
+---
+
+## 2026-08-13 (11) — Commandes : corrections performances critiques
+
+### ⚡ Performance
+
+- **N+1 cadencier/alertes** : remplacement des appels individuels `produitService.getById` par un appel bulk côté backend (`POST /api/produits/bulk-by-ids/`).
+  - Nouvel endpoint backend `bulk-by-ids` dans `ProduitBulkMixin`.
+  - `produitService.getByIds(ids)` côté frontend.
+  - Réduction drastique du nombre de requêtes HTTP lors de la création depuis le cadencier ou les alertes stock.
+
+- **Import CSV** : suppression du chargement de tout le catalogue produit en mémoire.
+  - Nouvel endpoint backend `by-cips` (`POST /api/produits/by-cips/`) qui renvoie uniquement les produits correspondant aux CIPs du fichier CSV.
+  - `produitService.getByCips(cips)` côté frontend.
+  - `useCommandeCsv` n'appelle plus `produits/for_import/`, seulement les CIPs pertinents.
+
+- **Recherche produit** : passage de `pageSize: 1000` à `pageSize: 100` dans `useCommandesState` pour limiter le volume de données transféré et rendu.
+
+### ♻️ Refactoring
+
+- Suppression du code de matching fuzzy par nom dans l'import CSV (inutilisé car la colonne libellé est vide dans ce format).
+
+- **Fichiers modifiés** :
+  - `backend/api/views/produit_actions/bulk_ops.py`
+  - `frontend/frontend/src/services/produitService.ts`
+  - `frontend/frontend/src/hooks/commandes/useCommandeCsv.tsx`
+  - `frontend/frontend/src/hooks/useCommandesState.tsx`
+
+---
+
+## 2026-08-13 (10) — Commandes : poursuite découpage hook + lint global
+
+### ♻️ Refactoring
+
+- Extraction de la sélection et fusion de commandes dans `hooks/commandes/useCommandeListSelection.tsx`.
+- Extraction de l'import/export CSV dans `hooks/commandes/useCommandeCsv.tsx`.
+- Suppression de ~320 lignes de logique de `useCommandesState.tsx`.
+
+### 🔧 Corrections lint
+
+- Suppression d'imports inutilisés dans `DashboardManagerShadcn.tsx`.
+- Renommage d'argument inutilisé dans `ProduitFormModal.tsx`.
+- Renommage d'erreur catch inutilisée dans `useFacturationActions.ts`.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/hooks/useCommandesState.tsx`
+  - `frontend/frontend/src/hooks/commandes/useCommandeListSelection.tsx` (nouveau)
+  - `frontend/frontend/src/hooks/commandes/useCommandeCsv.tsx` (nouveau)
+  - `frontend/frontend/src/components/DashboardManagerShadcn.tsx`
+  - `frontend/frontend/src/components/ProduitFormModal.tsx`
+  - `frontend/frontend/src/hooks/useFacturationActions.ts`
+  - `CHANGELOG.md`
+
+---
+
+## 2026-08-13 (9) — Commandes : P0 (toasts Lucide, typage, découpage hook)
+
+### ♿ Accessibilité / UI
+
+- Remplacement des emoji dans les toasts du module commandes par des icônes Lucide (`Package`, `Trash2`, `Handshake`, `RefreshCw`, `AlertTriangle`) dans `useCommandesState.tsx` et `CommandeForm.tsx`.
+
+### 🏷️ Typage
+
+- Export des interfaces `CommandeDetailsProps` et `CommandeFormProps`.
+- Remplacement des casts `as any` dans `Commandes.tsx` par des casts typés vers les interfaces de props.
+- Correction de `viewMode: viewMode as unknown` dans le hook vers `viewMode as 'CREATE' | 'EDIT' | 'DETAILS'`.
+
+### ♻️ Refactoring
+
+- Extraction des helpers CSV import (`parseCsvPrice`, `calculateNameScore`) vers `utils/commandes/csvImportHelpers.ts`.
+- Extraction du calcul des totaux de commande dans `hooks/commandes/useCommandeTotals.ts`.
+- Renommage de `useCommandesState.ts` en `useCommandesState.tsx` (utilisation de JSX dans les toasts).
+- Suppression de variables inutilisées `refetchCommandes` / `refetchProduits` (renommées avec préfixe `_`).
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/Commandes.tsx`
+  - `frontend/frontend/src/components/Commandes/CommandeForm.tsx`
+  - `frontend/frontend/src/components/Commandes/CommandeDetails.tsx`
+  - `frontend/frontend/src/hooks/useCommandesState.tsx` (renommé depuis `.ts`)
+  - `frontend/frontend/src/hooks/commandes/useCommandeTotals.ts` (nouveau)
+  - `frontend/frontend/src/utils/commandes/csvImportHelpers.ts` (nouveau)
+  - `CHANGELOG.md`
+
+---
+
+## 2026-08-13 (8) — Tests : correction suite complète
+
+### 🧪 Tests
+
+- Correction de `Commandes.test.tsx` : ajout du `QueryClientProvider` manquant autour du composant testé.
+- Correction de `StatistiquesFournisseur.test.tsx` : création d'un `QueryClient` frais par test pour éviter les interférences de cache ; réécriture de l'assertion de filtrage par dates pour vérifier le nombre d'appels à l'endpoint `statistiques/ca_par_fournisseur/` plutôt que le nombre total d'appels axios.
+- Suite de tests complète : **267 passed, 7 skipped, 0 failed**.
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/__tests__/Commandes.test.tsx`
+  - `frontend/frontend/src/components/__tests__/StatistiquesFournisseur.test.tsx`
+  - `CHANGELOG.md`
+
+---
+
+## 2026-08-13 (7) — Inventaire : tests
+
+### 🧪 Tests
+
+- Mise à jour du mock `useInventaireList` dans `Inventaire.test.tsx` pour inclure `totalPages`.
+- Ajout de tests unitaires pour les helpers typés de `types/inventory.ts` (`isProduitObject`, `getProduitId`, `getProduitName`).
+- Exécution de la suite de tests : **tests du module Inventaire OK**.
+- Échecs pré-existants hors périmètre inventaire :
+  - `Commandes.test.tsx` : `No QueryClient set`
+  - `StatistiquesFournisseur.test.tsx` : appel axios en double
+
+- **Fichiers modifiés** :
+  - `frontend/frontend/src/components/__tests__/Inventaire.test.tsx`
+  - `frontend/frontend/src/types/__tests__/inventory.test.ts` (nouveau)
+  - `CHANGELOG.md`
+
+---
+
 ## 2026-08-13 (6) — Inventaire : typage restant
 
 ### 🏷️ Typage

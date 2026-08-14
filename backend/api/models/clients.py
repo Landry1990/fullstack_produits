@@ -27,7 +27,7 @@ class Fournisseur(models.Model):
     )
     email = models.EmailField(unique=True, blank=True, null=True)
     is_active = models.BooleanField(
-        default=True,
+        default=True, db_index=True,
         help_text="Fournisseur actif (visible dans les recherches)"
     )
     deleted_by = models.ForeignKey(
@@ -135,7 +135,7 @@ class Client(models.Model):
         ('PARTICULIER', 'Particulier'),
         ('PROFESSIONNEL', 'Professionnel'),
     ]
-    client_type = models.CharField(max_length=20, choices=CLIENT_TYPE_CHOICES, default='PARTICULIER')
+    client_type = models.CharField(max_length=20, choices=CLIENT_TYPE_CHOICES, default='PARTICULIER', db_index=True)
     plafond = models.DecimalField(max_digits=12, decimal_places=2, default=-1.00)
     taux_couverture = models.DecimalField(
         max_digits=5, 
@@ -217,7 +217,7 @@ class Client(models.Model):
 
     created_at = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(
-        default=True,
+        default=True, db_index=True,
         help_text="Client actif (visible dans les recherches)"
     )
     deleted_by = models.ForeignKey(

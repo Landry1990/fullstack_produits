@@ -4,6 +4,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { safeStorage } from '../utils/storage';
+import { useConfirm } from './useConfirm';
 import type { Facture, LigneFacture, TotalsData, User, Client, LotAllocation } from '../types';
 import type { PosteVente } from '../services/cashSessionService';
 import type { OrdonnanceData } from '../components/OrdonnanceModal';
@@ -57,6 +58,7 @@ export function useFacturationActions({
     myActivePoste,
     postesCaisses: _postesCaisses
 }: UseFacturationActionsProps) {
+    const confirm = useConfirm();
 
     const handleProforma = useCallback(async () => {
         if (cart.lignesFacture.length === 0) return
@@ -122,7 +124,7 @@ export function useFacturationActions({
             clientsHook.setSelectedClient(null)
             clientsHook.setManualClientName('')
             ui.setTicketCaisse(null)
-        } catch (error) {
+        } catch (_error) {
             try { printWindow.close() } catch { /* ignore */ }
             toast.error("Erreur lors de la création du devis")
         } finally {
@@ -476,11 +478,18 @@ export function useFacturationActions({
         _resetSale()
     }, [cart.lignesFacture.length, ui, t, _resetSale])
 
-    const restaurerVente = useCallback((id: number) => {
+    const restaurerVente = useCallback(async (id: number) => {
         const vente = pendingSales.ventesEnAttente.find((v) => v.id === id)
         if (!vente) return
         if (cart.lignesFacture.length > 0) {
-            if (!window.confirm('Le panier actuel n\'est pas vide. Voulez-vous le remplacer par la vente en attente ?')) return
+            const ok = await confirm({
+                title: t('facturation:pending.replace_title', { defaultValue: 'Remplacer le panier ?' }),
+                message: t('facturation:pending.replace_message', { defaultValue: 'Le panier actuel n\'est pas vide. Voulez-vous le remplacer par la vente en attente ?' }),
+                confirmText: t('common:confirm', { defaultValue: 'Confirmer' }),
+                cancelText: t('common:cancel', { defaultValue: 'Annuler' }),
+                variant: 'warning',
+            })
+            if (!ok) return
         }
         cart.setLignesFacture(vente.lignes)
         clientsHook.setUseManualClient(vente.useManualClient)
@@ -499,7 +508,7 @@ export function useFacturationActions({
         pendingSales.deletePendingSale(id)
         pendingSales.setShowPendingSales(false)
         toast.success(t('facturation:messages.save_success'))
-    }, [pendingSales, cart, clientsHook, ui, t])
+    }, [pendingSales, cart, clientsHook, ui, t, confirm])
 
     const supprimerVenteEnAttente = useCallback((id: number) => {
         ui.setConfirmModal({

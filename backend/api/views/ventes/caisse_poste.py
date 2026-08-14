@@ -199,12 +199,15 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
                 "detail": f"Impossible de fermer : {count} vente(s) en attente de règlement."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Calculer le montant total encaissé
-        montant_encaisse = Caisse.objects.filter(
+        # OPTIMISATION : définir paiements_qs une seule fois (était dupliqué)
+        paiements_qs = Caisse.objects.filter(
             facture__poste_vente=poste,
             date_paiement__gte=poste.date_ouverture,
             statut='completee'
-        ).exclude(mode_paiement__in=['en_compte', 'depot']).aggregate(total=Sum('montant'))['total'] or Decimal(0)
+        ).exclude(mode_paiement__in=['en_compte', 'depot'])
+
+        # Calculer le montant total encaissé
+        montant_encaisse = paiements_qs.aggregate(total=Sum('montant'))['total'] or Decimal(0)
 
         poste.est_actif = False
         poste.date_fermeture = timezone.now()
@@ -217,12 +220,6 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         hide_amounts = request.data.get('hide_amounts', pharmacy_hide_setting)
 
         # Détails par mode de paiement
-        paiements_qs = Caisse.objects.filter(
-            facture__poste_vente=poste,
-            date_paiement__gte=poste.date_ouverture,
-            statut='completee'
-        ).exclude(mode_paiement__in=['en_compte', 'depot'])
-
         details_par_mode = {}
         if not hide_amounts:
             for item in paiements_qs.values('mode_paiement').annotate(total=Sum('montant')):
@@ -338,15 +335,17 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
             statut='completee'
         ).exclude(mode_paiement__in=['en_compte', 'depot'])
 
-        total_general = paiements.aggregate(t=Sum('montant'))['t'] or Decimal(0)
+        # OPTIMISATION : total + count en UNE seule requête agrégée
+        agg = paiements.aggregate(total=Sum('montant'), count=Count('facture', distinct=True))
+        total_general = agg['total'] or Decimal(0)
+        nb_transactions = agg['count'] or 0
+
         modes_data = paiements.values('mode_paiement').annotate(total=Sum('montant'))
         details = {
             item['mode_paiement']: float(item['total'])
             for item in modes_data
             if item['total']
         }
-
-        nb_transactions = paiements.values('facture').distinct().count()
         fond = Decimal(str(poste.fond_de_caisse)) if poste.fond_de_caisse else Decimal(0)
 
         return Response({

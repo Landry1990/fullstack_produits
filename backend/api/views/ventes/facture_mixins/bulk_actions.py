@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 class FactureBulkMixin:
     """Actions en lot : bulk_delete, supprimer_brouillons, bulk_cancel."""
 
+    MAX_BULK_DELETE = 1000
+    MAX_BULK_CANCEL = 1000
+
     @action(detail=False, methods=['post'])
     @transaction.atomic
     def bulk_delete(self, request):
@@ -31,6 +34,12 @@ class FactureBulkMixin:
         ids = request.data.get('ids', [])
         if not ids:
             return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(ids) > self.MAX_BULK_DELETE:
+            return Response(
+                {'detail': f'Trop de factures à supprimer en une fois (max {self.MAX_BULK_DELETE}). Veuillez réduire la sélection.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Filtrer les factures supprimables (Brouillon ou Annulée)
         factures_to_delete = Facture.objects.filter(
@@ -122,6 +131,11 @@ class FactureBulkMixin:
                 status__in=[Facture.Status.BROUILLON, Facture.Status.PROFORMA, Facture.Status.VALIDEE]
             ).order_by('id')
             total_remaining = all_pending_qs.count()
+            if total_remaining > self.MAX_BULK_CANCEL and not batch_size:
+                return Response(
+                    {'detail': f'{total_remaining} factures en attente. Trop pour une seule opération (max {self.MAX_BULK_CANCEL}). Utilisez batch_size pour traiter par lots.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             if batch_size:
                 factures = all_pending_qs[:batch_size]
             else:
@@ -130,6 +144,11 @@ class FactureBulkMixin:
             ids = request.data.get('facture_ids', [])
             if not ids:
                 return Response({'detail': 'Aucune facture sélectionnée.'}, status=status.HTTP_400_BAD_REQUEST)
+            if len(ids) > self.MAX_BULK_CANCEL:
+                return Response(
+                    {'detail': f'Trop de factures à annuler en une fois (max {self.MAX_BULK_CANCEL}). Veuillez réduire la sélection.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             total_remaining = len(ids)
             if batch_size:
                 ids = ids[:batch_size]

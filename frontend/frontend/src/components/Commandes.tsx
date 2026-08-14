@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCommandesState } from '../hooks/useCommandesState';
@@ -15,17 +15,20 @@ function scrollMainToTop() {
 }
 
 import CommandeList from './Commandes/CommandeList';
-import CommandeForm from './Commandes/CommandeForm';
-import CommandeDetails from './Commandes/CommandeDetails';
+import CommandeForm, { type CommandeFormProps } from './Commandes/CommandeForm';
+import CommandeDetails, { type CommandeDetailsProps } from './Commandes/CommandeDetails';
 
-import QuickCreateProductModal from './Commandes/QuickCreateProductModal';
-import SimplePrintLabelsModal from './SimplePrintLabelsModal';
 import SudoValidationModal from './common/SudoValidationModal';
-import TransferCommandeModal from './Commandes/TransferCommandeModal';
-import MergeCommandesModal from './Commandes/MergeCommandesModal';
-import SuggestionCommandeModal from './Commandes/SuggestionCommandeModal';
-import { ProductDetailsModal } from './products/modals/ProductDetailsModal';
 import { useProduit, useProduitLots, useProduitStats, useProduitAchats, useProduitHistory } from '../hooks/useProduits';
+
+const QuickCreateProductModal = lazy(() => import('./Commandes/QuickCreateProductModal'));
+const ProductDetailsModal = lazy(() =>
+  import('./products/modals/ProductDetailsModal').then((m) => ({ default: m.ProductDetailsModal }))
+);
+const SimplePrintLabelsModal = lazy(() => import('./SimplePrintLabelsModal'));
+const TransferCommandeModal = lazy(() => import('./Commandes/TransferCommandeModal'));
+const MergeCommandesModal = lazy(() => import('./Commandes/MergeCommandesModal'));
+const SuggestionCommandeModal = lazy(() => import('./Commandes/SuggestionCommandeModal'));
 
 interface CommandesProps {
     forcedType?: 'LOC' | 'DIR' | 'DIV';
@@ -147,71 +150,77 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
       {state.viewMode === 'DETAILS' && state.selectedCommande && (
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <CommandeDetails {...(detailsProps as any)} />
+          <CommandeDetails {...(detailsProps as CommandeDetailsProps)} />
         </div>
       )}
 
       {(state.viewMode === 'CREATE' || state.viewMode === 'EDIT') && (
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <CommandeForm {...(formProps as any)} onViewProductDetails={handleViewProductDetails} onEditProduct={(id: number) => setEditProductId(id)} />
+          <CommandeForm {...(formProps as CommandeFormProps)} onViewProductDetails={handleViewProductDetails} onEditProduct={(id: number) => setEditProductId(id)} />
         </div>
       )}
 
       {state.isSuggestionModalOpen && (
-        <SuggestionCommandeModal 
-          onClose={() => state.setIsSuggestionModalOpen(false)}
-          onApply={(products, supplierId) => {
-            modals.handleApplySuggestions(products, supplierId);
-            state.setIsSuggestionModalOpen(false);
-          }}
-          fournisseurs={modals.fournisseurs}
-          produitsList={modals.produitsList}
-        />
+        <Suspense fallback={null}>
+          <SuggestionCommandeModal
+            onClose={() => state.setIsSuggestionModalOpen(false)}
+            onApply={(products, supplierId) => {
+              modals.handleApplySuggestions(products, supplierId);
+              state.setIsSuggestionModalOpen(false);
+            }}
+            fournisseurs={modals.fournisseurs}
+            produitsList={modals.produitsList}
+          />
+        </Suspense>
       )}
 
-      <QuickCreateProductModal
-        open={state.isCreateProduitModalOpen}
-        onClose={() => state.setIsCreateProduitModalOpen(false)}
-        onCreated={modals.handleProduitCreated}
-        rayons={modals.rayons}
-      />
+      {(state.isCreateProduitModalOpen || (editProductId && editProductData)) && (
+        <Suspense fallback={null}>
+          <QuickCreateProductModal
+            open={state.isCreateProduitModalOpen}
+            onClose={() => state.setIsCreateProduitModalOpen(false)}
+            onCreated={modals.handleProduitCreated}
+            rayons={modals.rayons}
+          />
 
-      <QuickCreateProductModal
-        open={!!editProductId && !!editProductData}
-        onClose={() => setEditProductId(null)}
-        onCreated={(updatedProduit: ProduitModel) => {
-          // Met à jour la ligne de commande concernée sans recharger la page
-          setCommandeProduits((prev) =>
-            prev.map((line) => {
-              const lineProduitId = line.produit && typeof line.produit === 'object' ? line.produit.id : line.produit;
-              if (lineProduitId !== updatedProduit.id) return line;
-              return {
-                ...line,
-                produit: typeof line.produit === 'object' ? { ...line.produit, ...updatedProduit } : updatedProduit,
-              };
-            })
-          );
-          // Rafraîchit les caches React Query concernés (recherche produit, détails, listes)
-          queryClient.setQueryData(['produit', updatedProduit.id], updatedProduit);
-          queryClient.invalidateQueries({ queryKey: ['products', 'search'] });
-          queryClient.invalidateQueries({ queryKey: ['produits'] });
-          setEditProductId(null);
-        }}
-        rayons={modals.rayons}
-        editProduct={editProductData || null}
-      />
+          <QuickCreateProductModal
+            open={!!editProductId && !!editProductData}
+            onClose={() => setEditProductId(null)}
+            onCreated={(updatedProduit: ProduitModel) => {
+              // Met à jour la ligne de commande concernée sans recharger la page
+              setCommandeProduits((prev) =>
+                prev.map((line) => {
+                  const lineProduitId = line.produit && typeof line.produit === 'object' ? line.produit.id : line.produit;
+                  if (lineProduitId !== updatedProduit.id) return line;
+                  return {
+                    ...line,
+                    produit: typeof line.produit === 'object' ? { ...line.produit, ...updatedProduit } : updatedProduit,
+                  };
+                })
+              );
+              // Rafraîchit les caches React Query concernés (recherche produit, détails, listes)
+              queryClient.setQueryData(['produit', updatedProduit.id], updatedProduit);
+              queryClient.invalidateQueries({ queryKey: ['products', 'search'] });
+              queryClient.invalidateQueries({ queryKey: ['produits'] });
+              setEditProductId(null);
+            }}
+            rayons={modals.rayons}
+            editProduct={editProductData || null}
+          />
+        </Suspense>
+      )}
 
       {state.showPrintLabelsModal && state.selectedCommande && (
-        <SimplePrintLabelsModal
-          commandeId={state.selectedCommande.id}
-          commandeNumero={state.selectedCommande.numero_facture || `#${state.selectedCommande.id}`}
-          commande={state.selectedCommande}
-          produitsList={modals.produitsList}
-          selectedRows={modals.selectedRows}
-          onClose={() => state.setShowPrintLabelsModal(false)}
-        />
+        <Suspense fallback={null}>
+          <SimplePrintLabelsModal
+            commandeId={state.selectedCommande.id}
+            commandeNumero={state.selectedCommande.numero_facture || `#${state.selectedCommande.id}`}
+            commande={state.selectedCommande}
+            produitsList={modals.produitsList}
+            selectedRows={modals.selectedRows}
+            onClose={() => state.setShowPrintLabelsModal(false)}
+          />
+        </Suspense>
       )}
 
       <SudoValidationModal
@@ -224,47 +233,53 @@ export default function Commandes({ forcedType }: CommandesProps) {
       />
 
       {state.isTransferModalOpen && (
-        <TransferCommandeModal
-          isOpen={state.isTransferModalOpen}
-          onClose={() => state.setIsTransferModalOpen(false)}
-          selectedProducts={modals.commandeProduits.filter((_, idx) => modals.selectedRows.has(idx))}
-          fournisseurs={modals.fournisseurs}
-          currentSupplierId={modals.newCommandeFournisseurId}
-          produitsList={modals.produitsList}
-          commandesEndpoint={modals.commandesEndpoint}
-          fournisseursEndpoint={modals.fournisseursEndpoint}
-          onTransferSuccess={modals.handleTransferSuccess}
-        />
+        <Suspense fallback={null}>
+          <TransferCommandeModal
+            isOpen={state.isTransferModalOpen}
+            onClose={() => state.setIsTransferModalOpen(false)}
+            selectedProducts={modals.commandeProduits.filter((_, idx) => modals.selectedRows.has(idx))}
+            fournisseurs={modals.fournisseurs}
+            currentSupplierId={modals.newCommandeFournisseurId}
+            produitsList={modals.produitsList}
+            commandesEndpoint={modals.commandesEndpoint}
+            fournisseursEndpoint={modals.fournisseursEndpoint}
+            onTransferSuccess={modals.handleTransferSuccess}
+          />
+        </Suspense>
       )}
 
       {state.isMergeModalOpen && (
-        <MergeCommandesModal
-          isOpen={state.isMergeModalOpen}
-          onClose={() => state.setIsMergeModalOpen(false)}
-          selectedOrderIds={modals.selectedOrderIds}
-          fournisseurs={modals.fournisseurs}
-          commandesEndpoint={modals.commandesEndpoint}
-          onMergeSuccess={modals.handleMergeSuccess}
-        />
+        <Suspense fallback={null}>
+          <MergeCommandesModal
+            isOpen={state.isMergeModalOpen}
+            onClose={() => state.setIsMergeModalOpen(false)}
+            selectedOrderIds={modals.selectedOrderIds}
+            fournisseurs={modals.fournisseurs}
+            commandesEndpoint={modals.commandesEndpoint}
+            onMergeSuccess={modals.handleMergeSuccess}
+          />
+        </Suspense>
       )}
 
       {detailProduitId && (
-        <ProductDetailsModal
-          isOpen={!!detailProduitId}
-          onClose={() => setDetailProduitId(null)}
-          selectedProduit={detailProduit || null}
-          activeTab={detailActiveTab}
-          setActiveTab={setDetailActiveTab}
-          lots={detailLots}
-          monthlyStats={detailStats}
-          achats={detailAchats}
-          stockHistory={detailHistory}
-          loadingHistory={detailHistoryLoading}
-          onMovementClick={() => {}}
-          onOpenAdjustment={() => {}}
-          onOpenEdit={() => {}}
-          onDelete={() => {}}
-        />
+        <Suspense fallback={null}>
+          <ProductDetailsModal
+            isOpen={!!detailProduitId}
+            onClose={() => setDetailProduitId(null)}
+            selectedProduit={detailProduit || null}
+            activeTab={detailActiveTab}
+            setActiveTab={setDetailActiveTab}
+            lots={detailLots}
+            monthlyStats={detailStats}
+            achats={detailAchats}
+            stockHistory={detailHistory}
+            loadingHistory={detailHistoryLoading}
+            onMovementClick={() => {}}
+            onOpenAdjustment={() => {}}
+            onOpenEdit={() => {}}
+            onDelete={() => {}}
+          />
+        </Suspense>
       )}
     </div>
   )

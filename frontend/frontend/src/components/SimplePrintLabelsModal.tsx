@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Loader2 } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
-import bwipjs from 'bwip-js'
 import PremiumModal from './common/PremiumModal'
 import { useTranslation, type TFunction } from 'react-i18next'
 import { Button } from './shadcn/button'
@@ -157,18 +156,23 @@ function DatamatrixCanvas({ cip, lot, expiration, size }: { cip: string; lot: st
 
   useEffect(() => {
     if (!canvasRef.current || !cip) return
-    try {
-      bwipjs.toCanvas(canvasRef.current, {
-        bcid: 'datamatrix',
-        text: gs1Data,
-        scale: 2,
-        height: Math.round(size / 3.78), // px → mm approx
-        width: Math.round(size / 3.78),
-        parsefnc: true,
+    let cancelled = false
+    import('bwip-js')
+      .then((mod) => {
+        if (cancelled) return
+        const bwip = (mod as { default?: typeof import('bwip-js') }).default || mod
+        ;(bwip as typeof import('bwip-js')).toCanvas(canvasRef.current!, {
+          bcid: 'datamatrix',
+          text: gs1Data,
+          scale: 2,
+          height: Math.round(size / 3.78),
+          width: Math.round(size / 3.78),
+          parsefnc: true,
+        })
       })
-    } catch { /* ignore */ }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gs1Data, size])
+      .catch(() => { /* ignore */ })
+    return () => { cancelled = true }
+  }, [gs1Data, size, cip])
 
   if (!cip) return null
   return <canvas ref={canvasRef} style={{ width: size, height: size }} />

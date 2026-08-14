@@ -44,7 +44,7 @@ class Commande(models.Model):
     frais_coefficient = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
     
     fournisseur = models.ForeignKey(
-        'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True
+        'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True, db_index=True
     )
     fournisseur_nom = models.CharField(max_length=255, null=True, blank=True) # Nom si fournisseur supprimé
     numero_facture = models.CharField(max_length=100, null=True, blank=True, unique=True)
@@ -54,7 +54,7 @@ class Commande(models.Model):
         null=True, blank=True, 
         help_text="Calculée automatiquement selon le délai du fournisseur."
     )
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.EN_PREPARATION)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.EN_PREPARATION, db_index=True)
     
     # Source de création (pour suivre les commandes auto-générées)
     source = models.CharField(
@@ -63,7 +63,7 @@ class Commande(models.Model):
         default=Source.MANUEL,
         help_text="Origine de la commande (manuelle ou auto-générée)"
     )
-    is_active = models.BooleanField(default=True, help_text="Commande active (non supprimée dans la corbeille)")
+    is_active = models.BooleanField(default=True, db_index=True, help_text="Commande active (non supprimée dans la corbeille)")
     deleted_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='deleted_commandes', help_text="Utilisateur ayant supprimé cette commande"
@@ -202,9 +202,9 @@ class Commande(models.Model):
 class CommandeProduit(models.Model):
     """Model representing a product in an order."""
     id = models.AutoField(primary_key=True)
-    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True)
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, db_index=True)
     produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
-    commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='produits')
+    commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='produits', db_index=True)
     quantity = models.IntegerField(help_text="Quantité commandée et payée")
     unites_gratuites = models.IntegerField(default=0, help_text="Unités gratuites reçues (ex: promotion 3+1)")
     prix_euro = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)

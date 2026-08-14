@@ -25,7 +25,7 @@ vi.mock('../../hooks/useRecharts', () => ({
     }),
 }));
 
-const queryClient = new QueryClient({
+const createTestQueryClient = () => new QueryClient({
     defaultOptions: {
         queries: { retry: false, gcTime: 0 }
     }
@@ -33,7 +33,7 @@ const queryClient = new QueryClient({
 
 const renderWithContext = (ui: React.ReactElement) => {
     return render(
-        <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={createTestQueryClient()}>
             <MemoryRouter>
                 {ui}
             </MemoryRouter>
@@ -117,23 +117,23 @@ describe('StatistiquesFournisseur', () => {
 
     it('handles date filtering', async () => {
         renderWithContext(<StatistiquesFournisseur />);
-        
-        // Initial call
+
+        const statsUrl = 'statistiques/ca_par_fournisseur/';
+        const statsCallCount = () =>
+            vi.mocked(axios.get).mock.calls.filter(call =>
+                typeof call[0] === 'string' && call[0].includes(statsUrl)
+            ).length;
+
+        // Wait for the initial stats fetch
         await waitFor(() => {
-            expect(axios.get).toHaveBeenCalledTimes(1);
+            expect(statsCallCount()).toBe(1);
         });
 
-        // Find date inputs (label content is "Du" and "Au")
-        // Note: In the component, labels are "Du" and "Au"
-        // Since inputs might not have id/for explicitly set properly for screen.getByLabelText, we use closest selectors or placeholder if available, or class.
-        // Looking at code: <label><span>Du</span></label><input type="date" lang="fr-FR" > inside a controlled component.
-        // Let's assume fetching button triggers re-fetch.
-        
         const refreshBtn = screen.getByText('Actualiser');
         fireEvent.click(refreshBtn);
-        
+
         await waitFor(() => {
-            expect(axios.get).toHaveBeenCalledTimes(2);
+            expect(statsCallCount()).toBe(2);
         });
     });
 });
