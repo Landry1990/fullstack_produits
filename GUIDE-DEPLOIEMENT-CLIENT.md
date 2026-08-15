@@ -29,28 +29,46 @@ docker compose -f docker-compose.prod.yml logs backend 2>&1 | grep -i "error\|tr
 docker compose -f docker-compose.prod.yml logs frontend --tail 50
 ```
 
-## 4. Mise à jour manuelle (depuis le serveur)
+## 4. Mise à jour manuelle (méthode simple — recommandée)
+
+Cette méthode ne nécessite **pas npm** ni **d'internet vers Docker Hub** sur le serveur.
+Le frontend est déjà buildé sur le PC du développeur et commité sur GitHub.
 
 ```bash
 cd /opt/zenith-pharma
 
-# Récupérer le code
-git pull origin main
+# 1ère fois seulement : rendre le script exécutable
+chmod +x update.sh
 
-# Reconstruire le backend (utilise le cache, rapide ~1-3 min)
-docker compose -f docker-compose.prod.yml build backend
+# Récupérer le nouveau code + frontend buildé
+git pull
 
-# Reconstruire le frontend (~2-5 min)
-docker compose -f docker-compose.prod.yml build frontend
+# Lancer la mise à jour (copie backend + frontend + migrations + restart)
+./update.sh
+```
 
-# Reconstruire les deux
-docker compose -f docker-compose.prod.yml build
+C'est tout. Le script `update.sh` :
+- Copie le code backend dans le conteneur
+- Applique les migrations Django
+- Collecte les fichiers statiques
+- Copie le frontend (dist/) dans le conteneur nginx
+- Redémarre le backend et recharge nginx
 
-# Redémarrer les conteneurs
-docker compose -f docker-compose.prod.yml up -d
+> **Attention** : si `requirements.txt` a changé (nouvelle librairie Python),
+> il FAUT faire un rebuild Docker complet (voir section 4b ci-dessous).
 
-# Redémarrer uniquement le backend
+### 4b. Rebuild Docker complet (uniquement si requirements.txt a changé)
+
+```bash
+cd /opt/zenith-pharma
+git pull
+
+# Rebuild sans re-télécharger les images de base depuis Docker Hub
+docker compose -f docker-compose.prod.yml build --no-pull backend
 docker compose -f docker-compose.prod.yml up -d backend
+
+# Puis lancer les migrations
+docker exec zenith-pharma-backend python manage.py migrate --noinput
 ```
 
 ## 5. Mise à jour automatique (nightly-update.sh)
@@ -225,24 +243,50 @@ docker compose -f docker-compose.prod.yml start backend
 
 ## 17. Déploiement depuis Windows (développeur)
 
+### Méthode production (serveurs clients — via GitHub)
+
 ```powershell
-# Déployer le frontend uniquement
-pwsh -File "c:\Projet Fullstack\fullstack_produits\deploy.ps1" -Target frontend
+# 1. Builder le frontend sur ton PC
+cd frontend/frontend
+npm run build
+cd ../..
 
-# Déployer le backend uniquement
-pwsh -File "c:\Projet Fullstack\fullstack_produits\deploy.ps1" -Target backend
+# 2. Commiter le frontend buildé + le code backend
+git add -A
+git commit -m "feat: description des changements"
+git push
+```
 
-# Déployer tout (sans migrations)
-pwsh -File "c:\Projet Fullstack\fullstack_produits\deploy.ps1" -Target all
+Puis sur chaque serveur client :
+```bash
+cd /opt/zenith-pharma
+git pull
+./update.sh
+```
 
-# Déployer tout + migrations + DCI
-pwsh -File "c:\Projet Fullstack\fullstack_produits\deploy.ps1" -Target all-full
+### Méthode développement local (Docker Desktop)
+
+```powershell
+# Frontend + backend (rapide, usage courant)
+.\deploy.ps1 -Target all
+
+# Frontend + backend + migrations + setup DCI
+.\deploy.ps1 -Target all-full
+
+# Frontend seul
+.\deploy.ps1 -Target frontend
+
+# Backend seul (sans migrations)
+.\deploy.ps1 -Target backend
+
+# Backend + migrations + DCI
+.\deploy.ps1 -Target backend-full
 
 # Avec backup DB avant déploiement
-pwsh -File "c:\Projet Fullstack\fullstack_produits\deploy.ps1" -Target all -BackupDB
+.\deploy.ps1 -Target all -BackupDB
 
-# Reconstruire les images Docker
-pwsh -File "c:\Projet Fullstack\fullstack_produits\deploy.ps1" -Target all -Rebuild
+# Reconstruire les images Docker (changement de requirements.txt, Dockerfile)
+.\deploy.ps1 -Target all -Rebuild
 ```
 
 ## 18. Tailscale (accès distant)
