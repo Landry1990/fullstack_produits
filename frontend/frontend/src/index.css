@@ -190,7 +190,7 @@ input, button, textarea, select {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -210,22 +210,23 @@ input, button, textarea, select {
 
 /* Dark mode: ensure emerald scrollbar stays visible on dark backgrounds */
 [data-theme="dark"] .custom-scrollbar {
-  scrollbar-color: #34d399 rgba(255, 255, 255, 0.08);
+  scrollbar-color: #10b981 rgba(255, 255, 255, 0.15);
 }
 
 [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 10px;
 }
 
 [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #34d399;
+  background: #10b981;
   border-radius: 10px;
   min-height: 40px;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
 }
 
 [data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #10b981;
+  background: #34d399;
 }
 
 /* Prevent horizontal overflow globally */
