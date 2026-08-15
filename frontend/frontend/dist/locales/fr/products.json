@@ -247,6 +247,10 @@
             "view_invoice": "Cliquer pour voir la facture",
             "view_order": "Cliquer pour voir la commande",
             "stock_after": "Stock après",
+            "export_excel": "Exporter Excel",
+            "export_title": "Mouvements de stock — {{product}}",
+            "export_filename": "mouvements_{{product}}",
+            "export_error": "Erreur lors de l'export Excel",
             "types": {
                 "AJUSTEMENT": "Ajustement",
                 "ENTREE": "Entrée Stock",
@@ -304,6 +308,7 @@
         "update_error": "Erreur lors de la mise à jour du produit",
         "adjust_success": "Stock ajusté ({{change}})",
         "adjust_error": "Erreur lors de l'ajustement de stock",
+        "export_success": "Export Excel généré",
         "lot_update_success": "Lot mis à jour",
         "lot_update_error": "Erreur lors de la mise à jour"
     },
