@@ -164,6 +164,7 @@ class PayeALaClotureTestCase(APITestCase):
         paiements = PaiementFournisseur.objects.filter(fournisseur=self.fournisseur)
         self.assertEqual(paiements.count(), 1)
         paiement = paiements.first()
+        self.assertIsNotNone(paiement)
         # Montant total = 10 × 100 (price_cost) = 1000
         self.assertEqual(paiement.montant, Decimal('1000'))
         self.assertIn(commande, paiement.commandes.all())

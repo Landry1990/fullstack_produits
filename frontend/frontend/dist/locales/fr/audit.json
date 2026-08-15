@@ -1,0 +1,80 @@
+{
+    "title": "Journal d'Audit",
+    "subtitle": "Suivez toutes les actions effectuées sur le système",
+    "actions": {
+        "all": "Tous les types d'actions",
+        "PRICE_CHG": "Changement de Prix",
+        "STOCK_ADJ": "Ajustement de Stock",
+        "SALE": "Vente",
+        "SALE_CANCEL": "Annulation de Vente",
+        "PROD_CREATE": "Création Produit",
+        "PROD_UPDATE": "Modification Produit",
+        "INV_CREATE": "Facturation",
+        "INV_CRE": "Facturation",
+        "INV_DELETE": "Suppression de Facture",
+        "INV_CANCEL": "Annulation de Facture",
+        "INV_DEL": "Suppression de Facture",
+        "INV_VALID": "Validation de Facture",
+        "INV_VAL": "Validation de Facture (Sudo)",
+        "ORD_RECV": "Réception Commande",
+        "ORD_CNCL": "Annulation Commande",
+        "USER_LOGIN": "Connexion Utilisateur",
+        "SUDO_VAL": "Validation Sudo",
+        "CREATE": "Création",
+        "UPDATE": "Modification",
+        "DELETE": "Suppression",
+        "CLOTURE": "Clôture"
+    },
+    "stats": {
+        "total": "Total Logs",
+        "last_24h": "Dernières 24h",
+        "last_7d": "7 derniers jours",
+        "last_30d": "30 derniers jours"
+    },
+    "filters": {
+        "title": "Recherche & Filtres",
+        "action_label": "Action",
+        "user_label": "Utilisateur",
+        "all_users": "Tous les utilisateurs",
+        "date_from": "Période (Début)",
+        "date_to": "Période (Fin)",
+        "search_label": "Recherche texte",
+        "search_placeholder": "Facture, motif, produit...",
+        "hide_stats": "MASQUER STATS",
+        "show_stats": "AFFICHER STATS",
+        "export": "EXPORTER CSV",
+        "reset": "RÉINITIALISER"
+    },
+    "view": {
+        "flux": "Flux d'Audit",
+        "items": "éléments",
+        "cards_btn": "Vue Cartes",
+        "table_btn": "Vue Table",
+        "loading": "Chargement des logs...",
+        "empty_title": "Aucun log trouvé",
+        "empty_subtitle": "Essayez de modifier vos filtres de recherche",
+        "sudo_badge": "SUDO",
+        "system_user": "Système",
+        "json_btn": "Détails",
+        "raw_data": "Données Brutes (JSON)"
+    },
+    "table": {
+        "date": "Date & Heure",
+        "timestamp": "Date & Heure",
+        "user": "Utilisateur",
+        "action": "Action",
+        "operation": "Opération",
+        "description": "Description",
+        "details": "Détails",
+        "status": "Statut",
+        "sudo": "VALIDATION SUDO"
+    },
+    "details": {
+        "price_change": "Prix: {{old}} ➔ {{new}}",
+        "stock_adj": "Stock: {{old}} ➔ {{new}} ({{reason}})",
+        "sudo_val": "Sudo: {{user}} ({{permission}})",
+        "amount": "Montant: {{amount}}",
+        "quantity": "Quantité: {{quantity}}",
+        "ecart": "Écart: {{ecart}}"
+    }
+}

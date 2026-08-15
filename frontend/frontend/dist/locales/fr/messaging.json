@@ -1,0 +1,43 @@
+{
+  "title": "Messagerie Interne",
+  "subtitle": "Communiquez avec vos collègues",
+  "tabs": {
+    "received": "Reçus",
+    "sent": "Envoyés",
+    "templates": "Modèles",
+    "new": "Nouveau"
+  },
+  "received": {
+    "title": "Messages reçus",
+    "empty": "Aucun message reçu",
+    "broadcast": "TOUS"
+  },
+  "sent": {
+    "title": "Messages envoyés",
+    "empty": "Aucun message envoyé",
+    "to": "Pour:"
+  },
+  "templates": {
+    "title": "Messages prédéfinis",
+    "manage": "Gérer",
+    "add": "Nouveau modèle",
+    "edit": "Modifier le modèle",
+    "delete_confirm": "Supprimer ce modèle ?",
+    "success_deleted": "Modèle supprimé",
+    "success_saved": "Modèle enregistré",
+    "placeholder_title": "Titre du modèle",
+    "placeholder_content": "Contenu du modèle..."
+  },
+  "new": {
+    "title": "Nouveau message",
+    "recipient": "Destinataire",
+    "all": "Tous les utilisateurs",
+    "content": "Message",
+    "placeholder": "Écrivez votre message ici...",
+    "send": "Envoyer",
+    "success_sent": "Message envoyé !",
+    "error_sent": "Échec de l'envoi",
+    "new_notification": "Vous avez reçu un nouveau message interne !",
+    "view": "Voir"
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "title": "Help & Training",
+  "subtitle": "Guides and documentation for using ZENITH",
+  "import": {
+    "title": "Product Database Import",
+    "description": "ZENITH allows you to massively import your products from CSV or Excel (XLSX/XLS) files.",
+    "format": {
+      "title": "Supported Formats",
+      "csv": "CSV files (delimiter ';' or ',')",
+      "excel": "Excel files (.xlsx, .xls)"
+    },
+    "columns": {
+      "title": "File Columns",
+      "required": "Required Fields",
+      "optional": "Optional Fields",
+      "required_details": "You must provide at least the **Name** and one of the two **Prices** (Purchase or Sale).",
+      "nom": "Designation / Product Name",
+      "prix_public": "Selling Price (Public)",
+      "prix_cession": "Purchase Price (Cession)",
+      "stock": "Quantity in stock",
+      "cip": "CIP Codes (1, 2 or 3)",
+      "tva": "VAT or VAT Code",
+      "expire_date": "Expiration date"
+    },
+    "logic": {
+      "title": "Import Logic",
+      "tva": "If VAT is not specified, it is calculated automatically: 0% if a public price exists, 19.25% if the public price is 0.",
+      "update": "If a product already exists (same CIP or same Name), it will be updated. Otherwise, it will be created.",
+      "delimiter": "The system automatically detects if you use semicolon (;) or comma (,) in your CSV files."
+    }
+  },
+  "billing": {
+    "title": "Billing Management",
+    "description": "The billing module is designed for maximum productivity with the 'Zero Mouse' concept (Everything by keyboard).",
+    "shortcuts": {
+      "title": "'Zero Mouse' Shortcuts",
+      "f2": "Focus Product Search / Clear field",
+      "slash": "Focus Search (from anywhere)",
+      "f4": "Select Customer / Focus Quantity (Cart)",
+      "f9": "Checkout / Finalize sale",
+      "ctrl_s": "Put sale on hold",
+      "alt_z": "Zenith Mode (Fullscreen minimalist)",
+      "esc": "Cancel current action / Close"
+    },
+    "tips": {
+      "title": "Productivity Tips",
+      "qty_shortcut": {
+        "title": "Quick Quantity Shortcut",
+        "description": "In the search bar, type '*' followed by a number (e.g., *5) to instantly change the quantity of the last added product."
+      },
+      "navigation": {
+        "title": "Cart Navigation",
+        "description": "Use arrow keys ↑↓ to select a line, '+' and '-' to adjust quantity, and 'Delete' to remove the item."
+      },
+      "search": {
+        "title": "Smart Search",
+        "description": "The system searches simultaneously by Name, CIP Code or Barcode. Scanning is automatic."
+      }
+    },
+    "guide": {
+      "title": "How to sell: Step-by-step guide",
+      "step1": {
+        "title": "Step 1: Open Sale",
+        "description": "Access the 'Billing' menu. The ZENITH interface is clean to allow you to focus on what matters."
+      },
+      "step2": {
+        "title": "Step 2: Search for a Product",
+        "description": "Use the 'Product Search' field (F2). Type the name or scan directly. ZENITH displays stocks in real-time."
+      },
+      "step3": {
+        "title": "Step 3: Manage Cart",
+        "description": "Once added, adjust quantities. The system automatically separates what the patient must pay."
+      }
+    }
+  },
+  "training": {
+    "title": "Training",
+    "subtitle": "PharmaGest video tutorials",
+    "search_placeholder": "Search for a tutorial...",
+    "categories": {
+      "ventes": "Sales & Cashier",
+      "stock": "Stock Management",
+      "fournisseurs": "Suppliers",
+      "clients": "Customers & Receivables",
+      "dashboard": "Dashboard",
+      "parametres": "Settings"
+    },
+    "videos": {
+      "v1": "Quick sale",
+      "v2": "Manage payment methods",
+      "v3": "Issue customer invoice",
+      "v4": "Receive an order",
+      "v5": "Do inventory",
+      "v6": "Manage expirations",
+      "v7": "Create supplier order",
+      "v8": "Record supplier payment",
+      "v9": "Manage customer receivables",
+      "v10": "Loyalty program",
+      "v11": "Read flash report",
+      "v12": "Analyze statistics",
+      "v13": "Configure pharmacy",
+      "v14": "Manage users"
+    },
+    "shortcuts": {
+      "title": "Shortcuts",
+      "f2": "New sale",
+      "slash": "Product search",
+      "f4": "Validate line",
+      "f9": "Checkout",
+      "ctrl_s": "Save",
+      "alt_z": "Cancel line"
+    },
+    "close": "Close",
+    "soon": "Coming soon",
+    "no_results": "No tutorials found",
+    "try_again": "Try another keyword",
+    "videos_count": "video"
+  }
+}

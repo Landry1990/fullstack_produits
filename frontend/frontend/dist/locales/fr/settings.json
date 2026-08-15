@@ -1,0 +1,22 @@
+{
+    "title": "Paramètres",
+    "subtitle": "Configuration du système et de l'officine",
+    "sections": {
+        "pharmacy": "Informations Officine",
+        "system": "Système",
+        "backups": "Sauvegardes",
+        "printing": "Impression"
+    },
+    "pharmacy": {
+        "name": "Nom de l'Officine",
+        "address": "Adresse",
+        "phone": "Téléphone",
+        "email": "Email",
+        "logo": "Logo"
+    },
+    "system": {
+        "language": "Langue",
+        "currency": "Devise",
+        "timezone": "Fuseau horaire"
+    }
+}

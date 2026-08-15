@@ -1,0 +1,124 @@
+{
+    "dashboard": "Dashboard",
+    "manager_sidebar": "Manager Dashboard",
+    "ventes": {
+        "title": "Sales",
+        "consultation": "Consultation",
+        "historique": "Daily History",
+        "recap_client": "Client Recap",
+        "journal": "Cash Journal",
+        "clotures": "Closing History",
+        "ordonnancier": "Prescription Book",
+        "promotions": "Promotions",
+        "caisse_centralisee": "Centralized Register"
+    },
+    "facturation": "Invoicing",
+    "produits": "Products",
+    "vitrine": "My Storefront (Web)",
+    "commandes": {
+        "title": "Orders",
+        "local_title": "Wholesale Orders (Local)",
+        "direct_title": "Direct Orders (Overseas)",
+        "new_current": "New / In Progress",
+        "history": "Purchase History"
+    },
+    "commande": {
+        "local_title": "Wholesale Orders (Local)",
+        "direct_title": "Direct Orders (Overseas)",
+        "new_current": "New / In Progress",
+        "history": "Purchase History"
+    },
+    "fournisseurs": {
+        "title": "Suppliers",
+        "list": "List & Contacts",
+        "finance": "Finance & Payments"
+    },
+    "clients": "Clients",
+    "clients_consultation": "Consultation",
+    "clients_imc": "Clinical Tools",
+    "creances": "Debts",
+    "stock": {
+        "title": "Stock",
+        "inventaire": {
+            "title": "Inventory"
+        },
+        "journal": "Adjustment Journal",
+        "analyse": {
+            "title": "Stock Analysis"
+        },
+        "reappro": {
+            "title": "Shelf Restocking"
+        },
+        "ruptures": {
+            "title": "Shortage Tracking"
+        },
+        "avoirs": "Claims",
+        "promis": "Promised",
+        "transformations": {
+            "title": "Transformations"
+        },
+        "perimes": {
+            "title": "Expired"
+        },
+        "formes": "Forms",
+        "groupes": "Groups",
+        "rayons": "Shelves",
+        "organisation": {
+            "title": "Organization",
+            "tabs": {
+                "rayons": "Shelves",
+                "groupes": "Groups",
+                "formes": "Forms"
+            }
+        },
+        "etats_inventaire": {
+            "title": "Inventory Reports"
+        },
+        "rapport_ug": {
+            "title": "Free Units (UG) Report"
+        }
+    },
+    "utilisateurs": "Users",
+    "planning_operateurs": "Staff Scheduling",
+    "user_sessions_sidebar": "Presence Tracking",
+    "audit": "Audit Log",
+    "statistiques": {
+        "title": "Statistics",
+        "rapports": "Report Center",
+        "abc": "ABC Analysis",
+        "marges_produit": "Margins by Product",
+        "produits": "Products",
+        "fournisseurs": "Supplier Stats",
+        "mensuel": "Monthly Report",
+        "finances": "Financial Module",
+        "classement_vendeurs": "Seller Ranking",
+        "analyse_temporelle": "Time Analysis",
+        "guide": "Financial Guide 📖"
+    },
+    "compta": {
+        "title": "Accounting 📒",
+        "dashboard": "Dashboard",
+        "grand_livre": "General Ledger",
+        "balance": "Trial Balance",
+        "resultat": "Income Statement",
+        "charges": "Expense Entry",
+        "plan": "Chart of Accounts"
+    },
+    "parametres": {
+        "title": "Settings",
+        "facture": "Invoice Settings",
+        "pharmacie": "Pharmacy Information",
+        "telegram": "Telegram History",
+        "etiquettes": "Label Templates",
+        "imprimantes": "Printer Configuration"
+    },
+    "maintenance": "Maintenance",
+    "corbeille": "Recycle Bin",
+    "aide_formation": "Help and Training",
+    "logout": "Logout",
+    "app_subtitle": "Professional Management",
+    "roles": {
+        "pharmacist": "Administrator",
+        "user": "User"
+    }
+}

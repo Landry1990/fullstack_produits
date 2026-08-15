@@ -1,0 +1,25 @@
+{
+  "name": "Zenith Pharma",
+  "short_name": "Zenith",
+  "description": "Logiciel de gestion pour pharmacie",
+  "theme_color": "#059669",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/pwa-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
