@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { logger } from '../utils/logger'
@@ -13,6 +14,7 @@ export interface InvoiceSettings {
 }
 
 export function useInvoiceSettings() {
+    const { t } = useTranslation(['facturation', 'common']);
     const [settings, setSettings] = useState<InvoiceSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -36,14 +38,14 @@ export function useInvoiceSettings() {
         try {
             const { data } = await api.put<InvoiceSettings>('invoice-settings/', updates);
             setSettings(data);
-            toast.success('Paramètres de facturation mis à jour');
+            toast.success(t('facturation:messages.invoice_settings_updated'));
             return data;
         } catch (err) {
             logger.error('Error updating invoice settings:', err);
-            toast.error('Erreur lors de la mise à jour des paramètres');
+            toast.error(t('facturation:messages.invoice_settings_update_error'));
             throw err;
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         const controller = new AbortController();

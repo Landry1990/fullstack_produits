@@ -161,5 +161,16 @@
         "internet": "Internet & Téléphone",
         "fournitures": "Fournitures de bureau",
         "autre": "Autre charge..."
+    },
+    "messages": {
+        "entry_saved": "Écriture enregistrée avec succès",
+        "entry_save_error": "Erreur lors de l'enregistrement",
+        "history_initialized": "{{count}} écritures générées !",
+        "account_created": "Compte créé avec succès",
+        "account_create_error": "Erreur lors de la création",
+        "account_updated": "Compte modifié avec succès",
+        "account_update_error": "Erreur lors de la modification",
+        "account_deleted": "Compte supprimé",
+        "account_delete_error": "Impossible de supprimer ce compte (des écritures y sont liées)"
     }
 }

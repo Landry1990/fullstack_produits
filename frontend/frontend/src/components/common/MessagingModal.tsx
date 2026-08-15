@@ -192,7 +192,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
     try {
       await communicationService.archiveMessage(id);
       setMessages((prev: InternalMessage[]) => prev.map((m: InternalMessage) => m.id === id ? { ...m, is_archived: true } : m));
-      toast.success('Message archivé');
+      toast.success(t('messaging:messages.archived'));
     } catch {
       toast.error(t('common:error'));
     }

@@ -1,4 +1,5 @@
 import api from './api';
+import type { ReapproSessionData } from '../utils/print/reapproSessionPdfDraft';
 import type {
     ProduitModel,
     Rayon,
@@ -190,12 +191,12 @@ const produitService = {
         return response.data;
     },
 
-    bulkTransferToShelf: async (productIds: number[], sudoCreds?: { validated_by_id: number; sudo_password: string }): Promise<unknown> => {
+    bulkTransferToShelf: async (productIds: number[], sudoCreds?: { validated_by_id: number; sudo_password: string }): Promise<{ detail?: string; session_id?: number }> => {
         const payload = {
             product_ids: productIds,
             ...(sudoCreds || {})
         };
-        const response = await api.post('produits/bulk_transfer_to_shelf/', payload);
+        const response = await api.post<{ detail?: string; session_id?: number }>('produits/bulk_transfer_to_shelf/', payload);
         return response.data;
     },
 
@@ -203,9 +204,8 @@ const produitService = {
         const response = await api.get('reappro-sessions/');
         return response.data;
     },
-
-    getReapproSessionDetails: async (sessionId: number): Promise<unknown> => {
-        const response = await api.get(`reappro-sessions/${sessionId}/`);
+    getReapproSessionDetails: async (sessionId: number): Promise<ReapproSessionData> => {
+        const response = await api.get<ReapproSessionData>(`reappro-sessions/${sessionId}/`);
         return response.data;
     },
 

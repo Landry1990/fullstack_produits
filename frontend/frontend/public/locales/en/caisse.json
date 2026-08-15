@@ -114,6 +114,8 @@
         "bulk_cancel_error": "Error during bulk cancel",
         "cancel_invoice_success": "Invoice cancelled",
         "cancel_invoice_error": "Error cancelling invoice",
+        "bulk_cancel_success": "{{count}} invoice(s) cancelled. {{stock}} stock lines reintegrated.",
+        "bulk_cancel_total_errors": "{{count}} error(s) in total",
         "empty_invoice_error": "This invoice contains no products",
         "load_invoice_error": "Could not load invoice for modification",
         "enter_whatsapp_number_desc": "Enter WhatsApp number (international format e.g: 237...)",

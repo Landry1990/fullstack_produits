@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
 import type { ProduitModel, LigneFacture, StockLot } from '../types'
@@ -20,6 +21,7 @@ interface UseCartOptions {
 }
 
 export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForceStock, quantityInputsRef }: UseCartOptions = {}) {
+    const { t } = useTranslation(['facturation', 'prescriptions', 'common'])
     const { user } = useAuth()
     
     // Logic keys (prefixed with user ID for multi-user safety)
@@ -156,7 +158,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
 
             if (requiresOrdonnance && onRequirePrescription) {
                 onRequirePrescription()
-                toast('Produit sous ordonnance/surveillance détecté', { icon: '📋' })
+                toast(t('prescriptions:messages.prescription_product_detected'))
             }
 
             // CHECKOUT ALERT MESSAGE CHECK
@@ -195,7 +197,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
             }
         } catch (err) {
             logger.error('Erreur lors du chargement des détails du produit:', err)
-            toast.error('Impossible de charger les détails complets du produit')
+            toast.error(t('facturation:messages.product_detail_load_error'))
         } finally {
             setLoading(false)
         }

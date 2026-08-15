@@ -39,11 +39,11 @@ export default function PosteVenteSettingsSection() {
       setPostes(data)
       setCaissesDisponibles(caisses)
     } catch (err) {
-      toast.error(getApiErrorDetail(err, 'Erreur chargement points de vente'))
+      toast.error(getApiErrorDetail(err, t('messages.pos_load_error')))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadData()
@@ -52,17 +52,17 @@ export default function PosteVenteSettingsSection() {
   const handleCreate = async () => {
     const nom = newNom.trim()
     if (!nom) {
-      toast.error('Veuillez saisir un nom.')
+      toast.error(t('messages.pos_name_required'))
       return
     }
     setSubmitting(true)
     try {
       await cashSessionService.createPosteVente({ nom })
-      toast.success('Point de vente créé avec succès.')
+      toast.success(t('messages.pos_created'))
       setNewNom('')
       await loadData()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, 'Erreur création point de vente'))
+      toast.error(getApiErrorDetail(err, t('messages.pos_create_error')))
     } finally {
       setSubmitting(false)
     }
@@ -72,10 +72,10 @@ export default function PosteVenteSettingsSection() {
     if (!window.confirm('Supprimer ce point de vente ?')) return
     try {
       await cashSessionService.deletePosteVente(id)
-      toast.success('Point de vente supprimé.')
+      toast.success(t('messages.pos_deleted'))
       await loadData()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, 'Erreur suppression'))
+      toast.error(getApiErrorDetail(err, t('messages.pos_delete_error')))
     }
   }
 
@@ -83,10 +83,10 @@ export default function PosteVenteSettingsSection() {
     if (!window.confirm('Fermer ce point de vente ?')) return
     try {
       await cashSessionService.forcerFermeturePosteVente(id)
-      toast.success('Point de vente fermé.')
+      toast.success(t('messages.pos_closed'))
       await loadData()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, 'Erreur fermeture'))
+      toast.error(getApiErrorDetail(err, t('messages.pos_close_error')))
     }
   }
 

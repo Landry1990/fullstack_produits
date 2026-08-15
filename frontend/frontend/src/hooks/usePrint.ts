@@ -278,8 +278,8 @@ function usePrint(): UsePrintReturn {
    */
   const openPrintPage = useCallback((url: string) => {
     const w = window.open(url, '_blank');
-    if (!w) toast.error('Popup bloqué. Autorisez les popups pour imprimer.');
-  }, []);
+    if (!w) toast.error(t('popup_blocked'));
+  }, [t]);
 
   /**
    * Imprimer le contenu d'un élément DOM

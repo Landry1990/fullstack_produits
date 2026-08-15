@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useSubstances, useSubstanceProduits, type Substance } from '../hooks/useSubstances';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import type { ProduitModel } from '../types';
 import CatalogDCIAddModal from './CatalogDCIAddModal';
@@ -191,7 +193,7 @@ export default function CatalogDCI() {
                             disabled={deletingProductId === p.id}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteProduct(p.id, selectedSubstance?.id, queryClient, setDeletingProductId, searchTerm, page);
+                              handleDeleteProduct(p.id, selectedSubstance?.id, queryClient, setDeletingProductId, searchTerm, page, t);
                             }}
                           >
                             {deletingProductId === p.id ? (
@@ -277,7 +279,7 @@ export default function CatalogDCI() {
   );
 }
 
-function handleDeleteProduct(produitId: number, substanceId: number | undefined, queryClient: ReturnType<typeof useQueryClient>, setDeletingProductId: (id: number | null) => void, searchTerm: string, page: number) {
+function handleDeleteProduct(produitId: number, substanceId: number | undefined, queryClient: ReturnType<typeof useQueryClient>, setDeletingProductId: (id: number | null) => void, searchTerm: string, page: number, t: TFunction) {
   if (!substanceId) return;
   setDeletingProductId(produitId);
   api.patch(`produits/${produitId}/`, {
@@ -287,7 +289,11 @@ function handleDeleteProduct(produitId: number, substanceId: number | undefined,
     .then(() => {
       queryClient.invalidateQueries({ queryKey: ['substance-produits', substanceId] });
       queryClient.invalidateQueries({ queryKey: ['substances', { search: searchTerm, page }] });
+      toast.success(t('common:messages.success_delete'));
     })
-    .catch((err) => logger.error('Erreur suppression DCI:', err))
+    .catch((err) => {
+      logger.error('Erreur suppression DCI:', err);
+      toast.error(t('common:messages.error_saving'));
+    })
     .finally(() => setDeletingProductId(null));
 }

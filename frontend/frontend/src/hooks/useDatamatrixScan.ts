@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import { parseGS1Datamatrix } from '../utils/gs1Parser';
@@ -19,6 +20,7 @@ export function useDatamatrixScan({
     setLignesFacture,
     lignesFacture,
 }: UseDatamatrixScanOptions) {
+    const { t } = useTranslation('common');
     const [scanInput, setScanInput] = useState('');
     const [scanStatus, setScanStatus] = useState<ScanStatus>('idle');
     const [lastScanned, setLastScanned] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export function useDatamatrixScan({
 
         if (!cip || !lot) {
             setScanStatus('error');
-            toast.error('Format datamatrix non reconnu. Attendu : CIP + N° lot.');
+            toast.error(t('messages.datamatrix_unrecognized'));
             setTimeout(() => setScanStatus('idle'), 2500);
             return;
         }
@@ -113,22 +115,21 @@ export function useDatamatrixScan({
             setScanStatus('success');
             setLastScanned(`${data.produit.name} — Lot ${data.lot_numero}`);
             if (data.quantity_remaining <= 0) {
-                toast(`⚠️ ${data.produit.name} : stock de ce lot épuisé`, {
-                    icon: '⚠️',
+                toast(t('messages.datamatrix_lot_out_of_stock', { produit: data.produit.name }), {
                     style: { background: '#fef3c7', color: '#92400e' },
                 });
             } else {
-                toast.success(`${data.produit.name} ajouté (Lot ${data.lot_numero})`);
+                toast.success(t('messages.datamatrix_added', { produit: data.produit.name, lot: data.lot_numero }));
             }
         } catch (err: unknown) {
             setScanStatus('error');
-            const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Lot ou produit introuvable.';
+            const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || t('orders:messages.lot_or_product_not_found', { defaultValue: 'Lot ou produit introuvable.' });
             toast.error(detail);
         } finally {
             setScanInput('');
             setTimeout(() => setScanStatus('idle'), 2000);
         }
-    }, [addProduit, setLignesFacture, lignesFacture]);
+    }, [addProduit, setLignesFacture, lignesFacture, t]);
 
     const handleScanChange = useCallback((value: string) => {
         setScanInput(value);

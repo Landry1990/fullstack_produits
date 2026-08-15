@@ -209,7 +209,7 @@ export function useFacturationState() {
               let url = `/app/print-invoice/${result.facture.id}`
               if (nameToUse) url += `?client_name=${encodeURIComponent(nameToUse)}`
               const w = window.open(url, '_blank')
-              if (!w) toast.error('Popup bloqué. Autorisez les popups pour imprimer.')
+              if (!w) toast.error(t('common:popup_blocked'))
             }
             setIsFactureA4(false)
           } else {

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
@@ -55,6 +56,7 @@ export interface PaginatedResponse<T> {
 }
 
 export const useAccounting = () => {
+    const { t } = useTranslation('accounting');
     const queryClient = useQueryClient();
     const [dateRange, setDateRange] = useState({
         start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
@@ -167,7 +169,7 @@ export const useAccounting = () => {
         mutationFn: (data: Partial<Ecriture>) => api.post('compta/ecritures/', data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting'] });
-            toast.success('Écriture enregistrée avec succès');
+            toast.success(t('messages.entry_saved'));
         },
         onError: (error: unknown) => {
             const e = error as { response?: { data?: { detail?: string; message?: string; [key: string]: unknown } } };
@@ -175,10 +177,10 @@ export const useAccounting = () => {
             if (data && typeof data === 'object') {
                 // Si c'est une erreur de validation DRF (dictionnaire de champs)
                 const firstError = Object.values(data)[0];
-                const msg = Array.isArray(firstError) ? firstError[0] : (data.detail || data.message || 'Erreur de validation');
+                const msg = Array.isArray(firstError) ? firstError[0] : (data.detail || data.message || t('messages.entry_save_error'));
                 toast.error(msg);
             } else {
-                toast.error('Erreur lors de l\'enregistrement');
+                toast.error(t('messages.entry_save_error'));
             }
         }
     });
@@ -187,7 +189,7 @@ export const useAccounting = () => {
         mutationFn: () => api.post('compta/ecritures/initialiser_historique/'),
         onSuccess: (res) => {
             queryClient.invalidateQueries({ queryKey: ['accounting'] });
-            toast.success(`${res.data.entries_processed} écritures générées !`);
+            toast.success(t('messages.history_initialized', { count: res.data.entries_processed }));
         }
     });
 
@@ -195,11 +197,11 @@ export const useAccounting = () => {
         mutationFn: (data: Omit<Compte, 'id'>) => api.post('compta/comptes/', data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
-            toast.success('Compte créé avec succès');
+            toast.success(t('messages.account_created'));
         },
         onError: (error: unknown) => {
             const e = error as { response?: { data?: { numero?: string[]; detail?: string } } };
-            const msg = e.response?.data?.numero?.[0] || e.response?.data?.detail || 'Erreur lors de la création';
+            const msg = e.response?.data?.numero?.[0] || e.response?.data?.detail || t('messages.account_create_error');
             toast.error(msg);
         }
     });
@@ -208,11 +210,11 @@ export const useAccounting = () => {
         mutationFn: ({ id, ...data }: Compte) => api.patch(`compta/comptes/${id}/`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
-            toast.success('Compte modifié avec succès');
+            toast.success(t('messages.account_updated'));
         },
         onError: (error: unknown) => {
             const e = error as { response?: { data?: { numero?: string[]; detail?: string } } };
-            const msg = e.response?.data?.numero?.[0] || e.response?.data?.detail || 'Erreur lors de la modification';
+            const msg = e.response?.data?.numero?.[0] || e.response?.data?.detail || t('messages.account_update_error');
             toast.error(msg);
         }
     });
@@ -221,11 +223,11 @@ export const useAccounting = () => {
         mutationFn: (id: number) => api.delete(`compta/comptes/${id}/`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
-            toast.success('Compte supprimé');
+            toast.success(t('messages.account_deleted'));
         },
         onError: (error: unknown) => {
             const e = error as { response?: { data?: { detail?: string } } };
-            const msg = e.response?.data?.detail || 'Impossible de supprimer ce compte (des écritures y sont liées)';
+            const msg = e.response?.data?.detail || t('messages.account_delete_error');
             toast.error(msg);
         }
     });

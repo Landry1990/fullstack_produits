@@ -59,11 +59,11 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
         e.preventDefault();
         
         if (!formData.produit) {
-            toast(t('stock:promis.validation.product_required'), { icon: '⚠️' });
+            toast.error(t('stock:promis.validation.product_required'));
             return;
         }
         if (!formData.client && !formData.client_name.trim()) {
-            toast(t('stock:promis.validation.client_required'), { icon: '⚠️' });
+            toast.error(t('stock:promis.validation.client_required'));
             return;
         }
 
@@ -77,7 +77,8 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
             onSuccess();
             handleClose();
         } catch (err: unknown) {
-            toast.error(err.response?.data?.detail || t('stock:promis.validation.create_error'));
+            const apiErr = err as { response?: { data?: { detail?: string } } };
+            toast.error(apiErr.response?.data?.detail ?? t('stock:promis.validation.create_error'));
             logger.error(err);
         } finally {
             setSaving(false);

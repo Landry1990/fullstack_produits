@@ -28,6 +28,10 @@
     "placeholder_title": "Titre du modèle",
     "placeholder_content": "Contenu du modèle..."
   },
+  "messages": {
+    "archived": "Message archivé",
+    "archive_error": "Erreur lors de l'archivage"
+  },
   "new": {
     "title": "Nouveau message",
     "recipient": "Destinataire",

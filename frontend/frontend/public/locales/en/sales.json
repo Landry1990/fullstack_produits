@@ -109,6 +109,8 @@
         "no_invoices": "No invoices recorded",
         "refund_success": "Invoice cancelled and refund recorded successfully.",
         "refund_error": "Error recording refund.",
+        "stock_unloaded": "Stock unloaded successfully. Movements recorded.",
+        "stock_unload_error": "Error: {{message}}",
         "delete_drafts_confirm": "Are you sure you want to delete all draft invoices? This action is irreversible.",
         "delete_drafts_success": "draft invoice(s) deleted successfully.",
         "delete_drafts_error": "Error deleting draft invoices.",
@@ -140,6 +142,8 @@
         "sent_to_caisse": "Sale sent to Centralized Register (Ticket #{{id}})",
         "load_error": "Error loading",
         "load_details_error": "Failed to load details.",
+        "sale_details_load_error": "Failed to load sale details.",
+        "avoir_generate_error": "Could not generate a credit note for this sale.",
         "loading_details": "Loading details..."
     },
     "confirm_delete": "Delete this invoice?",

@@ -250,6 +250,7 @@
             "load_error": "Erreur lors du chargement des {{type}}s",
             "success_save": "{{type}} enregistré avec succès",
             "success_delete": "{{type}} supprimé avec succès",
+            "trash_success": "« {{name}} » déplacé en corbeille.",
             "delete_confirm_title": "Supprimer cet élément ?",
             "delete_confirm_msg": "Cette action est irréversible et affectera les produits associés.",
             "search": "Rechercher un {{type}}...",
@@ -534,6 +535,7 @@
             "no_result": "Aucun produit trouvé",
             "header_saved": "En-tête sauvegardé",
             "save_error": "Erreur sauvegarde",
+            "create_success": "Inventaire créé avec succès",
             "auto_create_error": "Impossible de créer l'inventaire automatiquement.",
             "bulk_delete_title": "Suppression Multiple",
             "bulk_delete_message": "Supprimer ces {{count}} lignes ?",
@@ -593,6 +595,7 @@
             "total_phys": "Valeur Saisie",
             "total_gap": "Ecart Valeur",
             "product_added": "Produit ajouté",
+            "delete_success": "Produit retiré de l'inventaire",
             "delete_error": "Impossible de supprimer la ligne."
         },
         "import": {
@@ -1236,7 +1239,10 @@
             "no_products_to_refill": "Aucun produit à réapprovisionner actuellement",
             "bulk_success": "Réapprovisionnement terminé : {{success}} produits traités sur {{total}}",
             "loading_stocks": "Analyse des besoins...",
-            "no_reserve_products": "Aucun produit avec gestion de réserve n'a été trouvé."
+            "no_reserve_products": "Aucun produit avec gestion de réserve n'a été trouvé.",
+            "history_load_error": "Erreur lors du chargement de l'historique",
+            "pdf_generated": "PDF téléchargé avec succès",
+            "pdf_generation_error": "Erreur lors de la génération du PDF"
         },
         "modal_confirm": {
             "title": "Transfert Global",

@@ -137,6 +137,7 @@ export const useInventaireEditor = (
                 setInventoryStats(null);
             }
 
+            toast.success(t('stock:inventaire.detail.create_success'));
             return newInv;
         } catch (error) {
             logger.error(error);
@@ -326,6 +327,7 @@ export const useInventaireEditor = (
                 next.delete(lineId);
                 return next;
             });
+            toast.success(t('stock:inventaire.lines.delete_success'));
         } catch (err) {
             logger.error("Erreur suppression ligne", err);
             toast.error(t('inventaire.lines.delete_error'));

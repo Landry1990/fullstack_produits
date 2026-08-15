@@ -28,6 +28,10 @@
     "placeholder_title": "Template title",
     "placeholder_content": "Template content..."
   },
+  "messages": {
+    "archived": "Message archived",
+    "archive_error": "Error while archiving"
+  },
   "new": {
     "title": "New message",
     "recipient": "Recipient",

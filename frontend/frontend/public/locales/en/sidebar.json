@@ -120,5 +120,15 @@
     "roles": {
         "pharmacist": "Administrator",
         "user": "User"
+    },
+    "categories": {
+        "accueil": "Home",
+        "ventes": "Sales",
+        "catalogue": "Products & Catalog",
+        "achats": "Purchases & Suppliers",
+        "tiers": "Clients & Accounts",
+        "stock": "Stock & Inventory",
+        "rapports": "Reports & Analytics",
+        "parametres": "Settings & Admin"
     }
 }

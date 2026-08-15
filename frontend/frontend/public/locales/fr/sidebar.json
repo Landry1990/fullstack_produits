@@ -127,5 +127,15 @@
         "ca": "CA Divers",
         "commandes": "Commandes Divers"
     },
-    "changelog": "Quoi de neuf ?"
+    "changelog": "Quoi de neuf ?",
+    "categories": {
+        "accueil": "Accueil",
+        "ventes": "Caisse & Ventes",
+        "catalogue": "Produits & Catalogue",
+        "achats": "Achats & Fournisseurs",
+        "tiers": "Clients & Comptes",
+        "stock": "Stock & Inventaire",
+        "rapports": "Rapports & Analyses",
+        "parametres": "Paramètres & Admin"
+    }
 }

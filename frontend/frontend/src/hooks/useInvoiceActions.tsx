@@ -12,7 +12,7 @@ interface UseInvoiceActionsProps {
     setFacturesLocal?: React.Dispatch<React.SetStateAction<Facture[]>>; // For optimistic updates
 }
 
-const printInvoicePDF = (factureId: number, clientName?: string | null, type?: string) => {
+const printInvoicePDF = (factureId: number, clientName?: string | null, type?: string, t?: (key: string) => string) => {
     let url = `/app/print-invoice/${factureId}`;
     const params = new URLSearchParams();
     if (clientName) params.append('client_name', clientName);
@@ -31,7 +31,7 @@ const printInvoicePDF = (factureId: number, clientName?: string | null, type?: s
         'PrintInvoice',
         `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
     );
-    if (!w) toast.error('Popup bloqué. Autorisez les popups pour imprimer.');
+    if (!w) toast.error(t('common:popup_blocked'));
 };
 
 const isGenericClient = (facture: Facture): boolean => {
@@ -67,7 +67,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 setSelectedFacture(response.data);
             } catch (error) {
                 logger.error("Erreur chargement détails", error);
-                toast.error("Impossible de charger le détail.");
+                toast.error(t('messages.load_details_error'));
             } finally {
                 setDetailsLoading(false);
             }
@@ -81,7 +81,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             setShowClientNameModal(true);
         } else {
             const nameToUse = facture.client_name_override || facture.client_name;
-            printInvoicePDF(facture.id, nameToUse);
+            printInvoicePDF(facture.id, nameToUse, undefined, t);
         }
     };
 
@@ -91,7 +91,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             setShowClientNameModal(true);
         } else {
             const nameToUse = facture.client_name_override || facture.client_name;
-            printInvoicePDF(facture.id, nameToUse, 'BL');
+            printInvoicePDF(facture.id, nameToUse, 'BL', t);
         }
     };
 
@@ -117,7 +117,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             }
 
             // Lancer impression
-            printInvoicePDF(pendingPrintFacture.id, clientNameInput);
+            printInvoicePDF(pendingPrintFacture.id, clientNameInput, undefined, t);
 
         } catch (error) {
             logger.error('Erreur sauvegarde nom client:', error);
@@ -143,7 +143,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 toast.dismiss(toastId);
             } catch (error) {
                 logger.error("Erreur chargement pour ticket", error);
-                toast.error("Impossible de charger le détail.");
+                toast.error(t('messages.load_details_error'));
                 toast.dismiss(toastId);
                 return;
             }
@@ -226,7 +226,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 toast.dismiss(toastId);
             } catch (error) {
                 logger.error("Erreur chargement détails pour modification", error);
-                toast.error("Impossible de charger le détail de la vente.");
+                toast.error(t('messages.sale_details_load_error'));
                 toast.dismiss(toastId);
                 return;
             }
@@ -252,7 +252,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 toast.dismiss(toastId);
             } catch (error) {
                 logger.error("Erreur chargement détails pour duplication", error);
-                toast.error("Impossible de charger le détail de la vente à dupliquer.");
+                toast.error(t('messages.sale_details_load_error'));
                 toast.dismiss(toastId);
                 return;
             }
@@ -319,7 +319,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             logger.error("Erreur génération avoir", error);
             const err = error as { response?: { data?: { detail?: string } } };
             const detail = err.response?.data?.detail;
-            toast.error(detail || "Impossible de générer un avoir pour cette vente.");
+            toast.error(detail || t('messages.avoir_generate_error'));
             toast.dismiss(toastId);
         }
     };
