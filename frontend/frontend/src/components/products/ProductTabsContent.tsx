@@ -15,8 +15,11 @@ import { Input } from '../shadcn/input';
 import { Select } from '../ui/Select';
 import { Card, CardContent } from '../shadcn/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
-import { Loader2, Check, X, Pencil } from 'lucide-react';
+import { Loader2, Check, X, Pencil, Download } from 'lucide-react';
 import type { TFunction } from 'i18next';
+import { usePharmacySettings } from '../../hooks/usePharmacySettings';
+import { exportToExcel } from '../../utils/excelExport';
+import { logger } from '../../utils/logger';
 
 interface ProductTabsContentProps {
   selectedProduit: ProduitModel;
@@ -388,7 +391,34 @@ const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: MonthlyStat[]; t: 
     );
 };
 
-const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t }: { stockHistory: StockMovement[]; loadingHistory: boolean; onMovementClick: (item: StockMovement) => void; t: TFunction }) => {
+const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, produitName, t }: { stockHistory: StockMovement[]; loadingHistory: boolean; onMovementClick: (item: StockMovement) => void; produitName: string; t: TFunction }) => {
+    const { settings } = usePharmacySettings();
+
+    const handleExportExcel = useCallback(() => {
+        if (!stockHistory || stockHistory.length === 0) return;
+        try {
+            const rows = stockHistory.map((item) => ({
+                [t('products:detail.movements.date')]: formatDate(item.date),
+                [t('products:detail.movements.type')]: t(`products:detail.movements.types.${item.type}`, { defaultValue: item.type }),
+                [t('products:detail.movements.label')]: item.libelle || '',
+                [t('products:detail.movements.operator')]: item.user || item.user_nom || '-',
+                [t('products:detail.movements.before')]: item.stock_avant,
+                [t('products:detail.movements.qty')]: item.quantity,
+                [t('products:detail.movements.after')]: item.stock_apres,
+            }));
+            const today = new Date().toISOString().slice(0, 10);
+            exportToExcel(rows, settings, {
+                sheetName: t('products:detail.movements.export_excel'),
+                filename: `${t('products:detail.movements.export_filename', { product: produitName })}_${today}.xlsx`,
+                title: t('products:detail.movements.export_title', { product: produitName }),
+            });
+            toast.success(t('products:messages.export_success', { defaultValue: 'Export généré' }));
+        } catch (err) {
+            logger.error('Erreur export Excel mouvements:', err);
+            toast.error(t('products:detail.movements.export_error'));
+        }
+    }, [stockHistory, settings, produitName, t]);
+
     if (loadingHistory) return (
         <div className="flex justify-center py-12">
             <Loader2 className="size-8 animate-spin text-indigo-600" />
@@ -398,7 +428,18 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t 
     if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-slate-400 py-8">{t('products:detail.movements.empty')}</p>;
 
     return (
-        <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+        <div className="flex flex-col h-full">
+            <div className="flex justify-end mb-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Download className="size-4" />}
+                    onClick={handleExportExcel}
+                >
+                    {t('products:detail.movements.export_excel')}
+                </Button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
@@ -469,6 +510,7 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t 
                     })}
                 </TableBody>
             </Table>
+            </div>
         </div>
     );
 };
@@ -605,7 +647,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
 
         {activeTab === 'stats' && <StatsTabContent monthlyStats={monthlyStats} t={t} />}
 
-        {activeTab === 'mvmts' && <MovementsTabContent stockHistory={stockHistory} loadingHistory={loadingHistory} onMovementClick={onMovementClick} t={t} />}
+        {activeTab === 'mvmts' && <MovementsTabContent stockHistory={stockHistory} loadingHistory={loadingHistory} onMovementClick={onMovementClick} produitName={selectedProduit.name} t={t} />}
       </div>
     </div>
   );

@@ -247,6 +247,10 @@
             "view_invoice": "Click to view invoice",
             "view_order": "Click to view order",
             "stock_after": "Stock after",
+            "export_excel": "Export Excel",
+            "export_title": "Stock movements — {{product}}",
+            "export_filename": "movements_{{product}}",
+            "export_error": "Excel export failed",
             "types": {
                 "AJUSTEMENT": "Adjustment",
                 "ENTREE": "Stock Entry",
@@ -304,6 +308,7 @@
         "update_error": "Error while updating product",
         "adjust_success": "Stock adjusted ({{change}})",
         "adjust_error": "Error while adjusting stock",
+        "export_success": "Excel export generated",
         "lot_update_success": "Batch updated",
         "lot_update_error": "Update error"
     },
