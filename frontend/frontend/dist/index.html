@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr" data-theme="corporate">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#059669" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://* https://*; connect-src 'self' http://* https://* ws://* wss://*; font-src 'self' data:; object-src 'none'; frame-ancestors 'none';">
+    <title>Zenith</title>
+    <script type="module" crossorigin src="/assets/index-BkYzs9_F.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-i18n-DbEs1fka.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-query-Dscd91Be.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-router-BUNIphaQ.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-rEllUvbT.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-dates-BrGixsn1.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-http-DhXgJQ-f.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-caisse-BP_gf4Cc.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-dashboard-CkgOq0A6.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-inventory-editor-mMIoITW9.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-inventory-DljZo0h6.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-xlsx-C2K9OxTh.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-inventory-states-DelZnQ6z.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-history-BxXJImlP.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-pdf-BymwfF-v.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-reports-HRiZyP6a.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-commandes-B0ZG3PqM.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-settings-CM5Fcj2L.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-produits-BBgEP0FO.js">
+    <link rel="modulepreload" crossorigin href="/assets/feature-ventes-UCaiBnhe.js">
+    <link rel="stylesheet" crossorigin href="/assets/feature-caisse-B5U4kmJ6.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-COPBTZmg.css">
+  <script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+  <body>
+    <div id="root"></div>
+    <script>
+      (function() {
+        var lng = localStorage.getItem('i18nextLng') || 'fr';
+        document.documentElement.lang = lng.startsWith('en') ? 'en-US' : 'fr-FR';
+
+        var isDark = localStorage.getItem('theme-midnight') === 'true';
+        if (isDark) {
+          document.documentElement.classList.add('theme-midnight');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+  </body>
+</html>

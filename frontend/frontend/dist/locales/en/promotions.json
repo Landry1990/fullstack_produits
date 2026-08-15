@@ -1,0 +1,89 @@
+{
+    "title": "Promotion Management",
+    "subtitle": "Configure your discounts, bundles, and special offers",
+    "new_btn": "New Promotion",
+    "loading": "Loading promotions...",
+    "error_loading": "Error loading promotions",
+    "fetch_error": "Could not fetch promotions",
+    "delete_confirm": "Are you sure you want to delete this promotion?",
+    "delete_error": "Delete failed: {{message}}",
+    "list": {
+        "table": {
+            "name": "Name",
+            "type": "Type",
+            "detail": "Detail",
+            "period": "Period",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "types": {
+            "discount": "Discount",
+            "special_offer": "Special Offer"
+        },
+        "discount": {
+            "buy_get": "Buy {{buy}}, Get {{get}} Free"
+        },
+        "period": {
+            "indefinite": "Indefinite"
+        },
+        "status": {
+            "active": "Active",
+            "inactive": "Inactive"
+        },
+        "actions": {
+            "edit": "Edit",
+            "delete": "Delete"
+        }
+    },
+    "form": {
+        "title_new": "New Promotion",
+        "title_edit": "Edit Promotion",
+        "subtitle": "Define rules and affected products",
+        "general_info": "General Information",
+        "pack_name": "Offer / Pack Name",
+        "pack_placeholder": "Ex: Summer Sale, Health Pack...",
+        "start_date": "Start Date",
+        "end_date": "End Date (Optional)",
+        "type_value": "Type and Value",
+        "promo_type": "Promotion type",
+        "types": {
+            "percentage": "Percentage (%)",
+            "fixed": "Fixed Amount",
+            "buy_get": "Buy/Get Free (X+Y)",
+            "bundle": "Fixed Pack Price (Bundle)"
+        },
+        "labels": {
+            "discount_value": "Discount value",
+            "pack_price": "Total pack price",
+            "buy": "Quantity to buy (X)",
+            "get": "Quantity free (Y)"
+        },
+        "products": {
+            "title": "Affected Products",
+            "count": "{{count}} product(s) selected",
+            "search_placeholder": "Search for product to add (Name, CIP, Barcode...)",
+            "stock": "Stock:",
+            "loading_names": "Loading names...",
+            "error_id": "Error ID: {{id}}",
+            "table": {
+                "product": "Product",
+                "stock": "Stock",
+                "qty": "Qty",
+                "unit_price": "Unit Price",
+                "discount_effect": "Discount Effect",
+                "empty": "No products selected",
+                "offered": "{{count}} Free"
+            }
+        },
+        "status": {
+            "loading": "Saving...",
+            "ready": "Ready",
+            "total_fixed": "Total fixed: {{value}} F"
+        },
+        "actions": {
+            "cancel": "Cancel",
+            "save": "Save Offer"
+        },
+        "save_error": "Error while saving promotion"
+    }
+}

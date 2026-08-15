@@ -1,0 +1,43 @@
+{
+  "title": "Internal Messaging",
+  "subtitle": "Communicate with your colleagues",
+  "tabs": {
+    "received": "Inbox",
+    "sent": "Sent",
+    "templates": "Templates",
+    "new": "Compose"
+  },
+  "received": {
+    "title": "Received messages",
+    "empty": "No messages received",
+    "broadcast": "ALL"
+  },
+  "sent": {
+    "title": "Sent messages",
+    "empty": "No messages sent",
+    "to": "To:"
+  },
+  "templates": {
+    "title": "Predefined messages",
+    "manage": "Manage",
+    "add": "New template",
+    "edit": "Edit template",
+    "delete_confirm": "Delete this template?",
+    "success_deleted": "Template deleted",
+    "success_saved": "Template saved",
+    "placeholder_title": "Template title",
+    "placeholder_content": "Template content..."
+  },
+  "new": {
+    "title": "New message",
+    "recipient": "Recipient",
+    "all": "All users",
+    "content": "Message",
+    "placeholder": "Write your message here...",
+    "send": "Send",
+    "success_sent": "Message sent!",
+    "error_sent": "Send failed",
+    "new_notification": "You have a new internal message!",
+    "view": "View"
+  }
+}

@@ -1,0 +1,1410 @@
+{
+    "matrix": {
+        "quadrants": {
+            "MOTEUR": {
+                "label": "Moteur",
+                "description": "Se vend bien · bien en stock",
+                "impact": "Positif"
+            },
+            "HEMORRAGIE": {
+                "label": "Hémorragie",
+                "description": "Très demandé · en rupture",
+                "impact": "Critique"
+            },
+            "SOMNIFERE": {
+                "label": "Somnifère",
+                "description": "Surstock · aucune vente +90j",
+                "impact": "Pénalisant"
+            },
+            "NEUTRE": {
+                "label": "Neutre",
+                "description": "Flux tendu · à la demande",
+                "impact": "Neutre"
+            }
+        },
+        "diagnostic": {
+            "excellent": "Excellent ! Votre stock est sain, bien équilibré et tourne efficacement.",
+            "dead_stock": "Votre score est freiné par {{count}} produit{{plural}} somnifère{{plural}} qui immobilisent votre trésorerie.",
+            "shortage": "{{count}} produit{{plural}} moteur{{plural}} en rupture font chuter votre score. Agissez maintenant.",
+            "unbalanced": "Plusieurs déséquilibres détectés. Consultez les quadrants pour identifier les actions prioritaires."
+        },
+        "score_card": {
+            "title": "Score de Santé",
+            "tooltip_title": "5 composantes (100 pts)",
+            "tooltip_items": {
+                "disponibilite": "Disponibilité — 30 pts",
+                "fluidite": "Fluidité — 25 pts",
+                "couverture": "Couverture — 20 pts",
+                "activite": "Activité récente — 15 pts",
+                "immobilisation": "Immobilisation — 10 pts"
+            },
+            "labels": {
+                "disponibilite": "Dispo",
+                "fluidite": "Fluidité",
+                "couverture": "Couvert.",
+                "activite": "Activité",
+                "immobilisation": "Immo"
+            },
+            "status": {
+                "healthy": "Stock Sain",
+                "warning": "À Surveiller",
+                "critical": "Critique"
+            },
+            "out_of": "100"
+        },
+        "grid": {
+            "title": "Matrice Performance",
+            "high_rotation": "Rot. forte",
+            "low_rotation": "Rot. faible",
+            "low_availability": "← Dispo. Basse",
+            "high_availability": "Dispo. Haute →",
+            "value_labels": {
+                "missed_sales": "Manque à gagner / 7j",
+                "blocked_cash": "Trésorerie bloquée"
+            },
+            "product_one": "prod",
+            "product_other": "prods"
+        },
+        "penalties": {
+            "title": "Top 5 — Pénalités de score",
+            "empty": "Aucune pénalité significative détectée. Votre stock est équilibré.",
+            "headers": {
+                "designation": "Désignation",
+                "type": "Type",
+                "days": "Jours",
+                "value": "Valeur",
+                "impact": "Impact"
+            },
+            "rupture": "Rupture",
+            "impact_pts": "{{pts}} pts"
+        }
+    },
+    "perimes": {
+        "title": "Gestion des Périmés",
+        "subtitle": "Analyse des pertes et prévisions",
+        "tabs": {
+            "dashboard": "Dashboard",
+            "list": "Liste",
+            "history": "Historique"
+        },
+        "stats": {
+            "valeur_perimes": "Pertes (Coût)",
+            "manque_gagner": "Manque à Gagner",
+            "lots_count": "{{count}} lots périmés",
+            "at_sale_price": "Au prix de vente",
+            "taux_perte": "Taux de Perte",
+            "vs_ca": "vs CA"
+        },
+        "prevision": {
+            "title": "Prévisions d'Expiration",
+            "lots_count": "{{count}} lots",
+            "potential_risk": "Valeur vente potentielle à risque"
+        },
+        "top_perimes": "Produits Périmés en Stock",
+        "risk_lots": "Lots à Risque",
+        "no_result": "Aucun lot à risque trouvé",
+        "history": {
+            "print": "Imprimer",
+            "excel": "Excel",
+            "title": "Historique des Sorties",
+            "no_result": "Aucune sortie trouvée sur cette période",
+            "total_valorization": "Valorisation Totale des Sorties",
+            "operations_count": "{{count}} opérations sur la période",
+            "table": {
+                "date": "Date",
+                "product": "Produit",
+                "lot": "Lot",
+                "qty": "Qté Sortie",
+                "value": "Valorisation",
+                "user": "Utilisateur",
+                "details": "Détails"
+            }
+        },
+        "messages": {
+            "loading": "Chargement des lots...",
+            "loading_stats": "Chargement des statistiques...",
+            "loading_history": "Chargement de l'historique...",
+            "error_loading": "Impossible de charger les lots",
+            "error_stats": "Erreur chargement stats",
+            "error_history": "Erreur chargement historiques",
+            "error_exit": "Erreur lors de la sortie de stock",
+            "error_bulk_exit": "Erreur lors de la sortie groupée",
+            "success_exit": "Sortie de stock effectuée.",
+            "success_bulk_exit": "{{count}} lots sortis avec succès.",
+            "invalid_qty": "Quantité invalide."
+        },
+        "confirm": {
+            "exit_title": "Sortie de stock - Périmés",
+            "exit_message": "Confirmer la sortie de <strong>{{qty}} unités</strong> du produit <strong>{{product}}</strong> (Lot {{lot}}) ?<br/><br/>Cette action est irréversible.",
+            "bulk_exit_title": "Sortie Groupée - Périmés",
+            "bulk_exit_message": "Voulez-vous sortir <strong>{{count}} lots</strong> du stock ?<br/>Leur stock passera à 0."
+        },
+        "prompt": {
+            "qty": "Combien d'unités voulez-vous sortir du stock pour le lot {{lot}} ? (Max: {{max}})"
+        },
+        "table": {
+            "product": "Produit",
+            "lot": "Lot",
+            "expiration": "Expiration",
+            "provider": "Fournisseur",
+            "stock": "Stock",
+            "qty": "Qté",
+            "value": "Valeur",
+            "value_cost": "Valeur (Coût)",
+            "value_sale": "Valeur (Vente)",
+            "actions": "Actions",
+            "sorti": "Sorti",
+            "exit_btn": "Sortir"
+        },
+        "filters_label": "Filtres",
+        "show_expired_only": "Déjà périmés",
+        "no_data": "Aucune donnée disponible",
+        "history_print_generated": "Document généré le",
+        "alerts": {
+            "expired": "⛔ STOP : Ce produit est PÉRIMÉ depuis {{days}} jours !",
+            "warning": "⚠️ ATTENTION : Périme dans {{days}} jours !",
+            "info": "ℹ️ Info : Périme dans {{months}} mois ({{days}} jours)",
+            "click_to_close": "(Cliquez pour fermer)",
+            "click_to_confirm": "(Cliquez pour confirmer)"
+        }
+    },
+    "transformations": {
+        "title": "Gestion des Transformations",
+        "subtitle": "Transformez vos stocks (ex: Boite vers Unités)",
+        "new_relation_btn": "+ Nouvelle Relation",
+        "tabs": {
+            "configured_relations": "Relations Configurées",
+            "history": "Historique"
+        },
+        "messages": {
+            "load_error": "Erreur lors du chargement des données",
+            "create_success": "Relation créée avec succès",
+            "create_error": "Erreur lors de la création de la relation",
+            "delete_confirm_title": "Supprimer la relation ?",
+            "delete_confirm_message": "Cette action supprimera la configuration de transformation.",
+            "delete_confirm_btn": "Supprimer",
+            "delete_success": "Relation supprimée",
+            "delete_error": "Erreur lors de la suppression",
+            "transform_success": "Transformation effectuée avec succès",
+            "transform_error": "Erreur lors de la transformation"
+        },
+        "modal_relation": {
+            "title": "Nouvelle Relation de Transformation",
+            "subtitle": "Configurez une nouvelle règle de transformation",
+            "source": "Produit Source",
+            "source_placeholder": "Rechercher le produit source...",
+            "destination": "Produit Destination",
+            "destination_placeholder": "Rechercher le produit destination...",
+            "ratio_label": "Ratio de conversion",
+            "ratio_placeholder": "Ex: 20",
+            "ratio_help": "Quantité de destination obtenue pour 1 unité de source",
+            "cancel": "Annuler",
+            "create": "Créer la relation"
+        },
+        "modal_transform": {
+            "title": "Exécuter une Transformation",
+            "subtitle": "Exécuter une transformation de stock",
+            "qty_to_transform": "Qté à transformer",
+            "qty_obtained": "Qté obtenue",
+            "notes_label": "Notes / Observations",
+            "notes_placeholder": "Ajoutez une note optionnelle...",
+            "confirm_btn": "Confirmer la transformation"
+        },
+        "preview": {
+            "stock_remaining": "Stock source restant",
+            "current_stock": "Stock actuel",
+            "stock_after": "Stock après",
+            "lots_consumed": "Lots qui seront consommés (FEFO)",
+            "selected": "sélectionnés",
+            "available": "disponible",
+            "remaining": "rest.",
+            "lot_qty_mismatch": "La somme des lots sélectionnés ({{selected}}) doit être égale à la quantité à transformer ({{total}})."
+        },
+        "table_history": {
+            "date": "Date",
+            "user": "Utilisateur",
+            "transformation": "Transformation",
+            "quantities": "Quantités",
+            "notes": "Notes",
+            "empty": "Aucun historique disponible"
+        },
+        "labels": {
+            "dest": "Dest.",
+            "unit": "UNITE",
+            "units": "UNITES",
+            "transformer": "Transformer",
+            "no_relations": "Aucune relation configurée"
+        }
+    },
+    "organisation": {
+        "title": "Organisation du Stock",
+        "subtitle": "Gérez vos rayons, formes et groupes de produits",
+        "tabs": {
+            "rayons": "Rayons",
+            "formes": "Formes",
+            "groupes": "Groupes",
+            "motifs": "Motifs d'ajustement"
+        },
+        "category_manager": {
+            "name_label": "Nom du {{type}}",
+            "load_error": "Erreur lors du chargement des {{type}}s",
+            "success_save": "{{type}} enregistré avec succès",
+            "success_delete": "{{type}} supprimé avec succès",
+            "delete_confirm_title": "Supprimer cet élément ?",
+            "delete_confirm_msg": "Cette action est irréversible et affectera les produits associés.",
+            "search": "Rechercher un {{type}}...",
+            "no_items": "Aucun {{type}} trouvé",
+            "details_title": "Détails du {{type}}",
+            "parent_label": "Parent",
+            "add_products_btn": "Ajouter des produits",
+            "assoc_products_title": "Associer des produits",
+            "assoc_products_subtitle": "Recherche et ajout massif de produits pour : {{name}}",
+            "search_products_placeholder": "Rechercher par nom ou CIP...",
+            "product_added": "{{name}} ajouté au {{type}}",
+            "product_removed": "Produit retiré",
+            "remove_product_title": "Retirer le produit ?",
+            "remove_product_msg": "Voulez-vous retirer {{name}} de ce {{type}} ?",
+            "select_item": "Sélectionnez un {{type}}",
+            "select_item_hint": "Choisissez une catégorie dans la liste pour voir ses produits.",
+            "edit_title": "Modifier le {{type}}",
+            "new_title": "Nouveau {{type}}",
+            "edit_subtitle": "Mettre à jour les informations",
+            "new_subtitle": "Créer une nouvelle entrée dans {{type}}s",
+            "parent_select_none": "Aucun (Catégorie parente)",
+            "description_label": "Description",
+            "cancel": "Annuler",
+            "save": "Enregistrer",
+            "print_stock_title": "Imprimer l'état du stock",
+            "print_help": "Générez un rapport PDF de l'état actuel des stocks pour cette catégorie.",
+            "exclude_zero_stock": "Exclure les produits en rupture de stock",
+            "print_btn": "Lancer l'impression",
+            "print_no_rayon_title": "Imprimer les produits sans rayon",
+            "no_rayon": "Sans Rayon",
+            "order_label": "Ordre d'affichage",
+            "delete_all_btn": "Tout supprimer",
+            "delete_all_confirm_title": "Tout supprimer ?",
+            "delete_all_confirm_msg": "Tous les {{type}}s ({{count}}) seront déplacés en corbeille. Vous pourrez les restaurer depuis la page Corbeille.",
+            "delete_all_confirm_btn": "Tout mettre en corbeille",
+            "delete_all_success": "{{count}} {{type}}s déplacés en corbeille.",
+            "delete_all_error": "Erreur lors de la suppression en bloc.",
+            "delete_all_empty": "Aucun {{type}} à supprimer.",
+            "add_another_entry": "Ajouter un autre {{type}}",
+            "remove_entry": "Retirer cette ligne",
+            "save_all": "Tout enregistrer ({{count}})",
+            "bulk_create_success": "{{count}} {{type}}s créés avec succès",
+            "bulk_create_error": "{{count}} erreur(s) lors de la création"
+        },
+        "config_option_manager": {
+            "title": "Motifs d'ajustement",
+            "subtitle": "Gérez les motifs personnalisés pour les mouvements de stock",
+            "code_label": "Code (Unique)",
+            "code_placeholder": "EX: PERIME",
+            "label_label": "Libellé (Nom affiché)",
+            "label_placeholder": "Ex: Produit Périmé",
+            "value_label": "Valeur (Optionnelle)",
+            "value_placeholder": "Valeur technique associée...",
+            "active_label": "Motif actif",
+            "update_btn": "Mettre à jour",
+            "save_btn": "Enregistrer"
+        },
+        "smart_organizer": {
+            "title": "Rangement Intelligent",
+            "subtitle": "Classer des produits dans : {{name}}",
+            "help_text": "Définissez une plage alphabétique pour identifier les produits à déplacer.",
+            "from_label": "De (Inclus)",
+            "to_label": "À (Inclus)",
+            "contains_label": "Contient (Optionnel)",
+            "case_sensitive": "Respecter la casse",
+            "loading_products": "Chargement de la base produit...",
+            "products_found": "{{count}} produit trouvé",
+            "products_found_plural": "{{count}} produits trouvés",
+            "preview": "Aperçu",
+            "more_products": "+ {{count}} autres produits...",
+            "no_results": "Aucun produit ne correspond aux critères",
+            "processing": "Rangement...",
+            "apply_btn": "Ranger dans {{name}}",
+            "success_message": "{{count}} produits ont été rangés dans \"{{name}}\"",
+            "load_error": "Erreur lors de la récupération de la liste des produits",
+            "bulk_error": "Erreur lors du rangement massif"
+        }
+    },
+    "etats_inventaire": {
+        "title": "États d'Inventaires",
+        "generate_title": "Générer un état d'inventaire",
+        "grouping_title": "Regroupement",
+        "groups": {
+            "rayon": "Par Rayon",
+            "forme": "Par Forme",
+            "groupe": "Par Groupe"
+        },
+        "to_print_label": "{{type}} à imprimer",
+        "all_entities": "Tous les {{type}}s",
+        "loading_entities": "Chargement...",
+        "stock_display_title": "Affichage du Stock",
+        "stock_options": {
+            "machine": "Stock Machine (valeurs actuelles)",
+            "zero": "Stock à Zéro (pour saisie)"
+        },
+        "summary": {
+            "recap": "Récapitulatif :",
+            "title": "État d'inventaire",
+            "all": "Tous",
+            "with": "avec"
+        },
+        "generating": "Génération...",
+        "download_btn": "Télécharger PDF",
+        "messages": {
+            "success": "PDF téléchargé avec succès",
+            "error": "Erreur lors du téléchargement du PDF"
+        },
+        "help": {
+            "title": "Comment utiliser ?",
+            "step1": "1. Choisissez le type de regroupement",
+            "step2": "2. Sélectionnez un {{type}} spécifique ou laissez \"Tous\"",
+            "step3": "3. Choisissez l'affichage du stock",
+            "step4": "4. Cliquez sur \"Télécharger PDF\""
+        }
+    },
+    "rapport_ug": {
+        "title": "Rapport des Unités Gratuites (UG)",
+        "title_part1": "Rapport des",
+        "title_part2": "Unités Gratuites",
+        "subtitle": "Suivi des entrées promotionnelles (UG) par fournisseur",
+        "refresh": "Actualiser",
+        "export": "CSV",
+        "print": "Imprimer",
+        "stats": {
+            "history_ug": "Historique UG Reçues",
+            "current_stock_ug": "Stock UG Actuel (Restant)",
+            "estimated_value": "Valeur Reçue Estimée",
+            "latent_cash": "Trésorerie Latente UG"
+        },
+        "filters": {
+            "supplier_split": "Répartition par Fournisseur",
+            "date_from": "Début",
+            "date_to": "Fin",
+            "to": "au",
+            "clear_dates": "Effacer les dates",
+            "search": "Rechercher fournisseur, produit, lot..."
+        },
+        "table": {
+            "supplier": "Fournisseur",
+            "lots_count": "Nb Réceptions (Lots)",
+            "received_ug": "UG Reçues (Histo.)",
+            "remaining_stock": "Stock UG Restant",
+            "remaining_value": "Valeur Restante (FCFA)",
+            "empty": "Aucune unité gratuite trouvée sur cette période",
+            "ug_suffix": "UG",
+            "lots_badge_one": "{{count}} lot",
+            "lots_badge_other": "{{count}} lots",
+            "details": {
+                "product": "Produit",
+                "lot": "N° Lot",
+                "date": "Date Réception",
+                "order": "N° Commande",
+                "invoice": "N° Facture",
+                "price": "Prix Vente",
+                "received": "Reçues",
+                "remaining": "Restantes",
+                "val_rest": "Valeur Rest."
+            }
+        },
+        "dialog": {
+            "details_description": "{{count}} lot pour ce fournisseur",
+            "details_description_plural": "{{count}} lots pour ce fournisseur"
+        },
+        "print_template": {
+            "title": "Rapport Unités Gratuites",
+            "situation": "Situation du stock promotionnel au {{date}}",
+            "footer": "Fin du rapport de stock promotionnel",
+            "lot_label": "Lot",
+            "invoice_label": "Fact",
+            "lots_count_one": "{{count}} lot",
+            "lots_count_other": "{{count}} lots"
+        }
+    },
+    "inventaire": {
+        "title": "Inventaires",
+        "subtitle": "Gérez et validez vos inventaires de stock",
+        "create_btn": "+ Nouvel Inventaire",
+        "create": {
+            "title": "Nouvel Inventaire",
+            "action_title": "Action à effectuer",
+            "action_verify": "Vérifier le stock",
+            "action_verify_desc": "Pointer et corriger le stock existant",
+            "action_entry": "Saisie initiale",
+            "action_entry_desc": "Saisir un stock partant de zéro",
+            "stock_type_title": "Type de stock",
+            "stock_global": "Global",
+            "stock_rayon": "Rayon",
+            "stock_reserve": "Réserve",
+            "perimeter_title": "Périmètre de l'inventaire",
+            "rayon_all": "Tous les rayons",
+            "groupe_all": "Tous les groupes",
+            "forme_all": "Toutes les formes"
+        },
+        "bulk_action": "{{count}} inventaire(s) sélectionné(s)",
+        "deselect": "Désélectionner",
+        "merge_btn": "Fusionner",
+        "delete_confirm": "Supprimer l'inventaire ?",
+        "product_exists": "Ce produit est déjà dans la liste",
+        "validation": {
+            "success": "Inventaire validé avec succès",
+            "error": "Erreur lors de la validation",
+            "title": "Validation d'Inventaire",
+            "message": "Êtes-vous sûr de vouloir valider cet inventaire ? Cette action mettra à jour le stock officiel."
+        },
+        "types": {
+            "global": "STOCK GLOBAL",
+            "reserve": "STOCK RÉSERVE",
+            "rayon": "STOCK RAYON"
+        },
+        "filters": {
+            "search_placeholder": "Rechercher un inventaire...",
+            "status_all": "Tous les statuts",
+            "creators_all": "Tous les créateurs",
+            "sort_date_desc": "Plus récent",
+            "sort_date_asc": "Plus ancien",
+            "sort_valeur_desc": "Écart valeur (-)",
+            "sort_valeur_asc": "Écart valeur (+)",
+            "sort_qty_desc": "Écart qté (-)",
+            "sort_qty_asc": "Écart qté (+)",
+            "delete_drafts": "Supprimer les brouillons"
+        },
+        "status": {
+            "draft": "En cours",
+            "validated": "Validée"
+        },
+        "merge": {
+            "modal_title": "Fusionner Inventaires",
+            "modal_desc": "Fusionnez l'inventaire actuel avec un autre.",
+            "confirm_title": "Confirmer la fusion",
+            "confirm_message_list": "Les inventaires sélectionnés seront fusionnés dans l'inventaire cible. Les inventaires sources seront supprimés. Continuer ?",
+            "confirm_message_detail": "L'inventaire source sera fusionné dans l'inventaire actuel. Cette action est irréversible. Continuer ?",
+            "select_source": "Sélectionnez l'inventaire source",
+            "choose_placeholder": "Choisir un inventaire...",
+            "confirm_msg": "Fusionner l'inventaire sélectionné dans l'actuel ? L'inventaire source sera supprimé.",
+            "need_two": "Sélectionnez au moins 2 inventaires.",
+            "btn": "Fusionner",
+            "success": "Fusion effectuée",
+            "success_count": "{{count}} inventaire(s) fusionné(s) avec succès !",
+            "error": "Erreur lors de la fusion",
+            "inventory_number": "Inventaire #{{id}}",
+            "no_description": "Sans description"
+        },
+        "list": {
+            "title_short": "inventaires",
+            "delete_title": "Supprimer l'inventaire ?",
+            "delete_message": "L'inventaire #{{id}} sera définitivement supprimé. Cette action est irréversible.",
+            "date": "Date",
+            "desc": "Description",
+            "val_theo": "Val. Théorique",
+            "val_phys": "Val. Saisie",
+            "ecart": "Ecart Valeur",
+            "status": "Statut",
+            "created_by": "Crée par",
+            "created_by_prefix": "Par",
+            "actions": "Actions",
+            "no_description": "-",
+            "empty": "Aucun inventaire"
+        },
+        "detail": {
+            "back": "← Retour",
+            "title_new": "Nouvel Inventaire",
+            "title_edit": "Inventaire #{{id}}",
+            "validated": "VALIDÉE",
+            "tab_data": "📝 Saisie / Liste",
+            "tab_entry": "Saisie",
+            "tab_analysis": "Analyse",
+            "print": "🖨️ Imprimer Etat (PDF)",
+            "import_csv_title": "Importer un fichier CSV (Cip, Quantite)",
+            "saved_auto": "Enregistré auto.",
+            "merge_to": "🔗 Fusionner vers...",
+            "validate": "✓ Valider et Mettre à jour Stock",
+            "validating": "Validation...",
+            "selected": "ligne(s) sélectionnée(s)",
+            "delete_selected": "Supprimer sélection",
+            "sync_now": "Synchroniser {{count}} ligne(s)",
+            "date": "Date",
+            "description": "Description",
+            "placeholder_desc": "Ex: Inventaire Annuel 2025...",
+            "add_product_label": "Ajouter un produit (Recherche par Nom ou CIP)",
+            "search_placeholder": "Scanner ou taper le nom...",
+            "hint_min_char": "Tapez au moins 1 caractère",
+            "no_result": "Aucun produit trouvé",
+            "header_saved": "En-tête sauvegardé",
+            "save_error": "Erreur sauvegarde",
+            "auto_create_error": "Impossible de créer l'inventaire automatiquement.",
+            "bulk_delete_title": "Suppression Multiple",
+            "bulk_delete_message": "Supprimer ces {{count}} lignes ?",
+            "bulk_delete_confirm": "Oui, Supprimer",
+            "bulk_delete_success": "{{count}} lignes supprimées",
+            "empty_list_title": "Aucun produit",
+            "empty_list": "Recherchez et ajoutez des produits pour commencer l'inventaire.",
+            "col_product": "Produit",
+            "col_cip": "CIP",
+            "col_lot": "Lot",
+            "col_expiration": "Péremption",
+            "col_rayon": "Rayon",
+            "col_theo": "Théo.",
+            "col_phys": "Phys.",
+            "col_gap": "Écart",
+            "col_actions": "Actions",
+            "total_gap_value": "Montant Total Écarts",
+            "items_count": "Articles",
+            "sort": {
+                "title": "Trier par :",
+                "chronologie": "Chronologie (Ajout)",
+                "nom": "Libellé (A-Z)",
+                "ecart": "Écart Valeur (F)",
+                "prix": "Prix Achat"
+            },
+            "col_cmp": "PMP",
+            "lot_label": "Lot",
+            "no_ecart_title": "Aucun écart",
+            "no_ecart_desc": "Tous les produits correspondent au stock théorique.",
+            "quick_create_product": "Créer un produit rapidement",
+            "print_group_by": "Regrouper par",
+            "group_rayon": "Par Rayon",
+            "group_forme": "Par Forme",
+            "group_groupe": "Par Groupe",
+            "col_phys_qty": "Qté Physique"
+        },
+        "lines": {
+            "selected": "{{count}} ligne(s) sélectionnée(s)",
+            "remove_title": "Retirer le produit",
+            "remove_message": "Retirer ce produit de l'inventaire ?",
+            "remove_confirm": "Retirer",
+            "delete_selection": "🗑️ Supprimer sélection",
+            "sort_by": "Trier par :",
+            "sort_chronological": "Chronologie (Ajout)",
+            "sort_name": "Libellé (A-Z)",
+            "sort_gap_value": "Ecart Valeur (F)",
+            "sort_gap_qty": "Ecart Quantité (U)",
+            "product": "Produit",
+            "rayon": "Rayon",
+            "buy_price": "Prix Achat",
+            "stock_theo": "Stock Théo.",
+            "qty_saisie": "Qté Saisie",
+            "ecart_qty": "Ecart Qté",
+            "ecart_val": "Ecart Val.",
+            "empty_hint": "Scanner ou ajouter des produits pour commencer le comptage.",
+            "total_theo": "Valeur Théorique",
+            "total_phys": "Valeur Saisie",
+            "total_gap": "Ecart Valeur",
+            "product_added": "Produit ajouté",
+            "delete_error": "Impossible de supprimer la ligne."
+        },
+        "import": {
+            "loading_products_error": "Erreur lors du chargement des produits pour l'import",
+            "not_found_download_name": "produits_non_reconnus_inventaire_{{date}}.txt",
+            "not_found_toast_one": "{{count}} produit non reconnu. Fichier rapport téléchargé.",
+            "not_found_toast_other": "{{count}} produits non reconnus. Fichier rapport téléchargé.",
+            "no_valid_product": "Aucun produit valide trouvé dans le fichier.",
+            "bulk_send_error": "Erreur lors de l'enregistrement des lignes importées.",
+            "reader_error": "Erreur de lecture du fichier.",
+            "success": "{{count}} produits importés ({{lines}} lignes)."
+        },
+        "analysis": {
+            "no_data": "Aucune donnée disponible.",
+            "print_ecarts": "🖨️ Imprimer Rapport Écarts (PDF)",
+            "top_losses": "📉 Top 10 Pertes",
+            "ecarts_by_rayon": "📊 Écarts par Rayon",
+            "loss": "Perte",
+            "top_surplus": "📈 Top Surplus",
+            "total_ecart": "Total Écart",
+            "print_report": "🖨️ Imprimer le Rapport"
+        },
+        "lot_modal": {
+            "title": "Sélectionner un Lot",
+            "subtitle": "Pour: {{name}}",
+            "btn_global": "Stock Global",
+            "desc_global": "Ajouter sans spécifier de lot",
+            "btn_new": "Nouveau Lot",
+            "desc_new": "Créer une nouvelle entrée de lot",
+            "loading": "Chargement des lots...",
+            "no_lots_title": "Aucun lot disponible",
+            "no_lots_desc": "Il n'y a actuellement aucun lot en stock pour ce produit."
+        },
+        "modals": {
+            "lot_title": "Sélectionner un Lot",
+            "lot_for": "Pour: {{name}}",
+            "lot_hint": "Utilisez les flèches ↑/↓ pour naviguer et Entrée pour valider",
+            "lot_none": "Aucun lot trouvé.",
+            "add_global": "Ajouter sans lot (Stock global)",
+            "merge_title_list": "Fusionner {{count}} inventaires",
+            "merge_warning_list": "Tous les inventaires sélectionnés seront fusionnés dans <strong>l'inventaire Cible</strong>. Les autres seront supprimés.",
+            "merge_warning_list_plain": "Fusionner les inventaires sélectionnés dans la CIBLE ?\nLes autres seront supprimés (lignes transférées).",
+            "merge_list_desc": "Les inventaires sélectionnés seront fusionnés dans l'inventaire cible.",
+            "merge_warning": "Attention",
+            "merge_warning_desc": "Les inventaires sources seront supprimés après la fusion. Les lignes en double seront additionnées.",
+            "target_inventory": "Inventaire Cible",
+            "choose_target": "Choisir l'inventaire cible..."
+        },
+        "pdf": {
+            "title_etat": "ETAT D'INVENTAIRE #{{id}}",
+            "title_ecarts": "RAPPORT DES ÉCARTS - #{{id}}",
+            "date": "Date : {{date}}",
+            "desc": "Description : {{desc}}",
+            "rayon": "RAYON : {{name}}",
+            "col_id": "ID",
+            "col_product": "Produit",
+            "col_pmp": "PMP",
+            "col_theo": "Theo.",
+            "col_phys": "Phys.",
+            "col_gap": "Ecart",
+            "col_val": "Val.",
+            "total_rayon": "TOTAL",
+            "total_global": "TOTAL GLOBAL ÉCARTS (VALEUR) : {{sign}}{{amount}} F",
+            "no_gaps": "Aucun écart constaté."
+        },
+        "stats": {
+            "en_cours": "Inventaires En Cours",
+            "val_phys": "Valeur physique (page)",
+            "ecart_global": "Écart (page)",
+            "to_validate": "A valider",
+            "all_inventories": "page affichée"
+        },
+        "audit": {
+            "title": "Audit des Pertes et Écarts",
+            "subtitle": "Analyse approfondie de l'intégrité du stock",
+            "loading": "Analyse du stock en cours...",
+            "error_title": "Erreur de chargement",
+            "error_msg": "Nous n'avons pas pu charger les données d'audit. Cela peut être dû à une erreur serveur ou à l'absence d'inventaires validés.",
+            "retry": "Réessayer",
+            "back": "Retourner",
+            "filter_by_rayon": "PAR RAYON",
+            "filter_by_groupe": "PAR GROUPE",
+            "metric_value": "VALEUR",
+            "metric_freq": "FRÉQUENCE",
+            "stats": {
+                "total_loss": "Total Pertes",
+                "total_gain": "Total Gains",
+                "net_result": "Résultat Net",
+                "analyzed_count": "Inventaires Analysés",
+                "lines_info": "sur {{count}} lignes de produits"
+            },
+            "chart": {
+                "title_value": "Pertes nettes par {{type}}",
+                "title_freq": "Occurrences d'écarts par {{type}}"
+            },
+            "table": {
+                "title": "Top Produits à Problèmes (Pertes/Fréquence)",
+                "critical_badge": "CRITIQUE",
+                "col_product": "Produit",
+                "col_gap_qty": "Écart Qty",
+                "col_total_val": "Valeur Totale",
+                "col_occurrences": "Occurrences",
+                "empty": "Aucune donnée critique"
+            }
+        },
+        "audit_btn": "Audit Flash",
+        "whatsapp_not_configured": "Le numéro WhatsApp de la pharmacienne n'est pas configuré dans les paramètres.",
+        "whatsapp_prepared": "Rapport préparé pour WhatsApp !",
+        "whatsapp_share_error": "Erreur lors de la préparation du partage",
+        "telegram_report_sent": "Rapport inventaire envoyé sur Telegram !",
+        "print": {
+            "total_global_gap": "Total Global des Écarts",
+            "report_legend": "Ce rapport détaille les écarts constatés entre le stock théorique et le comptage physique.",
+            "fill_legend": "Veuillez remplir la colonne 'Qté Physique' lors de votre comptage. Les lots non listés doivent être signalés au verso.",
+            "global_gap": "Écart Global"
+        }
+    },
+    "ajustements": {
+        "title": "Ajustements de Stock",
+        "subtitle": "Historique complet des mouvements manuels",
+        "stats": {
+            "total": "Total Ajustements",
+            "positive": "Total Entrées (+)",
+            "negative": "Total Sorties (-)"
+        },
+        "filters": {
+            "search_label": "Rechercher",
+            "search_placeholder": "Produit, CIP, utilisateur...",
+            "date_start": "Date début",
+            "date_end": "Date fin",
+            "reason_label": "Motif",
+            "all_reasons": "Tous les motifs",
+            "refresh": "Actualiser",
+            "export": "Exporter Excel",
+            "reset": "Réinitialiser",
+            "reasons": {
+                "INVENTAIRE": "Inventaire",
+                "CASSE": "Casse / Dommage",
+                "VOL": "Vol / Perte",
+                "CONFUSION": "Erreur de saisie / Confusion",
+                "ERR_ENTREE": "Erreur Entrée Stock",
+                "AVARIE": "Avarie / Dégradation",
+                "USAGE_INT": "Usage Interne",
+                "PERIME": "Produit Périmé"
+            }
+        },
+        "table": {
+            "loading": "Chargement des ajustements...",
+            "empty": "Aucun ajustement trouvé",
+            "date_header": "Date & Heure",
+            "product_header": "Produit",
+            "cip_header": "CIP",
+            "user_header": "Utilisateur",
+            "lot_header": "Lot",
+            "before_header": "Avant",
+            "after_header": "Après",
+            "diff_header": "Différence",
+            "reason_header": "Motif",
+            "pagination": "Page {{current}} sur {{total}} ({{count}} ajustements)"
+        }
+    },
+    "promis": {
+        "title": "Gestion des Promis",
+        "subtitle": "Gérez les produits promis, les livraisons et les retours en stock",
+        "new_btn": "+ Nouveau Promis",
+        "filter_status": "Filtrer par statut",
+        "status_all": "Tous",
+        "status_att": "En attente",
+        "status_del": "Délivrés",
+        "status_ann": "Annulés",
+        "stats": {
+            "all_title": "Tous les Promis",
+            "att_title": "En Attente",
+            "del_title": "Délivrés",
+            "ann_title": "Annulés"
+        },
+        "table": {
+            "date": "Date",
+            "client": "Client",
+            "phone": "Téléphone",
+            "product": "Produit",
+            "qty": "Qté",
+            "status": "Statut",
+            "actions": "Actions"
+        },
+        "actions": {
+            "deliver": "Délivrer",
+            "cancel": "Annuler",
+            "print": "Imprimer Ticket",
+            "sms": "Envoyer SMS",
+            "whatsapp": "Rappel WhatsApp",
+            "sms_send": "Envoyer 📨"
+        },
+        "modal": {
+            "title_new": "Nouveau Promis",
+            "title_sms": "Envoyer SMS à {{name}}",
+            "client_label": "Client",
+            "client_placeholder": "Nom du patient ou client...",
+            "phone_label": "Téléphone",
+            "phone_placeholder": "Numéro de téléphone (ex: 77...)",
+            "product_label": "Produit *",
+            "product_placeholder": "Rechercher un produit (Nom/CIP)...",
+            "qty_label": "Quantité *",
+            "notes_label": "Notes",
+            "notes_placeholder": "Instructions ou commentaires...",
+            "cancel": "Annuler",
+            "create": "Enregistrer",
+            "sms_number": "Numéro destinataire",
+            "sms_message": "Contenu du message"
+        },
+        "validation": {
+            "product_required": "Veuillez sélectionner un produit",
+            "client_required": "Client requis (sélection ou nom libre)",
+            "create_error": "Erreur lors de l'enregistrement"
+        },
+        "messages": {
+            "loading": "Chargement des promis...",
+            "empty": "Aucun promis trouvé",
+            "delivered_on": "Livré le {{date}}",
+            "cancelled": "Annulé",
+            "print_ticket_error": "Erreur lors de l'impression du ticket",
+            "bulk_delivery_error": "Erreur lors de la livraison en masse",
+            "bulk_cancel_error": "Erreur lors de l'annulation en masse",
+            "sms_success": "SMS envoyé avec succès",
+            "sms_error": "Erreur lors de l'envoi du SMS",
+            "sms_default_body": "Bonjour {{name}}, votre produit {{product}} est disponible à la pharmacie.",
+            "sudo_required_note": "Une confirmation par mot de passe sera requise.",
+            "deliver_confirm": "Marquer ce promis comme délivré ?",
+            "deliver_error": "Erreur lors de la livraison",
+            "cancel_confirm": "Annuler ce promis et réintégrer le stock ?\n\nCette action créera une entrée dans l'historique du produit.\n\nUne confirmation par mot de passe sera requise.",
+            "cancel_error": "Erreur lors de l'annulation",
+            "whatsapp_error": "Erreur lors de l'envoi du rappel WhatsApp",
+            "load_error": "Erreur lors du chargement des promis"
+        },
+        "modals": {
+            "bulk_delivery_title": "Livrer plusieurs promis",
+            "bulk_delivery_message": "Marquer {{count}} promis comme délivrés ?",
+            "bulk_delivery_confirm": "Délivrer tous",
+            "bulk_cancel_title": "Annuler plusieurs promis",
+            "bulk_cancel_message": "Annuler {{count}} promis et réintégrer le stock ?\n\nCette action créera des entrées dans l'historique des produits.",
+            "bulk_cancel_confirm": "Annuler tous",
+            "sudo_confirm_title": "Confirmation Requise (Zone Sensible)",
+            "sudo_confirm_message": "Cette action va modifier le stock (réintégration). Veuillez confirmer votre mot de passe pour continuer."
+        }
+    },
+    "abc": {
+        "title": "Analyse ABC",
+        "subtitle": "Classification des produits par contribution au CA (Pareto 80/20)",
+        "loading": "Chargement de l'analyse...",
+        "error_loading": "Erreur lors du chargement des données",
+        "filters": {
+            "months_3": "3 mois",
+            "months_6": "6 mois",
+            "months_12": "12 mois",
+            "all_rayons": "Tous les rayons",
+            "all_suppliers": "Tous les fournisseurs",
+            "copy": "Copier"
+        },
+        "alerts": {
+            "shortage": "{{count}} produit(s) A en rupture !",
+            "shortage_plural": "{{count}} produits A en rupture !"
+        },
+        "stats": {
+            "total_ca": "Chiffre d'Affaires Total",
+            "period_info": "Sur {{count}} mois",
+            "category_a": "Catégorie A",
+            "category_b": "Catégorie B",
+            "category_c": "Catégorie C"
+        },
+        "tabs": {
+            "vital": "A - Vital",
+            "important": "B - Important",
+            "secondary": "C - Secondaire"
+        },
+        "table": {
+            "product": "Produit",
+            "cip": "CIP",
+            "rayon": "Rayon",
+            "stock": "Stock",
+            "qty_sold": "Qté Vendue",
+            "sale_price": "Prix Vente",
+            "ca": "CA",
+            "ca_percent": "% CA",
+            "cumulated_percent": "% Cumulé",
+            "category": "Catégorie",
+            "no_products": "Aucun produit dans cette catégorie",
+            "shortage_badge": "Rupture"
+        },
+        "footer": {
+            "analyzed_since": "Données analysées depuis le {{date}}",
+            "total_products": "{{count}} produits au total"
+        },
+        "messages": {
+            "copy_success": "{{count}} lignes copiées ! Collez dans Excel.",
+            "copy_error": "Erreur lors de la copie des données"
+        }
+    },
+    "analyse": {
+        "title": "Analyse",
+        "subtitle": "Analyse et optimisation des stocks",
+        "error": "Erreur de chargement",
+        "per_month": "mois",
+        "per_day": "jour",
+        "days": "jours",
+        "day_short": "j",
+        "tabs": {
+            "pilotage": "Pilotage Expert",
+            "unsold": "Invendus",
+            "overstock": "Surstock",
+            "shortage": "Ruptures",
+            "pilotage_desc": "Vue globale de la santé du stock",
+            "unsold_desc": "Produits sans vente récente",
+            "overstock_desc": "Produits en surstock",
+            "shortage_desc": "Prévision des ruptures"
+        },
+        "dashboard": {
+            "health_score": "Score de Santé Global",
+            "health_score_desc": "Performance globale du stock",
+            "health_score_tooltip": "Performance combinée du stock basée sur {{avail}}% Disponibilité et {{rot}}% Rotation.",
+            "missed_sales": "Ventes Manquées (Mensuel)",
+            "missed_sales_tooltip": "Estimation du chiffre d'affaires mensuel perdu car des produits à forte rotation sont en rupture.",
+            "lost_revenue_label": "Perte Mensuelle Estimée",
+            "lost_revenue_desc": "Montant estimé non encaissé à cause des ruptures de produits à forte rotation.",
+            "fix_ruptures_btn": "Réparer les ruptures (IA)",
+            "dead_stock": "Capital Dormant",
+            "dead_stock_tooltip": "Valeur d'achat des produits n'ayant eu aucune vente depuis plus de 90 jours.",
+            "dead_stock_impact": "{{count}} produits > {{days}}j",
+            "dead_stock_desc": "Argent immobilisé dans des produits sans mouvement depuis {{days}} jours.",
+            "optimize_cash_btn": "Optimiser la trésorerie",
+            "availability": "Disponibilité",
+            "availability_tooltip": "% des produits pertinents (en stock ou avec activité récente) actuellement disponibles.",
+            "rotation": "Rotation",
+            "rotation_tooltip": "% des produits actuellement en stock qui ont été vendus sur les 30 derniers jours.",
+            "rupture_rate": "Taux de Rupture",
+            "rupture_rate_tooltip": "% des produits pertinents actuellement en rupture de stock.",
+            "imminent_shortages": "Ruptures Imminentes",
+            "imminent_shortages_tooltip": "Produits qui seront en rupture totale sous 7 jours au rythme de vente actuel.",
+            "total_stock_value": "Valeur Stock Totale",
+            "total_stock_value_tooltip": "Valeur d'achat totale de toutes les marchandises présentes physiquement en stock."
+        },
+        "filters": {
+            "supplier": "Fournisseur",
+            "all_suppliers": "Tous les fournisseurs",
+            "days_threshold": "Seuil (jours)",
+            "refresh": "Actualiser"
+        },
+        "stats": {
+            "supplier": "Fournisseur",
+            "item_count": "Nb. produits",
+            "estimated_value": "Valeur estimée",
+            "overstock_value": "Valeur surstock",
+            "value_at_risk": "Valeur à risque",
+            "critical_alerts": "Alertes critiques",
+            "selected": "{{count}} article(s) sélectionné(s)"
+        },
+        "columns": {
+            "product": "Produit",
+            "supplier": "Fournisseur",
+            "current_stock": "Stock",
+            "created_at": "Date création",
+            "last_purchase": "Dernier Achat",
+            "last_sale": "Dernière Vente",
+            "inactive_since": "Inactif depuis",
+            "cost_price": "Prix coût",
+            "stock_value": "Valeur stock",
+            "avg_rotation": "Rotation Moy.",
+            "threshold": "Seuil",
+            "excess_qty": "Excédent",
+            "excess_value": "Valeur excédent",
+            "avg_daily_sales": "Ventes/jour",
+            "days_until_stockout": "Jours restants",
+            "urgency": "Urgence",
+            "value_at_risk": "Valeur à risque"
+        },
+        "shortage": {
+            "warnings": "avertissements",
+            "selected": "{{count}} sélectionné(s)",
+            "generate_order": "Générer commande",
+            "urgency": {
+                "critical": "Rupture Imminente",
+                "warning": "Stock faible",
+                "caution": "À surveiller"
+            }
+        },
+        "messages": {
+            "loading": "Chargement de l'analyse...",
+            "never_sold": "Jamais vendu"
+        },
+        "empty": {
+            "unsold": "Aucun produit invendu",
+            "overstock": "Pas de surstock",
+            "shortage": "Pas de rupture prévue",
+            "all_good": "Tout semble en ordre !"
+        }
+    },
+    "avoirs": {
+        "title": "Gestion des Avoirs",
+        "subtitle": "Gérez les retours fournisseurs et les réintégrations de stock",
+        "loading": "Chargement des avoirs...",
+        "empty": "Aucun avoir trouvé",
+        "search_placeholder": "Rechercher fournisseur ou numéro...",
+        "create_btn": "Nouvel Avoir",
+        "stats": {
+            "total": "Total Avoirs",
+            "valides": "Validés",
+            "brouillons": "Brouillons"
+        },
+        "table": {
+            "date": "Date",
+            "numero": "N° Avoir",
+            "fournisseur": "Fournisseur",
+            "montant": "Montant HT",
+            "status": "Statut"
+        },
+        "types": {
+            "perime": "Périmé",
+            "casse": "Cassé",
+            "erreur_livraison": "Erreur Livraison",
+            "avarie": "Avarie",
+            "non_facture": "Non Facturé",
+            "autre": "Autre"
+        },
+        "statuses": {
+            "brouillon": "Brouillon",
+            "valide": "Validé"
+        },
+        "form": {
+            "title_new": "Nouvel Avoir",
+            "title_edit": "Modifier l'Avoir #{{id}}",
+            "subtitle": "Créez ou modifiez un retour fournisseur",
+            "cancel": "Annuler",
+            "saving": "Enregistrement...",
+            "save_draft": "Enregistrer Brouillon",
+            "general_info": "Informations Générales",
+            "fournisseur": "Fournisseur",
+            "fournisseur_placeholder": "Rechercher un fournisseur...",
+            "no_fournisseur": "Aucun fournisseur trouvé",
+            "type_label": "Motif du retour",
+            "observations_label": "Observations",
+            "observations_placeholder": "Notes internes relatives à ce retour...",
+            "search_product_placeholder": "Rechercher un produit à ajouter...",
+            "empty_lines": "Aucun produit ajouté à l'avoir.",
+            "table_product": "Produit",
+            "table_lot": "Lot / Expir.",
+            "table_qty": "Qté",
+            "table_price": "Prix Achat",
+            "table_total": "Total HT",
+            "no_lot": "SANS LOT",
+            "no_date": "SANS DATE",
+            "select_lot": "Choisir Lot",
+            "items_count": "{{count}} article(s) • {{units}} unités",
+            "total_amount": "Total Avoir (HT)"
+        },
+        "details": {
+            "back": "Retour à la liste",
+            "title": "Avoir N° {{numero}}",
+            "created_at": "Créé le {{date}}",
+            "created_by": "par {{name}}",
+            "print": "Imprimer",
+            "delete": "Supprimer",
+            "validate": "Valider Avoir",
+            "fournisseur_info": "Informations Fournisseur",
+            "type_label": "Motif",
+            "observations_label": "Observations",
+            "financial_summary": "Résumé Financier",
+            "items_count": "Articles",
+            "total_qty": "Unités totales",
+            "total_ht": "Total HT",
+            "lines_title": "Lignes de l'avoir",
+            "lines_subtitle": "Détail des produits retournés",
+            "close_line": "Clôturer la ligne",
+            "reopen_line": "Réouvrir la ligne",
+            "close_all": "Tout clôturer",
+            "reopen_all": "Tout réouvrir",
+            "no_lines": "Cet avoir ne contient aucune ligne."
+        },
+        "modals": {
+            "lot_title": "Sélectionner un Lot pour le Retour",
+            "no_lots": "Aucun lot disponible en stock pour ce produit.",
+            "sudo_validate_title": "Validation d'Avoir - {{numero}}",
+            "sudo_validate_message": "Confirmer la validation de l'avoir fournisseur <strong>{{numero}}</strong> ?<br/>Cela réintégrera les produits en stock (ou ajustera selon le type).",
+            "sudo_bulk_validate_title": "Validation groupée - {{count}} avoirs",
+            "sudo_bulk_validate_message": "Confirmer la validation de <strong>{{count}} avoirs</strong> fournisseurs ?<br/>Le stock sera réintégré pour tous."
+        },
+        "toasts": {
+            "select_supplier": "Veuillez sélectionner un fournisseur",
+            "add_product": "Veuillez ajouter au moins un produit",
+            "product_exists": "Ce produit est déjà dans la liste",
+            "load_lots_error": "Erreur lors du chargement des lots",
+            "save_success": "Avoir créé avec succès (Brouillon)",
+            "update_success": "Avoir modifié avec succès",
+            "save_error": "Erreur lors de la sauvegarde",
+            "delete_success": "Avoir supprimé avec succès",
+            "delete_error": "Erreur lors de la suppression",
+            "validate_success": "Avoir validé et stock mis à jour",
+            "validate_error": "Erreur lors de la validation",
+            "line_closed": "Ligne clôturée",
+            "line_reopened": "Ligne réouverte",
+            "update_line_error": "Erreur lors de la mise à jour de la ligne",
+            "bulk_lines_closed": "Toutes les lignes clôturées",
+            "bulk_lines_reopened": "Toutes les lignes réouvertes",
+            "bulk_update_error": "Erreur lors de la mise à jour groupée",
+            "bulk_delete_success": "{{count}} avoirs supprimés",
+            "bulk_delete_error": "Erreur lors de la suppression groupée",
+            "bulk_validate_success": "{{count}} avoirs validés",
+            "bulk_validate_error": "Erreur lors de la validation groupée"
+        },
+        "confirms": {
+            "back_to_list": "Voulez-vous vraiment quitter ? Les modifications non enregistrées seront perdues.",
+            "delete_avoir": "Voulez-vous vraiment supprimer l'avoir brouillon {{numero}} ?",
+            "bulk_delete": "Supprimer ces {{count}} avoirs brouillons ?"
+        }
+    },
+    "ruptures": {
+        "title": "Suivi des Ruptures",
+        "subtitle": "Gérez les ruptures internes et signalez les indisponibilités grossistes",
+        "tabs": {
+            "pharmacie": "Ruptures Pharmacie",
+            "fournisseur": "Ruptures Fournisseurs",
+            "stats": "Historique & Stats"
+        },
+        "pharmacie": {
+            "info": "Produits en rupture de stock (rotation moyenne de vente ≥ 1).",
+            "columns": {
+                "cip": "CIP",
+                "produit": "Produit",
+                "rayon": "Rayon",
+                "rotation": "Rotation Moy/Mois",
+                "fournisseur": "Dernier Fournisseur",
+                "dernier_achat": "Dernier Achat",
+                "dernier_vente": "Dernière Vente",
+                "prix_achat": "Prix Achat"
+            },
+            "empty": "Aucune rupture pharmacie à signaler.",
+            "per_month": "/ mois",
+            "filters": {
+                "rayon": "Filtrer par Rayon",
+                "fournisseur": "Filtrer par Fournisseur"
+            },
+            "added_to_order_success": "Produit ajouté à la commande",
+            "added_to_order_error": "Erreur lors de l'ajout à la commande"
+        },
+        "fournisseur": {
+            "signaler": "Signaler une Indisponibilité",
+            "search_placeholder": "Chercher un produit...",
+            "searching": "Recherche...",
+            "no_results": "Aucun produit trouvé",
+            "stock": "Stock",
+            "fournisseur": "Fournisseur",
+            "declare_success": "Rupture fournisseur signalée",
+            "declare_error": "Erreur lors du signalement",
+            "active_list": "Produits Actuellement Indisponibles",
+            "columns": {
+                "produit": "Produit",
+                "fournisseur": "Dernier Fournisseur",
+                "date": "Date Signalement",
+                "action": "Action"
+            },
+            "empty": "Aucune rupture grossiste active.",
+            "mark_resolved": "Résolu",
+            "mark_resolved_title": "Signaler comme de nouveau disponible",
+            "resolve": "Résolu",
+            "resolve_success": "Produit marqué comme disponible",
+            "resolve_error": "Erreur lors de la résolution"
+        },
+        "stats": {
+            "title": "Analyses de Fréquence",
+            "subtitle": "Top des produits les plus souvent absents",
+            "columns": {
+                "rang": "RANG",
+                "produit": "PRODUIT",
+                "frequence": "FRÉQUENCE"
+            },
+            "empty": "Pas de données statistiques pour cette période",
+            "times": "RUPTURES"
+        },
+        "actions": {
+            "add_to_order": "Ajouter à une commande",
+            "signal_shortage": "Signaler en rupture grossiste"
+        }
+    },
+    "temporal_analysis": {
+        "title": "Analyse Temporelle",
+        "subtitle": "Analysez vos heures de pointe, jours et saisons.",
+        "peak_hours": "Heures de pointe",
+        "daily_comparison": "Jours rentables",
+        "seasonality": "Saisonnalité",
+        "peak_hour_title": "Affluence Maximale",
+        "peak_hour_summary": "Pic à {{hour}}:00 avec un chiffre d'affaires de {{revenue}}",
+        "best_day_title": "Meilleur Jour de Performance",
+        "best_day_summary": "{{day}} est votre meilleur jour avec {{revenue}} en moyenne",
+        "seasonality_title": "Tendances Saisonnières",
+        "seasonality_summary": "Analyse sur {{months}} mois • {{count}} produits saisonniers détectés",
+        "global_revenue_evolution": "Évolution Globale du CA",
+        "top_seasonal_products": "Top Produits Saisonniers",
+        "no_seasonality_detected": "Aucune tendance saisonnière forte détectée pour le moment.",
+        "no_data": "Aucune donnée",
+        "columns": {
+            "day": "Jour",
+            "avg_sales": "Ventes Moy.",
+            "avg_basket": "Panier Moy.",
+            "avg_revenue": "CA Moy.",
+            "product": "Produit",
+            "peak_month": "Mois de Pointe",
+            "peak_volume": "Vol. de Pointe",
+            "monthly_avg": "Moy. Mensuelle",
+            "variation": "Variation",
+            "avg_basket_short": "Panier M."
+        }
+    },
+    "reappro": {
+        "title": "Réapprovisionnement Rayon",
+        "subtitle": "Transférez des produits de la réserve vers le rayon",
+        "print_title": "BESOINS EN RÉAPPROVISIONNEMENT",
+        "print_hint": "Liste des produits à sortir de réserve pour remplir les rayons.",
+        "stats": {
+            "displayed_products": "{{count}} produit(s) affiché(s)",
+            "urgencies": "Urgences",
+            "suggested_volume": "Volume suggéré",
+            "units": "unités"
+        },
+        "table": {
+            "product": "Produit",
+            "level": "Niveau",
+            "min": "Min.",
+            "capacity": "Capac.",
+            "on_shelf": "En Rayon",
+            "in_reserve": "En Réserve",
+            "suggestion": "Sortie Réserve",
+            "actions": "Actions",
+            "need_refill": "Besoin urgent",
+            "stabilized": "Stable",
+            "suggested": "Suggéré",
+            "complete": "Complet",
+            "transfer_btn": "Sortir"
+        },
+        "messages": {
+            "error_loading_products": "Erreur lors du chargement des produits à réapprovisionner",
+            "no_refill_needed": "Aucun réapprovisionnement nécessaire pour ce produit",
+            "transfer_success": "Transfert réussi : {{count}} {{name}} déplacés en rayon",
+            "no_products_to_refill": "Aucun produit à réapprovisionner actuellement",
+            "bulk_success": "Réapprovisionnement terminé : {{success}} produits traités sur {{total}}",
+            "loading_stocks": "Analyse des besoins...",
+            "no_reserve_products": "Aucun produit avec gestion de réserve n'a été trouvé."
+        },
+        "modal_confirm": {
+            "title": "Transfert Global",
+            "question": "Confirmer le transfert ?",
+            "message": "Vous allez sortir les quantités suggérées de la réserve pour {{count}} produits.",
+            "cancel": "Annuler",
+            "confirm": "Confirmer le Transfert"
+        },
+        "modal_sudo": {
+            "title": "Validation Administrative",
+            "message": "Un mot de passe de pharmacien ou d'administrateur est requis pour ajuster les stocks."
+        },
+        "critical_alerts": "Alertes Critiques",
+        "suggested_volume": "Volume Suggéré",
+        "displayed_products": "Produits Affichés",
+        "alerts_only": "Seulement les alertes",
+        "selected_products": "Produits sélectionnés",
+        "analyze": "Analyser",
+        "columns": {
+            "product": "Produit",
+            "section_status": "État du Rayon",
+            "section": "Rayon",
+            "reserve": "Réserve",
+            "suggestion": "Suggestion",
+            "actions": "Actions"
+        },
+        "loading": "Analyse des stocks en cours...",
+        "empty": "Aucun produit à réapprovisionner",
+        "empty_desc": "Tous vos rayons sont actuellement bien fournis selon les paramètres de stock.",
+        "min": "MIN",
+        "cap": "CAP",
+        "reserve": "Réserve",
+        "suggested": "Suggéré",
+        "status": {
+            "critical": "Alerte Critique",
+            "ok": "Niveau Correct"
+        },
+        "transfer": "Transférer",
+        "transfer_all": "Tout réapprovisionner",
+        "modal": {
+            "title": "Réapprovisionner les stocks ?",
+            "confirm": "Vous êtes sur le point de transférer les stocks réserve vers le rayon pour {{count}} produits.",
+            "download": "Télécharger",
+            "download_pdf": "Télécharger la confirmation PDF",
+            "view_history": "Voir Historique",
+            "close": "Fermer",
+            "confirm_btn": "Confirmer le transfert",
+            "success": "Transfert Réussi !",
+            "success_desc": "Les stocks ont été transférés. Vous pouvez télécharger le document de confirmation ou consulter l'historique détaillé.",
+            "cancel": "Annuler"
+        }
+    },
+    "cadencier": {
+        "title": "Cadencier",
+        "subtitle": "Planification des approvisionnements par rotation et couverture",
+        "search_placeholder": "Rechercher un produit, CIP...",
+        "type": "Type de commande",
+        "type_grossiste": "Commande Grossiste",
+        "type_divers": "Commande Divers",
+        "coverage": "Couverture cible",
+        "rayon": "Rayon",
+        "fournisseur": "Fournisseur",
+        "only_below_target": "Uniquement les produits sous le seuil",
+        "total_products": "Produits à commander",
+        "units": "unités suggérées",
+        "total_ht": "Montant total HT",
+        "selection": "Sélection",
+        "products": "produits",
+        "generate_grossiste": "Commande Grossiste",
+        "generate_divers": "Commande Divers",
+        "list": "Lignes du cadencier",
+        "showing": "{{count}} / {{total}} lignes",
+        "product": "Produit",
+        "stock": "Stock",
+        "rotation": "Rotation",
+        "target": "Cible",
+        "suggested": "Qté suggérée",
+        "unit_price": "Prix achat",
+        "amount": "Montant HT",
+        "urgency": "Urgence",
+        "supplier": "Fournisseur",
+        "exclusive": "Exclusif",
+        "empty": "Aucun produit à afficher dans le cadencier",
+        "error_loading": "Erreur de chargement du cadencier",
+        "no_selection": "Veuillez sélectionner au moins un produit",
+        "urgence": {
+            "rupture": "Rupture",
+            "alerte": "Alerte",
+            "surveillance": "Surveillance",
+            "ok": "OK"
+        }
+    },
+    "sidebar": {
+        "stock": {
+            "organisation": {
+                "tabs": {
+                    "rayons": "Rayon",
+                    "groupes": "Groupe",
+                    "formes": "Forme"
+                }
+            }
+        }
+    },
+    "expiration": {
+        "widget_title": "Alertes Péremption",
+        "error_loading": "Erreur chargement alertes",
+        "no_alerts": "Aucune alerte péremption",
+        "all_good": "Aucun produit n'expire dans les {{days}} prochains jours",
+        "alerts_count": "{{count}} alerte(s)",
+        "critical_count": "{{count}} critique(s)",
+        "urgent_count": "{{count}} urgent(s)",
+        "notice_count": "{{count}} attention",
+        "days_until": "J-{{days}}",
+        "units": "{{count}} unité(s)",
+        "lot_label": "Lot: {{lot}}",
+        "pa_label": "PA: {{value}}",
+        "days_filter": "{{days}}j",
+        "view_all": "Voir tous les périmés",
+        "manage_perimes": "Gérer les produits périmés",
+        "total_value": "{{count}} alerte(s) • {{value}}"
+    },
+    "etats": {
+        "title": "Listing d'inventaire",
+        "subtitle": "Génération configurable — Excel & Impression",
+        "card_grouping": "Regroupement",
+        "card_grouping_desc": "Organiser le listing par…",
+        "card_source": "Source des données",
+        "card_source_desc": "Stock courant ou inventaire à l'aveugle",
+        "card_filters": "Filtres",
+        "card_filters_desc": "Affiner par entité et par stock",
+        "card_summary": "Récapitulatif",
+        "source_stock": "Stock courant",
+        "source_stock_desc": "Quantités réelles présentes",
+        "source_blind": "Inventaire à l'aveugle",
+        "source_blind_desc": "Listing sans stock théorique (pour comptage)",
+        "group_by_rayon": "Par Rayon",
+        "group_by_rayon_desc": "Emplacement physique",
+        "group_by_forme": "Par Forme galénique",
+        "group_by_forme_desc": "Comprimé, sirop, pommade…",
+        "group_by_groupe": "Par Groupe thérap.",
+        "group_by_groupe_desc": "Classification DCI / ATC",
+        "group_by_fournisseur": "Par Fournisseur",
+        "group_by_fournisseur_desc": "Fournisseur des lots",
+        "filter_all": "Tous les produits",
+        "filter_all_desc": "Stock nul et positif",
+        "filter_positive": "Stocks positifs (> 0)",
+        "filter_positive_desc": "Produits en stock uniquement",
+        "filter_zero": "Stocks nuls (= 0)",
+        "filter_zero_desc": "Ruptures / produits à saisir",
+        "location_all": "Tous (Rayon + Réserve)",
+        "location_all_desc": "Tous les emplacements",
+        "location_rayon": "Stock Rayon",
+        "location_rayon_desc": "Produits en rayon uniquement",
+        "location_reserve": "Stock Réserve",
+        "location_reserve_desc": "Produits en réserve uniquement",
+        "filter_by_entity": "Filtrer par {{entity}}",
+        "filter_stock_label": "Filtre stock",
+        "location_label": "Emplacement",
+        "summary_source": "Source",
+        "summary_grouping": "Regroupement",
+        "summary_filter_stock": "Filtre stock",
+        "summary_location": "Emplacement",
+        "all_option": "— Tous —",
+        "export_info": "L'export Excel est groupé, avec sous-totaux par catégorie et total général. Pour le fournisseur, le regroupement s'effectue via les lots en stock.",
+        "excel_success": "Fichier Excel téléchargé !",
+        "excel_error": "Erreur lors de l'export Excel",
+        "generating": "Génération…",
+        "export_excel": "Exporter en Excel",
+        "print": "Imprimer"
+    }
+}

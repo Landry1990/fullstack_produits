@@ -8,9 +8,13 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist/ est commité pour déploiement production sans npm sur le serveur
 dist-ssr
 *.local
+
+# Exception pour le dossier dist/ (frontend buildé pour la prod)
+!dist/
+!dist/**
 
 # Editor directories and files
 .vscode/*

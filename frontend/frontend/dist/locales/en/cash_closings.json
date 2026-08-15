@@ -1,0 +1,169 @@
+{
+  "title": "Closing History",
+  "description": "Tracking and audits of daily cash register closings",
+  "tabs": {
+    "closings": "Cash Closings",
+    "sessions": "Cash Sessions"
+  },
+  "messages": {
+    "loading_closures": "Error loading closings",
+    "loading_sessions": "Error loading cash sessions"
+  },
+  "filters": {
+    "date_start": "Start Date",
+    "date_end": "End Date",
+    "select_placeholder": "Select...",
+    "filter_btn": "Filter",
+    "reset_btn": "Reset",
+    "reset_title": "Reset filters",
+    "cashier": "Cashier",
+    "all_cashiers": "All cashiers",
+    "post": "Cash Post",
+    "all_posts": "All posts"
+  },
+  "performance": {
+    "title": "Cashier Performance",
+    "hide": "Hide ranking",
+    "show": "Show ranking",
+    "months": {
+      "01": "January",
+      "02": "February",
+      "03": "March",
+      "04": "April",
+      "05": "May",
+      "06": "June",
+      "07": "July",
+      "08": "August",
+      "09": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    },
+    "best_cashier": "Best Cashier",
+    "rigor_score": "Rigor Score",
+    "avg_trend": "Average Trend",
+    "total_closures": "Total Closures",
+    "ranking_title": "Performance Ranking",
+    "badges": {
+      "1st": "1st",
+      "2nd": "2nd",
+      "3rd": "3rd"
+    }
+  },
+  "stats": {
+    "theoretical_total": "Theoretical Total",
+    "real_total": "Real Total (Cash)",
+    "global_gap": "Global Gap"
+  },
+  "table": {
+    "header_date": "Date & Time",
+    "header_cashier": "Cashier",
+    "header_done_by": "Closed by",
+    "header_post": "Post",
+    "header_theoretical": "Theoretical",
+    "header_real": "Real",
+    "header_gap": "Gap",
+    "header_actions": "Actions",
+    "no_cloture": "No closing found",
+    "no_cloture_desc": "No cash register closing has been recorded for this period.",
+    "period_desc": "Period from {{start}} to {{end}}",
+    "view_details": "View details",
+    "print": "Print ticket",
+    "period_total": "Totals on {{count}} closings",
+    "rank": "Rank",
+    "operator": "Operator",
+    "closures": "Closures",
+    "avg_gap": "Avg Gap",
+    "trend": "Trend",
+    "list_title": "Detailed closings",
+    "daily_title": "Daily summary"
+  },
+  "view_mode": {
+    "list": "List",
+    "daily": "By day"
+  },
+  "daily": {
+    "header_date": "Date",
+    "header_count": "Closures",
+    "header_theoretical": "Theoretical",
+    "header_real": "Real",
+    "header_gap": "Gap",
+    "header_sales": "Sales",
+    "header_entries": "Entries",
+    "header_exits": "Exits",
+    "no_data": "No daily data",
+    "footer_total": "Totals"
+  },
+  "pagination": {
+    "showing": "Showing {{start}} to {{end}} of {{total}}",
+    "per_page": "/ page",
+    "prev": "Previous",
+    "page": "Page {{current}} of {{total}}",
+    "next": "Next"
+  },
+  "sessions": {
+    "active_title": "Active sessions in progress",
+    "active_badge_one": "{{count}} active",
+    "active_badge_other": "{{count}} active",
+    "opened_on": "Opened on {{date}}",
+    "fund_label": "Fund: {{amount}}",
+    "view_details": "View details",
+    "view_detail": "View detail",
+    "status": {
+      "active": "Active",
+      "closed": "Closed",
+      "open": "In progress",
+      "in_progress": "— In progress —"
+    },
+    "table": {
+      "status": "Status",
+      "post": "Post",
+      "cashier": "Cashier",
+      "opening": "Opening",
+      "closing": "Closing",
+      "fund": "Cash fund",
+      "total_collected": "Total collected",
+      "actions": "Actions"
+    },
+    "empty": {
+      "title": "No cash session",
+      "description": "Sessions will appear here after opening a cash post."
+    },
+    "pagination": {
+      "showing": "{{start}}–{{end}} of {{total}} sessions"
+    },
+    "modal": {
+      "title": "Session details",
+      "opening": "Opening",
+      "closing": "Closing",
+      "in_progress": "In progress...",
+      "fund": "Cash fund",
+      "payment_breakdown": "Payment breakdown",
+      "total_collected": "Total collected",
+      "no_payments": "No payment recorded for this session"
+    }
+  },
+  "modal": {
+    "title": "Closing Details",
+    "cash_of": "{{name}}'s cash register",
+    "closed_by": " - Closed by {{name}}",
+    "date_label": "Closing date",
+    "period_label": "Activity period",
+    "period_from": "From: {{date}}",
+    "period_to": "To: {{date}}",
+    "theoretical_label": "Theoretical Amount",
+    "real_label": "Entered Real Amount",
+    "gap_label": "Cash Gap",
+    "flows_summary": "Flows Summary",
+    "ventes": "Net sales",
+    "entries": "Entries (Mov.)",
+    "exits": "Exits (Mov.)",
+    "mode_details": "Details by payment mode",
+    "observations": "Observations / Notes",
+    "pharmacy": "Pharmacy: {{amount}}",
+    "misc": "Misc: {{amount}}",
+    "print": "Reprint ticket",
+    "print_title": "Cash Closing #{{id}}",
+    "close": "Close"
+  }
+}

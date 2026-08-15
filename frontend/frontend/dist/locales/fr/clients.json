@@ -1,0 +1,158 @@
+{
+    "title": "Gestion des Clients",
+    "actions": {
+        "create": "Nouveau Client",
+        "edit": "Modifier Client",
+        "delete": "Supprimer Client",
+        "bulk_delete": "Supprimer {{count}} client(s)"
+    },
+    "filters": {
+        "search_placeholder": "Rechercher par nom, téléphone, matricule...",
+        "show_inactive": "Afficher inactifs",
+        "hide_inactive": "Masquer inactifs"
+    },
+    "fields": {
+        "name": "Nom Complet",
+        "phone": "Téléphone",
+        "email": "Email",
+        "type": "Type de Client",
+        "address": "Adresse",
+        "status": "Statut",
+        "loyalty_member": "Membre Fidélité",
+        "is_deposit_enabled": "Privilège Dépôt"
+    },
+    "hints": {
+        "is_active": "Le client est visible et peut effectuer des achats",
+        "loyalty_member": "Le client participe au programme de points et récompenses",
+        "is_deposit_enabled": "Autoriser ce client à effectuer des dépôts et à les utiliser comme mode de paiement"
+    },
+    "types": {
+        "individual": "Particulier",
+        "professional": "Professionnel",
+        "particulier": "Particulier",
+        "professionnel": "Professionnel",
+        "pro_short": "Pro",
+        "part_short": "Part"
+    },
+    "sections": {
+        "general_info": "Informations Générales",
+        "contact": "Coordonnées",
+        "finance": "Conditions Financières",
+        "programs": "Programmes & Avantages",
+        "purchase_history": "Historique d'Achats",
+        "settings": "Paramètres",
+        "pro_info": "Informations Professionnelles"
+    },
+    "finance": {
+        "auto_discount": "Remise Automatique",
+        "credit_limit": "Plafond de Crédit",
+        "coverage": "Taux de Couverture",
+        "majoration_pro": "Majoration Pro",
+        "current_debt": "Dette Actuelle",
+        "solde_depot": "Solde Dépôt",
+        "manage_deposit": "Gérer le dépôt",
+        "debt_usage": "Dette Actuelle / Plafond"
+    },
+    "beneficiaries": {
+        "title": "Bénéficiaires (Ayants Droit)",
+        "empty": "Aucun bénéficiaire enregistré",
+        "name_placeholder": "Nom du bénéficiaire",
+        "id_placeholder": "ID / Matricule",
+        "col_name": "Nom Complet",
+        "col_id": "Matricule",
+        "company": "Société"
+    },
+    "history": {
+        "total_visits": "Visites Totales",
+        "loyalty": "Points Fidélité",
+        "empty_title": "Aucun achat",
+        "empty_desc": "Ce client n'a pas encore effectué d'achats.",
+        "invoice_no": "Facture #{{no}}",
+        "visit_date": "Date de visite",
+        "quantity_short": "Qté",
+        "status_validee": "VALIDÉE"
+    },
+    "loyalty": {
+        "title": "Configuration Fidélité",
+        "subtitle": "Paramétrer le programme de fidélité",
+        "amount_per_point": "Montant d'achat pour 1 point (FCFA)",
+        "amount_per_point_hint": "Ex: 1000 = 1 point par tranche de 1000 F",
+        "manual_usage": "Usage Manuel",
+        "point_value": "Valeur d'un point (FCFA)",
+        "point_value_hint": "Si utilisé comme monnaie. Ex: 10 F",
+        "auto_reward": "Récompense Automatique",
+        "threshold": "Seuil (Points)",
+        "threshold_hint": "0 = Désactivé",
+        "discount": "Remise (%)",
+        "discount_hint": "Ex: 5.00 pour 5%"
+    },
+    "messages": {
+        "create_success": "Client créé avec succès",
+        "update_success": "Client mis à jour avec succès",
+        "delete_success": "Client supprimé avec succès",
+        "bulk_delete_success": "{{count}} clients supprimés",
+        "error_fetch": "Erreur lors du chargement des clients",
+        "error_save": "Erreur lors de l'enregistrement",
+        "error_delete": "Erreur lors de la suppression",
+        "error_bulk_delete": "Erreur lors de la suppression groupée",
+        "error_status": "Erreur lors du changement de statut",
+        "status_active": "Client réactivé",
+        "status_inactive": "Client masqué"
+    },
+    "modals": {
+        "delete_confirm": "Voulez-vous vraiment supprimer le client \"{{name}}\" ?",
+        "bulk_delete_confirm": "Supprimer {{count}} clients ?",
+        "select_client_hint": "Sélectionnez un client pour voir ses détails.",
+        "select_client_empty": "Sélectionnez un client",
+        "select_client_empty_desc": "Consultez les détails financiers, l'historique d'achat et gérez les bénéficiaires en un clic."
+    },
+    "status": {
+        "inactive": "INACTIF"
+    },
+    "sales_modal": {
+        "print_placeholder": "Entrez le nom pour l'impression...",
+        "print_hint": "Ce nom apparaîtra uniquement sur la facture imprimée"
+    },
+    "units": {
+        "pts": "pts",
+        "percent": "%",
+        "per_unit": "/ unité"
+    },
+    "bmi": {
+        "title": "Outils Cliniques",
+        "subtitle": "Calculateurs de santé selon les normes de l'OMS",
+        "tab_adult": "IMC Adulte",
+        "tab_child": "Poids Enfant",
+        "weight": "Poids (kg)",
+        "height": "Taille (cm)",
+        "age": "Âge",
+        "age_unit_months": "Mois",
+        "age_unit_years": "Ans",
+        "weight_placeholder": "Ex: 75",
+        "height_placeholder": "Ex: 175",
+        "age_placeholder": "Ex: 4",
+        "unit_kg": "kg",
+        "info_text": "L'IMC est un indicateur de la corpulence d'une personne. Il est calculé en divisant le poids (kg) par le carré de la taille (m²).",
+        "child_info_text": "Estimation du poids idéal d'un enfant en fonction de son âge selon les formules pédiatriques standards (APLS).",
+        "your_bmi": "Votre IMC",
+        "estimated_weight": "Poids Estimé",
+        "empty_state": "Saisissez les données pour voir le résultat",
+        "oms_classification": "Classification de l'OMS",
+        "categories": {
+            "underweight": "Insuffisance pondérale (Maigreur)",
+            "normal": "Corpulence normale",
+            "overweight": "Surpoids",
+            "obesity_1": "Obésité modérée (Classe I)",
+            "obesity_2": "Obésité sévère (Classe II)",
+            "obesity_3": "Obésité morbide (Classe III)"
+        },
+        "descriptions": {
+            "underweight": "Votre poids est inférieur à la normale. Un suivi nutritionnel peut être recommandé.",
+            "normal": "Votre poids est idéal par rapport à votre taille. Continuez à maintenir une alimentation équilibrée.",
+            "overweight": "Vous êtes en léger surpoids. Une activité physique régulière et une attention à votre régime alimentaire sont conseillées.",
+            "obesity_1": "Votre IMC indique une obésité modérée. Il est conseillé de consulter un professionnel de santé.",
+            "obesity_2": "Votre IMC indique une obésité sévère. Un suivi médical est fortement recommandé.",
+            "obesity_3": "Votre IMC indique une obésité morbide ou massive. Une prise en charge médicale urgente est nécessaire."
+        }
+    }
+}

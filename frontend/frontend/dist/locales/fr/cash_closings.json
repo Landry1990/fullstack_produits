@@ -1,0 +1,169 @@
+{
+  "title": "Historique des Clôtures",
+  "description": "Suivi et audits des clôtures de caisse journalières",
+  "tabs": {
+    "closings": "Clôtures de caisse",
+    "sessions": "Sessions de caisse"
+  },
+  "messages": {
+    "loading_closures": "Erreur lors du chargement des clôtures",
+    "loading_sessions": "Erreur lors du chargement des sessions de caisse"
+  },
+  "filters": {
+    "date_start": "Date début",
+    "date_end": "Date fin",
+    "select_placeholder": "Sélectionner...",
+    "filter_btn": "Filtrer",
+    "reset_btn": "Réinitialiser",
+    "reset_title": "Réinitialiser les filtres",
+    "cashier": "Caissier",
+    "all_cashiers": "Tous les caissiers",
+    "post": "Poste de Caisse",
+    "all_posts": "Tous les postes"
+  },
+  "performance": {
+    "title": "Performance par Caissier",
+    "hide": "Masquer le classement",
+    "show": "Afficher le classement",
+    "months": {
+      "01": "Janvier",
+      "02": "Février",
+      "03": "Mars",
+      "04": "Avril",
+      "05": "Mai",
+      "06": "Juin",
+      "07": "Juillet",
+      "08": "Août",
+      "09": "Septembre",
+      "10": "Octobre",
+      "11": "Novembre",
+      "12": "Décembre"
+    },
+    "best_cashier": "Meilleur Caissier",
+    "rigor_score": "Score de Rigueur",
+    "avg_trend": "Tendance Moyenne",
+    "total_closures": "Total Clôtures",
+    "ranking_title": "Classement de Performance",
+    "badges": {
+      "1st": "1er",
+      "2nd": "2ème",
+      "3rd": "3ème"
+    }
+  },
+  "stats": {
+    "theoretical_total": "Total Théorique",
+    "real_total": "Total Réel (Caisse)",
+    "global_gap": "Écart Global"
+  },
+  "table": {
+    "header_date": "Date & Heure",
+    "header_cashier": "Caissier",
+    "header_done_by": "Clôturé par",
+    "header_post": "Poste",
+    "header_theoretical": "Théorique",
+    "header_real": "Réel",
+    "header_gap": "Écart",
+    "header_actions": "Actions",
+    "no_cloture": "Aucune clôture trouvée",
+    "no_cloture_desc": "Aucune clôture de caisse n'a été enregistrée pour cette période.",
+    "period_desc": "Période du {{start}} au {{end}}",
+    "view_details": "Voir les détails",
+    "print": "Imprimer le ticket",
+    "period_total": "Totaux sur {{count}} clôtures",
+    "rank": "Rang",
+    "operator": "Opérateur",
+    "closures": "Clôtures",
+    "avg_gap": "Écart Moyen",
+    "trend": "Tendance",
+    "list_title": "Clôtures détaillées",
+    "daily_title": "Récapitulatif journalier"
+  },
+  "view_mode": {
+    "list": "Liste",
+    "daily": "Par jour"
+  },
+  "daily": {
+    "header_date": "Date",
+    "header_count": "Clôtures",
+    "header_theoretical": "Théorique",
+    "header_real": "Réel",
+    "header_gap": "Écart",
+    "header_sales": "Ventes",
+    "header_entries": "Entrées",
+    "header_exits": "Sorties",
+    "no_data": "Aucune donnée journalière",
+    "footer_total": "Totaux"
+  },
+  "pagination": {
+    "showing": "Affichage de {{start}} à {{end}} sur {{total}}",
+    "per_page": "/ page",
+    "prev": "Précédent",
+    "page": "Page {{current}} sur {{total}}",
+    "next": "Suivant"
+  },
+  "sessions": {
+    "active_title": "Sessions actives en cours",
+    "active_badge_one": "{{count}} active",
+    "active_badge_other": "{{count}} actives",
+    "opened_on": "Ouvert le {{date}}",
+    "fund_label": "Fond : {{amount}}",
+    "view_details": "Voir détails",
+    "view_detail": "Voir le détail",
+    "status": {
+      "active": "Active",
+      "closed": "Fermée",
+      "open": "En cours",
+      "in_progress": "— En cours —"
+    },
+    "table": {
+      "status": "Statut",
+      "post": "Poste",
+      "cashier": "Caissier",
+      "opening": "Ouverture",
+      "closing": "Fermeture",
+      "fund": "Fond de caisse",
+      "total_collected": "Total encaissé",
+      "actions": "Actions"
+    },
+    "empty": {
+      "title": "Aucune session de caisse",
+      "description": "Les sessions apparaîtront ici après l'ouverture d'un poste de caisse."
+    },
+    "pagination": {
+      "showing": "{{start}}–{{end}} sur {{total}} sessions"
+    },
+    "modal": {
+      "title": "Détail de la session",
+      "opening": "Ouverture",
+      "closing": "Fermeture",
+      "in_progress": "En cours...",
+      "fund": "Fond de caisse",
+      "payment_breakdown": "Ventilation des paiements",
+      "total_collected": "Total encaissé",
+      "no_payments": "Aucun paiement enregistré pour cette session"
+    }
+  },
+  "modal": {
+    "title": "Détails de la Clôture",
+    "cash_of": "Caisse de {{name}}",
+    "closed_by": " - Clôturé par {{name}}",
+    "date_label": "Date de clôture",
+    "period_label": "Période d'activité",
+    "period_from": "Du: {{date}}",
+    "period_to": "Au: {{date}}",
+    "theoretical_label": "Montant Théorique",
+    "real_label": "Montant Réel Saisi",
+    "gap_label": "Écart de Caisse",
+    "flows_summary": "Résumé des Flux",
+    "ventes": "Ventes nettes",
+    "entries": "Entrées (Mouv.)",
+    "exits": "Sorties (Mouv.)",
+    "mode_details": "Détails par mode de paiement",
+    "observations": "Observations / Notes",
+    "pharmacy": "Pharmacie : {{amount}}",
+    "misc": "Diverses : {{amount}}",
+    "print": "Réimprimer le ticket",
+    "print_title": "Clôture Caisse #{{id}}",
+    "close": "Fermer"
+  }
+}

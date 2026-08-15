@@ -3,7 +3,6 @@ services:
   db:
     image: postgres:15-alpine
     container_name: zenith-pharma-db
-    pull_policy: never
     entrypoint: ["bash", "/init-db.sh"]
     command: >-
       postgres
@@ -50,7 +49,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: zenith-pharma-backend:latest
     container_name: zenith-pharma-backend
     command: >
       sh -c "python manage.py migrate &&
@@ -121,7 +119,6 @@ services:
       dockerfile: Dockerfile.prod
       args:
         GIT_COMMIT: ${GIT_COMMIT:-unknown}
-    image: zenith-pharma-frontend:latest
     container_name: zenith-pharma-frontend
     ports:
       - "${FRONTEND_PORT:-80}:80"
