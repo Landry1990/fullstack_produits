@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, type ReactNode } from 'react';
-import { Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Download, AlertTriangle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../services/api';
 import { Badge } from './ui/Badge';
@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from './shadcn/button';
 import { Card, CardContent, CardTitle } from './shadcn/card';
 import { Progress } from './shadcn/progress';
+import { Badge as ShadcnBadge } from './shadcn/badge';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/Table';
@@ -331,46 +332,42 @@ export default function StatistiquesFournisseur() {
 
             {/* Tableau détaillé */}
             <Card className="bg-base-100 shadow-sm border border-base-200">
-                <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse [&>tbody>tr:nth-child(even)]:bg-base-200/50">
-                    <thead>
-                        <tr className="bg-base-200">
-                        <th>{t('sales_tab.table.supplier')}</th>
-                        <th className="text-right">{t('sales_tab.table.qty_sold')}</th>
-                        <th className="text-right">{t('sales_tab.table.purchase_cost')}</th>
-                        <th className="text-right">{t('sales_tab.table.ca_ttc')}</th>
-                        <th className="text-right">{t('sales_tab.table.gross_margin')}</th>
-                        <th className="text-right">{t('sales_tab.table.margin_percent')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-1/3">{t('sales_tab.table.supplier')}</TableHead>
+                            <TableHead className="text-right w-24">{t('sales_tab.table.qty_sold')}</TableHead>
+                            <TableHead className="text-right w-40">{t('sales_tab.table.purchase_cost')}</TableHead>
+                            <TableHead className="text-right w-40">{t('sales_tab.table.ca_ttc')}</TableHead>
+                            <TableHead className="text-right w-40">{t('sales_tab.table.gross_margin')}</TableHead>
+                            <TableHead className="text-right w-32">{t('sales_tab.table.margin_percent')}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {stats.length === 0 ? (
-                        <tr>
-                            <td colSpan={6} className="text-center py-8 text-base-content/50">
-                            {t('sales_tab.table.no_data')}
-                            </td>
-                        </tr>
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-8">
+                                    {t('sales_tab.table.no_data')}
+                                </TableCell>
+                            </TableRow>
                         ) : (
-                        stats.map((stat) => (
-                            <tr key={stat.id}>
-                            <td className="font-medium">{stat.nom}</td>
-                            <td className="text-right">{stat.quantite_vendue}</td>
-                             <td className="text-right">{formatCurrency(Math.round(Number(stat.cout_achat)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
-                             <td className="text-right font-bold">{formatCurrency(Math.round(Number(stat.ca_ttc)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
-                             <td className="text-right text-success">{formatCurrency(Math.round(Number(stat.marge_brute)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
-                            <td className="text-right text-sm">
-                                {Number(stat.ca_ttc) > 0 
-                                ? ((Number(stat.marge_brute) / Number(stat.ca_ttc)) * 100).toFixed(1) 
-                                : 0}%
-                            </td>
-                            </tr>
-                        ))
+                            stats.map((stat) => (
+                                <TableRow key={stat.id}>
+                                    <TableCell className="font-medium">{stat.nom}</TableCell>
+                                    <TableCell className="text-right">{stat.quantite_vendue}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(Math.round(Number(stat.cout_achat)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                                    <TableCell className="text-right font-bold">{formatCurrency(Math.round(Number(stat.ca_ttc)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                                    <TableCell className="text-right text-success">{formatCurrency(Math.round(Number(stat.marge_brute)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                                    <TableCell className="text-right text-sm">
+                                        {Number(stat.ca_ttc) > 0
+                                            ? ((Number(stat.marge_brute) / Number(stat.ca_ttc)) * 100).toFixed(1)
+                                            : 0}%
+                                    </TableCell>
+                                </TableRow>
+                            ))
                         )}
-                    </tbody>
-                    </table>
-                </div>
-                </CardContent>
+                    </TableBody>
+                </Table>
             </Card>
         </div>
       )}
@@ -378,65 +375,82 @@ export default function StatistiquesFournisseur() {
       {/* TAB 2: PERFORMANCE (Scoring) */}
       {activeTab === 'performance' && (
         <div className="space-y-6 animate-fade-in">
-             <div className="flex items-start gap-3 p-4 rounded-lg bg-[#fef3c7] text-[#78350f] dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <Card className="border-amber-200/60 bg-amber-50/50 dark:bg-amber-900/20">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3 text-amber-900 dark:text-amber-400">
+                <AlertTriangle className="shrink-0 size-5 mt-0.5" />
                 <div>
-                <h3 className="font-bold">{t('performance_tab.alert_title')}</h3>
-                <div className="text-sm">{t('performance_tab.alert_text')}</div>
+                  <CardTitle className="text-base font-bold">{t('performance_tab.alert_title')}</CardTitle>
+                  <p className="text-sm text-amber-800/80 dark:text-amber-400/80 mt-1">{t('performance_tab.alert_text')}</p>
                 </div>
-            </div>
-            
-            {loadingAnalysis ? (
-                 <div className="h-64 flex items-center justify-center">
-                    <Loader2 className="size-8 animate-spin" />
-                 </div>
-            ) : (
-                <div className="grid grid-cols-1 gap-4">
-                     {supplierAnalysis?.map((item) => (
-                         <Card key={item.id} className="bg-base-100 shadow-sm border border-base-200">
-                             <CardContent className="p-4">
-                                 <div className="flex justify-between items-start">
-                                     <div>
-                                         <h3 className="text-xl font-bold">{item.nom}</h3>
-                                         <Badge variant="outline" size="lg" className="mt-2">Score: {item.score_global}/100</Badge>
-                                     </div>
-                                     <div className={`relative size-16 flex items-center justify-center font-bold text-lg ${
-                                        item.score_global >= 80 ? 'text-success' :
-                                        item.score_global >= 50 ? 'text-warning' : 'text-error'
-                                    }`} style={{
-                                        background: `conic-gradient(currentColor ${item.score_global * 3.6}deg, rgba(0,0,0,0.1) ${item.score_global * 3.6}deg)`,
-                                        borderRadius: '50%',
-                                    }}>
-                                        <span className="bg-base-100 rounded-full size-12 flex items-center justify-center">
-                                            {item.score_global}
-                                        </span>
-                                    </div>
-                                 </div>
-                                 
-                                 <div className="border-t border-base-200 my-2"></div>
+              </div>
+            </CardContent>
+          </Card>
 
-                                 <div className="grid grid-cols-3 gap-4 text-center">
-                                     <div>
-                                         <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.volume')}</div>
-                                          <div className="font-bold text-lg">{formatCurrency(Math.round(item.details.volume.valeur ?? 0), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</div>
-                                         <Progress value={item.details.volume.score} className="w-full" />
-                                     </div>
-                                     <div>
-                                         <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.quality')}</div>
-                                         <div className="font-bold text-lg">{item.details.qualite.incidents} {t('performance_tab.metrics.incidents')}</div>
-                                         <Progress value={item.details.qualite.score} className={`w-full ${item.details.qualite.score > 80 ? '[&>div]:bg-emerald-500' : '[&>div]:bg-red-500'}`} />
-                                     </div>
-                                     <div>
-                                         <div className="text-xs uppercase font-bold text-base-content/50">{t('performance_tab.metrics.consistency')}</div>
-                                         <div className="font-bold text-lg">{item.details.regularite.nb_livraisons} {t('performance_tab.metrics.deliveries')}</div>
-                                         <Progress value={item.details.regularite.score} className="w-full [&>div]:bg-sky-500" />
-                                     </div>
-                                 </div>
-                             </CardContent>
-                         </Card>
-                     ))}
-                </div>
-            )}
+          {loadingAnalysis ? (
+            <div className="h-64 flex items-center justify-center">
+              <Loader2 className="size-8 animate-spin text-slate-400" />
+            </div>
+          ) : (
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-56">{t('concentration_tab.table.supplier')}</TableHead>
+                      <TableHead className="text-center w-28">{t('performance_tab.score')}</TableHead>
+                      <TableHead>{t('performance_tab.metrics.volume')}</TableHead>
+                      <TableHead>{t('performance_tab.metrics.quality')}</TableHead>
+                      <TableHead>{t('performance_tab.metrics.consistency')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {!supplierAnalysis?.length ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                          {t('performance_tab.no_data', { defaultValue: 'Aucune analyse disponible' })}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      supplierAnalysis.map((item) => {
+                        const scoreColor = item.score_global >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
+                          item.score_global >= 50 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' :
+                            'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400';
+                        return (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium text-slate-900">{item.nom}</TableCell>
+                            <TableCell className="text-center">
+                              <ShadcnBadge className={scoreColor}>
+                                {item.score_global}/100
+                              </ShadcnBadge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-semibold text-sm text-slate-700">
+                                {formatCurrency(Math.round(item.details.volume.valeur ?? 0), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
+                              </div>
+                              <Progress value={item.details.volume.score} className="mt-2 [&>div]:bg-emerald-500" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-semibold text-sm text-slate-700">
+                                {item.details.qualite.incidents ?? 0} {t('performance_tab.metrics.incidents')}
+                              </div>
+                              <Progress value={item.details.qualite.score} className={`mt-2 [&>div]:${item.details.qualite.score > 80 ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-semibold text-sm text-slate-700">
+                                {item.details.regularite.nb_livraisons ?? 0} {t('performance_tab.metrics.deliveries')}
+                              </div>
+                              <Progress value={item.details.regularite.score} className="mt-2 [&>div]:bg-sky-500" />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
@@ -456,49 +470,49 @@ export default function StatistiquesFournisseur() {
                     <Loader2 className="size-8 animate-spin" />
                  </div>
             ) : (
-                <Card className="bg-base-100 shadow-sm border border-base-200 overflow-x-auto">
-                    <table className="w-full border-collapse [&>tbody>tr:nth-child(even)]:bg-base-200/50">
-                        <thead>
-                            <tr>
-                                <th>{t('prices_tab.table.product')}</th>
-                                <th>{t('prices_tab.table.max_gap')}</th>
-                                <th>{t('prices_tab.table.offers')}</th>
-                                <th>{t('prices_tab.table.best_price')}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <Card className="bg-base-100 shadow-sm border border-base-200">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-1/3">{t('prices_tab.table.product')}</TableHead>
+                                <TableHead className="text-center w-28">{t('prices_tab.table.max_gap')}</TableHead>
+                                <TableHead className="w-1/2 min-w-[300px]">{t('prices_tab.table.offers')}</TableHead>
+                                <TableHead className="text-right w-40">{t('prices_tab.table.best_price')}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {prixComparaison?.reduce<ReactNode[]>((rows, prod) => {
                                 if (prod.ecart_pourcentage <= 0) return rows;
                                 rows.push(
-                                    <tr key={prod.id}>
-                                        <td className="font-bold max-w-xs truncate" title={prod.produit}>{prod.produit}</td>
-                                        <td>
-                                            <span className={`badge ${
-                                                prod.ecart_pourcentage > 20 ? 'badge-error text-white' : 
-                                                prod.ecart_pourcentage > 5 ? 'badge-warning' : 'badge-ghost'
-                                            }`}>
+                                    <TableRow key={prod.id}>
+                                        <TableCell className="font-medium max-w-xs truncate" title={prod.produit}>{prod.produit}</TableCell>
+                                        <TableCell className="text-center">
+                                            <Badge variant={
+                                                prod.ecart_pourcentage > 20 ? 'error' :
+                                                prod.ecart_pourcentage > 5 ? 'warning' : 'ghost'
+                                            }>
                                                 {prod.ecart_pourcentage}%
-                                            </span>
-                                        </td>
-                                        <td className="space-y-1">
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="align-top">
                                             {prod.offres.map((offre) => (
-                                                <div key={offre.fournisseur} className="flex justify-between text-xs w-64">
-                                                    <span>{offre.fournisseur}:</span>
-                                                     <span className={offre.prix_moyen === prod.meilleur_prix ? 'font-bold text-success' : ''}>
-                                                         {formatCurrency(Math.round(offre.prix_moyen), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
-                                                     </span>
-                                                 </div>
-                                             ))}
-                                         </td>
-                                          <td className="font-bold text-success text-lg">
-                                             {formatCurrency(Math.round(prod.meilleur_prix), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
-                                          </td>
-                                    </tr>
+                                                <div key={offre.fournisseur} className="flex justify-between text-xs w-full py-0.5">
+                                                    <span className="truncate pr-2">{offre.fournisseur}</span>
+                                                    <span className={offre.prix_moyen === prod.meilleur_prix ? 'font-bold text-success whitespace-nowrap' : 'whitespace-nowrap'}>
+                                                        {formatCurrency(Math.round(offre.prix_moyen), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </TableCell>
+                                        <TableCell className="font-bold text-success text-lg text-right">
+                                            {formatCurrency(Math.round(prod.meilleur_prix), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
+                                        </TableCell>
+                                    </TableRow>
                                 );
                                 return rows;
                             }, [])}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </Card>
             )}
         </div>
@@ -539,28 +553,30 @@ export default function StatistiquesFournisseur() {
                             </div>
                             
                             <div className="flex-1">
-                                <table className="w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            <th>{t('concentration_tab.table.color')}</th>
-                                            <th>{t('concentration_tab.table.supplier')}</th>
-                                            <th>{t('concentration_tab.table.market_share')}</th>
-                                            <th>{t('concentration_tab.table.volume')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-12 text-center">{t('concentration_tab.table.color')}</TableHead>
+                                            <TableHead>{t('concentration_tab.table.supplier')}</TableHead>
+                                            <TableHead className="text-right w-44 pr-8">{t('concentration_tab.table.market_share')}</TableHead>
+                                            <TableHead className="text-right w-48 pl-8">{t('concentration_tab.table.volume')}</TableHead>
+                                            <TableHead className="text-right w-40 pl-8">{t('concentration_tab.table.quantity')}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
                                         {repartitionAchats?.data.map((entry, index) => (
-                                            <tr key={entry.id}>
-                                                <td>
-                                                    <div className="size-4 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                                                </td>
-                                                <td className="font-bold">{entry.nom}</td>
-                                                <td>{entry.pourcentage}%</td>
-                                                 <td>{formatCurrency(Math.round(Number(entry.value)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</td>
-                                            </tr>
+                                            <TableRow key={entry.id}>
+                                                <TableCell className="text-center">
+                                                    <div className="mx-auto size-4 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                                                </TableCell>
+                                                <TableCell className="font-medium">{entry.nom}</TableCell>
+                                                <TableCell className="text-right pr-8">{entry.pourcentage}%</TableCell>
+                                                <TableCell className="text-right pl-8">{formatCurrency(Math.round(Number(entry.value)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                                                <TableCell className="text-right pl-8">{entry.quantite.toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-GB')}</TableCell>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
                             </div>
                         </div>
                     )}

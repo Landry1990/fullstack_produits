@@ -2,6 +2,199 @@
 
 ---
 
+## 2026-08-15 (48) — Centre de rapports : résultats designés en shadcn/ui
+
+### 🎨 Amélioration
+
+La partie de droite du **Centre de Rapports** (affichage des résultats de
+requêtes) utilisait des `<table>`, `<div>` et `<pre>` bruts, sans intégration
+avec le design system shadcn/ui.
+
+### Solution
+
+- `ReportResults.tsx` : migration complète de la zone de résultats vers
+  shadcn/ui.
+- État "en attente" : `Card` avec `CardTitle`/`CardDescription`.
+- État "rapport généré" : `Card` verte.
+- Affichage cartes (rapports synthétiques) : `Card`, `CardHeader`,
+  `CardTitle`, `CardContent`.
+- Tableaux : `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`,
+  `TableCell` (composants shadcn/ui).
+- Filtre marge intégré dans `CardHeader` avec des `Button` shadcn.
+- Badges shadcn pour les statuts `PERTE` / `FAIBLE` / `OK` (plus d'emojis).
+- Footer récapitulatif sous le tableau en `TableBody` stylisé.
+- Pagination et fallback JSON entourés de `Card`/`CardFooter`.
+- Affichage "vide" : `Card` avec `CardDescription`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/dashboard/reports/ReportResults.tsx`
+
+---
+
+## 2026-08-15 (47) — Ventes et marges : tableau en shadcn/ui
+
+### 🎨 Amélioration
+
+L'onglet **Ventes et Marges** (statistiques fournisseurs) utilisait un `<table>`
+brut : colonnes non alignées et pas de largeurs fixes.
+
+### Solution
+
+- `StatistiquesFournisseur.tsx` (onglet `ventes`) : remplacement du `<table>`
+  par les composants shadcn/ui `Table` / `TableHeader` / `TableBody` /
+  `TableRow` / `TableHead` / `TableCell`.
+- Alignement des colonnes : `Fournisseur` (`w-1/3`), `Qté Vendue` (`w-24`),
+  `Coût Achat`, `CA TTC`, `Marge Brute` (toutes `w-40`, alignées à droite),
+  `% Marge` (`w-32`, alignée à droite).
+- Ligne vide centrée avec `TableCell colSpan={6}`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/StatistiquesFournisseur.tsx`
+
+---
+
+## 2026-08-15 (46) — Comparateur de prix : tableau en shadcn/ui et alignement
+
+### 🎨 Amélioration
+
+L'onglet **Comparateur de Prix** (statistiques fournisseurs) utilisait un
+`<table>` brut : colonnes mal alignées, badges DaisyUI et offres sans largeur
+adaptative.
+
+### Solution
+
+- `StatistiquesFournisseur.tsx` (onglet `prix`) : remplacement du `<table>` par
+  les composants shadcn/ui `Table` / `TableHeader` / `TableBody` / `TableRow` /
+  `TableHead` / `TableCell`.
+- Alignement des colonnes : `Produit` (`w-1/3` + tronqué), `Écart Max` centré
+  (`w-28`), `Offres` extensible (`w-1/2 min-w-[300px]`, `align-top`),
+  `Meilleur Prix` aligné à droite (`w-40`).
+- Badges convertis au composant `Badge` (`error` / `warning` / `ghost`).
+- Liste des offres en `w-full` avec fournisseur tronqué et prix aligné à droite
+  (`whitespace-nowrap`) pour éviter les retours à la ligne intempestifs.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/StatistiquesFournisseur.tsx`
+
+---
+
+## 2026-08-15 (46) — Performance fournisseurs : refonte shadcn/ui + traductions
+
+### 🎨 Amélioration
+
+L'onglet **Performance (Scoring)** des statistiques fournisseurs était rendu
+avec une carte par fournisseur, un score affiché via un `conic-gradient` fait
+main et des progress bars non harmonisées avec le design system.
+
+### Solution
+
+- `StatistiquesFournisseur.tsx` (onglet `performance`) : remplacement de la
+  vue "cartes" par un tableau shadcn/ui `Table` plus compact et lisible.
+- Utilisation des composants shadcn/ui : `Card`, `CardContent`, `CardTitle`,
+  `Progress`, `Badge`, plus `AlertTriangle` de lucide.
+- Score global affiché dans un `Badge` coloré selon le seuil
+  (vert ≥ 80, orange ≥ 50, rouge < 50).
+- Métriques Volume / Qualité / Régularité affichées avec libellé, valeur et
+  `Progress` shadcn coloré.
+- Ajout de la clé de traduction `performance_tab.no_data` en `fr` et `en`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/StatistiquesFournisseur.tsx`
+- `frontend/frontend/public/locales/fr/supplier_stats.json`
+- `frontend/frontend/public/locales/en/supplier_stats.json`
+
+---
+
+## 2026-08-15 (45) — Centre de rapports : recherche rapide des requêtes
+
+### 🔍 Amélioration
+
+Le panneau latéral du **Centre de Rapports** affichait l'ensemble des requêtes
+sans moyen de les filtrer. Trouver un rapport (par exemple lié à la TVA)
+demandait de scroller manuellement dans une liste longue.
+
+### Solution
+
+- `ReportSidebar.tsx` : ajout d'un champ de recherche en haut du panneau,
+  avec icône `Search` et placeholder i18n.
+- Filtrage en temps réel sur le **libellé** (`queries.{id}.name`) et la
+  **description** (`queries.{id}.description`) des requêtes.
+- Recherche insensible à la casse, aux accents et aux espaces : taper `TVA`
+  remonte `produits_tva`, `produits_vendus_tva`, `rapport_ca_multi_annuel`,
+  `recap_valeur_stock_pdf`, etc.
+- Message "Aucun rapport trouvé" affiché si la recherche ne retourne rien.
+- Traductions fr/en : `search_placeholder` et `search_no_results`
+  (`public/locales/{fr,en}/reports.json`).
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/dashboard/reports/ReportSidebar.tsx`
+- `frontend/frontend/public/locales/fr/reports.json`
+- `frontend/frontend/public/locales/en/reports.json`
+
+---
+
+## 2026-08-15 (44) — UI statistiques fournisseurs : tableau concentration en shadcn/ui
+
+### 🎨 Amélioration
+
+Le tableau de l'onglet **Concentration des Achats** était rendu avec une balise
+`<table>` brute et les colonnes n'étaient pas alignées (part de marché / volume
+non calés sous leur en-tête, pastille de couleur mal centrée).
+
+### Solution
+
+- `StatistiquesFournisseur.tsx` (onglet `concentration`) : remplacement du
+  `<table>` natif par les composants shadcn/ui `Table`, `TableHeader`,
+  `TableBody`, `TableRow`, `TableHead`, `TableCell`.
+- Alignement des colonnes : `Couleur` centrée et réduite (`w-12`),
+  `Fournisseur` aligné à gauche, `Part de Marché` (`w-44`) et `Volume Acheté`
+  (`w-48`) alignés à droite.
+- Espacement supplémentaire entre `Part de Marché` et `Volume Acheté` via
+  `pr-8` sur la part et `pl-8` sur le volume (pour éviter que les deux colonnes
+  ne semblent collées).
+- Pastille de couleur centrée dans sa cellule via `mx-auto`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/StatistiquesFournisseur.tsx`
+
+---
+
+## 2026-08-15 (45) — Concentration achats : ajout de la quantité achetée
+
+### 🎨 Amélioration
+
+Le tableau **Concentration des Achats** indique le volume financier et la part
+ de marché, mais ne donne pas le nombre d'unités correspondant, ce qui limite
+l'analyse (même volume financier peut cacher des profils très différents :
+beaucoup d'unités bon marché ou peu d'unités chères).
+
+### Solution
+
+- **Backend** (`finance_stats.py`) : l'endpoint `repartition_achats` agrège
+  désormais la somme des `quantity_initial` par fournisseur et l'expose dans
+  le champ `quantite`.
+- **Frontend** (`useFinanceStats.ts`) : le type `RepartitionAchatsItem` intègre
+  `quantite: number`.
+- **Frontend** (`StatistiquesFournisseur.tsx`) : nouvelle colonne `Quantité`
+  dans le tableau, alignée à droite et séparée du volume par `pl-8`.
+- **i18n** : clés `concentration_tab.table.quantity` ajoutées en `fr` et `en`.
+
+### Fichiers modifiés
+
+- `backend/api/views/finance_stats.py`
+- `frontend/frontend/src/hooks/useFinanceStats.ts`
+- `frontend/frontend/src/components/StatistiquesFournisseur.tsx`
+- `frontend/frontend/public/locales/fr/supplier_stats.json`
+- `frontend/frontend/public/locales/en/supplier_stats.json`
+
+---
+
 ## 2026-08-15 (43) — Achats de mise en place : paiement au comptant à la clôture
 
 ### 🔧 Problème

@@ -261,6 +261,7 @@ Puis sur chaque serveur client :
 ```bash
 cd /opt/zenith-pharma
 git pull
+chmod +x /opt/zenith-pharma/update.sh(executable une seule fois:la premiere fois)
 ./update.sh
 ```
 

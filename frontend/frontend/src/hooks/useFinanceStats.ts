@@ -296,6 +296,7 @@ export interface RepartitionAchatsItem {
     nom: string;
     value: number;
     pourcentage: number;
+    quantite: number;
     [key: string]: string | number | boolean | null | undefined;
 }
 
