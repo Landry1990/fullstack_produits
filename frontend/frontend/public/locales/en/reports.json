@@ -7,6 +7,8 @@
     "params_title": "Parameters",
     "no_query_selected": "No query selected",
     "select_query_prompt": "Select a query from the list on the left to start.",
+    "search_placeholder": "Search for a report...",
+    "search_no_results": "No report found",
     "queries": {
         "rapport_mensuel": {
             "name": "Monthly Report",

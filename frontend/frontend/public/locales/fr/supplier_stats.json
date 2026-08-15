@@ -42,6 +42,7 @@
         "alert_title": "Analyse sur 12 mois glissants",
         "alert_text": "Scores calculés sur l'historique des réceptions.",
         "score": "Score",
+        "no_data": "Aucune analyse de performance disponible",
         "metrics": {
             "volume": "Volume (30%)",
             "quality": "Qualité (30%)",
@@ -66,7 +67,8 @@
             "color": "Couleur",
             "supplier": "Fournisseur",
             "market_share": "Part de Marché",
-            "volume": "Volume Acheté"
+            "volume": "Volume Acheté",
+            "quantity": "Quantité"
         }
     },
     "payments_tab": {

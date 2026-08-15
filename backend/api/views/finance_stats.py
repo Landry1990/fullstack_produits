@@ -695,7 +695,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         ).exclude(
             Q(fournisseur__isnull=True) | Q(fournisseur__name__iexact='Inconnu')
         ).values('fournisseur__id', 'fournisseur__name').annotate(
-            total_achat=Coalesce(Sum(F('quantity_initial') * F('price_cost'), output_field=DecimalField()), Decimal(0))
+            total_achat=Coalesce(Sum(F('quantity_initial') * F('price_cost'), output_field=DecimalField()), Decimal(0)),
+            quantite=Coalesce(Sum('quantity_initial'), 0)
         ).order_by('-total_achat')
 
         total_global = sum(a['total_achat'] for a in achats)
@@ -705,7 +706,8 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             pourcentage = (montant / float(total_global)) * 100 if total_global > 0 else 0
             data.append({
                 'id': a['fournisseur__id'], 'nom': a['fournisseur__name'] or "Inconnu",
-                'value': montant, 'pourcentage': round(pourcentage, 1)
+                'value': montant, 'pourcentage': round(pourcentage, 1),
+                'quantite': int(a['quantite'])
             })
 
         return Response({'total_achats': total_global, 'data': data})
