@@ -18,5 +18,13 @@
         "language": "Language",
         "currency": "Currency",
         "timezone": "Timezone"
+    },
+    "messages": {
+        "settings_saved": "Settings saved",
+        "settings_save_error": "Error while saving settings",
+        "logo_uploaded": "Logo uploaded successfully",
+        "logo_upload_error": "Error uploading logo",
+        "logo_removed": "Logo removed",
+        "logo_remove_error": "Error removing logo"
     }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import { safeStorage } from '../utils/storage'
 import type { ProduitModel, Facture, FactureProduit, LigneFacture } from '../types'
 
@@ -30,6 +31,7 @@ export interface UseDevisLoaderOptions {
 }
 
 export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions) {
+    const { t } = useTranslation('facturation')
     const hasLoadedDevisRef = useRef(false)
 
     useEffect(() => {
@@ -98,18 +100,18 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                     ui.setModificationInvoiceStatus(devis.status || null)
                     ui.setOriginalTotalTtc(Number(devis.total_ttc || 0))
                     if (isDevis) {
-                        toast.success(`Devis #${devis.numero_facture || devis.id} chargé en modification`)
+                        toast.success(t('messages.devis_loaded_for_edit', { num: devis.numero_facture || devis.id }))
                     } else {
-                        toast.success(`Facture #${devis.numero_facture || devis.id} chargée en mode modification`)
+                        toast.success(t('messages.invoice_loaded_for_edit', { num: devis.numero_facture || devis.id }))
                     }
                 } else if (devis.id) {
-                    toast.success(`Devis #${devis.numero_facture || devis.id} chargé`)
+                    toast.success(t('messages.devis_loaded', { num: devis.numero_facture || devis.id }))
                 } else {
-                    toast.success(`Panier pré-rempli à partir de la copie`)
+                    toast.success(t('messages.cart_prefilled_from_copy'))
                 }
                 safeStorage.removeItem('devis_to_load', 'local')
             } catch {
-                toast.error('Impossible de charger le devis')
+                toast.error(t('messages.devis_load_error'))
                 safeStorage.removeItem('devis_to_load', 'local')
             }
         }

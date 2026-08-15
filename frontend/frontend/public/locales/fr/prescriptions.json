@@ -61,7 +61,8 @@
     },
     "messages": {
         "save_success": "Enregistré dans l'ordonnancier",
-        "save_error": "Erreur lors de l'enregistrement de l'ordonnance"
+        "save_error": "Erreur lors de l'enregistrement de l'ordonnance",
+        "prescription_product_detected": "Produit sous ordonnance/surveillance détecté"
     },
     "pos": {
         "zenith_title": "Zenith Pharma - POS",

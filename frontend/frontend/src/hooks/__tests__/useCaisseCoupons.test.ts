@@ -24,6 +24,18 @@ vi.mock('react-hot-toast', () => {
   }
 })
 
+// Mock de react-i18next
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: vi.fn((key: string, options?: unknown) => {
+      if (options && typeof options === 'object' && 'defaultValue' in options) {
+        return String((options as { defaultValue: string }).defaultValue)
+      }
+      return key
+    })
+  })
+}))
+
 describe('useCaisseCoupons Hook', () => {
   const mockFacture: Facture = {
     id: 1,
@@ -46,8 +58,6 @@ describe('useCaisseCoupons Hook', () => {
   const mockSetIsDetailsCouponModalOpen = vi.fn()
   const mockSetCouponTrouve = vi.fn()
   const mockOnSuccess = vi.fn()
-
-  const mockT = vi.fn((key: string, _options?: unknown) => key)
 
   const defaultProps = {
     coupons: [],
@@ -106,7 +116,7 @@ describe('useCaisseCoupons Hook', () => {
       const { result } = renderHook(() => useCaisseCoupons(defaultProps))
 
       await act(async () => {
-        await result.current.handleGenererCoupon('5000', 'Notes test', 1, mockT)
+        await result.current.handleGenererCoupon('5000', 'Notes test', 1)
       })
 
       expect(api.post).toHaveBeenCalledWith('coupons/', {
@@ -124,7 +134,7 @@ describe('useCaisseCoupons Hook', () => {
       const { result } = renderHook(() => useCaisseCoupons(defaultProps))
 
       await act(async () => {
-        await result.current.handleGenererCoupon('', 'Notes', 1, mockT)
+        await result.current.handleGenererCoupon('', 'Notes', 1)
       })
 
       expect(api.post).not.toHaveBeenCalled()
@@ -134,7 +144,7 @@ describe('useCaisseCoupons Hook', () => {
       const { result } = renderHook(() => useCaisseCoupons(defaultProps))
 
       await act(async () => {
-        await result.current.handleGenererCoupon('0', 'Notes', 1, mockT)
+        await result.current.handleGenererCoupon('0', 'Notes', 1)
       })
 
       expect(api.post).not.toHaveBeenCalled()
@@ -150,7 +160,7 @@ describe('useCaisseCoupons Hook', () => {
       const { result } = renderHook(() => useCaisseCoupons(defaultProps))
 
       await act(async () => {
-        await result.current.handleRechercherCoupon('CP001', mockT)
+        await result.current.handleRechercherCoupon('CP001')
       })
 
       expect(api.get).toHaveBeenCalledWith('coupons/', {
@@ -164,7 +174,7 @@ describe('useCaisseCoupons Hook', () => {
       const { result } = renderHook(() => useCaisseCoupons(defaultProps))
 
       await act(async () => {
-        await result.current.handleRechercherCoupon('', mockT)
+        await result.current.handleRechercherCoupon('')
       })
 
       expect(api.get).not.toHaveBeenCalled()
@@ -176,7 +186,7 @@ describe('useCaisseCoupons Hook', () => {
       const { result } = renderHook(() => useCaisseCoupons(defaultProps))
 
       act(() => {
-        result.current.handleAppliquerCouponAFacture(mockCoupon, mockFacture, mockT)
+        result.current.handleAppliquerCouponAFacture(mockCoupon, mockFacture)
       })
 
       expect(mockSetCouponsParFacture).toHaveBeenCalledWith(expect.any(Function))
@@ -187,7 +197,7 @@ describe('useCaisseCoupons Hook', () => {
       const { result } = renderHook(() => useCaisseCoupons(defaultProps))
 
       act(() => {
-        result.current.handleAppliquerCouponAFacture(couponInactif as CouponMonnaie, mockFacture, mockT)
+        result.current.handleAppliquerCouponAFacture(couponInactif as CouponMonnaie, mockFacture)
       })
 
       expect(mockSetCouponsParFacture).not.toHaveBeenCalled()
@@ -201,7 +211,7 @@ describe('useCaisseCoupons Hook', () => {
       const { result } = renderHook(() => useCaisseCoupons(propsAvecCoupon))
 
       act(() => {
-        result.current.handleAppliquerCouponAFacture(mockCoupon, mockFacture, mockT)
+        result.current.handleAppliquerCouponAFacture(mockCoupon, mockFacture)
       })
 
       expect(mockSetCouponsParFacture).not.toHaveBeenCalled()
@@ -213,7 +223,7 @@ describe('useCaisseCoupons Hook', () => {
       const { result } = renderHook(() => useCaisseCoupons(defaultProps))
 
       act(() => {
-        result.current.handleRetirerCouponDeFacture(1, mockT)
+        result.current.handleRetirerCouponDeFacture(1)
       })
 
       expect(mockSetCouponsParFacture).toHaveBeenCalledWith(expect.any(Function))

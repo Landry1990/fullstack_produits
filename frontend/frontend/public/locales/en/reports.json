@@ -186,6 +186,7 @@
     },
     "results": {
         "title": "Results",
+        "loading": "Calculating data...",
         "execute_prompt": "Click \"Execute\" to view results",
         "empty": "No results found",
         "copy_success": "{{count}} items copied! Paste them into Excel.",
@@ -199,6 +200,7 @@
         "print_launched": "Print launched",
         "error_execution_toast": "Error during execution",
         "export_success_short": "Report Generated",
+        "export_error": "Error downloading Excel",
         "filter_margin": "Margin Filter:",
         "filter_all": "All",
         "filter_negative": "Negative",

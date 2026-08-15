@@ -120,7 +120,13 @@
         "confirm_print_receipt": "Would you like to print a receipt for this payment?",
         "confirm_print_bulk_receipt": "Would you like to print the summary receipt for this settlement?",
         "select_client_error": "Please select a client",
-        "error_loading": "Error loading claims"
+        "error_loading": "Error loading claims",
+        "ticket_generation_error": "Receipt error: {{error}}",
+        "releve_loading": "Generating statement...",
+        "releve_generated": "Statement generated successfully.",
+        "excel_loading": "Generating Excel file...",
+        "excel_export_success": "Excel export generated successfully.",
+        "excel_export_error": "Error during Excel export."
     },
     "print_view": {
         "title": "ACCOUNTS RECEIVABLE STATEMENT",

@@ -97,7 +97,19 @@
         "purge_error": "Error during purge",
         "backup_finished": "Backup finished!",
         "backup_error": "Error during backup",
-        "restore_error": "Error during restoration"
+        "restore_error": "Error during restoration",
+        "download_report_error": "Report download error",
+        "update_success": "Update completed successfully.",
+        "update_error": "Update failed: {{error}}",
+        "update_started": "Update started.",
+        "update_launch_error": "Error launching update",
+        "select_excel_file": "Please select an Excel file",
+        "import_uploading": "Uploading file...",
+        "import_started": "Import started in the background...",
+        "import_launch_error": "Error launching import",
+        "purge_launch_error": "Error during purge",
+        "backend_restarting": "Backend is restarting...",
+        "starting": "Starting..."
     },
     "placeholders": {
         "enter_password": "Enter your password",

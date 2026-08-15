@@ -12,6 +12,7 @@ import { ProductSearch, type SearchResult } from '../common/ProductSearch';
 import { cn } from '../../lib/utils';
 import { useDataMatrixScanner } from '../../hooks/useDataMatrixScanner';
 import DataMatrixScanBar from './DataMatrixScanBar';
+import { LoadingScreen } from '../common/LoadingScreen';
 
 const ExportCommandeModal = lazy(() => import('./ExportCommandeModal'));
 const DuplicateLotModal = lazy(() => import('./DuplicateLotModal'));
@@ -511,7 +512,7 @@ export default function CommandeForm({
           />
 
           {pendingDuplicateProduct && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
               <DuplicateLotModal
                 isOpen={!!pendingDuplicateProduct}
                 product={pendingDuplicateProduct ?? null}
@@ -527,7 +528,7 @@ export default function CommandeForm({
 
           {/* Modal d'export */}
           {isExportModalOpen && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
               <ExportCommandeModal
                 isOpen={isExportModalOpen}
                 onClose={() => setIsExportModalOpen(false)}

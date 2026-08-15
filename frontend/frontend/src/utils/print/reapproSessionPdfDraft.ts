@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable, { type RowInput } from 'jspdf-autotable';
 import type { PharmacySettings } from '../../hooks/usePharmacySettings';
 
-interface ReapproAdjustment {
+export interface ReapproAdjustment {
   id: number;
   produit_name: string;
   lot_num: string | null;
@@ -10,7 +10,7 @@ interface ReapproAdjustment {
   quantity_change: number;
 }
 
-interface ReapproSessionData {
+export interface ReapproSessionData {
   id: number;
   created_at: string;
   user_name: string | null;

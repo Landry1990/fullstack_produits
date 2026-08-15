@@ -1,5 +1,6 @@
 import { useEffect, type RefObject } from 'react'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
 import type { Facture } from '../types'
 
@@ -68,6 +69,7 @@ export function useFacturationKeyboardShortcuts({
   showPendingSales,
   setShowPendingSales
 }: UseFacturationKeyboardShortcutsProps) {
+  const { t } = useTranslation('facturation')
   const { isPosMode, closePoste, activePoste } = usePosteCaisseMode()
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -166,11 +168,11 @@ export function useFacturationKeyboardShortcuts({
         e.preventDefault()
         if (isPosMode && activePoste) {
           if (lignesFacture.length > 0) {
-            toast.error('Impossible de fermer le POS : le panier n\'est pas vide. Finalisez ou videz la vente.')
+            toast.error(t('messages.close_pos_cart_not_empty'))
             return
           }
           closePoste(false).catch(() => {
-            toast.error('Erreur lors de la fermeture du poste de vente')
+            toast.error(t('messages.close_pos_error'))
           })
         }
         return
@@ -220,6 +222,7 @@ export function useFacturationKeyboardShortcuts({
     setSearchQuery, searchInputRef, clientSearchRef, quantityInputsRef,
     setShowHelp, handleSuspendSale, handleAddAlertMessage,
     showPendingSales, setShowPendingSales,
-    isPosMode, closePoste, activePoste
+    isPosMode, closePoste, activePoste,
+    t
   ])
 }

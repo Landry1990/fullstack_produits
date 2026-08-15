@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { getApiErrorDetail } from '../utils/errorHandling';
 
@@ -27,6 +28,7 @@ export interface SupplierDashboardStats {
 const QUERY_KEY = ['supplier-dashboard'];
 
 export function useSupplierDashboard() {
+    const { t } = useTranslation('suppliers');
     const { data: stats, isLoading: loading, error: queryError, refetch } = useQuery<SupplierDashboardStats>({
         queryKey: QUERY_KEY,
         queryFn: async () => {
@@ -35,7 +37,7 @@ export function useSupplierDashboard() {
         },
     });
 
-    const error = queryError ? getApiErrorDetail(queryError, 'Erreur lors de la récupération des statistiques') : null;
+    const error = queryError ? getApiErrorDetail(queryError, t('messages.stats_load_error')) : null;
 
     return { stats: stats || null, loading, error, refresh: refetch };
 }

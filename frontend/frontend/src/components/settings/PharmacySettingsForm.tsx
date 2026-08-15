@@ -86,11 +86,11 @@ export default function PharmacySettingsForm() {
         handleChange('telegram_chat_id', res.data.chat_id)
         import('react-hot-toast').then(({ toast }) => toast.success(t('messages.telegram_chat_retrieved', { id: res.data.chat_id, name: res.data.chat_name || t('common:unknown') })))
       } else {
-        import('react-hot-toast').then(({ toast }) => toast.error('⚠️ ' + res.data.message, { duration: 8000 }))
+        import('react-hot-toast').then(({ toast }) => toast.error(res.data.message, { duration: 8000 }))
       }
     } catch (err) {
       const msg = getApiErrorDetail(err, t('messages.unknown_error'))
-      import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
+      import('react-hot-toast').then(({ toast }) => toast.error(msg, { duration: 8000 }))
     } finally {
       setGettingChatId(false)
     }
@@ -112,10 +112,10 @@ export default function PharmacySettingsForm() {
         bot_token: formData.telegram_bot_token,
         chat_id: formData.telegram_chat_id,
       })
-      import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || t('messages.test_sent'))))
+      import('react-hot-toast').then(({ toast }) => toast.success(res.data.message || t('messages.test_sent')))
     } catch (err) {
       const msg = getApiErrorDetail(err, t('messages.unknown_error'))
-      import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
+      import('react-hot-toast').then(({ toast }) => toast.error(msg, { duration: 8000 }))
     } finally {
       setTestingTelegram(false)
     }
@@ -131,10 +131,10 @@ export default function PharmacySettingsForm() {
     try {
       const { default: api } = await import('../../services/api')
       const res = await api.post('whatsapp/test/', { numero: numero.replace('+', '') })
-      import('react-hot-toast').then(({ toast }) => toast.success('✅ ' + (res.data.message || t('messages.test_sent'))))
+      import('react-hot-toast').then(({ toast }) => toast.success(res.data.message || t('messages.test_sent')))
     } catch (err) {
       const msg = getApiErrorDetail(err, t('messages.unknown_error'))
-      import('react-hot-toast').then(({ toast }) => toast.error('❌ ' + msg, { duration: 8000 }))
+      import('react-hot-toast').then(({ toast }) => toast.error(msg, { duration: 8000 }))
     } finally {
       setTestingWhatsapp(false)
     }

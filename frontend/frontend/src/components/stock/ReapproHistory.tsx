@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -58,7 +58,7 @@ interface ReapproSession {
 }
 
 export default function ReapproHistory() {
-  useTranslation(['stock', 'common']);
+  const { t } = useTranslation(['stock', 'common']);
   const { settings } = usePharmacySettings();
   const [history, setHistory] = useState<ReapproSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,23 +66,23 @@ export default function ReapproHistory() {
   const [selectedSession, setSelectedSession] = useState<ReapproSession | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
       const data: unknown = await produitService.getReapproHistory();
-      const results = Array.isArray(data) ? data : (data?.results ?? []);
+      const results = Array.isArray(data) ? data : ((data as { results?: unknown[] })?.results ?? []);
       setHistory(results as ReapproSession[]);
     } catch (error) {
       logger.error('Error fetching history:', error);
-      toast.error("Erreur lors du chargement de l'historique");
+      toast.error(t('stock:reappro.messages.history_load_error'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [fetchHistory]);
 
   const handleDownloadPdf = async (session: ReapproSession) => {
     setDownloadingId(session.id);
@@ -90,10 +90,10 @@ export default function ReapproHistory() {
       generateReapproSessionPdfDraft(session, settings).save(
         `reappro_session_${session.id}_${new Date(session.created_at).toISOString().slice(0, 10).replace(/-/g, '')}.pdf`
       );
-      toast.success('PDF téléchargé avec succès');
+      toast.success(t('stock:reappro.messages.pdf_generated'));
     } catch (error) {
       logger.error('Error generating PDF:', error);
-      toast.error('Erreur lors de la génération du PDF');
+      toast.error(t('stock:reappro.messages.pdf_generation_error'));
     } finally {
       setDownloadingId(null);
     }

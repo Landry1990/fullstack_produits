@@ -409,7 +409,9 @@
         "status_change_error": "Error while changing status",
         "cancel_reception_error": "Error during cancellation",
         "missing_id": "Missing order ID",
-        "quick_product_created": "Product \"{{name}}\" created and added"
+        "quick_product_created": "Product \"{{name}}\" created and added",
+        "lot_update_success": "Batch / date updated",
+        "lot_update_error": "Update error"
     },
     "quick_create": {
         "title": "Quick Product Creation",

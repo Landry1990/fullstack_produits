@@ -410,7 +410,9 @@
         "status_change_error": "Erreur lors du changement de statut",
         "cancel_reception_error": "Erreur lors de l'annulation",
         "missing_id": "ID de commande manquant",
-        "quick_product_created": "Produit \"{{name}}\" créé et ajouté"
+        "quick_product_created": "Produit \"{{name}}\" créé et ajouté",
+        "lot_update_success": "Lot / date mis à jour",
+        "lot_update_error": "Erreur lors de la mise à jour"
     },
     "quick_create": {
         "title": "Création rapide de produit",

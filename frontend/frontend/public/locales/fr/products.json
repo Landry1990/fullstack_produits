@@ -220,7 +220,9 @@
             "lot_number": "Numéro de Lot",
             "provider": "Fournisseur",
             "initial_qty": "Qté Initiale",
-            "remaining_qty": "Qté Restante"
+            "remaining_qty": "Qté Restante",
+            "show_finished": "Afficher les lots épuisés",
+            "hide_finished": "Masquer les lots épuisés"
         },
         "stats": {
             "month": "Mois",
@@ -261,10 +263,12 @@
     "messages": {
         "loading": "Chargement des produits...",
         "create_success": "Produit créé avec succès",
+        "create_success_named": "{{name}} — Produit créé avec succès",
         "adjust_reserve_details": " (Réserve: {{oldReserve}} -> {{newReserve}})",
         "delete_confirm_title": "Supprimer le produit",
         "delete_confirm_body": "Voulez-vous vraiment supprimer le produit \"{{name}}\" ?\n\nCette action est irréversible.",
         "delete_success": "Produit supprimé avec succès",
+        "delete_success_count": "{{count}} produit(s) supprimé(s)",
         "update_success": "Produit mis à jour",
         "bulk_delete_title": "Suppression groupée",
         "bulk_delete_body": "Supprimer {{count}} produit(s) sélectionné(s) ?",
@@ -299,7 +303,9 @@
         "status_error": "Erreur lors du changement de statut",
         "update_error": "Erreur lors de la mise à jour du produit",
         "adjust_success": "Stock ajusté ({{change}})",
-        "adjust_error": "Erreur lors de l'ajustement de stock"
+        "adjust_error": "Erreur lors de l'ajustement de stock",
+        "lot_update_success": "Lot mis à jour",
+        "lot_update_error": "Erreur lors de la mise à jour"
     },
     "labels": {
         "filename_prefix": "etiquettes"

@@ -137,7 +137,7 @@ export default function SuggestionCommandeModal({
   function handleApply() {
     const selectedItems = suggestions.filter((_, i) => selectedSuggestions.has(i))
     if (selectedItems.length === 0) {
-      toast(t('orders:suggestion_modal.no_selection'), { icon: '⚠️' })
+      toast.error(t('orders:suggestion_modal.no_selection'))
       return
     }
 

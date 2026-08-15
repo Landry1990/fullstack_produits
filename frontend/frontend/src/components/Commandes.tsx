@@ -19,6 +19,7 @@ import CommandeForm, { type CommandeFormProps } from './Commandes/CommandeForm';
 import CommandeDetails, { type CommandeDetailsProps } from './Commandes/CommandeDetails';
 
 import SudoValidationModal from './common/SudoValidationModal';
+import { LoadingScreen } from './common/LoadingScreen';
 import { useProduit, useProduitLots, useProduitStats, useProduitAchats, useProduitHistory } from '../hooks/useProduits';
 
 const QuickCreateProductModal = lazy(() => import('./Commandes/QuickCreateProductModal'));
@@ -161,7 +162,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       )}
 
       {state.isSuggestionModalOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
           <SuggestionCommandeModal
             onClose={() => state.setIsSuggestionModalOpen(false)}
             onApply={(products, supplierId) => {
@@ -175,7 +176,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       )}
 
       {(state.isCreateProduitModalOpen || (editProductId && editProductData)) && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
           <QuickCreateProductModal
             open={state.isCreateProduitModalOpen}
             onClose={() => state.setIsCreateProduitModalOpen(false)}
@@ -211,7 +212,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       )}
 
       {state.showPrintLabelsModal && state.selectedCommande && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
           <SimplePrintLabelsModal
             commandeId={state.selectedCommande.id}
             commandeNumero={state.selectedCommande.numero_facture || `#${state.selectedCommande.id}`}
@@ -233,7 +234,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       />
 
       {state.isTransferModalOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
           <TransferCommandeModal
             isOpen={state.isTransferModalOpen}
             onClose={() => state.setIsTransferModalOpen(false)}
@@ -249,7 +250,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       )}
 
       {state.isMergeModalOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
           <MergeCommandesModal
             isOpen={state.isMergeModalOpen}
             onClose={() => state.setIsMergeModalOpen(false)}
@@ -262,7 +263,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       )}
 
       {detailProduitId && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
           <ProductDetailsModal
             isOpen={!!detailProduitId}
             onClose={() => setDetailProduitId(null)}

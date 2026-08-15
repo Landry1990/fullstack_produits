@@ -97,7 +97,19 @@
         "purge_error": "Erreur lors de la purge",
         "backup_finished": "Sauvegarde terminée !",
         "backup_error": "Erreur lors de la sauvegarde",
-        "restore_error": "Erreur lors de la restauration"
+        "restore_error": "Erreur lors de la restauration",
+        "download_report_error": "Erreur téléchargement rapport",
+        "update_success": "Mise à jour terminée avec succès.",
+        "update_error": "Mise à jour échouée : {{error}}",
+        "update_started": "Mise à jour démarrée.",
+        "update_launch_error": "Erreur lors du lancement de la mise à jour",
+        "select_excel_file": "Sélectionnez un fichier Excel",
+        "import_uploading": "Envoi du fichier...",
+        "import_started": "Import démarré en arrière-plan...",
+        "import_launch_error": "Erreur lors du lancement de l'import",
+        "purge_launch_error": "Erreur lors de la purge",
+        "backend_restarting": "Redémarrage du backend en cours...",
+        "starting": "Démarrage..."
     },
     "placeholders": {
         "enter_password": "Saisissez votre mot de passe",

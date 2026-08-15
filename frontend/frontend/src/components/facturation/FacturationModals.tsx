@@ -3,6 +3,7 @@ import { Button } from '../shadcn/button'
 import ClientCreateModal from './ClientCreateModal'
 import PendingSalesDrawer from './PendingSalesDrawer'
 import SudoValidationModal from '../common/SudoValidationModal'
+import { LoadingScreen } from '../common/LoadingScreen'
 import PremiumModal from '../common/PremiumModal'
 import { ClientNameModal } from '../sales/modals/ClientNameModal'
 import AlertMessageModal from './AlertMessageModal'
@@ -30,7 +31,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
   return (
     <>
       {hook.ui.isPaymentModalOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
         <PaymentModal
           isOpen={hook.ui.isPaymentModalOpen}
           onClose={hook.ui.closePaymentModal}
@@ -81,7 +82,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
       )}
 
       {/* Ticket Preview Modal */}
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
       <TicketPreviewModal
         isOpen={hook.showTicketPreview}
         onClose={() => {
@@ -95,7 +96,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
       </Suspense>
 
       {/* Stock Resolution Handler */}
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
       <StockResolutionHandler
         isOpen={hook.showStockResolution}
         onClose={() => hook.setShowStockResolution(false)}
@@ -160,7 +161,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
 
       {/* Lot Selection Modal */}
       {hook.lotModal.isOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
         <LotSelectionModal
           isOpen={hook.lotModal.isOpen}
           onClose={hook.closeLotModal}
@@ -184,7 +185,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
 
       {/* Ordonnance Modal */}
       {hook.showOrdonnanceModal && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
           <OrdonnanceModal
               isOpen={hook.showOrdonnanceModal}
               onClose={() => {
@@ -327,7 +328,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
       )}
 
       {/* Prescription Scanner Modal */}
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
       <PrescriptionScannerModal
         isOpen={hook.ui.isScannerModalOpen}
         onClose={() => hook.ui.setIsScannerModalOpen(false)}
@@ -357,7 +358,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
       />
 
       {/* Substitution Modal */}
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
       <SubstitutionModal
         produitId={hook.substitutionProduct?.id ?? null}
         produitName={hook.substitutionProduct?.name ?? ''}
@@ -370,7 +371,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
       </Suspense>
 
       {/* Open Point-of-Sale Modal */}
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
       <OpenPointDeVenteModal
         isOpen={showOpenPosteModal}
         onClose={() => setShowOpenPosteModal(false)}

@@ -353,7 +353,7 @@ export function useCentreRapports() {
                 toast.success(t('results.export_success', { filename }));
             } catch (err) {
                 logger.error('Excel download error:', err);
-                toast.error("Erreur lors du téléchargement Excel");
+                toast.error(t('results.export_error'));
             }
             return;
         }

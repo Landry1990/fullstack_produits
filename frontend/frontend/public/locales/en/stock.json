@@ -190,6 +190,7 @@
             "no_result": "No product found",
             "header_saved": "Header saved",
             "save_error": "Save error",
+            "create_success": "Inventory created successfully",
             "auto_create_error": "Cannot create inventory automatically.",
             "bulk_delete_title": "Bulk Delete",
             "bulk_delete_message": "Delete these {{count}} lines?",
@@ -249,6 +250,7 @@
             "total_phys": "Entered Value",
             "total_gap": "Value Gap",
             "product_added": "Product added",
+            "delete_success": "Product removed from inventory",
             "delete_error": "Cannot delete the line."
         },
         "import": {
@@ -949,6 +951,7 @@
             "load_error": "Error loading {{type}}s",
             "success_save": "{{type}} saved successfully",
             "success_delete": "{{type}} deleted successfully",
+            "trash_success": "« {{name}} » moved to trash.",
             "delete_confirm_title": "Delete this item?",
             "delete_confirm_msg": "This action is irreversible and will affect associated products.",
             "search": "Search a {{type}}...",
@@ -1197,7 +1200,10 @@
             "no_products_to_refill": "No products to replenish currently",
             "bulk_success": "Replenishment completed: {{success}} products processed out of {{total}}",
             "loading_stocks": "Analyzing needs...",
-            "no_reserve_products": "No products with reserve management found."
+            "no_reserve_products": "No products with reserve management found.",
+            "history_load_error": "Error loading history",
+            "pdf_generated": "PDF downloaded successfully",
+            "pdf_generation_error": "Error generating PDF"
         },
         "modal_confirm": {
             "title": "Global Transfer",

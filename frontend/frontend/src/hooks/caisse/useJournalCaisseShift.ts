@@ -61,7 +61,7 @@ export function useJournalCaisseShift({
         const endToday = getServerDate();
         endToday.setHours(23, 59, 59, 999);
         onNoShift(today, endToday);
-        toast(t('messages.no_shift_found', { defaultValue: 'Aucune activité pour ce caissier...' }), { icon: 'ℹ️' });
+        toast(t('messages.no_shift_found', { defaultValue: 'Aucune activité pour ce caissier...' }));
       }
     } catch (err) {
       logger.error("Erreur détection shift:", err);

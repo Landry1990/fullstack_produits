@@ -61,11 +61,11 @@ export function useFacturationClients() {
             setClients(loadedClients)
         } catch (error) {
             logger.error('Erreur chargement clients:', error)
-            toast.error('Impossible de charger la liste des clients')
+            toast.error(t('messages.client_load_error'))
         } finally {
             setLoading(false)
         }
-    }, [debouncedSearch])
+    }, [debouncedSearch, t])
 
     useEffect(() => {
         fetchClients()
@@ -214,15 +214,15 @@ export function useFacturationClients() {
                 is_loyalty_member: true
             })
 
-            toast.success(`Client "${createdClient.name}" créé et sélectionné`)
+            toast.success(t('messages.client_created_selected', { name: createdClient.name }))
         } catch (err) {
             logger.error('Erreur création client:', err)
             const errorData = (err as { response?: { data?: Record<string, unknown> } })?.response?.data
             if (errorData && typeof errorData === 'object') {
                 const messages = Object.entries(errorData).map(([k, v]) => `${k}: ${v}`).join(', ')
-                toast.error(`Erreur: ${messages}`)
+                toast.error(t('messages.client_create_field_error', { message: messages }))
             } else {
-                toast.error('Erreur lors de la création du client')
+                toast.error(t('messages.client_create_error'))
             }
         } finally {
             setIsCreatingClient(false)

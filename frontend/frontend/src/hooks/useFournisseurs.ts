@@ -300,6 +300,7 @@ export function useFournisseurs() {
       setSelectedFournisseur(addedFournisseur);
       setNewFournisseur(emptyForm);
       closeAddModal();
+      toast.success(t('providers:messages.save_success'));
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: unknown }; message?: string };
       if (axiosErr?.response) {
@@ -325,6 +326,7 @@ export function useFournisseurs() {
       setFournisseurs(prev => prev.map(f => (f.id === updatedFournisseur.id ? updatedFournisseur : f)));
       setSelectedFournisseur(updatedFournisseur);
       closeEditModal();
+      toast.success(t('providers:messages.update_success'));
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: unknown }; message?: string };
       if (axiosErr?.response) {
@@ -350,7 +352,7 @@ export function useFournisseurs() {
              toast.error(t('providers:messages.delete_protected'));
         } else {
              const msg = axiosErr.response?.data?.message ?? axiosErr.message ?? t('common:network_error');
-             toast.error(`${t('common:error')}: ${msg}`);
+             toast.error(t('common:messages.error_with_message', { message: msg }));
         }
       } else {
         toast.error(t('providers:messages.delete_error'));

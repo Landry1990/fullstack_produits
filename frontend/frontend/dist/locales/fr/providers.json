@@ -60,6 +60,8 @@
     "messages": {
         "load_error": "Erreur lors du chargement des fournisseurs",
         "save_error": "Erreur lors de l'enregistrement",
+        "save_success": "Fournisseur ajouté avec succès",
+        "update_success": "Fournisseur modifié avec succès",
         "delete_success": "Fournisseur supprimé avec succès",
         "delete_protected": "Impossible de supprimer ce fournisseur car il a des transactions liées",
         "delete_error": "Erreur lors de la suppression",

@@ -89,15 +89,16 @@ export default function Sidebar() {
   const { data: reapproStats } = useReapproStats();
   
   const allMenuItems = [
-    { path: '/app', label: t('dashboard'), key: 'dashboard', icon: (
+    { path: '/app', label: t('dashboard'), key: 'dashboard', category: 'accueil', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
     )},
-    { path: '/app/manager-dashboard', label: t('manager_sidebar'), key: 'manager_sidebar', icon: (
+    { path: '/app/manager-dashboard', label: t('manager_sidebar'), key: 'manager_sidebar', category: 'accueil', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" /></svg>
     )},
     {
       label: t('ventes.title'), 
       key: 'ventes', 
+      category: 'ventes',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
       ),
@@ -112,21 +113,22 @@ export default function Sidebar() {
         { path: '/app/caisse-centralisee', label: t('ventes.caisse_centralisee'), key: 'caisse' } // Keeping 'caisse' as it might be a specific top-level permission
       ]
     },
-    { path: '/app/facturation', label: t('facturation'), key: 'facturation', icon: (
+    { path: '/app/facturation', label: t('facturation'), key: 'facturation', category: 'ventes', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
     )},
-    { path: '/app/produits', label: t('produits'), key: 'produits', icon: (
+    { path: '/app/produits', label: t('produits'), key: 'produits', category: 'catalogue', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
     )},
-    { path: '/app/catalog-dci', label: t('catalog_dci'), key: 'produits', icon: (
+    { path: '/app/catalog-dci', label: t('catalog_dci'), key: 'produits', category: 'catalogue', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
     )},
-    { path: '/app/vitrine', label: t('vitrine'), key: 'vitrine', icon: (
+    { path: '/app/vitrine', label: t('vitrine'), key: 'vitrine', category: 'catalogue', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
     )},
     { 
       label: t('commandes.local_title'), 
       key: 'commandes_loc', 
+      category: 'achats',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
       ),
@@ -138,6 +140,7 @@ export default function Sidebar() {
     { 
       label: t('commandes.direct_title'), 
       key: 'commandes_dir', 
+      category: 'achats',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
       ),
@@ -146,12 +149,13 @@ export default function Sidebar() {
         { path: '/app/historique-achats/directes', label: t('commandes.history'), key: 'commandes_dir_history' },
       ]
     },
-    { path: '/app/fournisseurs', label: t('fournisseurs.title'), key: 'fournisseurs', icon: (
+    { path: '/app/fournisseurs', label: t('fournisseurs.title'), key: 'fournisseurs', category: 'achats', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
     )},
     { 
       label: t('clients'), 
       key: 'clients', 
+      category: 'tiers',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
       ),
@@ -160,12 +164,13 @@ export default function Sidebar() {
         { path: '/app/outils/imc', label: t('clients_imc', 'Calculateur IMC'), key: 'clients_imc' },
       ]
     },
-    { path: '/app/creances', label: t('creances'), key: 'creances', icon: (
+    { path: '/app/creances', label: t('creances'), key: 'creances', category: 'tiers', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
     )},
     { 
       label: t('stock.title'), 
       key: 'inventaire', 
+      category: 'stock',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
       ),
@@ -187,6 +192,7 @@ export default function Sidebar() {
     { 
       label: t('statistiques.title'), 
       key: 'statistiques', 
+      category: 'rapports',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" /></svg>
       ),
@@ -206,6 +212,7 @@ export default function Sidebar() {
       path: '/app/compta/dashboard',
       label: t('compta.title', 'Comptabilité'), 
       key: 'compta', 
+      category: 'rapports',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
       )
@@ -213,6 +220,7 @@ export default function Sidebar() {
     {
       label: t('divers.title', 'Gestion Divers'),
       key: 'divers',
+      category: 'rapports',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -226,6 +234,7 @@ export default function Sidebar() {
     {
       label: t('parametres.title'),
       key: 'settings',
+      category: 'parametres',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
       ),
@@ -236,13 +245,14 @@ export default function Sidebar() {
         { path: '/app/systeme', label: 'Administration Système', key: 'settings_systeme' },
       ]
     },
-    { path: '/app/aide-formation', label: t('aide_formation'), key: 'aide_formation', icon: (
+    { path: '/app/aide-formation', label: t('aide_formation'), key: 'aide_formation', category: 'parametres', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 10 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
     )},
     {
       path: '/app/utilisateurs',
       label: t('utilisateurs'),
       key: 'utilisateurs',
+      category: 'parametres',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
       )
@@ -251,6 +261,7 @@ export default function Sidebar() {
       path: '/app/planning-operateurs',
       label: t('planning_operateurs'),
       key: 'planning_operateurs',
+      category: 'parametres',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
       )
@@ -259,6 +270,7 @@ export default function Sidebar() {
       path: '/app/user-sessions',
       label: t('user_sessions_sidebar'),
       key: 'user_sessions',
+      category: 'parametres',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
       )
@@ -267,6 +279,7 @@ export default function Sidebar() {
       path: '/app/journal-audit',
       label: t('audit'),
       key: 'audit',
+      category: 'parametres',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
       )
@@ -275,6 +288,7 @@ export default function Sidebar() {
       path: '/app/import-dci',
       label: t('import_dci', 'Import DCI & Matching'),
       key: 'import_dci',
+      category: 'parametres',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
       )
@@ -283,6 +297,7 @@ export default function Sidebar() {
       path: '/app/maintenance',
       label: t('maintenance'),
       key: 'maintenance',
+      category: 'parametres',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
       )
@@ -291,6 +306,7 @@ export default function Sidebar() {
       path: '/app/corbeille',
       label: t('corbeille', 'Corbeille'),
       key: 'corbeille',
+      category: 'parametres',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
       )
@@ -340,6 +356,32 @@ export default function Sidebar() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [user, t]);
 
+  const categoryOrder = useMemo(() => [
+    'accueil',
+    'ventes',
+    'catalogue',
+    'achats',
+    'tiers',
+    'stock',
+    'rapports',
+    'parametres',
+  ] as const, []);
+
+  type CategoryKey = typeof categoryOrder[number];
+
+  const menuGroups = useMemo(() => {
+    const grouped = menuItems.reduce((acc, item) => {
+      const cat = (item.category || 'parametres') as CategoryKey;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(item);
+      return acc;
+    }, {} as Record<CategoryKey, typeof menuItems>);
+
+    return categoryOrder
+      .filter((cat) => grouped[cat]?.length > 0)
+      .map((cat) => ({ category: cat, items: grouped[cat] }));
+  }, [menuItems, categoryOrder]);
+
 
 
   // Effect to automatically handle expansion and collapsing
@@ -363,6 +405,134 @@ export default function Sidebar() {
   const toggleMenu = (key: string) => {
     setOpenMenu(prev => prev === key ? null : key);
   }
+
+  const renderMenuItem = (item: typeof menuItems[number]) => {
+    const hasSubmenus = !!item.submenus;
+    const isParentOfActive = item.submenus?.some(sub => location.pathname.startsWith(sub.path));
+    const isMenuOpen = openMenu === item.key;
+
+    if (hasSubmenus) {
+      return (
+        <li key={item.key}>
+          {isCollapsed ? (
+            <div className="relative group w-full">
+              <div
+                className={cn(
+                  "flex items-center justify-center w-full h-10 rounded-xl cursor-pointer transition-all",
+                  isParentOfActive
+                    ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                )}
+                title={item.label}
+              >
+                <span className="size-4">{item.icon}</span>
+              </div>
+              <ul className="absolute left-full top-0 z-[100] p-2 shadow-2xl shadow-black/20 bg-slate-900 border border-slate-700 rounded-2xl w-52 ml-3 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200">
+                <li className="px-3 py-2 border-b border-slate-800 mb-1">
+                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">{item.label}</span>
+                </li>
+                {item.submenus?.map((sub) => (
+                  <li key={sub.path}>
+                    <NavLink to={sub.path} onClick={closeSidebar}
+                      onMouseEnter={() => handleRoutePrefetch(sub.path)}
+                      className={({ isActive }) => cn(
+                        "block rounded-lg text-sm py-2 px-3 transition-all",
+                        isActive
+                          ? 'bg-emerald-500/20 text-emerald-300 font-semibold'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      )}
+                    >
+                      {sub.label}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <>
+              {/* Parent button */}
+              <button
+                onClick={() => toggleMenu(item.key)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group",
+                  isMenuOpen || isParentOfActive
+                    ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/20'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                )}
+              >
+                <span className={cn(
+                  "size-5 shrink-0 transition-colors",
+                  (isMenuOpen || isParentOfActive) && 'text-emerald-400'
+                )}>
+                  {item.icon}
+                </span>
+                <span className="flex-1 text-left text-sm font-medium tracking-tight truncate">{item.label}</span>
+                <ChevronDown className={cn(
+                  "size-4 shrink-0 transition-transform duration-200 text-slate-500",
+                  isMenuOpen && 'rotate-180'
+                )} />
+              </button>
+
+              {/* Submenus with vertical connector */}
+              <div className={cn(
+                "overflow-hidden transition-all duration-300 ease-in-out",
+                isMenuOpen ? 'max-h-[600px] opacity-100 mt-1' : 'max-h-0 opacity-0'
+              )}>
+                <ul className="relative ml-4 pl-3 border-l border-slate-700 flex flex-col gap-0.5 py-1">
+                  {item.submenus?.map((sub) => (
+                    <li key={sub.path}>
+                      <NavLink
+                        to={sub.path}
+                        onClick={closeSidebar}
+                        onMouseEnter={() => handleRoutePrefetch(sub.path)}
+                        className={({ isActive }) => cn(
+                          "flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-all",
+                          isActive
+                            ? 'bg-emerald-500/20 text-emerald-300 font-semibold'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                        )}
+                      >
+                        <span className="truncate">{sub.label}</span>
+                        {sub.key === 'inventaire_reappro' && reapproStats && reapproStats.product_count > 0 && (
+                          <span className="ml-2 shrink-0 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            {reapproStats.product_count}
+                          </span>
+                        )}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+        </li>
+      );
+    }
+
+    return (
+      <li key={item.path}>
+        <NavLink
+          to={item.path!}
+          end={item.path === '/app'}
+          onClick={closeSidebar}
+          onMouseEnter={() => item.path && handleRoutePrefetch(item.path)}
+          title={isCollapsed ? item.label : undefined}
+          className={({ isActive }) => cn(
+            "flex items-center rounded-xl transition-all duration-200",
+            isCollapsed
+              ? 'justify-center w-full h-10'
+              : 'gap-3 px-3 py-2.5',
+            isActive
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 font-semibold'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          )}
+        >
+          <span className={cn("shrink-0", isCollapsed ? 'size-5' : 'size-5')}>{item.icon}</span>
+          {!isCollapsed && <span className="text-sm font-medium tracking-tight truncate">{item.label}</span>}
+        </NavLink>
+      </li>
+    );
+  };
 
   return (
     <>
@@ -430,138 +600,24 @@ export default function Sidebar() {
 
         {/* ── NAV ── */}
         <nav className="flex-1 overflow-y-auto py-2 custom-scrollbar">
-          <ul className={cn(
-            "flex flex-col gap-1",
-            isCollapsed ? 'px-2' : 'px-3'
-          )}>
-            {menuItems.map((item) => {
-              const hasSubmenus = !!item.submenus;
-              const isParentOfActive = item.submenus?.some(sub => location.pathname.startsWith(sub.path));
-              const isMenuOpen = openMenu === item.key;
-
-              if (hasSubmenus) {
-                return (
-                  <li key={item.key}>
-                    {isCollapsed ? (
-                      <div className="relative group w-full">
-                        <div
-                          className={cn(
-                            "flex items-center justify-center w-full h-10 rounded-xl cursor-pointer transition-all",
-                            isParentOfActive
-                              ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30'
-                              : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                          )}
-                          title={item.label}
-                        >
-                          <span className="size-4">{item.icon}</span>
-                        </div>
-                        <ul className="absolute left-full top-0 z-[100] p-2 shadow-2xl shadow-black/20 bg-slate-900 border border-slate-700 rounded-2xl w-52 ml-3 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200">
-                          <li className="px-3 py-2 border-b border-slate-800 mb-1">
-                            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">{item.label}</span>
-                          </li>
-                          {item.submenus?.map((sub) => (
-                            <li key={sub.path}>
-                              <NavLink to={sub.path} onClick={closeSidebar}
-                                onMouseEnter={() => handleRoutePrefetch(sub.path)}
-                                className={({ isActive }) => cn(
-                                  "block rounded-lg text-sm py-2 px-3 transition-all",
-                                  isActive
-                                    ? 'bg-emerald-500/20 text-emerald-300 font-semibold'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                )}
-                              >
-                                {sub.label}
-                              </NavLink>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : (
-                      <>
-                        {/* Parent button */}
-                        <button
-                          onClick={() => toggleMenu(item.key)}
-                          className={cn(
-                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 group",
-                            isMenuOpen || isParentOfActive
-                              ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/20'
-                              : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                          )}
-                        >
-                          <span className={cn(
-                            "size-5 shrink-0 transition-colors",
-                            (isMenuOpen || isParentOfActive) && 'text-emerald-400'
-                          )}>
-                            {item.icon}
-                          </span>
-                          <span className="flex-1 text-left text-sm font-medium tracking-tight truncate">{item.label}</span>
-                          <ChevronDown className={cn(
-                            "size-4 shrink-0 transition-transform duration-200 text-slate-500",
-                            isMenuOpen && 'rotate-180'
-                          )} />
-                        </button>
-
-                        {/* Submenus with vertical connector */}
-                        <div className={cn(
-                          "overflow-hidden transition-all duration-300 ease-in-out",
-                          isMenuOpen ? 'max-h-[600px] opacity-100 mt-1' : 'max-h-0 opacity-0'
-                        )}>
-                          <ul className="relative ml-4 pl-3 border-l border-slate-700 flex flex-col gap-0.5 py-1">
-                            {item.submenus?.map((sub) => (
-                              <li key={sub.path}>
-                                <NavLink
-                                  to={sub.path}
-                                  onClick={closeSidebar}
-                                  onMouseEnter={() => handleRoutePrefetch(sub.path)}
-                                  className={({ isActive }) => cn(
-                                    "flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-all",
-                                    isActive
-                                      ? 'bg-emerald-500/20 text-emerald-300 font-semibold'
-                                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                  )}
-                                >
-                                  <span className="truncate">{sub.label}</span>
-                                  {sub.key === 'inventaire_reappro' && reapproStats && reapproStats.product_count > 0 && (
-                                    <span className="ml-2 shrink-0 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                      {reapproStats.product_count}
-                                    </span>
-                                  )}
-                                </NavLink>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </>
-                    )}
-                  </li>
-                );
-              }
-
-              return (
-                <li key={item.path}>
-                  <NavLink
-                    to={item.path!}
-                    end={item.path === '/app'}
-                    onClick={closeSidebar}
-                    onMouseEnter={() => item.path && handleRoutePrefetch(item.path)}
-                    title={isCollapsed ? item.label : undefined}
-                    className={({ isActive }) => cn(
-                      "flex items-center rounded-xl transition-all duration-200",
-                      isCollapsed
-                        ? 'justify-center w-full h-10'
-                        : 'gap-3 px-3 py-2.5',
-                      isActive
-                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 font-semibold'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                    )}
-                  >
-                    <span className={cn("shrink-0", isCollapsed ? 'size-5' : 'size-5')}>{item.icon}</span>
-                    {!isCollapsed && <span className="text-sm font-medium tracking-tight truncate">{item.label}</span>}
-                  </NavLink>
-                </li>
-              );
-            })}
-          </ul>
+          {isCollapsed ? (
+            <ul className="flex flex-col gap-1 px-2">
+              {menuItems.map((item) => renderMenuItem(item))}
+            </ul>
+          ) : (
+            <div className="px-3">
+              {menuGroups.map((group) => (
+                <div key={group.category}>
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-1 mt-3 mb-1">
+                    {t(`sidebar:categories.${group.category}`)}
+                  </h3>
+                  <ul className="bg-slate-800/50 rounded-xl p-1.5 flex flex-col gap-1">
+                    {group.items.map((item) => renderMenuItem(item))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
         </nav>
 
         {/* Footer */}

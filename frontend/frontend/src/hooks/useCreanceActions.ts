@@ -241,7 +241,7 @@ export const useCreanceActions = ({
                     const errMsg = ticketErr instanceof Error
                         ? `${ticketErr.name}: ${ticketErr.message}`
                         : String(ticketErr);
-                    toast.error(`Erreur ticket: ${errMsg}`);
+                    toast.error(t('creances:toasts.ticket_generation_error', { error: errMsg }));
                 }
             }
 
@@ -267,7 +267,7 @@ export const useCreanceActions = ({
             return;
         }
 
-        const loadingToast = toast.loading('Génération du relevé...');
+        const loadingToast = toast.loading(t('creances:toasts.releve_loading'));
         try {
             const releveData = await creanceService.getReleve({
                 client_id: selectedClient,
@@ -290,7 +290,7 @@ export const useCreanceActions = ({
                 : selectedClient;
             const suffix = includeProducts ? '_detaille' : '';
             doc.save(`releve_${clientSlug}${suffix}_${new Date().toISOString().slice(0, 10)}.pdf`);
-            toast.success('Relevé généré avec succès.', { id: loadingToast });
+            toast.success(t('creances:toasts.releve_generated'), { id: loadingToast });
         } catch {
             toast.error(t('creances:toasts.error_print_statement'), { id: loadingToast });
         }
@@ -302,7 +302,7 @@ export const useCreanceActions = ({
         date_fin?: string;
         history?: boolean;
     }) => {
-        const loadingToast = toast.loading('Génération du fichier Excel...');
+        const loadingToast = toast.loading(t('creances:toasts.excel_loading'));
         try {
             const blob = await creanceService.exportExcel(params);
             const url = window.URL.createObjectURL(blob);
@@ -314,12 +314,12 @@ export const useCreanceActions = ({
             link.click();
             link.parentNode?.removeChild(link);
             setTimeout(() => window.URL.revokeObjectURL(url), 100);
-            toast.success('Export Excel généré avec succès.', { id: loadingToast });
+            toast.success(t('creances:toasts.excel_export_success'), { id: loadingToast });
         } catch (err) {
             logger.error('Erreur export Excel:', err);
-            toast.error('Erreur lors de l\'export Excel.', { id: loadingToast });
+            toast.error(t('creances:toasts.excel_export_error'), { id: loadingToast });
         }
-    }, []);
+    }, [t]);
 
     return {
         selectedCreance,

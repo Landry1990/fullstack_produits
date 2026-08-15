@@ -249,7 +249,7 @@ export default function CategoryManager({
 
     try {
       await api.delete(`${apiPath.replace(/^\/api\//, '')}${id}/`);
-      toast.success(`« ${name} » déplacé en corbeille.`);
+      toast.success(t('stock:organisation.category_manager.trash_success', { name }));
       if (selectedCategory?.id === id) setSelectedCategory(null);
       fetchCategories();
     } catch {

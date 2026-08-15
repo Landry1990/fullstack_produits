@@ -109,6 +109,8 @@
         "no_invoices": "Aucune facture enregistrée",
         "refund_success": "Facture annulée et remboursement enregistré avec succès.",
         "refund_error": "Erreur lors de l'enregistrement du remboursement.",
+        "stock_unloaded": "Stock déchargé avec succès. Les mouvements ont été enregistrés.",
+        "stock_unload_error": "Erreur : {{message}}",
         "delete_drafts_confirm": "Êtes-vous sûr de vouloir supprimer toutes les factures brouillons ? Cette action est irréversible.",
         "delete_drafts_success": "facture(s) brouillon supprimée(s) avec succès.",
         "delete_drafts_error": "Erreur lors de la suppression des factures brouillons.",
@@ -140,6 +142,8 @@
         "sent_to_caisse": "Vente envoyée à la Caisse Centralisée (Ticket #{{id}})",
         "load_error": "Erreur lors du chargement",
         "load_details_error": "Impossible de charger le détail.",
+        "sale_details_load_error": "Impossible de charger le détail de la vente.",
+        "avoir_generate_error": "Impossible de générer un avoir pour cette vente.",
         "loading_details": "Chargement des détails..."
     },
     "confirm_delete": "Supprimer cette facture ?",

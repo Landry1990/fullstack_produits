@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../useConfirm';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { Inventaire } from '../../types';
 import { logger } from '../../utils/logger'
 
 export const useInventaireList = () => {
     const { t } = useTranslation();
+    const confirm = useConfirm();
 
     const [inventaires, setInventaires] = useState<Inventaire[]>([]);
     const [loading, setLoading] = useState(true);
@@ -79,7 +81,7 @@ export const useInventaireList = () => {
                 setTotalCount(data.count || 0);
                 setNextPage(data.next);
                 setPrevPage(data.previous);
-                setCurrentPage(extractPageNumber(pageUrl));
+                setCurrentPage(extractPageNumber(pageUrl ?? null));
 
                 const pageSize = extractPageSize(data.next, data.previous);
                 setTotalPages(pageSize > 0 ? Math.max(1, Math.ceil((data.count || 0) / pageSize)) : 1);
@@ -133,12 +135,19 @@ export const useInventaireList = () => {
 
     const [deleting, setDeleting] = useState(false);
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: number, nom?: string) => {
         if (deleting) return;
+        const confirmed = await confirm({
+            title: t('common:confirmation', { defaultValue: 'Confirmer la suppression' }),
+            message: t('inventory:messages.delete_confirm', { name: nom || '', defaultValue: `Voulez-vous vraiment supprimer l'inventaire ${nom || ''} ?` }),
+            confirmText: t('common:delete', { defaultValue: 'Supprimer' }),
+            cancelText: t('common:cancel', { defaultValue: 'Annuler' }),
+        });
+        if (!confirmed) return;
         setDeleting(true);
         try {
             await api.delete(`inventaires/${id}/`);
-            toast.success(t('common:messages.deleted'));
+            toast.success(t('common:messages.success_delete'));
             setInventaires(prev => prev.filter(inv => inv.id !== id));
             setTotalCount(prev => Math.max(0, prev - 1));
         } catch (error) {

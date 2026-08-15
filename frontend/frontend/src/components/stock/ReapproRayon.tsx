@@ -601,7 +601,7 @@ export default function ReapproRayon() {
                         `reappro_session_${session.id}_${new Date(session.created_at).toISOString().slice(0, 10).replace(/-/g, '')}.pdf`
                       );
                     } catch {
-                      toast.error("Erreur lors de la génération du PDF");
+                      toast.error(t('stock:reappro.messages.pdf_generation_error'));
                     }
                   }
                   setShowSuccessModal(false);

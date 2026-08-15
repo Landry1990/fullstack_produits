@@ -207,10 +207,10 @@ export default function ProduitFormModal({
         const detail = anyErr.response?.data ?? anyErr.message;
         const errorText = typeof detail === 'string' ? detail : formatBackendErrors(detail);
         setError(errorText);
-        toast.error(`❌ ${errorText}`);
+        toast.error(errorText);
       } else {
         setError(t('products:form.validation.unknown_error'));
-        toast.error(`❌ ${t('products:form.validation.unknown_error')}`);
+        toast.error(t('products:form.validation.unknown_error'));
       }
     } finally {
       setLoading(false);

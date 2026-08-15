@@ -60,6 +60,8 @@
     "messages": {
         "load_error": "Error loading providers",
         "save_error": "Error during saving",
+        "save_success": "Provider added successfully",
+        "update_success": "Provider updated successfully",
         "delete_success": "Provider deleted successfully",
         "delete_protected": "Cannot delete this provider as they have linked transactions",
         "delete_error": "Error during deletion",

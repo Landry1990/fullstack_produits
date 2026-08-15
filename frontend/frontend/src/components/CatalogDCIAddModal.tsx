@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import PremiumModal from './common/PremiumModal';
 import { Loader2 } from 'lucide-react';
@@ -86,11 +87,13 @@ export default function CatalogDCIAddModal({
     setAdding(false);
     if (errors.length > 0) {
       setAddError(errors.join(' | '));
+      toast.error(t('common:messages.error_saving'));
     } else {
       onProductsAdded();
       setSelected(new Set());
       setSearchQuery('');
       onClose();
+      toast.success(t('common:messages.success_save'));
     }
   };
 

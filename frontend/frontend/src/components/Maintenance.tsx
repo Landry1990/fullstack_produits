@@ -104,7 +104,7 @@ const getTableCategories = (t: (key: string) => string) => ({
   },
 });
 
-const downloadRapport = (filename: string) => {
+const downloadRapport = (filename: string, t: (key: string) => string) => {
   api.get(`maintenance/download_rapport/?file=${filename}`, { responseType: 'blob' })
     .then(res => {
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -113,7 +113,7 @@ const downloadRapport = (filename: string) => {
       document.body.appendChild(a); a.click(); a.remove();
       window.URL.revokeObjectURL(url);
     })
-    .catch(() => toast.error('Erreur téléchargement rapport'));
+    .catch(() => toast.error(t('toasts.download_report_error')));
 };
 
 export default function Maintenance() {
@@ -228,45 +228,45 @@ export default function Maintenance() {
           setUpdateRunning(false);
           clearInterval(poll);
           if (d.status === 'done') {
-            toast.success('Mise à jour terminée avec succès.');
+            toast.success(t('toasts.update_success'));
           } else if (d.status === 'error') {
-            toast.error(`Mise à jour échouée : ${d.step || 'Erreur inconnue'}`);
-            setUpdateError(d.step || 'Erreur inconnue');
+            toast.error(t('toasts.update_error', { error: d.step || t('common:messages.error_generic') }));
+            setUpdateError(d.step || t('common:messages.error_generic'));
           }
         }
       } catch {
         // Backend redémarre pendant la mise à jour — continuer à poller
         setUpdateProgress((prev) => Math.min(prev + 2, 95));
-        setUpdateStep('Redémarrage du backend en cours...');
+        setUpdateStep(t('toasts.backend_restarting'));
       }
     }, 2000);
     return () => clearInterval(poll);
-  }, [updateRunning]);
+  }, [updateRunning, t]);
 
   const handleRunUpdate = async () => {
-    if (!updatePassword) { toast.error('Mot de passe requis'); return; }
+    if (!updatePassword) { toast.error(t('toasts.password_required')); return; }
     setUpdateRunning(true);
     setUpdateProgress(0);
-    setUpdateStep('Démarrage...');
+    setUpdateStep(t('toasts.starting'));
     setUpdateLog([]);
     setUpdateError('');
     try {
       const res = await api.post('maintenance/run_update/', { password: updatePassword });
       setUpdatePassword('');
       setShowUpdateConfirm(false);
-      toast.success(res.data.message || 'Mise à jour démarrée.');
+      toast.success(res.data.message || t('toasts.update_started'));
     } catch (err) {
       setUpdateRunning(false);
-      toast.error(getApiErrorDetail(err, 'Erreur lors du lancement de la mise à jour'));
+      toast.error(getApiErrorDetail(err, t('toasts.update_launch_error')));
     }
   };
 
   const handleImportProduits = async () => {
-    if (!importFile) { toast.error('Sélectionnez un fichier Excel'); return; }
+    if (!importFile) { toast.error(t('toasts.select_excel_file')); return; }
     setImporting(true);
     setImportResult(null);
     setImportProgress(0);
-    setImportMessage('Envoi du fichier...');
+    setImportMessage(t('toasts.import_uploading'));
     const formData = new FormData();
     formData.append('file', importFile);
     try {
@@ -276,7 +276,7 @@ export default function Maintenance() {
       });
       const jobId = res.data.job_id;
       importJobIdRef.current = jobId;
-      setImportMessage('Import démarré en arrière-plan...');
+      setImportMessage(t('toasts.import_started'));
 
       // Polling toutes les 2 secondes
       const poll = setInterval(async () => {
@@ -307,13 +307,13 @@ export default function Maintenance() {
       }, 2000);
 
     } catch (err) {
-      toast.error(getApiErrorDetail(err, 'Erreur lors du lancement de l\'import'));
+      toast.error(getApiErrorDetail(err, t('toasts.import_launch_error')));
       setImporting(false);
     }
   };
 
   const handlePurgeProduits = async () => {
-    if (!purgePassword) { toast.error('Mot de passe requis'); return; }
+    if (!purgePassword) { toast.error(t('toasts.password_required')); return; }
     setPurging2(true);
     try {
       const res = await api.post('maintenance/purge_produits/', {
@@ -326,7 +326,7 @@ export default function Maintenance() {
       toast.success(res.data.message);
       api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {});
     } catch (err) {
-      toast.error(getApiErrorDetail(err, 'Erreur lors de la purge'));
+      toast.error(getApiErrorDetail(err, t('toasts.purge_launch_error')));
     } finally {
       setPurging2(false);
     }
@@ -909,7 +909,7 @@ export default function Maintenance() {
                         variant="outline"
                         size="sm"
                         className="w-full gap-1 mt-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
-                        onClick={() => downloadRapport(importResult.rapport_xlsx as string)}
+                        onClick={() => downloadRapport(importResult.rapport_xlsx as string, t)}
                       >
                         <FileDown className="size-3" /> Télécharger le rapport Excel
                       </Button>
@@ -919,7 +919,7 @@ export default function Maintenance() {
                         variant="outline"
                         size="sm"
                         className="w-full gap-1"
-                        onClick={() => downloadRapport(importResult.rapport_txt as string)}
+                        onClick={() => downloadRapport(importResult.rapport_txt as string, t)}
                       >
                         <FileDown className="size-3" /> Télécharger le rapport texte
                       </Button>
