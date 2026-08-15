@@ -255,7 +255,7 @@ export default function Perimes() {
         fetchStats() 
       } catch (err) {
         logger.error('Erreur sortie stock:', err);
-        toast.error(t('perimes.messages.error_exit') + ': ' + getApiErrorDetail(err, 'Erreur inconnue'))
+        toast.error(t('perimes.messages.error_exit') + ': ' + getApiErrorDetail(err, t('common:messages.error_generic')))
         throw err;
       } finally {
         setProcessing(false)

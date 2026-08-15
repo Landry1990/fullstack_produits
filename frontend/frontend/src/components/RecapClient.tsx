@@ -78,7 +78,7 @@ export default function RecapClient() {
         const facture = data.results[0]
         if (facture.status === 'ANN' || facture.status === 'ANNULEE') {
           setNumerosStatus(prev => ({ ...prev, [numero]: 'cancelled' }))
-          toast(t('recap:errors.ticket_cancelled', { numero }), { icon: '⚠️' })
+          toast(t('recap:errors.ticket_cancelled', { numero }), { icon: <AlertTriangle className="h-4 w-4 text-amber-600" /> })
         } else {
           setNumerosStatus(prev => ({ ...prev, [numero]: 'found' }))
         }
@@ -152,7 +152,7 @@ export default function RecapClient() {
 
     // Ouvrir la page d'impression avec le même template que les factures
     const w = window.open('/app/print-invoice/recap?type=RECAP', '_blank')
-    if (!w) toast.error('Popup bloqué. Autorisez les popups pour imprimer.')
+    if (!w) toast.error(t('common:popup_blocked'))
   }
 
   return (

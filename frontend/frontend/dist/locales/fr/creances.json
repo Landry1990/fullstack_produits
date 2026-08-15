@@ -120,7 +120,13 @@
         "confirm_print_receipt": "Voulez-vous imprimer un reçu pour ce paiement ?",
         "confirm_print_bulk_receipt": "Voulez-vous imprimer le reçu récapitulatif pour ce règlement ?",
         "select_client_error": "Veuillez sélectionner un client",
-        "error_loading": "Erreur lors du chargement des créances"
+        "error_loading": "Erreur lors du chargement des créances",
+        "ticket_generation_error": "Erreur ticket : {{error}}",
+        "releve_loading": "Génération du relevé...",
+        "releve_generated": "Relevé généré avec succès.",
+        "excel_loading": "Génération du fichier Excel...",
+        "excel_export_success": "Export Excel généré avec succès.",
+        "excel_export_error": "Erreur lors de l'export Excel."
     },
     "print_view": {
         "title": "RELEVÉ DE CRÉANCES",

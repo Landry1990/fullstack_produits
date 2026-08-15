@@ -197,6 +197,7 @@
     },
     "results": {
         "title": "Résultats",
+        "loading": "Calcul des données en cours...",
         "execute_prompt": "Cliquez sur \"Exécuter\" pour voir les résultats",
         "empty": "Aucun résultat trouvé",
         "copy_success": "{{count}} éléments copiés ! Collez-les dans Excel.",
@@ -210,6 +211,7 @@
         "print_launched": "Impression lancée",
         "error_execution_toast": "Erreur lors de l'exécution",
         "export_success_short": "Rapport Généré",
+        "export_error": "Erreur lors du téléchargement Excel",
         "filter_margin": "Filtre marge :",
         "filter_all": "Toutes",
         "filter_negative": "Négatives",

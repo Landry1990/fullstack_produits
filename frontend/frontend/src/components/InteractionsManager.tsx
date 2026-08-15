@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
+import { useConfirm } from '../hooks/useConfirm';
+import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Substance } from '../hooks/useSubstances';
 import { logger } from '../utils/logger'
 
@@ -40,7 +43,8 @@ const GRAVITY_LABELS: Record<string, string> = {
 };
 
 export default function InteractionsManager() {
-  const [_t] = useTranslation(['products', 'common']);
+  const { t } = useTranslation(['products', 'common']);
+  const confirm = useConfirm();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [stats, setStats] = useState<InteractionStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,16 +134,33 @@ export default function InteractionsManager() {
         setShowModal(false);
         fetchInteractions();
         fetchStats();
+        toast.success(t('common:messages.success_save'));
       })
-      .catch(err => alert(err.response?.data?.detail || 'Erreur'))
+      .catch(err => {
+        logger.error(err);
+        toast.error(getApiErrorDetail(err, t('common:messages.error_saving')));
+      })
       .finally(() => setSaving(false));
   };
 
-  const handleDelete = (id: number) => {
-    if (!confirm('Supprimer cette interaction ?')) return;
+  const handleDelete = async (id: number) => {
+    const confirmed = await confirm({
+      title: t('common:confirmation', { defaultValue: 'Confirmer la suppression' }),
+      message: t('common:messages.confirm_delete', { defaultValue: 'Voulez-vous vraiment supprimer cette interaction ?' }),
+      confirmText: t('common:delete', { defaultValue: 'Supprimer' }),
+      cancelText: t('common:cancel', { defaultValue: 'Annuler' }),
+    });
+    if (!confirmed) return;
     api.delete(`interactions/${id}/`)
-      .then(() => { fetchInteractions(); fetchStats(); })
-      .catch(err => alert(err.response?.data?.detail || 'Erreur'));
+      .then(() => {
+        fetchInteractions();
+        fetchStats();
+        toast.success(t('common:messages.success_delete'));
+      })
+      .catch(err => {
+        logger.error(err);
+        toast.error(getApiErrorDetail(err, t('common:messages.error_deleting')));
+      });
   };
 
   const handleCsvUpload = () => {
@@ -154,8 +175,12 @@ export default function InteractionsManager() {
         setUploadResult(r.data);
         fetchInteractions();
         fetchStats();
+        toast.success(t('common:messages.import_success'));
       })
-      .catch(err => alert(err.response?.data?.error || 'Erreur upload'))
+      .catch(err => {
+        logger.error(err);
+        toast.error(getApiErrorDetail(err, t('common:messages.error_saving')));
+      })
       .finally(() => setUploading(false));
   };
 

@@ -218,5 +218,15 @@
         "info_simplifie": "Simplifié : Accompte 5% (+10% CAC = 5,5%) · Précompte 3-5%",
         "info_marge": "Marge administrée : 14% sur la marge brute (pharmacie)",
         "info_common": "Droit commun : sur CA global (2,2% ou 5,5% selon régime)"
+    },
+    "messages": {
+        "pos_load_error": "Erreur chargement points de vente",
+        "pos_name_required": "Veuillez saisir un nom.",
+        "pos_created": "Point de vente créé avec succès.",
+        "pos_create_error": "Erreur création point de vente",
+        "pos_deleted": "Point de vente supprimé.",
+        "pos_delete_error": "Erreur suppression",
+        "pos_closed": "Point de vente fermé.",
+        "pos_close_error": "Erreur fermeture"
     }
 }

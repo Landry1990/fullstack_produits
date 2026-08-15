@@ -10,8 +10,11 @@ import { formatDate } from '../../utils/dateUtils';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
 import { Input } from '../shadcn/input';
 import { Select } from '../ui/Select';
+import { Card, CardContent } from '../shadcn/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
 import { Loader2, Check, X, Pencil } from 'lucide-react';
 import type { TFunction } from 'i18next';
 
@@ -68,80 +71,80 @@ const PriceEvolutionChart = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
     const isStable = Math.abs(variation) < 1;
 
     return (
-        <div className="mb-4 bg-slate-100 rounded-2xl border border-slate-200 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2">
-                    <span className="text-base font-black uppercase tracking-wider text-slate-400">
-                        📈 {t('products:detail.purchases.price_evolution', { defaultValue: 'Évolution Prix Achat' })}
-                    </span>
-                    {hasMultiplePoints && (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                            isStable ? 'bg-slate-200 text-slate-500' : isHausse ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'
-                        }`}>
-                            {isStable ? '→' : isHausse ? '▲' : '▼'} {Math.abs(variation).toFixed(1)}%
+        <Card className="mb-4 bg-slate-100 border-slate-200">
+            <CardContent className="p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                        <span className="text-base font-black uppercase tracking-wider text-slate-400">
+                            📈 {t('products:detail.purchases.price_evolution', { defaultValue: 'Évolution Prix Achat' })}
                         </span>
+                        {hasMultiplePoints && (
+                            <Badge variant={isStable ? 'secondary' : isHausse ? 'error' : 'success'} size="sm">
+                                {isStable ? '→' : isHausse ? '▲' : '▼'} {Math.abs(variation).toFixed(1)}%
+                            </Badge>
+                        )}
+                    </div>
+                    {fournisseurs.length > 1 && (
+                        <Select
+                            size="sm"
+                            value={selectedFournisseur}
+                            onChange={(e) => setSelectedFournisseur(e.target.value)}
+                        >
+                            <option value="all">{t('products:detail.purchases.all_providers', { defaultValue: 'Tous les fournisseurs' })}</option>
+                            {fournisseurs.map((f) => (
+                                <option key={f} value={f}>{f}</option>
+                            ))}
+                        </Select>
                     )}
                 </div>
-                {fournisseurs.length > 1 && (
-                    <Select
-                        size="sm"
-                        value={selectedFournisseur}
-                        onChange={(e) => setSelectedFournisseur(e.target.value)}
-                    >
-                        <option value="all">{t('products:detail.purchases.all_providers', { defaultValue: 'Tous les fournisseurs' })}</option>
-                        {fournisseurs.map((f) => (
-                            <option key={f} value={f}>{f}</option>
-                        ))}
-                    </Select>
-                )}
-            </div>
 
-            <div className="flex gap-4 mb-3 text-xs">
-                <span className="font-bold text-slate-400">
-                    {t('products:detail.purchases.min')} <span className="text-emerald-600 font-black">{formatCurrency(minPrix)}</span>
-                </span>
-                <span className="font-bold text-slate-400">
-                    {t('products:detail.purchases.max')} <span className="text-red-600 font-black">{formatCurrency(maxPrix)}</span>
-                </span>
-                <span className="font-bold text-slate-400">
-                    {t('products:detail.purchases.latest')} <span className="text-blue-600 font-black">{formatCurrency(lastPrix)}</span>
-                </span>
-            </div>
+                <div className="flex gap-4 mb-3 text-xs">
+                    <span className="font-bold text-slate-400">
+                        {t('products:detail.purchases.min')} <span className="text-emerald-600 font-black">{formatCurrency(minPrix)}</span>
+                    </span>
+                    <span className="font-bold text-slate-400">
+                        {t('products:detail.purchases.max')} <span className="text-red-600 font-black">{formatCurrency(maxPrix)}</span>
+                    </span>
+                    <span className="font-bold text-slate-400">
+                        {t('products:detail.purchases.latest')} <span className="text-blue-600 font-black">{formatCurrency(lastPrix)}</span>
+                    </span>
+                </div>
 
-            <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="date" fontSize={10} tick={{ fontWeight: 700 }} />
-                    <YAxis
-                        fontSize={10}
-                        tickFormatter={(v: number) => formatCurrency(v)}
-                        domain={[
-                            (dataMin: number) => Math.floor(dataMin * 0.95),
-                            (dataMax: number) => Math.ceil(dataMax * 1.05),
-                        ]}
-                        width={70}
-                    />
-                    <Tooltip
-                        formatter={(value: number) => [formatCurrency(value), t('products:detail.purchases.price_label')]}
-                        labelFormatter={(label: string, payload: readonly { payload?: { fullDate?: string; fournisseur?: string } }[]) => {
-                            const item = payload?.[0]?.payload;
-                            return item ? `${item.fullDate}${item.fournisseur ? ` — ${item.fournisseur}` : ''}` : label;
-                        }}
-                        contentStyle={{ fontSize: 12, fontWeight: 700 }}
-                    />
-                    {hasMultiplePoints && <ReferenceLine y={minPrix} stroke="#10b981" strokeDasharray="4 2" strokeWidth={1} />}
-                    {hasMultiplePoints && minPrix !== maxPrix && <ReferenceLine y={maxPrix} stroke="#ef4444" strokeDasharray="4 2" strokeWidth={1} />}
-                    <Line
-                        type="monotone"
-                        dataKey="prix"
-                        stroke="#3b82f6"
-                        strokeWidth={2.5}
-                        dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
-                        activeDot={{ r: 6 }}
-                    />
-                </LineChart>
-            </ResponsiveContainer>
-        </div>
+                <ResponsiveContainer width="100%" height={180}>
+                    <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="date" fontSize={10} tick={{ fontWeight: 700 }} />
+                        <YAxis
+                            fontSize={10}
+                            tickFormatter={(v: number) => formatCurrency(v)}
+                            domain={[
+                                (dataMin: number) => Math.floor(dataMin * 0.95),
+                                (dataMax: number) => Math.ceil(dataMax * 1.05),
+                            ]}
+                            width={70}
+                        />
+                        <Tooltip
+                            formatter={(value: number) => [formatCurrency(value), t('products:detail.purchases.price_label')]}
+                            labelFormatter={(label: string, payload: readonly { payload?: { fullDate?: string; fournisseur?: string } }[]) => {
+                                const item = payload?.[0]?.payload;
+                                return item ? `${item.fullDate}${item.fournisseur ? ` — ${item.fournisseur}` : ''}` : label;
+                            }}
+                            contentStyle={{ fontSize: 12, fontWeight: 700 }}
+                        />
+                        {hasMultiplePoints && <ReferenceLine y={minPrix} stroke="#10b981" strokeDasharray="4 2" strokeWidth={1} />}
+                        {hasMultiplePoints && minPrix !== maxPrix && <ReferenceLine y={maxPrix} stroke="#ef4444" strokeDasharray="4 2" strokeWidth={1} />}
+                        <Line
+                            type="monotone"
+                            dataKey="prix"
+                            stroke="#3b82f6"
+                            strokeWidth={2.5}
+                            dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                            activeDot={{ r: 6 }}
+                        />
+                    </LineChart>
+                </ResponsiveContainer>
+            </CardContent>
+        </Card>
     );
 };
 
@@ -151,38 +154,36 @@ const PurchasesTabContent = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
     return (
         <div>
             <PriceEvolutionChart achats={achats} t={t} />
-            <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-                <thead className="bg-white sticky top-0 border-b border-slate-200">
-                    <tr className="text-slate-400">
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.purchases.date')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.purchases.provider')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right py-2">{t('products:detail.purchases.qty')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right py-2">{t('products:detail.purchases.price')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.purchases.lot')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.purchases.exp')}</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <Table>
+                <TableHeader className="sticky top-0 z-10">
+                    <TableRow>
+                        <TableHead className="w-28">{t('products:detail.purchases.date')}</TableHead>
+                        <TableHead className="w-40">{t('products:detail.purchases.provider')}</TableHead>
+                        <TableHead className="text-right w-20">{t('products:detail.purchases.qty')}</TableHead>
+                        <TableHead className="text-right w-28">{t('products:detail.purchases.price')}</TableHead>
+                        <TableHead className="w-40">{t('products:detail.purchases.lot')}</TableHead>
+                        <TableHead className="w-32">{t('products:detail.purchases.exp')}</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
                     {achats.map((achat) => (
-                        <tr key={achat.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-                            <td className="text-sm font-mono font-bold text-slate-500 py-2">{formatDate(achat.commande_date)}</td>
-                            <td className="text-sm font-bold truncate max-w-[150px] py-2" title={achat.fournisseur_name}>{achat.fournisseur_name}</td>
-                            <td className="text-right text-sm font-black py-2">{achat.quantity}</td>
-                            <td className="text-right text-sm font-black text-blue-600 py-2">
+                        <TableRow key={achat.id}>
+                            <TableCell className="text-sm font-mono font-bold text-slate-500 py-2 px-3">{formatDate(achat.commande_date)}</TableCell>
+                            <TableCell className="text-sm font-bold truncate py-2 px-3" title={achat.fournisseur_name}>{achat.fournisseur_name}</TableCell>
+                            <TableCell className="text-right text-sm font-black py-2 px-3">{achat.quantity}</TableCell>
+                            <TableCell className="text-right text-sm font-black text-blue-600 py-2 px-3">
                                 {formatCurrency(Math.round(Number(achat.price_cost)))}
-                            </td>
-                            <td className="py-2">
+                            </TableCell>
+                            <TableCell className="py-2 px-3">
                                 <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 text-xs font-mono font-semibold text-slate-500 bg-slate-100">{achat.lot || '-'}</span>
-                            </td>
-                            <td className="text-sm font-bold text-slate-400 py-2">
+                            </TableCell>
+                            <TableCell className="text-sm font-bold text-slate-400 py-2 px-3">
                                 {formatDate(achat.date_expiration)}
-                            </td>
-                        </tr>
+                            </TableCell>
+                        </TableRow>
                     ))}
-                </tbody>
-            </table>
-            </div>
+                </TableBody>
+            </Table>
         </div>
     );
 };
@@ -192,9 +193,15 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editValues, setEditValues] = useState<{ lot: string; date_expiration: string }>({ lot: '', date_expiration: '' });
     const [saving, setSaving] = useState(false);
+    const [showFinishedLots, setShowFinishedLots] = useState(false);
     const [localLots, setLocalLots] = useState<StockLot[]>(lots);
 
     React.useEffect(() => { setLocalLots(lots); }, [lots]);
+
+    const visibleLots = useMemo(() => {
+        if (showFinishedLots) return localLots;
+        return localLots.filter((lot) => lot.quantity_remaining > 0);
+    }, [localLots, showFinishedLots]);
 
     const startEdit = useCallback((lot: StockLot) => {
         setEditingId(lot.id);
@@ -221,107 +228,116 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
             setLocalLots(prev => prev.map(l => l.id === lotId ? { ...l, ...payload } : l));
             setEditingId(null);
             queryClient.invalidateQueries({ queryKey: ['produit-lots', produitId] });
-            toast.success('Lot mis à jour');
+            toast.success(t('products:messages.lot_update_success'));
         } catch {
-            toast.error('Erreur lors de la mise à jour');
+            toast.error(t('products:messages.lot_update_error'));
         } finally {
             setSaving(false);
         }
-    }, [editValues, queryClient, produitId]);
+    }, [editValues, queryClient, produitId, t]);
 
     if (!localLots || localLots.length === 0) return <p className="text-center text-slate-400 py-8">{t('products:detail.lots.empty')}</p>;
 
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-                <thead className="bg-white sticky top-0 border-b border-slate-200">
-                    <tr className="text-slate-400">
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.lots.date_reception')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.lots.lot_number')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.lots.expiration')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.lots.provider')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right py-2">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right py-2">{t('products:detail.lots.initial_qty')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right py-2">{t('products:detail.lots.remaining_qty')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider w-16"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {localLots.map((lot) => {
-                        const isExpired = lot.date_expiration ? new Date(lot.date_expiration) < new Date() : false;
-                        const isEditing = editingId === lot.id;
-                        return (
-                            <tr key={lot.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-                                <td className="text-sm font-mono font-bold text-slate-500 py-2">{formatDate(lot.date_reception)}</td>
-                                <td className="py-2">
-                                    {isEditing ? (
-                                        <Input
-                                            type="text"
-                                            className="w-28 font-mono text-xs h-8"
-                                            value={editValues.lot}
-                                            onChange={e => setEditValues(v => ({ ...v, lot: e.target.value }))}
-                                            autoFocus
-                                        />
-                                    ) : (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 text-xs font-mono font-bold text-slate-700 bg-slate-100">{lot.lot || '-'}</span>
-                                    )}
-                                </td>
-                                <td className="py-2">
-                                    {isEditing ? (
-                                        <Input
-                                            type="date"
-                                            className="w-36 text-xs h-8"
-                                            value={editValues.date_expiration}
-                                            onChange={e => setEditValues(v => ({ ...v, date_expiration: e.target.value }))}
-                                        />
-                                    ) : (
-                                        <span className={`text-sm font-black ${isExpired ? 'text-red-600' : 'text-slate-800'}`}>
-                                            {formatDate(lot.date_expiration)}
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="text-sm font-bold truncate max-w-[120px] py-2" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</td>
-                                <td className="text-right text-sm font-black text-blue-600 py-2">
-                                    {formatCurrency(Math.round(Number(lot.price_cost || 0)))}
-                                </td>
-                                <td className="text-right text-sm font-bold py-2">{lot.quantity_initial}</td>
-                                <td className="text-right font-black text-sm py-2">
-                                    <span className={lot.quantity_remaining > 0 ? 'text-emerald-600' : 'text-slate-300'}>
-                                        {lot.quantity_remaining}
+        <div className="flex flex-col h-full">
+            <div className="flex justify-end mb-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFinishedLots(v => !v)}
+                >
+                    {showFinishedLots ? t('products:detail.lots.hide_finished') : t('products:detail.lots.show_finished')}
+                </Button>
+            </div>
+            <Table>
+                <TableHeader className="sticky top-0 z-10">
+                    <TableRow>
+                        <TableHead className="w-28">{t('products:detail.lots.date_reception')}</TableHead>
+                    <TableHead className="w-36">{t('products:detail.lots.lot_number')}</TableHead>
+                    <TableHead className="w-32">{t('products:detail.lots.expiration')}</TableHead>
+                    <TableHead className="w-40">{t('products:detail.lots.provider')}</TableHead>
+                    <TableHead className="text-right w-28">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</TableHead>
+                    <TableHead className="text-right w-20">{t('products:detail.lots.initial_qty')}</TableHead>
+                    <TableHead className="text-right w-20">{t('products:detail.lots.remaining_qty')}</TableHead>
+                    <TableHead className="w-16 text-center"></TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {visibleLots.map((lot) => {
+                    const isExpired = lot.date_expiration ? new Date(lot.date_expiration) < new Date() : false;
+                    const isEditing = editingId === lot.id;
+                    return (
+                        <TableRow key={lot.id}>
+                            <TableCell className="text-sm font-mono font-bold text-slate-500 py-2 px-3">{formatDate(lot.date_reception)}</TableCell>
+                            <TableCell className="py-2 px-3">
+                                {isEditing ? (
+                                    <Input
+                                        type="text"
+                                        className="w-28 font-mono text-xs h-8"
+                                        value={editValues.lot}
+                                        onChange={e => setEditValues(v => ({ ...v, lot: e.target.value }))}
+                                        autoFocus
+                                    />
+                                ) : (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 text-xs font-mono font-bold text-slate-700 bg-slate-100">{lot.lot || '-'}</span>
+                                )}
+                            </TableCell>
+                            <TableCell className="py-2 px-3">
+                                {isEditing ? (
+                                    <Input
+                                        type="date"
+                                        className="w-36 text-xs h-8"
+                                        value={editValues.date_expiration}
+                                        onChange={e => setEditValues(v => ({ ...v, date_expiration: e.target.value }))}
+                                    />
+                                ) : (
+                                    <span className={`text-sm font-black ${isExpired ? 'text-red-600' : 'text-slate-800'}`}>
+                                        {formatDate(lot.date_expiration)}
                                     </span>
-                                </td>
-                                <td className="text-center py-2">
-                                    {isEditing ? (
-                                        <div className="flex items-center gap-1 justify-center">
-                                            <Button
-                                                variant="ghost" size="sm"
-                                                className="size-7 p-0 text-emerald-600"
-                                                onClick={() => saveEdit(lot.id)}
-                                                disabled={saving}
-                                                title="Enregistrer"
-                                            ><Check className="size-3.5" /></Button>
-                                            <Button
-                                                variant="ghost" size="sm"
-                                                className="size-7 p-0"
-                                                onClick={cancelEdit}
-                                                disabled={saving}
-                                                title="Annuler"
-                                            ><X className="size-3.5" /></Button>
-                                        </div>
-                                    ) : (
+                                )}
+                            </TableCell>
+                            <TableCell className="text-sm font-bold truncate py-2 px-3" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</TableCell>
+                            <TableCell className="text-right text-sm font-black text-blue-600 py-2 px-3">
+                                {formatCurrency(Math.round(Number(lot.price_cost || 0)))}
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-bold py-2 px-3">{lot.quantity_initial}</TableCell>
+                            <TableCell className="text-right font-black text-sm py-2 px-3">
+                                <span className={lot.quantity_remaining > 0 ? 'text-emerald-600' : 'text-slate-300'}>
+                                    {lot.quantity_remaining}
+                                </span>
+                            </TableCell>
+                            <TableCell className="text-center py-2 px-3">
+                                {isEditing ? (
+                                    <div className="flex items-center gap-1 justify-center">
                                         <Button
                                             variant="ghost" size="sm"
-                                            className="size-7 p-0 text-slate-400 hover:text-indigo-600"
-                                            onClick={() => startEdit(lot)}
-                                            title="Modifier lot / date péremption"
-                                        ><Pencil className="size-3" /></Button>
-                                    )}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+                                            className="size-7 p-0 text-emerald-600"
+                                            onClick={() => saveEdit(lot.id)}
+                                            disabled={saving}
+                                            title="Enregistrer"
+                                        ><Check className="size-3.5" /></Button>
+                                        <Button
+                                            variant="ghost" size="sm"
+                                            className="size-7 p-0"
+                                            onClick={cancelEdit}
+                                            disabled={saving}
+                                            title="Annuler"
+                                        ><X className="size-3.5" /></Button>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        variant="ghost" size="sm"
+                                        className="size-7 p-0 text-slate-400 hover:text-indigo-600"
+                                        onClick={() => startEdit(lot)}
+                                        title="Modifier lot / date péremption"
+                                    ><Pencil className="size-3" /></Button>
+                                )}
+                            </TableCell>
+                        </TableRow>
+                    );
+                })}
+            </TableBody>
+        </Table>
         </div>
     );
 };
@@ -331,35 +347,38 @@ const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: MonthlyStat[]; t: 
 
     let currentYear: number | null = null;
     return (
-        <div className="overflow-x-auto max-h-80">
-            <table className="w-full text-sm">
-                <thead className="bg-white sticky top-0 border-b border-slate-200">
-                    <tr className="text-slate-400">
-                    <th className="text-[11px] font-black uppercase whitespace-nowrap text-left py-2"></th>
-                    <th className="text-[11px] font-black uppercase whitespace-nowrap text-left py-2">{t('products:detail.stats.month')}</th>
-                    <th className="text-[11px] font-black uppercase text-right text-indigo-600 whitespace-nowrap py-2">{t('products:detail.stats.qty_sold')}</th>
-                    <th className="text-[11px] font-black uppercase text-right text-amber-600 whitespace-nowrap py-2">{t('products:detail.stats.qty_ordered')}</th>
-                    <th className="text-[11px] font-black uppercase text-right text-blue-600 whitespace-nowrap py-2">{t('products:detail.stats.nb_clients')}</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div className="max-h-80 overflow-y-auto custom-scrollbar">
+            <Table>
+                <TableHeader className="sticky top-0 z-10">
+                    <TableRow>
+                        <TableHead className="w-16"></TableHead>
+                        <TableHead className="w-32">{t('products:detail.stats.month')}</TableHead>
+                        <TableHead className="text-right w-24 text-indigo-600">{t('products:detail.stats.qty_sold')}</TableHead>
+                        <TableHead className="text-right w-24 text-amber-600">{t('products:detail.stats.qty_ordered')}</TableHead>
+                        <TableHead className="text-right w-24 text-blue-600">{t('products:detail.stats.nb_clients')}</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
                     {(monthlyStats || []).map((stat) => {
                         const showYear = stat.year !== currentYear;
                         currentYear = stat.year;
                         return (
-                            <tr key={`${stat.year}-${stat.month_name}`} className={`border-b border-slate-100 ${showYear ? 'border-t-2 border-slate-200' : ''}`}>
-                                <td className="font-black text-sm text-slate-400 py-2">
+                            <TableRow
+                                key={`${stat.year}-${stat.month_name}`}
+                                className={`${showYear ? 'border-t-2 border-slate-200' : ''}`}
+                            >
+                                <TableCell className="font-black text-sm text-slate-400 py-2 px-3">
                                     {showYear ? stat.year : ''}
-                                </td>
-                                <td className="text-sm font-bold py-2">{stat.month_name}</td>
-                                <td className="text-right font-mono font-black text-sm text-indigo-600 py-2">{stat.qte_v}</td>
-                                <td className="text-right font-mono font-bold text-sm text-amber-600 py-2">{stat.qte_c}</td>
-                                <td className="text-right font-mono font-bold text-sm text-blue-600 py-2">{stat.nb_c}</td>
-                            </tr>
+                                </TableCell>
+                                <TableCell className="text-sm font-bold py-2 px-3">{stat.month_name}</TableCell>
+                                <TableCell className="text-right font-mono font-black text-sm text-indigo-600 py-2 px-3">{stat.qte_v}</TableCell>
+                                <TableCell className="text-right font-mono font-bold text-sm text-amber-600 py-2 px-3">{stat.qte_c}</TableCell>
+                                <TableCell className="text-right font-mono font-bold text-sm text-blue-600 py-2 px-3">{stat.nb_c}</TableCell>
+                            </TableRow>
                         );
                     })}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
             <div className="mt-2 text-[10px] text-slate-400 flex justify-around">
                 <span>{t('products:detail.stats.legend_sold')}</span>
                 <span>{t('products:detail.stats.legend_ordered')}</span>
@@ -379,72 +398,77 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, t 
     if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-slate-400 py-8">{t('products:detail.movements.empty')}</p>;
 
     return (
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-            <table className="w-full text-sm">
-                <thead className="bg-white sticky top-0 border-b border-slate-200">
-                    <tr className="text-slate-400">
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.movements.date')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.movements.type')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.movements.label')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-left py-2">{t('products:detail.movements.operator')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right py-2">{t('products:detail.movements.before')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right py-2">{t('products:detail.movements.qty')}</th>
-                        <th className="text-[11px] font-black uppercase tracking-wider text-right py-2">{t('products:detail.movements.after')}</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <Table>
+                <TableHeader className="sticky top-0 z-10">
+                    <TableRow>
+                        <TableHead className="w-28">{t('products:detail.movements.date')}</TableHead>
+                        <TableHead className="w-44">{t('products:detail.movements.type')}</TableHead>
+                        <TableHead className="min-w-[180px]">{t('products:detail.movements.label')}</TableHead>
+                        <TableHead className="w-32">{t('products:detail.movements.operator')}</TableHead>
+                        <TableHead className="text-right w-20">{t('products:detail.movements.before')}</TableHead>
+                        <TableHead className="text-right w-20">{t('products:detail.movements.qty')}</TableHead>
+                        <TableHead className="text-right w-20">{t('products:detail.movements.after')}</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
                     {(stockHistory || []).map((item) => {
-                        const isPositive = item.type === 'AJUSTEMENT' 
-                            ? item.quantity > 0 
+                        const isPositive = item.type === 'AJUSTEMENT'
+                            ? item.quantity > 0
                             : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
-                        
+
                         const cleanedLibelle = (item.libelle || '')
+                            .replace(/^Vente\s+/i, '')
+                            .replace(/^Réception\s+/i, '')
+                            .replace(/^Décharge\s+/i, '')
                             .replace(/\s*\(FAC.*?\)/gi, '')
                             .replace(/\s*-\s*Lot:.*?(?=\s*-\s*|$)/gi, '')
                             .trim();
 
+                        const badgeVariant = item.type === 'AJUSTEMENT'
+                            ? 'warning'
+                            : isPositive ? 'success' : 'error';
+
                         return (
-                            <tr 
-                                key={item.id || `${item.date}-${item.type}`} 
-                                className={`hover:bg-slate-50 transition-colors border-b border-slate-100 ${(item.facture || item.commande) ? 'cursor-pointer' : ''}`}
-                                onClick={() => onMovementClick(item)}
+                            <TableRow
+                                key={item.id || `${item.date}-${item.type}`}
                             >
-                                <td className="whitespace-nowrap text-sm font-mono font-bold text-slate-500 py-2">
+                                <TableCell className="whitespace-nowrap text-sm font-mono font-bold text-slate-500 py-2 px-3">
                                     {formatDate(item.date)}
-                                </td>
-                                <td className="py-2">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold whitespace-nowrap ${
-                                        item.type === 'AJUSTEMENT'
-                                            ? 'bg-amber-50 text-amber-600 border border-amber-100'
-                                            : isPositive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'
-                                    }`}>
+                                </TableCell>
+                                <TableCell className="py-2 px-3">
+                                    <Badge variant={badgeVariant} size="sm" className="whitespace-nowrap">
                                         {t(`products:detail.movements.types.${item.type}`, { defaultValue: item.type })}
-                                    </span>
-                                </td>
-                                <td className="text-sm font-bold py-2" title={item.libelle}>
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-sm font-bold py-2 px-3" title={item.libelle}>
                                     <div className="flex items-center gap-1">
                                         {(item.facture || item.commande) && (
-                                            <span className="text-indigo-600" title={item.facture ? t('products:detail.movements.view_invoice') : t('products:detail.movements.view_order')}>🔍</span>
+                                            <span
+                                                className="text-indigo-600 cursor-pointer hover:text-indigo-800"
+                                                title={item.facture ? t('products:detail.movements.view_invoice') : t('products:detail.movements.view_order')}
+                                                onClick={(e) => { e.stopPropagation(); onMovementClick(item); }}
+                                            >🔍</span>
                                         )}
-                                        {cleanedLibelle}
+                                        <span className="truncate">{cleanedLibelle}</span>
                                         {item.commande_numero && (
                                             <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 text-xs font-mono font-bold text-slate-500 bg-slate-100 ml-auto">
                                                 {item.commande_numero}
                                             </span>
                                         )}
                                     </div>
-                                </td>
-                                <td className="text-sm font-bold text-slate-400 py-2">{item.user || item.user_nom || '-'}</td>
-                                <td className="text-right font-mono text-sm font-bold text-slate-400 py-2">{item.stock_avant}</td>
-                                <td className={`text-right font-black text-sm py-2 ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                                </TableCell>
+                                <TableCell className="text-sm font-bold text-slate-400 py-2 px-3 truncate">{item.user || item.user_nom || '-'}</TableCell>
+                                <TableCell className="text-right font-mono text-sm font-bold text-slate-400 py-2 px-3">{item.stock_avant}</TableCell>
+                                <TableCell className={`text-right font-black text-sm py-2 px-3 ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
                                     {isPositive ? '+' : ''}{item.quantity}
-                                </td>
-                                <td className="text-right font-mono font-black text-sm py-2">{item.stock_apres}</td>
-                            </tr>
+                                </TableCell>
+                                <TableCell className="text-right font-mono font-black text-sm py-2 px-3">{item.stock_apres}</TableCell>
+                            </TableRow>
                         );
                     })}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
         </div>
     );
 };
@@ -491,88 +515,88 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
       {/* Contenu des onglets */}
       <div className="flex-1 overflow-auto p-4">
         {activeTab === 'general' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <tbody>
-                <tr className="border-b border-slate-200">
-                  <td className="font-bold text-sm text-slate-400 uppercase tracking-wider w-1/3 py-4">{t('products:detail.general.description')}</td>
-                  <td className="uppercase font-black text-sm py-4">{selectedProduit.description || '-'}</td>
-                </tr>
-                <tr className="border-b border-slate-200">
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.rayon')}</td>
-                  <td className="py-4"><span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">{selectedProduit.rayon_name || '-'}</span></td>
-                </tr>
-                <tr className="border-b border-slate-200">
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.provider')}</td>
-                  <td className="py-4"><span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">{selectedProduit.fournisseur_name || '-'}</span></td>
-                </tr>
-                <tr className="border-b border-slate-200">
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.min_max')}</td>
-                  <td className="font-black py-4">{selectedProduit.stock_minimum ?? 0} / {selectedProduit.stock_maximum ?? 0}</td>
-                </tr>
-                <tr className="border-b border-slate-200">
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.alert_threshold')}</td>
-                  <td className="py-4"><span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100">{selectedProduit.stock_alert ?? 0}</span></td>
-                </tr>
-                <tr className="border-b border-slate-200">
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.expiration')}</td>
-                  <td className="font-mono font-black text-sm py-4">{selectedProduit.expire_date ? (() => {
-                    const d = new Date(selectedProduit.expire_date);
-                    return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
-                  })() : '-'}</td>
-                </tr>
-                <tr className="border-b border-slate-200">
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.last_purchase')}</td>
-                  <td className="font-mono font-bold text-sm py-4">{formatDate(selectedProduit.dernier_achat)}</td>
-                </tr>
-                <tr className="border-b border-slate-200">
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.last_sale')}</td>
-                  <td className="font-mono font-bold text-sm py-4">{formatDate(selectedProduit.dernier_vente)}</td>
-                </tr>
-                <tr className="border-b border-slate-200">
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.lot_management')}</td>
-                  <td className="font-bold text-sm py-4">{selectedProduit.use_lot_management ? `✅ ${t('products:detail.general.enabled')}` : `❌ ${t('products:detail.general.disabled')}`}</td>
-                </tr>
-                <tr className="border-b border-slate-200">
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.prescription')}</td>
-                  <td className="font-bold text-sm py-4">{selectedProduit.requires_prescription ? `✅ ${t('products:detail.general.yes')}` : `❌ ${t('products:detail.general.no')}`}</td>
-                </tr>
-                <tr>
-                   <td className="font-bold text-sm text-slate-400 uppercase tracking-wider py-4">{t('products:detail.general.surveillance')}</td>
-                  <td className="font-bold text-sm py-4">{selectedProduit.surveillance_category === 'NONE' ? '-' : selectedProduit.surveillance_category}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.description')}</TableCell>
+                <TableCell className="uppercase font-black text-sm">{selectedProduit.description || '-'}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.rayon')}</TableCell>
+                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">{selectedProduit.rayon_name || '-'}</span></TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.provider')}</TableCell>
+                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">{selectedProduit.fournisseur_name || '-'}</span></TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.min_max')}</TableCell>
+                <TableCell className="font-black">{selectedProduit.stock_minimum ?? 0} / {selectedProduit.stock_maximum ?? 0}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.alert_threshold')}</TableCell>
+                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100">{selectedProduit.stock_alert ?? 0}</span></TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.expiration')}</TableCell>
+                <TableCell className="font-mono font-black text-sm">{selectedProduit.expire_date ? (() => {
+                  const d = new Date(selectedProduit.expire_date);
+                  return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
+                })() : '-'}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.last_purchase')}</TableCell>
+                <TableCell className="font-mono font-bold text-sm">{formatDate(selectedProduit.dernier_achat)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.last_sale')}</TableCell>
+                <TableCell className="font-mono font-bold text-sm">{formatDate(selectedProduit.dernier_vente)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.lot_management')}</TableCell>
+                <TableCell className="font-bold text-sm">{selectedProduit.use_lot_management ? `✅ ${t('products:detail.general.enabled')}` : `❌ ${t('products:detail.general.disabled')}`}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.prescription')}</TableCell>
+                <TableCell className="font-bold text-sm">{selectedProduit.requires_prescription ? `✅ ${t('products:detail.general.yes')}` : `❌ ${t('products:detail.general.no')}`}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.surveillance')}</TableCell>
+                <TableCell className="font-bold text-sm">{selectedProduit.surveillance_category === 'NONE' ? '-' : selectedProduit.surveillance_category}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         )}
 
         {activeTab === 'prix' && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-slate-100 rounded-xl border border-slate-200 p-5">
-               <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('products:detail.price.cost')}</div>
-              <div className="text-blue-600 text-2xl font-bold">{formatCurrency(Math.round(Number(selectedProduit.cost_price || 0)))}</div>
-            </div>
-            <div className="bg-indigo-600 text-white rounded-xl p-5 shadow-sm">
-               <div className="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-2">{t('products:detail.price.selling')}</div>
-              <div className="text-2xl font-bold">{formatCurrency(Math.round(Number(selectedProduit.selling_price || 0)))}</div>
-            </div>
-            <div className="bg-slate-100 rounded-xl border border-slate-200 p-5">
-               <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('products:detail.price.vat')}</div>
-              <div className="text-2xl font-bold text-slate-800">{selectedProduit.tva || '19.25'}%</div>
-            </div>
-            <div className="bg-slate-100 rounded-xl border border-slate-200 p-5">
-               <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('products:detail.price.margin_percent')}</div>
-              <div className="text-2xl font-bold text-emerald-600">{Number(selectedProduit.pourcentage_marge || 0).toFixed(1)}%</div>
-            </div>
-            <div className="bg-slate-100 rounded-xl border border-slate-200 p-5">
-               <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('products:detail.price.margin_coeff')}</div>
-              <div className="text-2xl font-bold text-emerald-600">{Number(selectedProduit.taux_marge || 0).toFixed(2)}</div>
-            </div>
-            <div className="bg-slate-100 rounded-xl border border-slate-200 p-5">
-               <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('products:detail.price.rotation')}</div>
-               <div className="text-2xl font-bold text-blue-600">{Number(selectedProduit.rotation_moyenne || 0).toFixed(1)}<span className="text-xs font-bold uppercase ml-1 text-slate-400"> {t('products:detail.price.per_month')}</span></div>
-            </div>
-          </div>
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.price.cost')}</TableCell>
+                <TableCell className="font-black text-xl text-blue-600">{formatCurrency(Math.round(Number(selectedProduit.cost_price || 0)))}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.price.selling')}</TableCell>
+                <TableCell className="font-black text-2xl text-indigo-600">{formatCurrency(Math.round(Number(selectedProduit.selling_price || 0)))}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.price.vat')}</TableCell>
+                <TableCell className="font-black text-xl text-slate-800">{selectedProduit.tva || '19.25'}%</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.price.margin_percent')}</TableCell>
+                <TableCell className="font-black text-xl text-emerald-600">{Number(selectedProduit.pourcentage_marge || 0).toFixed(1)}%</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.price.margin_coeff')}</TableCell>
+                <TableCell className="font-black text-xl text-emerald-600">{Number(selectedProduit.taux_marge || 0).toFixed(2)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.price.rotation')}</TableCell>
+                <TableCell className="font-black text-xl text-blue-600">{Number(selectedProduit.rotation_moyenne || 0).toFixed(1)}<span className="text-xs font-bold uppercase ml-1 text-slate-400">{t('products:detail.price.per_month')}</span></TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         )}
 
         {activeTab === 'achats' && <PurchasesTabContent achats={achats} t={t} />}

@@ -12,7 +12,7 @@ import api from '../services/api'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../context/AuthContext'
-import type { ProduitModel } from '../types'
+import type { ProduitModel, Facture } from '../types'
 import type { Groupe } from '../types/catalog'
 
 import {
@@ -34,6 +34,7 @@ import ProduitCreateModal from './ProduitFormModal'
 import PasswordConfirmModal from './PasswordConfirmModal'
 import { StockAdjustmentModal } from './products/modals/StockAdjustmentModal'
 import ImportProductsModal from './products/ImportProductsModal'
+import { ProductDetailsModal as SalesDetailsModal } from './sales/modals/ProductDetailsModal'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -81,6 +82,9 @@ export default function ProduitShadcn() {
   const [isPasswordOpen, setIsPasswordOpen] = useState(false)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [passwordConfig, setPasswordConfig] = useState({ title: '', message: '' })
+  const [showSalesModal, setShowSalesModal] = useState(false)
+  const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null)
+  const [loadingFacture, setLoadingFacture] = useState(false)
   const pendingActionRef = useRef<() => Promise<void>>(() => Promise.resolve())
   const queryClient = useQueryClient()
 
@@ -202,7 +206,7 @@ export default function ProduitShadcn() {
       setIsAdjustOpen(false)
       refetch()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('products:messages.adjust_error', { defaultValue: 'Erreur lors de l\u00e9ajustement' })))
+      toast.error(getApiErrorDetail(err, t('products:messages.adjust_error')))
     }
   }
 
@@ -210,7 +214,7 @@ export default function ProduitShadcn() {
     e.preventDefault()
     if (!selectedProduit) return
     if (!user?.is_superuser && !user?.profile?.can_adjust_stock && !user?.can_adjust_stock) {
-      toast.error(t('products:messages.access_denied_adjust', { defaultValue: 'Acc\u00e8s refus\u00e9' })); return
+      toast.error(t('products:messages.access_denied_adjust')); return
     }
     setIsAdjustOpen(false)
     setPasswordConfig({
@@ -230,51 +234,57 @@ export default function ProduitShadcn() {
     try {
       const response = await api.post(`produits/${produit.id}/toggle_active/`)
       const isActive = response.data.is_active
-      toast.success(isActive ? t('products:messages.status_reactivated', { defaultValue: 'Produit r\u00e9activ\u00e9' }) : t('products:messages.status_hidden', { defaultValue: 'Produit masqu\u00e9' }))
+      toast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
       setSelectedProduit(prev => prev ? { ...prev, is_active: isActive } : null)
       refetch()
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.status_error', { defaultValue: 'Erreur' }))) }
+    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
   }
 
   const handleGenerateLabels = async (produit: ProduitModel) => {
     const qtyStr = prompt(t('products:messages.labels_prompt', { name: produit.name, defaultValue: `Quantit\u00e9 \u00e9tiquettes pour ${produit.name}` }), "1")
     if (!qtyStr) return
     const quantity = parseInt(qtyStr, 10)
-    if (isNaN(quantity) || quantity <= 0) { toast.error(t('products:messages.invalid_quantity', { defaultValue: 'Quantit\u00e9 invalide' })); return }
+    if (isNaN(quantity) || quantity <= 0) { toast.error(t('products:messages.invalid_quantity')); return }
     try {
       const resp = await api.post('produits/generate_labels/', { products: [{ id: produit.id, quantity }] }, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([resp.data]))
       const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${produit.name}.pdf`)
       document.body.appendChild(link); link.click(); link.remove()
       window.URL.revokeObjectURL(url)
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.generation_error', { defaultValue: 'Erreur g\u00e9n\u00e9ration' }))) }
+    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.generation_error'))) }
   }
 
   const handleTransferToRayon = async (produit: ProduitModel) => {
     if (!produit.has_reserve_storage || (produit.stock_reserve ?? 0) <= 0) return
     const needed = Math.max(0, (produit.capacite_rayon ?? 0) - (produit.stock ?? 0))
     const suggest = Math.min(needed, produit.stock_reserve ?? 0)
-    const qtyStr = prompt(t('products:messages.transfer_prompt', { reserve: produit.stock_reserve, capacity: produit.capacite_rayon, needed, defaultValue: 'Quantit\u00e9 \u00e0 transf\u00e9rer ?' }), String(suggest))
+    const qtyStr = prompt(t('products:messages.transfer_prompt', { reserve: produit.stock_reserve, capacity: produit.capacite_rayon, needed }), String(suggest))
     if (qtyStr === null) return
     const qty = parseInt(qtyStr, 10)
-    if (isNaN(qty) || qty <= 0) { toast.error(t('products:messages.invalid_quantity', { defaultValue: 'Quantit\u00e9 invalide' })); return }
+    if (isNaN(qty) || qty <= 0) { toast.error(t('products:messages.invalid_quantity')); return }
     setTransferLoading(true)
     try {
       await api.post(`produits/${produit.id}/transfer_to_shelf/`, { quantity: qty })
-      toast.success(t('products:messages.transfer_success', { count: qty, defaultValue: `${qty} unit\u00e9s transf\u00e9r\u00e9es` }))
+      toast.success(t('products:messages.transfer_success', { count: qty }))
       refetch()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('products:messages.transfer_error', { defaultValue: 'Erreur transfert' })))
+      toast.error(getApiErrorDetail(err, t('products:messages.transfer_error')))
     } finally { setTransferLoading(false) }
   }
 
   const handleMovementClick = async (item: { facture?: number | null; commande?: number | null; type?: string }) => {
-    if (item.facture && (item.type === 'SORTIE' || item.type === 'RETOUR')) {
+    if (item.facture) {
+      setSelectedFacture(null)
+      setLoadingFacture(true)
+      setShowSalesModal(true)
       try {
-        await api.get(`factures/${item.facture}/`)
-        toast.success(t('products:messages.facture_loaded', { defaultValue: 'Facture #' + item.facture }))
+        const { data } = await api.get(`factures/${item.facture}/`)
+        setSelectedFacture(data)
       } catch {
-        toast.error(t('products:messages.facture_load_error', { defaultValue: 'Erreur chargement facture' }))
+        toast.error(t('products:messages.facture_load_error'))
+        setShowSalesModal(false)
+      } finally {
+        setLoadingFacture(false)
       }
     } else if (item.commande) {
       navigate('/app/commandes', { state: { openDetailsId: item.commande } })
@@ -663,7 +673,7 @@ export default function ProduitShadcn() {
       <ProduitCreateModal
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onCreated={(produit: ProduitModel) => { refetch(); setIsCreateOpen(false); setSelectedProduit(produit); toast.success(`✅ ${produit.name} — ${t('products:messages.create_success', { defaultValue: 'Produit créé avec succès' })}`); }}
+        onCreated={(produit: ProduitModel) => { refetch(); setIsCreateOpen(false); setSelectedProduit(produit); toast.success(t('products:messages.create_success_named', { name: produit.name })); }}
         produitsEndpoint={'produits/'}
         rayons={rayons}
         fournisseurs={fournisseurs}
@@ -676,6 +686,12 @@ export default function ProduitShadcn() {
           onSuccess={() => { queryClient.invalidateQueries({ queryKey: ['produits'] }); setIsImportOpen(false); }}
         />
       )}
+      <SalesDetailsModal
+        isOpen={showSalesModal}
+        onClose={() => { setShowSalesModal(false); setSelectedFacture(null); }}
+        facture={selectedFacture}
+        loading={loadingFacture}
+      />
     </div>
   )
 }

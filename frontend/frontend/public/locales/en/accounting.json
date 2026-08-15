@@ -158,5 +158,16 @@
         "internet": "Internet & Phone",
         "fournitures": "Office Supplies",
         "autre": "Other expense..."
+    },
+    "messages": {
+        "entry_saved": "Entry saved successfully",
+        "entry_save_error": "Error while saving",
+        "history_initialized": "{{count}} entries generated!",
+        "account_created": "Account created successfully",
+        "account_create_error": "Error creating account",
+        "account_updated": "Account updated successfully",
+        "account_update_error": "Error while updating",
+        "account_deleted": "Account deleted",
+        "account_delete_error": "Cannot delete this account (linked entries exist)"
     }
 }

@@ -32,7 +32,7 @@ export function CaisseTicketPreviewModal({
   onSendWhatsApp,
   loading = false
 }: CaisseTicketPreviewModalProps) {
-  const { t } = useTranslation('caisse')
+  const { t } = useTranslation(['caisse', 'common'])
 
   // Refs pour la navigation clavier dans le footer
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -84,6 +84,7 @@ export function CaisseTicketPreviewModal({
       await api.patch(`factures/${pendingFacture.id}/`,
         { client_name_override: upperName }
       )
+      toast.success(t('common:messages.saved'))
     } catch (err) {
       console.error('Erreur mise à jour nom client facture :', err)
       toast.error(t('common:save_error'))

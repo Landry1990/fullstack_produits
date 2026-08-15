@@ -17,5 +17,14 @@
         "phone": "Téléphone",
         "email": "Email",
         "address": "Adresse"
+    },
+    "messages": {
+        "stats_load_error": "Erreur lors de la récupération des statistiques",
+        "load_suppliers_error": "Erreur de chargement des fournisseurs",
+        "load_payments_error": "Erreur de chargement des paiements",
+        "payment_saved": "Paiement enregistré avec succès",
+        "payment_save_error": "Erreur lors de l'enregistrement",
+        "payment_deleted": "Paiement supprimé",
+        "payment_delete_error": "Erreur lors de la suppression"
     }
 }

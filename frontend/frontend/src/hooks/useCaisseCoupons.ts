@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import type { Facture, CouponMonnaie } from '../types'
@@ -28,6 +29,7 @@ export const useCaisseCoupons = ({
   selectedFacture: _selectedFacture,
   onSuccess
 }: CouponsState) => {
+  const { t } = useTranslation('caisse')
   const [loading, setLoading] = useState(false)
   const [searchCouponNumero, setSearchCouponNumero] = useState('')
 
@@ -43,8 +45,7 @@ export const useCaisseCoupons = ({
   const handleGenererCoupon = async (
     montant: string,
     notes: string,
-    factureId: number | null,
-    t: (key: string, options?: unknown) => string
+    factureId: number | null
   ) => {
     if (!montant || Number(montant) <= 0) {
       toast.error(t('messages.invalid_amount'))
@@ -76,8 +77,7 @@ export const useCaisseCoupons = ({
   }
 
   const handleRechercherCoupon = useCallback(async (
-    numero: string,
-    t: (key: string, options?: unknown) => string
+    numero: string
   ) => {
     if (!numero) return
 
@@ -98,12 +98,11 @@ export const useCaisseCoupons = ({
     } finally {
       setLoading(false)
     }
-  }, [setCouponTrouve, setIsDetailsCouponModalOpen])
+  }, [setCouponTrouve, setIsDetailsCouponModalOpen, t])
 
   const handleAppliquerCouponAFacture = useCallback((
     coupon: CouponMonnaie,
-    facture: Facture,
-    t: (key: string, options?: unknown) => string
+    facture: Facture
   ) => {
     if (coupon.status !== 'ACTIF') {
       toast.error(t('messages.coupon_not_active'))
@@ -124,16 +123,16 @@ export const useCaisseCoupons = ({
       numero: coupon.numero,
       ticket: facture.session_ticket_number || facture.numero_facture
     }))
-  }, [couponsParFacture, setCouponsParFacture])
+  }, [couponsParFacture, setCouponsParFacture, t])
 
-  const handleRetirerCouponDeFacture = useCallback((factureId: number, t: (key: string) => string) => {
+  const handleRetirerCouponDeFacture = useCallback((factureId: number) => {
     setCouponsParFacture(prev => {
       const updated = { ...prev }
       delete updated[factureId]
       return updated
     })
-    toast(t('messages.coupon_removed'), { icon: '🗑️' })
-  }, [setCouponsParFacture])
+    toast(t('messages.coupon_removed'))
+  }, [setCouponsParFacture, t])
 
   const utiliserCouponApresEncaissement = useCallback(async (couponId: number, factureId: number) => {
     try {

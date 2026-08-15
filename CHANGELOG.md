@@ -2,6 +2,477 @@
 
 ---
 
+## 2026-08-17 (63) — Toasts i18n : corrections emojis, deps React et messages serveur
+
+### 🐛 Correctif
+
+Après le nettoyage i18n des toasts, quelques points restaient problématiques :
+- Emojis restants (`⚠️`, `ℹ️`, `🗑️`) dans les options des toasts.
+- Warnings ESLint `react-hooks/exhaustive-deps` sur `t` manquant dans plusieurs
+  `useCallback` / `useEffect`.
+- Messages serveur ou fallback français encore en dur (`Lot ou produit introuvable.`).
+
+### Solution
+
+- Remplacement des toasts avec emojis par `toast.error` / `toast.info` standard.
+- Ajout de `t` dans les tableaux de dépendances des hooks concernés.
+- Suppression du message en dur dans `useDatamatrixScan.ts`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useCaisseCoupons.ts`
+- `frontend/frontend/src/hooks/useAvoirsData.ts`
+- `frontend/frontend/src/hooks/useDatamatrixScan.ts`
+- `frontend/frontend/src/hooks/caisse/useJournalCaisseShift.ts`
+- `frontend/frontend/src/hooks/useFacturationKeyboardShortcuts.ts`
+- `frontend/frontend/src/hooks/usePrint.ts`
+- `frontend/frontend/src/hooks/useCreanceActions.ts`
+- `frontend/frontend/src/hooks/useFacturationActions.ts`
+- `frontend/frontend/src/hooks/useFacturationClients.ts`
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx`
+- `frontend/frontend/src/components/Maintenance.tsx`
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx`
+- `frontend/frontend/src/components/settings/PosteVenteSettingsSection.tsx`
+- `frontend/frontend/src/context/PharmacySettingsContext.tsx`
+- `frontend/frontend/src/components/stock/ReapproHistory.tsx`
+- `frontend/frontend/src/components/promis/modals/PromisFormModal.tsx`
+- `frontend/frontend/src/components/Commandes/SuggestionCommandeModal.tsx`
+
+---
+
+## 2026-08-17 (62) — Internationalisation des toasts restants (frontend)
+
+### 🌐 i18n — Toasts
+
+Finalisation de la migration des messages `toast` encore en dur (FR/anglais/emoji) vers des clés `react-i18next` dans le frontend.
+
+### Fichiers sources modifiés
+
+- `src/hooks/useDatamatrixScan.ts`
+- `src/hooks/useCentreRapports.ts`
+- `src/hooks/useFinanceFournisseurs.ts`
+- `src/hooks/useFacturationClients.ts`
+- `src/hooks/useAccounting.ts`
+- `src/hooks/useInvoiceSettings.ts`
+- `src/hooks/useCart.ts`
+- `src/hooks/useAvoirsData.ts`
+- `src/hooks/useSupplierDashboard.ts`
+- `src/components/common/CategoryManager.tsx`
+- `src/components/common/MessagingModal.tsx`
+- `src/context/PharmacySettingsContext.tsx`
+- `src/components/stock/ReapproHistory.tsx`
+- `src/components/stock/ReapproRayon.tsx`
+- `src/components/settings/PosteVenteSettingsSection.tsx`
+- `src/components/Perimes.tsx`
+
+### Fichiers de locales modifiés
+
+FR et EN : `common`, `reports`, `suppliers`, `facturation`, `accounting`, `stock`, `messaging`, `settings`, `prescriptions`, `pharmacy_settings`.
+
+### Points clés
+
+- 21 appels `toast` encore en dur ont été remplacés par `t('...')`.
+- Toutes les clés ajoutées existent en `fr` et `en`.
+- Les emojis dans les toasts ont été retirés (🚫 banni de `useCart` et `useDatamatrixScan`).
+- Les fallbacks `getApiErrorDetail(err, '...')` restants ont été traduits.
+- Vérifications TypeScript / ESLint non lancées (exec refusé en arrière-plan).
+
+---
+
+## 2026-08-16 (61) — Corrections de lint TypeScript (TFunction, types unknown)
+
+### 🐛 Correctif
+
+Plusieurs erreurs TypeScript pré-existantes rendaient le code non strict-mode
+compliant. Profité du refactor de `CaisseCentralisee.tsx` pour nettoyer.
+
+### Corrections
+
+- **`useCaisseCoupons.ts`** : `useTranslation('caisse')` poussé dans le hook,
+  paramètre `t` retiré des 4 fonctions (`handleGenererCoupon`,
+  `handleRechercherCoupon`, `handleAppliquerCouponAFacture`,
+  `handleRetirerCouponDeFacture`). Élimine les wrappers `t` côté composant.
+- **`useCaissePayment.ts`** : même traitement, `t` retiré de `enregistrerPaiement`.
+- **`useInvoiceModification.ts`** : `t` retiré de l'interface
+  `ModificationState`, `useTranslation` ajouté en interne.
+- **`cashSessionService.ts`** : `closePosteVente` retournait `Promise<unknown>`
+  → `Promise<Record<string, unknown>>` (fixe `data does not exist on unknown`).
+- **`CaisseModals.tsx`** : `onSessionOpened` typé `(poste?: PosteVente | null) => void`
+  au lieu de `(poste: unknown) => Promise<void>` (correspond à `OpenCashSessionModal`).
+- **`CatalogDCI.tsx`** : `handleDeleteProduct` typé avec `TFunction` importé
+  depuis `i18next` au lieu de la signature manuelle `(key: string, options?: unknown) => string`.
+- **`useFacturationImport.ts`** : `pack` typé avec une interface explicite,
+  `item` typé `{ product: number; quantity: number }`, `filter` utilise un
+  type guard au lieu d'un cast `as`, `p` typé `ProduitModel` dans le `find`.
+- **`InventaireListTable.tsx`** : appel `handleDelete(inv.id, inv.description)`
+  corrigé en `handleDelete(inv)` (la fonction attend un `Inventaire`).
+- **`useCaisseCoupons.test.ts`** : mock `useTranslation` ajouté, `mockT`
+  retiré de tous les appels.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useCaisseCoupons.ts`
+- `frontend/frontend/src/hooks/useCaissePayment.ts`
+- `frontend/frontend/src/hooks/useInvoiceModification.ts`
+- `frontend/frontend/src/hooks/useFacturationImport.ts`
+- `frontend/frontend/src/hooks/__tests__/useCaisseCoupons.test.ts`
+- `frontend/frontend/src/services/cashSessionService.ts`
+- `frontend/frontend/src/components/caisse/CaisseModals.tsx`
+- `frontend/frontend/src/components/CaisseCentralisee.tsx`
+- `frontend/frontend/src/components/CatalogDCI.tsx`
+- `frontend/frontend/src/components/inventaire/InventaireListTable.tsx`
+
+### Vérification
+
+- `npx tsc --noEmit` : 0 erreur.
+
+---
+
+## 2026-08-16 (60) — Refactor CaisseCentralisee : hook useBulkCancel + composant CaisseModals
+
+### ♻️ Refactor
+
+Extraction de la logique de vidange caisse et des modals de `CaisseCentralisee.tsx`
+pour alléger le composant principal (~700 lignes → ~530 lignes).
+
+### Fichiers touchés
+
+- **`frontend/frontend/src/hooks/useBulkCancel.ts`** (nouveau) : hook regroupant les
+  états (`selectedFactureIds`, `showBulkCancelModal`, `bulkCancelLoading`,
+  `bulkProgress`) et fonctions (`toggleSelectFacture`, `selectAllFactures`,
+  `handleBulkCancelClick`, `handleConfirmBulkCancel`, `canBulkCancel`) de la vidange
+  caisse par lots. Utilise `useTranslation('caisse')` en interne.
+- **`frontend/frontend/src/components/caisse/CaisseModals.tsx`** (nouveau) : composant
+  unique rendant tous les modals (paiement, ticket, coupons génération/détails,
+  session, clôture, vidange, sudo) avec leurs imports `lazy` + `Suspense`.
+- **`frontend/frontend/src/components/CaisseCentralisee.tsx`** : remplace la logique
+  inline de vidange par `useBulkCancel` et le JSX des modals par `<CaisseModals />`.
+  Suppression des imports `lazy`/`Suspense`/`PasswordConfirmModal`/
+  `SudoValidationModal`/`LoadingScreen` (déplacés vers `CaisseModals`).
+
+### Vérification
+
+- `npx tsc --noEmit` : 0 erreur.
+
+---
+
+## 2026-08-16 (59) — Correction des clés de traduction des toasts
+
+### 🐛 Correctif
+
+Quelques toasts ajoutés précédemment affichaient des clés i18n au lieu du texte
+traduit (namespace `common` non chargé, clés `success_save`/`success_delete`
+manquantes en anglais, clés inexistantes dans `common:confirm.*`).
+
+### Solution
+
+- `CaisseTicketPreviewModal.tsx` : chargement des namespaces `['caisse', 'common']`.
+- `useInventaireList.ts` et `InteractionsManager.tsx` : remplacement de la clé
+  `common:confirm.delete_title` inexistante par `common:confirmation`.
+- `common.json` : ajout des clés `messages.success_save` et `messages.success_delete`
+  en anglais.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/caisse/CaisseTicketPreviewModal.tsx`
+- `frontend/frontend/src/hooks/inventaire/useInventaireList.ts`
+- `frontend/frontend/src/components/InteractionsManager.tsx`
+- `frontend/frontend/public/locales/en/common.json`
+
+---
+
+## 2026-08-16 (58) — Toasts & confirmations sur les actions CRUD critiques
+
+### 🚀 Amélioration
+
+Un audit a montré que plusieurs actions CRUD sensibles n'affichaient aucun
+feedback (toast de succès/erreur) et certaines suppressions manquaient de
+confirmation explicite.
+
+### Solution
+
+- `useFournisseurs.ts` : toasts succès pour CREATE et UPDATE fournisseur.
+- `useInventaireList.ts` / `InventaireListTable.tsx` : confirmation shadcn/ui
+  avant suppression d'un inventaire + toast de succès.
+- `useInventaireEditor.ts` : toasts succès pour la création d'inventaire et
+  la suppression d'une ligne.
+- `useFacturationActions.ts` : toast succès après mise à jour du nom client
+  sur facture.
+- `InteractionsManager.tsx` : remplacement des `alert()` par des `toast()`
+  (succès + erreur) et `window.confirm()` par `useConfirm()` pour la suppression.
+- `CatalogDCI.tsx` / `CatalogDCIAddModal.tsx` : toasts succès/erreur sur
+  ajout/retrait DCI produit.
+- `CaisseTicketPreviewModal.tsx` : toast succès après mise à jour du nom client.
+- Traductions `fr`/`en` : ajout des clés nécessaires dans `providers.json`,
+  `stock.json`, `facturation.json`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useFournisseurs.ts`
+- `frontend/frontend/src/hooks/inventaire/useInventaireList.ts`
+- `frontend/frontend/src/hooks/inventaire/useInventaireEditor.ts`
+- `frontend/frontend/src/hooks/useFacturationActions.ts`
+- `frontend/frontend/src/components/InteractionsManager.tsx`
+- `frontend/frontend/src/components/CatalogDCI.tsx`
+- `frontend/frontend/src/components/CatalogDCIAddModal.tsx`
+- `frontend/frontend/src/components/caisse/CaisseTicketPreviewModal.tsx`
+- `frontend/frontend/src/components/inventaire/InventaireListTable.tsx`
+- `frontend/frontend/public/locales/fr/providers.json`
+- `frontend/frontend/public/locales/en/providers.json`
+- `frontend/frontend/public/locales/fr/stock.json`
+- `frontend/frontend/public/locales/en/stock.json`
+- `frontend/frontend/public/locales/fr/facturation.json`
+- `frontend/frontend/public/locales/en/facturation.json`
+
+---
+
+## 2026-08-16 (57) — LoadingScreen shadcn/ui : spinners unifiés sur chargements lourds
+
+### 🚀 Amélioration
+
+Plusieurs écrans et modales n'avaient pas de feedback visuel pendant les
+longs chargements (lazy routes, modales lourdes, exécution de requêtes).
+L'utilisateur pouvait croire que l'application était figée.
+
+### Solution
+
+- Création du composant `LoadingScreen.tsx` (shadcn/ui) : `Card` + `Loader2`
+  animé + message i18n, avec option overlay ou inline.
+- `App.tsx` : remplacement des spinners DaisyUI par `LoadingScreen` pour le
+  démarrage backend et le `Suspense` global des routes lazy.
+- Modales lazy : `fallback={null}` remplacé par `LoadingScreen` dans
+  `CaisseCentralisee.tsx`, `Commandes.tsx`, `CommandeForm.tsx`,
+  `FacturationModals.tsx`.
+- `CentreRapports.tsx` : spinner shadcn/ui pendant le calcul des requêtes.
+- Traductions `fr`/`en` : ajout de `reports.results.loading`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/common/LoadingScreen.tsx` (nouveau)
+- `frontend/frontend/src/App.tsx`
+- `frontend/frontend/src/components/CaisseCentralisee.tsx`
+- `frontend/frontend/src/components/Commandes.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx`
+- `frontend/frontend/src/components/facturation/FacturationModals.tsx`
+- `frontend/frontend/src/components/CentreRapports.tsx`
+- `frontend/frontend/public/locales/fr/reports.json`
+- `frontend/frontend/public/locales/en/reports.json`
+
+---
+
+## 2026-08-16 (56) — Sidebar : regroupement par catégories style iOS Settings
+
+### 🎨 Amélioration
+
+La barre latérale principale devenait longue et difficile à parcourir.
+Les éléments de navigation sont maintenant regroupés par catégories
+avec des en-têtes non cliquables et des cartes groupées (style iOS Settings).
+
+### Solution
+
+- `Sidebar.tsx` :
+  - Ajout d'un champ `category` sur chaque item de `allMenuItems`.
+  - Ajout d'un `useMemo` `menuGroups` pour regrouper et ordonner
+    les items par catégorie (`accueil`, `ventes`, `catalogue`,
+    `achats`, `tiers`, `stock`, `rapports`, `parametres`).
+  - En mode non réduit : affichage des catégories avec un `<h3>`
+    et des conteneurs `bg-slate-800/50 rounded-xl p-1.5`.
+  - En mode réduit (`isCollapsed`) : conservation de la liste plate.
+- `public/locales/fr/sidebar.json` et `en/sidebar.json` :
+  - Ajout de la clé `categories` avec les libellés fr/en.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Sidebar.tsx`
+- `frontend/frontend/public/locales/fr/sidebar.json`
+- `frontend/frontend/public/locales/en/sidebar.json`
+
+---
+
+## 2026-08-16 (55) — Fiche produit : ouverture du détail de vente depuis Mouvements
+
+### ✨ Amélioration
+
+Dans l'onglet **Mouvements (MVMTS)**, la loupe bleue à côté du libellé
+indiquait que la ligne était cliquable, mais elle ne faisait qu'un appel API
+sans afficher le détail de la facture.
+
+### Solution
+
+- `ProductTabsContent.tsx` : déplacement du `onClick` de la ligne entière
+  vers la loupe 🔍 elle-même (`stopPropagation` pour éviter les conflits),
+  suppression du `cursor-pointer` sur la `TableRow`.
+- `ProduitShadcn.tsx` :
+  - Ajout des états `showSalesModal`, `selectedFacture` et `loadingFacture`.
+  - Modification de `handleMovementClick` pour charger la facture via
+    `api.get(factures/{id}/)` et ouvrir le `ProductDetailsModal` des ventes.
+  - Import du modal `ProductDetailsModal` renommé en `SalesDetailsModal`.
+  - Affichage du modal dans le JSX.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/ProduitShadcn.tsx`
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx`
+
+---
+
+## 2026-08-16 (54) — Fiche produit : onglet Prix en Table harmonisée
+
+### 🎨 Amélioration
+
+L'onglet **Prix** utilisait une grille de `Card` colorées, ce qui le différenciait
+visuellement des autres onglets (Général, Achats, Lots, Stats, Mouvements) qui
+sont tous en `Table`.
+
+### Solution
+
+- `ProductTabsContent.tsx` : conversion de l'onglet `prix` en `Table` /
+  `TableBody` / `TableRow` / `TableCell` avec une colonne libellé `w-1/3` et
+  une colonne valeur.
+- Conservation des couleurs sémantiques sur les valeurs :
+  - Prix d'achat en bleu
+  - Prix de vente en indigo, en `text-2xl` (légèrement plus gros que les autres)
+  - Marge / coefficient en émeraude
+  - Rotation en bleu
+- Suppression du layout `Card` / `grid` pour l'onglet `prix`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx`
+
+---
+
+## 2026-08-16 (53) — Fiche produit : masquer les lots épuisés par défaut
+
+### ✨ Amélioration
+
+L'onglet **Lots** affichait tous les lots, y compris ceux dont la quantité
+restante était à zéro. Cela alourdissait la lecture pour les produits avec
+beaucoup d'historique de lots.
+
+### Solution
+
+- `ProductTabsContent.tsx` : ajout d'un état `showFinishedLots` à `false` par
+  défaut dans le composant `LotsTabContent`.
+- Affichage d'un bouton `outline` au-dessus du tableau pour basculer
+  `Afficher les lots épuisés` / `Masquer les lots épuisés`.
+- Filtrage par défaut : seuls les lots avec `quantity_remaining > 0` sont
+  affichés.
+- Ajout des clés de traduction `show_finished` / `hide_finished` dans
+  `products:detail.lots` (fr + en).
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx`
+- `frontend/frontend/public/locales/fr/products.json`
+- `frontend/frontend/public/locales/en/products.json`
+
+---
+
+## 2026-08-16 (52) — Fiche produit : ajustements onglet Mouvements
+
+### 🎨 Polish
+
+Retour utilisateur sur l'onglet **Mouvements (MVMTS)** : les libellés étaient
+trop longs et les badges de type revenaient sur deux lignes.
+
+### Solution
+
+- `ProductTabsContent.tsx` :
+  - Suppression du préfixe `Vente ` dans les libellés de vente
+    (ex. `Vente Facture #...` devient `Facture #...`).
+  - Suppression du préfixe `Réception ` dans les libellés d'entrée
+    (ex. `Réception commande #...` devient `commande #...`).
+  - Ajout de `whitespace-nowrap` sur le `Badge` du type pour forcer
+    l'affichage sur une seule ligne.
+  - Élargissement de la colonne Type à `w-44` pour accueillir les badges
+    `Sortie Stock`, `Avoir Fournisseur`, etc.
+  - Ajustement de la colonne Libellé avec `min-w-[180px]`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx`
+
+---
+
+## 2026-08-16 (51) — Fiche produit : refonte des onglets Général, Prix, Achats, Lots
+
+### 🎨 Amélioration
+
+Les onglets **Général**, **Prix**, **Achats** et **Lots** de la fiche produit
+utilisaient des `<table>` / `<div>` bruts. Ils sont maintenant cohérents avec
+le design system shadcn/ui.
+
+### Solution
+
+- `ProductTabsContent.tsx` :
+  - Onglet `général` : conversion en `Table` / `TableBody` / `TableRow` /
+    `TableCell` (liste libellé / valeur avec `w-1/3` pour la colonne labels).
+  - Onglet `prix` : conversion des 6 cartes en `Card` shadcn (prix d'achat,
+    prix de vente, TVA, marge, coefficient, rotation) avec leurs fonds
+    colorés conservés.
+  - Onglet `achats` : refonte du graphique d'évolution dans un `Card` shadcn
+    avec `Badge` pour la variation, et tableau d'achats en shadcn `Table`.
+  - Onglet `lots` : tableau des lots entièrement en shadcn `Table` avec
+    `TableHeader` sticky, colonnes dimensionnées, et conservation des inputs
+    d'édition en ligne.
+- Ajout de l'import `Card` et `CardContent` depuis `../shadcn/card`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx`
+
+---
+
+## 2026-08-16 (50) — Fiche produit : onglet Stats en shadcn/ui
+
+### 🎨 Amélioration
+
+L'onglet **Stats** de la fiche produit (statistiques mensuelles) utilisait
+un `<table>` brut ; il est maintenant aligné avec le design system shadcn/ui.
+
+### Solution
+
+- `ProductTabsContent.tsx` : remplacement du `<table>` de l'onglet `stats` par
+  les composants shadcn/ui `Table` / `TableHeader` / `TableBody` / `TableRow` /
+  `TableHead` / `TableCell`.
+- Alignement des colonnes : `Année` (`w-16`), `Mois` (`w-32`) à gauche,
+  `Qté V` (indigo), `Qté C` (amber), `Nb C` (blue) alignés à droite (`w-24`).
+- Conservation de la séparation visuelle entre les années via `border-t-2`.
+- Légende en dessous du tableau inchangée.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx`
+
+---
+
+## 2026-08-16 (49) — Fiche produit : onglet Mouvements en shadcn/ui
+
+### 🎨 Amélioration
+
+L'onglet **Mouvements (MVMTS)** de la fiche produit utilisait un `<table>` brut.
+Il méritait une refonte cohérente avec les autres tableaux de l'application.
+
+### Solution
+
+- `ProductTabsContent.tsx` : remplacement du `<table>` par les composants
+  shadcn/ui `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableHead` /
+  `TableCell`.
+- Conversion des badges de type en composant `Badge` (`warning` pour
+  `AJUSTEMENT`, `success` pour les entrées, `error` pour les sorties).
+- Alignement des colonnes : date, type, libellé et opérateur à gauche ;
+  quantités (avant / qté / après) alignées à droite.
+- Largeurs fixes sur les colonnes `Date` (`w-28`), `Type` (`w-28`),
+  `Opérateur` (`w-32`) et les quantités (`w-20`).
+- Ajout des imports `Badge` et `Table*`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx`
+
+---
+
 ## 2026-08-15 (48) — Centre de rapports : résultats designés en shadcn/ui
 
 ### 🎨 Amélioration

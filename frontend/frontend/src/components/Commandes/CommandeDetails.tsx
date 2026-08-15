@@ -169,13 +169,13 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
       if (editLotValues.produitId) {
         queryClient.invalidateQueries({ queryKey: ['produit-lots', editLotValues.produitId] });
       }
-      toast.success('Lot / date mis à jour');
+      toast.success(t('orders:messages.lot_update_success'));
     } catch {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('orders:messages.lot_update_error'));
     } finally {
       setSavingLot(false);
     }
-  }, [editLotValues, queryClient]);
+  }, [editLotValues, queryClient, t]);
 
 
 

@@ -299,11 +299,11 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleSave = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
         if (!selectedFournisseurId) {
-            toast(t('avoirs.toasts.select_supplier'), { icon: '⚠️' });
+            toast.error(t('avoirs.toasts.select_supplier'));
             return;
         }
         if (lignes.length === 0) {
-            toast(t('avoirs.toasts.add_product'), { icon: '⚠️' });
+            toast.error(t('avoirs.toasts.add_product'));
             return;
         }
 
@@ -396,12 +396,13 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                     validated_by_id: validatorId,
                     password: password
                 });
-                toast.success('Stock déchargé avec succès. Les mouvements ont été enregistrés.');
+                toast.success(t('sales:messages.stock_unloaded'));
                 setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
                 setSelectedAvoir(updated);
             } catch (err: unknown) {
                 const error = err as { response?: { data?: { error?: string } }; message?: string };
-                toast.error('Erreur : ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
+                const msg = error.response?.data?.error || error.message || t('common:messages.error_generic');
+                toast.error(t('common:messages.error_with_message', { message: msg }));
                 throw err;
             } finally {
                 setLoading(false);

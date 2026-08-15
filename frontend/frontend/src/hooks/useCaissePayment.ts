@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
@@ -117,12 +118,12 @@ export const useCaissePayment = ({
   utiliserCouponApresEncaissement,
   onSuccess
 }: PaymentState) => {
+  const { t } = useTranslation('caisse')
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
 
   const enregistrerPaiement = useCallback(async (
     paiementsValides: { mode: string; montant: number }[],
-    t: (key: string, options?: unknown) => string,
     user: unknown,
     successMessage: string = 'Paiement enregistré'
   ) => {

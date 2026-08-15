@@ -14,14 +14,18 @@ export interface UseFacturationImportOptions {
 
 export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
     // Pack Addition
-    const addPackToFacture = useCallback(async (pack: unknown) => {
+    const addPackToFacture = useCallback(async (pack: {
+        pack_items?: { product: number; quantity: number }[];
+        value?: string | number;
+        name?: string;
+    }) => {
         if (!pack.pack_items || pack.pack_items.length === 0) {
             toast.error(t('facturation:messages.pack_empty'))
             return
         }
         const toastId = toast.loading(t('facturation:messages.adding_pack'))
         try {
-            const itemPromises = pack.pack_items.map(async (item: unknown) => {
+            const itemPromises = pack.pack_items.map(async (item: { product: number; quantity: number }) => {
                 try {
                     const { data: product } = await api.get<ProduitModel>(`produits/${item.product}/`)
                     return { product, quantity: item.quantity }
@@ -30,7 +34,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 }
             })
             const results = await Promise.all(itemPromises)
-            const items = results.filter(i => i !== null) as { product: ProduitModel, quantity: number }[]
+            const items = results.filter((i): i is { product: ProduitModel, quantity: number } => i !== null)
 
             if (items.length === 0) {
                 toast.error(t('facturation:messages.pack_items_error'), { id: toastId })
@@ -57,12 +61,12 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
 
     // CSV Import
     const handleCsvImport = useCallback(async (file: File) => {
-        const toastId = toast.loading('Analyse et importation du fichier CSV...');
+        const toastId = toast.loading(t('facturation:messages.csv_loading'));
         try {
             const text = await file.text();
             const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
             if (lines.length === 0) {
-                toast.error('Le fichier CSV est vide.', { id: toastId });
+                toast.error(t('facturation:messages.csv_empty_file'), { id: toastId });
                 return;
             }
             const params: { identifiers: string[], quantities: Record<string, number> } = {
@@ -82,7 +86,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 }
             }
             if (params.identifiers.length === 0) {
-                toast.error('Aucune donnée valide trouvée dans le CSV.', { id: toastId });
+                toast.error(t('facturation:messages.csv_no_valid_data'), { id: toastId });
                 return;
             }
             let fetchedProducts: ProduitModel[] = [];
@@ -95,7 +99,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                         const res = await api.get('produits/', { params: { search: ident } });
                         const results = res.data.results || res.data;
                         if (results && results.length > 0) {
-                            const match = results.find((p: unknown) => p.cip1 === ident || String(p.id) === ident) || results[0];
+                            const match = results.find((p: ProduitModel) => p.cip1 === ident || String(p.id) === ident) || results[0];
                             return { identifier: ident, product: match };
                         }
                     } catch { return null; }
@@ -109,7 +113,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 });
             }
             if (fetchedProducts.length === 0) {
-                toast.error('Aucun produit correspondant trouvé.', { id: toastId });
+                toast.error(t('facturation:messages.csv_no_matching_products'), { id: toastId });
                 return;
             }
             const itemsToBulkAdd = fetchedProducts.map(product => {
@@ -122,9 +126,9 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 }
             });
             cart.bulkAddProduits(itemsToBulkAdd);
-            toast.success(`${itemsToBulkAdd.length} produit(s) importé(s).`, { id: toastId });
+            toast.success(t('facturation:messages.csv_import_success', { count: itemsToBulkAdd.length }), { id: toastId });
         } catch {
-            toast.error("Erreur lecture CSV.", { id: toastId });
+            toast.error(t('facturation:messages.csv_read_error'), { id: toastId });
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.bulkAddProduits])

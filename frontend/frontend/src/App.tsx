@@ -15,6 +15,7 @@ import { ClockSyncAlert } from './components/ClockSyncAlert'
 import { ExpirationAlertToasts } from './components/ExpirationAlertToast'
 import { useAuth } from './context/AuthContext'
 import { router } from './routes'
+import { LoadingScreen } from './components/common/LoadingScreen'
 
 const MAX_ATTEMPTS = 10; // ~50 secondes d'attente max
 
@@ -106,17 +107,10 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="h-screen flex items-center justify-center bg-base-100">
-      <div className="flex flex-col items-center gap-4">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/40 animate-pulse">
-          Démarrage du système en cours...
-        </p>
-        <p className="text-[10px] text-base-content/30">
-          {attempts > 0 ? `Tentative ${attempts}/${MAX_ATTEMPTS}...` : 'Vérification du serveur...'}
-        </p>
-      </div>
-    </div>
+    <LoadingScreen
+      message={attempts > 0 ? `Démarrage... Tentative ${attempts}/${MAX_ATTEMPTS}` : 'Démarrage du système en cours...'}
+      size="lg"
+    />
   );
 }
 
@@ -152,16 +146,7 @@ export default function App() {
               <ClockSyncAlert />
               <GlobalAlerts />
               <BackendHealthCheck>
-                <Suspense fallback={
-                  <div className="h-screen flex items-center justify-center bg-base-100">
-                    <div className="flex flex-col items-center gap-4">
-                      <span className="loading loading-spinner loading-lg text-primary"></span>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/40 animate-pulse">
-                        Chargement du système...
-                      </p>
-                    </div>
-                  </div>
-                }>
+                <Suspense fallback={<LoadingScreen size="lg" overlay />}>
                   <PosteCaisseModeProvider>
                     <RouterProvider router={router} />
                   </PosteCaisseModeProvider>

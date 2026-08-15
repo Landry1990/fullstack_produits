@@ -114,6 +114,8 @@
         "bulk_cancel_error": "Erreur lors de la vidange",
         "cancel_invoice_success": "Facture annulée",
         "cancel_invoice_error": "Erreur lors de l'annulation",
+        "bulk_cancel_success": "{{count}} facture(s) annulée(s). {{stock}} lignes de stock réintégrées.",
+        "bulk_cancel_total_errors": "{{count}} erreur(s) au total",
         "empty_invoice_error": "Cette facture ne contient aucun produit",
         "load_invoice_error": "Impossible de charger la facture pour modification",
         "enter_whatsapp_number_desc": "Entrez le numéro WhatsApp (format international ex: 237...)",

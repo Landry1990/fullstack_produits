@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import type { Facture } from '../types'
@@ -9,15 +10,14 @@ import { logger } from '../utils/logger'
 interface ModificationState {
   setLoading: (loading: boolean) => void
   fetchFacturesEnAttente: () => Promise<void>
-  t: (key: string, options?: unknown) => string
 }
 
 export const useInvoiceModification = ({
   setLoading,
-  fetchFacturesEnAttente,
-  t
+  fetchFacturesEnAttente
 }: ModificationState) => {
   const navigate = useNavigate()
+  const { t } = useTranslation('caisse')
 
   /**
    * Modifier une facture complète (redirection vers Facturation)

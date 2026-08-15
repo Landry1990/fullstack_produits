@@ -61,7 +61,8 @@
     },
     "messages": {
         "save_success": "Saved in prescription registry",
-        "save_error": "Error while saving prescription"
+        "save_error": "Error while saving prescription",
+        "prescription_product_detected": "Prescription/controlled product detected"
     },
     "pos": {
         "zenith_title": "Zenith Pharma - POS",

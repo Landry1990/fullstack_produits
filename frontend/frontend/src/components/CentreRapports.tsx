@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LoadingScreen } from './common/LoadingScreen';
 import { useCentreRapports } from '../hooks/useCentreRapports';
 import { ReportSidebar } from './dashboard/reports/ReportSidebar';
 import { ReportFilters } from './dashboard/reports/ReportFilters';
@@ -244,16 +245,7 @@ export default function CentreRapports() {
                                 {/* Results Section */}
                                 <div className="flex-1 min-h-0 flex flex-col">
                                     {loading && !results ? (
-                                        <div className="flex-1 flex flex-col items-center justify-center p-12 bg-white rounded-2xl shadow-sm border border-slate-200">
-                                            <div className="flex gap-1 mb-4">
-                                              {[0,1,2,3].map(i => (
-                                                <div key={i} className="w-1.5 bg-blue-500 rounded-full animate-bounce" style={{height: '2rem', animationDelay: `${i * 0.1}s`}}></div>
-                                              ))}
-                                            </div>
-                                            <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-600 animate-pulse">
-                                                Calcul des données en cours…
-                                            </p>
-                                        </div>
+                                        <LoadingScreen message={t('results.loading', { defaultValue: 'Calcul des données en cours...' })} size="md" overlay={false} className="min-h-[400px]" />
                                     ) : (
                                         <ReportResults 
                                             selectedQuery={selectedQuery}

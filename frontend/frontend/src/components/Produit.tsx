@@ -355,7 +355,7 @@ export default function Produit() {
         try { await api.delete(`produits/${id}/`); return true; } catch { return false; }
       }));
       successCount = results.filter(Boolean).length;
-      if (successCount > 0) { queryClient.invalidateQueries({ queryKey: ['produits'] }); setSelectedProductIds([]); toast.success(`${successCount} ${t('products:messages.delete_success')}`); }
+      if (successCount > 0) { queryClient.invalidateQueries({ queryKey: ['produits'] }); setSelectedProductIds([]); toast.success(t('products:messages.delete_success_count', { count: successCount })); }
     } finally { setActionLoading(false) }
   }
 
@@ -593,7 +593,7 @@ export default function Produit() {
           queryClient.invalidateQueries({ queryKey: ['produits'] });
           setIsCreateModalOpen(false);
           setSelectedProduit(produit);
-          toast.success(`✅ ${produit.name} — ${t('products:messages.create_success')}`);
+          toast.success(t('products:messages.create_success_named', { name: produit.name }));
         }}
         produitsEndpoint={'produits/'}
         rayons={rayons}

@@ -17,5 +17,14 @@
         "phone": "Phone",
         "email": "Email",
         "address": "Address"
+    },
+    "messages": {
+        "stats_load_error": "Error retrieving statistics",
+        "load_suppliers_error": "Error loading suppliers",
+        "load_payments_error": "Error loading payments",
+        "payment_saved": "Payment recorded successfully",
+        "payment_save_error": "Error during recording",
+        "payment_deleted": "Payment deleted",
+        "payment_delete_error": "Error during deletion"
     }
 }
