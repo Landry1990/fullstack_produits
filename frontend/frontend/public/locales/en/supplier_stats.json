@@ -42,6 +42,7 @@
         "alert_title": "12-Month Rolling Analysis",
         "alert_text": "Scores calculated based on reception history.",
         "score": "Score",
+        "no_data": "No performance analysis available",
         "metrics": {
             "volume": "Volume (30%)",
             "quality": "Quality (30%)",
@@ -66,7 +67,8 @@
             "color": "Color",
             "supplier": "Supplier",
             "market_share": "Market Share",
-            "volume": "Purchase Volume"
+            "volume": "Purchase Volume",
+            "quantity": "Quantity"
         }
     },
     "payments_tab": {

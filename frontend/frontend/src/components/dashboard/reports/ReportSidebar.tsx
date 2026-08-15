@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, ChevronRight, X } from 'lucide-react';
+import { FileText, ChevronRight, X, Search } from 'lucide-react';
 import { QUERIES } from '../../../hooks/useCentreRapports';
 import type { QueryDefinition } from '../../../hooks/useCentreRapports';
 
@@ -12,6 +12,19 @@ interface ReportSidebarProps {
 
 export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onSelect, onClose }) => {
     const { t } = useTranslation(['reports', 'common']);
+    const [search, setSearch] = useState('');
+
+    const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+    const filteredQueries = useMemo(() => {
+        const q = normalize(search);
+        if (!q) return QUERIES;
+        return QUERIES.filter(query => {
+            const name = t(`queries.${query.id}.name`, { defaultValue: query.name });
+            const description = t(`queries.${query.id}.description`, { defaultValue: query.description || '' });
+            return normalize(name).includes(q) || normalize(description).includes(q);
+        });
+    }, [search, t]);
 
     return (
         <div
@@ -37,8 +50,25 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                     </button>
                 )}
             </div>
+            <div className="p-3 border-b border-slate-200">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder={t('search_placeholder', { defaultValue: 'Rechercher un rapport...' }) as string}
+                        className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                </div>
+            </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                {QUERIES.map(query => (
+                {filteredQueries.length === 0 && search && (
+                    <div className="p-6 text-center text-sm text-slate-500">
+                        {t('search_no_results', { defaultValue: 'Aucun rapport trouvé' })}
+                    </div>
+                )}
+                {filteredQueries.map(query => (
                     <button
                         key={query.id}
                         onClick={() => onSelect(query)}

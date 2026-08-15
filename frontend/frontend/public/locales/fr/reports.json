@@ -16,6 +16,8 @@
     "params_title": "Paramètres",
     "no_query_selected": "Aucune requête sélectionnée",
     "select_query_prompt": "Sélectionnez une requête dans la liste de gauche pour commencer.",
+    "search_placeholder": "Rechercher un rapport...",
+    "search_no_results": "Aucun rapport trouvé",
     "queries": {
         "rapport_mensuel": {
             "name": "Rapport Mensuel",

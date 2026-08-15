@@ -13,6 +13,9 @@ import { MonthlyReportView } from './MonthlyReportView';
 import { StockValuationReport } from './StockValuationReport';
 import { ChevronLeft, ChevronRight, Inbox, Eye, Download, AlertTriangle } from 'lucide-react';
 import { Button } from '../../shadcn/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../shadcn/card';
+import { Badge } from '../../shadcn/badge';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../ui/Table';
 
 // Constante de module pour éviter la recréation à chaque render
 const EMPTY_PARAMS: Record<string, unknown> = {};
@@ -49,10 +52,13 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
 
     if (!results) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-300 animate-in fade-in duration-700">
-                <Inbox className="size-24 mb-4 opacity-10" />
-                <p className="text-xl font-black uppercase tracking-[0.2em]">{t('results.execute_prompt', 'En attente d\'exécution...')}</p>
-            </div>
+            <Card className="flex-1 flex flex-col items-center justify-center border-dashed border-slate-300 bg-slate-50/50 animate-in fade-in duration-700">
+                <CardContent className="flex flex-col items-center justify-center py-20 text-slate-400">
+                    <Inbox className="size-20 mb-4 opacity-20" />
+                    <CardTitle className="text-xl font-black uppercase tracking-[0.2em] text-slate-500">{t('results.execute_prompt', 'En attente d\'exécution...')}</CardTitle>
+                    <CardDescription className="mt-2">{t('results.execute_prompt', { defaultValue: 'Exécutez une requête pour visualiser les résultats' })}</CardDescription>
+                </CardContent>
+            </Card>
         );
     }
 
@@ -70,13 +76,15 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         // Special case: Direct Download / Raw results
         if (selectedQuery.resultType === 'raw') {
             return (
-                <div className="flex flex-col items-center justify-center py-20 text-emerald-600 animate-in zoom-in duration-500">
-                    <Download className="size-16 mb-4" />
-                    <p className="text-lg font-black uppercase tracking-widest">{t('results.export_success_short', { defaultValue: 'Rapport Généré' })}</p>
-                    {results && typeof results === 'object' && (results as { filename?: string }).filename && (
-                         <p className="text-xs opacity-60 mt-2">{(results as { filename?: string }).filename}</p>
-                    )}
-                </div>
+                <Card className="border-emerald-200 bg-emerald-50/50 animate-in zoom-in duration-500">
+                    <CardContent className="flex flex-col items-center justify-center py-20 text-emerald-700">
+                        <Download className="size-16 mb-4" />
+                        <CardTitle className="text-lg font-black uppercase tracking-widest">{t('results.export_success_short', { defaultValue: 'Rapport Généré' })}</CardTitle>
+                        {results && typeof results === 'object' && (results as { filename?: string }).filename && (
+                            <CardDescription className="mt-2 opacity-70">{(results as { filename?: string }).filename}</CardDescription>
+                        )}
+                    </CardContent>
+                </Card>
             );
         }
 
@@ -87,24 +95,32 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                     {Object.entries(results).map(([key, value]) => {
                         if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                             return (
-                                <div key={key} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-                                    <div className="text-[10px] font-bold uppercase text-slate-400 mb-4 tracking-widest">{key.replace(/_/g, ' ')}</div>
-                                    <div className="space-y-2">
-                                        {Object.entries(value as object).map(([subKey, subValue]) => (
-                                            <div key={subKey} className="flex justify-between items-center text-sm border-b border-slate-200/50 pb-2 last:border-0 last:pb-0">
-                                                <span className="text-slate-500 font-bold uppercase text-[10px] tracking-tight">{subKey.replace(/_/g, ' ')}</span>
-                                                <span className="font-black text-slate-800">{formatValue(subKey, subValue, t)}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                <Card key={key}>
+                                    <CardHeader className="pb-3">
+                                        <CardTitle className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">{key.replace(/_/g, ' ')}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-2">
+                                            {Object.entries(value as object).map(([subKey, subValue]) => (
+                                                <div key={subKey} className="flex justify-between items-center text-sm border-b border-slate-200/50 pb-2 last:border-0 last:pb-0">
+                                                    <span className="text-slate-500 font-bold uppercase text-[10px] tracking-tight">{subKey.replace(/_/g, ' ')}</span>
+                                                    <span className="font-black text-slate-800">{formatValue(subKey, subValue, t)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             );
                         }
                         return (
-                            <div key={key} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-center">
-                                <div className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-1">{key.replace(/_/g, ' ')}</div>
-                                <div className="text-2xl font-black text-slate-800">{formatValue(key, value, t)}</div>
-                            </div>
+                            <Card key={key} className="flex flex-col justify-center">
+                                <CardHeader className="pb-1">
+                                    <CardTitle className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">{key.replace(/_/g, ' ')}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-black text-slate-800">{formatValue(key, value, t)}</div>
+                                </CardContent>
+                            </Card>
                         );
                     })}
                 </div>
@@ -115,10 +131,12 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
         if (Array.isArray(results)) {
             if (results.length === 0) {
                 return (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-400 italic">
-                        <Inbox className="size-12 mb-2 text-slate-300" />
-                        <p>{t('results.empty', 'Aucun résultat trouvé pour cette période.')}</p>
-                    </div>
+                    <Card className="border-dashed border-slate-300 bg-slate-50/50">
+                        <CardContent className="flex flex-col items-center justify-center py-20 text-slate-400 italic">
+                            <Inbox className="size-12 mb-2 text-slate-300" />
+                            <CardDescription className="text-base">{t('results.empty', 'Aucun résultat trouvé pour cette période.')}</CardDescription>
+                        </CardContent>
+                    </Card>
                 );
             }
 
@@ -154,55 +172,69 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                 : rawColumns;
 
             return (
-                <div ref={tableContainerRef} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-500">
-                    {/* Filtre marge — visible uniquement pour detail_marges_lots */}
-                    {isMargesReport && (
-                        <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-200 bg-slate-50">
-                            <AlertTriangle className="size-3.5 text-amber-600 shrink-0" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2">{t('reports.results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
-                            {(['all', 'negative', 'low'] as const).map(f => (
-                                <button
-                                    key={f}
-                                    onClick={() => setMargeFilter(f)}
-                                    className={`h-7 px-3 rounded-full font-bold uppercase tracking-wider text-[10px] transition-all ${
-                                        margeFilter === f
-                                            ? f === 'negative' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : f === 'low' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
-                                            : 'border border-slate-200 text-slate-500 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    {f === 'all' ? t('reports.results.filter_all', { defaultValue: 'Toutes' }) : f === 'negative' ? '⚠ ' + t('reports.results.filter_negative', { defaultValue: 'Négatives' }) : t('reports.results.filter_low', { defaultValue: '< 25%' })}
-                                </button>
-                            ))}
-                            <span className="ml-auto text-[10px] text-slate-400 font-bold">
+                <Card ref={tableContainerRef} className="overflow-hidden animate-in fade-in duration-500">
+                    <CardHeader className="border-b border-slate-200 bg-slate-50 py-4 px-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-500">
+                                {t('results.title', { defaultValue: 'Résultats' })}
+                            </CardTitle>
+                            {/* Filtre marge — visible uniquement pour detail_marges_lots */}
+                            {isMargesReport && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <AlertTriangle className="size-3.5 text-amber-600 shrink-0" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2">{t('reports.results.filter_margin', { defaultValue: 'Filtre marge :' })}</span>
+                                    {(['all', 'negative', 'low'] as const).map(f => (
+                                        <Button
+                                            key={f}
+                                            onClick={() => setMargeFilter(f)}
+                                            variant={margeFilter === f ? 'default' : 'outline'}
+                                            size="sm"
+                                            className={`h-7 px-3 rounded-full font-bold uppercase tracking-wider text-[10px] ${
+                                                margeFilter === f
+                                                    ? f === 'negative' ? 'bg-red-500 hover:bg-red-600' : f === 'low' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'
+                                                    : 'text-slate-500'
+                                            }`}
+                                        >
+                                            {f === 'all' ? t('reports.results.filter_all', { defaultValue: 'Toutes' }) : f === 'negative' ? t('reports.results.filter_negative', { defaultValue: 'Négatives' }) : t('reports.results.filter_low', { defaultValue: '< 25%' })}
+                                        </Button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="mt-2 flex items-center justify-end">
+                            <span className="text-[10px] text-slate-400 font-bold">
                                 {t('reports.results.lines_count', { filtered: filteredResults.length, total: results.length, defaultValue: `${filteredResults.length} / ${results.length} lignes` })}
                             </span>
                         </div>
-                    )}
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-separate border-spacing-0">
-                            <thead>
-                                <tr className="bg-slate-50">
-                                    {columns.map((col, idx) => (
-                                        <th 
-                                            key={col} 
-                                            className={`text-xs font-semibold uppercase tracking-wider text-slate-500 py-4 px-4 ${idx === 0 ? 'pl-6 rounded-tl-2xl' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'}`}
+                    </CardHeader>
+                    <CardContent className="p-0 overflow-x-auto">
+                        <Table className="border-0 rounded-none">
+                            <TableHeader>
+                                <TableRow>
+                                    {columns.map((col) => (
+                                        <TableHead
+                                            key={col}
+                                            className={isNumericColumn(col) ? 'text-right' : 'text-left'}
                                         >
                                             {formatColumnHeader(col, t)}
-                                        </th>
+                                        </TableHead>
                                     ))}
-                                    <th className="w-10 rounded-tr-2xl"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: Record<string, unknown>, _idx: number) => (
-                                    <tr key={String(row.id ?? row.produit_id ?? row.code ?? row['nom'] ?? row['produit_nom'])} className={`hover:bg-emerald-50 transition-all group ${
-                                        isMargesReport && Number(row['taux_marge'] ?? 0) < 0 ? 'bg-red-50' :
-                                        isMargesReport && Number(row['taux_marge'] ?? 0) < 25 ? 'bg-amber-50' : ''
-                                    }`}>
+                                    <TableHead className="w-10"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {(isMargesReport ? filteredResults : filteredResults.slice(0, 100)).map((row: Record<string, unknown>) => (
+                                    <TableRow
+                                        key={String(row.id ?? row.produit_id ?? row.code ?? row['nom'] ?? row['produit_nom'])}
+                                        className={
+                                            isMargesReport && Number(row['taux_marge'] ?? 0) < 0 ? 'bg-red-50 hover:bg-red-100' :
+                                            isMargesReport && Number(row['taux_marge'] ?? 0) < 25 ? 'bg-amber-50 hover:bg-amber-100' : ''
+                                        }
+                                    >
                                         {columns.map((col, subIdx) => (
-                                            <td 
-                                                key={col} 
-                                                className={`py-4 px-4 text-sm font-medium text-slate-700 ${subIdx === 0 ? 'pl-6 font-bold' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'} ${
+                                            <TableCell
+                                                key={col}
+                                                className={`${subIdx === 0 ? 'font-bold' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'} ${
                                                     col === 'taux_marge' && Number(row[col]) < 0 ? 'text-red-600 font-black' :
                                                     col === 'taux_marge' && Number(row[col]) < 25 ? 'text-amber-600 font-bold' :
                                                     col === 'marge' && Number(row[col]) < 0 ? 'text-red-600 font-black' :
@@ -211,88 +243,98 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                                     col === 'statut' && row[col] === 'OK' ? 'text-emerald-600 font-bold' : ''
                                                 }`}
                                             >
-                                                {col === 'statut' && row[col] === 'PERTE' ? '🔴 PERTE' :
-                                                 col === 'statut' && row[col] === 'FAIBLE' ? '🟡 FAIBLE' :
-                                                 col === 'statut' && row[col] === 'OK' ? '🟢 OK' :
-                                                 formatValue(col, row[col], t)}
-                                            </td>
+                                                {col === 'statut' ? (
+                                                    <Badge className={
+                                                        row[col] === 'PERTE' ? 'bg-red-100 text-red-700 hover:bg-red-100' :
+                                                        row[col] === 'FAIBLE' ? 'bg-amber-100 text-amber-700 hover:bg-amber-100' :
+                                                        row[col] === 'OK' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : ''
+                                                    }>
+                                                        {row[col] === 'PERTE' ? 'PERTE' : row[col] === 'FAIBLE' ? 'FAIBLE' : row[col] === 'OK' ? 'OK' : formatValue(col, row[col], t)}
+                                                    </Badge>
+                                                ) : (
+                                                    formatValue(col, row[col], t)
+                                                )}
+                                            </TableCell>
                                         ))}
-                                        <td className="pr-4">
-                                            <button className="size-7 rounded-lg opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 flex items-center justify-center">
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="sm" className="size-7 p-0 opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:text-emerald-600">
                                                 <Eye className="size-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
+                            </TableBody>
                             {/* Generic Summary Footer for all Table Reports */}
                             {filteredResults.length > 0 && (
-                                <tfoot className="bg-emerald-50 border-t-2 border-emerald-600/20">
-                                    <tr className="font-black text-emerald-600 uppercase">
+                                <TableBody className="border-t-2 border-emerald-200 bg-emerald-50/60">
+                                    <TableRow className="font-black text-emerald-700 uppercase hover:bg-emerald-50/60">
                                         {columns.map((col, idx) => {
-                                            if (idx === 0) return <td key={col} className="py-4 px-6 text-[10px] tracking-widest">{t('common:total', 'TOTAL / MOYENNE')}</td>;
-                                            
+                                            if (idx === 0) return <TableCell key={col} className="text-[10px] tracking-widest">{t('common:total', 'TOTAL / MOYENNE')}</TableCell>;
+
                                             if (isAverageColumn(col)) {
                                                 const total = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r[col]) || 0), 0);
                                                 const avg = filteredResults.length > 0 ? total / filteredResults.length : 0;
                                                 return (
-                                                    <td key={col} className="py-4 px-4 text-right text-sm">
-                                                        <div className="flex flex-col">
+                                                    <TableCell key={col} className={`text-right text-sm ${isNumericColumn(col) ? 'text-right' : ''}`}>
+                                                        <div className="flex flex-col items-end">
                                                             <span>{formatValue(col, avg, t)}</span>
-                                                            <span className="text-[9px] opacity-40 uppercase tracking-wider">{t('reports.results.footer_avg_label', { defaultValue: 'moyenne' })}</span>
+                                                            <span className="text-[9px] opacity-50 uppercase tracking-wider">{t('reports.results.footer_avg_label', { defaultValue: 'moyenne' })}</span>
                                                         </div>
-                                                    </td>
+                                                    </TableCell>
                                                 );
                                             }
 
                                             if (isSummableColumn(col)) {
                                                 const total = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r[col]) || 0), 0);
-                                                return <td key={col} className="py-4 px-4 text-right text-sm">{formatValue(col, total, t)}</td>;
+                                                return <TableCell key={col} className="text-right text-sm">{formatValue(col, total, t)}</TableCell>;
                                             }
-                                            
+
                                             if (isPercentageColumn(col)) {
-                                                // Pour taux_marge : calculer le taux global à partir de mt_vente et marge agrégés
                                                 if (col === 'taux_marge') {
                                                     const totalMtVente = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r['mt_vente']) || 0), 0);
                                                     const totalMarge   = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r['marge']) || 0), 0);
                                                     const tauxGlobal   = totalMtVente > 0 ? (totalMarge / totalMtVente) * 100 : 0;
                                                     return (
-                                                        <td key={col} className="py-4 px-4 text-right text-sm">
-                                                            <div className="flex flex-col">
+                                                        <TableCell key={col} className="text-right text-sm">
+                                                            <div className="flex flex-col items-end">
                                                                 <span>{tauxGlobal.toFixed(1)} %</span>
-                                                                <span className="text-[9px] opacity-40 uppercase tracking-wider">{t('reports.results.footer_global_label', { defaultValue: 'global' })}</span>
+                                                                <span className="text-[9px] opacity-50 uppercase tracking-wider">{t('reports.results.footer_global_label', { defaultValue: 'global' })}</span>
                                                             </div>
-                                                        </td>
+                                                        </TableCell>
                                                     );
                                                 }
                                                 const total = filteredResults.reduce((sum: number, r: Record<string, unknown>) => sum + (Number(r[col]) || 0), 0);
                                                 const avg = filteredResults.length > 0 ? (total / filteredResults.length) : 0;
-                                                return <td key={col} className="py-4 px-4 text-right text-sm">{avg.toFixed(1)} %</td>;
+                                                return <TableCell key={col} className="text-right text-sm">{avg.toFixed(1)} %</TableCell>;
                                             }
-                                            
-                                            return <td key={col} className="py-4 px-4"></td>;
+
+                                            return <TableCell key={col}></TableCell>;
                                         })}
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
+                                        <TableCell></TableCell>
+                                    </TableRow>
+                                </TableBody>
                             )}
-                        </table>
-                    </div>
+                        </Table>
+                    </CardContent>
                     {!isMargesReport && filteredResults.length > 100 && !pagination && (
-                        <div className="p-4 bg-slate-50 text-center text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] border-t border-slate-200">
-                            {t('results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: Array.isArray(results) ? results.length : 0 })}
-                        </div>
+                        <CardFooter className="p-4 bg-slate-50 border-t border-slate-200 justify-center">
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
+                                {t('results.limited_display', 'Affichage limité aux 100 premiers résultats sur {{total}}', { total: Array.isArray(results) ? results.length : 0 })}
+                            </span>
+                        </CardFooter>
                     )}
-                </div>
+                </Card>
             );
         }
 
         return (
-            <div className="bg-slate-100 p-6 rounded-2xl border border-slate-200 overflow-auto max-h-[600px] shadow-inner">
-                <pre className="text-xs font-mono text-slate-600">
-                    {JSON.stringify(results, null, 2)}
-                </pre>
-            </div>
+            <Card className="bg-slate-100 border-slate-200">
+                <CardContent className="overflow-auto max-h-[600px]">
+                    <pre className="text-xs font-mono text-slate-600">
+                        {JSON.stringify(results, null, 2)}
+                    </pre>
+                </CardContent>
+            </Card>
         );
     };
 
@@ -303,31 +345,33 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             </div>
 
             {pagination && (
-                <div className="mt-6 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center sm:text-left">
-                        Total: <span className="text-slate-800">{pagination.count}</span> éléments
-                    </div>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                        <Button 
-                            variant="outline" size="sm"
-                            className="rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
-                            disabled={!pagination.previous || loading}
-                            onClick={() => onPageChange(pagination.previous)}
-                        >
-                            <ChevronLeft className="size-4" />
-                            {t('common:previous', 'Précédent')}
-                        </Button>
-                        <Button 
-                            variant="outline" size="sm"
-                            className="rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
-                            disabled={!pagination.next || loading}
-                            onClick={() => onPageChange(pagination.next)}
-                        >
-                            {t('common:next', 'Suivant')}
-                            <ChevronRight className="size-4" />
-                        </Button>
-                    </div>
-                </div>
+                <Card className="mt-6">
+                    <CardFooter className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center sm:text-left">
+                            Total: <span className="text-slate-800">{pagination.count}</span> éléments
+                        </div>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <Button 
+                                variant="outline" size="sm"
+                                className="rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
+                                disabled={!pagination.previous || loading}
+                                onClick={() => onPageChange(pagination.previous)}
+                            >
+                                <ChevronLeft className="size-4" />
+                                {t('common:previous', 'Précédent')}
+                            </Button>
+                            <Button 
+                                variant="outline" size="sm"
+                                className="rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 flex-1 sm:flex-initial"
+                                disabled={!pagination.next || loading}
+                                onClick={() => onPageChange(pagination.next)}
+                            >
+                                {t('common:next', 'Suivant')}
+                                <ChevronRight className="size-4" />
+                            </Button>
+                        </div>
+                    </CardFooter>
+                </Card>
             )}
         </div>
     );
