@@ -4,7 +4,6 @@ __pycache__/
 *.pyo
 *.pyd
 *.egg-info/
-dist/
 build/
 *.egg
 
@@ -31,7 +30,7 @@ logs/
 # ============== Node / React ==============
 node_modules/
 .next/
-dist/
+# dist/ du frontend est commité pour déploiement production sans npm sur le serveur
 build/
 *.tsbuildinfo
 
