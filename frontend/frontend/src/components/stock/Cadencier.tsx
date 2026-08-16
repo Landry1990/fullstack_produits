@@ -200,19 +200,19 @@ const Cadencier: React.FC = () => {
   };
 
   return (
-    <div className="p-4 h-full flex flex-col space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-          <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+    <div className="p-2 lg:p-4 h-full flex flex-col space-y-2 lg:space-y-4">
+      <div className="flex items-center gap-2 lg:gap-3">
+        <div className="p-1.5 lg:p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+          <TrendingUp className="h-5 w-5 lg:h-6 lg:w-6 text-emerald-600 dark:text-emerald-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('stock:cadencier.title', 'Cadencier de Stock')}</h1>
-          <p className="text-sm text-muted-foreground">{t('stock:cadencier.subtitle', 'Planification des approvisionnements par rotation et couverture')}</p>
+          <h1 className="text-lg lg:text-2xl font-bold tracking-tight">{t('stock:cadencier.title', 'Cadencier de Stock')}</h1>
+          <p className="text-xs lg:text-sm text-muted-foreground hidden lg:block">{t('stock:cadencier.subtitle', 'Planification des approvisionnements par rotation et couverture')}</p>
         </div>
       </div>
 
-      <Card className="p-3">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+      <Card className="p-2 lg:p-3">
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-2 lg:gap-3 items-end">
           <div className="md:col-span-3">
             <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-transparent focus-within:ring-1 focus-within:ring-emerald-500">
               <Search className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -291,7 +291,7 @@ const Cadencier: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-1 lg:mt-2 flex items-center gap-2">
           <Checkbox
             checked={filters.only_below_target}
             onChange={(checked) => handleFilterChange('only_below_target', checked)}
@@ -302,30 +302,30 @@ const Cadencier: React.FC = () => {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <Card className="p-4 flex flex-col justify-center border-slate-200">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+        <Card className="p-2 lg:p-4 flex flex-col justify-center border-slate-200">
           <div className="flex items-center gap-2 mb-1">
             <div className="p-1.5 bg-emerald-50 rounded-md">
               <Boxes className="h-4 w-4 text-emerald-600" />
             </div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t('stock:cadencier.total_products', 'Produits à commander')}</p>
           </div>
-          <h2 className="text-2xl font-bold text-slate-800">{totalCount}</h2>
+          <h2 className="text-lg lg:text-2xl font-bold text-slate-800">{totalCount}</h2>
           <p className="text-xs text-slate-400">{totalQuantite} {t('stock:cadencier.units', 'unités suggérées')}</p>
         </Card>
 
-        <Card className="p-4 flex flex-col justify-center border-slate-200">
+        <Card className="p-2 lg:p-4 flex flex-col justify-center border-slate-200">
           <div className="flex items-center gap-2 mb-1">
             <div className="p-1.5 bg-emerald-50 rounded-md">
               <Calendar className="h-4 w-4 text-emerald-600" />
             </div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t('stock:cadencier.total_ht', 'Montant total HT')}</p>
           </div>
-          <h2 className="text-2xl font-bold text-slate-800">{totalHt.toLocaleString('fr-FR')} F</h2>
+          <h2 className="text-lg lg:text-2xl font-bold text-slate-800">{totalHt.toLocaleString('fr-FR')} F</h2>
           <p className="text-xs text-slate-400">{t('stock:cadencier.coverage', 'Couverture')}: {filters.coverage_days} jours</p>
         </Card>
 
-        <Card className="p-4 flex flex-col justify-center lg:col-span-2 border-slate-200">
+        <Card className="p-2 lg:p-4 flex flex-col justify-center col-span-2 lg:col-span-2 border-slate-200">
           <div className="flex items-center gap-2 mb-1">
             <div className="p-1.5 bg-emerald-50 rounded-md">
               <ShoppingCart className="h-4 w-4 text-emerald-600" />
@@ -333,10 +333,10 @@ const Cadencier: React.FC = () => {
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t('stock:cadencier.selection', 'Sélection')}</p>
           </div>
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-slate-800">{selectedItems.length} <span className="text-base font-normal text-slate-500">{t('stock:cadencier.products', 'produits')}</span></h2>
-            <span className="text-xl font-bold text-slate-800">{selectedTotal.toLocaleString('fr-FR')} F</span>
+            <h2 className="text-lg lg:text-2xl font-bold text-slate-800">{selectedItems.length} <span className="text-sm lg:text-base font-normal text-slate-500">{t('stock:cadencier.products', 'produits')}</span></h2>
+            <span className="text-base lg:text-xl font-bold text-slate-800">{selectedTotal.toLocaleString('fr-FR')} F</span>
           </div>
-          <div className="mt-2 flex gap-2">
+          <div className="mt-1 lg:mt-2 flex gap-2">
             <Button
               onClick={() => handleGenerateOrder('LOC')}
               disabled={selectedItems.length === 0}
@@ -362,7 +362,7 @@ const Cadencier: React.FC = () => {
       </div>
 
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden p-0">
-        <div className="px-4 py-3 border-b flex justify-between items-center bg-muted/30">
+        <div className="px-3 lg:px-4 py-2 lg:py-3 border-b flex justify-between items-center bg-muted/30">
           <h3 className="font-semibold flex items-center gap-2 text-sm">
             <Package className="h-4 w-4 text-emerald-600" />
             {t('stock:cadencier.list', 'Lignes du cadencier')}
@@ -470,8 +470,8 @@ const Cadencier: React.FC = () => {
         </div>
 
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t flex items-center justify-between bg-muted/30">
-            <span className="text-sm text-muted-foreground">
+          <div className="px-3 lg:px-6 py-2 lg:py-4 border-t flex items-center justify-between bg-muted/30">
+            <span className="text-xs lg:text-sm text-muted-foreground">
               Page {page} / {totalPages} · {totalCount} {t('common:results', 'résultats')}
             </span>
             <div className="flex gap-2">

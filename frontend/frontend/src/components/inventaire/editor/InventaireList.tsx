@@ -78,18 +78,18 @@ export const InventaireList: React.FC<InventaireListProps> = ({
     const isSaving = editorLogic.saving || deleting;
 
     return (
-        <div className="flex flex-col gap-4 animate-in fade-in duration-500 flex-1 overflow-hidden">
+        <div className="flex flex-col gap-2 lg:gap-4 animate-in fade-in duration-500 flex-1 overflow-hidden">
             {/* Title & Filters & QuickStats */}
-            <div className="w-full space-y-3 shrink-0">
+            <div className="w-full space-y-2 lg:space-y-3 shrink-0">
                 <div className="bg-white rounded-lg border border-slate-200 flex flex-col">
-                    <div className="p-4 border-b border-slate-100">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="p-2 lg:p-4 border-b border-slate-100">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 lg:gap-4">
                             <div>
-                                <h1 className="text-xl font-semibold text-slate-800 tracking-tight flex items-center gap-2">
+                                <h1 className="text-base lg:text-xl font-semibold text-slate-800 tracking-tight flex items-center gap-2">
                                     <ClipboardList className="h-5 w-5 text-emerald-600" />
                                     {t('inventaire.title')}
                                 </h1>
-                                <p className="text-slate-500 text-sm mt-1">
+                                <p className="text-slate-500 text-xs lg:text-sm mt-1 hidden lg:block">
                                     {t('inventaire.subtitle')}
                                 </p>
                             </div>

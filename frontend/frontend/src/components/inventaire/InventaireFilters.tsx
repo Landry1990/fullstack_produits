@@ -50,9 +50,9 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
     }, []);
 
     return (
-        <div className="bg-white p-4 space-y-4">
+        <div className="bg-white p-2 lg:p-4 space-y-2 lg:space-y-4">
             {/* Top Row: Search & Dates */}
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-2 lg:gap-4">
                 {/* Search Bar */}
                 <div className="flex-1 relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -87,8 +87,8 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
             </div>
 
             {/* Bottom Row: Advanced Filters & Actions */}
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 w-full">
+            <div className="flex flex-col md:flex-row gap-2 lg:gap-4 items-center">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-4 flex-1 w-full">
                     {/* Status Filter */}
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
