@@ -245,6 +245,7 @@
             "after": "Après",
             "empty": "Aucun mouvement enregistré",
             "view_invoice": "Cliquer pour voir la facture",
+            "view_avoir": "Cliquer pour voir l'avoir",
             "view_order": "Cliquer pour voir la commande",
             "stock_after": "Stock après",
             "export_excel": "Exporter Excel",

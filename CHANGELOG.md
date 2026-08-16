@@ -2,6 +2,85 @@
 
 ---
 
+## 2026-08-16 — Suppression de la colonne Motif dans les lignes d'avoirs
+
+### 🧹 Refonte
+
+- **Colonne "Motif" retirée** des tableaux de lignes d'avoirs (détails, formulaire, modal produit)
+  pour éviter la confusion avec le type d'avoir. Les motifs éventuels restent stockés en base.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/avoirs/AvoirsDetails.tsx`
+- `frontend/frontend/src/components/avoirs/AvoirsForm.tsx`
+- `frontend/frontend/src/components/products/modals/AvoirDetailsModal.tsx`
+
+---
+
+## 2026-08-16 — Libellés et modal Avoir dans les mouvements de stock produit
+
+### ✨ Nouvelles fonctionnalités
+
+- **Loupe Avoir** dans l'onglet MVMTS de la fiche produit : cliquer sur 🔍 ouvre un modal
+  affichant les détails de l'avoir (numéro, fournisseur, date, statut, total HT, lignes).
+
+### 🐛 Corrections
+
+- **Libellé Avoir Fournisseur raccourci** : suppression du nom du fournisseur et du motif
+  dans la colonne Libellé de l'historique des mouvements. Affichage maintenant : `Avoir AV-XXXX`.
+
+### Fichiers modifiés
+
+- `backend/api/views/produit_actions/stock.py` — extraction `avoir_id`/`avoir_numero` pour mouvements `AVOIR`/`RETOUR`
+- `frontend/frontend/src/hooks/useProduits.ts` — ajout `avoir`/`avoir_numero` dans `StockMovement`
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx` — loupe pour avoir et libellé raccourci
+- `frontend/frontend/src/components/products/modals/AvoirDetailsModal.tsx` — nouveau modal de détail d'avoir
+- `frontend/frontend/src/components/ProduitShadcn.tsx` — intégration du modal Avoir
+- `frontend/frontend/public/locales/fr/products.json` — clé `view_avoir`
+- `frontend/frontend/public/locales/en/products.json` — clé `view_avoir`
+
+---
+
+## 2026-08-16 — Amélioration du menu Avoirs Fournisseurs
+
+### ✨ Nouvelles fonctionnalités
+
+- **Annuler le déchargement de stock** : bouton "Annuler déchargement" sur un avoir déjà déchargé.
+  Réintègre les quantités en stock (produit + lot), crée un mouvement `RETOUR`, log l'audit.
+  Nécessite le mode sudo avec la permission `can_manage_avoirs`.
+- **Bouton "Modifier"** sur les avoirs brouillons non déchargés : bascule en mode édition
+  (changement de lot, motif, quantité possible).
+- **Validation automatique** : quand toutes les lignes d'un avoir brouillon sont clôturées
+  (individuellement ou via "Tout clôturer"), le statut passe automatiquement à `VALIDEE`.
+- **Recherche produit fonctionnelle** dans le formulaire de création/édition d'avoirs
+  (avant : résultats vides, recherche ne marchait pas).
+- **Suppression de ligne** dans les avoirs brouillons depuis la vue détails.
+
+### 🐛 Corrections
+
+- **Total recalculé automatiquement** après suppression d'une ligne (plus besoin de recharger la page).
+- **Prix non modifiable** dans le formulaire : affiché en lecture seule (provient du prix d'achat du lot).
+- **Après sauvegarde du brouillon** : retour à la vue Détails de l'avoir (avant : retour à la liste).
+- **Bouton "Modifier" masqué** si l'avoir est déchargé (il faut annuler le déchargement d'abord).
+- Colonne "Motif" : affichage en `capitalize` (plus de minuscules).
+- Section "Motif" supprimée des informations fournisseur dans les détails.
+
+### 🔒 Permissions
+
+- Permission `can_manage_avoirs` déjà existante dans le modèle `Profile` et la gestion utilisateurs.
+
+### Fichiers modifiés
+
+- `backend/api/views/commandes/avoirs.py` — action `annuler_dechargement`, `perform_update` auto-validation
+- `frontend/frontend/src/services/avoirService.ts` — méthode `annulerDechargement`
+- `frontend/frontend/src/hooks/useAvoirsData.ts` — `handleAnnulerDechargement`, recalcul total, auto-validation, retour DETAILS après save
+- `frontend/frontend/src/components/avoirs/AvoirsDetails.tsx` — boutons annuler déchargement / modifier / supprimer ligne
+- `frontend/frontend/src/components/avoirs/AvoirsForm.tsx` — recherche produit branchée, prix en lecture seule
+- `frontend/frontend/public/locales/fr/stock.json` — clés `edit`, `dechargement_cancelled`
+- `frontend/frontend/public/locales/en/stock.json` — clés `edit`, `dechargement_cancelled`
+
+---
+
 ## 2026-08-15 — Compactage des pages Stock sur petits écrans (13-14")
 
 ### 🎨 Amélioration UI

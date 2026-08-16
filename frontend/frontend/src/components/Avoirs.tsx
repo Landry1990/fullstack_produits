@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useAvoirsData } from '../hooks/useAvoirsData';
 import { Card, CardHeader, CardTitle, CardDescription } from './shadcn/card';
 
@@ -20,6 +21,7 @@ export default function Avoirs() {
 
     const [statusFilter, setStatusFilter] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
+    const [headerCollapsed, setHeaderCollapsed] = useState(false);
 
     const filteredAvoirs = useMemo(() => {
         return avoirsData.avoirs.filter(a => {
@@ -70,7 +72,7 @@ export default function Avoirs() {
     // Default 'LIST' view
     return (
         <div className="h-full flex flex-col bg-slate-50 p-4 md:p-6 gap-4 sm:gap-6 font-sans">
-            {/* Header Section */}
+            {!headerCollapsed && (
             <div className="flex flex-col gap-6">
                 <div className="w-full space-y-4">
                     <Card className="flex flex-col overflow-hidden">
@@ -98,8 +100,22 @@ export default function Avoirs() {
                     <AvoirsQuickStats avoirs={avoirsData.avoirs} />
                 </div>
             </div>
+            )}
 
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden flex-1 flex flex-col min-h-0">
+                <div className="px-4 py-2 border-b flex justify-between items-center bg-muted/30 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-sm">{t('avoirs.title')}</h3>
+                        <button
+                            onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-emerald-600 transition-colors px-2 py-1 rounded hover:bg-emerald-50"
+                            title={headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
+                        >
+                            {headerCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+                            {headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
+                        </button>
+                    </div>
+                </div>
                 <AvoirsTable
                     avoirs={filteredAvoirs}
                     loading={avoirsData.loading}
