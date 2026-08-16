@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useDebounce } from 'use-debounce'
+import { isCancel } from 'axios'
 import clientService from '../services/clientService'
 import { toast } from 'react-hot-toast'
 import type { Client, AyantDroit } from '../types'
@@ -16,7 +18,9 @@ export function useFacturationClients() {
 
     // Search state
     const [clientSearch, setClientSearch] = useState('')
+    const [debouncedSearch] = useDebounce(clientSearch, 200)
     const [showClientDropdown, setShowClientDropdown] = useState(false)
+    const [ayantDroitSearchResults, setAyantDroitSearchResults] = useState<AyantDroit[]>([])
 
     // Create Client Modal State
     const [showClientCreateModal, setShowClientCreateModal] = useState(false)
@@ -42,24 +46,21 @@ export function useFacturationClients() {
     const [ayantDroitSociete, setAyantDroitSociete] = useState('')
     const [showNewAyantDroit, setShowNewAyantDroit] = useState(false)
 
-    const [debouncedSearch, setDebouncedSearch] = useState('')
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(clientSearch)
-        }, 300)
-        return () => clearTimeout(timer)
-    }, [clientSearch])
-
     // Load clients
-    const fetchClients = useCallback(async () => {
+    const fetchClients = useCallback(async (signal?: AbortSignal) => {
+        const query = debouncedSearch.trim()
+        if (query.length === 1) {
+            return
+        }
         setLoading(true)
         try {
-            const data = await clientService.getAll(debouncedSearch ? { search: debouncedSearch } : {}) as unknown as Client[] | { results?: Client[] }
+            const filters = query ? { search: query, page_size: 25 } : {}
+            const data = await clientService.getAll(filters, false, signal) as unknown as Client[] | { results?: Client[] }
             const clientsData = Array.isArray(data) ? data : (data.results || [])
             const loadedClients = clientsData || []
             setClients(loadedClients)
         } catch (error) {
+            if (isCancel(error)) return
             logger.error('Erreur chargement clients:', error)
             toast.error(t('messages.client_load_error'))
         } finally {
@@ -68,8 +69,32 @@ export function useFacturationClients() {
     }, [debouncedSearch, t])
 
     useEffect(() => {
-        fetchClients()
+        const controller = new AbortController()
+        fetchClients(controller.signal)
+        return () => controller.abort()
     }, [fetchClients])
+
+    // Recherche globale d'ayants droit dans le même champ client
+    useEffect(() => {
+        const query = debouncedSearch.trim()
+        if (query.length < 2) {
+            setAyantDroitSearchResults([])
+            return
+        }
+
+        const controller = new AbortController()
+        const searchAyants = async () => {
+            try {
+                const data = await clientService.searchAyantsDroit(query, controller.signal)
+                setAyantDroitSearchResults(data)
+            } catch (error) {
+                if (isCancel(error)) return
+                setAyantDroitSearchResults([])
+            }
+        }
+        searchAyants()
+        return () => controller.abort()
+    }, [debouncedSearch])
 
     const [hasInitialAutoSelect, setHasInitialAutoSelect] = useState(false)
 
@@ -169,8 +194,22 @@ export function useFacturationClients() {
 
     // Filtered clients
     const filteredClients = useMemo(() => {
-        return clients.slice(0, 10)
-    }, [clients])
+        const query = clientSearch.trim().toLowerCase()
+        if (!query || clients.length === 0) {
+            return clients.slice().sort((a, b) => a.name.localeCompare(b.name)).slice(0, 10)
+        }
+        const scored = clients.map(client => {
+            const name = client.name.toLowerCase()
+            const phone = (client.phone || '').toLowerCase()
+            let score = 0
+            if (name.startsWith(query)) score = 3
+            else if (name.includes(query)) score = 2
+            if (phone.includes(query)) score = Math.max(score, 1)
+            return { client, score }
+        }).filter(item => item.score > 0)
+        scored.sort((a, b) => b.score - a.score || a.client.name.localeCompare(b.client.name))
+        return scored.map(item => item.client).slice(0, 10)
+    }, [clients, clientSearch])
 
     const handleCreateClient = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -196,7 +235,8 @@ export function useFacturationClients() {
             };
             const createdClient = await clientService.create(payload)
 
-            setClients(prev => [...prev, createdClient].slice().sort((a, b) => a.name.localeCompare(b.name)))
+            const updatedClients = [...clients, createdClient].slice().sort((a, b) => a.name.localeCompare(b.name))
+            setClients(updatedClients)
             setSelectedClient(createdClient.id)
             setShowClientCreateModal(false)
             setClientSearch('')
@@ -229,6 +269,32 @@ export function useFacturationClients() {
         }
     }
 
+    const handleSelectAyantDroit = useCallback(async (ad: AyantDroit) => {
+        const clientId = ad.client
+        if (!clientId) return
+
+        try {
+            const clientExists = clients.some(c => c.id === clientId)
+            if (!clientExists) {
+                const client = await clientService.getById(clientId)
+                setClients(prev => [...prev, client].slice().sort((a, b) => a.name.localeCompare(b.name)))
+            }
+
+            setSelectedClient(clientId)
+            setClientSearch('')
+            setShowClientDropdown(false)
+
+            setSelectedAyantDroit(ad.id ?? null)
+            setAyantDroitNom(ad.nom)
+            setAyantDroitMatricule(ad.matricule)
+            setAyantDroitSociete(ad.societe || '')
+            setShowNewAyantDroit(false)
+        } catch (err) {
+            logger.error('Erreur chargement client ayant droit:', err)
+            toast.error(t('messages.client_load_error'))
+        }
+    }, [clients, t])
+
     return {
         clients,
         loading,
@@ -238,11 +304,13 @@ export function useFacturationClients() {
         useManualClient, setUseManualClient,
         clientSearch, setClientSearch,
         filteredClients,
+        ayantDroitSearchResults,
         showClientDropdown, setShowClientDropdown,
         showClientCreateModal, setShowClientCreateModal,
         newClientForm, setNewClientForm,
         isCreatingClient,
         handleCreateClient,
+        handleSelectAyantDroit,
         ayantsDroitList,
         selectedAyantDroit, setSelectedAyantDroit,
         ayantDroitNom, setAyantDroitNom,

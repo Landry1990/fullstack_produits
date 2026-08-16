@@ -21,7 +21,7 @@ export interface PackResult {
   name: string
   value: number | string
   products_count?: number
-  pack_items?: unknown[]
+  pack_items?: Array<{ product: number; quantity: number }>
 }
 
 export interface DciResult {

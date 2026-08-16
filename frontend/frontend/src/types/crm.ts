@@ -1,6 +1,8 @@
 export interface AyantDroit {
     id?: number
     client?: number
+    client_name?: string
+    client_type?: 'PARTICULIER' | 'PROFESSIONNEL'
     matricule: string
     nom: string
     societe?: string

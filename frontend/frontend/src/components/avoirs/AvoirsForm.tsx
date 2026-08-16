@@ -263,6 +263,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                         <TableRow>
                                             <TableHead>{t('stock:avoirs.form.table_product')}</TableHead>
                                             <TableHead className="w-32">{t('stock:avoirs.form.table_lot')}</TableHead>
+                                            <TableHead className="w-40">{t('stock:avoirs.form.table_motif')}</TableHead>
                                             <TableHead className="text-center w-24">{t('stock:avoirs.form.table_qty')}</TableHead>
                                             <TableHead className="text-right w-32">{t('stock:avoirs.form.table_price')}</TableHead>
                                             <TableHead className="text-right w-32">{t('stock:avoirs.form.table_total')}</TableHead>
@@ -296,6 +297,16 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                                 {t('stock:avoirs.form.select_lot')}
                                                             </Button>
                                                         </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            type="text"
+                                                            size="sm"
+                                                            className="text-xs"
+                                                            placeholder={t('stock:avoirs.form.motif_placeholder')}
+                                                            value={ligne.motif || ''}
+                                                            onChange={(e) => updateLine(index, 'motif', e.target.value)}
+                                                        />
                                                     </TableCell>
                                                     <TableCell>
                                                         <Input

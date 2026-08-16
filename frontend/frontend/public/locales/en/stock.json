@@ -636,9 +636,11 @@
             "observations_label": "Observations",
             "observations_placeholder": "Internal notes regarding this return...",
             "search_product_placeholder": "Search a product to add...",
+            "motif_placeholder": "Return reason (per product)...",
             "empty_lines": "No product added to return.",
             "table_product": "Product",
             "table_lot": "Lot / Exp.",
+            "table_motif": "Reason",
             "table_qty": "Qty",
             "table_price": "Cost Price",
             "table_total": "Total (Excl. Tax)",
@@ -664,6 +666,7 @@
             "items_count": "Items",
             "total_qty": "Total units",
             "total_ht": "Total (Excl. Tax)",
+            "motif": "Reason",
             "lines_title": "Return Lines",
             "lines_subtitle": "Detail of returned products",
             "close_line": "Close line",
@@ -887,8 +890,8 @@
         }
     },
     "transformations": {
-        "title": "Transformations Management",
-        "subtitle": "Transform your stock (ex: Box to Units)",
+        "title": "Reconditioning Management",
+        "subtitle": "Recondition your stock (ex: Box to Units)",
         "new_relation_btn": "+ New Relation",
         "tabs": {
             "configured_relations": "Configured Relations",

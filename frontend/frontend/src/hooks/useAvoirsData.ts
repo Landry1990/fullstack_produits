@@ -548,6 +548,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             price: product.cost_price || '0',
             lot: '',
             date_expiration: '',
+            motif: '',
             total: product.cost_price || '0'
         };
         setLignes(prev => [newLine, ...prev]);

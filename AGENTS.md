@@ -24,9 +24,13 @@ entrées existantes (titres avec emojis, listes à puces, mention des fichiers m
 
 - i18n : toute chaîne visible utilisateur doit avoir une clé de traduction en `fr` **et** `en`
   (voir dossiers de traduction du frontend).
+- **Tout nouvel élément (composant, label, placeholder, message, menu) doit être traduit
+  en `fr` **et** `en` immédiatement à sa création**, pas dans un second temps.
 - Messages d'erreur utilisateur en français.
 - Suivre le style des commits existants (`git log`) : `type: description courte` (feat, fix, docs...).
 - Ne pas committer sans que ça soit demandé.
+- **UI : toute nouvelle fenêtre, modal ou composant graphique doit être créé avec shadcn/ui**
+  (la migration depuis DaisyUI est en cours — ne pas introduire de nouveaux composants DaisyUI).
 
 ## Commandes utiles
 

@@ -11,7 +11,7 @@ interface ProductSearchSectionProps {
   searchLoading: boolean
   filteredProduits: ProduitModel[]
   addProduitToFacture: (product: ProduitModel) => void
-  addPackToFacture?: (pack: unknown) => void
+  addPackToFacture?: (pack: PackResult) => void | Promise<void>
   searchInputRef: React.RefObject<HTMLInputElement | null>
   placeholder?: string
   onQuantityShortcut?: (qty: number) => void

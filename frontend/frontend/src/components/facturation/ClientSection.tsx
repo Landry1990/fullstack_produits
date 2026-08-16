@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Client, AyantDroit } from '../../types'
 import { Button } from '../shadcn/button'
@@ -24,6 +24,8 @@ interface ClientSectionProps {
   showClientDropdown: boolean
   setShowClientDropdown: (v: boolean) => void
 
+  ayantDroitSearchResults: AyantDroit[]
+
   onOpenCreateClient: (initialName: string) => void
   onEnter?: () => void
 
@@ -40,6 +42,7 @@ interface ClientSectionProps {
   setAyantDroitMatricule: (v: string) => void
   ayantDroitSociete: string
   setAyantDroitSociete: (v: string) => void
+  onSelectAyantDroit?: (ad: AyantDroit) => Promise<void>
   inputRef?: React.Ref<HTMLInputElement>
   onApplyReward?: () => void
 }
@@ -57,6 +60,7 @@ export default function ClientSection({
   setClientSearch,
   showClientDropdown,
   setShowClientDropdown,
+  ayantDroitSearchResults,
   onOpenCreateClient,
   onEnter,
   ayantsDroitList,
@@ -70,13 +74,24 @@ export default function ClientSection({
   setAyantDroitMatricule,
   ayantDroitSociete,
   setAyantDroitSociete,
+  onSelectAyantDroit,
   inputRef,
   onApplyReward
 }: ClientSectionProps) {
   const { t } = useTranslation(['facturation', 'common'])
 
-  const [highlightedClientIndex, setHighlightedClientIndex] = useState(-1)
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const clientSearchRef = useRef<HTMLDivElement>(null)
+
+  type MixedItem =
+    | { type: 'client'; data: Client }
+    | { type: 'ayant_droit'; data: AyantDroit }
+
+  const mixedItems: MixedItem[] = useMemo(() => {
+    const clientsPart = filteredClients.slice(0, 5).map(c => ({ type: 'client' as const, data: c }))
+    const ayantsPart = ayantDroitSearchResults.slice(0, 5).map(ad => ({ type: 'ayant_droit' as const, data: ad }))
+    return [...clientsPart, ...ayantsPart]
+  }, [filteredClients, ayantDroitSearchResults])
 
   // Fermer le dropdown client au clic extérieur
   useEffect(() => {
@@ -88,6 +103,21 @@ export default function ClientSection({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [setShowClientDropdown])
+
+  const handleSelectClient = (client: Client) => {
+    setSelectedClient(client.id)
+    setClientSearch('')
+    setShowClientDropdown(false)
+    setHighlightedIndex(-1)
+  }
+
+  const handleSelectAyantDroitResult = async (ad: AyantDroit) => {
+    setShowClientDropdown(false)
+    setHighlightedIndex(-1)
+    if (onSelectAyantDroit) {
+      await onSelectAyantDroit(ad)
+    }
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showClientDropdown) {
@@ -101,24 +131,25 @@ export default function ClientSection({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setHighlightedClientIndex(prev =>
-          prev < filteredClients.length - 1 ? prev + 1 : prev
+        setHighlightedIndex(prev =>
+          prev < mixedItems.length - 1 ? prev + 1 : prev
         )
         break
       case 'ArrowUp':
         e.preventDefault()
-        setHighlightedClientIndex(prev => prev > 0 ? prev - 1 : -1)
+        setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1)
         break
       case 'Enter':
         e.preventDefault()
-        if (highlightedClientIndex >= 0 && highlightedClientIndex < filteredClients.length) {
-          const client = filteredClients[highlightedClientIndex]
-          setSelectedClient(client.id)
-          setClientSearch('')
-          setShowClientDropdown(false)
-          setHighlightedClientIndex(-1)
-          setTimeout(() => onEnter?.(), 0)
-        } else if (filteredClients.length === 0 && clientSearch) {
+        if (highlightedIndex >= 0 && highlightedIndex < mixedItems.length) {
+          const item = mixedItems[highlightedIndex]
+          if (item.type === 'client') {
+            handleSelectClient(item.data)
+            setTimeout(() => onEnter?.(), 0)
+          } else {
+            handleSelectAyantDroitResult(item.data)
+          }
+        } else if (mixedItems.length === 0 && clientSearch) {
           onOpenCreateClient(clientSearch)
           setShowClientDropdown(false)
         } else {
@@ -129,7 +160,7 @@ export default function ClientSection({
         break
       case 'Escape':
         setShowClientDropdown(false)
-        setHighlightedClientIndex(-1)
+        setHighlightedIndex(-1)
         break
     }
   }
@@ -137,7 +168,7 @@ export default function ClientSection({
   const selectedClientData = clients.find(c => c.id === selectedClient)
 
   return (
-    <div className="w-full md:w-64 lg:w-80 shrink-0 p-3 md:p-4">
+    <div className="w-full p-3 md:p-4">
       <div className="flex items-center justify-between mb-2">
         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider py-0">{t('facturation:client.label')}</label>
         <Button
@@ -181,11 +212,11 @@ export default function ClientSection({
               setClientSearch(e.target.value)
               setSelectedClient(null)
               setShowClientDropdown(true)
-              setHighlightedClientIndex(-1)
+              setHighlightedIndex(-1)
             }}
             onFocus={() => {
               setShowClientDropdown(true)
-              setHighlightedClientIndex(-1)
+              setHighlightedIndex(-1)
             }}
             onKeyDown={handleKeyDown}
             placeholder={t('facturation:client.search_placeholder')}
@@ -210,33 +241,53 @@ export default function ClientSection({
           {/* Dropdown des résultats */}
           {showClientDropdown && (clientSearch || !selectedClient) && (
             <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 max-h-60 overflow-auto">
-              {filteredClients.length > 0 ? (
+              {mixedItems.length > 0 ? (
                 <>
-                  {filteredClients.map((client, index) => (
-                    <div
-                      key={client.id}
-                      onClick={() => {
-                        setSelectedClient(client.id)
-                        setClientSearch('')
-                        setShowClientDropdown(false)
-                        setHighlightedClientIndex(-1)
-                      }}
-                      onMouseEnter={() => setHighlightedClientIndex(index)}
-                      className={`px-3 py-2.5 cursor-pointer flex justify-between items-center text-sm transition-colors ${
-                        index === highlightedClientIndex
-                          ? 'bg-emerald-50 text-emerald-900'
-                          : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className="font-medium text-slate-800">{client.name}</span>
-                      <span className="text-xs text-slate-400">{client.phone}</span>
-                    </div>
-                  ))}
-                  {clientSearch && filteredClients.length < clients.length && (
-                    <div className="px-3 py-2 text-xs text-slate-400 border-t border-slate-100">
-                      {t('facturation:client.results_count', { count: filteredClients.length, total: clients.length })}
-                    </div>
-                  )}
+                  {mixedItems.map((item, index) => {
+                    const isFirstAyant = item.type === 'ayant_droit' && (index === 0 || mixedItems[index - 1].type === 'client')
+                    return (
+                      <React.Fragment key={item.type === 'client' ? `client-${item.data.id}` : `ad-${item.data.id ?? index}`}>
+                        {isFirstAyant && (
+                          <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
+                            {t('facturation:client.ayant_droit.label')}
+                          </div>
+                        )}
+                        <div
+                          onClick={() => {
+                            if (item.type === 'client') {
+                              handleSelectClient(item.data)
+                            } else {
+                              handleSelectAyantDroitResult(item.data)
+                            }
+                          }}
+                          onMouseEnter={() => setHighlightedIndex(index)}
+                          className={`px-3 py-2.5 cursor-pointer text-sm transition-colors ${
+                            index === highlightedIndex
+                              ? 'bg-emerald-50 text-emerald-900'
+                              : 'hover:bg-slate-50'
+                          }`}
+                        >
+                          {item.type === 'client' ? (
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-slate-800">{item.data.name}</span>
+                              <span className="text-xs text-slate-400">{item.data.phone}</span>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-slate-800">{item.data.nom}</span>
+                                <span className="text-xs text-slate-400">{item.data.matricule}</span>
+                              </div>
+                              <div className="flex justify-between items-center mt-0.5">
+                                <span className="text-[10px] text-slate-500">{item.data.societe || '—'}</span>
+                                <span className="text-[10px] text-emerald-600 font-medium">{item.data.client_name}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </React.Fragment>
+                    )
+                  })}
                 </>
               ) : (
                 <div className="px-3 py-4 text-center">
@@ -263,7 +314,8 @@ export default function ClientSection({
       )}
 
       {/* Ayant Droit Section */}
-      {!useManualClient && selectedClient && selectedClientData?.client_type === 'PROFESSIONNEL' && (
+      {!useManualClient && (selectedClient === null || selectedClientData?.client_type === 'PROFESSIONNEL') && (
+      <div className="mt-3 pt-3 border-t border-slate-200">
         <AyantDroitSection
           ayantsDroitList={ayantsDroitList}
           selectedAyantDroit={selectedAyantDroit}
@@ -277,6 +329,7 @@ export default function ClientSection({
           ayantDroitSociete={ayantDroitSociete}
           setAyantDroitSociete={setAyantDroitSociete}
         />
+      </div>
       )}
     </div>
   )

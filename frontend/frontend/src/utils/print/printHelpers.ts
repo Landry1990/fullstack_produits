@@ -138,7 +138,7 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
   })
 
   return `<!DOCTYPE html>
-<html data-theme="light" lang="fr">
+<html lang="fr">
 <head>
   <title>Ticket de Caisse</title>
   <base href="${window.location.origin}/">
@@ -195,12 +195,6 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
     }
     #ticket-preview table { table-layout: fixed; width: 100% !important; }
     #ticket-preview td, #ticket-preview th { overflow: hidden; text-overflow: ellipsis; }
-    :root, [data-theme="light"] {
-      --b1: 100% 0 0;
-      --bc: 0% 0 0;
-      --p: 49.12% 0.3096 275.75;
-      --pc: 89.824% 0.06192 275.75;
-    }
   </style>
 </head>
 <body>
