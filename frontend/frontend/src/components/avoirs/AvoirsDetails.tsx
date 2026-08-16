@@ -1,14 +1,14 @@
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, CheckCircle2, Lock, Unlock, Printer, PackageX, CheckCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Lock, Unlock, Printer, PackageX, CheckCheck, Trash2, Undo2, Pencil } from 'lucide-react';
 import type { UseAvoirsDataReturn } from '../../hooks/useAvoirsData';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../shadcn/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
-import { isDraftStatus, getStatusStyle, getStatusLabel, getTypeAvoirLabel } from './utils';
+import { isDraftStatus, getStatusStyle, getStatusLabel } from './utils';
 
 interface AvoirsDetailsProps {
     data: UseAvoirsDataReturn;
@@ -23,6 +23,9 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
         handleToggleCloture,
         handleToggleAllCloture,
         handleDechargerStock,
+        handleAnnulerDechargement,
+        handleDeleteLigne,
+        handleEdit,
         savingValidation
     } = data;
     const { t, i18n } = useTranslation(['stock', 'common']);
@@ -100,14 +103,39 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                             Décharger Stock
                         </Button>
                     ) : (
-                        <div className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium">
-                            <CheckCheck className="size-4" />
-                            Stock déchargé
+                        <div className="inline-flex items-center gap-2">
+                            <div className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium">
+                                <CheckCheck className="size-4" />
+                                Stock déchargé
+                            </div>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="gap-2 border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                onClick={() => handleAnnulerDechargement(selectedAvoir)}
+                                disabled={savingValidation}
+                                title="Annuler le déchargement et réintégrer le stock"
+                            >
+                                <Undo2 className="size-4" />
+                                Annuler déchargement
+                            </Button>
                         </div>
                     )}
 
-                    {isDraft && (
+                    {isDraft && !selectedAvoir.stock_decharge && (
                         <>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(selectedAvoir)}
+                                disabled={savingValidation}
+                                className="gap-2 border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            >
+                                <Pencil className="size-4" />
+                                {t('stock:avoirs.details.edit', { defaultValue: 'Modifier' })}
+                            </Button>
                             <Button
                                 type="button"
                                 variant="outline"
@@ -146,12 +174,6 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                             <div>
                                 <p className="text-sm text-slate-500 mb-1">{t('stock:avoirs.form.fournisseur')}</p>
                                 <p className="font-bold text-lg">{selectedAvoir.fournisseur_name}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-slate-500 mb-1">{t('stock:avoirs.details.type_label')}</p>
-                                <div className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-sm font-medium border border-slate-200">
-                                    {getTypeAvoirLabel(selectedAvoir.type_avoir, t)}
-                                </div>
                             </div>
                             {selectedAvoir.observations && (
                                 <div>
@@ -231,10 +253,10 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                         <TableHead className="w-12 text-center">{t('stock:avoirs.table.status')}</TableHead>
                                         <TableHead>{t('stock:avoirs.form.table_product')}</TableHead>
                                         <TableHead>{t('stock:avoirs.form.table_lot')}</TableHead>
-                                        <TableHead>{t('stock:avoirs.form.table_motif', { defaultValue: 'Motif' })}</TableHead>
                                         <TableHead className="text-center">{t('stock:avoirs.form.table_qty')}</TableHead>
                                         <TableHead className="text-right">{t('stock:avoirs.form.table_price')}</TableHead>
                                         <TableHead className="text-right">{t('stock:avoirs.form.table_total')}</TableHead>
+                                        {isDraft && <TableHead className="w-10"></TableHead>}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -264,13 +286,6 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                     {ligne.date_expiration ? format(new Date(ligne.date_expiration), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS }) : t('stock:avoirs.form.no_date')}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                {ligne.motif ? (
-                                                    <span className="inline-block text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium">{ligne.motif}</span>
-                                                ) : (
-                                                    <span className="text-xs text-slate-300 italic">—</span>
-                                                )}
-                                            </TableCell>
                                             <TableCell className="text-center">
                                                 <span className="font-bold text-base bg-slate-100 text-slate-700 px-3 py-1 rounded-lg">
                                                     {ligne.quantity}
@@ -282,12 +297,26 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                             <TableCell className="text-right font-bold text-indigo-600 font-mono">
                                                 {formatCurrency(Number(ligne.total || (Number(ligne.quantity) * Number(ligne.price))))}
                                             </TableCell>
+                                            {isDraft && (
+                                                <TableCell className="text-center">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleDeleteLigne(ligne.id)}
+                                                        className="size-8 rounded-full text-red-400 hover:text-red-600 hover:bg-red-50"
+                                                        title={t('stock:avoirs.details.delete_line', 'Supprimer cette ligne')}
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </TableCell>
+                                            )}
                                         </TableRow>
                                     ))}
 
                                     {(!selectedAvoir.produits || selectedAvoir.produits.length === 0) && (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                                            <TableCell colSpan={isDraft ? 8 : 7} className="text-center py-8 text-slate-500">
                                                 {t('stock:avoirs.details.no_lines')}
                                             </TableCell>
                                         </TableRow>

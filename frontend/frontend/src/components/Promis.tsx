@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { usePromisData } from '../hooks/usePromisData';
 
 // Components
@@ -16,6 +17,7 @@ const Promis: React.FC = () => {
     // UI State for Modals
     const [showForm, setShowForm] = useState(false);
     const [smsModalState, setSmsModalState] = useState<{isOpen: boolean, promis: unknown | null}>({ isOpen: false, promis: null });
+    const [headerCollapsed, setHeaderCollapsed] = useState(false);
 
     // Business Logic Hook
     const {
@@ -48,7 +50,7 @@ const Promis: React.FC = () => {
     return (
         <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 gap-4 sm:gap-6 font-sans">
             
-            {/* Header Section */}
+            {!headerCollapsed && (
             <div className="flex flex-col gap-6">
                 
                 {/* Title & Filters */}
@@ -73,9 +75,23 @@ const Promis: React.FC = () => {
                     <PromisQuickStats stats={stats} />
                 </div>
             </div>
+            )}
 
             {/* Main Content: Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
+                <div className="px-4 py-2 border-b flex justify-between items-center bg-muted/30 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-sm">{t('stock:promis.title', 'Promis')}</h3>
+                        <button
+                            onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-emerald-600 transition-colors px-2 py-1 rounded hover:bg-emerald-50"
+                            title={headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
+                        >
+                            {headerCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+                            {headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
+                        </button>
+                    </div>
+                </div>
                 <PromisTable 
                     promisList={filteredPromis}
                     loading={loading}

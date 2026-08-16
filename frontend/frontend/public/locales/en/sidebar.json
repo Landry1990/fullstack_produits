@@ -52,7 +52,7 @@
         "ruptures": {
             "title": "Shortage Tracking"
         },
-        "avoirs": "Claims",
+        "avoirs": "Supplier Returns",
         "promis": "Promised",
         "transformations": {
             "title": "Transformations"

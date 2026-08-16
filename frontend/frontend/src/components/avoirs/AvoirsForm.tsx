@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Save, Trash2, ArrowLeft, Package, Loader2 } from 'lucide-react';
+import api from '../../services/api';
+import { logger } from '../../utils/logger';
 import type { ProduitModel } from '../../types';
 import type { UseAvoirsDataReturn } from '../../hooks/useAvoirsData';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
@@ -60,11 +62,47 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
         modes: ['products']
     });
 
-    const handleSelectProduct = (product: SearchResult | ProduitModel) => {
+    const [productResults, setProductResults] = useState<SearchResult[]>([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+
+    useEffect(() => {
+        if (searchProduitQuery.length < 2) {
+            setProductResults([]);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            setSearchLoading(true);
+            try {
+                const response = await api.get('produits/', {
+                    params: { search: searchProduitQuery, page_size: 20 }
+                });
+                const data = response.data;
+                const results: ProduitModel[] = Array.isArray(data) ? data : data.results || [];
+                setProductResults(results.map(p => ({
+                    ...p,
+                    id: p.id,
+                    name: p.name,
+                    stock: p.stock,
+                    selling_price: p.selling_price,
+                    cip1: p.cip1,
+                    rayon_name: p.rayon_name,
+                })));
+            } catch (e) {
+                logger.error('AvoirsForm product search error', e);
+                setProductResults([]);
+            } finally {
+                setSearchLoading(false);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchProduitQuery]);
+
+    const handleSelectProduct = useCallback((product: SearchResult | ProduitModel) => {
         selectProduct(product as unknown as ProduitModel);
         resetSearch();
+        setProductResults([]);
         searchInputRef.current?.focus();
-    };
+    }, [selectProduct, resetSearch, searchInputRef]);
 
     return (
         <form onSubmit={handleSave} className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-6">
@@ -200,8 +238,8 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                             <ProductSearch
                                 searchQuery={searchProduitQuery}
                                 setSearchQuery={setSearchProduitQuery}
-                                results={[]}
-                                loading={false}
+                                results={productResults}
+                                loading={searchLoading}
                                 modes={['products']}
                                 onSelect={handleSelectProduct}
                                 searchInputRef={searchInputRef}
@@ -225,7 +263,6 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                         <TableRow>
                                             <TableHead>{t('stock:avoirs.form.table_product')}</TableHead>
                                             <TableHead className="w-32">{t('stock:avoirs.form.table_lot')}</TableHead>
-                                            <TableHead className="w-40">{t('stock:avoirs.form.table_motif', { defaultValue: 'Motif' })}</TableHead>
                                             <TableHead className="text-center w-24">{t('stock:avoirs.form.table_qty')}</TableHead>
                                             <TableHead className="text-right w-32">{t('stock:avoirs.form.table_price')}</TableHead>
                                             <TableHead className="text-right w-32">{t('stock:avoirs.form.table_total')}</TableHead>
@@ -262,15 +299,6 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                     </TableCell>
                                                     <TableCell>
                                                         <Input
-                                                            type="text"
-                                                            placeholder="Ex: lot endommagé..."
-                                                            size="sm"
-                                                            value={ligne.motif || ''}
-                                                            onChange={(e) => updateLine(index, 'motif', e.target.value)}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Input
                                                             type="number"
                                                             min="1"
                                                             size="sm"
@@ -280,14 +308,9 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                         />
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Input
-                                                            type="number"
-                                                            step="0.01"
-                                                            size="sm"
-                                                            className="text-right font-mono"
-                                                            value={ligne.price}
-                                                            onChange={(e) => updateLine(index, 'price', e.target.value)}
-                                                        />
+                                                        <div className="text-right font-mono text-sm font-semibold text-slate-700 py-2">
+                                                            {formatCurrency(Number(ligne.price || 0))}
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell className="text-right font-semibold text-emerald-600 font-mono">
                                                         {formatCurrency(Number(ligne.total || 0))}

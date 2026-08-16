@@ -63,6 +63,8 @@ export interface UseAvoirsDataReturn {
     handleToggleCloture: (ligneId: number, currentStatus: boolean | undefined) => Promise<void>;
     handleToggleAllCloture: () => Promise<void>;
     handleDechargerStock: (avoir: Avoir) => Promise<void>;
+    handleAnnulerDechargement: (avoir: Avoir) => Promise<void>;
+    handleDeleteLigne: (ligneId: number) => Promise<void>;
 
     // Products & Lots Management (Form View)
     selectProduct: (product: ProduitModel) => void;
@@ -346,7 +348,10 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             await Promise.all(linePromises);
             toast.success(editingAvoirId ? 'Avoir modifié avec succès' : 'Avoir créé avec succès (Brouillon)');
             setEditingAvoirId(null);
-            setViewMode('LIST');
+            const updatedAvoir = await avoirService.getById(avoirId);
+            setSelectedAvoir(updatedAvoir);
+            setAvoirs(prev => prev.map(a => a.id === avoirId ? updatedAvoir : a));
+            setViewMode('DETAILS');
             fetchAvoirs();
         } catch (err: unknown) {
             const error = err as { response?: { data?: { message?: string } }; message?: string };
@@ -414,6 +419,32 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         });
     };
 
+    const handleAnnulerDechargement = async (avoir: Avoir) => {
+        requireSudo(async (validatorId, password) => {
+            try {
+                setLoading(true);
+                const updated = await avoirService.annulerDechargement(avoir.id, {
+                    validated_by_id: validatorId,
+                    password: password
+                });
+                toast.success(t('stock:avoirs.toasts.dechargement_cancelled', 'Déchargement annulé. Stock réintégré.'));
+                setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
+                setSelectedAvoir(updated);
+            } catch (err: unknown) {
+                const error = err as { response?: { data?: { error?: string } }; message?: string };
+                const msg = error.response?.data?.error || error.message || t('common:messages.error_generic');
+                toast.error(t('common:messages.error_with_message', { message: msg }));
+                throw err;
+            } finally {
+                setLoading(false);
+            }
+        }, {
+            title: `Annuler déchargement — ${avoir.numero}`,
+            message: `Cette action va réintégrer ${avoir.produits?.length || 0} produit(s) dans le stock et annuler les mouvements de déchargement.`,
+            permission: 'can_manage_avoirs'
+        });
+    };
+
     const handleToggleCloture = async (ligneId: number, currentStatus: boolean | undefined) => {
         const newStatus = !currentStatus;
         const currentAvoirId = selectedAvoir?.id;
@@ -421,17 +452,23 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         const updateState = (status: boolean) => {
             setSelectedAvoir(prev => {
                 if (!prev) return null;
+                const updatedProduits = prev.produits?.map(p => p.id === ligneId ? { ...p, est_cloture: status } : p) || [];
+                const allClosed = updatedProduits.length > 0 && updatedProduits.every(p => p.est_cloture);
                 return {
                     ...prev,
-                    produits: prev.produits?.map(p => p.id === ligneId ? { ...p, est_cloture: status } : p) || []
+                    produits: updatedProduits,
+                    status: allClosed && prev.status === 'BROUILLON' ? 'VALIDEE' : prev.status
                 };
             });
             if (currentAvoirId !== undefined) {
                 setAvoirs(prev => prev.map(a => {
                     if (a.id === currentAvoirId) {
+                        const updatedProduits = a.produits?.map(p => p.id === ligneId ? { ...p, est_cloture: status } : p) || [];
+                        const allClosed = updatedProduits.length > 0 && updatedProduits.every(p => p.est_cloture);
                         return {
                             ...a,
-                            produits: a.produits?.map(p => p.id === ligneId ? { ...p, est_cloture: status } : p)
+                            produits: updatedProduits,
+                            status: allClosed && a.status === 'BROUILLON' ? 'VALIDEE' : a.status
                         };
                     }
                     return a;
@@ -486,6 +523,9 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             }
             await Promise.all(promises);
             toast.success(targetStatus ? t('avoirs.toasts.bulk_lines_closed') : t('avoirs.toasts.bulk_lines_reopened'));
+            if (targetStatus && selectedAvoir.status === 'BROUILLON') {
+                toast.success(t('avoirs.toasts.auto_validated', { defaultValue: 'Avoir validé automatiquement (toutes lignes clôturées)' }));
+            }
         } catch {
             toast.error(t('avoirs.toasts.bulk_update_error'));
             // Rollback
@@ -531,6 +571,24 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
     const removeLine = (index: number) => {
         setLignes(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleDeleteLigne = async (ligneId: number) => {
+        if (!selectedAvoir) return;
+        if (!confirm(t('stock:avoirs.confirms.delete_ligne', 'Supprimer cette ligne de l\'avoir ?'))) return;
+        try {
+            setLoading(true);
+            await avoirService.deleteLigne(ligneId);
+            const updatedProduits = selectedAvoir.produits?.filter(p => p.id !== ligneId) || [];
+            const newTotal = updatedProduits.reduce((sum, p) => sum + Number(p.total || (Number(p.quantity) * Number(p.price))), 0);
+            setSelectedAvoir(prev => prev ? { ...prev, produits: updatedProduits, total_ht: newTotal.toString() } : null);
+            setAvoirs(prev => prev.map(a => a.id === selectedAvoir.id ? { ...a, produits: updatedProduits, total_ht: newTotal.toString() } : a));
+            toast.success(t('stock:avoirs.toasts.ligne_deleted', 'Ligne supprimée'));
+        } catch {
+            toast.error(t('stock:avoirs.toasts.ligne_delete_error', 'Erreur lors de la suppression'));
+        } finally {
+            setLoading(false);
+        }
     };
 
     // --- Lots Modal Functions ---
@@ -670,6 +728,8 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         handleToggleCloture,
         handleToggleAllCloture,
         handleDechargerStock,
+        handleAnnulerDechargement,
+        handleDeleteLigne,
         selectProduct,
         updateLine,
         removeLine,

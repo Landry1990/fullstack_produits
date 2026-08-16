@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from ...audit_helpers import log_audit
 from ...models import (
     AuditLog,
+    Avoir,
     Commande,
     FactureProduit,
     MouvementStock,
@@ -35,10 +36,28 @@ class ProduitStockMixin:
             match = re.search(r"[Cc]ommande\s*#(\d+)", desc)
             return int(match.group(1)) if match else None
 
+        def extract_avoir_numero(desc):
+            if not desc: return None
+            match = re.search(r"Avoir\s+([A-Z0-9\-]+)", desc)
+            return match.group(1) if match else None
+
+        # Pre-load avoir data for all potential avoir numeros
+        avoir_numeros = set()
+        for m in mouvements:
+            if m['type_mouvement'] in (MouvementStock.TypeMouvement.AVOIR, MouvementStock.TypeMouvement.RETOUR):
+                num = extract_avoir_numero(m['description'])
+                if num:
+                    avoir_numeros.add(num)
+        
+        avoir_map = {}
+        if avoir_numeros:
+            for a in Avoir.objects.filter(numero__in=avoir_numeros).values('id', 'numero'):
+                avoir_map[a['numero']] = a['id']
+
         history = []
         for m in mouvements:
             commande_id = m['commande'] or extract_commande_id(m['description'])
-            history.append({
+            item = {
                 'date': m['date'],
                 'type': m['type_mouvement'],
                 'quantity': m['quantite'], 
@@ -50,7 +69,14 @@ class ProduitStockMixin:
                 'id': m['id'],
                 'facture': m['facture'],
                 'commande': commande_id
-            })
+            }
+            if m['type_mouvement'] in (MouvementStock.TypeMouvement.AVOIR, MouvementStock.TypeMouvement.RETOUR):
+                avoir_numero = extract_avoir_numero(m['description'])
+                if avoir_numero:
+                    item['avoir'] = avoir_map.get(avoir_numero)
+                    item['avoir_numero'] = avoir_numero
+                    item['libelle'] = f"Avoir {avoir_numero}"
+            history.append(item)
             
         ventes = FactureProduit.objects.filter(
             produit=produit, 

@@ -654,6 +654,7 @@
             "created_at": "Created on {{date}}",
             "created_by": "by {{name}}",
             "print": "Print",
+            "edit": "Edit",
             "delete": "Delete",
             "validate": "Validate Return",
             "fournisseur_info": "Supplier Information",
@@ -700,12 +701,16 @@
             "bulk_delete_success": "{{count}} returns deleted",
             "bulk_delete_error": "Error during bulk deletion",
             "bulk_validate_success": "{{count}} returns validated",
-            "bulk_validate_error": "Error during bulk validation"
+            "bulk_validate_error": "Error during bulk validation",
+            "ligne_deleted": "Line deleted",
+            "ligne_delete_error": "Error deleting line",
+            "dechargement_cancelled": "Discharge cancelled. Stock restored."
         },
         "confirms": {
             "back_to_list": "Are you sure you want to leave? Unsaved changes will be lost.",
             "delete_avoir": "Are you sure you want to delete draft return {{numero}}?",
-            "bulk_delete": "Delete these {{count}} draft returns?"
+            "bulk_delete": "Delete these {{count}} draft returns?",
+            "delete_ligne": "Delete this line from the return?"
         }
     },
     "promis": {

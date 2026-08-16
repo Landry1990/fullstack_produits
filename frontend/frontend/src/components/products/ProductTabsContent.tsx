@@ -484,10 +484,16 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                                 </TableCell>
                                 <TableCell className="text-sm font-bold py-2 px-3" title={item.libelle}>
                                     <div className="flex items-center gap-1">
-                                        {(item.facture || item.commande) && (
+                                        {(item.facture || item.commande || item.avoir) && (
                                             <span
                                                 className="text-indigo-600 cursor-pointer hover:text-indigo-800"
-                                                title={item.facture ? t('products:detail.movements.view_invoice') : t('products:detail.movements.view_order')}
+                                                title={
+                                                    item.facture
+                                                        ? t('products:detail.movements.view_invoice')
+                                                        : item.avoir
+                                                            ? t('products:detail.movements.view_avoir', { defaultValue: 'Voir l\'avoir' })
+                                                            : t('products:detail.movements.view_order')
+                                                }
                                                 onClick={(e) => { e.stopPropagation(); onMovementClick(item); }}
                                             >🔍</span>
                                         )}
