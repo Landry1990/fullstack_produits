@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-08-15 — Compactage des pages Stock sur petits écrans (13-14")
+
+### 🎨 Amélioration UI
+
+Sur les petits écrans de laptop (13-14 pouces), les en-têtes, cartes de stats, filtres et
+autres éléments des pages du menu Stock prenaient plus de place que le tableau de données.
+Tous ces éléments sont maintenant responsifs : compacts sur petit écran, taille normale
+sur grand écran (`lg:` breakpoints).
+
+### Changements par page
+
+- **Cadencier** : en-tête réduit, filtres en grille 2-col, cartes de stats compactes
+- **Inventaire** : conteneur et filtres compactés, QuickStats en 3-col, titre réduit
+- **Journal d'ajustements** : en-tête réduit, filtres compactés, pagination compacte
+- **États d'inventaire** : en-tête réduit, espacement réduit
+- **Périmés** : en-tête réduit, KPI cards compactes, prévisions en 3-col, filtres compactés
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/stock/Cadencier.tsx`
+- `frontend/frontend/src/components/Inventaire.tsx`
+- `frontend/frontend/src/components/inventaire/editor/InventaireList.tsx`
+- `frontend/frontend/src/components/inventaire/InventaireFilters.tsx`
+- `frontend/frontend/src/components/inventaire/InventaireQuickStats.tsx`
+- `frontend/frontend/src/components/JournalAjustements.tsx`
+- `frontend/frontend/src/components/adjustments/AjustementsFilters.tsx`
+- `frontend/frontend/src/components/adjustments/AjustementsTable.tsx`
+- `frontend/frontend/src/components/EtatsInventaire.tsx`
+- `frontend/frontend/src/components/Perimes.tsx`
+
+---
+
 ## 2026-08-17 (63) — Toasts i18n : corrections emojis, deps React et messages serveur
 
 ### 🐛 Correctif

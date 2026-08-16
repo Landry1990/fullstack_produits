@@ -131,7 +131,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
             </div>
 
             {/* Pagination */}
-            <div className="mt-auto border-t border-slate-100 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white">
+            <div className="mt-auto border-t border-slate-100 p-3 lg:p-6 flex flex-col sm:flex-row items-center justify-between gap-2 lg:gap-4 bg-white">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                     {t('ajustements.table.pagination', { current: currentPage, total: totalPages, count: totalCount })}
                 </div>

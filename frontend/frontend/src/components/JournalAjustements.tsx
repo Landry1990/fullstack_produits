@@ -19,22 +19,22 @@ export default function JournalAjustements() {
     } = useAjustementsData();
 
     return (
-        <div className="h-screen bg-slate-100 p-3 sm:p-4 lg:p-6 flex flex-col overflow-hidden">
+        <div className="h-screen bg-slate-100 p-2 sm:p-3 lg:p-4 flex flex-col overflow-hidden">
             <Toaster position="top-right" />
 
-            <div className="max-w-[1600px] mx-auto w-full flex flex-col h-full gap-4">
+            <div className="max-w-[1600px] mx-auto w-full flex flex-col h-full gap-2 lg:gap-4">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 shrink-0">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-2 lg:gap-6 shrink-0">
                     <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-                                <span className="text-xl">📋</span>
+                        <div className="flex items-center gap-2 lg:gap-3 mb-1 lg:mb-2">
+                            <div className="size-8 lg:size-10 rounded-xl lg:rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                                <span className="text-base lg:text-xl">📋</span>
                             </div>
                             <div>
-                                <h1 className="text-2xl font-black tracking-tight text-slate-800">
+                                <h1 className="text-lg lg:text-2xl font-black tracking-tight text-slate-800">
                                     {t('ajustements.title')}
                                 </h1>
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                                <p className="text-[10px] lg:text-xs font-semibold text-slate-400 uppercase tracking-widest hidden lg:block">
                                     {t('ajustements.subtitle')}
                                 </p>
                             </div>
@@ -43,7 +43,7 @@ export default function JournalAjustements() {
                 </div>
 
                 {/* Search & Filter Bar */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
                     <AjustementsFilters
                         searchQuery={filters.searchQuery}
                         onSearchChange={setFilters.setSearchQuery}
@@ -66,7 +66,7 @@ export default function JournalAjustements() {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
                     <AjustementsTable
                         adjustments={adjustments}
                         loading={loading}
