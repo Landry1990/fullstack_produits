@@ -375,17 +375,17 @@ export default function Perimes() {
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-30 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-red-50 text-red-500 rounded-xl">
-            <AlertTriangle className="size-6" />
+      <div className="flex items-center justify-between px-3 lg:px-6 py-2 lg:py-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-30 shrink-0">
+        <div className="flex items-center gap-2 lg:gap-4">
+          <div className="p-1.5 lg:p-2.5 bg-red-50 text-red-500 rounded-lg lg:rounded-xl">
+            <AlertTriangle className="size-5 lg:size-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-800">{t('perimes.title')}</h1>
-            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">{t('perimes.subtitle')}</p>
+            <h1 className="text-base lg:text-xl font-bold tracking-tight text-slate-800">{t('perimes.title')}</h1>
+            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest hidden lg:block">{t('perimes.subtitle')}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 lg:gap-3">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
             <TabsList className="bg-slate-100">
               <TabsTrigger value="dashboard" className="gap-1.5 text-xs">
@@ -416,7 +416,7 @@ export default function Perimes() {
       </div>
 
       {error && (
-        <div className="px-6 pt-4 shrink-0">
+        <div className="px-3 lg:px-6 pt-2 lg:pt-4 shrink-0">
           <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-start gap-2 text-sm font-medium">
             <AlertTriangle className="size-5 shrink-0 mt-0.5" />
             <span>{error}</span>
@@ -425,10 +425,10 @@ export default function Perimes() {
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-auto px-6 py-4">
+      <div className="flex-1 overflow-auto px-3 lg:px-6 py-2 lg:py-4">
         {activeTab === 'dashboard' ? (
           /* ========== DASHBOARD VIEW ========== */
-          <div className="space-y-6">
+          <div className="space-y-4 lg:space-y-6">
             {/* KPI Cards Row */}
             {loadingStats ? (
               <div className="flex items-center justify-center py-12">
@@ -437,14 +437,14 @@ export default function Perimes() {
             ) : stats ? (
               <>
                 {/* Main KPIs */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-4">
                   <Card className="bg-gradient-to-br from-red-50 to-red-50/40 border-red-200">
-                    <CardContent className="p-5">
-                      <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-full bg-red-100 flex items-center justify-center text-2xl">💸</div>
+                    <CardContent className="p-3 lg:p-5">
+                      <div className="flex items-center gap-2 lg:gap-3">
+                        <div className="size-10 lg:size-12 rounded-full bg-red-100 flex items-center justify-center text-xl lg:text-2xl">💸</div>
                         <div>
-                          <p className="text-sm text-slate-500">{t('perimes.stats.valeur_perimes')}</p>
-                          <p className="text-2xl font-bold text-red-600">{formatCurrency(stats.perimes.valeur_cout)}</p>
+                          <p className="text-xs lg:text-sm text-slate-500">{t('perimes.stats.valeur_perimes')}</p>
+                          <p className="text-lg lg:text-2xl font-bold text-red-600">{formatCurrency(stats.perimes.valeur_cout)}</p>
                           <p className="text-xs text-slate-400">{t('perimes.stats.lots_count', { count: stats.perimes.count_lots })}</p>
                         </div>
                       </div>
@@ -452,12 +452,12 @@ export default function Perimes() {
                   </Card>
 
                   <Card className="bg-gradient-to-br from-amber-50 to-amber-50/40 border-amber-200">
-                    <CardContent className="p-5">
-                      <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">📉</div>
+                    <CardContent className="p-3 lg:p-5">
+                      <div className="flex items-center gap-2 lg:gap-3">
+                        <div className="size-10 lg:size-12 rounded-full bg-amber-100 flex items-center justify-center text-xl lg:text-2xl">📉</div>
                         <div>
-                          <p className="text-sm text-slate-500">{t('perimes.stats.manque_gagner')}</p>
-                          <p className="text-2xl font-bold text-amber-600">{formatCurrency(stats.perimes.valeur_vente_perdue)}</p>
+                          <p className="text-xs lg:text-sm text-slate-500">{t('perimes.stats.manque_gagner')}</p>
+                          <p className="text-lg lg:text-2xl font-bold text-amber-600">{formatCurrency(stats.perimes.valeur_vente_perdue)}</p>
                           <p className="text-xs text-slate-400">{t('perimes.stats.at_sale_price')}</p>
                         </div>
                       </div>
@@ -465,12 +465,12 @@ export default function Perimes() {
                   </Card>
 
                   <Card className="bg-gradient-to-br from-blue-50 to-blue-50/40 border-blue-200">
-                    <CardContent className="p-5">
-                      <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-full bg-blue-100 flex items-center justify-center text-2xl">📊</div>
+                    <CardContent className="p-3 lg:p-5">
+                      <div className="flex items-center gap-2 lg:gap-3">
+                        <div className="size-10 lg:size-12 rounded-full bg-blue-100 flex items-center justify-center text-xl lg:text-2xl">📊</div>
                         <div>
-                          <p className="text-sm text-slate-500">{t('perimes.stats.taux_perte')}</p>
-                          <p className="text-2xl font-bold text-blue-600">{stats.indicateurs.taux_perte_pct}%</p>
+                          <p className="text-xs lg:text-sm text-slate-500">{t('perimes.stats.taux_perte')}</p>
+                          <p className="text-lg lg:text-2xl font-bold text-blue-600">{stats.indicateurs.taux_perte_pct}%</p>
                           <p className="text-xs text-slate-400">{t('perimes.stats.vs_ca')} ({formatCurrency(stats.indicateurs.ca_periode)})</p>
                         </div>
                       </div>
@@ -484,14 +484,14 @@ export default function Perimes() {
                     <CardTitle className="text-lg">⏰ {t('perimes.prevision.title')}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 md:grid-cols-3 gap-2 lg:gap-4">
                       {(['30j', '60j', '90j'] as const).map((key, i) => (
-                        <div key={key} className={cn("border-2 rounded-xl p-4", getUrgencyClass(stats.previsions[key].valeur_vente))}>
+                        <div key={key} className={cn("border-2 rounded-xl p-3 lg:p-4", getUrgencyClass(stats.previsions[key].valeur_vente))}>
                           <div className="flex items-center justify-between mb-2">
                             <span className="font-bold text-slate-700">{t('common:count_days', { count: [30, 60, 90][i] })}</span>
                             <Badge variant="outline" className="bg-white/80 text-slate-600">{t('perimes.prevision.lots_count', { count: stats.previsions[key].count_lots })}</Badge>
                           </div>
-                          <p className="text-xl font-bold text-slate-800">{formatCurrency(stats.previsions[key].valeur_vente)}</p>
+                          <p className="text-lg lg:text-xl font-bold text-slate-800">{formatCurrency(stats.previsions[key].valeur_vente)}</p>
                           <p className="text-xs text-slate-500 mt-1">{t('perimes.prevision.potential_risk')}</p>
                         </div>
                       ))}
@@ -554,7 +554,7 @@ export default function Perimes() {
         ) : activeTab === 'list' ? (
           /* ========== LIST VIEW ========== */
           <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-100 bg-white sticky top-0 z-20 shrink-0">
+            <div className="p-2 lg:p-4 border-b border-slate-100 bg-white sticky top-0 z-20 shrink-0">
                <div className="flex justify-between items-center h-10">
                   {selectedLotIds.size > 0 ? (
                      <div className="flex items-center gap-2">
@@ -587,8 +587,8 @@ export default function Perimes() {
                   ) : (
                      <>
                         <div className="flex items-center gap-2">
-                           <div className="p-2 bg-red-50 text-red-500 rounded-lg"><AlertTriangle className="size-5" /></div>
-                           <h2 className="font-bold text-lg tracking-tight text-slate-800">{t('perimes.risk_lots')}</h2>
+                           <div className="p-1.5 lg:p-2 bg-red-50 text-red-500 rounded-lg"><AlertTriangle className="size-4 lg:size-5" /></div>
+                           <h2 className="font-bold text-base lg:text-lg tracking-tight text-slate-800">{t('perimes.risk_lots')}</h2>
                            <Badge variant="secondary" className="bg-slate-100 text-slate-500">{lots.length}</Badge>
                         </div>
                         <div className="flex gap-3 items-center">
@@ -716,8 +716,8 @@ export default function Perimes() {
         ) : (
           /* ========== HISTORY VIEW ========== */
           <div className="space-y-4">
-             <div className="flex flex-wrap gap-4 items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <div className="flex flex-wrap gap-4 items-center">
+             <div className="flex flex-wrap gap-2 lg:gap-4 items-center justify-between bg-slate-50 p-3 lg:p-4 rounded-xl border border-slate-200">
+                <div className="flex flex-wrap gap-2 lg:gap-4 items-center">
                     <div className="flex flex-col gap-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase pl-1">{t('common:from')}</span>
                         <Input

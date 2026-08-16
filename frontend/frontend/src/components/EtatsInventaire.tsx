@@ -191,16 +191,16 @@ export default function EtatsInventaire() {
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5 animate-in fade-in duration-300">
+    <div className="space-y-3 lg:space-y-5 animate-in fade-in duration-300">
 
       {/* ── En-tête ── */}
-      <div className="flex items-center gap-3">
-        <div className="size-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-          <BarChart3 className="size-5 text-white" />
+      <div className="flex items-center gap-2 lg:gap-3">
+        <div className="size-8 lg:size-10 rounded-lg lg:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+          <BarChart3 className="size-4 lg:size-5 text-white" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-slate-800 tracking-tight">{t('stock:etats.title')}</h1>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">{t('stock:etats.subtitle')}</p>
+          <h1 className="text-base lg:text-xl font-bold text-slate-800 tracking-tight">{t('stock:etats.title')}</h1>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest hidden lg:block">{t('stock:etats.subtitle')}</p>
         </div>
       </div>
 

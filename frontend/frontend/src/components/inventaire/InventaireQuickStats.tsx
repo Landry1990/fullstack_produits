@@ -21,9 +21,9 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
     }, [inventaires]);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-3 md:grid-cols-3 gap-2 lg:gap-4 mt-2 lg:mt-4">
             {/* Inventaires En Cours Card */}
-            <div className="bg-white p-4 rounded-lg border border-slate-200 border-l-4 border-l-amber-500 flex items-center justify-between">
+            <div className="bg-white p-2 lg:p-4 rounded-lg border border-slate-200 border-l-4 border-l-amber-500 flex items-center justify-between">
                 <div>
                     <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <ClipboardList className="size-3" /> {t('inventaire.stats.en_cours')}
@@ -38,7 +38,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
             </div>
 
             {/* Total Valeur Physique Card */}
-            <div className="bg-white p-4 rounded-lg border border-slate-200 border-l-4 border-l-emerald-500 flex items-center justify-between">
+            <div className="bg-white p-2 lg:p-4 rounded-lg border border-slate-200 border-l-4 border-l-emerald-500 flex items-center justify-between">
                 <div>
                     <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <PackageSearch className="size-3" /> {t('inventaire.stats.val_phys')}
@@ -55,7 +55,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
             </div>
 
             {/* Ecart Global Card */}
-            <div className="bg-white p-4 rounded-lg border border-slate-200 border-l-4 border-l-slate-300 flex items-center justify-between">
+            <div className="bg-white p-2 lg:p-4 rounded-lg border border-slate-200 border-l-4 border-l-slate-300 flex items-center justify-between">
                  <div>
                     <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <TrendingDown className="size-3" /> {t('inventaire.stats.ecart_global')}

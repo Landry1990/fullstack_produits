@@ -36,8 +36,8 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
     const hasFilters = searchQuery || dateStart || dateEnd || filterReasonType;
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 p-4 sm:p-6">
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 p-3 lg:p-4 sm:lg:p-6">
+            <div className="flex-1 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
                 {/* Search */}
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
