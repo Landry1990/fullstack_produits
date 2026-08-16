@@ -365,8 +365,8 @@
             "action_clients": "Voir les clients"
         }
     },
-    "transformation_alert_title": "⚡ Transformations nécessaires",
-    "transformation_alert_message_plural": "{{count}} produits à transformer depuis leur conditionnement source",
-    "transformation_alert_message": "{{item.destination_name}} (stock: {{item.destination_stock}}) — transformer depuis {{item.source_name}}",
-    "transformation_alert_link": "Aller aux transformations →"
+    "transformation_alert_title": "⚡ Reconditionnements nécessaires",
+    "transformation_alert_message_plural": "{{count}} produits à reconditionner depuis leur conditionnement source",
+    "transformation_alert_message": "{{item.destination_name}} (stock: {{item.destination_stock}}) — reconditionner depuis {{item.source_name}}",
+    "transformation_alert_link": "Aller aux reconditionnements →"
 }

@@ -171,6 +171,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                       <TableRow>
                         <TableHead>{t('stock:avoirs.details.product', { defaultValue: 'Produit' })}</TableHead>
                         <TableHead>{t('stock:avoirs.details.lot', { defaultValue: 'Lot' })}</TableHead>
+                        <TableHead>{t('stock:avoirs.details.motif', { defaultValue: 'Motif' })}</TableHead>
                         <TableHead className="text-right">{t('stock:avoirs.details.qty', { defaultValue: 'Qté' })}</TableHead>
                         <TableHead className="text-right">{t('stock:avoirs.details.price', { defaultValue: 'Prix' })}</TableHead>
                         <TableHead className="text-right">{t('stock:avoirs.details.total', { defaultValue: 'Total' })}</TableHead>
@@ -182,6 +183,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                           <TableRow key={ligne.id}>
                             <TableCell className="font-medium text-slate-900">{ligne.produit_nom}</TableCell>
                             <TableCell className="text-slate-600 font-mono text-xs">{ligne.lot || '—'}</TableCell>
+                            <TableCell className="text-slate-600 text-xs">{ligne.motif || '—'}</TableCell>
                             <TableCell className="text-right font-bold text-slate-700">{ligne.quantity}</TableCell>
                             <TableCell className="text-right font-mono text-slate-600">{formatCurrency(Number(ligne.price || 0))}</TableCell>
                             <TableCell className="text-right font-mono font-bold text-slate-700">{formatCurrency(Number(ligne.total || (ligne.quantity * Number(ligne.price))))}</TableCell>
@@ -189,7 +191,7 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center text-slate-400 py-6">
+                          <TableCell colSpan={6} className="text-center text-slate-400 py-6">
                             {t('stock:avoirs.details.no_lines', { defaultValue: 'Aucune ligne' })}
                           </TableCell>
                         </TableRow>

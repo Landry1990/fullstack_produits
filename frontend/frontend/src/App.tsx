@@ -15,6 +15,7 @@ import { ClockSyncAlert } from './components/ClockSyncAlert'
 import { ExpirationAlertToasts } from './components/ExpirationAlertToast'
 import { useAuth } from './context/AuthContext'
 import { router } from './routes'
+import { Loader2 } from 'lucide-react'
 import { LoadingScreen } from './components/common/LoadingScreen'
 
 const MAX_ATTEMPTS = 10; // ~50 secondes d'attente max
@@ -61,7 +62,7 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
     return (
       <div className="h-screen flex items-center justify-center bg-base-100">
         <div className="flex flex-col items-center gap-4">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <Loader2 className="size-8 animate-spin text-primary" />
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/40">
             Redirection vers la page de licence...
           </p>
@@ -77,8 +78,8 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
     return (
       <div className="h-screen flex items-center justify-center bg-base-100">
         <div className="flex flex-col items-center gap-4 max-w-md px-4">
-          <span className="text-4xl text-error">⚠️</span>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-error animate-pulse">
+          <span className="text-4xl text-red-500">⚠️</span>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 animate-pulse">
             Connexion impossible
           </p>
           <p className="text-[10px] text-base-content/50 text-center">
@@ -97,7 +98,7 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
           <button 
             type="button"
             onClick={() => window.location.reload()}
-            className="btn btn-sm btn-primary mt-4"
+            className="mt-4 h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
           >
             Réessayer
           </button>

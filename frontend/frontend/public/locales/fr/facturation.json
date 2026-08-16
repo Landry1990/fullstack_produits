@@ -116,7 +116,8 @@
             "new_button": "Nouveau",
             "existing_button": "Sélectionner",
             "new_tooltip": "Saisir un nouveau bénéficiaire",
-            "select_existing_tooltip": "Sélectionner un bénéficiaire existant"
+            "select_existing_tooltip": "Sélectionner un bénéficiaire existant",
+            "no_results": "Aucun bénéficiaire trouvé"
         },
         "solde_depot_label": "Solde Dépôt",
         "insufficient_deposit_warning": "Attention : Le montant de la vente dépasse le solde du dépôt du client ({{solde}} F).",

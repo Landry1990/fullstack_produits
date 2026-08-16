@@ -20,6 +20,7 @@ class DepotClientSerializer(UppercaseSerializerMixin, serializers.ModelSerialize
 
 class AyantDroitSerializer(UppercaseSerializerMixin, serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.name', read_only=True)
+    client_type = serializers.CharField(source='client.client_type', read_only=True)
 
     class Meta:
         model = AyantDroit

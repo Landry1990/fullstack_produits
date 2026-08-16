@@ -32,6 +32,7 @@ export default function FacturationLeftPanel({ hook, datamatrixEnabled, scan }: 
             setClientSearch={hook.clientsHook.setClientSearch}
             showClientDropdown={hook.clientsHook.showClientDropdown}
             setShowClientDropdown={hook.clientsHook.setShowClientDropdown}
+            ayantDroitSearchResults={hook.clientsHook.ayantDroitSearchResults}
             onOpenCreateClient={(initialName) => {
               hook.clientsHook.setNewClientForm(prev => ({ ...prev, name: initialName }))
               hook.clientsHook.setShowClientCreateModal(true)
@@ -47,6 +48,7 @@ export default function FacturationLeftPanel({ hook, datamatrixEnabled, scan }: 
             setAyantDroitMatricule={hook.clientsHook.setAyantDroitMatricule}
             ayantDroitSociete={hook.clientsHook.ayantDroitSociete}
             setAyantDroitSociete={hook.clientsHook.setAyantDroitSociete}
+            onSelectAyantDroit={hook.clientsHook.handleSelectAyantDroit}
             onEnter={() => hook.searchInputRef.current?.focus()}
             onApplyReward={hook.applyLoyaltyReward}
           />

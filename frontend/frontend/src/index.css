@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap');
 @import "tailwindcss";
-@plugin "daisyui";
+
 
 @custom-variant dark (&:where(.theme-midnight, .theme-midnight *));
 
@@ -29,6 +29,16 @@
   --color-base-200: #f7faf8;
   --color-base-300: #dde8e1;
   --color-base-content: #0f172a;
+
+  /* Semantic status colors (remplace DaisyUI) */
+  --color-success: #22c55e;
+  --color-success-content: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-content: #000000;
+  --color-error: #ef4444;
+  --color-error-content: #ffffff;
+  --color-info: #3b82f6;
+  --color-info-content: #ffffff;
 
   --radius-box: 1rem; /* Plus arrondi pour l'aspect premium */
   --radius-btn: 0.75rem;
@@ -112,7 +122,7 @@ body {
 }
 
 /* Appwrite-like Headings */
-h1, h2, h3, h4, h5, h6, .card-title, .modal-title {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading) !important;
   letter-spacing: -0.02em;
 }
@@ -120,23 +130,6 @@ h1, h2, h3, h4, h5, h6, .card-title, .modal-title {
 /* Force standard font across form elements */
 input, button, textarea, select {
   font-family: inherit;
-}
-
-/* Premium Primary Button */
-.btn-primary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary), #000 10%) 100%);
-  border: none;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary), transparent 80%);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-primary:hover {
-  box-shadow: 0 8px 16px color-mix(in srgb, var(--color-primary), transparent 70%);
-  transform: translateY(-1px);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
 }
 
 /* Pharmacy Theme Custom Styles */
@@ -399,58 +392,7 @@ input[type="week"] {
   border: 1px solid color-mix(in srgb, var(--color-primary), transparent 75%);
 }
 
-/* === BOUTONS PREMIUM === */
-.btn {
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.btn:active { transform: scale(0.97); }
-
-.btn-secondary {
-  background: linear-gradient(135deg, var(--color-secondary) 0%, color-mix(in srgb, var(--color-secondary), #000 12%) 100%);
-  border: none;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-secondary), transparent 80%);
-}
-.btn-secondary:hover {
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-secondary), transparent 70%);
-  transform: translateY(-1px);
-}
-
-.btn-error {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  border: none;
-  box-shadow: 0 4px 12px rgba(239,68,68,0.25);
-}
-.btn-error:hover {
-  box-shadow: 0 6px 16px rgba(239,68,68,0.35);
-  transform: translateY(-1px);
-}
-
-.btn-warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  border: none;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(245,158,11,0.25);
-}
-.btn-warning:hover {
-  box-shadow: 0 6px 16px rgba(245,158,11,0.35);
-  transform: translateY(-1px);
-}
-
-/* === CARDS GLOBALES === */
-.card {
-  border: 1px solid var(--color-base-300);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.07);
-}
-
 /* === INPUTS — FOCUS RING VISIBLE === */
-.input:focus,
-.select:focus,
 textarea:focus {
   outline: none !important;
   border-color: var(--color-primary) !important;
@@ -572,8 +514,7 @@ textarea:focus {
 }
 
 .theme-midnight .pos-glass-input-container input, 
-.theme-midnight .pos-glass-input-container select,
-.theme-midnight .pos-glass-input-container .btn-ghost {
+.theme-midnight .pos-glass-input-container select {
   background: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
@@ -607,11 +548,6 @@ textarea:focus {
 .theme-midnight .pos-glass-input-container .text-base-content\/50,
 .theme-midnight .pos-glass-input-container .text-base-content\/40 {
   color: rgba(255, 255, 255, 0.4) !important;
-}
-
-.theme-midnight .pos-glass-input-container .badge-ghost {
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: white !important;
 }
 
 .pos-sidebar-scroll::-webkit-scrollbar {
@@ -759,7 +695,7 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
 
 /* Tableau compact */
 .table-compact {
-  @apply table table-sm w-full;
+  @apply w-full border-collapse text-sm;
 }
 
 .table-compact th,
@@ -1110,9 +1046,6 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
   color: var(--color-base-content) !important;
 }
 
-.theme-midnight .input,
-.theme-midnight .select,
-.theme-midnight .textarea,
 .theme-midnight input:not([type="checkbox"]):not([type="radio"]),
 .theme-midnight select,
 .theme-midnight textarea {
@@ -1121,19 +1054,9 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
   border-color: var(--color-base-300) !important;
 }
 
-.theme-midnight .input::placeholder,
-.theme-midnight .textarea::placeholder {
+.theme-midnight input::placeholder,
+.theme-midnight textarea::placeholder {
   color: color-mix(in srgb, var(--color-base-content), transparent 60%) !important;
-}
-
-.theme-midnight .btn-ghost,
-.theme-midnight .btn-outline {
-  color: var(--color-base-content) !important;
-  border-color: var(--color-base-300) !important;
-}
-
-.theme-midnight .btn-ghost:hover {
-  background-color: var(--color-base-300) !important;
 }
 
 /* ── Scrollbar ─────────────────────────────────────── */

@@ -469,8 +469,9 @@ class AyantDroitViewSet(viewsets.ModelViewSet):
     serializer_class = AyantDroitSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
-    filter_backends = (DjangoFilterBackend,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ['client']
+    search_fields = ['nom', 'matricule', 'societe', 'client__name']
 
 class DepotClientViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint for viewing deposit history globally."""

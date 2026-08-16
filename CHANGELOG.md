@@ -2,6 +2,124 @@
 
 ---
 
+## 2026-08-16 — Autocomplétion des ayants droit en facturation
+
+### ✨ Fonctionnalités
+
+- **Recherche client et ayant droit unifiée dans le même champ** :
+  - le champ de recherche client affiche désormais les clients **et** les bénéficiaires (ayants droit) côte à côte.
+  - recherche en temps réel sur nom, matricule, société et client (pro/assurance).
+  - sélection d'un ayant droit existant sélectionne automatiquement le client pro/assurance et affiche les champs bénéficiaire (nom, matricule, société).
+  - dropdown avec section "Bénéficiaires" et affichage du client parent.
+  - annulation des requêtes périmées avec `AbortController` + debounce 200ms.
+
+### 🐛 Corrections
+
+- Simplification de la section `AyantDroitSection` : plus d'autocomplétion séparée, affichage des infos du bénéficiaire sélectionné.
+- Correction du type de comparaison `id` dans `AyantDroitSection` (`a.id === id` au lieu de `String(a.id) === id`).
+- Le cache PWA du service worker pouvait afficher l'ancienne version du frontend après déploiement — un **Ctrl+F5** (hard reload) est nécessaire pour invalider le cache.
+
+### Fichiers modifiés
+
+- `backend/api/serializers/clients.py`
+- `backend/api/views/clients.py`
+- `frontend/frontend/src/services/clientService.ts`
+- `frontend/frontend/src/types/crm.ts`
+- `frontend/frontend/src/hooks/useFacturationClients.ts`
+- `frontend/frontend/src/components/facturation/ClientSection.tsx`
+- `frontend/frontend/src/components/facturation/AyantDroitSection.tsx`
+- `frontend/frontend/src/components/facturation/FacturationLeftPanel.tsx`
+- `frontend/frontend/public/locales/fr/facturation.json`
+- `frontend/frontend/public/locales/en/facturation.json`
+
+---
+
+## 2026-08-16 — Optimisation de la recherche client en facturation
+
+### ⚡ Performance / UX
+
+- **Recherche client plus rapide et réactive** en facturation :
+  - debounce passé à 200ms via `use-debounce`.
+  - annulation des requêtes périmées avec `AbortController`.
+  - requêtes paginées (`page_size: 25`) pour réduire la taille des réponses.
+  - saisie d'un seul caractère n'appelle plus le serveur (évite les requêtes inutiles).
+  - tri par pertinence côté client (nom commençant par la recherche, contenu, téléphone) limité aux 10 meilleurs résultats.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useFacturationClients.ts`
+- `frontend/frontend/src/services/clientService.ts`
+
+---
+
+## 2026-08-16 — Renommage du menu Transformations
+
+### 🔄 Changements
+
+- **Menu "Transformations" renommé en "Reconditionnements"** pour un intitulé plus explicite par rapport au métier (reconditionnement de conditionnements source vers unités).
+- Mise à jour des traductions `fr` et `en` (sidebar, stock, dashboard) : libellés de menu, titres de page et alertes dashboard.
+
+### Fichiers modifiés
+
+- `frontend/frontend/public/locales/fr/sidebar.json`
+- `frontend/frontend/public/locales/en/sidebar.json`
+- `frontend/frontend/public/locales/fr/stock.json`
+- `frontend/frontend/public/locales/en/stock.json`
+- `frontend/frontend/public/locales/fr/dashboard.json`
+- `frontend/frontend/public/locales/en/dashboard.json`
+
+---
+
+## 2026-08-16 — Restauration de la colonne Motif par ligne d'avoir
+
+### 🐛 Corrections
+
+- **Colonne "Motif" réintégrée dans le détail par ligne de produit** :
+  - le motif a un sens par produit retourné (`ligne.motif`) et doit donc être visible/renseigné dans les lignes.
+  - `AvoirsDetails.tsx` : ajout d'une colonne "Motif" en lecture seule.
+  - `AvoirsForm.tsx` : ajout d'un champ `Input` motif éditable par ligne.
+  - `AvoirDetailsModal.tsx` : ajout d'une colonne "Motif" en lecture seule.
+  - `useAvoirsData.ts` : initialisation du champ `motif` sur les nouvelles lignes.
+- **Le tableau de liste des avoirs (`AvoirsTable.tsx`) reste sans colonne "Motif"**, car un avoir avec plusieurs produits peut avoir plusieurs motifs différents.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/avoirs/AvoirsDetails.tsx`
+- `frontend/frontend/src/components/avoirs/AvoirsForm.tsx`
+- `frontend/frontend/src/components/products/modals/AvoirDetailsModal.tsx`
+- `frontend/frontend/src/hooks/useAvoirsData.ts`
+- `frontend/frontend/public/locales/fr/stock.json`
+- `frontend/frontend/public/locales/en/stock.json`
+
+---
+
+## 2026-08-16 — Nettoyage des restes DaisyUI
+
+### 🧹 Refonte
+
+- **Suppression du plugin DaisyUI** (`@plugin "daisyui"`) de `index.css`.
+- **Remplacement des classes Daisy mortes** dans `index.css` :
+  - suppression des `.btn-*`, `.card`, `.input`, `.select`, `.textarea` et `.btn-ghost`/`.btn-outline`
+  - suppression des variables de fallback Daisy dans les templates d'impression.
+- **Remplacement des composants Daisy** dans `App.tsx` :
+  - `loading loading-spinner` → `Loader2`
+  - `text-error` → `text-red-500`
+  - `btn btn-sm btn-primary` → bouton Tailwind.
+- **Ajout des couleurs sémantiques** (`success`, `warning`, `error`, `info`) dans le `@theme` de `index.css` pour conserver les classes `text-*` restantes sans Daisy.
+- **Nettoyage des mentions DaisyUI** dans `Checkbox.tsx` et des templates d'impression.
+- **Suppression** de `frontend/frontend/src/index.css.backup`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/index.css`
+- `frontend/frontend/src/App.tsx`
+- `frontend/frontend/src/components/facturation/TicketPreviewModal.tsx`
+- `frontend/frontend/src/utils/print/printHelpers.ts`
+- `frontend/frontend/src/components/ui/Checkbox.tsx`
+- `frontend/frontend/src/index.css.backup` (suppression)
+
+---
+
 ## 2026-08-16 — Suppression de la colonne Motif dans les lignes d'avoirs
 
 ### 🧹 Refonte

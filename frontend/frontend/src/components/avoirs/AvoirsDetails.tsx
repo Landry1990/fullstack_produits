@@ -253,6 +253,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                         <TableHead className="w-12 text-center">{t('stock:avoirs.table.status')}</TableHead>
                                         <TableHead>{t('stock:avoirs.form.table_product')}</TableHead>
                                         <TableHead>{t('stock:avoirs.form.table_lot')}</TableHead>
+                                        <TableHead>{t('stock:avoirs.form.table_motif')}</TableHead>
                                         <TableHead className="text-center">{t('stock:avoirs.form.table_qty')}</TableHead>
                                         <TableHead className="text-right">{t('stock:avoirs.form.table_price')}</TableHead>
                                         <TableHead className="text-right">{t('stock:avoirs.form.table_total')}</TableHead>
@@ -286,6 +287,11 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                     {ligne.date_expiration ? format(new Date(ligne.date_expiration), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS }) : t('stock:avoirs.form.no_date')}
                                                 </div>
                                             </TableCell>
+                                            <TableCell>
+                                                <div className="text-sm text-slate-600 max-w-[180px] truncate">
+                                                    {ligne.motif || '—'}
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="text-center">
                                                 <span className="font-bold text-base bg-slate-100 text-slate-700 px-3 py-1 rounded-lg">
                                                     {ligne.quantity}
@@ -316,7 +322,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
 
                                     {(!selectedAvoir.produits || selectedAvoir.produits.length === 0) && (
                                         <TableRow>
-                                            <TableCell colSpan={isDraft ? 8 : 7} className="text-center py-8 text-slate-500">
+                                            <TableCell colSpan={isDraft ? 9 : 8} className="text-center py-8 text-slate-500">
                                                 {t('stock:avoirs.details.no_lines')}
                                             </TableCell>
                                         </TableRow>
