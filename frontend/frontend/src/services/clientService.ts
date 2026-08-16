@@ -8,13 +8,14 @@ export interface ClientFilters {
 }
 
 const clientService = {
-    getAll: async (filters: ClientFilters = {}, skipCache: boolean = false): Promise<unknown> => {
+    getAll: async (filters: ClientFilters = {}, skipCache: boolean = false, signal?: AbortSignal): Promise<unknown> => {
         const params: Record<string, unknown> = { ...filters };
         if (skipCache) {
             params._t = Date.now(); // Timestamp pour éviter le cache
         }
         const response = await api.get('clients/', {
             params,
+            signal,
             headers: skipCache ? {
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
@@ -44,9 +45,19 @@ const clientService = {
         return response.data;
     },
 
-    getAyantsDroit: async (clientId: number): Promise<AyantDroit[]> => {
+    getAyantsDroit: async (clientId: number, signal?: AbortSignal): Promise<AyantDroit[]> => {
         const response = await api.get<AyantDroit[] | { results: AyantDroit[] }>('ayants-droit/', {
-            params: { client: clientId }
+            params: { client: clientId },
+            signal
+        });
+        return Array.isArray(response.data) ? response.data : (response.data.results || []);
+    },
+
+    searchAyantsDroit: async (query: string, signal?: AbortSignal): Promise<AyantDroit[]> => {
+        if (!query || query.trim().length < 2) return [];
+        const response = await api.get<AyantDroit[] | { results: AyantDroit[] }>('ayants-droit/', {
+            params: { search: query.trim(), page_size: 10 },
+            signal
         });
         return Array.isArray(response.data) ? response.data : (response.data.results || []);
     },

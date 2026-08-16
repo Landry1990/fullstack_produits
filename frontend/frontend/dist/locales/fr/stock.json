@@ -169,8 +169,8 @@
         }
     },
     "transformations": {
-        "title": "Gestion des Transformations",
-        "subtitle": "Transformez vos stocks (ex: Boite vers Unités)",
+        "title": "Gestion des Reconditionnements",
+        "subtitle": "Reconditionnez vos stocks (ex: Boite vers Unités)",
         "new_relation_btn": "+ Nouvelle Relation",
         "tabs": {
             "configured_relations": "Relations Configurées",
@@ -1037,9 +1037,11 @@
             "observations_label": "Observations",
             "observations_placeholder": "Notes internes relatives à ce retour...",
             "search_product_placeholder": "Rechercher un produit à ajouter...",
+            "motif_placeholder": "Motif du retour (par produit)...",
             "empty_lines": "Aucun produit ajouté à l'avoir.",
             "table_product": "Produit",
             "table_lot": "Lot / Expir.",
+            "table_motif": "Motif",
             "table_qty": "Qté",
             "table_price": "Prix Achat",
             "table_total": "Total HT",
@@ -1067,6 +1069,7 @@
             "total_ht": "Total HT",
             "lines_title": "Lignes de l'avoir",
             "lines_subtitle": "Détail des produits retournés",
+            "motif": "Motif",
             "close_line": "Clôturer la ligne",
             "reopen_line": "Réouvrir la ligne",
             "close_all": "Tout clôturer",

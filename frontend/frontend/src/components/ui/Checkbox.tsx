@@ -22,7 +22,7 @@ interface CheckboxProps {
 
 /**
  * Premium Checkbox component using Lucide icons.
- * Replaces native/DaisyUI checkboxes for a more consistent and polished look.
+ * Replaces native checkboxes for a more consistent and polished look.
  */
 export const Checkbox: React.FC<CheckboxProps> = ({
   checked = false,

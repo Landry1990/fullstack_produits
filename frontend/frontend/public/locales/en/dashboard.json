@@ -302,8 +302,8 @@
             "drop_msg": "This week's CA is significantly lower than last week (-30%+)."
         }
     },
-    "transformation_alert_title": "⚡ Transformations needed",
-    "transformation_alert_message_plural": "{{count}} products to transform from their source packaging",
-    "transformation_alert_message": "{{item.destination_name}} (stock: {{item.destination_stock}}) — transform from {{item.source_name}}",
-    "transformation_alert_link": "Go to transformations →"
+    "transformation_alert_title": "⚡ Reconditioning needed",
+    "transformation_alert_message_plural": "{{count}} products to recondition from their source packaging",
+    "transformation_alert_message": "{{item.destination_name}} (stock: {{item.destination_stock}}) — recondition from {{item.source_name}}",
+    "transformation_alert_link": "Go to reconditioning →"
 }
