@@ -1055,6 +1055,7 @@
             "created_at": "Créé le {{date}}",
             "created_by": "par {{name}}",
             "print": "Imprimer",
+            "edit": "Modifier",
             "delete": "Supprimer",
             "validate": "Valider Avoir",
             "fournisseur_info": "Informations Fournisseur",
@@ -1101,12 +1102,16 @@
             "bulk_delete_success": "{{count}} avoirs supprimés",
             "bulk_delete_error": "Erreur lors de la suppression groupée",
             "bulk_validate_success": "{{count}} avoirs validés",
-            "bulk_validate_error": "Erreur lors de la validation groupée"
+            "bulk_validate_error": "Erreur lors de la validation groupée",
+            "ligne_deleted": "Ligne supprimée",
+            "ligne_delete_error": "Erreur lors de la suppression",
+            "dechargement_cancelled": "Déchargement annulé. Stock réintégré."
         },
         "confirms": {
             "back_to_list": "Voulez-vous vraiment quitter ? Les modifications non enregistrées seront perdues.",
             "delete_avoir": "Voulez-vous vraiment supprimer l'avoir brouillon {{numero}} ?",
-            "bulk_delete": "Supprimer ces {{count}} avoirs brouillons ?"
+            "bulk_delete": "Supprimer ces {{count}} avoirs brouillons ?",
+            "delete_ligne": "Supprimer cette ligne de l'avoir ?"
         }
     },
     "ruptures": {

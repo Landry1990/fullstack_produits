@@ -37,6 +37,11 @@ const avoirService = {
         return response.data.avoir;
     },
 
+    annulerDechargement: async (id: number, data: { validated_by_id: number; password: string }): Promise<Avoir> => {
+        const response = await api.post(`avoirs/${id}/annuler_dechargement/`, data);
+        return response.data.avoir;
+    },
+
     // LigneAvoir specific
     createLigne: async (data: Partial<LigneAvoir>): Promise<LigneAvoir> => {
         const response = await api.post<LigneAvoir>('ligne-avoirs/', data);

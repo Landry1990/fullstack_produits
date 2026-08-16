@@ -245,6 +245,7 @@
             "after": "After",
             "empty": "No movements recorded",
             "view_invoice": "Click to view invoice",
+            "view_avoir": "Click to view supplier return",
             "view_order": "Click to view order",
             "stock_after": "Stock after",
             "export_excel": "Export Excel",

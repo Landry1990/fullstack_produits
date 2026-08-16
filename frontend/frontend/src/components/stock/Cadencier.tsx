@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Package, TrendingUp, Calendar, Search, ShoppingCart, Truck, Boxes,
-  ChevronLeft, ChevronRight, RotateCcw
+  ChevronLeft, ChevronRight, RotateCcw, ChevronDown, ChevronUp
 } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -67,6 +67,7 @@ const Cadencier: React.FC = () => {
   const [rayons, setRayons] = useState<{ id: number; name: string }[]>([]);
   const [fournisseurs, setFournisseurs] = useState<{ id: number; name: string }[]>([]);
 
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [filters, setFilters] = useState<FiltreCadencier>({
     type: 'grossiste',
     coverage_days: 30,
@@ -201,6 +202,8 @@ const Cadencier: React.FC = () => {
 
   return (
     <div className="p-2 lg:p-4 h-full flex flex-col space-y-2 lg:space-y-4">
+      {!headerCollapsed && (
+        <>
       <div className="flex items-center gap-2 lg:gap-3">
         <div className="p-1.5 lg:p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
           <TrendingUp className="h-5 w-5 lg:h-6 lg:w-6 text-emerald-600 dark:text-emerald-400" />
@@ -360,13 +363,25 @@ const Cadencier: React.FC = () => {
           </div>
         </Card>
       </div>
+      </>
+      )}
 
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden p-0">
         <div className="px-3 lg:px-4 py-2 lg:py-3 border-b flex justify-between items-center bg-muted/30">
-          <h3 className="font-semibold flex items-center gap-2 text-sm">
-            <Package className="h-4 w-4 text-emerald-600" />
-            {t('stock:cadencier.list', 'Lignes du cadencier')}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold flex items-center gap-2 text-sm">
+              <Package className="h-4 w-4 text-emerald-600" />
+              {t('stock:cadencier.list', 'Lignes du cadencier')}
+            </h3>
+            <button
+              onClick={() => setHeaderCollapsed(!headerCollapsed)}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-emerald-600 transition-colors ml-2 px-2 py-1 rounded hover:bg-emerald-50"
+              title={headerCollapsed ? t('common:show_header', 'Afficher en-tête') : t('common:hide_header', 'Masquer en-tête')}
+            >
+              {headerCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+              {headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
+            </button>
+          </div>
           <span className="text-xs text-muted-foreground">
             {t('stock:cadencier.showing', { count: items.length, total: totalCount })}
           </span>

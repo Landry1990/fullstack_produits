@@ -35,6 +35,7 @@ import PasswordConfirmModal from './PasswordConfirmModal'
 import { StockAdjustmentModal } from './products/modals/StockAdjustmentModal'
 import ImportProductsModal from './products/ImportProductsModal'
 import { ProductDetailsModal as SalesDetailsModal } from './sales/modals/ProductDetailsModal'
+import { AvoirDetailsModal } from './products/modals/AvoirDetailsModal'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -85,6 +86,8 @@ export default function ProduitShadcn() {
   const [showSalesModal, setShowSalesModal] = useState(false)
   const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null)
   const [loadingFacture, setLoadingFacture] = useState(false)
+  const [showAvoirModal, setShowAvoirModal] = useState(false)
+  const [selectedAvoirId, setSelectedAvoirId] = useState<number | null>(null)
   const pendingActionRef = useRef<() => Promise<void>>(() => Promise.resolve())
   const queryClient = useQueryClient()
 
@@ -272,7 +275,7 @@ export default function ProduitShadcn() {
     } finally { setTransferLoading(false) }
   }
 
-  const handleMovementClick = async (item: { facture?: number | null; commande?: number | null; type?: string }) => {
+  const handleMovementClick = async (item: { facture?: number | null; commande?: number | null; avoir?: number | null; type?: string }) => {
     if (item.facture) {
       setSelectedFacture(null)
       setLoadingFacture(true)
@@ -288,6 +291,9 @@ export default function ProduitShadcn() {
       }
     } else if (item.commande) {
       navigate('/app/commandes', { state: { openDetailsId: item.commande } })
+    } else if (item.avoir) {
+      setSelectedAvoirId(item.avoir)
+      setShowAvoirModal(true)
     }
   }
 
@@ -691,6 +697,11 @@ export default function ProduitShadcn() {
         onClose={() => { setShowSalesModal(false); setSelectedFacture(null); }}
         facture={selectedFacture}
         loading={loadingFacture}
+      />
+      <AvoirDetailsModal
+        isOpen={showAvoirModal}
+        onClose={() => { setShowAvoirModal(false); setSelectedAvoirId(null); }}
+        avoirId={selectedAvoirId}
       />
     </div>
   )

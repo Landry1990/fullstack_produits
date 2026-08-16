@@ -49,6 +49,8 @@
     "units_short": "u",
     "days": "jours",
     "refresh": "Actualiser",
+    "show_header": "Afficher",
+    "hide_header": "Masquer",
     "add": "Ajouter",
     "restore": "Restaurer",
     "import": "Import",
