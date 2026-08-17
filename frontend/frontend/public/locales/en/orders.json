@@ -205,7 +205,8 @@
         },
         "pagination": {
             "showing": "Showing {{count}} of {{total}} orders"
-        }
+        },
+        "clear_search": "Clear search"
     },
     "details": {
         "title": "Order #{{id}}",
@@ -231,7 +232,16 @@
         "ug_message": "This order contains {{count}} free units offered by the supplier.",
         "products_list": "Ordered Products List",
         "empty_products": "No products in this order",
-        "price_unit": "Buy Price U."
+        "price_unit": "Buy Price U.",
+        "recap": {
+            "buy_ht": "buy price excl. tax",
+            "buy_vat": "buy vat",
+            "buy_ttc": "buy price ttc",
+            "sell_ttc": "sell price ttc",
+            "margin": "margin",
+            "coeff": "coeff",
+            "precompte": "withholding"
+        }
     },
     "form": {
         "back_to_list": "Back to list",
@@ -273,7 +283,9 @@
         },
         "nav_help": "F2: Search | TAB/ENTER: Navigate | F9: Save",
         "saving": "Saving...",
-        "save_btn": "Save Order"
+        "save_btn": "Save Order",
+        "enable_datamatrix_scan": "Enable Data Matrix scan",
+        "disable_datamatrix_scan": "Disable Data Matrix scan"
     },
     "product_table": {
         "title": "Products ({{count}})",
@@ -306,7 +318,7 @@
             "qty": "Quantity",
             "ug": "F.U",
             "stock": "Stock",
-            "stock_short": "Stk",
+            "stock_short": "Stock",
             "dev_price": "Dev. Price",
             "buy_price_ht": "B.P HT",
             "tva": "VAT %",
@@ -579,6 +591,11 @@
         "new_line": "Add a new line",
         "new_line_desc": "Different lot delivered by the supplier",
         "cancel": "Cancel"
+    },
+    "export_modal": {
+        "table": {
+            "ug": "Free units"
+        }
     }
 }
 

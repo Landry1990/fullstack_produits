@@ -235,7 +235,7 @@ export function useCommandeActions({
 
             const formatM = (val: number | string) => {
                 const n = typeof val === 'string' ? parseFloat(val) : val;
-                return (n || 0).toLocaleString(getLocale());
+                return (Math.round(n) || 0).toLocaleString(getLocale());
             };
 
             const produits = commande.produits || [];

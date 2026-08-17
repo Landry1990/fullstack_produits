@@ -401,7 +401,8 @@
             "new_sale": "Nouvelle Vente",
             "new_product": "Créer un nouveau produit",
             "new_client": "Ajouter un client",
-            "new_order": "Créer une commande fournisseur"
+            "new_order": "Créer une commande fournisseur",
+            "open_products": "Liste de Produits"
         },
         "preview": {
             "title": "God Mode Omnisearch",

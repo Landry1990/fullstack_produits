@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   AlertCircle,
 } from 'lucide-react';
+import { AxiosError } from 'axios';
 import api from '../../services/api';
 import type { Commande } from '../../types';
 import {
@@ -22,6 +23,14 @@ import {
 } from '../shadcn/dialog';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '../shadcn/table';
 import { cn } from '../../lib/utils';
 
 interface ExportCommandeModalProps {
@@ -72,7 +81,7 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
   onClose,
   commande,
 }) => {
-  const { t } = useTranslation('export');
+  const { t } = useTranslation(['export', 'orders']);
   const [selectedCip, setSelectedCip] = useState<'cip1' | 'cip3'>('cip1');
   const [preview, setPreview] = useState<ExportPreview | null>(null);
   const [loading, setLoading] = useState(false);
@@ -95,7 +104,8 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
       );
       setPreview(response.data);
     } catch (err: unknown) {
-      toast.error(err.response?.data?.error || t('errors.load_failed'));
+      const axiosErr = err instanceof AxiosError ? err : undefined;
+      toast.error(axiosErr?.response?.data?.error || t('errors.load_failed'));
     } finally {
       setLoading(false);
     }
@@ -230,31 +240,31 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
                     {t('list.avec_cip')} <Badge variant="default" className="text-[10px] h-4 px-1.5">{preview.produits_avec_cip.length}</Badge>
                   </div>
                   <div className="max-h-40 overflow-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50 text-slate-500 text-xs sticky top-0">
-                        <tr>
-                          <th className="text-left px-4 py-1.5 font-medium">{selectedCip.toUpperCase()}</th>
-                          <th className="text-left px-4 py-1.5 font-medium">{t('table.libelle')}</th>
-                          <th className="text-right px-4 py-1.5 font-medium">{t('table.qte')}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
+                    <Table className="w-full text-sm">
+                      <TableHeader className="bg-slate-50 text-slate-500 text-xs sticky top-0">
+                        <TableRow className="border-slate-100 hover:bg-transparent">
+                          <TableHead className="text-left px-4 py-1.5 font-medium h-auto normal-case tracking-normal">{selectedCip.toUpperCase()}</TableHead>
+                          <TableHead className="text-left px-4 py-1.5 font-medium h-auto normal-case tracking-normal">{t('table.libelle')}</TableHead>
+                          <TableHead className="text-right px-4 py-1.5 font-medium h-auto normal-case tracking-normal">{t('table.qte')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {preview.produits_avec_cip.slice(0, 5).map((p) => (
-                          <tr key={p.id}>
-                            <td className="px-4 py-1.5 font-mono text-xs text-slate-600">{p.cip}</td>
-                            <td className="px-4 py-1.5 truncate max-w-[200px]" title={p.libelle}>{p.libelle}</td>
-                            <td className="px-4 py-1.5 text-right font-medium">{p.quantite}</td>
-                          </tr>
+                          <TableRow key={p.id} className="border-slate-100 hover:bg-transparent">
+                            <TableCell className="px-4 py-1.5 font-mono text-xs text-slate-600">{p.cip}</TableCell>
+                            <TableCell className="px-4 py-1.5 truncate max-w-[200px]" title={p.libelle}>{p.libelle}</TableCell>
+                            <TableCell className="px-4 py-1.5 text-right font-medium">{p.quantite}</TableCell>
+                          </TableRow>
                         ))}
                         {preview.produits_avec_cip.length > 5 && (
-                          <tr>
-                            <td colSpan={3} className="px-4 py-2 text-center text-xs text-slate-500">
+                          <TableRow className="border-slate-100 hover:bg-transparent">
+                            <TableCell colSpan={3} className="px-4 py-2 text-center text-xs text-slate-500">
                               +{preview.produits_avec_cip.length - 5} {t('more')}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         )}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
@@ -267,24 +277,24 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
                     {t('list.sans_cip')} <Badge variant="destructive" className="text-[10px] h-4 px-1.5">{preview.produits_sans_cip.length}</Badge>
                   </div>
                   <div className="max-h-40 overflow-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-amber-50 text-amber-700 text-xs sticky top-0">
-                        <tr>
-                          <th className="text-left px-4 py-1.5 font-medium">{t('table.libelle')}</th>
-                          <th className="text-right px-4 py-1.5 font-medium">{t('table.qte')}</th>
-                          <th className="text-right px-4 py-1.5 font-medium">UG</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-amber-100">
+                    <Table className="w-full text-sm">
+                      <TableHeader className="bg-amber-50 border-amber-100 text-xs sticky top-0">
+                        <TableRow className="border-amber-100 hover:bg-transparent">
+                          <TableHead className="text-left px-4 py-1.5 font-medium h-auto normal-case tracking-normal text-amber-700">{t('table.libelle')}</TableHead>
+                          <TableHead className="text-right px-4 py-1.5 font-medium h-auto normal-case tracking-normal text-amber-700">{t('table.qte')}</TableHead>
+                          <TableHead className="text-right px-4 py-1.5 font-medium h-auto normal-case tracking-normal text-amber-700">{t('orders:export_modal.table.ug')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {preview.produits_sans_cip.map((p) => (
-                          <tr key={p.id} className="bg-amber-50/30">
-                            <td className="px-4 py-1.5 truncate max-w-[200px]" title={p.libelle}>{p.libelle}</td>
-                            <td className="px-4 py-1.5 text-right font-medium">{p.quantite}</td>
-                            <td className="px-4 py-1.5 text-right text-slate-500">{p.unites_gratuites || '-'}</td>
-                          </tr>
+                          <TableRow key={p.id} className="bg-amber-50/30 border-amber-100 hover:bg-amber-50/30">
+                            <TableCell className="px-4 py-1.5 truncate max-w-[200px]" title={p.libelle}>{p.libelle}</TableCell>
+                            <TableCell className="px-4 py-1.5 text-right font-medium">{p.quantite}</TableCell>
+                            <TableCell className="px-4 py-1.5 text-right text-slate-500">{p.unites_gratuites || '-'}</TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}

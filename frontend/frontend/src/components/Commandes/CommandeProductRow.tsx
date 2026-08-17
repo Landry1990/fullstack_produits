@@ -5,6 +5,7 @@ import type { CommandeProduit, ProduitModel } from '../../types';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
 import { Checkbox } from '../shadcn/checkbox';
+import { TableRow, TableCell } from '../shadcn/table';
 import { normalizeNumberInput } from '../../utils/formatters';
 import {
     type FieldConfig,
@@ -92,22 +93,24 @@ export function CommandeProductRow({
     const margeDisplayValue = isMargeFocused
         ? (p.marge || '')
         : (_buyHT > 0 && _sellTTC > 0 ? effectiveMarge.toFixed(2) : (p.marge || ''));
-    const margeForComparison = _buyHT > 0 && _sellTTC > 0 ? effectiveMarge : Number(p.marge || 0);
+    const margeForComparison = _buyHT > 0 && _sellTTC > 0
+        ? Number(effectiveMarge.toFixed(2))
+        : Number((Number(p.marge || 0)).toFixed(2));
 
     return (
         <React.Fragment key={p.id || `row-${index}`}>
-            <tr
+            <TableRow
                 className={`hover:bg-slate-100/50 group border-b border-slate-200 last:border-0 ${selectedRows.has(index) ? 'bg-indigo-50' : ''} ${highlightedIndex === index ? 'ring-2 ring-amber-400 bg-amber-50 animate-pulse' : ''} ${hasMarginIssue ? 'bg-red-50' : ''}`}
             >
-                <td className="px-2">
+                <TableCell className="px-2">
                     <Checkbox
                         checked={selectedRows.has(index)}
                         onCheckedChange={() => toggleRowSelection(index)}
                     />
-                </td>
+                </TableCell>
 
                 {/* Product Info */}
-                <td className="pl-2 py-0.5 min-w-[220px]">
+                <TableCell className="pl-2 py-0.5 min-w-[260px] w-full">
                     <div className="font-medium text-sm">
                         <div className="flex items-center gap-1">
                             <span
@@ -129,22 +132,22 @@ export function CommandeProductRow({
                             )}
                         </div>
                     </div>
-                </td>
+                </TableCell>
 
                 {/* CIP Column */}
-                <td className="pl-2 py-0.5">
+                <TableCell className="pl-2 py-0.5">
                     <span className="text-sm font-mono font-bold text-slate-600">{cip}</span>
-                </td>
+                </TableCell>
 
                 {/* Stock Actuel */}
-                <td className="text-center py-0.5 bg-amber-50/20">
+                <TableCell className="text-center py-0.5 bg-amber-50/20">
                     <span className={`text-xs font-bold px-1 rounded ${currentStock <= 0 ? 'text-red-600 bg-red-50' : 'text-amber-600'}`}>
                         {currentStock}
                     </span>
-                </td>
+                </TableCell>
 
                 {/* Quantity (0) */}
-                <td className="text-right py-0.5">
+                <TableCell className="text-right py-0.5">
                     <Input
                         type="text"
                         data-row={index}
@@ -158,10 +161,10 @@ export function CommandeProductRow({
                         readOnly={!fieldsConfig[0].editable}
                         tabIndex={!fieldsConfig[0].editable ? -1 : 0}
                     />
-                </td>
+                </TableCell>
 
                 {/* Unites Gratuites (1) */}
-                <td className="text-center py-0.5">
+                <TableCell className="text-center py-0.5">
                     <Input
                         type="text"
                         inputMode="numeric"
@@ -182,11 +185,11 @@ export function CommandeProductRow({
                         readOnly={!fieldsConfig[1].editable}
                         tabIndex={!fieldsConfig[1].editable ? -1 : 0}
                     />
-                </td>
+                </TableCell>
 
                 {/* Prix Euro (Direct Only) */}
                 {commandeType === 'DIR' && (
-                    <td className="text-right py-0.5 bg-blue-50/10 border-l border-blue-100">
+                    <TableCell className="text-right py-0.5 bg-blue-50/10 border-l border-blue-100">
                         <Input
                             type="text"
                             data-row={index}
@@ -198,11 +201,11 @@ export function CommandeProductRow({
                             className="h-8 px-2 text-sm w-full text-right focus:bg-blue-50 focus:text-blue-600 font-mono"
                             placeholder="..."
                         />
-                    </td>
+                    </TableCell>
                 )}
 
                 {/* Price (2) */}
-                <td className="text-right py-0.5">
+                <TableCell className="text-right py-0.5">
                     <Input
                         type="text"
                         data-row={index}
@@ -216,19 +219,19 @@ export function CommandeProductRow({
                         readOnly={!fieldsConfig[2].editable}
                         tabIndex={!fieldsConfig[2].editable ? -1 : 0}
                     />
-                </td>
+                </TableCell>
 
                 {/* Montant = qty × price */}
-                <td className="text-right py-0.5 font-bold text-indigo-600 font-mono">
+                <TableCell className="text-right py-0.5 font-bold text-indigo-600 font-mono">
                     {(() => {
                         const qty = Number(p.quantity || 0);
                         const price = Number(p.price || 0);
                         return (qty * price).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                     })()}
-                </td>
+                </TableCell>
 
                 {/* TVA (3) */}
-                <td className="text-right py-0.5">
+                <TableCell className="text-right py-0.5">
                     <Input
                         type="text"
                         data-row={index}
@@ -242,12 +245,12 @@ export function CommandeProductRow({
                         readOnly={!fieldsConfig[3].editable}
                         tabIndex={!fieldsConfig[3].editable ? -1 : 0}
                     />
-                </td>
+                </TableCell>
 
                 {/* Marge (4) — affiche la marge effective calculée depuis les prix réels
                      (cohérente avec le récap global). Au focus, bascule sur la valeur brute
                      stockée pour permettre l'édition. */}
-                <td className="text-right py-0.5">
+                <TableCell className="text-right py-0.5">
                     <div className="relative flex items-center justify-end">
                         <Input
                             type="text"
@@ -269,10 +272,10 @@ export function CommandeProductRow({
                             </div>
                         )}
                     </div>
-                </td>
+                </TableCell>
 
                 {/* Selling Price (5) */}
-                <td className="text-right py-0.5 pr-3">
+                <TableCell className="text-right py-0.5 pr-3">
                     <Input
                         type="text"
                         data-row={index}
@@ -287,10 +290,10 @@ export function CommandeProductRow({
                         readOnly={!fieldsConfig[5].editable}
                         tabIndex={!fieldsConfig[5].editable ? -1 : 0}
                     />
-                </td>
+                </TableCell>
 
                 {/* Lot (6) */}
-                <td className="text-left py-0.5">
+                <TableCell className="text-left py-0.5">
                     <Input
                         type="text"
                         data-row={index}
@@ -299,16 +302,16 @@ export function CommandeProductRow({
                         onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 7 : 6))}
                         onFocus={handleSelectAll}
-                        className={`h-9 px-2.5 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[6].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
+                        className={`h-8 px-2 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[6].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
                         placeholder="Lot"
                         autoFocus={focusedField?.row === index && focusedField?.field === 6}
                         readOnly={!fieldsConfig[6].editable}
                         tabIndex={!fieldsConfig[6].editable ? -1 : 0}
                     />
-                </td>
+                </TableCell>
 
                 {/* Expiration (7) */}
-                <td className="text-left py-0.5">
+                <TableCell className="text-left py-0.5">
                     <Input
                         type="text"
                         data-row={index}
@@ -323,16 +326,16 @@ export function CommandeProductRow({
                         }}
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 8 : 7))}
                         onFocus={handleSelectAll}
-                        className={`h-9 px-2.5 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[7].editable ? 'bg-slate-100 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'border-red-500 text-red-600' : ''}`}
+                        className={`h-8 px-2 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[7].editable ? 'bg-slate-100 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'border-red-500 text-red-600' : ''}`}
                         placeholder="MM/YY"
                         maxLength={5}
                         autoFocus={focusedField?.row === index && focusedField?.field === 7}
                         readOnly={!fieldsConfig[7].editable}
                         tabIndex={!fieldsConfig[7].editable ? -1 : 0}
                     />
-                </td>
+                </TableCell>
 
-                <td className="w-12 text-center p-0">
+                <TableCell className="w-12 text-center p-0">
                     <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
                         <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-600" onClick={onToggleExpand} aria-label={t('common:details')}>
                             <Info className="size-3.5" />
@@ -341,8 +344,8 @@ export function CommandeProductRow({
                             <Trash2 className="size-3.5" />
                         </Button>
                     </div>
-                </td>
-            </tr>
+                </TableCell>
+            </TableRow>
         </React.Fragment>
     );
 }

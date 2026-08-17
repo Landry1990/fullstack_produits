@@ -58,19 +58,25 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   const activeResultCount = searchMode === 'packs' ? packResults.length :
     searchMode === 'dci' ? (selectedDci ? dciProducts.length : dciResults.length) :
     (searchMode === 'products' && !searchQuery ? recentProducts.length : results.length)
+  const isActiveItem = (itemProps: { className?: string; style?: React.CSSProperties }) =>
+    Object.keys(itemProps.style || {}).length > 0 ||
+    itemProps.className?.includes('active') ||
+    itemProps.className?.includes('shadow')
+
   const activeIndex = React.useMemo(() => {
     if (!getItemProps) return -1
     for (let i = 0; i < activeResultCount; i++) {
-      if (getItemProps(i).className?.includes('shadow')) return i
+      if (isActiveItem(getItemProps(i))) return i
     }
     return -1
   }, [getItemProps, activeResultCount])
 
   React.useEffect(() => {
     if (activeIndex < 0 || !resultsContainerRef.current) return
-    const el = resultsContainerRef.current.querySelector(`[data-search-index="${activeIndex}"]`)
+    const item = getItemProps?.(activeIndex)
+    const el = item?.id ? document.getElementById(item.id) : resultsContainerRef.current.querySelector(`[data-search-index="${activeIndex}"]`)
     el?.scrollIntoView({ block: 'nearest' })
-  }, [activeIndex])
+  }, [activeIndex, getItemProps])
   
   const handleModeChange = (mode: SearchMode) => {
     if (onModeChange) {
@@ -190,7 +196,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   
   const renderProductItem = (item: SearchResult, idx: number) => {
     const itemProps = getItemProps?.(idx) || { className: '', style: {} }
-    const isActive = itemProps.className?.includes('shadow')
+    const isActive = isActiveItem(itemProps)
     const stock = item.stock ?? 0
     const stockMin = item.stock_minimum ?? 0
     const canSellNegativeStock = skipStockCheck || user?.is_superuser || user?.profile?.can_sell_negative_stock || user?.can_sell_negative_stock
@@ -276,7 +282,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   
   const renderPackItem = (pack: PackResult, idx: number) => {
     const itemProps = getItemProps?.(idx) || { className: '', style: {} }
-    const isSelected = itemProps.className?.includes('shadow')
+    const isSelected = isActiveItem(itemProps)
     
     return (
       <div
@@ -303,7 +309,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   
   const renderDciItem = (dci: DciResult, idx: number) => {
     const itemProps = getItemProps?.(idx) || { className: '', style: {} }
-    const isSelected = itemProps.className?.includes('shadow')
+    const isSelected = isActiveItem(itemProps)
     
     return (
       <div

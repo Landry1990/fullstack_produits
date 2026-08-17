@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, CheckCircle2, Lock, Unlock, Printer, PackageX, CheckCheck, Trash2, Undo2, Pencil } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Lock, Unlock, Printer, PackageX, CheckCheck, Trash2, Undo2, Pencil, AlertTriangle } from 'lucide-react';
 import type { UseAvoirsDataReturn } from '../../hooks/useAvoirsData';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
@@ -160,6 +160,15 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                     )}
                 </div>
             </Card>
+
+            {!selectedAvoir.stock_decharge && (
+                <Card className="bg-amber-50 border-amber-200 text-amber-800 p-4 flex items-start gap-3">
+                    <AlertTriangle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-sm font-medium">
+                        {t('avoirs.details.unload_warning', { defaultValue: "Le stock n'a pas été déchargé. Pensez à décharger pour retirer physiquement les produits du stock." })}
+                    </p>
+                </Card>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Col: Info Cards */}

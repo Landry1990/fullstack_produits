@@ -890,7 +890,8 @@
             "sale_price": "Prix Vente",
             "ca": "CA",
             "ca_percent": "% CA",
-            "cumulated_percent": "% Cumulé",
+            "rotation": "Rotation",
+            "margin": "Marge",
             "category": "Catégorie",
             "no_products": "Aucun produit dans cette catégorie",
             "shortage_badge": "Rupture"
@@ -1085,7 +1086,8 @@
             "reopen_line": "Réouvrir la ligne",
             "close_all": "Tout clôturer",
             "reopen_all": "Tout réouvrir",
-            "no_lines": "Cet avoir ne contient aucune ligne."
+            "no_lines": "Cet avoir ne contient aucune ligne.",
+            "unload_warning": "Stock non déchargé : pensez à décharger pour retirer physiquement les produits du stock."
         },
         "modals": {
             "lot_title": "Sélectionner un Lot pour le Retour",
@@ -1123,6 +1125,7 @@
         },
         "confirms": {
             "back_to_list": "Voulez-vous vraiment quitter ? Les modifications non enregistrées seront perdues.",
+            "back_unloaded": "Le stock n'a pas été déchargé. Voulez-vous vraiment retourner à la liste sans décharger ?",
             "delete_avoir": "Voulez-vous vraiment supprimer l'avoir brouillon {{numero}} ?",
             "bulk_delete": "Supprimer ces {{count}} avoirs brouillons ?",
             "delete_ligne": "Supprimer cette ligne de l'avoir ?"
