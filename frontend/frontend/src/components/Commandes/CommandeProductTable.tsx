@@ -126,14 +126,14 @@ export default function CommandeProductTable({
                                 </th>
                                 <th className="!bg-slate-100 pl-2 font-bold w-[22%] min-w-[220px]">{t('orders:product_table.headers.product')}</th>
                                 <th className="!bg-slate-100 pl-2 font-bold w-24">{t('orders:product_table.headers.cip')}</th>
-                                <th className="!bg-slate-100 text-center w-14 text-amber-600 font-bold border-x border-slate-300/30">{t('orders:product_table.info_row.stock', 'Stk')}</th>
+                                <th className="!bg-slate-100 text-center w-14 text-amber-600 font-bold border-x border-slate-300/30">{t('orders:product_table.headers.stock_short')}</th>
                                 <th className="!bg-slate-100 text-right w-16 font-bold">{t('orders:product_table.headers.qty')}</th>
                                 <th className="!bg-slate-100 text-center w-14 font-bold text-emerald-600 border-l border-slate-300/30">{t('orders:product_table.headers.ug')}</th>
                                 {commandeType === 'DIR' && (
                                     <th className="!bg-slate-100 text-right w-24 font-bold text-blue-600 border-l border-slate-300/30">{t('orders:product_table.headers.dev_price')}</th>
                                 )}
                                 <th className="!bg-slate-100 text-right w-24 font-bold border-l border-slate-300/30">{t('orders:product_table.headers.buy_price_ht')}</th>
-                                <th className="!bg-slate-100 text-right w-24 font-bold text-indigo-600 border-l border-slate-300/30">Montant</th>
+                                <th className="!bg-slate-100 text-right w-24 font-bold text-indigo-600 border-l border-slate-300/30">{t('orders:product_table.headers.amount')}</th>
                                 <th className="!bg-slate-100 text-right w-16 font-bold">{t('orders:product_table.headers.tva')}</th>
                                 <th className="!bg-slate-100 text-right w-16 font-bold">{t('orders:product_table.headers.margin')}</th>
                                 <th className="!bg-slate-100 text-right w-24 font-bold border-l border-slate-300/30 pr-3">{t('orders:product_table.headers.sell_price')}</th>
@@ -178,7 +178,7 @@ export default function CommandeProductTable({
 
                         <tfoot className="sticky bottom-0 z-30">
                             <tr className="!bg-slate-100 text-[10px] uppercase font-bold text-slate-500 border-t-2 border-slate-300 shadow-[0_-2px_4px_rgba(0,0,0,0.05)]">
-                                <th colSpan={3} className="!bg-slate-100 pl-4 py-2">Fin de liste - {commandeProduits.length} articles</th>
+                                <th colSpan={3} className="!bg-slate-100 pl-4 py-2">{t('orders:product_table.end_of_list', { count: commandeProduits.length })}</th>
                                 <th className="!bg-slate-100 py-2"></th>
                                 <th className="!bg-slate-100 py-2"></th>
                                 <th className="!bg-slate-100 py-2"></th>

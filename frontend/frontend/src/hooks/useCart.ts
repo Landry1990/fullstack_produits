@@ -11,6 +11,30 @@ import { showExpirationToast } from '../utils/toastUtils'
 import { safeStorage } from '../utils/storage'
 import { logger } from '../utils/logger'
 
+function playAddBeep() {
+  try {
+    const AudioCtx = (window.AudioContext || ((window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext))
+    if (!AudioCtx) return
+    const ctx = new AudioCtx()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.type = 'sine'
+    osc.frequency.value = 600
+    gain.gain.setValueAtTime(0.08, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.1)
+  } catch { /* ignore */ }
+}
+
+function triggerAddHaptic() {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator && typeof navigator.vibrate === 'function') {
+    try { navigator.vibrate(40) } catch { /* ignore */ }
+  }
+}
+
 interface UseCartOptions {
     apiBaseUrl?: string
     onRequirePrescription?: () => void
@@ -74,7 +98,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                 } else if (onSubstitution) {
                     onSubstitution(fullProduit)
                 }
-                return
+                return undefined
             }
 
             setLignesFacture(prevLignes => {
@@ -195,6 +219,10 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                 const daysUntilExpiration = differenceInDays(parseISO(expirationToCheck), new Date())
                 showExpirationToast(daysUntilExpiration)
             }
+
+            playAddBeep()
+            triggerAddHaptic()
+            return fullProduit
         } catch (err) {
             logger.error('Erreur lors du chargement des détails du produit:', err)
             toast.error(t('facturation:messages.product_detail_load_error'))

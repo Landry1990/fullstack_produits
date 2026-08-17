@@ -9,6 +9,7 @@ import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
 import { FacturesTable } from './caisse/FacturesTable'
 import { CouponPanel } from './caisse/CouponPanel'
 import { CaisseModals } from './caisse/CaisseModals'
+import PremiumModal from './common/PremiumModal'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { Keyboard } from 'lucide-react'
@@ -59,6 +60,8 @@ const _navigate = useNavigate()
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0)
   // État pour ouvrir le preview produits via raccourci clavier
   const [previewFactureId, setPreviewFactureId] = useState<number | null>(null)
+  // État pour afficher l'aide des raccourcis
+  const [showCaisseHelp, setShowCaisseHelp] = useState(false)
   
   // États pour le multi-caisse et sessions — gérés par useCaisseSession
   const {
@@ -226,6 +229,7 @@ const _navigate = useNavigate()
         setIsDetailsCouponModalOpen(false)
         setShowTicketPreview(false)
       },
+      onToggleShowHelp: () => setShowCaisseHelp(prev => !prev),
       canCashOut: user?.can_cash_out || user?.is_superuser || false
     },
     {
@@ -236,7 +240,8 @@ const _navigate = useNavigate()
       isDetailsCouponModalOpen,
       isSudoModalOpen,
       showTicketPreview,
-      isCouponPanelOpen
+      isCouponPanelOpen,
+      showCaisseHelp
     },
     setSelectedRowIndex
   )
@@ -546,6 +551,46 @@ const _navigate = useNavigate()
           message: sudoState.message ?? '',
         }}
       />
+      <PremiumModal
+        isOpen={showCaisseHelp}
+        onClose={() => setShowCaisseHelp(false)}
+        title={t('shortcuts.title', { defaultValue: 'Raccourcis :' })}
+        icon={<Keyboard className="size-5" />}
+        footer={
+          <button
+            type="button"
+            onClick={() => setShowCaisseHelp(false)}
+            className="inline-flex items-center justify-center h-8 px-4 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+          >
+            {t('shortcuts.close', { defaultValue: 'Fermer' })}
+          </button>
+        }
+      >
+        <div className="p-5 space-y-2 text-sm">
+          <div className="grid grid-cols-2 gap-2">
+            <span className="font-mono font-bold text-slate-700">↑ ↓ / j k</span>
+            <span className="text-slate-600">{t('shortcuts.navigate', { defaultValue: 'Naviguer' })}</span>
+            <span className="font-mono font-bold text-slate-700">Home / End</span>
+            <span className="text-slate-600">{t('shortcuts.home_end', { defaultValue: 'Début / Fin' })}</span>
+            <span className="font-mono font-bold text-slate-700">PageUp / PageDown</span>
+            <span className="text-slate-600">{t('shortcuts.page', { defaultValue: 'Page précédente / suivante' })}</span>
+            <span className="font-mono font-bold text-slate-700">1 - 9</span>
+            <span className="text-slate-600">{t('shortcuts.quick_select', { defaultValue: 'Sélection rapide' })}</span>
+            <span className="font-mono font-bold text-slate-700">Entrée</span>
+            <span className="text-slate-600">{t('shortcuts.cash_in', { defaultValue: 'Encaisser' })}</span>
+            <span className="font-mono font-bold text-slate-700">Espace</span>
+            <span className="text-slate-600">{t('shortcuts.view_products', { defaultValue: 'Voir les produits' })}</span>
+            <span className="font-mono font-bold text-slate-700">c</span>
+            <span className="text-slate-600">{t('shortcuts.coupon', { defaultValue: 'Appliquer coupon' })}</span>
+            <span className="font-mono font-bold text-slate-700">r</span>
+            <span className="text-slate-600">{t('shortcuts.refresh', { defaultValue: 'Rafraîchir' })}</span>
+            <span className="font-mono font-bold text-slate-700">?</span>
+            <span className="text-slate-600">{t('shortcuts.help', { defaultValue: 'Aide' })}</span>
+            <span className="font-mono font-bold text-slate-700">Esc</span>
+            <span className="text-slate-600">{t('shortcuts.close', { defaultValue: 'Fermer' })}</span>
+          </div>
+        </div>
+      </PremiumModal>
     </div>
   )
 }

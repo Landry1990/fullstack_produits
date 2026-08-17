@@ -4,6 +4,20 @@ import PremiumModal from '../common/PremiumModal'
 import { formatCurrency } from '../../utils/formatters'
 import { getPaymentModeWithIcon } from '../../config/paymentModes'
 
+interface ClosingReport {
+  poste?: { nom?: string }
+  session?: {
+    date_fermeture?: string
+    fond_de_caisse?: number
+    montant_encaisse?: number
+    montant_theorique?: number
+  }
+  hide_amounts?: boolean
+  details_par_mode?: Record<string, number>
+  transactions?: { total?: number }
+  detail?: string
+}
+
 interface ClosingReportModalProps {
   isOpen: boolean
   onClose: () => void
@@ -16,6 +30,7 @@ export function ClosingReportModal({
   report
 }: ClosingReportModalProps) {
   const { t } = useTranslation('caisse')
+  const r = report as ClosingReport
 
   return (
     <PremiumModal
@@ -34,30 +49,30 @@ export function ClosingReportModal({
         </div>
       }
     >
-      {report && (
+      {!!report && (
         <div className="p-5 space-y-4">
           {/* En-tête */}
           <div className="text-center border-b border-slate-200 pb-4">
-            <h3 className="font-bold text-lg text-slate-800">{report.poste?.nom}</h3>
+            <h3 className="font-bold text-lg text-slate-800">{r.poste?.nom}</h3>
             <p className="text-sm text-slate-500">
-              {new Date(report.session?.date_fermeture).toLocaleString('fr-FR')}
+              {r.session?.date_fermeture ? new Date(r.session.date_fermeture).toLocaleString('fr-FR') : ''}
             </p>
           </div>
 
           {/* Stats - masquées si sécurité activée */}
-          {!report.hide_amounts ? (
+          {!r.hide_amounts ? (
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white p-3 rounded-lg border border-slate-200">
                   <p className="text-[10px] uppercase text-slate-500">{t('cash_session.fond_initial', { defaultValue: 'Fond Initial' })}</p>
                   <p className="font-mono font-bold text-lg text-slate-800">
-                    {report.session?.fond_de_caisse?.toLocaleString('fr-FR')} F
+                    {r.session?.fond_de_caisse?.toLocaleString('fr-FR')} F
                   </p>
                 </div>
                 <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
                   <p className="text-[10px] uppercase text-emerald-600">{t('cash_session.encaisse', { defaultValue: 'Encaissé' })}</p>
                   <p className="font-mono font-bold text-lg text-emerald-600">
-                    {report.session?.montant_encaisse?.toLocaleString('fr-FR')} F
+                    {r.session?.montant_encaisse?.toLocaleString('fr-FR')} F
                   </p>
                 </div>
               </div>
@@ -68,18 +83,18 @@ export function ClosingReportModal({
                   {t('cash_session.total_theorique', { defaultValue: 'Total Théorique en Caisse' })}
                 </p>
                 <p className="font-mono font-bold text-2xl text-emerald-600">
-                  {report.session?.montant_theorique?.toLocaleString('fr-FR')} F
+                  {r.session?.montant_theorique?.toLocaleString('fr-FR')} F
                 </p>
               </div>
 
               {/* Détails par mode de règlement */}
-              {report.details_par_mode && Object.keys(report.details_par_mode).length > 0 && (
+              {r.details_par_mode && Object.keys(r.details_par_mode).length > 0 && (
                 <div className="bg-white p-4 rounded-lg border border-slate-200">
                   <p className="text-[10px] uppercase text-slate-500 font-semibold mb-2">
                     {t('cash_session.details_by_mode', { defaultValue: 'Détails par mode de règlement' })}
                   </p>
                   <div className="space-y-1.5">
-                    {Object.entries(report.details_par_mode)
+                    {Object.entries(r.details_par_mode)
                       .filter(([, v]) => Number(v) > 0)
                       .sort(([, a], [, b]) => Number(b) - Number(a))
                       .map(([mode, montant]) => (
@@ -110,12 +125,14 @@ export function ClosingReportModal({
           {/* Transactions */}
           <div className="flex justify-between items-center text-sm">
             <span className="text-slate-500">{t('cash_session.transactions', { defaultValue: 'Transactions' })}</span>
-            <span className="font-bold text-slate-800">{report.transactions?.total || 0}</span>
+            <span className="font-bold text-slate-800">{r.transactions?.total || 0}</span>
           </div>
 
           {/* Message de confirmation */}
           <div className="text-center pt-2">
-            <p className="text-sm text-emerald-600 font-medium">✓ {report.detail}</p>
+            <p className="text-sm text-emerald-600 font-medium">
+              ✓ {r.hide_amounts && typeof r.detail === 'string' ? r.detail.replace(/\d[\d\s,.]*(?:\s*F)?/g, '***') : r.detail}
+            </p>
           </div>
         </div>
       )}

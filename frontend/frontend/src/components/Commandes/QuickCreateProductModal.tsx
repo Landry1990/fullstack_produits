@@ -2,13 +2,21 @@ import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { X, Zap, Pencil, Loader2 } from 'lucide-react';
+import { Zap, Pencil, Loader2 } from 'lucide-react';
 import api from '../../services/api';
 import { useTVA } from '../../hooks/useTVA';
 import { normalizeNumberInput } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
+import { Select } from '../shadcn/select';
 import type { ProduitModel, Rayon } from '../../types';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '../shadcn/dialog';
 
 interface QuickCreateProductModalProps {
   open: boolean;
@@ -29,7 +37,6 @@ export default function QuickCreateProductModal({
   const { tvaList } = useTVA();
   const isEditMode = !!editProduct;
 
-  // Auto-fetch rayons if not provided via props
   const [localRayons, setLocalRayons] = useState<Rayon[]>([]);
 
   useEffect(() => {
@@ -120,7 +127,7 @@ export default function QuickCreateProductModal({
       if (isEditMode && editProduct) {
         const res = await api.patch<ProduitModel>(`produits/${editProduct.id}/`, payload);
         data = res.data;
-        toast.success(t('orders:messages.quick_product_updated', { name: data.name, defaultValue: `Produit "${data.name}" modifié` }));
+        toast.success(t('orders:messages.quick_product_updated', { name: data.name }));
       } else {
         payload.stock = 0;
         payload.stock_alert = 0;
@@ -151,36 +158,28 @@ export default function QuickCreateProductModal({
     }
   }
 
-  if (!open) return null;
-
   const Icon = isEditMode ? Pencil : Zap;
   const title = isEditMode
-    ? t('orders:quick_create.edit_title', { defaultValue: 'Modifier le produit' })
+    ? t('orders:quick_create.edit_title')
     : t('orders:quick_create.title');
   const submitLabel = isEditMode
-    ? t('common:save', { defaultValue: 'Enregistrer' })
+    ? t('common:save')
     : t('orders:quick_create.submit');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg">
-        {/* Header */}
-        <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className={`p-2 rounded-lg ${isEditMode ? 'bg-blue-50' : 'bg-emerald-50'}`}>
-              <Icon className={`size-5 ${isEditMode ? 'text-blue-600' : 'text-emerald-600'}`} />
-            </div>
-            <h3 className="text-base font-bold text-slate-800">
-              {title}
-            </h3>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="max-w-lg p-0 overflow-hidden">
+        <div className="px-5 py-3 border-b border-slate-200 flex items-center gap-2.5">
+          <div className={`p-2 rounded-lg ${isEditMode ? 'bg-blue-50' : 'bg-emerald-50'}`}>
+            <Icon className={`size-5 ${isEditMode ? 'text-blue-600' : 'text-emerald-600'}`} />
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors">
-            <X className="size-5" />
-          </button>
+          <div className="flex-1 min-w-0">
+            <DialogHeader className="text-left space-y-0 p-0">
+              <DialogTitle className="text-base font-bold text-slate-800">{title}</DialogTitle>
+            </DialogHeader>
+          </div>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-red-600 text-sm">
@@ -188,12 +187,16 @@ export default function QuickCreateProductModal({
             </div>
           )}
 
-          {/* Nom du produit */}
+          <DialogDescription className="sr-only">
+            {isEditMode ? t('orders:quick_create.edit_title') : t('orders:quick_create.title')}
+          </DialogDescription>
+
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            <label htmlFor="quick-product-name" className="block text-xs font-semibold text-slate-600 mb-1.5">
               {t('products:form.name')} <span className="text-red-500">*</span>
             </label>
             <Input
+              id="quick-product-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -204,13 +207,13 @@ export default function QuickCreateProductModal({
             />
           </div>
 
-          {/* Prix achat + Prix vente */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label htmlFor="quick-product-cost" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.cost_price')} <span className="text-red-500">*</span>
               </label>
               <Input
+                id="quick-product-cost"
                 type="number"
                 value={costPrice}
                 onChange={(e) => setCostPrice(e.target.value)}
@@ -222,10 +225,11 @@ export default function QuickCreateProductModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label htmlFor="quick-product-sell" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.selling_price')} <span className="text-red-500">*</span>
               </label>
               <Input
+                id="quick-product-sell"
                 type="number"
                 value={sellingPrice}
                 onChange={(e) => setSellingPrice(e.target.value)}
@@ -238,30 +242,31 @@ export default function QuickCreateProductModal({
             </div>
           </div>
 
-          {/* TVA + Rayon */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label htmlFor="quick-product-tva" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.tva')}
               </label>
-              <select
+              <Select
+                id="quick-product-tva"
                 value={tva}
                 onChange={(e) => setTva(e.target.value)}
-                className="w-full h-11 rounded-lg border border-slate-200 bg-white text-slate-800 px-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                className="h-11 text-sm"
               >
                 {tvaList.map(t => (
                   <option key={t.id} value={t.taux}>{t.taux}%</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label htmlFor="quick-product-rayon" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.rayon')}
               </label>
-              <select
+              <Select
+                id="quick-product-rayon"
                 value={rayon}
                 onChange={(e) => setRayon(e.target.value)}
-                className="w-full h-11 rounded-lg border border-slate-200 bg-white text-slate-800 px-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                className="h-11 text-sm"
               >
                 <option value="">{t('products:form.select_rayon')}</option>
                 {rayons.flatMap(parent => {
@@ -275,16 +280,16 @@ export default function QuickCreateProductModal({
                     </optgroup>
                   )];
                 })}
-              </select>
+              </Select>
             </div>
           </div>
 
-          {/* CIP1 / CIP2 / CIP3 */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            <label htmlFor="quick-product-cip1" className="block text-xs font-semibold text-slate-600 mb-1.5">
               {t('products:form.cip1')}
             </label>
             <Input
+              id="quick-product-cip1"
               type="text"
               value={cip1}
               onChange={(e) => setCip1(e.target.value)}
@@ -294,10 +299,11 @@ export default function QuickCreateProductModal({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label htmlFor="quick-product-cip2" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.cip2')}
               </label>
               <Input
+                id="quick-product-cip2"
                 type="text"
                 value={cip2}
                 onChange={(e) => setCip2(e.target.value)}
@@ -306,10 +312,11 @@ export default function QuickCreateProductModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label htmlFor="quick-product-cip3" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.cip3')}
               </label>
               <Input
+                id="quick-product-cip3"
                 type="text"
                 value={cip3}
                 onChange={(e) => setCip3(e.target.value)}
@@ -319,7 +326,6 @@ export default function QuickCreateProductModal({
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="ghost" onClick={onClose} className="h-10 px-4">
               {t('common:cancel')}
@@ -334,7 +340,7 @@ export default function QuickCreateProductModal({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

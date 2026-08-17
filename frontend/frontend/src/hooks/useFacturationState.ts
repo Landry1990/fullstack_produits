@@ -36,6 +36,7 @@ export function useFacturationState() {
 
   // --- Core local state ---
   const [loading, setLoading] = useState(false)
+  const saleInProgressRef = useRef(false)
   const [isRetrocession, setIsRetrocession] = useState(false)
   const [isFactureA4, setIsFactureA4] = useState(false)
   const [sortBy, setSortBy] = useState<'chrono' | 'stock' | 'name' | 'qty'>('chrono')
@@ -266,14 +267,19 @@ export function useFacturationState() {
 
   // --- Complete Sale Handler ---
   const handleCompleteSale = async (sudoCredentials?: { validatorId: number, password: string }) => {
+    if (saleInProgressRef.current) return
+    saleInProgressRef.current = true
+
     // En mode caisse centrale, une caisse doit être ouverte avant toute vente
     if (multiCaisse.centralizedCashRegister && !hasActiveCaisse) {
       setError(t('facturation:messages.no_cash_register_open'))
+      saleInProgressRef.current = false
       return
     }
 
     // Sudo required when sending to centralized cash register or when selling on an opened cash register point
     if ((multiCaisse.centralizedCashRegister || isPosteCaisseActive) && !sudoCredentials) {
+      saleInProgressRef.current = false
       requireSudo(async (validatorId, password) => {
         await handleCompleteSale({ validatorId, password })
       }, {
@@ -334,7 +340,11 @@ export function useFacturationState() {
       isFactureA4: isFactureA4,
       is_avoir_client: ui.isAvoirClient
     }
-    await completeSale(params)
+    try {
+      await completeSale(params)
+    } finally {
+      saleInProgressRef.current = false
+    }
   }
 
   const applyLoyaltyReward = useCallback(() => {

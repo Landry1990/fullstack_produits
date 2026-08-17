@@ -458,6 +458,8 @@ export function useFacturationActions({
             clientName,
             useManualClient: clientsHook.useManualClient,
             manualClientName: clientsHook.manualClientName,
+            vendeurId: user?.id ?? null,
+            vendeurName: user?.username || (user ? String(user.id) : ''),
             lignes: cart.lignesFacture,
             remise: ui.remiseGlobale,
             remiseMode: ui.remiseMode,

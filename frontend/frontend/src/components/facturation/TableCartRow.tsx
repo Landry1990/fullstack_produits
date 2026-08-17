@@ -26,6 +26,7 @@ export interface TableCartRowProps {
   maxDiscount: number
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number
+  flashId?: number | null
 }
 
 export default React.memo(function TableCartRow({
@@ -45,12 +46,13 @@ export default React.memo(function TableCartRow({
   maxDiscount,
   t,
   refreshTrigger,
+  flashId,
 }: TableCartRowProps) {
   const {
     localQty,
     localPrice, setLocalPrice,
     localRemise, setLocalRemise,
-    handleQtyChange, handleQtySubmit,
+    handleQtyChange, handleQtyStep, handleQtySubmit,
     handlePriceSubmit, handleRemiseSubmit,
     isReturn,
   } = useCartRowState({ ligne, updateQuantite, updatePrix, updateRemiseProduit, maxDiscount, t, refreshTrigger })
@@ -61,14 +63,15 @@ export default React.memo(function TableCartRow({
     <TableRow
       className={`hover:bg-slate-50/50 group border-b border-slate-100 last:border-0 cursor-pointer transition-colors duration-150
         ${index === selectedIndex ? '!bg-emerald-50/70 border-l-4 border-l-emerald-500 shadow-sm' : ''}
-        ${isReturn ? 'bg-red-50 text-red-600 font-semibold' : ''}`}
+        ${isReturn ? 'bg-red-50 text-red-600 font-semibold' : ''}
+        ${flashId === ligne.produit.id ? 'animate-pulse bg-emerald-100' : ''}`}
       ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
       onClick={() => onSelectLine?.(index)}
     >
       <TableCell className="pl-2 md:pl-4 py-2">
         <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
           <div className="flex items-center gap-2">
-            <span className="truncate text-slate-800">{ligne.produit.name}</span>
+            <span className="truncate text-slate-800" title={`${t('facturation:cart.headers.total')} ${formatCurrency(normalizeNumberInput(ligne.total_ligne))}`}>{ligne.produit.name}</span>
             {ligne.isPromis && (
               <Badge variant="secondary" className="text-[10px] h-5 bg-amber-100 text-amber-700 border-amber-200 animate-pulse shrink-0">
                 {t('facturation:cart_extra.promis')}
@@ -107,6 +110,11 @@ export default React.memo(function TableCartRow({
           onChange={(e) => handleQtyChange(e.target.value)}
           onBlur={handleQtySubmit}
           onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+              e.preventDefault()
+              handleQtyStep(e.key === 'ArrowUp' ? 1 : -1)
+              return
+            }
             if (e.key === 'Enter') {
               e.preventDefault()
               handleQtySubmit()

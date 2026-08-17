@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Eye, Trash2, Printer, GitMerge, Sparkles, Plus, Search, X, Package } from 'lucide-react';
+import { Eye, Trash2, Printer, GitMerge, Sparkles, Plus, Search, X, Package, Loader2 } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
-import SelectionHeader from '../ui/SelectionHeader';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { Checkbox } from '../shadcn/checkbox';
@@ -15,7 +14,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/Table';
+} from '../shadcn/table';
+import CommandeSelectionHeader from './CommandeSelectionHeader';
 import { cn } from '../../lib/utils';
 
 
@@ -189,7 +189,7 @@ export default function CommandeList({
             onClick={() => onOpenSuggestionModal()}
             disabled={loading}
           >
-            {loading ? <span className="size-4 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" /> : <Sparkles className="size-4" />}
+            {loading ? <Loader2 className="size-4 animate-spin text-emerald-600" /> : <Sparkles className="size-4" />}
             {t('orders:list.suggestions_btn')}
           </Button>
 
@@ -200,7 +200,7 @@ export default function CommandeList({
             onClick={onOpenCreateView}
             disabled={loading}
           >
-            {loading ? <span className="size-4 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" /> : <Plus className="size-4" />}
+            {loading ? <Loader2 className="size-4 animate-spin text-emerald-600" /> : <Plus className="size-4" />}
             {t('orders:list.create_btn')}
           </Button>
         </div>
@@ -347,7 +347,7 @@ export default function CommandeList({
 
                 {selectedOrderIds.size > 0 ? (
 
-                  <SelectionHeader
+                  <CommandeSelectionHeader
 
                     selectedCount={selectedOrderIds.size}
 
@@ -363,7 +363,7 @@ export default function CommandeList({
 
                           <li className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
 
-                            {t('common:single_selection', { defaultValue: 'Sélection' })}
+                            {t('common:single_selection')}
 
                           </li>
 
@@ -431,7 +431,7 @@ export default function CommandeList({
 
                           <li className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
 
-                            {t('common:bulk_actions', { defaultValue: 'Actions Groupées' })}
+                            {t('common:bulk_actions')}
 
                           </li>
 
@@ -469,7 +469,7 @@ export default function CommandeList({
 
                     <div />
 
-                  </SelectionHeader>
+                  </CommandeSelectionHeader>
 
                 ) : (
                   <>
@@ -549,7 +549,7 @@ export default function CommandeList({
                   {(() => {
                     const fournisseur = fournisseurs.find(f => f.id === commande.fournisseur);
                     const isDeleted = !fournisseur && !!commande.fournisseur_nom;
-                    const nom = fournisseur?.name ?? (commande.fournisseur_nom || `${t('common:id', { defaultValue: 'ID' })}: ${commande.fournisseur}`);
+                    const nom = fournisseur?.name ?? (commande.fournisseur_nom || `${t('common:id')}: ${commande.fournisseur}`);
                     return (
                       <div className="flex flex-col">
                         <span className={cn("font-semibold text-sm", isDeleted ? 'italic text-slate-400' : 'text-slate-700')}>

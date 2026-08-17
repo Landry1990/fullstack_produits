@@ -83,6 +83,13 @@ export function useFacturationKeyboardShortcuts({
         return
       }
 
+      // ?: Aide Raccourcis (qwerty)
+      if (e.key === '?' && !isInput) {
+        e.preventDefault()
+        setShowHelp(true)
+        return
+      }
+
       // F2: Focus Recherche Produit
       if (e.key === 'F2') {
         e.preventDefault()

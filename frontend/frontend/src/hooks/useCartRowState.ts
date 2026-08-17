@@ -37,6 +37,13 @@ export function useCartRowState({
     setLocalQty(filteredValue)
   }
 
+  const handleQtyStep = (delta: number) => {
+    const current = normalizeNumberInput(localQty) || 0
+    const newValue = Math.max(1, current + delta)
+    setLocalQty(newValue.toString())
+    updateQuantite(ligne.produit.id, newValue)
+  }
+
   const handleQtySubmit = () => {
     const numValue = normalizeNumberInput(localQty)
     if (!isNaN(numValue) && numValue !== 0) {
@@ -73,6 +80,7 @@ export function useCartRowState({
     localRemise,
     setLocalRemise,
     handleQtyChange,
+    handleQtyStep,
     handleQtySubmit,
     handlePriceSubmit,
     handleRemiseSubmit,

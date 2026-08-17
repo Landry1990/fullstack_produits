@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react';
 import type { CommandeProduit, ProduitModel } from '../../types';
-import { Button } from '../ui/Button';
+import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
 import { Checkbox } from '../shadcn/checkbox';
 import { normalizeNumberInput } from '../../utils/formatters';
@@ -264,7 +264,7 @@ export function CommandeProductRow({
                             tabIndex={!fieldsConfig[4].editable ? -1 : 0}
                         />
                         {margeForComparison > 0 && margeForComparison < marginThreshold && (
-                            <div className="absolute right-1 top-1/2 -translate-y-1/2" title={t('orders:product_table.low_margin_tooltip', { threshold: marginThreshold, defaultValue: `Marge faible (seuil: ${marginThreshold})` })}>
+                            <div className="absolute right-1 top-1/2 -translate-y-1/2" title={t('orders:product_table.low_margin_tooltip', { threshold: marginThreshold })}>
                                 <AlertTriangle className="size-3.5 text-amber-600" />
                             </div>
                         )}
@@ -334,8 +334,12 @@ export function CommandeProductRow({
 
                 <td className="w-12 text-center p-0">
                     <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100">
-                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-600" onClick={onToggleExpand}><Info className="size-3.5" /></Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-600" onClick={onDeleteProduct}><Trash2 className="size-3.5" /></Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-600" onClick={onToggleExpand} aria-label={t('common:details')}>
+                            <Info className="size-3.5" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-600" onClick={onDeleteProduct} aria-label={t('common:delete')}>
+                            <Trash2 className="size-3.5" />
+                        </Button>
                     </div>
                 </td>
             </tr>

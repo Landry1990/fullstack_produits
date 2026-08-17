@@ -1,11 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
-import { logger } from '../../utils/logger'
+import { logger } from '../../utils/logger';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '../shadcn/dialog';
+import { Select } from '../shadcn/select';
 
 interface TransferCommandeModalProps {
     isOpen: boolean;
@@ -35,7 +44,6 @@ export default function TransferCommandeModal({
     const [transferCataloguePrices, setTransferCataloguePrices] = useState<Map<number, number>>(new Map());
     const [loadingCatalogue, setLoadingCatalogue] = useState(false);
 
-    // Reset e on open
     useEffect(() => {
         if (isOpen) {
             setTransferTargetFournisseur('');
@@ -43,7 +51,6 @@ export default function TransferCommandeModal({
         }
     }, [isOpen]);
 
-    // Récupérer les prix du catalogue
     const fetchCataloguePrices = async (fournisseurId: string) => {
         if (!fournisseurId) {
             setTransferCataloguePrices(new Map());
@@ -69,13 +76,11 @@ export default function TransferCommandeModal({
         }
     };
 
-    const handleSupplierChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value;
-        setTransferTargetFournisseur(val);
-        fetchCataloguePrices(val);
+    const handleSupplierChange = (value: string) => {
+        setTransferTargetFournisseur(value);
+        fetchCataloguePrices(value);
     };
 
-    // Calculer le gain/perte
     const transferCalc = useMemo(() => {
         let totalCurrentCost = 0;
         let totalNewCost = 0;
@@ -117,14 +122,12 @@ export default function TransferCommandeModal({
         }
 
         try {
-            // 1. Créer une nouvelle commande
             const newCommandePayload = {
                 fournisseur: parseInt(transferTargetFournisseur, 10),
                 numero_facture: '',
             };
             const { data: newCommande } = await api.post<Commande>(commandesEndpoint, newCommandePayload);
 
-            // 2. Ajouter les produits transférés
             await Promise.all(selectedProducts.map(async (p) => {
                 const payload = {
                     commande: newCommande.id,
@@ -144,7 +147,7 @@ export default function TransferCommandeModal({
                 await api.post('commande-produits/', payload);
             }));
 
-            const fournisseurName = fournisseurs.find(f => f.id === parseInt(transferTargetFournisseur))?.name || 'Inconnu';
+            const fournisseurName = fournisseurs.find(f => f.id === parseInt(transferTargetFournisseur))?.name || t('common:unknown');
             onTransferSuccess(selectedProducts.length, fournisseurName, newCommande.id);
             onClose();
 
@@ -154,146 +157,142 @@ export default function TransferCommandeModal({
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-base-100 rounded-2xl shadow-2xl border border-base-300 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    {t('orders:transfer_modal.title')}
-                </h3>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>{t('orders:transfer_modal.title')}</DialogTitle>
+                    <DialogDescription>{t('orders:transfer_modal.description')}</DialogDescription>
+                </DialogHeader>
 
-                <p className="text-sm text-base-content/60 mb-4">
-                   {t('orders:transfer_modal.description')}
-                </p>
-
-                {/* Sélection du fournisseur */}
-                <div className=" mb-4">
-                    <label className="flex flex-col">
-                        <span className="text-sm font-medium text-base-content font-semibold">{t('orders:transfer_modal.supplier_label')}</span>
-                    </label>
-                    <select
-                        className="w-full rounded-lg border border-base-300 bg-base-100 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                        value={transferTargetFournisseur}
-                        onChange={handleSupplierChange}
-                    >
-                        <option value="">{t('orders:transfer_modal.select_supplier')}</option>
-                        {fournisseurs
-                            .flatMap(f => f.id !== parseInt(currentSupplierId || '0') ? [<option key={f.id} value={f.id}>{f.name}</option>] : [])
-                        }
-                    </select>
-                </div>
-
-                {/* Liste des produits à transférer */}
-                <div className="bg-base-200 rounded-lg p-4 mb-4 max-h-60 overflow-y-auto">
-                    <h4 className="font-semibold text-sm mb-2">{t('orders:transfer_modal.products_title', { count: selectedProducts.length })}</h4>
+                <div className="space-y-4 py-2">
                     <div className="space-y-2">
-                        {selectedProducts.map((p, _i) => {
-                            const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
-                            let produitName = '';
-                            if (p.produit && typeof p.produit === 'object' && p.produit.name) {
-                                produitName = p.produit.name;
-                            } else if ((p as unknown as Record<string, unknown>).produit_nom) {
-                                produitName = (p as unknown as Record<string, unknown>).produit_nom as string;
-                            } else {
-                                const found = produitsList.find(prod => prod.id === produitId);
-                                produitName = found?.name || `Produit #${produitId}`;
+                        <label className="text-sm font-medium text-slate-700">
+                            {t('orders:transfer_modal.supplier_label')}
+                        </label>
+                        <Select
+                            value={transferTargetFournisseur}
+                            onChange={(e) => handleSupplierChange(e.target.value)}
+                            className="w-full h-10 text-sm"
+                        >
+                            <option value="">{t('orders:transfer_modal.select_supplier')}</option>
+                            {fournisseurs
+                                .filter(f => f.id !== parseInt(currentSupplierId || '0'))
+                                .map(f => (
+                                    <option key={f.id} value={String(f.id)}>{f.name}</option>
+                                ))
                             }
-                            const isDeleted = p.produit === null || produitName.includes('(supprimé)');
-                            const currentPrice = parseFloat(String(p.price || 0));
-                            const quantity = parseInt(String(p.quantity || 0));
-                            const newPrice = transferCataloguePrices.get(produitId);
-                            const hasPriceInfo = newPrice !== undefined;
-                            const priceDiff = hasPriceInfo ? currentPrice - newPrice : 0;
+                        </Select>
+                    </div>
 
-                            return (
-                                <div key={produitId} className="flex justify-between items-center text-sm bg-base-100 p-2 rounded">
-                                    <div>
-                                        <span className={`font-medium ${isDeleted ? 'italic text-base-content/50' : ''}`}>
-                                            {produitName}
-                                        </span>
-                                        <span className="text-base-content/50 ml-2">({t('orders:transfer_modal.qty_label', { qty: quantity })})</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-base-content/60">{formatCurrency(currentPrice)}</span>
-                                        {hasPriceInfo && (
-                                            <>
-                                                <span className="text-base-content/50">→</span>
-                                                <span className={newPrice < currentPrice ? 'text-success font-semibold' : newPrice > currentPrice ? 'text-error font-semibold' : ''}>
-                                                    {formatCurrency(newPrice)}
-                                                </span>
-                                                {priceDiff !== 0 && (
-                                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${priceDiff > 0 ? 'bg-success/20 text-success' : 'bg-error/20 text-error'}`}>
-                                                        {priceDiff > 0 ? '+' : ''}{formatCurrency(priceDiff * quantity)}
+                    <div className="bg-slate-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                        <h4 className="font-semibold text-sm mb-2">{t('orders:transfer_modal.products_title', { count: selectedProducts.length })}</h4>
+                        <div className="space-y-2">
+                            {selectedProducts.map((p, _i) => {
+                                const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
+                                let produitName = '';
+                                if (p.produit && typeof p.produit === 'object' && p.produit.name) {
+                                    produitName = p.produit.name;
+                                } else if ((p as unknown as Record<string, unknown>).produit_nom) {
+                                    produitName = (p as unknown as Record<string, unknown>).produit_nom as string;
+                                } else {
+                                    const found = produitsList.find(prod => prod.id === produitId);
+                                    produitName = found?.name || `Produit #${produitId}`;
+                                }
+                                const isDeleted = p.produit === null || produitName.includes('(supprimé)');
+                                const currentPrice = parseFloat(String(p.price || 0));
+                                const quantity = parseInt(String(p.quantity || 0));
+                                const newPrice = transferCataloguePrices.get(produitId);
+                                const hasPriceInfo = newPrice !== undefined;
+                                const priceDiff = hasPriceInfo ? currentPrice - newPrice : 0;
+
+                                return (
+                                    <div key={produitId} className="flex justify-between items-center text-sm bg-white p-2 rounded border border-slate-100">
+                                        <div>
+                                            <span className={`font-medium ${isDeleted ? 'italic text-slate-400' : ''}`}>
+                                                {produitName}
+                                            </span>
+                                            <span className="text-slate-500 ml-2">({t('orders:transfer_modal.qty_label', { qty: quantity })})</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-slate-500">{formatCurrency(currentPrice)}</span>
+                                            {hasPriceInfo && (
+                                                <>
+                                                    <span className="text-slate-400">→</span>
+                                                    <span className={newPrice < currentPrice ? 'text-emerald-600 font-semibold' : newPrice > currentPrice ? 'text-red-600 font-semibold' : ''}>
+                                                        {formatCurrency(newPrice)}
                                                     </span>
-                                                )}
-                                            </>
-                                        )}
-                                        {!hasPriceInfo && transferTargetFournisseur && !loadingCatalogue && (
-                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-base-200 text-base-content/60">{t('orders:transfer_modal.unknown_price')}</span>
-                                        )}
+                                                    {priceDiff !== 0 && (
+                                                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${priceDiff > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                                            {priceDiff > 0 ? '+' : ''}{formatCurrency(priceDiff * quantity)}
+                                                        </span>
+                                                    )}
+                                                </>
+                                            )}
+                                            {!hasPriceInfo && transferTargetFournisseur && !loadingCatalogue && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">{t('orders:transfer_modal.unknown_price')}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {transferTargetFournisseur && (
+                        <div className="bg-white border border-slate-200 rounded-lg p-4">
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div className="text-xs text-slate-500 uppercase">{t('orders:transfer_modal.current_cost')}</div>
+                                    <div className="font-bold">{formatCurrency(transferCalc.totalCurrentCost)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-slate-500 uppercase">{t('orders:transfer_modal.new_cost')}</div>
+                                    <div className="font-bold">{formatCurrency(transferCalc.totalNewCost)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-slate-500 uppercase">
+                                        {transferCalc.isGain ? t('orders:transfer_modal.savings') : t('orders:transfer_modal.overspend')}
+                                    </div>
+                                    <div className={`font-bold text-lg ${transferCalc.isGain ? 'text-emerald-600' : transferCalc.difference < 0 ? 'text-red-600' : ''}`}>
+                                        {transferCalc.isGain ? '+' : ''}{formatCurrency(transferCalc.difference)}
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Résumé Gain/Perte */}
-                {transferTargetFournisseur && (
-                    <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-4">
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                            <div>
-                                <div className="text-xs text-base-content/50 uppercase">{t('orders:transfer_modal.current_cost')}</div>
-                                <div className="font-bold">{formatCurrency(transferCalc.totalCurrentCost)}</div>
                             </div>
-                            <div>
-                                <div className="text-xs text-base-content/50 uppercase">{t('orders:transfer_modal.new_cost')}</div>
-                                <div className="font-bold">{formatCurrency(transferCalc.totalNewCost)}</div>
-                            </div>
-                            <div>
-                                <div className="text-xs text-base-content/50 uppercase">
-                                    {transferCalc.isGain ? t('orders:transfer_modal.savings') : t('orders:transfer_modal.overspend')}
+                            {transferCalc.productsWithoutPricing > 0 && (
+                                <div className="mt-2 text-xs text-amber-600 text-center">
+                                    {t('orders:transfer_modal.no_price_warning', { count: transferCalc.productsWithoutPricing })}
                                 </div>
-                                <div className={`font-bold text-lg ${transferCalc.isGain ? 'text-success' : transferCalc.difference < 0 ? 'text-error' : ''}`}>
-                                    {transferCalc.isGain ? '+' : ''}{formatCurrency(transferCalc.difference)}
-                                </div>
-                            </div>
+                            )}
                         </div>
-                        {transferCalc.productsWithoutPricing > 0 && (
-                            <div className="mt-2 text-xs text-warning text-center">
-                                {t('orders:transfer_modal.no_price_warning', { count: transferCalc.productsWithoutPricing })}
-                            </div>
-                        )}
-                    </div>
-                )}
+                    )}
 
-                {loadingCatalogue && (
-                    <div className="flex items-center justify-center py-4">
-                        <span className="inline-block size-4 border-2 border-base-300 border-t-indigo-600 rounded-full animate-spin mr-2"></span>
-                        {t('orders:transfer_modal.loading_prices')}
-                    </div>
-                )}
+                    {loadingCatalogue && (
+                        <div className="flex items-center justify-center py-4 text-slate-600">
+                            <Loader2 className="size-4 animate-spin mr-2" />
+                            {t('orders:transfer_modal.loading_prices')}
+                        </div>
+                    )}
 
-                <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={onClose}
-                    >
-                        {t('orders:transfer_modal.cancel')}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="default" className="bg-sky-500 hover:bg-sky-600 text-white"
-                        onClick={handleTransfer}
-                        disabled={!transferTargetFournisseur || loadingCatalogue}
-                    >
-                        {t('orders:transfer_modal.transfer_btn', { count: selectedProducts.length })}
-                    </Button>
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={onClose}
+                        >
+                            {t('orders:transfer_modal.cancel')}
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleTransfer}
+                            disabled={!transferTargetFournisseur || loadingCatalogue}
+                            className="bg-sky-600 hover:bg-sky-700 text-white"
+                        >
+                            {t('orders:transfer_modal.transfer_btn', { count: selectedProducts.length })}
+                        </Button>
+                    </div>
                 </div>
-            </div>
-            <div className="modal-backdrop" onClick={onClose}></div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

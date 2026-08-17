@@ -22,7 +22,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/Table'
+} from '../shadcn/table'
 import { cn } from '../../lib/utils'
 import {
   Brain,
@@ -41,6 +41,7 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
+  Loader2,
 } from 'lucide-react'
 
 interface SuggestionItem {
@@ -616,7 +617,7 @@ export default function SuggestionCommandeModal({
               className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 min-w-[160px]"
             >
               {loadingSuggestions ? (
-                <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <Loader2 className="size-4 animate-spin text-white" />
               ) : (
                 <Search className="size-4" />
               )}

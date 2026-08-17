@@ -170,7 +170,8 @@
     "actions": {
         "title": "Actions Rapides",
         "new_invoice": "Nouvelle Facture",
-        "manage_products": "Gérer les Produits",
+        "send_report": "Rapport flash Telegram",
+        "send_inventory": "Rapport inventaire Telegram",
         "new_client": "Nouveau Client",
         "refresh_tooltip": "Actualiser tout"
     },

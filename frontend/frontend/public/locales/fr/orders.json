@@ -279,6 +279,10 @@
         "title": "Produits ({{count}})",
         "import_btn": "Import",
         "new_product_btn": "Nouveau produit",
+        "month": "mois",
+        "day": "j",
+        "min": "Min",
+        "max": "Max",
         "search_placeholder": "Rechercher un produit...",
         "sort_options": {
             "chrono": "Chronologie",
@@ -294,6 +298,7 @@
         "delete_btn": "Retirer",
         "transfer_btn": "Transférer",
         "empty_state": "La commande est vide. Utilisez la barre de recherche pour ajouter des produits.",
+        "end_of_list": "Fin de liste - {{count}} articles",
         "headers": {
             "product": "Produit / Désignation",
             "cip": "CIP / Code",
@@ -301,17 +306,21 @@
             "qty": "Quantité",
             "ug": "U.G",
             "stock": "Stock",
+            "stock_short": "Stk",
             "dev_price": "Prix Dev.",
             "buy_price_ht": "P.A HT",
             "tva": "TVA %",
             "margin": "Marge %",
             "sell_price": "P.V TTC",
+            "amount": "Montant",
             "lot": "Lot",
             "exp_date": "Expiration",
             "rotation": "Rot."
         },
         "exclusivity_tooltip": "Produit exclusif au fournisseur: {{provider}}",
         "specific_provider": "fournisseur spécifique",
+        "unknown_product_id": "Produit #{{id}}",
+        "low_margin_tooltip": "Marge faible (seuil: {{threshold}})",
         "info_row": {
             "stock": "Stock",
             "purchase_history": "Historique d'Achat",
@@ -324,7 +333,9 @@
             "stock_out": "Stock en rupture",
             "stock_life": "Durée de vie stock actuel",
             "rotation_unknown": "Rotation inconnue",
-            "margin_value": "Montant Marge"
+            "margin_value": "Montant Marge",
+            "unknown": "Inconnu",
+            "never": "Jamais"
         }
     },
     "actions": {
@@ -336,10 +347,20 @@
         "description": "Les produits sélectionnés seront transférés vers une nouvelle commande chez le fournisseur choisi.",
         "supplier_label": "Fournisseur destination",
         "select_supplier": "Sélectionner un fournisseur",
-        "products_title": "Produits à transférer",
+        "select_supplier_error": "Veuillez sélectionner un fournisseur destination",
+        "products_title": "{{count}} produits à transférer",
         "qty_label": "Qté",
-        "cancel": "Annuler",
-        "transfer_btn": "Transférer"
+        "current_cost": "Coût actuel",
+        "new_cost": "Nouveau coût",
+        "savings": "Économie",
+        "overspend": "Surcoût",
+        "unknown_price": "Prix inconnu",
+        "no_price_warning": "{{count}} produits sans tarif catalogue",
+        "loading_prices": "Chargement des prix...",
+        "transfer_btn": "Transférer {{count}} produit(s)",
+        "transfer_error": "Erreur lors du transfert",
+        "unknown_supplier": "Fournisseur inconnu",
+        "cancel": "Annuler"
     },
     "messages": {
         "create_success": "Commande créée avec succès",
@@ -515,6 +536,15 @@
         "step_results": "Résultats",
         "mode_label": "Mode d'analyse"
     },
+    "data_matrix_scanner": {
+        "active": "Scan Data Matrix actif — pointez la douchette sur un code",
+        "filled": "{{cip}} — Lot : {{lot}}  Exp : {{date}}",
+        "already_filled": "Ligne déjà remplie — CIP {{cip}} (ligne surlignée)",
+        "not_found": "CIP {{cip}} non trouvé dans la commande",
+        "parse_error": "Code non reconnu",
+        "hide_title": "Masquer la barre de scan Data Matrix",
+        "show_title": "Afficher la barre de scan Data Matrix"
+    },
     "merge_modal": {
         "title": "Fusionner {{count}} commandes",
         "description": "Cette opération va fusionner toutes les lignes des commandes sélectionnées dans une <strong>commande principale</strong>. Les commandes sources seront supprimées.",
@@ -534,6 +564,22 @@
         "select_main_error": "Veuillez sélectionner une commande principale",
         "no_orders_error": "Aucune commande à fusionner",
         "merge_error": "Erreur lors de la fusion"
+    },
+    "duplicate_lot": {
+        "title": "Produit déjà dans la commande",
+        "already_in_order": "Ce produit est déjà saisi",
+        "multiple_lines": "({{count}} lignes)",
+        "question": "Que souhaitez-vous faire ?",
+        "increment": "Incrémenter",
+        "line_label_singular": "Ligne existante",
+        "line_label": "Ligne {{number}}",
+        "qty": "Qté : {{qty}}",
+        "lot": "Lot : {{lot}}",
+        "exp": "Exp : {{date}}",
+        "no_lot": "Lot non encore saisi",
+        "new_line": "Ajouter une nouvelle ligne",
+        "new_line_desc": "Lot différent livré par le fournisseur",
+        "cancel": "Annuler"
     }
 }
 

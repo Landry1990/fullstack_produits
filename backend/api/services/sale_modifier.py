@@ -95,17 +95,29 @@ class SaleModifier:
         """Restaure temporairement le stock avant modification."""
         _allocations, product_ids_with_allocations = LotAllocationService.restore_allocations(facture)
 
-        old_items = FactureProduit.objects.filter(facture=facture)
+        old_items = list(FactureProduit.objects.filter(facture=facture).select_related('produit'))
         old_quantity_by_product = {}
         old_product_ids = set()
+
+        # Verrouiller les produits pour éviter les race conditions
+        product_ids = [item.produit_id for item in old_items if item.produit_id]
+        if product_ids:
+            locked_products = {
+                p.id: p
+                for p in Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id')
+            }
+        else:
+            locked_products = {}
 
         for item in old_items:
             old_quantity_by_product[item.produit_id] = old_quantity_by_product.get(item.produit_id, 0) + item.quantity
             old_product_ids.add(item.produit_id)
-            if item.produit and (not item.produit.use_lot_management or item.produit_id not in product_ids_with_allocations):
+            produit = locked_products.get(item.produit_id) or item.produit
+            if produit and (not produit.use_lot_management or item.produit_id not in product_ids_with_allocations):
                 Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
 
-        old_items.delete()
+        for item in old_items:
+            item.delete()
 
         return old_quantity_by_product, old_product_ids, product_ids_with_allocations
 
@@ -115,7 +127,14 @@ class SaleModifier:
         new_quantity_by_product = {}
         new_product_ids_with_allocations = set()
         product_ids = [p.get('produit') for p in new_products]
-        products_by_id = Produit.objects.in_bulk(product_ids) if product_ids else {}
+        # Verrouiller les produits pour éviter les race conditions
+        if product_ids:
+            products_by_id = {
+                p.id: p
+                for p in Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id')
+            }
+        else:
+            products_by_id = {}
 
         for prod_data in new_products:
             produit_id = prod_data.get('produit')

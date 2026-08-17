@@ -98,8 +98,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                     {inventaires.map(inv => (
                         <tr
                             key={inv.id}
-                            className={`group hover:bg-slate-50 transition-colors cursor-pointer ${selectedIds.has(inv.id) ? 'bg-emerald-50/40' : ''}`}
-                            onClick={() => onEdit(inv)}
+                            className={`group hover:bg-slate-50 transition-colors ${selectedIds.has(inv.id) ? 'bg-emerald-50/40' : ''}`}
                         >
                             <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
                                 <input
@@ -112,7 +111,15 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex flex-col">
                                     <span className={`font-semibold text-slate-800 flex items-center gap-2`}>
-                                         #{inv.id}
+                                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
+                                            ${inv.inventory_type === 'GLOBAL' ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                                              inv.inventory_type === 'RESERVE' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                              'bg-blue-50 text-blue-600 border-blue-200'}`}>
+                                            {inv.inventory_type === 'GLOBAL' ? t('inventaire.types.global') :
+                                             inv.inventory_type === 'RESERVE' ? t('inventaire.types.reserve') :
+                                             t('inventaire.types.rayon')}
+                                        </span>
+                                        #{inv.id}
                                     </span>
                                     <span className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
                                         <Calendar className="size-3" />
@@ -151,20 +158,21 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
-                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center justify-end gap-1">
                                     <button
                                         type="button"
-                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                                        className="inline-flex items-center gap-1 px-2 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors"
                                         onClick={() => onEdit(inv)}
                                         title={t('common:details')}
                                     >
-                                        <ChevronRight className="h-5 w-5" />
+                                        <ChevronRight className="h-4 w-4" />
+                                        {t('common:open', 'Ouvrir')}
                                     </button>
                                     {onShareWhatsApp && inv.status === 'VALIDEE' && (
                                         <button
                                             type="button"
                                             className="p-2 text-slate-400 hover:text-[#25D366] hover:bg-[#25D366]/10 rounded-md transition-colors"
-                                            onClick={(e) => { e.stopPropagation(); onShareWhatsApp(inv.id); }}
+                                            onClick={() => onShareWhatsApp(inv.id)}
                                             disabled={sharingId === inv.id}
                                             title={t('common:share_whatsapp')}
                                         >
@@ -173,17 +181,19 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                                 : <MessageCircle className="h-4 w-4" />}
                                         </button>
                                     )}
-                                    <button
-                                        type="button"
-                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40"
-                                        onClick={() => handleDelete(inv)}
-                                        disabled={inv.status === 'VALIDEE' || deleting}
-                                        title={t('common:delete')}
-                                    >
-                                        {deleting
-                                            ? <div className="animate-spin rounded-full size-4 border-b-2 border-slate-400"></div>
-                                            : <Trash2 className="h-4 w-4" />}
-                                    </button>
+                                    {inv.status !== 'VALIDEE' && (
+                                        <button
+                                            type="button"
+                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40"
+                                            onClick={() => handleDelete(inv)}
+                                            disabled={deleting}
+                                            title={t('common:delete')}
+                                        >
+                                            {deleting
+                                                ? <div className="animate-spin rounded-full size-4 border-b-2 border-slate-400"></div>
+                                                : <Trash2 className="h-4 w-4" />}
+                                        </button>
+                                    )}
                                 </div>
                             </td>
                         </tr>

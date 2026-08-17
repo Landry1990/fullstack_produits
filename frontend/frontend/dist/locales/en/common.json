@@ -447,5 +447,6 @@
     "products": "products",
     "id": "ID",
     "designation": "Designation",
-    "lot": "Lot"
+    "lot": "Lot",
+    "unknown_product_deleted": "Unknown product (deleted)"
 }

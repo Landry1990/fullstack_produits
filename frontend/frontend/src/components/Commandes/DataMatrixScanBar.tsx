@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScanLine, X, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import type { ScanResult } from '../../hooks/useDataMatrixScanner';
+
+type FeedbackState =
+    | { type: 'idle' }
+    | { type: 'success'; message: string }
+    | { type: 'warning'; message: string }
+    | { type: 'error'; message: string };
+
+const SCAN_TIMEOUT_MS = 80;
+const MIN_SCAN_LENGTH = 18;
 
 interface DataMatrixScanBarProps {
     onScan: (raw: string) => ScanResult;
@@ -9,40 +19,32 @@ interface DataMatrixScanBarProps {
     active?: boolean;
 }
 
-type FeedbackState =
-    | { type: 'idle' }
-    | { type: 'success'; message: string }
-    | { type: 'warning'; message: string }
-    | { type: 'error'; message: string };
-
-const SCAN_TIMEOUT_MS = 80; // ms : délai max entre caractères douchette
-const MIN_SCAN_LENGTH = 18; // longueur minimale pour considérer comme un scan Data Matrix
-
-const feedbackColors: Record<FeedbackState['type'], string> = {
-    idle: 'bg-slate-800/90 border-slate-600',
-    success: 'bg-emerald-800/90 border-emerald-500',
-    warning: 'bg-amber-800/90 border-amber-500',
-    error: 'bg-red-800/90 border-red-500',
-};
-
-const feedbackIcons = {
-    idle: <ScanLine className="size-4 text-slate-300 animate-pulse" />,
-    success: <CheckCircle2 className="size-4 text-emerald-300" />,
-    warning: <AlertTriangle className="size-4 text-amber-300" />,
-    error: <XCircle className="size-4 text-red-300" />,
-};
-
 export default function DataMatrixScanBar({
     onScan,
     searchInputRef,
     onClearSearchInput,
     active = true,
 }: DataMatrixScanBarProps) {
+    const { t } = useTranslation(['orders']);
     const [feedback, setFeedback] = useState<FeedbackState>({ type: 'idle' });
     const [isVisible, setIsVisible] = useState(true);
     const bufferRef = useRef('');
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const feedbackColors: Record<FeedbackState['type'], string> = {
+        idle: 'bg-slate-800/90 border-slate-600',
+        success: 'bg-emerald-800/90 border-emerald-500',
+        warning: 'bg-amber-800/90 border-amber-500',
+        error: 'bg-red-800/90 border-red-500',
+    };
+
+    const feedbackIcons = {
+        idle: <ScanLine className="size-4 text-slate-300 animate-pulse" />,
+        success: <CheckCircle2 className="size-4 text-emerald-300" />,
+        warning: <AlertTriangle className="size-4 text-amber-300" />,
+        error: <XCircle className="size-4 text-red-300" />,
+    };
 
     const showFeedback = useCallback((state: FeedbackState, autoClearMs = 4000) => {
         setFeedback(state);
@@ -56,7 +58,7 @@ export default function DataMatrixScanBar({
         const raw = bufferRef.current.trim();
         bufferRef.current = '';
 
-        if (!raw || raw.length < 6) return; // trop court pour être un code valide
+        if (!raw || raw.length < 6) return;
 
         const result = onScan(raw);
 
@@ -64,31 +66,34 @@ export default function DataMatrixScanBar({
             case 'filled':
                 showFeedback({
                     type: 'success',
-                    message: `✓ ${result.cip} → Lot : ${result.lot || '—'}  Exp : ${result.date || '—'}`,
+                    message: t('orders:data_matrix_scanner.filled', {
+                        cip: result.cip,
+                        lot: result.lot || '—',
+                        date: result.date || '—',
+                    }),
                 });
                 break;
             case 'already_filled':
                 showFeedback({
                     type: 'warning',
-                    message: `Ligne déjà remplie — CIP ${result.cip} (ligne surlignée)`,
+                    message: t('orders:data_matrix_scanner.already_filled', { cip: result.cip }),
                 }, 5000);
                 break;
             case 'not_found':
                 showFeedback({
                     type: 'error',
-                    message: `CIP ${result.cip ?? 'inconnu'} non trouvé dans la commande`,
+                    message: t('orders:data_matrix_scanner.not_found', { cip: result.cip ?? '—' }),
                 });
-                // Rediriger vers la recherche manuelle
                 setTimeout(() => searchInputRef?.current?.focus(), 50);
                 break;
             case 'parse_error':
                 showFeedback({
                     type: 'error',
-                    message: `Code non reconnu`,
+                    message: t('orders:data_matrix_scanner.parse_error'),
                 });
                 break;
         }
-    }, [onScan, showFeedback, searchInputRef]);
+    }, [onScan, showFeedback, searchInputRef, t]);
 
     useEffect(() => {
         if (!active) return;
@@ -98,7 +103,6 @@ export default function DataMatrixScanBar({
             const tag = target.tagName;
             const isInInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
 
-            // La douchette envoie Enter à la fin
             if (e.key === 'Enter') {
                 if (timerRef.current) {
                     clearTimeout(timerRef.current);
@@ -107,7 +111,6 @@ export default function DataMatrixScanBar({
                 if (bufferRef.current.length >= MIN_SCAN_LENGTH) {
                     e.preventDefault();
                     e.stopPropagation();
-                    // Nettoyer l'input si les chars du scan y ont quand même atterri
                     if (isInInput) {
                         onClearSearchInput?.();
                     }
@@ -118,13 +121,11 @@ export default function DataMatrixScanBar({
                 return;
             }
 
-            // Filtrer les touches de contrôle (mais garder les chars imprimables + GS)
             if (e.key.length === 1 || e.key === 'GS' || e.charCode === 29) {
                 bufferRef.current += e.key === 'GS' ? '\x1d' : e.key;
 
                 if (timerRef.current) clearTimeout(timerRef.current);
                 timerRef.current = setTimeout(() => {
-                    // Timeout : si assez long c'est un scan sans Enter final
                     if (bufferRef.current.length >= MIN_SCAN_LENGTH) {
                         if (isInInput) {
                             onClearSearchInput?.();
@@ -150,7 +151,8 @@ export default function DataMatrixScanBar({
             <button
                 onClick={() => setIsVisible(true)}
                 className="fixed top-2 right-2 z-50 bg-indigo-600 text-white rounded-full p-1.5 shadow-lg hover:bg-indigo-700 transition-colors"
-                title="Afficher la barre de scan Data Matrix"
+                title={t('orders:data_matrix_scanner.show_title')}
+                aria-label={t('orders:data_matrix_scanner.show_title')}
             >
                 <ScanLine className="size-4" />
             </button>
@@ -164,13 +166,14 @@ export default function DataMatrixScanBar({
             {feedbackIcons[feedback.type]}
             <span className="text-xs font-medium text-white max-w-[480px] truncate">
                 {feedback.type === 'idle'
-                    ? 'Scan Data Matrix actif — pointez la douchette sur un code'
+                    ? t('orders:data_matrix_scanner.active')
                     : feedback.message}
             </span>
             <button
                 onClick={() => setIsVisible(false)}
                 className="ml-1 text-white/60 hover:text-white transition-colors"
-                title="Masquer"
+                title={t('orders:data_matrix_scanner.hide_title')}
+                aria-label={t('orders:data_matrix_scanner.hide_title')}
             >
                 <X className="size-3" />
             </button>
