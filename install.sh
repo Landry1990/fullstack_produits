@@ -8,6 +8,7 @@
 # ═══════════════════════════════════════════════════════
 
 set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
 
 ZENITH_DIR="/opt/zenith-pharma"
 REPO_URL="${REPO_URL:-https://github.com/Landry1990/fullstack_produits.git}"
@@ -56,20 +57,21 @@ stop_spinner() {
 # Exécuter une commande avec spinner
 run_with_spinner() {
     local msg="$1"; shift
+    local rc=0
     start_spinner "$msg"
-    "$@"
-    local rc=$?
+    "$@" || rc=$?
     stop_spinner
     return $rc
 }
 
-# ── 0. Vérifier Ubuntu ─────────────────────────────────
+# ── 0. Vérifier système compatible (Ubuntu ou dérivé) ──
 step "0. Vérification du système"
-if ! grep -q "Ubuntu" /etc/os-release 2>/dev/null; then
-    err "Ce script est conçu pour Ubuntu Desktop/Server uniquement."
+if ! grep -qE "ID_LIKE=.*ubuntu|UBUNTU_CODENAME=" /etc/os-release 2>/dev/null; then
+    err "Ce script est conçu pour Ubuntu et ses dérivés (Linux Mint, etc.) uniquement."
     exit 1
 fi
-ok "Ubuntu détecté : $(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)"
+DISTRO_PRETTY=$(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)
+ok "Système détecté : $DISTRO_PRETTY"
 
 # ── 1. Mise à jour ───────────────────────────────────
 step "1. Mise à jour du système"
@@ -79,7 +81,7 @@ ok "Système à jour"
 
 # ── 2. Installer Docker ────────────────────────────────
 step "2. Installation de Docker & Docker Compose"
-if command -v docker &>/dev/null && docker compose version &>/dev/null; then
+if command -v docker &>/dev/null && sudo docker compose version &>/dev/null; then
     ok "Docker déjà installé : $(docker --version)"
 else
     warn "Docker non trouvé — installation en cours..."
@@ -88,8 +90,11 @@ else
     sudo install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    # Linux Mint n'a pas de repo Docker dédié ; utiliser le codename Ubuntu sous-jacent
+    UBUNTU_CODENAME=$(grep UBUNTU_CODENAME /etc/os-release | cut -d'=' -f2)
+    DOCKER_CODENAME="${UBUNTU_CODENAME:-$(lsb_release -cs)}"
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-        https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+        https://download.docker.com/linux/ubuntu $DOCKER_CODENAME stable" | \
         sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     sudo apt-get update -qq
     run_with_spinner "Installation des paquets Docker" sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
@@ -207,8 +212,7 @@ step "8. Construction & démarrage des conteneurs"
 sudo docker volume create fullstack_postgres_data_protected 2>/dev/null || true
 ok "Volume Docker PostgreSQL prêt"
 export GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-run_with_spinner "Pull des images Docker" sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml pull 2>/dev/null || true
-run_with_spinner "Build des conteneurs (peut prendre plusieurs minutes)" sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml build --quiet 2>/dev/null || sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml build
+run_with_spinner "Build des conteneurs (peut prendre plusieurs minutes)" sudo GIT_COMMIT="$GIT_COMMIT" docker compose -f docker-compose.prod.yml build
 run_with_spinner "Démarrage des conteneurs" sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
 ok "Conteneurs démarrés"
 
@@ -241,18 +245,23 @@ step "10. Vérification du superutilisateur"
 # Le entrypoint.sh du backend crée automatiquement l'admin
 # avec profil pharmacien complet via DEFAULT_ADMIN_* du .env.
 # On vérifie simplement qu'il existe.
-sudo docker compose -f docker-compose.prod.yml exec -T backend python -c "
+SUPERUSER_CHECK=$(sudo docker compose -f docker-compose.prod.yml exec -T backend python -c "
 import os, django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 from django.contrib.auth.models import User
 admin = User.objects.filter(is_superuser=True).first()
 if admin:
-    print(f'OK: superuser \"{admin.username}\" existe')
+    print(f'OK:{admin.username}')
 else:
-    print('WARN: aucun superuser trouvé — vérifiez les logs backend')
-" 2>/dev/null || warn "Impossible de vérifier le superuser"
-ok "Superutilisateur : admin / admin123 (changez le mot de passe !)"
+    print('WARN:')
+" 2>/dev/null || echo "ERR:")
+if [[ "$SUPERUSER_CHECK" == OK:* ]]; then
+    SUPERUSER_NAME="${SUPERUSER_CHECK#OK:}"
+    ok "Superutilisateur '$SUPERUSER_NAME' vérifié"
+else
+    warn "Impossible de vérifier le superutilisateur"
+fi
 
 # ── 11. Services systemd ──────────────────────────────
 step "11. Installation des services auto-démarrage"
@@ -298,11 +307,11 @@ ok "Règle sudoers : docker sans mot de passe pour le groupe docker"
 
 # ── 12. Portainer (optionnel) ─────────────────────────
 step "12. Installation de Portainer (interface web Docker)"
-if docker ps --format '{{.Names}}' | grep -q '^portainer$'; then
+if sudo docker ps --format '{{.Names}}' | grep -q '^portainer$'; then
     ok "Portainer déjà installé"
 else
-    docker volume create portainer_data 2>/dev/null || true
-    docker run -d \
+    sudo docker volume create portainer_data 2>/dev/null || true
+    sudo docker run -d \
         --name portainer \
         -p 9001:9000 \
         -v /var/run/docker.sock:/var/run/docker.sock \
