@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import type { Facture, FactureProduit, CouponMonnaie } from '../../types'
@@ -64,8 +64,6 @@ interface FactureProduitRow extends FactureProduit {
   produit_id?: number
 }
 
-const PAGE_SIZE = 100
-
 export const FacturesTable: React.FC<FacturesTableProps> = ({
   sortedFactures,
   loading,
@@ -87,9 +85,13 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   forcePreviewFactureId,
   onPreviewClosed
 }) => {
-  const { t } = useTranslation('caisse')
+  const { t, i18n } = useTranslation('caisse')
   const [previewFacture, setPreviewFacture] = useState<Facture | null>(null)
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(50)
+  const selectedRowRef = useRef<HTMLTableRowElement>(null)
+
+  const dateLocale = i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR'
 
   // Open preview from keyboard shortcut (controlled prop)
   useEffect(() => {
@@ -98,6 +100,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       if (facture) setPreviewFacture(facture)
     }
   }, [forcePreviewFactureId, sortedFactures])
+
+  // Garder la ligne sélectionnée focalisée pour le clavier
+  useEffect(() => {
+    selectedRowRef.current?.focus()
+  }, [selectedRowIndex])
 
   const canModify = user?.is_superuser || user?.can_modify_invoice || user?.profile?.can_modify_invoice
   const canCancel = user?.is_superuser || user?.can_cancel_invoice || user?.profile?.can_cancel_invoice
@@ -108,8 +115,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
   // Reset page if list shrinks
   useEffect(() => {
-    if (page > 1 && (page - 1) * PAGE_SIZE >= sortedFactures.length) setPage(1)
-  }, [sortedFactures.length, page])
+    if (page > 1 && (page - 1) * pageSize >= sortedFactures.length) setPage(1)
+  }, [sortedFactures.length, page, pageSize])
 
   // Sync preview modal if the invoice is updated in the list
   useEffect(() => {
@@ -133,8 +140,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
     )
   }
 
-  const totalPages = Math.ceil(sortedFactures.length / PAGE_SIZE)
-  const pagedFactures = sortedFactures.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const totalPages = Math.ceil(sortedFactures.length / pageSize)
+  const pagedFactures = sortedFactures.slice((page - 1) * pageSize, page * pageSize)
 
   if (sortedFactures.length === 0) {
     return (
@@ -176,7 +183,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     checked={selectedIds ? selectedIds.size === pagedFactures.length && pagedFactures.length > 0 : false}
                     onCheckedChange={() => { if (onSelectAll) onSelectAll() }}
                     onClick={(e) => e.stopPropagation()}
-                    className="border-red-400 data-[state=checked]:bg-red-500"
+                    className="border-amber-400 data-[state=checked]:bg-amber-500"
                   />
                 </TableHead>
               )}
@@ -208,9 +215,12 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               return (
                 <tr 
                   key={facture.id} 
-                  className={`cursor-pointer transition-all border-b border-slate-100 ${
+                  ref={(el) => { if (isSelected) selectedRowRef.current = el }}
+                  tabIndex={-1}
+                  aria-selected={isSelected}
+                  className={`cursor-pointer transition-all border-b border-slate-100 outline-none focus:ring-2 focus:ring-inset focus:ring-sky-200 ${
                     isChecked
-                      ? 'bg-red-50 border-l-4 border-red-500'
+                      ? 'bg-amber-50 border-l-4 border-amber-500'
                       : isSelected 
                         ? 'bg-sky-50 border-l-4 border-sky-500 font-medium' 
                         : 'hover:bg-slate-50'
@@ -227,7 +237,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       <Checkbox
                         checked={isChecked}
                         onCheckedChange={() => { if (onToggleSelect) onToggleSelect(facture.id) }}
-                        className="border-red-400 data-[state=checked]:bg-red-500"
+                        className="border-amber-400 data-[state=checked]:bg-amber-500"
                       />
                     </TableCell>
                   )}
@@ -249,12 +259,12 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     <div className="font-bold">{facture.client_name || t('table.passerby_client')}</div>
                   </TableCell>
                   <TableCell className="text-xs hidden lg:table-cell text-slate-600">
-                    <div className="font-medium">{new Date(facture.date).toLocaleDateString('fr-FR', {
+                    <div className="font-medium">{new Date(facture.date).toLocaleDateString(dateLocale, {
                       day: '2-digit',
                       month: '2-digit',
                       year: '2-digit'
                     })}</div>
-                    <div className="text-slate-400">{new Date(facture.date).toLocaleTimeString('fr-FR', {
+                    <div className="text-slate-400">{new Date(facture.date).toLocaleTimeString(dateLocale, {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}</div>
@@ -298,54 +308,60 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     )}
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex justify-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300 h-8 w-8 p-0"
-                        onClick={(e) => {
-                           e.stopPropagation()
-                           onModify(facture)
-                        }}
-                        onDoubleClick={(e) => e.stopPropagation()}
-                        title={canModify ? t('table.modify') : t('table.not_authorized')}
-                        disabled={!canModify}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300 h-8 w-8 p-0"
-                        onClick={(e) => {
-                           e.stopPropagation()
-                           onCancel(facture)
-                        }}
-                        onDoubleClick={(e) => e.stopPropagation()}
-                        title={canCancel ? t('table.cancel') : t('table.not_authorized')}
-                        disabled={!canCancel}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                      {!couponPourCetteFacture && (
+                    <div className="flex justify-center items-center gap-2">
+                      <div className="flex gap-1">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100 hover:border-fuchsia-300 h-8 w-8 p-0"
+                          className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300 h-8 w-8 p-0"
                           onClick={(e) => {
                              e.stopPropagation()
-                             onApplyCoupon(facture)
+                             onModify(facture)
                           }}
                           onDoubleClick={(e) => e.stopPropagation()}
-                          title={t('table.apply_coupon')}
+                          title={canModify ? t('table.modify') : t('table.not_authorized')}
+                          disabled={!canModify}
+                          aria-label={canModify ? t('table.modify') : t('table.not_authorized')}
                         >
-                          <Ticket className="size-4" />
+                          <Pencil className="size-4" />
                         </Button>
-                      )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300 h-8 w-8 p-0"
+                          onClick={(e) => {
+                             e.stopPropagation()
+                             onCancel(facture)
+                          }}
+                          onDoubleClick={(e) => e.stopPropagation()}
+                          title={canCancel ? t('table.cancel') : t('table.not_authorized')}
+                          disabled={!canCancel}
+                          aria-label={canCancel ? t('table.cancel') : t('table.not_authorized')}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                        {!couponPourCetteFacture && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100 hover:border-fuchsia-300 h-8 w-8 p-0"
+                            onClick={(e) => {
+                               e.stopPropagation()
+                               onApplyCoupon(facture)
+                            }}
+                            onDoubleClick={(e) => e.stopPropagation()}
+                            title={t('table.apply_coupon')}
+                            aria-label={t('table.apply_coupon')}
+                          >
+                            <Ticket className="size-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="h-5 w-px bg-slate-200" />
                       <Button
                         variant="default"
                         size="sm"
-                        className="bg-emerald-600 text-white hover:bg-emerald-700 gap-1 shadow-sm h-8"
+                        className="bg-emerald-600 text-white hover:bg-emerald-700 gap-1 shadow-sm h-8 px-3"
                         onClick={(e) => {
                           e.stopPropagation()
                           onEncaisser(facture)
@@ -353,6 +369,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                         onDoubleClick={(e) => e.stopPropagation()}
                         disabled={!canCashOut}
                         title={!canCashOut
+                          ? (!hasActiveCashSession && !user?.is_superuser
+                            ? t('table.open_cash_register_first', { defaultValue: 'Veuillez d\'abord ouvrir votre caisse' })
+                            : t('table.not_authorized'))
+                          : t('table.cash_in')}
+                        aria-label={!canCashOut
                           ? (!hasActiveCashSession && !user?.is_superuser
                             ? t('table.open_cash_register_first', { defaultValue: 'Veuillez d\'abord ouvrir votre caisse' })
                             : t('table.not_authorized'))
@@ -371,11 +392,23 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {sortedFactures.length > 0 && (
         <div className="shrink-0 bg-white border-t border-slate-200 px-4 py-2 flex items-center justify-between text-sm">
-          <span className="text-slate-500">
-            {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sortedFactures.length)} {t('common.pagination.of', 'sur')} {sortedFactures.length}
-          </span>
+          <div className="flex items-center gap-3">
+            <select
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}
+              className="h-7 px-2 rounded-md border border-slate-200 bg-white text-xs text-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none"
+              aria-label="Lignes par page"
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-slate-500">
+              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sortedFactures.length)} {t('common.pagination.of', 'sur')} {sortedFactures.length}
+            </span>
+          </div>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
               <ChevronLeft className="size-4" />

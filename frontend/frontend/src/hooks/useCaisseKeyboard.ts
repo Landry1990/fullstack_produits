@@ -8,6 +8,7 @@ interface KeyboardHandlers {
   onRefresh: () => void
   onToggleCouponPanel: () => void
   onCloseModal: () => void
+  onToggleShowHelp: () => void
   canCashOut: boolean
 }
 
@@ -20,6 +21,7 @@ interface KeyboardState {
   isSudoModalOpen: boolean
   showTicketPreview: boolean
   isCouponPanelOpen: boolean
+  showCaisseHelp: boolean
 }
 
 /**
@@ -64,8 +66,17 @@ export const useCaisseKeyboard = (
       return
     }
 
+    const isInput = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
+
+    // ? pour ouvrir/fermer l'aide
+    if (e.key === '?' && !isInput) {
+      e.preventDefault()
+      current.onToggleShowHelp()
+      return
+    }
+
     // Ignorer si l'utilisateur tape dans un input
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+    if (isInput) {
       return
     }
 
@@ -82,6 +93,26 @@ export const useCaisseKeyboard = (
       case 'k':
         e.preventDefault()
         setSelectedRowIndex(prev => Math.max(prev - 1, 0))
+        break
+
+      case 'Home':
+        e.preventDefault()
+        setSelectedRowIndex(0)
+        break
+
+      case 'End':
+        e.preventDefault()
+        setSelectedRowIndex(Math.max(0, sortedFactures.length - 1))
+        break
+
+      case 'PageDown':
+        e.preventDefault()
+        setSelectedRowIndex(prev => Math.min(prev + 10, sortedFactures.length - 1))
+        break
+
+      case 'PageUp':
+        e.preventDefault()
+        setSelectedRowIndex(prev => Math.max(prev - 10, 0))
         break
 
       case 'Enter':
@@ -121,6 +152,8 @@ export const useCaisseKeyboard = (
       case 'Escape':
         if (isCouponPanelOpen) {
           current.onToggleCouponPanel()
+        } else if (current.showCaisseHelp) {
+          current.onToggleShowHelp()
         }
         break
 

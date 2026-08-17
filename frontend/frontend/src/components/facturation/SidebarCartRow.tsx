@@ -23,6 +23,7 @@ export interface SidebarCartRowProps {
   maxDiscount: number
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number
+  flashId?: number | null
 }
 
 export default React.memo(function SidebarCartRow({
@@ -41,12 +42,13 @@ export default React.memo(function SidebarCartRow({
   maxDiscount,
   t,
   refreshTrigger,
+  flashId,
 }: SidebarCartRowProps) {
   const {
     localQty,
     localPrice, setLocalPrice,
     localRemise, setLocalRemise,
-    handleQtyChange, handleQtySubmit,
+    handleQtyChange, handleQtyStep, handleQtySubmit,
     handlePriceSubmit, handleRemiseSubmit,
     isReturn,
   } = useCartRowState({ ligne, updateQuantite, updatePrix, updateRemiseProduit, maxDiscount, t, refreshTrigger })
@@ -58,13 +60,14 @@ export default React.memo(function SidebarCartRow({
       onClick={() => onSelectLine?.(index)}
       className={`group relative flex flex-col p-3 border-b border-slate-100 transition-all duration-200 cursor-pointer
         ${index === selectedIndex ? 'bg-emerald-50 border-l-4 border-l-emerald-500' : 'hover:bg-slate-50'}
-        ${isReturn ? 'bg-red-50' : ''}`}
+        ${isReturn ? 'bg-red-50' : ''}
+        ${flashId === ligne.produit.id ? 'animate-pulse bg-emerald-100' : ''}`}
     >
       {/* Ligne Haut: Nom Produit + Total + Action */}
       <div className="flex justify-between items-start gap-2">
         <div className="flex-1 min-w-0">
            <div className="flex items-center gap-1.5">
-             <h4 className={`text-sm font-semibold truncate leading-tight ${isReturn ? 'text-red-600' : 'text-slate-800'}`} title={ligne.produit.name}>
+             <h4 className={`text-sm font-semibold truncate leading-tight ${isReturn ? 'text-red-600' : 'text-slate-800'}`} title={`${t('facturation:cart.headers.total')} ${formatCurrency(normalizeNumberInput(ligne.total_ligne))}`}>
                {ligne.produit.name}
              </h4>
              {ligne.isPromis && <Badge variant="secondary" className="text-[10px] h-4 px-1 bg-amber-100 text-amber-700 border-amber-200">{t('facturation:cart_extra.promis')}</Badge>}
@@ -105,13 +108,18 @@ export default React.memo(function SidebarCartRow({
              value={localQty}
              onChange={(e) => handleQtyChange(e.target.value)}
              onBlur={handleQtySubmit}
-             onKeyDown={(e) => {
-               if (e.key === 'Enter') {
-                 e.preventDefault()
-                 handleQtySubmit()
-                 onReturnFocus()
-               }
-             }}
+              onKeyDown={(e) => {
+              if ((e.ctrlKey || e.metaKey) && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                e.preventDefault()
+                handleQtyStep(e.key === 'ArrowUp' ? 1 : -1)
+                return
+              }
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleQtySubmit()
+                onReturnFocus()
+              }
+            }}
              className="w-12 h-9 bg-transparent px-1 text-xs text-center font-semibold text-slate-700 focus:bg-white focus:outline-none"
            />
            <div className="flex items-center h-9 px-1.5 bg-slate-50 border-l border-slate-200 text-[10px] font-semibold text-slate-400">

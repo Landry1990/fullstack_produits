@@ -21,6 +21,7 @@ export function useFacturationClients() {
     const [debouncedSearch] = useDebounce(clientSearch, 200)
     const [showClientDropdown, setShowClientDropdown] = useState(false)
     const [ayantDroitSearchResults, setAyantDroitSearchResults] = useState<AyantDroit[]>([])
+    const [ayantDroitSearchLoading, setAyantDroitSearchLoading] = useState(false)
 
     // Create Client Modal State
     const [showClientCreateModal, setShowClientCreateModal] = useState(false)
@@ -79,9 +80,11 @@ export function useFacturationClients() {
         const query = debouncedSearch.trim()
         if (query.length < 2) {
             setAyantDroitSearchResults([])
+            setAyantDroitSearchLoading(false)
             return
         }
 
+        setAyantDroitSearchLoading(true)
         const controller = new AbortController()
         const searchAyants = async () => {
             try {
@@ -90,6 +93,8 @@ export function useFacturationClients() {
             } catch (error) {
                 if (isCancel(error)) return
                 setAyantDroitSearchResults([])
+            } finally {
+                setAyantDroitSearchLoading(false)
             }
         }
         searchAyants()
@@ -305,6 +310,7 @@ export function useFacturationClients() {
         clientSearch, setClientSearch,
         filteredClients,
         ayantDroitSearchResults,
+        ayantDroitSearchLoading,
         showClientDropdown, setShowClientDropdown,
         showClientCreateModal, setShowClientCreateModal,
         newClientForm, setNewClientForm,

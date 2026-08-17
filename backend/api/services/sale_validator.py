@@ -50,10 +50,14 @@ class SaleValidator:
         if facture.remise > facture.total_ht:
             raise ValueError(f"La remise globale ({facture.remise} F) ne peut pas être supérieure au total des produits ({facture.total_ht} F).")
 
-        # 2. Optimistic locking — fetch products
+        # 2. Verrouillage pessimiste — fetch products with FOR UPDATE
+        # Empêche deux transactions concurrentes de lire le même stock
+        # et de passer toutes les deux la vérification de stock.
         product_ids = [item.produit_id for item in items]
-        products_map = {p.id: p for p in Produit.objects.filter(id__in=product_ids)}
-        {pid: p.version for pid, p in products_map.items()}
+        products_map = {
+            p.id: p
+            for p in Produit.objects.select_for_update().filter(id__in=product_ids)
+        }
 
         # 3. Credit ceiling check
         SaleValidator._check_credit_ceiling(facture, data)

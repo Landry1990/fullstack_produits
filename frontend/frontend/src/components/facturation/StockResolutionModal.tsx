@@ -97,7 +97,7 @@ export default function StockResolutionModal({
                 <button className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose}>
                     {t('stock_resolution.cancel_and_edit_cart')}
                 </button>
-                <button className="inline-flex items-center justify-center h-9 px-8 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors gap-2" onClick={handleConfirm}>
+                <button className="inline-flex items-center justify-center h-9 px-8 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors gap-2" onClick={handleConfirm} autoFocus>
                     {t('stock_resolution.validate_and_cash')}
                 </button>
             </div>

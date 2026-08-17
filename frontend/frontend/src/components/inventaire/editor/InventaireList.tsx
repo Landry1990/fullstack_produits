@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     ClipboardList, Database, Plus, 
-    BarChart3 
+    BarChart3, MessageCircle 
 } from 'lucide-react';
 import { InventaireFilters } from '../InventaireFilters';
 import { InventaireQuickStats } from '../InventaireQuickStats';
@@ -96,14 +96,33 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    className="inline-flex items-center justify-center h-9 px-4 rounded-md gap-2 text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors disabled:opacity-50"
-                                    onClick={onOpenMergeModal}
-                                    disabled={!canMerge.canMerge}
-                                    title={canMerge.reason || ''}
+                                    className="inline-flex items-center justify-center h-9 px-5 rounded-md gap-2 text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                                    onClick={onCreate}
+                                    disabled={listLogic.loading || isSaving}
                                 >
-                                    <Database className="h-4 w-4" />
-                                    {t('inventaire.merge_btn')}
+                                    {isSaving && editorLogic.saving ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div> : <Plus className="h-4 w-4" />}
+                                    {t('inventaire.create_btn')}
                                 </button>
+                                <div className="h-6 w-px bg-slate-200" />
+                                <div
+                                    title={!canMerge.canMerge ? canMerge.reason || '' : undefined}
+                                    className="inline-flex"
+                                >
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center justify-center h-9 px-4 rounded-md gap-2 text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        onClick={onOpenMergeModal}
+                                        disabled={!canMerge.canMerge}
+                                    >
+                                        <Database className="h-4 w-4" />
+                                        {t('inventaire.merge_btn')}
+                                        {listLogic.selectedInventaireIds.size > 0 && (
+                                            <span className="ml-1.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+                                                {listLogic.selectedInventaireIds.size}
+                                            </span>
+                                        )}
+                                    </button>
+                                </div>
                                 <button
                                     type="button"
                                     className="inline-flex items-center justify-center h-9 px-4 rounded-md gap-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
@@ -111,15 +130,6 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                 >
                                     <BarChart3 className="h-4 w-4" />
                                     {t('inventaire.audit_btn')}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="inline-flex items-center justify-center h-9 px-5 rounded-md gap-2 text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-60"
-                                    onClick={onCreate}
-                                    disabled={listLogic.loading || isSaving}
-                                >
-                                    {isSaving && editorLogic.saving ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div> : <Plus className="h-4 w-4" />}
-                                    {t('inventaire.create_btn')}
                                 </button>
                             </div>
                         </div>

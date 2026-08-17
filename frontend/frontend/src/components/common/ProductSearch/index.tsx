@@ -45,17 +45,19 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   // Permissions
   user,
   skipStockCheck = false,
-  compact = false
+  compact = false,
+  recentProducts = []
 }) => {
   const { t } = useTranslation(['facturation', 'common'])
   const [internalMode, setInternalMode] = React.useState<SearchMode>(modes[0])
+  const [isFocused, setIsFocused] = React.useState(false)
   const searchMode = selectedDci ? 'dci' : (controlledMode ?? internalMode)
   const resultsContainerRef = React.useRef<HTMLDivElement>(null)
 
   // Garde l'élément sélectionné au clavier visible dans le dropdown (auto-scroll).
   const activeResultCount = searchMode === 'packs' ? packResults.length :
     searchMode === 'dci' ? (selectedDci ? dciProducts.length : dciResults.length) :
-    results.length
+    (searchMode === 'products' && !searchQuery ? recentProducts.length : results.length)
   const activeIndex = React.useMemo(() => {
     if (!getItemProps) return -1
     for (let i = 0; i < activeResultCount; i++) {
@@ -171,6 +173,8 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={onInternalKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setTimeout(() => setIsFocused(false), 150)}
           className={cn(
             "w-full pl-10 pr-4 text-base h-11 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all",
             getFocusColor()
@@ -188,11 +192,13 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     const itemProps = getItemProps?.(idx) || { className: '', style: {} }
     const isActive = itemProps.className?.includes('shadow')
     const stock = item.stock ?? 0
+    const stockMin = item.stock_minimum ?? 0
     const canSellNegativeStock = skipStockCheck || user?.is_superuser || user?.profile?.can_sell_negative_stock || user?.can_sell_negative_stock
     const isOutOfStock = stock <= 0
     const isBlocked = isOutOfStock && !canSellNegativeStock
     const isNegativeStock = stock < 0
     const isZeroStock = stock === 0
+    const isLowStock = stock > 0 && stockMin > 0 && stock <= stockMin
 
     const handleClick = () => {
       if (isBlocked) return
@@ -225,6 +231,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
               isZeroStock ? 'text-slate-500 font-normal' :
               'text-slate-800 font-bold'
             )}>{item.name}</div>
+            {isLowStock && (
+              <Badge variant="secondary" className={cn("text-[10px] h-4 px-1 shrink-0", isActive ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-100 text-amber-700 border-amber-200')}>
+                {t('facturation:search.low_stock_badge')}
+              </Badge>
+            )}
             {(item.active_promis_count ?? 0) > 0 && (
               <Badge variant="secondary" className={cn("text-[10px] h-4 px-1 shrink-0", isActive ? 'bg-blue-400 text-white border-blue-300' : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse')}>
                 PROMIS ({item.active_promis_count})
@@ -317,6 +328,26 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     )
   }
   
+  const renderSkeleton = () => (
+    <div className="max-h-96 overflow-y-auto space-y-0.5 p-1">
+      <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
+        {t('facturation:search.tabs_products')}
+      </div>
+      {[1, 2, 3].map((n) => (
+        <div key={`skel-${n}`} className="p-3 rounded-lg animate-pulse">
+          <div className="flex justify-between items-center mb-1.5">
+            <div className="h-3.5 w-1/2 bg-slate-200 rounded" />
+            <div className="h-3 w-1/5 bg-slate-200 rounded" />
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="h-2.5 w-1/3 bg-slate-200 rounded" />
+            <div className="h-2.5 w-1/4 bg-slate-200 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
   const renderResults = () => {
     // DCI Products view
     if (selectedDci && searchMode === 'dci') {
@@ -338,7 +369,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             </Button>
           </div>
           <div className="max-h-80 overflow-y-auto space-y-0.5">
-            {dciProducts.map((produit, idx) => renderProductItem(produit as SearchResult, idx))}
+            {dciProducts.map((produit, idx) => renderProductItem(produit as unknown as SearchResult, idx))}
           </div>
         </div>
       )
@@ -377,6 +408,19 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     }
     
     // Product results (default)
+    if (searchMode === 'products' && !searchQuery && recentProducts.length > 0) {
+      return (
+        <div className="max-h-96 overflow-y-auto space-y-0.5 p-1">
+          <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 border-y border-slate-200">
+            {t('facturation:search.recent_label')}
+          </div>
+          {recentProducts.map((item, idx) => renderProductItem(item, idx))}
+        </div>
+      )
+    }
+    if (searchMode === 'products' && loading) {
+      return renderSkeleton()
+    }
     if (results.length === 0) {
       return (
         <div className="text-center py-8 text-slate-400 text-sm">
@@ -392,7 +436,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     )
   }
   
-  const hasResults = searchQuery || selectedDci
+  const hasResults = isFocused || searchQuery || selectedDci
   
   return (
     <div className={cn("flex-1 relative flex flex-col gap-2", compact ? "p-0" : "p-3 md:p-4")}>

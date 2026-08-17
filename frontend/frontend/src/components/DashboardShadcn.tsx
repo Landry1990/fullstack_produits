@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import {
@@ -7,9 +7,9 @@ import {
   TrendingUp,
   Package,
   Wallet,
-  Plus,
   MessageCircle,
-  Calendar
+  Calendar,
+  MoreHorizontal
 } from 'lucide-react';
 import {
   useDashboardStats,
@@ -31,7 +31,6 @@ import { formatCurrency } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import { useLicence } from '../context/LicenceContext';
 
-import { Link } from 'react-router-dom';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import api from '../services/api';
 
@@ -57,6 +56,8 @@ export default function DashboardShadcn() {
   const [activeTab, setActiveTab] = useState<'overview' | 'stock' | 'finance'>('overview');
   const [sendingReport, setSendingReport] = useState(false);
   const [sendingInventaire, setSendingInventaire] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useDashboardStats();
   const { data: heavyStats } = useDashboardHeavyStats();
@@ -138,6 +139,17 @@ export default function DashboardShadcn() {
       setSendingInventaire(false);
     }
   };
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   useEffect(() => {
     const retards = echeances.filter(e => e.status === 'EN RETARD');
@@ -224,52 +236,65 @@ export default function DashboardShadcn() {
 
           {/* Right: actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <Link to="/app/facturation">
-              <Button className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700">
-                <Plus className="size-4" />
-                <span className="hidden sm:inline">{t('actions.new_invoice')}</span>
-                <span className="sm:hidden">{t('new_sale_short', 'Vente')}</span>
+
+            <div className="relative" ref={menuRef}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMenuOpen(o => !o)}
+                className="rounded-xl"
+                aria-expanded={menuOpen}
+                aria-haspopup="menu"
+              >
+                <MoreHorizontal className="size-5 text-slate-500" />
               </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRefreshAll}
-              disabled={loading}
-              className="rounded-xl"
-            >
-              {loading ? (
-                <div className="size-4 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
-              ) : (
-                <RefreshCw className="size-4 text-slate-500" />
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 p-1 z-50" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    onClick={() => { handleRefreshAll(); setMenuOpen(false); }}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <div className="size-4 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-4 text-slate-500" />
+                    )}
+                    {t('common:refresh')}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    onClick={() => { handleSendTelegramReport(); setMenuOpen(false); }}
+                    disabled={sendingReport}
+                  >
+                    {sendingReport ? (
+                      <div className="size-4 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
+                    ) : (
+                      <MessageCircle className="size-4 text-blue-500" />
+                    )}
+                    {t('actions.send_report')}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    onClick={() => { handleSendTelegramInventaire(); setMenuOpen(false); }}
+                    disabled={sendingInventaire}
+                  >
+                    {sendingInventaire ? (
+                      <div className="size-4 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
+                    ) : (
+                      <Package className="size-4 text-amber-500" />
+                    )}
+                    {t('actions.send_inventory')}
+                  </button>
+                </div>
               )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSendTelegramReport}
-              disabled={sendingReport}
-              className="rounded-xl"
-            >
-              {sendingReport ? (
-                <div className="size-4 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
-              ) : (
-                <MessageCircle className="size-4 text-blue-500" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSendTelegramInventaire}
-              disabled={sendingInventaire}
-              className="rounded-xl"
-            >
-              {sendingInventaire ? (
-                <div className="size-4 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
-              ) : (
-                <Package className="size-4 text-amber-500" />
-              )}
-            </Button>
+            </div>
           </div>
         </div>
 

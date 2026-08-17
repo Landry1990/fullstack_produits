@@ -48,8 +48,18 @@ class SaleCanceller:
             # 2. Restore general stock for non-lot products
             old_items = list(FactureProduit.objects.filter(facture=facture).select_related('produit'))
 
+            # Verrouiller les produits pour éviter les race conditions avec une vente concurrente
+            product_ids = [item.produit_id for item in old_items if item.produit_id]
+            if product_ids:
+                locked_products = {
+                    p.id: p
+                    for p in Produit.objects.select_for_update().filter(id__in=product_ids).order_by('id')
+                }
+            else:
+                locked_products = {}
+
             for item in old_items:
-                produit = item.produit
+                produit = locked_products.get(item.produit_id) or item.produit
                 if produit and produit.use_lot_management and item.produit_id in product_ids_with_allocations:
                     produit.calculate_stock_from_lots()
                 elif produit:

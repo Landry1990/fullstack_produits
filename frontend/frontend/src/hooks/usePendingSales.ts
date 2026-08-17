@@ -9,6 +9,8 @@ export type VenteEnAttente = {
     clientName: string | null
     useManualClient: boolean
     manualClientName: string
+    vendeurId?: number | null
+    vendeurName?: string | null
     lignes: LigneFacture[]
     remise: string
     remiseMode: 'montant' | 'taux'

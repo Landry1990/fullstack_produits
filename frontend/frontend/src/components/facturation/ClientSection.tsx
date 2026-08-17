@@ -1,10 +1,31 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Client, AyantDroit } from '../../types'
+import { safeStorage } from '../../utils/storage'
 import { Button } from '../shadcn/button'
-import { X, UserPlus } from 'lucide-react'
+import { X, UserPlus, Loader2 } from 'lucide-react'
 import AyantDroitSection from './AyantDroitSection'
 import ClientInfoBadges from './ClientInfoBadges'
+
+type RecentItem =
+  | { type: 'client'; id: number; name: string; phone?: string }
+  | { type: 'ayant_droit'; id: number; nom: string; matricule?: string; societe?: string; client_name?: string }
+
+const HISTORY_KEY = 'facturation_recent_client_ayantdroit'
+
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query) return <span>{text}</span>
+  const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${safeQuery})`, 'i')
+  const parts = text.split(new RegExp(`(${safeQuery})`, 'gi'))
+  return (
+    <span>
+      {parts.map((part, i) =>
+        regex.test(part) ? <strong key={i} className="font-bold text-emerald-700">{part}</strong> : <span key={i}>{part}</span>
+      )}
+    </span>
+  )
+}
 
 interface ClientSectionProps {
   clients: Client[]
@@ -25,6 +46,7 @@ interface ClientSectionProps {
   setShowClientDropdown: (v: boolean) => void
 
   ayantDroitSearchResults: AyantDroit[]
+  ayantDroitSearchLoading: boolean
 
   onOpenCreateClient: (initialName: string) => void
   onEnter?: () => void
@@ -61,6 +83,7 @@ export default function ClientSection({
   showClientDropdown,
   setShowClientDropdown,
   ayantDroitSearchResults,
+  ayantDroitSearchLoading,
   onOpenCreateClient,
   onEnter,
   ayantsDroitList,
@@ -81,6 +104,7 @@ export default function ClientSection({
   const { t } = useTranslation(['facturation', 'common'])
 
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const [recentItems, setRecentItems] = useState<RecentItem[]>([])
   const clientSearchRef = useRef<HTMLDivElement>(null)
 
   type MixedItem =
@@ -92,6 +116,43 @@ export default function ClientSection({
     const ayantsPart = ayantDroitSearchResults.slice(0, 5).map(ad => ({ type: 'ayant_droit' as const, data: ad }))
     return [...clientsPart, ...ayantsPart]
   }, [filteredClients, ayantDroitSearchResults])
+
+  // Chargement historique
+  useEffect(() => {
+    try {
+      const raw = safeStorage.getItem(HISTORY_KEY, 'session')
+      if (raw) setRecentItems(JSON.parse(raw))
+    } catch { /* ignore */ }
+  }, [])
+
+  const saveRecentItem = (item: RecentItem) => {
+    setRecentItems(prev =>
+      [item, ...prev.filter(r => !(r.type === item.type && r.id === item.id))].slice(0, 5)
+    )
+  }
+
+  useEffect(() => {
+    safeStorage.setItem(HISTORY_KEY, JSON.stringify(recentItems), 'session')
+  }, [recentItems])
+
+  const focusSearchInput = () => {
+    clientSearchRef.current?.querySelector<HTMLInputElement>('input')?.focus()
+  }
+
+  // Raccourci F3 focus client
+  useEffect(() => {
+    const handleDocKey = (e: KeyboardEvent) => {
+      if (e.key === 'F3') {
+        e.preventDefault()
+        setShowClientDropdown(true)
+        setClientSearch('')
+        setHighlightedIndex(-1)
+        setTimeout(focusSearchInput, 0)
+      }
+    }
+    document.addEventListener('keydown', handleDocKey)
+    return () => document.removeEventListener('keydown', handleDocKey)
+  }, [setShowClientDropdown, setClientSearch])
 
   // Fermer le dropdown client au clic extérieur
   useEffect(() => {
@@ -109,11 +170,20 @@ export default function ClientSection({
     setClientSearch('')
     setShowClientDropdown(false)
     setHighlightedIndex(-1)
+    saveRecentItem({ type: 'client', id: client.id, name: client.name, phone: client.phone })
   }
 
   const handleSelectAyantDroitResult = async (ad: AyantDroit) => {
     setShowClientDropdown(false)
     setHighlightedIndex(-1)
+    saveRecentItem({
+      type: 'ayant_droit',
+      id: ad.id ?? 0,
+      nom: ad.nom,
+      matricule: ad.matricule,
+      societe: ad.societe,
+      client_name: ad.client_name
+    })
     if (onSelectAyantDroit) {
       await onSelectAyantDroit(ad)
     }
@@ -219,9 +289,12 @@ export default function ClientSection({
               setHighlightedIndex(-1)
             }}
             onKeyDown={handleKeyDown}
-            placeholder={t('facturation:client.search_placeholder')}
+            placeholder={`${t('facturation:client.search_placeholder')} (F3)`}
             className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all pr-8"
           />
+          {ayantDroitSearchLoading && !selectedClient && (
+            <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 size-4 text-slate-400 animate-spin" />
+          )}
           {selectedClient && (
             <Button
               type="button"
@@ -241,6 +314,46 @@ export default function ClientSection({
           {/* Dropdown des résultats */}
           {showClientDropdown && (clientSearch || !selectedClient) && (
             <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 max-h-60 overflow-auto">
+              {clientSearch.trim().length === 0 && recentItems.length > 0 && (
+                <>
+                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 border-y border-slate-200">
+                    {t('facturation:client.recent_label')}
+                  </div>
+                  {recentItems.map((r, idx) => (
+                    <div
+                      key={`recent-${r.type}-${r.id}-${idx}`}
+                      onClick={() => {
+                        if (r.type === 'client') {
+                          const client = clients.find(c => c.id === r.id)
+                          if (client) handleSelectClient(client)
+                        } else {
+                          const ad = ayantsDroitList.find(a => a.id === r.id)
+                          if (ad) handleSelectAyantDroitResult(ad)
+                        }
+                      }}
+                      className="px-3 py-2 cursor-pointer text-sm hover:bg-slate-50 transition-colors"
+                    >
+                      {r.type === 'client' ? (
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-slate-800">{r.name}</span>
+                          <span className="text-xs text-slate-400">{r.phone}</span>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-slate-800 uppercase">{r.nom}</span>
+                            <span className="text-xs text-slate-400 uppercase">{r.matricule}</span>
+                          </div>
+                          <div className="flex justify-between items-center mt-0.5">
+                            <span className="text-[10px] text-slate-500 uppercase">{r.societe || '—'}</span>
+                            <span className="text-[10px] text-emerald-600 font-medium uppercase">{r.client_name}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
               {mixedItems.length > 0 ? (
                 <>
                   {mixedItems.map((item, index) => {
@@ -269,18 +382,18 @@ export default function ClientSection({
                         >
                           {item.type === 'client' ? (
                             <div className="flex justify-between items-center">
-                              <span className="font-medium text-slate-800">{item.data.name}</span>
-                              <span className="text-xs text-slate-400">{item.data.phone}</span>
+                              <span className="font-medium text-slate-800"><HighlightText text={item.data.name} query={clientSearch} /></span>
+                              <span className="text-xs text-slate-400"><HighlightText text={item.data.phone || ''} query={clientSearch} /></span>
                             </div>
                           ) : (
                             <div>
                               <div className="flex justify-between items-center">
-                                <span className="font-medium text-slate-800">{item.data.nom}</span>
-                                <span className="text-xs text-slate-400">{item.data.matricule}</span>
+                                <span className="font-medium text-slate-800 uppercase"><HighlightText text={item.data.nom} query={clientSearch} /></span>
+                                <span className="text-xs text-slate-400 uppercase"><HighlightText text={item.data.matricule || ''} query={clientSearch} /></span>
                               </div>
                               <div className="flex justify-between items-center mt-0.5">
-                                <span className="text-[10px] text-slate-500">{item.data.societe || '—'}</span>
-                                <span className="text-[10px] text-emerald-600 font-medium">{item.data.client_name}</span>
+                                <span className="text-[10px] text-slate-500 uppercase"><HighlightText text={item.data.societe || '—'} query={clientSearch} /></span>
+                                <span className="text-[10px] text-emerald-600 font-medium uppercase"><HighlightText text={item.data.client_name || ''} query={clientSearch} /></span>
                               </div>
                             </div>
                           )}
@@ -288,6 +401,43 @@ export default function ClientSection({
                       </React.Fragment>
                     )
                   })}
+                  {ayantDroitSearchLoading && (
+                    <>
+                      <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
+                        {t('facturation:client.ayant_droit.label')}
+                      </div>
+                      {[1, 2, 3].map((n) => (
+                        <div key={`skel-${n}`} className="px-3 py-2.5 animate-pulse">
+                          <div className="flex justify-between items-center mb-1.5">
+                            <div className="h-3.5 w-1/2 bg-slate-200 rounded" />
+                            <div className="h-3 w-1/4 bg-slate-200 rounded" />
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <div className="h-2.5 w-1/3 bg-slate-200 rounded" />
+                            <div className="h-2.5 w-1/4 bg-slate-200 rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </>
+              ) : ayantDroitSearchLoading ? (
+                <>
+                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
+                    {t('facturation:client.ayant_droit.label')}
+                  </div>
+                  {[1, 2, 3].map((n) => (
+                    <div key={`skel-empty-${n}`} className="px-3 py-2.5 animate-pulse">
+                      <div className="flex justify-between items-center mb-1.5">
+                        <div className="h-3.5 w-1/2 bg-slate-200 rounded" />
+                        <div className="h-3 w-1/4 bg-slate-200 rounded" />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="h-2.5 w-1/3 bg-slate-200 rounded" />
+                        <div className="h-2.5 w-1/4 bg-slate-200 rounded" />
+                      </div>
+                    </div>
+                  ))}
                 </>
               ) : (
                 <div className="px-3 py-4 text-center">

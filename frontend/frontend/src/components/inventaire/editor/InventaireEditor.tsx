@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDocumentLock } from '../../../hooks/useDocumentLock';
 import { LockBanner } from '../../common/LockBanner';
 import { useTranslation } from 'react-i18next';
 import { 
     ChevronLeft, Plus, FileText, CheckCircle2, History, 
-    Download, Save, Upload, Send
+    Download, Save, Upload, Send, MoreHorizontal
 } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from 'react-hot-toast';
@@ -37,6 +37,8 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     const [activeTab, setActiveTab] = React.useState<'ENTRY' | 'ANALYSIS'>('ENTRY');
     const [printGroupBy, setPrintGroupBy] = React.useState<'rayon' | 'forme' | 'groupe'>('rayon');
     const [sendingTelegram, setSendingTelegram] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = React.useRef<HTMLDivElement>(null);
 
     const handleSendTelegram = async () => {
         setSendingTelegram(true);
@@ -44,11 +46,23 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
             await api.post('telegram/rapport-inventaire/', activeInventaire?.id ? { inventaire_id: activeInventaire.id } : {});
             toast.success(t('inventaire.telegram_report_sent'), { icon: <Send className="h-4 w-4 text-[#229ED9]" /> });
         } catch (err: unknown) {
-            toast.error(err?.response?.data?.message || t('common:telegram.send_error'));
+            const apiError = err as { response?: { data?: { message?: string } } } | undefined;
+            toast.error(apiError?.response?.data?.message || t('common:telegram.send_error'));
         } finally {
             setSendingTelegram(false);
         }
     };
+
+    React.useEffect(() => {
+        if (!menuOpen) return;
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [menuOpen]);
 
     const {
         lignes, setLignes,
@@ -172,48 +186,60 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         type="button"
                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'ANALYSIS' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
                         onClick={() => setActiveTab('ANALYSIS')}
+                        title={t('inventaire.detail.tab_analysis_tooltip')}
                       >
                         {t('inventaire.detail.tab_analysis')}
                       </button>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <select
-                      value={printGroupBy}
-                      onChange={(e) => setPrintGroupBy(e.target.value as 'rayon' | 'forme' | 'groupe')}
-                      className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-[10px] font-bold uppercase text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
-                      title={t('inventaire.detail.print_group_by')}
-                    >
-                      <option value="rayon">{t('inventaire.detail.group_rayon')}</option>
-                      <option value="forme">{t('inventaire.detail.group_forme')}</option>
-                      <option value="groupe">{t('inventaire.detail.group_groupe')}</option>
-                    </select>
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center h-10 px-4 rounded-xl gap-2 text-sm font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-60"
-                      onClick={handlePrintEtat}
-                      disabled={!activeInventaire?.id || printing}
-                    >
-                      {printing
-                        ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
-                        : <Download className="h-4 w-4" />}
-                      <span className="hidden sm:inline">{t('inventaire.detail.print')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#229ED9]/30 text-[#229ED9] hover:bg-[#229ED9]/10 hover:border-[#229ED9] transition-all disabled:opacity-60"
-                      onClick={handleSendTelegram}
-                      disabled={sendingTelegram || !activeInventaire?.id}
-                      title={t('common:telegram.inventory_report')}
-                    >
-                      {sendingTelegram
-                        ? <div className="animate-spin rounded-full size-4 border-b-2 border-[#229ED9]"></div>
-                        : (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.67l-2.93-.918c-.638-.196-.65-.638.136-.943l11.434-4.41c.53-.194.995.131.822.943z"/>
-                          </svg>
-                        )}
-                    </button>
+                  <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex" role="group" aria-label={t('inventaire.detail.print_group_by')}>
+                      {(['rayon', 'forme', 'groupe'] as const).map((g) => (
+                          <button
+                              key={g}
+                              type="button"
+                              onClick={() => setPrintGroupBy(g)}
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${printGroupBy === g ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+                          >
+                              {t(`inventaire.detail.group_${g}`)}
+                          </button>
+                      ))}
+                  </div>
+
+                  <div className="relative" ref={menuRef}>
+                      <button
+                          type="button"
+                          className="inline-flex items-center justify-center h-10 px-4 rounded-xl gap-2 text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition-colors"
+                          onClick={() => setMenuOpen(o => !o)}
+                          aria-expanded={menuOpen}
+                          aria-haspopup="menu"
+                      >
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="hidden sm:inline">{t('inventaire.detail.export_share')}</span>
+                      </button>
+                      {menuOpen && (
+                          <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 p-1 z-50" role="menu">
+                              <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                  onClick={() => { handlePrintEtat(); setMenuOpen(false); }}
+                                  disabled={!activeInventaire?.id || printing}
+                              >
+                                  {printing ? <div className="animate-spin rounded-full size-4 border-b-2 border-emerald-600" /> : <Download className="h-4 w-4" />}
+                                  {t('inventaire.detail.print')}
+                              </button>
+                              <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                  onClick={() => { handleSendTelegram(); setMenuOpen(false); }}
+                                  disabled={sendingTelegram || !activeInventaire?.id}
+                              >
+                                  {sendingTelegram ? <div className="animate-spin rounded-full size-4 border-b-2 border-[#229ED9]" /> : <Send className="h-4 w-4 text-[#229ED9]" />}
+                                  {t('common:telegram.inventory_report')}
+                              </button>
+                          </div>
+                      )}
                   </div>
 
                   {!isReadOnly && activeInventaire && (
@@ -326,6 +352,23 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                 )
             )}
           </div>
+
+          {/* Bottom action bar */}
+          {!isReadOnly && activeInventaire && (
+              <div className="shrink-0 p-4 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-end gap-3">
+                  <button
+                      type="button"
+                      className="inline-flex items-center justify-center h-10 px-6 rounded-xl gap-2 text-sm font-black bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                      onClick={handleOpenValidateModal}
+                      disabled={saving}
+                  >
+                      {saving
+                          ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
+                          : <CheckCircle2 className="h-5 w-5" />}
+                      {t('inventaire.detail.validate')}
+                  </button>
+              </div>
+          )}
         </div>
     );
 };

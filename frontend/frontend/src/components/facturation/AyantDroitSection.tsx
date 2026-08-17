@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AyantDroit } from '../../types'
 import { Button } from '../shadcn/button'
@@ -32,9 +32,40 @@ export default function AyantDroitSection({
 }: AyantDroitSectionProps) {
   const { t } = useTranslation(['facturation', 'common'])
 
+  const nomRef = useRef<HTMLInputElement>(null)
+  const matriculeRef = useRef<HTMLInputElement>(null)
+  const societeRef = useRef<HTMLInputElement>(null)
+
   const selectedData = useMemo(() =>
     ayantsDroitList.find(ad => ad.id === selectedAyantDroit),
   [ayantsDroitList, selectedAyantDroit])
+
+  const duplicate = useMemo(() => {
+    const trimmed = ayantDroitMatricule.trim()
+    if (!trimmed) return null
+    return ayantsDroitList.find(ad =>
+      ad.matricule?.toUpperCase() === trimmed &&
+      ad.id !== selectedAyantDroit
+    ) || null
+  }, [ayantsDroitList, ayantDroitMatricule, selectedAyantDroit])
+
+  const handleInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    nextRef: React.RefObject<HTMLInputElement | null>
+  ) => {
+    if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
+      e.preventDefault()
+      nextRef.current?.focus()
+    }
+  }
+
+  const [showCard, setShowCard] = useState(false)
+
+  useEffect(() => {
+    setShowCard(false)
+    const id = window.requestAnimationFrame(() => setShowCard(true))
+    return () => window.cancelAnimationFrame(id)
+  }, [selectedData?.id])
 
   const handleSelectFromList = (id: number | null) => {
     const ad = ayantsDroitList.find(a => a.id === id)
@@ -83,30 +114,42 @@ export default function AyantDroitSection({
       {showNewAyantDroit || ayantsDroitList.length === 0 ? (
         <div className="grid grid-cols-3 gap-2 relative">
           <input
+            ref={nomRef}
             type="text"
             value={ayantDroitNom}
             onChange={(e) => {
-              setAyantDroitNom(e.target.value)
+              setAyantDroitNom(e.target.value.toUpperCase())
               setSelectedAyantDroit(null)
               setShowNewAyantDroit(true)
             }}
+            onKeyDown={(e) => handleInputKeyDown(e, matriculeRef)}
             placeholder={t('facturation:client.ayant_droit.name_placeholder')}
             className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
           />
           <input
+            ref={matriculeRef}
             type="text"
             value={ayantDroitMatricule}
-            onChange={(e) => setAyantDroitMatricule(e.target.value)}
+            onChange={(e) => setAyantDroitMatricule(e.target.value.toUpperCase())}
+            onKeyDown={(e) => handleInputKeyDown(e, societeRef)}
             placeholder={t('facturation:client.ayant_droit.matricule_placeholder')}
-            className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+            className={`w-full px-3 py-1.5 text-xs border rounded-lg bg-white focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+              duplicate ? 'border-amber-300 focus:border-amber-400 focus:ring-amber-100' : 'border-slate-200 focus:border-emerald-300 focus:ring-emerald-100'
+            }`}
           />
           <input
+            ref={societeRef}
             type="text"
             value={ayantDroitSociete}
-            onChange={(e) => setAyantDroitSociete(e.target.value)}
+            onChange={(e) => setAyantDroitSociete(e.target.value.toUpperCase())}
             placeholder={t('facturation:client.ayant_droit.societe_placeholder')}
             className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
           />
+          {duplicate && (
+            <div className="col-span-3 text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded px-2 py-1">
+              {t('facturation:client.ayant_droit.duplicate_warning')} : {duplicate.nom} ({duplicate.matricule})
+            </div>
+          )}
           {ayantsDroitList.length > 0 && (
             <button
               type="button"
@@ -145,22 +188,26 @@ export default function AyantDroitSection({
           </div>
 
           {selectedData && (
-            <div className="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-100 text-xs grid grid-cols-2 gap-x-4 gap-y-1">
+            <div
+              className={`mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-100 text-xs grid grid-cols-2 gap-x-4 gap-y-1 transition-all duration-500 ease-out transform ${
+                showCard ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+              }`}
+            >
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">{t('facturation:client.ayant_droit.name_placeholder')}</span>
-                <span className="font-medium text-slate-800">{selectedData.nom}</span>
+                <span className="font-medium text-slate-800 uppercase">{selectedData.nom}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">{t('facturation:client.ayant_droit.matricule_placeholder')}</span>
-                <span className="font-medium text-slate-800">{selectedData.matricule}</span>
+                <span className="font-medium text-slate-800 uppercase">{selectedData.matricule}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">{t('facturation:client.ayant_droit.societe_placeholder')}</span>
-                <span className="font-medium text-slate-800">{selectedData.societe || '—'}</span>
+                <span className="font-medium text-slate-800 uppercase">{selectedData.societe || '—'}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">{t('facturation:client.label')}</span>
-                <span className="font-medium text-emerald-700">{selectedData.client_name}</span>
+                <span className="font-medium text-emerald-700 uppercase">{selectedData.client_name}</span>
               </div>
             </div>
           )}

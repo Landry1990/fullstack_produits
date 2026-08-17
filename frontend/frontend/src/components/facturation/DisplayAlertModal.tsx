@@ -1,6 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from '../common/PremiumModal';
+import { safeStorage } from '../../utils/storage';
+
+const DISMISS_KEY = 'display_alert_dismissed_session';
 
 interface DisplayAlertModalProps {
     alerts: { id: string; title: string; message: string; type: 'product' | 'client'; is_blocking: boolean }[];
@@ -9,10 +12,43 @@ interface DisplayAlertModalProps {
 
 export default function DisplayAlertModal({ alerts, onAcknowledge }: DisplayAlertModalProps) {
     const { t } = useTranslation(['facturation', 'common']);
-    const currentAlert = alerts[0];
+    const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+    const [dontShowAgain, setDontShowAgain] = useState(false);
+    const onAcknowledgeRef = React.useRef<() => void>(() => {});
+    const autoAckedRef = React.useRef<Set<string>>(new Set());
 
-    const onAcknowledgeRef = React.useRef(onAcknowledge);
-    useEffect(() => { onAcknowledgeRef.current = onAcknowledge; });
+    useEffect(() => { onAcknowledgeRef.current = handleAcknowledge; });
+
+    // Load dismissed ids from session storage
+    useEffect(() => {
+        try {
+            const raw = safeStorage.getItem(DISMISS_KEY, 'session');
+            const ids = raw ? JSON.parse(raw) : [];
+            setDismissed(new Set(Array.isArray(ids) ? ids : []));
+        } catch { /* ignore */ }
+    }, []);
+
+    // Persist dismissed ids
+    useEffect(() => {
+        safeStorage.setItem(DISMISS_KEY, JSON.stringify([...dismissed]), 'session');
+    }, [dismissed]);
+
+    // Auto-acknowledge alerts already marked as dismissed this session
+    useEffect(() => {
+        if (alerts.length === 0) return;
+        const first = alerts[0];
+        if (first && dismissed.has(first.id) && !autoAckedRef.current.has(first.id)) {
+            autoAckedRef.current.add(first.id);
+            setTimeout(() => onAcknowledgeRef.current(), 0);
+        }
+    }, [alerts, dismissed]);
+
+    // Reset checkbox when current alert changes
+    useEffect(() => {
+        setDontShowAgain(false);
+    }, [alerts[0]?.id]);
+
+    const currentAlert = alerts[0];
 
     // Handle Enter to dismiss when open
     useEffect(() => {
@@ -29,12 +65,19 @@ export default function DisplayAlertModal({ alerts, onAcknowledge }: DisplayAler
 
     if (!currentAlert) return null;
 
-    const isBlocking = !!currentAlert.is_blocking;
+    const isBlocking = !!currentAlert?.is_blocking;
+
+    const handleAcknowledge = () => {
+        if (currentAlert && !isBlocking && dontShowAgain && currentAlert.type === 'product') {
+            setDismissed(prev => new Set([...prev, currentAlert.id]));
+        }
+        onAcknowledge();
+    };
 
     return (
         <PremiumModal
             isOpen={true}
-            onClose={onAcknowledge}
+            onClose={handleAcknowledge}
             title={
                 isBlocking 
                     ? t('facturation:display_alert.critical_title', { title: currentAlert.title })
@@ -60,10 +103,21 @@ export default function DisplayAlertModal({ alerts, onAcknowledge }: DisplayAler
                     }
                 </p>
 
-                <div className="w-full pt-4">
+                <div className="w-full pt-4 space-y-3">
+                    {!isBlocking && currentAlert?.type === 'product' && (
+                        <label className="flex items-center justify-center gap-2 text-sm text-slate-600 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={dontShowAgain}
+                                onChange={(e) => setDontShowAgain(e.target.checked)}
+                                className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            {t('facturation:display_alert.dont_show_again_session')}
+                        </label>
+                    )}
                     <button
                         className={`inline-flex items-center justify-center w-full h-12 rounded-xl text-white shadow-lg font-bold transition-all ${isBlocking ? 'bg-red-600 border-4 border-white/30 text-xl hover:bg-red-700' : 'bg-red-600 shadow-red-200 hover:bg-red-700'}`}
-                        onClick={onAcknowledge}
+                        onClick={handleAcknowledge}
                         autoFocus
                     >
                         {isBlocking ? t('facturation:display_alert.understood_blocking') : t('facturation:display_alert.understood')}

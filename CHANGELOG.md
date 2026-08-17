@@ -2,6 +2,276 @@
 
 ---
 
+## 2026-08-17 — Commandes : P1 rapides dans `CommandeProductTable.tsx`
+
+### 🎨 UI/UX
+
+- **Internationalisation des headers du tableau de produits** :
+  - `Stk` → `orders:product_table.headers.stock_short`.
+  - `Montant` → `orders:product_table.headers.amount`.
+  - `Fin de liste - X articles` → `orders:product_table.end_of_list`.
+- **Clés de traduction ajoutées** (fr/en) :
+  - `orders:product_table.headers.stock_short`
+  - `orders:product_table.headers.amount`
+  - `orders:product_table.end_of_list`
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeProductTable.tsx`
+- `frontend/frontend/public/locales/fr/orders.json`
+- `frontend/frontend/public/locales/en/orders.json`
+
+---
+
+## 2026-08-17 — Commandes : nettoyage i18n final et fallback FR
+
+### 🎨 UI/UX
+
+- **Suppression de tous les `defaultValue` français dans `src/components/Commandes/`** :
+  - `CommandeList.tsx`
+  - `CommandeDetails.tsx`
+  - `CommandeDeleteModals.tsx`
+  - `CommandeProductRow.tsx`
+  - `productTableUtils.ts`
+- **Internationalisation** :
+  - Ajout `common:unknown_product_deleted` en `fr` et `en`.
+  - Ajout `orders:product_table.unknown_product_id` en `fr` et `en`.
+  - Ajout `orders:product_table.low_margin_tooltip` en `fr` et `en`.
+
+### ✅ Résultat
+
+- Zéro `defaultValue` FR restant dans `src/components/Commandes`.
+- Toutes les chaînes visibles du module Commandes sont désormais assurées par les clés de traduction.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeList.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeDeleteModals.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx`
+- `frontend/frontend/src/components/Commandes/productTableUtils.ts`
+- `frontend/frontend/public/locales/fr/orders.json`
+- `frontend/frontend/public/locales/en/orders.json`
+- `frontend/frontend/public/locales/fr/common.json`
+- `frontend/frontend/public/locales/en/common.json`
+
+---
+
+## 2026-08-17 — Commandes : suppression des derniers imports `ui/Table` et `ui/SelectionHeader`
+
+### 🎨 UI/UX
+
+- **Création `frontend/frontend/src/components/shadcn/table.tsx`** :
+  - Migration du composant tableau partagé dans le répertoire `shadcn` pour aligner la stack.
+- **Création `frontend/frontend/src/components/Commandes/CommandeSelectionHeader.tsx`** :
+  - Remplacement de `../ui/SelectionHeader` par un composant local sans classes DaisyUI (`base-*`).
+  - Utilisation de `Button` et `Badge` shadcn.
+- **Mise à jour des imports dans `CommandeList.tsx`, `CommandeDetails.tsx`, `SuggestionCommandeModal.tsx`** :
+  - `../ui/Table` → `../shadcn/table`.
+  - `../ui/SelectionHeader` → `./CommandeSelectionHeader`.
+
+### ✅ Résultat
+
+- Plus aucun import `../ui/(Button|Select|Table|SelectionHeader|Badge)` dans `src/components/Commandes`.
+- Plus de classes `base-*` (DaisyUI) dans le module Commandes.
+- Plus d'emojis dans les composants Commandes.
+
+### Fichiers modifiés / créés
+
+- `frontend/frontend/src/components/shadcn/table.tsx` (créé)
+- `frontend/frontend/src/components/Commandes/CommandeSelectionHeader.tsx` (créé)
+- `frontend/frontend/src/components/Commandes/CommandeList.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx`
+- `frontend/frontend/src/components/Commandes/SuggestionCommandeModal.tsx`
+
+---
+
+## 2026-08-17 — Commandes : i18n scanner Data Matrix + ligne produit étendue
+
+### 🎨 UI/UX
+
+- **Internationalisation `DataMatrixScanBar.tsx`** :
+  - Tous les messages de feedback du scanner (succès, déjà rempli, non trouvé, code non reconnu, état actif) sont traduits.
+  - Titres d'accessibilité du bouton afficher/masquer traduits.
+  - Suppression du caractère `✓` dans le message de succès.
+- **Amélioration `CommandeProductExpandedRow.tsx`** :
+  - Remplacement de l'emoji `⚠️` par l'icône Lucide `AlertTriangle`.
+  - Suppression des `defaultValue` FR et des chaînes hardcodées (`Inconnu`, `Jamais`).
+  - Format des dates localisé avec `i18n.language`.
+  - Unités (mois, jour, Min, Max) et libellés traduits.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/DataMatrixScanBar.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeProductExpandedRow.tsx`
+- `frontend/frontend/public/locales/fr/orders.json`
+- `frontend/frontend/public/locales/en/orders.json`
+
+---
+
+## 2026-08-17 — Commandes : migration des modales P0 vers shadcn/ui + i18n
+
+### 🎨 UI/UX
+
+- **Migration `DuplicateLotModal.tsx`** :
+  - Overlay/structure faits main → `Dialog` shadcn.
+  - Boutons natifs → `Button` shadcn.
+  - Tous les textes visibles traduits avec `useTranslation`.
+  - Ajout d'`aria-describedby` sur `DialogContent`.
+- **Migration `MergeCommandesModal.tsx`** :
+  - Overlay fait main → `Dialog` shadcn (`DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`).
+  - `<select>` natif → `Select` shadcn.
+  - Spinner fait main → `Loader2` Lucide.
+  - Bouton de confirmation natif → `Button` shadcn.
+  - Classes `base-*`/DaisyUI → tokens slate/indigo.
+- **Migration `TransferCommandeModal.tsx`** :
+  - Overlay fait main → `Dialog` shadcn.
+  - `<select>` natif → `Select` shadcn.
+  - Spinner fait main → `Loader2` Lucide.
+  - Classes `base-*`/DaisyUI (`text-success`, `bg-success/20`, `text-warning`...) → tokens Tailwind standard (`emerald`, `red`, `amber`, `slate`).
+- **Migration `QuickCreateProductModal.tsx`** :
+  - Overlay/header faits main → `Dialog` shadcn.
+  - `<select>` natifs (TVA, Rayon) → `Select` shadcn.
+  - Bouton de fermeture natif supprimé (géré par `DialogContent`).
+  - Labels associés aux champs via `htmlFor`/`id`.
+- **Internationalisation** :
+  - Nouvelles clés `orders:duplicate_lot.*` (fr/en).
+  - Nouvelles clés `orders:transfer_modal.*` complétées (fr/en).
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/DuplicateLotModal.tsx`
+- `frontend/frontend/src/components/Commandes/MergeCommandesModal.tsx`
+- `frontend/frontend/src/components/Commandes/TransferCommandeModal.tsx`
+- `frontend/frontend/src/components/Commandes/QuickCreateProductModal.tsx`
+- `frontend/frontend/public/locales/fr/orders.json`
+- `frontend/frontend/public/locales/en/orders.json`
+
+---
+
+## 2026-08-17 — Commandes : migration CommandeForm et modales de suppression vers shadcn/ui
+
+### 🎨 UI/UX
+
+- **Migration `CommandeForm.tsx`** :
+  - `Select` de `../ui/Select` → `../shadcn/select`.
+  - Checkboxes natives (`mise en place`, `payé au comptant`) → `shadcn/checkbox` + `<label>` associés.
+  - Ajout de `aria-label` sur tous les boutons d'action du header (retour, Data Matrix, export, import, nouveau produit, avoir).
+  - Label `Fournisseur` ajouté au-dessus du select avec `htmlFor`/`id`.
+- **Migration `CommandeDeleteModals.tsx`** :
+  - `Button` de `../ui/Button` → `../shadcn/button`.
+  - `variant="danger"` → `variant="destructive"`.
+  - Suppression des `defaultValue` FR dans les traductions.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeDeleteModals.tsx`
+
+---
+
+## 2026-08-17 — Fiabilité : verrous pessimistes sur annulation et modification de vente
+
+### 🔒 Sécurité & Fiabilité
+
+- **Race conditions éliminées** sur `SaleCanceller.cancel_invoice` et `SaleModifier.modify_sale` :
+  - ajout de `select_for_update().order_by('id')` sur les produits concernés avant toute modification de stock.
+  - empêche une vente concurrente de lire un stock incohérent pendant une annulation ou modification.
+  - `order_by('id')` garantit un ordre de verrouillage déterministe pour éviter les deadlocks.
+- **Audit des points de fiabilité** :
+  - ✅ Idempotency Key : déjà présente sur `finaliser` et `cloturer` (frontend + backend).
+  - ✅ Reconnexion WebSocket : déjà implémentée dans `useCaisseRealtime` et `useDocumentLock`.
+  - ✅ `can_sell_negative_stock` : `default=False`, tests de non-régression présents.
+- **Fichiers** : `backend/api/services/sale_canceller.py`, `backend/api/services/sale_modifier.py`.
+
+---
+
+## 2026-08-17 — Facturation : stock à jour pour les derniers produits
+
+### 🐛 Corrections
+
+- **Rafraîchissement des derniers produits** :
+  - au chargement de la page, les produits récents sont rechargés depuis l'API pour avoir leur stock courant.
+  - à l'ajout au panier, `useCart.addProduit` renvoie maintenant le produit frais récupéré du backend, et celui-ci est utilisé pour l'historique récent.
+- **Dropdown des derniers produits** : le dropdown de recherche ne reste plus ouvert en permanauté ; il s'affiche uniquement quand le champ est focusé, qu'une recherche est en cours ou qu'un DCI est sélectionné.
+- **Double vente évitée (stock négatif)** :
+  - **Frontend** : `handleCompleteSale` utilise un `useRef` (`saleInProgressRef`) pour bloquer toute double soumission (double-clic, F9 répété) pendant qu'une vente est en cours.
+  - **Backend** : `SaleValidator.validate_invoice` utilise `select_for_update()` sur les produits, empêchant deux transactions concurrentes de lire le même stock et de passer toutes les deux la vérification.
+- **Fichiers** : `ProductSearchSection.tsx`, `useCart.ts`, `ProductSearch/index.tsx`, `useFacturationState.ts`, `backend/api/services/sale_validator.py`.
+
+---
+
+## 2026-08-16 — Commandes : migration toolbar/row vers shadcn/ui
+
+### 🎨 UI/UX
+
+- **Migration composants legacy** dans `CommandeProductToolbar.tsx` et `CommandeProductRow.tsx` :
+  - `Button` de `../ui/Button` → `../shadcn/button`.
+  - `Select` de `../ui/Select` → `../shadcn/select`.
+- **Suppression des emojis** : remplacement par `lucide-react` (`Package`, `ArrowRight`) dans la toolbar et suppression dans les options de tri.
+- **Accessibilité** : ajout de `aria-label` sur les boutons Info/Supprimer de la ligne produit.
+- **i18n** : le bouton de suppression utilise désormais `orders:product_table.delete_btn` au lieu du texte en dur "Suppr.".
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeProductToolbar.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx`
+
+---
+
+## 2026-08-16 — Audit UI/UX du module Commandes
+
+### 🎨 Analyse
+
+- Audit complet du module `Commandes` (`frontend/frontend/src/components/Commandes/`) et de ses sous-dossiers.
+- Identification des incohérences de composants (DaisyUI vs shadcn/ui), emojis dans l'UI, textes non traduits, problèmes d'accessibilité et densité visuelle.
+- Création du document `docs/commandes-ux-propositions.md` avec le design system cible et un plan d'action priorisé (P0/P1/P2/P3).
+
+### Fichiers créés
+
+- `docs/commandes-ux-propositions.md`
+
+---
+
+## 2026-08-16 — Inventaire : actions visibles et badge type
+
+### 📦 Inventaire - P1 Quick win
+
+- **Tableau** : actions toujours visibles (Ouvrir, WhatsApp, Supprimer), plus d'affichage au survol.
+- **Badge type** : affichage du type d'inventaire (`Global`, `Rayon`, `Réserve`) dans la première cellule.
+- **Sécurité clic** : suppression du clic global sur la ligne pour éviter les conflits avec la sélection.
+- **Fichiers** : `InventaireListTable.tsx`.
+
+### 📦 Inventaire - P4 Assistant de création
+
+- **Wizard 2 étapes** : étape 1 choix de l'action (Contrôle partiel / Inventaire complet), étape 2 périmètre et récapitulatif.
+- **Libellés métiers** : remplacement de "Vérifier" / "Saisie" par des intitulés explicites.
+- **Chargement des filtres** : indicateurs de chargement sur les dropdowns rayon, groupe, forme.
+- **Accessibilité** : `aria-modal`, `role="dialog"` et `aria-labelledby` sur le modal.
+- **Fichiers** : `InventaireCreateModal.tsx`, `public/locales/fr/stock.json`, `public/locales/en/stock.json`.
+
+### 📦 Inventaire - P5 Actions d'export de l'éditeur
+
+- **ToggleGroup** : remplacement du select de regroupement par 3 boutons (Rayon / Forme / Groupe).
+- **Menu Exporter / Partager** : regroupement PDF et Telegram dans un dropdown personnalisé.
+- **Tooltip onglet Analyse** : ajout d'un `title` explicite sur le bouton Analyse.
+- **Bouton Valider en bas** : bouton de validation également accessible en bas de l'éditeur.
+- **Fichiers** : `InventaireEditor.tsx`, `public/locales/fr/stock.json`, `public/locales/en/stock.json`.
+
+### 📦 Inventaire - P6 Quick stats
+
+- **Variation** : comparaison de l'écart total avec le dernier inventaire validé.
+- **Sémantique couleurs** : ambre pour les écarts non nuls, rouge seulement pour les pertes supérieures à 100 000 F.
+- **Tooltip** : info-bulle sur le calcul de l'écart global.
+- **Fichiers** : `InventaireQuickStats.tsx`, `public/locales/fr/stock.json`, `public/locales/en/stock.json`.
+
+### 📦 Sidebar & Dashboard - P1 / P3 Quick wins
+
+- **Sidebar** : drawer mobile moins large (`min(280px, 85vw)`), état actif avec bordure, titres de catégories plus visibles, footer aéré.
+- **Dashboard** : regroupement des actions secondaires (refresh, Telegram) dans un menu `…` ; suppression du bouton `Nouvelle facture`.
+- **Traductions** : ajout `actions.send_report` et `actions.send_inventory` dans `fr/dashboard.json` et `en/dashboard.json`.
+- **Fichiers** : `Sidebar.tsx`, `DashboardShadcn.tsx`, `public/locales/fr/dashboard.json`, `public/locales/en/dashboard.json`.
+
 ## 2026-08-16 — Autocomplétion des ayants droit en facturation
 
 ### ✨ Fonctionnalités
@@ -19,6 +289,82 @@
 - Correction du type de comparaison `id` dans `AyantDroitSection` (`a.id === id` au lieu de `String(a.id) === id`).
 - Le cache PWA du service worker pouvait afficher l'ancienne version du frontend après déploiement — un **Ctrl+F5** (hard reload) est nécessaire pour invalider le cache.
 
+### 🎨 UI
+
+- Étalement horizontal des champs ayant droit (nom, matricule, société) en grille 3 colonnes au lieu d'empilés vertical.
+- Carte infos bénéficiaire en grille 2 colonnes pour mieux utiliser l'espace.
+- Largeur du panneau client passée de `w-64 lg:w-80` à `w-full` pour occuper toute la largeur disponible.
+
+### 🔤 Majuscules automatiques
+
+- Saisie des champs ayant droit (nom, matricule, société) forcée en majuscules via `.toUpperCase()` sur `onChange`.
+- Affichage en majuscules (`uppercase` CSS) dans le dropdown de recherche et la carte infos bénéficiaire.
+- Payload envoyé au backend également uppercase (`useSaleCompletion.ts`) en plus du `UppercaseSerializerMixin` déjà présent côté backend.
+
+### ⌨️ UX recherche client / ayant droit
+
+- **Highlight de la correspondance** : la partie du texte qui matche la recherche est mise en gras et en vert dans le dropdown (nom, matricule, société, client).
+- **Raccourci `F3`** : focus instantané dans le champ de recherche client / ayant droit.
+- **Historique rapide** : quand le champ est vide et focusé, les 5 derniers clients / ayants droit sélectionnés apparaissent en haut du dropdown.
+
+### ✨ Feedback & indicateurs
+
+- **Animation de la carte bénéficiaire** : fade + slide vers le bas quand un ayant droit est sélectionné, pour confirmer visuellement le remplissage des champs.
+- **Badge client PROFESSIONNEL** : indicateur bleu avec icône `Briefcase` affiché sous le client sélectionné quand `client_type === 'PROFESSIONNEL'`, pour expliquer l'affichage de la section ayant droit.
+
+### ⚡ Performance / perception de rapidité
+
+- **Loader discret** : icône `Loader2` animée dans le champ de recherche quand la recherche d'ayants droit est en cours.
+- **Skeleton de chargement** : 3 lignes de placeholder `animate-pulse` dans le dropdown (section bénéficiaires) pendant le chargement des résultats, pour éviter l'affichage vide.
+- **État `ayantDroitSearchLoading`** ajouté dans `useFacturationClients.ts` pour suivre le chargement des requêtes d'ayants droit.
+
+### 🔎 UX recherche produit
+
+- **Placeholder contextuel** : le champ affiche `Ex: PARACÉTAMOL (F2)` au lieu du texte générique.
+- **Squelette de chargement** : 3 lignes de placeholder `animate-pulse` dans le dropdown pendant la recherche produit.
+- **Badge stock faible** : indicateur ambre affiché quand `stock <= stock_minimum`.
+- **Produits récents** : section "Derniers produits" affichée quand le champ est vide et focusé, avec les 5 derniers produits ajoutés au panier.
+- **Navigation clavier** : `↑`/`↓` + `Entrée` pour sélectionner/ajouter un produit (déjà présent, maintenant utilisée avec les produits récents).
+
+### 🛒 UX panier
+
+- **Total au survol** : tooltip affichant le total de la ligne au survol du nom du produit (tableau et sidebar).
+- **Raccourcis quantité** : `Ctrl+↑` / `Ctrl+↓` dans le champ quantité pour incrémenter/décrémenter rapidement.
+- **Feedback visuel à l'ajout** : flash vert `animate-pulse` sur la dernière ligne ajoutée au panier pendant 600ms.
+
+### 🔔 Modales & alertes
+
+- **Alertes produit non répétitives** : case "Ne plus afficher pour cette session" persistante en `sessionStorage`, avec auto-achèvement des alertes déjà marquées.
+- **Feedback scanner ordonnance** : bip sonore via `AudioContext` + icône `Check` animée (`animate-ping`) quand un médicament est reconnu/sélectionné.
+- **Focus automatique** : bouton principal des modales de confirmation (`DisplayAlertModal`, `AlertMessageModal`, `StockResolutionModal`) reçoit l'`autoFocus`.
+
+### 🛒 Ventes en attente
+
+- **Aperçu au survol** : tooltip avec jusqu'à 4 articles et le total net.
+- **Badge vendeur** : pastille colorée avec initiales et tooltip nom d'utilisateur.
+- **Badge durée** : "à l'instant / il y a X min / h / j" + changement de couleur au delà de 15 min / 1 h.
+- **Fichiers** : `PendingSalesDrawer.tsx`, `usePendingSales.ts`, `useFacturationActions.ts`.
+
+### ⚡ Général / fluidité
+
+- **Feedback d'ajout** : bip sonore (600 Hz, 100 ms) + vibration mobile (`navigator.vibrate`) à chaque ajout de produit dans `useCart.ts`.
+- **Raccourci `?`** : ouvre la fenêtre d'aide des raccourcis en facturation (en complément de `F1`).
+- **Fichiers** : `useCart.ts`, `useFacturationKeyboardShortcuts.ts`.
+
+### 🏦 Caisse Centrale - Tableau des factures
+
+- **Hiérarchie des actions** : CTA `Encaisser` séparé par un trait vertical des actions secondaires (modifier, annuler, coupon).
+- **Sémantique couleurs** : sélection de masse (vidange) passe en ambre au lieu du rouge conflictuel.
+- **Pagination** : taille de page paramétrable (25/50/100) par défaut 50, format de date selon la locale i18n.
+- **Accessibilité** : ajout de `aria-label` sur les boutons d'action.
+- **Fichiers** : `FacturesTable.tsx`.
+
+### 🏦 Caisse Centrale - Journal & clôture
+
+- **Layout unifié** : `JournalCaisse.tsx` wrappe stats et table dans un conteneur cohérent.
+- **Sécurité clôture** : masquage des montants dans le message de confirmation du rapport de clôture.
+- **Fichiers** : `JournalCaisse.tsx`, `ClosingReportModal.tsx`.
+
 ### Fichiers modifiés
 
 - `backend/api/serializers/clients.py`
@@ -31,6 +377,7 @@
 - `frontend/frontend/src/components/facturation/FacturationLeftPanel.tsx`
 - `frontend/frontend/public/locales/fr/facturation.json`
 - `frontend/frontend/public/locales/en/facturation.json`
+- `frontend/frontend/src/hooks/useSaleCompletion.ts`
 
 ---
 

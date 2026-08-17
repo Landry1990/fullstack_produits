@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '../ui/Button';
+import { Button } from '../shadcn/button';
 import {
   Dialog,
   DialogContent,
@@ -38,11 +38,11 @@ export function CommandeDeleteModals({
                         <DialogDescription>{t('orders:messages.remove_product_confirm', 'Êtes-vous sûr de vouloir retirer ce produit de la commande ?')}</DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-3 pt-4">
-                        <Button variant="ghost" onClick={onClearProductToDelete}>{t('common:cancel', 'Annuler')}</Button>
-                        <Button variant="danger" onClick={() => {
+                        <Button type="button" variant="ghost" onClick={onClearProductToDelete}>{t('common:cancel')}</Button>
+                        <Button type="button" variant="destructive" onClick={() => {
                             if (productToDelete !== null) onConfirmDeleteProduct(productToDelete);
                             onClearProductToDelete();
-                        }}>{t('common:confirm', 'Confirmer')}</Button>
+                        }}>{t('common:confirm')}</Button>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -51,14 +51,14 @@ export function CommandeDeleteModals({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle className="text-red-600">{t('orders:bulk_delete_title', 'Confirmer la suppression multiple')}</DialogTitle>
-                        <DialogDescription>{t('orders:bulk_delete_confirm_minimal', { count: selectedRowsSize, defaultValue: `Êtes-vous sûr de vouloir supprimer les ${selectedRowsSize} produits sélectionnés ?` })}</DialogDescription>
+                        <DialogDescription>{t('orders:bulk_delete_confirm_minimal', { count: selectedRowsSize })}</DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-3 pt-4">
-                        <Button variant="ghost" onClick={onClearDeletingMultiple}>{t('common:cancel', 'Annuler')}</Button>
-                        <Button variant="danger" onClick={() => {
+                        <Button type="button" variant="ghost" onClick={onClearDeletingMultiple}>{t('common:cancel')}</Button>
+                        <Button type="button" variant="destructive" onClick={() => {
                             onConfirmDeleteMultiple();
                             onClearDeletingMultiple();
-                        }}>{t('common:confirm', 'Confirmer')}</Button>
+                        }}>{t('common:confirm')}</Button>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -76,9 +76,9 @@ export function resolveProductInfo(
             produitName = p.produit_nom;
             cip = p.produit_cip || p.produit_ref || '';
         } else if (p.produit === null) {
-            produitName = t('common:unknown_product_deleted', { defaultValue: 'Produit inconnu (supprimé)' });
+            produitName = t('common:unknown_product_deleted');
         } else {
-            produitName = t('orders:product_table.unknown_product_id', { id: produitId, defaultValue: `Produit #${produitId}` });
+            produitName = t('orders:product_table.unknown_product_id', { id: produitId });
         }
     }
 

@@ -21,6 +21,7 @@ export interface CartRowProps {
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number
   isSidebarStyle?: boolean
+  flashId?: number | null
 }
 
 const CartRow = React.memo(({
@@ -28,8 +29,8 @@ const CartRow = React.memo(({
   ...props
 }: CartRowProps) => {
   if (isSidebarStyle) {
-    const { isSidebarStyle: _, updateTreatmentDuration: __, ...sidebarProps } = props
-    void _; void __
+    const { updateTreatmentDuration: _, ...sidebarProps } = props
+    void _
     return <SidebarCartRow {...sidebarProps} />
   }
   return <TableCartRow {...props} />
