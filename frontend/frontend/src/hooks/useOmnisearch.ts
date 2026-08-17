@@ -229,8 +229,8 @@ export default function useOmnisearch() {
         navigate('/app/clients', { state: { action } });
       } else if (action === 'NEW_ORDER') {
         navigate('/app/commandes', { state: { action } });
-      } else if (action === 'OPEN_POS') {
-        navigate('/app/facturation', { state: { openPosteModal: true } });
+      } else if (action === 'OPEN_PRODUCTS') {
+        navigate('/app/produits');
       } else if (action === 'OPEN_PERIMES') {
         navigate('/app/perimes');
       } else if (action === 'OPEN_CADENCIER') {

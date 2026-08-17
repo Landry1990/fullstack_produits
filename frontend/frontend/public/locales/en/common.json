@@ -12,6 +12,7 @@
         "script_hint": "Run as administrator (PowerShell)"
     },
     "loading": "Loading...",
+    "today": "Today",
     "dashboard": "Dashboard",
     "name": "Name",
     "phone": "Phone",
@@ -366,7 +367,8 @@
             "new_sale": "New Sale",
             "new_product": "Create new product",
             "new_client": "Add a client",
-            "new_order": "Create supplier order"
+            "new_order": "Create supplier order",
+            "open_products": "Product List"
         },
         "preview": {
             "title": "God Mode Omnisearch",

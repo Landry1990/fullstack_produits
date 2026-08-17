@@ -14,8 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../shadcn/card';
 import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import { Label } from '../ui/Label';
-import { Select } from '../ui/Select';
-import { getTypeOptions } from './utils';
 import {
     Table, TableHeader, TableBody, TableRow, TableHead, TableCell
 } from '../ui/Table';
@@ -30,8 +28,6 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
     const {
         viewMode,
         editingAvoirId,
-        typeAvoir,
-        setTypeAvoir,
         observations,
         setObservations,
         lignes,
@@ -201,21 +197,6 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                 {showFournisseurList && (
                                     <div className="fixed inset-0 z-[45]" onClick={() => setShowFournisseurList(false)} />
                                 )}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <Label>{t('stock:avoirs.details.type_label', { defaultValue: 'Type d\'avoir' })} <span className="text-red-500">*</span></Label>
-                                <Select
-                                    value={typeAvoir}
-                                    onChange={(e) => setTypeAvoir(e.target.value)}
-                                    size="md"
-                                >
-                                    {getTypeOptions().map(opt => (
-                                        <option key={opt.value} value={opt.value}>
-                                            {t(opt.labelKey, { defaultValue: opt.defaultLabel })}
-                                        </option>
-                                    ))}
-                                </Select>
                             </div>
 
                             <div className="space-y-1.5">

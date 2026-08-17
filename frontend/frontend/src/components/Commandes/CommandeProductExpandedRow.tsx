@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
+import { TableRow, TableCell } from '../shadcn/table';
 import type { CommandeProduit } from '../../types';
 
 interface CommandeProductExpandedRowProps {
@@ -29,8 +30,8 @@ export function CommandeProductExpandedRow({ p, colSpan }: CommandeProductExpand
     const formatVente = s.dernier_vente ? new Date(s.dernier_vente).toLocaleDateString(i18n.language, dateOptions) : t('orders:product_table.info_row.never');
 
     return (
-        <tr className="bg-blue-50/30 border-b border-slate-200">
-            <td colSpan={colSpan} className="p-0">
+        <TableRow className="bg-blue-50/30 border-b border-slate-200">
+            <TableCell colSpan={colSpan} className="p-0">
                 <div className="p-4 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-sm">
                     <div>
                         <div className="text-xs uppercase font-bold text-slate-400 mb-1">{t('orders:product_table.info_row.purchase_history')}</div>
@@ -74,7 +75,7 @@ export function CommandeProductExpandedRow({ p, colSpan }: CommandeProductExpand
                         </div>
                     </div>
                 </div>
-            </td>
-        </tr>
+            </TableCell>
+        </TableRow>
     );
 }

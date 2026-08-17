@@ -277,12 +277,12 @@ export default function SuggestionCommandeModal({
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {modes.map(m => (
-                    <button
+                    <Button
                       key={m.key}
                       type="button"
                       onClick={() => setSuggestionParams(prev => ({ ...prev, mode: m.key }))}
                       className={cn(
-                        'relative flex flex-col gap-2 p-4 rounded-xl border-2 text-left transition-all cursor-pointer',
+                        'relative flex flex-col gap-2 p-4 rounded-xl border-2 text-left transition-all cursor-pointer h-auto items-stretch shadow-none',
                         suggestionParams.mode === m.key
                           ? 'border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-100'
                           : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/40'
@@ -299,16 +299,16 @@ export default function SuggestionCommandeModal({
                       {suggestionParams.mode === m.key && (
                         <span className="absolute top-3 right-3 size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
                       )}
-                    </button>
+                    </Button>
                   ))}
                 </div>
 
                 {suggestionParams.mode === 'optimise' && (
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setSuggestionParams(prev => ({ ...prev, abcAOnly: !prev.abcAOnly }))}
                     className={cn(
-                      'mt-3 flex items-center gap-2 text-sm font-medium transition-colors',
+                      'mt-3 flex items-center gap-2 text-sm font-medium transition-colors h-auto p-0 bg-transparent shadow-none',
                       suggestionParams.abcAOnly ? 'text-emerald-700' : 'text-slate-600 hover:text-emerald-600'
                     )}
                   >
@@ -318,7 +318,7 @@ export default function SuggestionCommandeModal({
                       <Square className="size-5 text-slate-400" />
                     )}
                     {t('orders:suggestion_modal.abc_a_only_label')}
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -376,22 +376,22 @@ export default function SuggestionCommandeModal({
                         {t('orders:suggestion_modal.hourly_range_label')}
                       </label>
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           type="button"
-                          className="text-[10px] uppercase font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors"
+                          className="text-[10px] uppercase font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors h-auto p-0 bg-transparent shadow-none rounded-none"
                           onClick={() => {
                             const d = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
                             setSuggestionParams(p => ({ ...p, dateDebut: d, dateFin: new Date().toISOString().slice(0, 16) }))
                           }}
-                        >24h</button>
-                        <button
+                        >24h</Button>
+                        <Button
                           type="button"
-                          className="text-[10px] uppercase font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors"
+                          className="text-[10px] uppercase font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors h-auto p-0 bg-transparent shadow-none rounded-none"
                           onClick={() => {
                             const d = new Date().toISOString().slice(0, 10) + 'T00:00'
                             setSuggestionParams(p => ({ ...p, dateDebut: d, dateFin: new Date().toISOString().slice(0, 16) }))
                           }}
-                        >{t('common:today', "Aujourd'hui")}</button>
+                        >{t('common:today')}</Button>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -423,19 +423,19 @@ export default function SuggestionCommandeModal({
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {periodOptions.map(p => (
-                        <button
+                        <Button
                           key={p.value}
                           type="button"
                           onClick={() => setSuggestionParams(prev => ({ ...prev, periode: p.value }))}
                           className={cn(
-                            'px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer',
+                            'px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer h-auto shadow-none',
                             suggestionParams.periode === p.value
                               ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                               : 'bg-white text-slate-600 border-slate-300 hover:border-emerald-400 hover:text-emerald-700'
                           )}
                         >
                           {p.label}
-                        </button>
+                        </Button>
                       ))}
                       <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-300 rounded-full ml-auto">
                         <Input

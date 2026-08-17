@@ -3,6 +3,7 @@ import { MoreVertical, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
+import { TableHead } from '../shadcn/table';
 
 interface CommandeSelectionHeaderProps {
   selectedCount: number;
@@ -35,7 +36,7 @@ const CommandeSelectionHeader: React.FC<CommandeSelectionHeaderProps> = ({
   }, [isOpen]);
 
   return (
-    <th colSpan={colSpan} className="sticky top-0 z-30 bg-slate-100 border-b border-slate-200 py-3">
+    <TableHead colSpan={colSpan} className="sticky top-0 z-30 bg-slate-100 border-b border-slate-200 py-3">
       <div className="flex items-center justify-between w-full h-8">
         {selectedCount > 0 ? (
           <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2 duration-200">
@@ -67,7 +68,7 @@ const CommandeSelectionHeader: React.FC<CommandeSelectionHeaderProps> = ({
           </div>
         )}
       </div>
-    </th>
+    </TableHead>
   );
 };
 

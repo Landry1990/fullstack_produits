@@ -155,7 +155,7 @@ class ProduitStatsMixin:
             produit_filter
         ).values(
             'produit', 'produit__name', 'produit__stock', 'produit__cip1', 
-            'produit__selling_price', 'produit__rayon__name', 'produit__fournisseur__name'
+            'produit__selling_price', 'produit__cost_price', 'produit__pmp', 'produit__rayon__name', 'produit__fournisseur__name'
         ).annotate(
             chiffre_affaires=Coalesce(Sum(F('quantity') * F('selling_price')), Decimal(0)),
             quantite_vendue=Coalesce(Sum('quantity'), 0)
@@ -198,7 +198,11 @@ class ProduitStatsMixin:
             
             stats[categorie] += 1
             ca_par_categorie[categorie] += ca_produit
-            
+
+            cout_unitaire = item['produit__pmp'] or item['produit__cost_price'] or Decimal(0)
+            marge_produit = ca_produit - (Decimal(item['quantite_vendue']) * cout_unitaire)
+            rotation_produit = float(item['quantite_vendue']) / periode if periode else 0
+
             produits_classes.append({
                 'id': item['produit'],
                 'nom': item['produit__name'],
@@ -210,7 +214,8 @@ class ProduitStatsMixin:
                 'chiffre_affaires': float(ca_produit or 0),
                 'quantite_vendue': item['quantite_vendue'],
                 'pourcentage_ca': float(pourcentage_ca or 0),
-                'pourcentage_cumule': float((pourcentage_cumule * 100).quantize(Decimal('0.01'))) if pourcentage_cumule is not None else 0.0,
+                'marge': float(marge_produit or 0),
+                'rotation': float(rotation_produit),
                 'categorie': categorie,
                 'en_rupture': (item['produit__stock'] or 0) <= 0
             })
@@ -243,8 +248,10 @@ class ProduitStatsMixin:
                     'stock': p['stock'],
                     'prix_vente': float(p['selling_price'] or 0),
                     'chiffre_affaires': 0,
+                    'quantite_vendue': 0,
                     'pourcentage_ca': 0,
-                    'pourcentage_cumule': 100,
+                    'marge': 0,
+                    'rotation': 0,
                     'categorie': 'C',
                     'en_rupture': p['stock'] <= 0
                 })

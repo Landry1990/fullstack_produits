@@ -205,7 +205,8 @@
         },
         "pagination": {
             "showing": "Affichage de {{count}} sur {{total}} commandes"
-        }
+        },
+        "clear_search": "Effacer la recherche"
     },
     "details": {
         "title": "Commande #{{id}}",
@@ -231,7 +232,16 @@
         "ug_message": "Cette commande contient {{count}} unités gratuites offertes par le fournisseur.",
         "products_list": "Liste des produits commandés",
         "empty_products": "Aucun produit dans cette commande",
-        "price_unit": "P.U Achat"
+        "price_unit": "P.U Achat",
+        "recap": {
+            "buy_ht": "prix a ht",
+            "buy_vat": "tva a",
+            "buy_ttc": "prix a ttc",
+            "sell_ttc": "prix v ttc",
+            "margin": "marge",
+            "coeff": "coeff",
+            "precompte": "précompte"
+        }
     },
     "form": {
         "back_to_list": "Retour à la liste",
@@ -273,7 +283,9 @@
         },
         "nav_help": "F2: Recherche | TAB/ENTRÉE: Naviguer | F9: Sauvegarder",
         "saving": "Sauvegarde...",
-        "save_btn": "Enregistrer la Commande"
+        "save_btn": "Enregistrer la Commande",
+        "enable_datamatrix_scan": "Activer le scan Data Matrix",
+        "disable_datamatrix_scan": "Désactiver le scan Data Matrix"
     },
     "product_table": {
         "title": "Produits ({{count}})",
@@ -306,7 +318,7 @@
             "qty": "Quantité",
             "ug": "U.G",
             "stock": "Stock",
-            "stock_short": "Stk",
+            "stock_short": "Stock",
             "dev_price": "Prix Dev.",
             "buy_price_ht": "P.A HT",
             "tva": "TVA %",
@@ -580,6 +592,11 @@
         "new_line": "Ajouter une nouvelle ligne",
         "new_line_desc": "Lot différent livré par le fournisseur",
         "cancel": "Annuler"
+    },
+    "export_modal": {
+        "table": {
+            "ug": "UG"
+        }
     }
 }
 
