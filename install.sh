@@ -73,6 +73,16 @@ fi
 DISTRO_PRETTY=$(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)
 ok "Système détecté : $DISTRO_PRETTY"
 
+# Authentifier sudo avant d'utiliser les spinners et garder le cache actif
+step "Authentification sudo"
+if ! sudo -v; then
+    err "Ce script nécessite les droits sudo."
+    exit 1
+fi
+# Rafraîchit le cache sudo toutes les 60s pendant toute la durée du script
+( while true; do sudo -n true 2>/dev/null; sleep 60; kill -0 "$$" || exit; done ) 2>/dev/null &
+ok "Authentification sudo OK"
+
 # ── 1. Mise à jour ───────────────────────────────────
 step "1. Mise à jour du système"
 run_with_spinner "Mise à jour des paquets" sudo apt-get update -qq
