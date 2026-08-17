@@ -7,7 +7,8 @@ import CommandeProductTable from './CommandeProductTable';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { Input } from '../shadcn/input';
-import { Select } from '../ui/Select';
+import { Select } from '../shadcn/select';
+import { Checkbox } from '../shadcn/checkbox';
 import { ProductSearch, type SearchResult } from '../common/ProductSearch';
 import { cn } from '../../lib/utils';
 import { useDataMatrixScanner } from '../../hooks/useDataMatrixScanner';
@@ -200,6 +201,7 @@ export default function CommandeForm({
                   onClick={handleBackToList}
                   className="size-8 text-slate-400 hover:text-slate-600"
                   title={t('orders:form.back_to_list')}
+                  aria-label={t('orders:form.back_to_list')}
                 >
                   <ArrowLeft className="size-4" />
                 </Button>
@@ -228,6 +230,7 @@ export default function CommandeForm({
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}
               title={datamatrixEnabled ? 'Désactiver le scan Data Matrix' : 'Activer le scan Data Matrix'}
+              aria-label={datamatrixEnabled ? 'Désactiver le scan Data Matrix' : 'Activer le scan Data Matrix'}
             >
               <ScanLine className="size-4" />
             </Button>
@@ -245,11 +248,14 @@ export default function CommandeForm({
                 <div className="flex flex-wrap items-end gap-2">
                   {/* Fournisseur */}
                   <div className="flex-1 min-w-[150px]">
+                    <label htmlFor="fournisseur-select" className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                      {t('orders:form.provider_label')}
+                    </label>
                     <Select
-                      size="sm"
+                      id="fournisseur-select"
                       value={newCommandeFournisseurId}
-                      onChange={(e) => setNewCommandeFournisseurId(e.target.value)}
-                      className="bg-slate-100 border-slate-200 text-sm"
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewCommandeFournisseurId(e.target.value)}
+                      className="h-9 text-sm bg-slate-100 border-slate-200 py-1 px-2 pr-6"
                     >
                       <option value="" disabled>{t('orders:form.provider_placeholder')}</option>
                       {fournisseurs.map(f => (
@@ -272,17 +278,17 @@ export default function CommandeForm({
 
                   {/* Achat de mise en place / condition négociée */}
                   <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
-                    <label className="flex items-center gap-1.5 h-9 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
+                    <div className="flex items-center gap-1.5 h-9">
+                      <Checkbox
+                        id="mise-en-place"
                         checked={isMiseEnPlace}
-                        onChange={(e) => setIsMiseEnPlace(e.target.checked)}
-                        className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        onCheckedChange={(checked) => setIsMiseEnPlace(checked === true)}
+                        className="data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                       />
-                      <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
+                      <label htmlFor="mise-en-place" className="text-xs font-semibold text-slate-600 whitespace-nowrap cursor-pointer select-none">
                         {t('orders:form.mise_en_place_label')}
-                      </span>
-                    </label>
+                      </label>
+                    </div>
                     {isMiseEnPlace && (
                       <div className="flex flex-col">
                         <span className="text-[10px] font-semibold text-indigo-600 uppercase">
@@ -301,17 +307,17 @@ export default function CommandeForm({
                       </div>
                     )}
                     {isMiseEnPlace && (
-                      <label className="flex items-center gap-1.5 h-9 cursor-pointer select-none" title={t('orders:form.paye_a_la_cloture_help')}>
-                        <input
-                          type="checkbox"
+                      <div className="flex items-center gap-1.5 h-9" title={t('orders:form.paye_a_la_cloture_help')}>
+                        <Checkbox
+                          id="paye-a-la-cloture"
                           checked={payeALaCloture}
-                          onChange={(e) => setPayeALaCloture(e.target.checked)}
-                          className="size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                          onCheckedChange={(checked) => setPayeALaCloture(checked === true)}
+                          className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                         />
-                        <span className="text-xs font-semibold text-emerald-700 whitespace-nowrap">
+                        <label htmlFor="paye-a-la-cloture" className="text-xs font-semibold text-emerald-700 whitespace-nowrap cursor-pointer select-none">
                           {t('orders:form.paye_a_la_cloture_label')}
-                        </span>
-                      </label>
+                        </label>
+                      </div>
                     )}
                   </div>
 
@@ -362,13 +368,14 @@ export default function CommandeForm({
                         setIsExportModalOpen(true);
                       }}
                       title={t('orders:form.export_btn')}
+                      aria-label={t('orders:form.export_btn')}
                     >
                       <FileDown className="size-4" />
                     </Button>
-                    <Button type="button" variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => fileInputRef.current?.click()} title={t('orders:import_btn')}>
+                    <Button type="button" variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => fileInputRef.current?.click()} title={t('orders:import_btn')} aria-label={t('orders:import_btn')}>
                       <FolderOpen className="size-4" />
                     </Button>
-                    <Button type="button" variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => setIsCreateProduitModalOpen(true)} title={t('orders:new_product_btn')}>
+                    <Button type="button" variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => setIsCreateProduitModalOpen(true)} title={t('orders:new_product_btn')} aria-label={t('orders:new_product_btn')}>
                       <Plus className="size-4" />
                     </Button>
 
@@ -381,7 +388,7 @@ export default function CommandeForm({
                     />
 
                     {selectedCommande?.status === 'CLOT' && onCreateAvoir && (
-                         <Button type="button" variant="ghost" size="icon" className="size-9 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={onCreateAvoir} title={t('orders:messages.create_credit_note_help')}>
+                         <Button type="button" variant="ghost" size="icon" className="size-9 text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={onCreateAvoir} title={t('orders:messages.create_credit_note_help')} aria-label={t('orders:messages.create_credit_note_help')}>
                             <RotateCcw className="size-4" />
                          </Button>
                     )}

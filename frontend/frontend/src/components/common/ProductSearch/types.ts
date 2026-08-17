@@ -6,6 +6,7 @@ export interface SearchResult {
   id: number
   name: string
   stock?: number
+  stock_minimum?: number | null
   selling_price?: number | string
   isPromis?: boolean
   active_promis_count?: number
@@ -36,6 +37,7 @@ export interface ProductSearchState {
   searchMode: SearchMode
   setSearchMode: (mode: SearchMode) => void
   results: SearchResult[]
+  recentProducts?: SearchResult[]
   loading: boolean
   selectedIndex: number
   searchInputRef: React.RefObject<HTMLInputElement | null>
@@ -49,6 +51,7 @@ export interface ProductSearchProps {
   searchQuery: string
   setSearchQuery: (v: string) => void
   results: SearchResult[]
+  recentProducts?: SearchResult[]
   loading: boolean
   
   // Configuration

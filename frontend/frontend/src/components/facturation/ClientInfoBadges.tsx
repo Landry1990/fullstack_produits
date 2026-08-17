@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import type { Client } from '../../types'
 import { Button } from '../shadcn/button'
 import { Badge } from '../shadcn/badge'
-import { Star, Wallet } from 'lucide-react'
+import { Star, Wallet, Briefcase } from 'lucide-react'
 
 interface ClientInfoBadgesProps {
   client: Client
@@ -14,6 +14,17 @@ export default function ClientInfoBadges({ client, onApplyReward }: ClientInfoBa
 
   return (
     <>
+      {/* Type client PRO */}
+      {client.client_type === 'PROFESSIONNEL' && (
+        <div className="mt-2 px-3 py-2 bg-blue-50 rounded-lg flex justify-between items-center border border-blue-100">
+          <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-1">
+            <Briefcase className="size-3" />
+            {t('facturation:client.professional_badge')}
+          </span>
+          <Badge variant="secondary" className="h-5 text-[10px] bg-blue-100 text-blue-700 border-blue-200 font-bold">{client.client_type}</Badge>
+        </div>
+      )}
+
       {/* Solde dépôt */}
       {client.client_type === 'PARTICULIER' && (client.is_deposit_enabled || parseFloat(client.solde_depot || '0') > 0) && (
         <div className="mt-2 px-3 py-2 bg-emerald-50 rounded-lg flex justify-between items-center border border-emerald-100">

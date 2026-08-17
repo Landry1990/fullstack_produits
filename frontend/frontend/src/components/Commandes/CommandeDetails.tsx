@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useDocumentLock } from '../../hooks/useDocumentLock';
 import { LockBanner } from '../common/LockBanner';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X } from 'lucide-react';
+import { ArrowLeft, Pencil, Pause, Play, Check, Printer, Trash2, Tag, RotateCcw, Package, Search, X, Loader2 } from 'lucide-react';
 import type { Commande, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
@@ -17,7 +17,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/Table';
+} from '../shadcn/table';
 import { cn } from '../../lib/utils';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -226,7 +226,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             onClick={onMettreEnAttente}
             disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
           >
-            {executingAction ? <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (selectedCommande.status === 'ATT' ? <><Play className="size-4" /> {t('orders:details.resume')}</> : <><Pause className="size-4" /> {t('orders:details.suspend')}</>)}
+            {executingAction ? <Loader2 className="size-4 animate-spin text-white" /> : (selectedCommande.status === 'ATT' ? <><Play className="size-4" /> {t('orders:details.resume')}</> : <><Pause className="size-4" /> {t('orders:details.suspend')}</>)}
           </Button>
 
           <Button
@@ -235,7 +235,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             onClick={onCloture}
             disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
           >
-            {executingAction ? <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Check className="size-4" /> {t('orders:details.close')}</>}
+            {executingAction ? <Loader2 className="size-4 animate-spin text-white" /> : <><Check className="size-4" /> {t('orders:details.close')}</>}
           </Button>
 
           <Button
@@ -244,7 +244,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             className="gap-1 bg-violet-600 hover:bg-violet-700"
             onClick={onOpenLabelsModal}
             disabled={selectedCommande.status !== 'CLOT' || executingAction}
-            title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only', { defaultValue: 'Uniquement pour les commandes clôturées' }) : ''}
+            title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only') : ''}
           >
             <Tag className="size-4" /> {t('orders:details.labels')}
           </Button>
@@ -256,7 +256,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             onClick={onDelete}
             disabled={selectedCommande.status === 'CLOT' || executingAction || isReadOnly}
           >
-            {executingAction ? <span className="size-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <><Trash2 className="size-4" /> {t('orders:details.delete')}</>}
+            {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><Trash2 className="size-4" /> {t('orders:details.delete')}</>}
           </Button>
 
           <Button
@@ -269,7 +269,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             }}
             disabled={selectedCommande.status !== 'CLOT' || executingAction}
           >
-            {executingAction ? <span className="size-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <><Printer className="size-4" /> {t('orders:details.print_receipt')}</>}
+            {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><Printer className="size-4" /> {t('orders:details.print_receipt')}</>}
           </Button>
 
           <Button
@@ -278,9 +278,9 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             className="gap-1 border-amber-200 text-amber-600 hover:bg-amber-50"
             onClick={onAnnulerReception}
             disabled={selectedCommande.status !== 'CLOT' || executingAction}
-            title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only', { defaultValue: 'Uniquement pour les commandes clôturées' }) : t('orders:details.cancel_reception')}
+            title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only') : t('orders:details.cancel_reception')}
           >
-            {executingAction ? <span className="size-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <><RotateCcw className="size-4" /> {t('orders:details.cancel_reception')}</>}
+            {executingAction ? <Loader2 className="size-4 animate-spin text-slate-600" /> : <><RotateCcw className="size-4" /> {t('orders:details.cancel_reception')}</>}
           </Button>
 
           <Button
@@ -290,7 +290,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             className="gap-1 border-amber-200 text-amber-600 hover:bg-amber-50"
             onClick={onCreateAvoir}
             disabled={selectedCommande.status !== 'CLOT' || executingAction}
-            title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only', { defaultValue: 'Uniquement pour les commandes clôturées' }) : t('orders:details.return')}
+            title={selectedCommande.status !== 'CLOT' ? t('orders:details.labels_clot_only') : t('orders:details.return')}
           >
             <RotateCcw className="size-4" />
             {selectedRows.size > 0 ? `${t('orders:details.return')} (${selectedRows.size})` : t('orders:details.return')}

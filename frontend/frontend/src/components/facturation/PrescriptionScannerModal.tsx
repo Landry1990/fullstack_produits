@@ -24,6 +24,24 @@ interface MatchResult {
   suggestions: ProduitModel[];
 }
 
+const playScanBeep = () => {
+  try {
+    const AudioCtx = (window.AudioContext || ((window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext));
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 800;
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.15);
+  } catch { /* ignore */ }
+};
+
 const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({ 
   isOpen, 
   onClose, 
@@ -38,6 +56,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
   const [matchResults, setMatchResults] = useState<MatchResult[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [extractionData, setExtractionData] = useState<ScannedPrescription | null>(null);
+  const [matchPulse, setMatchPulse] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<File | null>(null);
@@ -174,7 +193,14 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       });
 
       // Garder les lignes qui ont au moins une suggestion (laisser l'utilisateur juger)
-      setMatchResults(matches.filter(m => m.suggestions.length > 0));
+      const visibleMatches = matches.filter(m => m.suggestions.length > 0);
+      setMatchResults(visibleMatches);
+      
+      if (visibleMatches.some(m => m.matchedProduct)) {
+        setMatchPulse(true);
+        setTimeout(() => setMatchPulse(false), 600);
+        playScanBeep();
+      }
       
       if (matches.length === 0) {
         toast.error(t('facturation:prescription_scanner.error_no_products'));
@@ -192,6 +218,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
     const updated = [...matchResults];
     updated[index].matchedProduct = product;
     setMatchResults(updated);
+    playScanBeep();
   };
 
   const validateScan = () => {
@@ -335,7 +362,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                       <div key={result.ocrLine} className={`p-3 rounded-xl border transition-all ${result.matchedProduct ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-100'}`}>
                         <div className="flex justify-between items-start mb-2">
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{t('facturation:prescription_scanner.ocr_line_label')}</span>
-                          {result.matchedProduct && <Check className="size-4 text-emerald-600" />}
+                          {result.matchedProduct && <Check className={`size-4 text-emerald-600 ${matchPulse ? 'animate-ping' : ''}`} />}
                         </div>
                         <p className="font-medium text-sm mb-2 text-slate-800">{result.ocrLine}</p>
 

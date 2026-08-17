@@ -5,12 +5,55 @@ import { Badge } from '../ui/Badge'
 
 interface PendingSale {
   id: number
-  lignes: { total_ligne: string | number }[]
+  lignes: { total_ligne: string | number; produit?: { name?: string }; quantite?: number }[]
   remiseMode: string
   remise: string | number
   clientName: string
   manualClientName: string
-  timestamp: string
+  timestamp: number | string
+  vendeurId?: number | null
+  vendeurName?: string | null
+}
+
+const VENDOR_PALETTE = [
+  { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
+  { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
+  { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
+  { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200' },
+  { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-200' },
+]
+
+function getVendorStyle(id: number | null | undefined, fallback = true) {
+  if (!id) return fallback ? { bg: 'bg-slate-100', text: 'text-slate-500', border: 'border-slate-200' } : null
+  const index = Math.abs(id) % VENDOR_PALETTE.length
+  return VENDOR_PALETTE[index]
+}
+
+function getInitials(name: string) {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length > 1) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
+}
+
+function formatDurationAgo(timestamp: number | string, t: (key: string, opts?: Record<string, unknown>) => string) {
+  const then = new Date(Number(timestamp))
+  const diff = Math.max(0, Date.now() - then.getTime())
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(diff / (60 * 1000))
+  const hours = Math.floor(diff / (60 * 60 * 1000))
+  const days = Math.floor(diff / (24 * 60 * 60 * 1000))
+
+  if (seconds < 90) return t('facturation:pending_sales.just_now')
+  if (minutes < 60) return t('facturation:pending_sales.minutes_ago', { count: minutes })
+  if (hours < 24) return t('facturation:pending_sales.hours_ago', { count: hours })
+  return t('facturation:pending_sales.days_ago', { count: days })
+}
+
+function durationColor(diffMs: number) {
+  if (diffMs > 60 * 60 * 1000) return 'bg-red-100 text-red-700 border-red-200'
+  if (diffMs > 15 * 60 * 1000) return 'bg-amber-100 text-amber-700 border-amber-200'
+  return 'bg-emerald-100 text-emerald-700 border-emerald-200'
 }
 
 interface PendingSalesDrawerProps {
@@ -52,23 +95,36 @@ export default function PendingSalesDrawer({
                 ? normalizeNumberInput(vente.remise)
                 : total * (normalizeNumberInput(vente.remise) / 100)
               const totalNet = total - remiseMontant
+              const vendeur = getVendorStyle(vente.vendeurId)
+              const previewLines = vente.lignes.slice(0, 4)
+              const diff = Date.now() - new Date(Number(vente.timestamp)).getTime()
 
               return (
-                <div key={vente.id} className="group hover:bg-base-200/50 transition-all rounded-xl border border-base-200 p-2 sm:p-3 shadow-sm">
-                  <div className="flex items-center gap-3 sm:gap-4 w-full">
-                    {/* ID Badge */}
-                    <Badge variant="primary" size="sm" className="shrink-0 font-black">#{idx + 1}</Badge>
-                    
+                <div key={vente.id} className="group/preview relative hover:bg-base-200/50 transition-all rounded-xl border border-base-200 p-2 sm:p-3 shadow-sm">
+                  <div className="flex items-center gap-2 sm:gap-3 w-full">
+                    {/* ID + Vendor */}
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                      <Badge variant="primary" size="sm" className="shrink-0 font-black">#{idx + 1}</Badge>
+                      {vendeur && (
+                        <span title={vente.vendeurName || t('facturation:pending_sales.unknown_vendor')} className={`text-[10px] font-black size-5 rounded-full flex items-center justify-center border ${vendeur.bg} ${vendeur.text} ${vendeur.border}`}>
+                          {getInitials(vente.vendeurName || '')}
+                        </span>
+                      )}
+                    </div>
+
                     {/* Client Info */}
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm truncate" title={vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}>
                         {vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}
                       </div>
+                      <div className="text-[10px] text-base-content/40 flex items-center gap-1 sm:hidden">
+                        {vente.lignes.length} {t('facturation:pending_sales.articles_short')}
+                      </div>
                     </div>
 
-                    {/* Stats & Time - Hidden/Stacked on mobile, row on desktop */}
-                    <div className="flex items-center gap-3 md:gap-5 shrink-0">
-                      <div className="hidden sm:flex flex-col items-end border-r border-base-200 pr-3 sm:pr-5">
+                    {/* Stats, Duration, Total */}
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                      <div className="hidden sm:flex flex-col items-end">
                         <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">
                           {t('facturation:cart.items_count', { count: vente.lignes.length })}
                         </span>
@@ -77,17 +133,19 @@ export default function PendingSalesDrawer({
                         </span>
                       </div>
 
-                      <div className="flex flex-col items-end border-r border-base-200 pr-3 sm:pr-5">
+                      <div className="flex flex-col items-end">
                         <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider font-sans">{t('facturation:pending_sales.total')}</span>
                         <span className="text-sm font-black text-primary tabular-nums">
                           {formatCurrency(totalNet)}
                         </span>
                       </div>
 
-                      <div className="hidden md:flex flex-col items-center">
-                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">{t('facturation:pending_sales.time')}</span>
-                        <span className="text-xs font-medium opacity-40 tabular-nums">
-                          {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="hidden sm:flex flex-col items-end">
+                        <Badge size="sm" className={`text-[10px] tabular-nums border font-semibold ${durationColor(diff)}`}>
+                          {formatDurationAgo(vente.timestamp, t)}
+                        </Badge>
+                        <span className="text-[10px] font-medium opacity-40 tabular-nums mt-0.5">
+                          {new Date(Number(vente.timestamp)).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     </div>
@@ -108,6 +166,30 @@ export default function PendingSalesDrawer({
                       >
                          ✕
                       </Button>
+                    </div>
+                  </div>
+
+                  {/* Hover preview */}
+                  <div className="pointer-events-none absolute left-0 right-0 top-full z-10 mt-1 opacity-0 invisible group-hover/preview:opacity-100 group-hover/preview:visible transition-all duration-200">
+                    <div className="bg-white border border-base-300 rounded-xl shadow-xl p-3 mx-1">
+                      <p className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider mb-2">
+                        {t('facturation:pending_sales.preview_title')}
+                      </p>
+                      <div className="space-y-1 mb-2">
+                        {previewLines.map((ligne, i) => (
+                          <div key={i} className="flex justify-between text-xs">
+                            <span className="truncate max-w-[70%] text-slate-700">{ligne.quantite}x {ligne.produit?.name || 'Produit'}</span>
+                            <span className="tabular-nums text-slate-500">{formatCurrency(normalizeNumberInput(ligne.total_ligne) || 0)}</span>
+                          </div>
+                        ))}
+                        {vente.lignes.length > 4 && (
+                          <p className="text-[10px] text-slate-400 italic">+ {vente.lignes.length - 4} {t('facturation:pending_sales.more_items')}</p>
+                        )}
+                      </div>
+                      <div className="flex justify-between items-center border-t border-base-200 pt-2">
+                        <span className="text-xs font-bold text-slate-700">{t('facturation:pending_sales.total')}</span>
+                        <span className="text-sm font-black text-primary tabular-nums">{formatCurrency(totalNet)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -94,9 +94,9 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 } else {
                     const payload = {
                         client: params.selectedClient,
-                        nom: params.ayantDroitNom,
-                        matricule: params.ayantDroitMatricule,
-                        societe: params.ayantDroitSociete || null
+                        nom: params.ayantDroitNom.toUpperCase(),
+                        matricule: params.ayantDroitMatricule.toUpperCase(),
+                        societe: params.ayantDroitSociete?.toUpperCase() || null
                     };
                     const created = await clientService.createAyantDroit(payload as unknown as Partial<AyantDroit>);
                     ayantDroitId = created.id || null;

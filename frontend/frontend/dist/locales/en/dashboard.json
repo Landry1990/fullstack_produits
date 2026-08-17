@@ -149,7 +149,8 @@
     "actions": {
         "title": "Quick Actions",
         "new_invoice": "New Invoice",
-        "manage_products": "Manage Products",
+        "send_report": "Telegram Flash Report",
+        "send_inventory": "Telegram Inventory Report",
         "new_client": "New Client",
         "refresh_tooltip": "Refresh all"
     },

@@ -279,6 +279,10 @@
         "title": "Products ({{count}})",
         "import_btn": "Import",
         "new_product_btn": "New Product",
+        "month": "month",
+        "day": "d",
+        "min": "Min",
+        "max": "Max",
         "search_placeholder": "Search for a product...",
         "sort_options": {
             "chrono": "Chronological",
@@ -294,6 +298,7 @@
         "delete_btn": "Remove",
         "transfer_btn": "Transfer",
         "empty_state": "The order is empty. Use the search bar to add products.",
+        "end_of_list": "End of list - {{count}} items",
         "headers": {
             "product": "Product / Description",
             "cip": "CIP / Code",
@@ -301,17 +306,21 @@
             "qty": "Quantity",
             "ug": "F.U",
             "stock": "Stock",
+            "stock_short": "Stk",
             "dev_price": "Dev. Price",
             "buy_price_ht": "B.P HT",
             "tva": "VAT %",
             "margin": "Margin %",
             "sell_price": "S.P TTC",
+            "amount": "Amount",
             "lot": "Lot",
             "exp_date": "Expiration",
             "rotation": "Rot."
         },
         "exclusivity_tooltip": "Exclusive product for supplier: {{provider}}",
         "specific_provider": "specific supplier",
+        "unknown_product_id": "Product #{{id}}",
+        "low_margin_tooltip": "Low margin (threshold: {{threshold}})",
         "info_row": {
             "stock": "Stock",
             "purchase_history": "Purchase History",
@@ -324,7 +333,9 @@
             "stock_out": "Out of stock",
             "stock_life": "Current stock lifespan",
             "rotation_unknown": "Unknown rotation",
-            "margin_value": "Margin Amount"
+            "margin_value": "Margin Amount",
+            "unknown": "Unknown",
+            "never": "Never"
         }
     },
     "actions": {
@@ -336,10 +347,20 @@
         "description": "Selected products will be transferred to a new order with the chosen supplier.",
         "supplier_label": "Destination supplier",
         "select_supplier": "Select a supplier",
-        "products_title": "Products to transfer",
+        "select_supplier_error": "Please select a destination supplier",
+        "products_title": "{{count}} products to transfer",
         "qty_label": "Qty",
-        "cancel": "Cancel",
-        "transfer_btn": "Transfer"
+        "current_cost": "Current cost",
+        "new_cost": "New cost",
+        "savings": "Savings",
+        "overspend": "Overspend",
+        "unknown_price": "Unknown price",
+        "no_price_warning": "{{count}} products without catalog price",
+        "loading_prices": "Loading prices...",
+        "transfer_btn": "Transfer {{count}} product(s)",
+        "transfer_error": "Error during transfer",
+        "unknown_supplier": "Unknown supplier",
+        "cancel": "Cancel"
     },
     "messages": {
         "create_success": "Order created successfully",
@@ -514,6 +535,15 @@
         "step_results": "Results",
         "mode_label": "Analysis mode"
     },
+    "data_matrix_scanner": {
+        "active": "Data Matrix scan active — point the scanner at a code",
+        "filled": "{{cip}} — Lot: {{lot}}, Exp: {{date}}",
+        "already_filled": "Line already filled — CIP {{cip}} (highlighted line)",
+        "not_found": "CIP {{cip}} not found in order",
+        "parse_error": "Unrecognized code",
+        "hide_title": "Hide Data Matrix scan bar",
+        "show_title": "Show Data Matrix scan bar"
+    },
     "merge_modal": {
         "title": "Merge {{count}} orders",
         "description": "This operation will merge all lines from the selected orders into one <strong>main order</strong>. Source orders will be deleted.",
@@ -533,6 +563,22 @@
         "select_main_error": "Please select a main order",
         "no_orders_error": "No orders to merge",
         "merge_error": "Error while merging"
+    },
+    "duplicate_lot": {
+        "title": "Product already in order",
+        "already_in_order": "This product is already entered",
+        "multiple_lines": "({{count}} lines)",
+        "question": "What would you like to do?",
+        "increment": "Increment",
+        "line_label_singular": "Existing line",
+        "line_label": "Line {{number}}",
+        "qty": "Qty: {{qty}}",
+        "lot": "Lot: {{lot}}",
+        "exp": "Exp: {{date}}",
+        "no_lot": "Lot not yet entered",
+        "new_line": "Add a new line",
+        "new_line_desc": "Different lot delivered by the supplier",
+        "cancel": "Cancel"
     }
 }
 

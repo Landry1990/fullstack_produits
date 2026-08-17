@@ -76,9 +76,11 @@
     },
     "search": {
         "label": "Rechercher un produit (F2)",
-        "placeholder": "Saisir nom ou matricule...",
+        "placeholder": "Ex: PARACÉTAMOL (F2)",
         "min_chars": "Tapez au moins 2 caractères",
         "no_results": "Aucun produit trouvé",
+        "low_stock_badge": "Stock faible",
+        "recent_label": "Derniers produits",
         "label_pack": "Rechercher un PACK",
         "placeholder_pack": "Tapez le nom du pack...",
         "no_results_pack": "Aucun pack trouvé",
@@ -96,8 +98,10 @@
     },
     "client": {
         "label": "Client",
+        "professional_badge": "Client professionnel",
         "search_label": "Rechercher un client",
         "search_placeholder": "Nom, Téléphone, Matricule...",
+        "recent_label": "Récents",
         "manual_button": "Saisie Manuelle",
         "manual_input_tooltip": "Saisir un nom de client manuellement",
         "list_button": "Liste Clients",
@@ -110,9 +114,10 @@
         "ayant_droit": {
             "label": "Bénéficiaire / Ayant Droit",
             "select_placeholder": "-- Sélectionner un bénéficiaire --",
-            "name_placeholder": "Nom du bénéficiaire",
-            "matricule_placeholder": "Matricule / ID",
-            "societe_placeholder": "Société / Entreprise",
+            "name_placeholder": "Ex: TAMO ISIDORE",
+            "matricule_placeholder": "Ex: 01589",
+            "societe_placeholder": "Ex: ASCOMA",
+            "duplicate_warning": "Ce matricule existe déjà",
             "new_button": "Nouveau",
             "existing_button": "Sélectionner",
             "new_tooltip": "Saisir un nouveau bénéficiaire",
@@ -189,7 +194,14 @@
         "unspecified_client": "Client non précisé",
         "articles_short": "art.",
         "total": "Total",
-        "time": "Heure"
+        "time": "Heure",
+        "preview_title": "Aperçu",
+        "more_items": "autres",
+        "just_now": "à l'instant",
+        "minutes_ago": "il y a {{count}} min",
+        "hours_ago": "il y a {{count}} h",
+        "days_ago": "il y a {{count}} j",
+        "unknown_vendor": "Vendeur inconnu"
     },
     "messages": {
         "discount_limit_error": "Remise limitée à {{rate}}% pour votre profil.",
@@ -318,7 +330,8 @@
         "product_check_message": "Veuillez vérifier ce produit avant de continuer.",
         "client_check_message": "Veuillez prendre en compte cette information pour ce client.",
         "understood_blocking": "J'AI COMPRIS LA RESTRICTION (Entrée)",
-        "understood": "Compris (Entrée)"
+        "understood": "Compris (Entrée)",
+        "dont_show_again_session": "Ne plus afficher pour cette session"
     },
     "prescription_scanner": {
         "title": "Scanner Ordonnance",

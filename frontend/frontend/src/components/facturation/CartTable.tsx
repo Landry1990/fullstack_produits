@@ -46,6 +46,20 @@ const CartTable = React.memo(({
 }: CartTableProps) => {
   const { user } = useAuth()
   const { t } = useTranslation(['facturation', 'common'])
+  const [flashId, setFlashId] = React.useState<number | null>(null)
+  const prevLenRef = React.useRef(lignesFacture.length)
+
+  React.useEffect(() => {
+    if (lignesFacture.length > prevLenRef.current) {
+      const last = lignesFacture[lignesFacture.length - 1]
+      if (last) {
+        setFlashId(last.produit.id)
+        const id = setTimeout(() => setFlashId(null), 600)
+        return () => clearTimeout(id)
+      }
+    }
+    prevLenRef.current = lignesFacture.length
+  }, [lignesFacture])
 
   const canModifyPrice = user?.is_superuser || user?.profile?.can_modify_price
   const maxDiscount = user?.is_superuser ? 100 : (normalizeNumberInput(user?.profile?.max_discount_rate || 0))
@@ -82,6 +96,7 @@ const CartTable = React.memo(({
             t={t}
             refreshTrigger={refreshTrigger}
             isSidebarStyle={true}
+            flashId={flashId}
           />
         ))}
       </div>
@@ -122,6 +137,7 @@ const CartTable = React.memo(({
             maxDiscount={maxDiscount}
             t={t}
             refreshTrigger={refreshTrigger}
+            flashId={flashId}
           />
         ))}
       </TableBody>

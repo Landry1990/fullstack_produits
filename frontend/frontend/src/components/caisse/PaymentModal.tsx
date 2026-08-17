@@ -43,7 +43,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   )
 
   const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0)
-  const resteAPayer = montantDu - totalVerse
+  const resteReel = montantDu - totalVerse
+  const resteApercu = resteReel - Number(montantPaye || 0)
   const peutValider = totalVerse >= montantDu && paiements.length > 0
 
   const soldeDepot = parseFloat(facture.client_solde_depot || '0')
@@ -81,6 +82,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
+
+  // Enter to validate
+  useEffect(() => {
+    if (!isOpen) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && peutValider && !loading && !e.defaultPrevented) {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'BUTTON') {
+          e.preventDefault()
+          onConfirm(paiements)
+        }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isOpen, peutValider, loading, onConfirm, paiements])
 
   if (!isOpen) return null
 
@@ -191,7 +208,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               ? <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
               : peutValider
                 ? `✓ ${t('payment.validate')}`
-                : t('payment.remaining', { amount: resteAPayer })
+                : t('payment.remaining', { amount: resteReel })
             }
           </button>
         </div>
@@ -239,7 +256,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
-                    focusFirstModeBtn()
+                    if (Number(montantPaye) > 0) {
+                      handleAddPayment()
+                    } else {
+                      focusFirstModeBtn()
+                    }
                   }
                 }}
                 placeholder="0"
@@ -254,6 +275,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             >
               +
             </button>
+          </div>
+
+          {/* Montants arrondis rapides */}
+          <div className="flex flex-wrap gap-1">
+            {[500, 1000, 5000, 10000, 20000].map((montant) => (
+              <button
+                key={montant}
+                type="button"
+                onClick={() => { setMontantPaye(montant.toString()); montantInputRef.current?.focus() }}
+                className="px-2 py-1 text-xs font-medium rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-colors"
+              >
+                {montant.toLocaleString('fr-FR')}
+              </button>
+            ))}
           </div>
 
           {/* Modes de paiement en boutons */}
@@ -311,18 +346,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           )}
 
           {/* Reste à payer / Rendu monnaie */}
-          {paiements.length > 0 && (
+          {(Number(montantPaye) > 0 || paiements.length > 0) && (
             <div className="space-y-2">
-              {resteAPayer > 0 && (
-                <div className="flex justify-between items-center px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-                  <span className="text-sm font-semibold text-amber-700">{t('payment.remaining', { amount: '' }).replace(' F', '')}</span>
-                  <span className="font-mono font-bold text-amber-700 text-lg">{resteAPayer} {t('common:currency_symbol', 'F')}</span>
+              {resteApercu > 0 && (
+                <div className="flex justify-between items-center px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                  <span className="text-sm font-semibold text-red-700">{t('payment.remaining', { amount: '' }).replace(' F', '')}</span>
+                  <span className="font-mono font-bold text-red-700 text-lg">{resteApercu} {t('common:currency_symbol', 'F')}</span>
                 </div>
               )}
-              {resteAPayer < 0 && (
+              {resteApercu < 0 && (
                 <div className="flex justify-between items-center px-3 py-3 bg-emerald-50 border border-emerald-200 rounded-lg">
                   <span className="text-sm font-semibold text-emerald-700">💰 {t('payment.change_back')}</span>
-                  <span className="font-mono font-bold text-emerald-700 text-2xl">{Math.abs(resteAPayer)} {t('common:currency_symbol', 'F')}</span>
+                  <span className="font-mono font-bold text-emerald-700 text-2xl">{Math.abs(resteApercu)} {t('common:currency_symbol', 'F')}</span>
                 </div>
               )}
             </div>

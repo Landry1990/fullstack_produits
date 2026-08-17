@@ -33,6 +33,7 @@ export default function FacturationLeftPanel({ hook, datamatrixEnabled, scan }: 
             showClientDropdown={hook.clientsHook.showClientDropdown}
             setShowClientDropdown={hook.clientsHook.setShowClientDropdown}
             ayantDroitSearchResults={hook.clientsHook.ayantDroitSearchResults}
+            ayantDroitSearchLoading={hook.clientsHook.ayantDroitSearchLoading}
             onOpenCreateClient={(initialName) => {
               hook.clientsHook.setNewClientForm(prev => ({ ...prev, name: initialName }))
               hook.clientsHook.setShowClientCreateModal(true)

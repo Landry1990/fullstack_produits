@@ -438,8 +438,8 @@ export default function Sidebar() {
                       className={({ isActive }) => cn(
                         "block rounded-lg text-sm py-2 px-3 transition-all",
                         isActive
-                          ? 'bg-emerald-500/20 text-emerald-300 font-semibold'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                          ? 'bg-emerald-500/20 text-emerald-300 font-semibold border-l-2 border-l-emerald-500'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-2 border-l-transparent'
                       )}
                     >
                       {sub.label}
@@ -488,8 +488,8 @@ export default function Sidebar() {
                         className={({ isActive }) => cn(
                           "flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-all",
                           isActive
-                            ? 'bg-emerald-500/20 text-emerald-300 font-semibold'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                          ? 'bg-emerald-500/20 text-emerald-300 font-semibold border-l-2 border-l-emerald-500'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-2 border-l-transparent'
                         )}
                       >
                         <span className="truncate">{sub.label}</span>
@@ -523,8 +523,8 @@ export default function Sidebar() {
               ? 'justify-center w-full h-10'
               : 'gap-3 px-3 py-2.5',
             isActive
-              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 font-semibold'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 font-semibold border-l-4 border-l-emerald-300'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-4 border-l-transparent'
           )}
         >
           <span className={cn("shrink-0", isCollapsed ? 'size-5' : 'size-5')}>{item.icon}</span>
@@ -557,7 +557,7 @@ export default function Sidebar() {
         className={cn(
           "flex flex-col fixed lg:sticky top-0 z-50 transition-all duration-300 ease-in-out",
           "bg-slate-900 border-r border-slate-800",
-          isCollapsed ? 'w-[70px]' : 'w-screen lg:w-[260px]',
+          isCollapsed ? 'w-[70px]' : 'w-[min(280px,85vw)] lg:w-[260px]',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
         style={{ height: '100dvh', minHeight: '100dvh' }}
@@ -608,7 +608,7 @@ export default function Sidebar() {
             <div className="px-3">
               {menuGroups.map((group) => (
                 <div key={group.category}>
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-1 mt-3 mb-1">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-300 px-1 mt-3 mb-2 border-b border-slate-700/50 pb-1">
                     {t(`sidebar:categories.${group.category}`)}
                   </h3>
                   <ul className="bg-slate-800/50 rounded-xl p-1.5 flex flex-col gap-1">
@@ -621,7 +621,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="shrink-0 px-4 py-3 border-t border-white/10">
+        <div className="shrink-0 px-4 py-4 border-t border-white/10">
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-primary shadow-[0_0_6px] shadow-primary/50"></div>
             <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider truncate">Zenith OS</span>
