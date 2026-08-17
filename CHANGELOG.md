@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-08-18 — Installation : support Linux Mint et optimisations
+
+### 🛠 Corrections
+
+- **`install.sh`** :
+  - Détection `ID_LIKE=.*ubuntu` / `UBUNTU_CODENAME` pour Linux Mint et dérivés.
+  - Dépôt Docker basé sur le codename Ubuntu sous-jacent (`UBUNTU_CODENAME`).
+  - `run_with_spinner` gère `set -e` : arrêt propre du spinner en cas d'échec.
+  - `DEBIAN_FRONTEND=noninteractive` pour éviter les prompts bloquants d'`apt-get`.
+  - Usage uniforme de `sudo docker` pour le build, le démarrage et Portainer (suppression du `build --quiet` en double).
+  - Vérification du superuser : message `ok` ou `warn` selon le résultat réel.
+
+### Fichiers modifiés
+
+- `install.sh`
+
+---
+
+## 2026-08-17 — Analyse ABC : correction du bouton Copier
+
+### 🐛 Corrections
+
+- **`AnalyseABC.tsx`** :
+  - Ajout d’un fallback `execCommand` pour le presse-papier en l’absence de `navigator.clipboard` ou de contexte sécurisé.
+  - Gestion centralisée des erreurs de copie.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/AnalyseABC.tsx`
+
+---
+
 ## 2026-08-17 — Analyse ABC : remplace % cumulés par Marge et Rotation
 
 ### 🐛 Corrections

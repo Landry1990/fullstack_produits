@@ -243,7 +243,7 @@ export default function AnalyseABC() {
   }, [data, activeTab])
 
   // Copier le tableau dans le presse-papier (format TSV pour Excel)
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     if (!data) return
 
     // En-têtes
@@ -279,15 +279,29 @@ export default function AnalyseABC() {
     // Construire le TSV
     const tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n')
 
-    // Modern clipboard API
-    navigator.clipboard.writeText(tsv)
-      .then(() => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(tsv)
         toast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
-      })
-      .catch((err) => {
-        logger.error('Failed to copy:', err)
-        toast.error(t('stock:abc.messages.copy_error'))
-      })
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = tsv
+        textarea.style.position = 'fixed'
+        textarea.style.left = '-9999px'
+        document.body.appendChild(textarea)
+        textarea.select()
+        const ok = document.execCommand('copy')
+        document.body.removeChild(textarea)
+        if (ok) {
+          toast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
+        } else {
+          throw new Error('execCommand copy failed')
+        }
+      }
+    } catch (err) {
+      logger.error('Failed to copy:', err)
+      toast.error(t('stock:abc.messages.copy_error'))
+    }
   }
 
   if (loading) {
