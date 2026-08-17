@@ -194,7 +194,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         setEditingAvoirId(null);
         setSelectedFournisseurId('');
         setFournisseurSearch('');
-        setTypeAvoir('PERIME');
+        setTypeAvoir('AUTRE');
         setObservations('');
         setLignes([]);
     };
@@ -231,7 +231,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 setFournisseurSearch(data.fournisseur_nom || '');
             }
 
-            setTypeAvoir('PERIME');
+            setTypeAvoir('AUTRE');
             setObservations(`Retour suite à commande #${data.source_commande}`);
 
             if (Array.isArray(data.produits)) {
@@ -287,6 +287,9 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
     const handleBackToList = () => {
         if (viewMode === 'DETAILS') {
+            if (selectedAvoir && !selectedAvoir.stock_decharge) {
+                if (!confirm(t('avoirs.confirms.back_unloaded', { defaultValue: "Le stock n'a pas été déchargé. Voulez-vous vraiment retourner à la liste sans décharger ?" }))) return;
+            }
             setViewMode('LIST');
             setSelectedAvoir(null);
             return;

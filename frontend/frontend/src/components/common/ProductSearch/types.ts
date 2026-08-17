@@ -77,7 +77,14 @@ export interface ProductSearchProps {
   
   // Navigation clavier
   handleKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>, resultCount: number) => void
-  getItemProps?: (index: number) => { 'data-search-index': number; className: string; style: React.CSSProperties }
+  getItemProps?: (index: number) => {
+    className: string
+    style: React.CSSProperties
+    'data-search-index'?: number
+    id?: string
+    onMouseEnter?: () => void
+    [key: string]: unknown
+  }
   
   // Ref
   searchInputRef: React.RefObject<HTMLInputElement | null>

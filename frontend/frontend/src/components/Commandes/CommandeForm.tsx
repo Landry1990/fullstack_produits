@@ -230,7 +230,7 @@ export default function CommandeForm({
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}
               title={datamatrixEnabled ? 'Désactiver le scan Data Matrix' : 'Activer le scan Data Matrix'}
-              aria-label={datamatrixEnabled ? 'Désactiver le scan Data Matrix' : 'Activer le scan Data Matrix'}
+              aria-label={datamatrixEnabled ? t('orders:form.disable_datamatrix_scan') : t('orders:form.enable_datamatrix_scan')}
             >
               <ScanLine className="size-4" />
             </Button>

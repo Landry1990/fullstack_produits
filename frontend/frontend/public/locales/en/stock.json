@@ -558,7 +558,8 @@
             "sale_price": "Sale Price",
             "ca": "Turnover",
             "ca_percent": "% Turnover",
-            "cumulated_percent": "% Cumulated",
+            "rotation": "Rotation",
+            "margin": "Margin",
             "category": "Category",
             "no_products": "No products in this category",
             "shortage_badge": "Shortage"
@@ -684,7 +685,8 @@
             "reopen_line": "Reopen line",
             "close_all": "Close all",
             "reopen_all": "Reopen all",
-            "no_lines": "This return contains no lines."
+            "no_lines": "This return contains no lines.",
+            "unload_warning": "Stock not unloaded: remember to unload to physically remove products from stock."
         },
         "modals": {
             "lot_title": "Select a Lot for Return",
@@ -722,6 +724,7 @@
         },
         "confirms": {
             "back_to_list": "Are you sure you want to leave? Unsaved changes will be lost.",
+            "back_unloaded": "Stock has not been unloaded. Are you sure you want to return to the list without unloading?",
             "delete_avoir": "Are you sure you want to delete draft return {{numero}}?",
             "bulk_delete": "Delete these {{count}} draft returns?",
             "delete_ligne": "Delete this line from the return?"

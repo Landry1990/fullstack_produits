@@ -4,6 +4,7 @@ import { Package } from 'lucide-react';
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
 import { usePharmacySettings } from '../../context/PharmacySettingsContext';
 import { Checkbox } from '../shadcn/checkbox';
+import { Table, TableHeader, TableBody, TableHead, TableRow } from '../shadcn/table';
 import { type FieldConfig, type SortBy, type FieldType } from './productTableUtils';
 import { CommandeProductToolbar } from './CommandeProductToolbar';
 import { CommandeProductRow } from './CommandeProductRow';
@@ -112,38 +113,38 @@ export default function CommandeProductTable({
                 {commandeProduits.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 py-12">
                         <Package className="h-16 w-16 text-slate-200" />
-                        <p className="font-light">{t('orders:product_table.empty_e')}</p>
+                        <p className="font-light">{t('orders:product_table.empty_state')}</p>
                     </div>
                 ) : (
-                    <table className="w-full relative text-sm">
-                        <thead className="sticky top-0 z-30">
-                            <tr className="!bg-slate-100 text-[11px] uppercase tracking-wider text-slate-600 font-bold border-b-2 border-slate-300">
-                                <th className="!bg-slate-100 w-8 px-2">
+                    <Table className="w-full relative text-sm">
+                        <TableHeader>
+                            <TableRow className="sticky top-0 z-30 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-600 font-bold border-b-2 border-slate-300">
+                                <TableHead className="bg-slate-100 w-8 px-2 whitespace-nowrap">
                                     <Checkbox
                                         checked={selectedRows.size === commandeProduits.length && commandeProduits.length > 0}
                                         onCheckedChange={() => toggleAllRows()}
                                     />
-                                </th>
-                                <th className="!bg-slate-100 pl-2 font-bold w-[22%] min-w-[220px]">{t('orders:product_table.headers.product')}</th>
-                                <th className="!bg-slate-100 pl-2 font-bold w-24">{t('orders:product_table.headers.cip')}</th>
-                                <th className="!bg-slate-100 text-center w-14 text-amber-600 font-bold border-x border-slate-300/30">{t('orders:product_table.headers.stock_short')}</th>
-                                <th className="!bg-slate-100 text-right w-16 font-bold">{t('orders:product_table.headers.qty')}</th>
-                                <th className="!bg-slate-100 text-center w-14 font-bold text-emerald-600 border-l border-slate-300/30">{t('orders:product_table.headers.ug')}</th>
+                                </TableHead>
+                                <TableHead className="bg-slate-100 pl-2 font-bold min-w-[260px] w-full whitespace-nowrap">{t('orders:product_table.headers.product')}</TableHead>
+                                <TableHead className="bg-slate-100 pl-2 font-bold min-w-[96px] whitespace-nowrap">{t('orders:product_table.headers.cip')}</TableHead>
+                                <TableHead className="bg-slate-100 text-center min-w-[56px] text-amber-600 font-bold border-x border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.stock_short')}</TableHead>
+                                <TableHead className="bg-slate-100 text-right min-w-[64px] font-bold whitespace-nowrap">{t('orders:product_table.headers.qty')}</TableHead>
+                                <TableHead className="bg-slate-100 text-center min-w-[56px] font-bold text-emerald-600 border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.ug')}</TableHead>
                                 {commandeType === 'DIR' && (
-                                    <th className="!bg-slate-100 text-right w-24 font-bold text-blue-600 border-l border-slate-300/30">{t('orders:product_table.headers.dev_price')}</th>
+                                    <TableHead className="bg-slate-100 text-right min-w-[96px] font-bold text-blue-600 border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.dev_price')}</TableHead>
                                 )}
-                                <th className="!bg-slate-100 text-right w-24 font-bold border-l border-slate-300/30">{t('orders:product_table.headers.buy_price_ht')}</th>
-                                <th className="!bg-slate-100 text-right w-24 font-bold text-indigo-600 border-l border-slate-300/30">{t('orders:product_table.headers.amount')}</th>
-                                <th className="!bg-slate-100 text-right w-16 font-bold">{t('orders:product_table.headers.tva')}</th>
-                                <th className="!bg-slate-100 text-right w-16 font-bold">{t('orders:product_table.headers.margin')}</th>
-                                <th className="!bg-slate-100 text-right w-24 font-bold border-l border-slate-300/30 pr-3">{t('orders:product_table.headers.sell_price')}</th>
-                                <th className="!bg-slate-100 text-left w-24 font-bold border-l border-slate-300/30">{t('orders:product_table.headers.lot')}</th>
-                                <th className="!bg-slate-100 text-left w-24 font-bold border-l border-slate-300/30">{t('orders:product_table.headers.exp_date')}</th>
-                                <th className="!bg-slate-100 w-12 rounded-tr-lg"></th>
-                            </tr>
-                        </thead>
+                                <TableHead className="bg-slate-100 text-right min-w-[96px] font-bold border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.buy_price_ht')}</TableHead>
+                                <TableHead className="bg-slate-100 text-right min-w-[112px] font-bold text-indigo-600 border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.amount')}</TableHead>
+                                <TableHead className="bg-slate-100 text-right min-w-[72px] font-bold whitespace-nowrap">{t('orders:product_table.headers.tva')}</TableHead>
+                                <TableHead className="bg-slate-100 text-right min-w-[64px] font-bold whitespace-nowrap">{t('orders:product_table.headers.margin')}</TableHead>
+                                <TableHead className="bg-slate-100 text-right min-w-[96px] font-bold border-l border-slate-300/30 pr-3 whitespace-nowrap">{t('orders:product_table.headers.sell_price')}</TableHead>
+                                <TableHead className="bg-slate-100 text-left min-w-[96px] font-bold border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.lot')}</TableHead>
+                                <TableHead className="bg-slate-100 text-left min-w-[96px] font-bold border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.exp_date')}</TableHead>
+                                <TableHead className="bg-slate-100 min-w-[48px] rounded-tr-lg"></TableHead>
+                            </TableRow>
+                        </TableHeader>
 
-                        <tbody>
+                        <TableBody>
                             {commandeProduits.map((p, index) => (
                                 <React.Fragment key={p.id || (typeof p.produit === 'object' ? p.produit.id : p.produit) || `row-${p.produit_cip}-${p.produit_nom}`}>
                                     <CommandeProductRow
@@ -174,26 +175,24 @@ export default function CommandeProductTable({
                                     )}
                                 </React.Fragment>
                             ))}
-                        </tbody>
-
-                        <tfoot className="sticky bottom-0 z-30">
-                            <tr className="!bg-slate-100 text-[10px] uppercase font-bold text-slate-500 border-t-2 border-slate-300 shadow-[0_-2px_4px_rgba(0,0,0,0.05)]">
-                                <th colSpan={3} className="!bg-slate-100 pl-4 py-2">{t('orders:product_table.end_of_list', { count: commandeProduits.length })}</th>
-                                <th className="!bg-slate-100 py-2"></th>
-                                <th className="!bg-slate-100 py-2"></th>
-                                <th className="!bg-slate-100 py-2"></th>
-                                {commandeType === 'DIR' && <th className="!bg-slate-100 py-2"></th>}
-                                <th className="!bg-slate-100 py-2"></th>
-                                <th className="!bg-slate-100 py-2"></th>
-                                <th className="!bg-slate-100 py-2"></th>
-                                <th className="!bg-slate-100 py-2"></th>
-                                <th className="!bg-slate-100 py-2"></th>
-                                <th className="!bg-slate-100 py-2"></th>
-                                <th className="!bg-slate-100 py-2"></th>
-                                <th className="!bg-slate-100 py-2 rounded-br-lg"></th>
-                            </tr>
-                        </tfoot>
-                    </table>
+                            <TableRow className="sticky bottom-0 z-30 bg-slate-100 text-[10px] uppercase font-bold text-slate-500 border-t-2 border-slate-300 shadow-md">
+                                <TableHead colSpan={3} className="bg-slate-100 pl-4 py-2">{t('orders:product_table.end_of_list', { count: commandeProduits.length })}</TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                {commandeType === 'DIR' && <TableHead className="bg-slate-100 py-2"></TableHead>}
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
+                                <TableHead className="bg-slate-100 py-2 rounded-br-lg"></TableHead>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
                 )}
             </div>
 

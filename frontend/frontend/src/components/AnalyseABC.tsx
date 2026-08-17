@@ -16,7 +16,8 @@ interface ProduitABC {
   chiffre_affaires: number
   quantite_vendue: number
   pourcentage_ca: number
-  pourcentage_cumule: number
+  marge: number
+  rotation: number
   categorie: 'A' | 'B' | 'C'
   en_rupture: boolean
 }
@@ -129,21 +130,22 @@ function AbcProductTable({ produits }: AbcProductTableProps) {
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-[0.12em]">
-              <th className="sticky top-0 bg-slate-50 py-3 pl-6 text-left border-b border-slate-200">{t('stock:abc.table.product')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.product')}</th>
               <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.cip')}</th>
               <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.rayon')}</th>
               <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200 pr-4">{t('stock:abc.table.stock')}</th>
               <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.qty_sold')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.rotation')}</th>
               <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.sale_price')}</th>
               <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.ca')}</th>
               <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200">{t('stock:abc.table.ca_percent')}</th>
-              <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200 pr-6">{t('stock:abc.table.cumulated_percent')}</th>
+              <th className="sticky top-0 bg-slate-50 py-3 text-right border-b border-slate-200 pr-6">{t('stock:abc.table.margin')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {produits.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-12 text-slate-400">
+                <td colSpan={10} className="text-center py-12 text-slate-400">
                   {t('stock:abc.table.no_products')}
                 </td>
               </tr>
@@ -160,10 +162,11 @@ function AbcProductTable({ produits }: AbcProductTableProps) {
                     p.stock <= 0 ? 'text-red-500' : p.stock <= 5 ? 'text-amber-500' : 'text-slate-700'
                   }`}>{p.stock}</td>
                   <td className="py-2.5 text-right font-semibold text-blue-600">{formatNumber(p.quantite_vendue)}</td>
+                  <td className="py-2.5 text-right text-slate-600">{p.rotation.toFixed(1)}</td>
                   <td className="py-2.5 text-right text-slate-600">{formatNumber(p.prix_vente)} {t('common:currency_symbol', { defaultValue: 'F' })}</td>
                   <td className="py-2.5 text-right font-bold text-slate-800">{formatNumber(p.chiffre_affaires)} {t('common:currency_symbol', { defaultValue: 'F' })}</td>
                   <td className="py-2.5 text-right text-slate-600">{p.pourcentage_ca.toFixed(0)}%</td>
-                  <td className="py-2.5 text-right text-slate-400 pr-6">{p.pourcentage_cumule.toFixed(1)}%</td>
+                  <td className="py-2.5 text-right text-emerald-600 font-medium pr-6">{formatNumber(p.marge)} {t('common:currency_symbol', { defaultValue: 'F' })}</td>
                 </tr>
               ))
             )}
@@ -250,10 +253,11 @@ export default function AnalyseABC() {
       t('stock:abc.table.rayon'),
       t('stock:abc.table.stock'),
       t('stock:abc.table.qty_sold'),
+      t('stock:abc.table.rotation'),
       t('stock:abc.table.sale_price'),
       t('stock:abc.table.ca'),
       t('stock:abc.table.ca_percent'),
-      t('stock:abc.table.cumulated_percent'),
+      t('stock:abc.table.margin'),
       t('stock:abc.table.category', { defaultValue: 'Catégorie' })
     ]
 
@@ -264,10 +268,11 @@ export default function AnalyseABC() {
       p.rayon,
       p.stock,
       p.quantite_vendue,
+      p.rotation.toFixed(1),
       p.prix_vente,
       Math.round(p.chiffre_affaires),
       p.pourcentage_ca.toFixed(0) + '%',
-      p.pourcentage_cumule.toFixed(1) + '%',
+      Math.round(p.marge),
       p.categorie
     ])
 

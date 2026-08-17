@@ -10,7 +10,7 @@ import {
   LayoutDashboard,
   PackageSearch,
   Store,
-  Monitor,
+  Package,
   AlertTriangle,
   TrendingUp,
 } from 'lucide-react';
@@ -101,9 +101,9 @@ export default function OmnisearchResults({
             <ShoppingCart className="size-4 mr-3 text-indigo-500 group-aria-selected:scale-110 transition-transform" />
             <span className="font-bold">{t('omnisearch.actions.new_order')}</span>
           </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('OPEN_POS')} value="action-open-pos" className={itemClass}>
-            <Monitor className="size-4 mr-3 text-rose-500 group-aria-selected:scale-110 transition-transform" />
-            <span className="font-bold">{t('omnisearch.actions.open_pos', 'Ouvrir POS')}</span>
+          <CommandItem onSelect={() => onSelectAction('OPEN_PRODUCTS')} value="action-open-products" className={itemClass}>
+            <Package className="size-4 mr-3 text-emerald-500 group-aria-selected:scale-110 transition-transform" />
+            <span className="font-bold">{t('omnisearch.actions.open_products', 'Liste de Produits')}</span>
           </CommandItem>
           <CommandItem onSelect={() => onSelectAction('OPEN_PERIMES')} value="action-open-perimes" className={itemClass}>
             <AlertTriangle className="size-4 mr-3 text-red-500 group-aria-selected:scale-110 transition-transform" />
