@@ -2,6 +2,240 @@
 
 ---
 
+## 2026-08-17 — Analyse ABC : remplace % cumulés par Marge et Rotation
+
+### 🐛 Corrections
+
+- **`stats.py` (backend)** :
+  - Récupère `produit__cost_price` et `produit__pmp` pour le calcul de la marge.
+  - Calcule `marge` = CA - (quantité × coût unitaire moyen) et `rotation` = quantité vendue / période (boîtes/mois).
+  - Supprime `pourcentage_cumule` du payload produit (conservé seulement pour la classification A/B/C).
+- **`AnalyseABC.tsx`** :
+  - Supprime la colonne **"% Cumulé"**.
+  - Ajoute les colonnes **"Rotation"** (boîtes/mois) et **"Marge"**.
+  - Met à jour l'export CSV/presse-papiers.
+- **i18n** :
+  - Ajout des clés `stock:abc.table.rotation` et `stock:abc.table.margin` en `fr` et `en`.
+
+### Fichiers modifiés
+
+- `backend/api/views/produit_actions/stats.py`
+- `frontend/frontend/src/components/AnalyseABC.tsx`
+- `frontend/frontend/public/locales/fr/stock.json`
+- `frontend/frontend/public/locales/en/stock.json`
+
+---
+
+## 2026-08-17 — Omnisearch : remplace Ouvrir POS par Liste de Produits
+
+### 🐛 Corrections
+
+- **`OmnisearchResults.tsx`** :
+  - Suppression de l'action rapide **"Ouvrir POS"**.
+  - Ajout de l'action rapide **"Liste de Produits"** qui ouvre `ProduitShadcn.tsx` (route `/app/produits`).
+- **`useOmnisearch.ts`** :
+  - Ajout du handler `OPEN_PRODUCTS` redirigeant vers `/app/produits`.
+  - Suppression du handler `OPEN_POS`.
+- **i18n** :
+  - Ajout des clés `omnisearch.actions.open_products` en `fr` et `en`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/omnisearch/OmnisearchResults.tsx`
+- `frontend/frontend/src/hooks/useOmnisearch.ts`
+- `frontend/frontend/public/locales/fr/common.json`
+- `frontend/frontend/public/locales/en/common.json`
+
+---
+
+## 2026-08-17 — Avoirs : suppression du motif général et rappel déchargement
+
+### 🐛 Corrections
+
+- **`AvoirsForm.tsx`** :
+  - Suppression du champ **Motif** (type d'avoir) des informations générales.
+  - Le type reste masqué et est initialisé par défaut à `AUTRE`.
+- **`AvoirsDetails.tsx`** :
+  - Ajout d'un bandeau d'avertissement ambre quand le stock n'a pas encore été déchargé.
+- **`useAvoirsData.ts`** :
+  - Confirmation avant de revenir à la liste si l'avoir visualisé n'a pas été déchargé.
+  - Type par défaut `AUTRE` à la création.
+- **i18n** :
+  - Ajout des clés `avoirs.details.unload_warning` et `avoirs.confirms.back_unloaded` en `fr` et `en`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/avoirs/AvoirsForm.tsx`
+- `frontend/frontend/src/components/avoirs/AvoirsDetails.tsx`
+- `frontend/frontend/src/hooks/useAvoirsData.ts`
+- `frontend/frontend/public/locales/fr/stock.json`
+- `frontend/frontend/public/locales/en/stock.json`
+
+---
+
+## 2026-08-17 — Bon de réception : suppression des décimales
+
+### 🐛 Corrections
+
+- **`useCommandeActions.ts`** :
+  - Le formateur de montants du bon de réception arrondit maintenant à l'entier (`Math.round`) avant formattage, supprimant les décimales affichées (ex: `26 898,075` → `26 898`).
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useCommandeActions.ts`
+
+---
+
+## 2026-08-17 — Commandes : fix comparaison de marge (arrondi)
+
+### 🐛 Corrections
+
+- **`CommandeProductRow.tsx`** :
+  - La marge affichée (`toFixed(2)`) pouvait être `1.34` tandis que la comparaison interne utilisait la valeur flottante non arrondie (`1.3399999...`), ce qui affichait une marge en orange alors qu'elle était égale au seuil.
+  - La valeur de comparaison est maintenant arrondie à 2 décimales avant d'être comparée au seuil.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx`
+
+---
+
+## 2026-08-17 — Commandes : ajustement colonnes TVA et libellé stock
+
+### 🎨 UI/UX
+
+- **`CommandeProductTable.tsx`** :
+  - Colonne TVA légèrement élargie (`min-w-[64px]` → `min-w-[72px]`).
+- **Internationalisation** :
+  - Remplacement du libellé `Stk` par `Stock` pour `orders:product_table.headers.stock_short` en `fr` et `en`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeProductTable.tsx`
+- `frontend/frontend/public/locales/fr/orders.json`
+- `frontend/frontend/public/locales/en/orders.json`
+
+---
+
+## 2026-08-17 — Commandes : round 4 — nettoyage CSS forçage et i18n `common:today`
+
+### 🎨 UI/UX
+
+- **Nettoyage `CommandeProductTable.tsx`** :
+  - Suppression des forçages `!bg-slate-100` (31 occurrences) et `!border-t-2`.
+  - Remplacement du `shadow-[0_-2px_4px_rgba(0,0,0,0.05)]` fait main par `shadow-md` Tailwind.
+- **Internationalisation** :
+  - Ajout de la clé `common:today` en `en` (`"Today"`) et suppression du `defaultValue` dans `SuggestionCommandeModal.tsx`.
+- **Contrôle final** :
+  - Agent dédié : zéro balise table native, zéro import `../ui/`, zéro `base-*`, zéro `defaultValue`, zéro emoji, zéro `!bg-slate-100`/`!border-t-2`/`shadow-[`, `tsc` OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeProductTable.tsx`
+- `frontend/frontend/src/components/Commandes/SuggestionCommandeModal.tsx`
+- `frontend/frontend/public/locales/en/common.json`
+
+---
+
+## 2026-08-17 — Commandes : round 3 — i18n récap, accessibilité et harmonisation inputs
+
+### 🎨 UI/UX
+
+- **Internationalisation du récap `CommandeDetails`** :
+  - Les labels `PRIX A HT`, `TVA A`, `PRIX A TTC`, `PRIX V TTC`, `MARGE`, `COEFF`, `PRÉCOMPTE` sont maintenant traduits via `orders:details.recap.*` (fr/en).
+- **Empty state corrigé** :
+  - `CommandeProductTable.tsx` utilise désormais `orders:product_table.empty_state` au lieu de la clé inexistante `empty_e`.
+- **Accessibilité** :
+  - Ajout `aria-label` traduit sur le bouton Data Matrix de `CommandeForm.tsx`.
+  - Ajout `aria-label` traduit sur le bouton de réinitialisation de recherche de `CommandeList.tsx`.
+  - Remplacement du `<button>` natif de réinitialisation par un `Button` shadcn.
+  - Les liaisons `label/htmlFor` ↔ `id` de `CommandeForm` sont vérifiées et OK.
+- **Harmonisation visuelle** :
+  - `CommandeProductRow.tsx` : tous les inputs sont en `h-8 px-2`.
+  - `SuggestionCommandeModal.tsx` : les `<button>` natifs (modes, périodes, 24h, aujourd'hui) sont remplacés par des `Button` shadcn en conservant l'état sélectionné.
+- **Nouvelles clés i18n** :
+  - `orders:list.clear_search`
+  - `orders:form.enable_datamatrix_scan` / `orders:form.disable_datamatrix_scan`
+
+### ✅ Contrôle final
+
+- Agent de contrôle a vérifié : zéro balise table native, zéro import `../ui/`, zéro `base-*`, zéro `defaultValue`, zéro emoji, tous les spinners en `Loader2`, `tsc` OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeProductTable.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeList.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx`
+- `frontend/frontend/src/components/Commandes/SuggestionCommandeModal.tsx`
+- `frontend/frontend/public/locales/fr/orders.json`
+- `frontend/frontend/public/locales/en/orders.json`
+
+---
+
+## 2026-08-17 — Commandes : round 2 shadcn — ExportCommandeModal et SelectionHeader
+
+### 🎨 UI/UX
+
+- **Migration des dernières tables natives restantes dans le module Commandes** :
+  - `ExportCommandeModal.tsx` : les deux `<table>` natifs (produits avec CIP et sans CIP) sont migrés vers `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`.
+  - `CommandeSelectionHeader.tsx` : `<th>` natif remplacé par `TableHead`.
+- **Internationalisation** :
+  - Ajout `orders:export_modal.table.ug` en `fr` (`"UG"`) et `en` (`"Free units"`) pour remplacer le texte hardcodé `UG`.
+- **Contrôle final** :
+  - Vérification par agent dédié : zéro balise table native, zéro import `../ui/`, zéro `base-*`, zéro `defaultValue`, zéro emoji, tous les spinners en `Loader2`, `tsc` OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/ExportCommandeModal.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeSelectionHeader.tsx`
+- `frontend/frontend/public/locales/fr/orders.json`
+- `frontend/frontend/public/locales/en/orders.json`
+
+---
+
+## 2026-08-17 — Commandes : migration du tableau de produits vers shadcn/table
+
+### 🎨 UI/UX
+
+- **Migration complète du tableau des produits de commande vers `shadcn/table`** :
+  - `CommandeProductTable.tsx` : `<table>` natif → `Table`, `TableHeader`, `TableBody`, `TableHead`, `TableRow`. Footer déplacé en dernière `TableRow` du `TableBody`.
+  - `CommandeProductRow.tsx` : balises `<tr>`/`<td>` natives → `TableRow`/`TableCell`.
+  - `CommandeProductExpandedRow.tsx` : balises `<tr>`/`<td>` natives → `TableRow`/`TableCell`.
+- **Conservation des fonctionnalités critiques** :
+  - Header et footer sticky (`sticky top-0`, `sticky bottom-0`, `z-30`).
+  - Gestionnaires clavier (`onKeyDown`, `data-row`, `data-field`) et scroll horizontaux/verticaux.
+  - `colSpan` du footer et des lignes étendues.
+- **Travail parallèle et contrôle final** :
+  - 3 subagents pour répartir le refacto.
+  - 1 agent de contrôle final (imports, balises natives, emojis, `defaultValue`, `base-*`, sticky, clavier, `colSpan`, `tsc`).
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeProductTable.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeProductExpandedRow.tsx`
+
+---
+
+## 2026-08-17 — Commandes : remplacement des spinners faits main par `Loader2`
+
+### 🎨 UI/UX
+
+- **Remplacement des `span` animés faits main par l'icône Lucide `Loader2` dans** :
+  - `CommandeDetails.tsx` (5 spinners : actions clôture, suspension, suppression, impression, annulation réception).
+  - `CommandeList.tsx` (2 spinners : boutons suggestion et nouvelle commande).
+  - `SuggestionCommandeModal.tsx` (1 spinner : bouton de génération).
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeList.tsx`
+- `frontend/frontend/src/components/Commandes/SuggestionCommandeModal.tsx`
+
+---
+
 ## 2026-08-17 — Commandes : P1 rapides dans `CommandeProductTable.tsx`
 
 ### 🎨 UI/UX
