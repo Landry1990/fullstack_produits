@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import type { TFunction } from 'i18next'
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import type { ProduitModel } from '../types'
 
 export interface UseFacturationImportOptions {
@@ -20,10 +20,10 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
         name?: string;
     }) => {
         if (!pack.pack_items || pack.pack_items.length === 0) {
-            toast.error(t('facturation:messages.pack_empty'))
+            gooeyToast.error(t('facturation:messages.pack_empty'))
             return
         }
-        const toastId = toast.loading(t('facturation:messages.adding_pack'))
+        const toastId = gooeyToast.loading(t('facturation:messages.adding_pack'))
         try {
             const itemPromises = pack.pack_items.map(async (item: { product: number; quantity: number }) => {
                 try {
@@ -37,7 +37,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
             const items = results.filter((i): i is { product: ProduitModel, quantity: number } => i !== null)
 
             if (items.length === 0) {
-                toast.error(t('facturation:messages.pack_items_error'), { id: toastId })
+                gooeyToast.error(t('facturation:messages.pack_items_error'), { id: toastId })
                 return
             }
             const totalNormalPrice = items.reduce((sum, item) => sum + (Number(item.product.selling_price) * item.quantity), 0)
@@ -52,21 +52,21 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 }
             })
             cart.bulkAddProduits(itemsToBulkAdd)
-            toast.success(t('facturation.messages.pack_added', { name: pack.name }), { id: toastId })
+            gooeyToast.success(t('facturation.messages.pack_added', { name: pack.name }), { id: toastId })
         } catch {
-            toast.error(t('facturation.messages.pack_error'), { id: toastId })
+            gooeyToast.error(t('facturation.messages.pack_error'), { id: toastId })
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.bulkAddProduits, t])
 
     // CSV Import
     const handleCsvImport = useCallback(async (file: File) => {
-        const toastId = toast.loading(t('facturation:messages.csv_loading'));
+        const toastId = gooeyToast.loading(t('facturation:messages.csv_loading'));
         try {
             const text = await file.text();
             const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
             if (lines.length === 0) {
-                toast.error(t('facturation:messages.csv_empty_file'), { id: toastId });
+                gooeyToast.error(t('facturation:messages.csv_empty_file'), { id: toastId });
                 return;
             }
             const params: { identifiers: string[], quantities: Record<string, number> } = {
@@ -86,7 +86,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 }
             }
             if (params.identifiers.length === 0) {
-                toast.error(t('facturation:messages.csv_no_valid_data'), { id: toastId });
+                gooeyToast.error(t('facturation:messages.csv_no_valid_data'), { id: toastId });
                 return;
             }
             let fetchedProducts: ProduitModel[] = [];
@@ -113,7 +113,7 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 });
             }
             if (fetchedProducts.length === 0) {
-                toast.error(t('facturation:messages.csv_no_matching_products'), { id: toastId });
+                gooeyToast.error(t('facturation:messages.csv_no_matching_products'), { id: toastId });
                 return;
             }
             const itemsToBulkAdd = fetchedProducts.map(product => {
@@ -126,9 +126,9 @@ export function useFacturationImport({ cart, t }: UseFacturationImportOptions) {
                 }
             });
             cart.bulkAddProduits(itemsToBulkAdd);
-            toast.success(t('facturation:messages.csv_import_success', { count: itemsToBulkAdd.length }), { id: toastId });
+            gooeyToast.success(t('facturation:messages.csv_import_success', { count: itemsToBulkAdd.length }), { id: toastId });
         } catch {
-            toast.error(t('facturation:messages.csv_read_error'), { id: toastId });
+            gooeyToast.error(t('facturation:messages.csv_read_error'), { id: toastId });
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.bulkAddProduits])

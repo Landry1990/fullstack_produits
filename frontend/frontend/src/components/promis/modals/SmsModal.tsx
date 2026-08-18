@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { Send, Phone } from 'lucide-react';
 import type { Promis } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
@@ -48,10 +48,10 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                 context_type: 'PROMIS',
                 context_id: promis.id
             });
-            toast.success(t('stock:promis.messages.sms_success'));
+            gooeyToast.success(t('stock:promis.messages.sms_success'));
             onClose();
         } catch (err: unknown) {
-            toast.error(t('stock:promis.messages.sms_error'));
+            gooeyToast.error(t('stock:promis.messages.sms_error'));
             logger.error(err);
         } finally {
             setSendingSms(false);

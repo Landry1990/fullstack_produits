@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import {
   UserPlus, Users, Settings, Trash2, Eye, EyeOff, Search, Phone, MapPin, Mail,
   User, ShoppingBag, ShieldCheck, Edit, Activity, CreditCard, ArrowLeft
@@ -136,7 +136,7 @@ export default function Clients() {
         setTotalCount(data.length);
       }
     } catch {
-      toast.error(t('clients:messages.error_fetch'));
+      gooeyToast.error(t('clients:messages.error_fetch'));
     } finally {
       setLoading(false);
     }
@@ -237,7 +237,7 @@ export default function Clients() {
             const errorMsg = (validation.error as { errors: Array<{ path: (string | number)[]; message: string }> }).errors
                 .map((err) => `${t(`clients:fields.${err.path[0]}`)}: ${err.message}`)
                 .join('\n');
-            toast.error(errorMsg, { duration: 5000 });
+            gooeyToast.error(errorMsg, { duration: 5000 });
             setIsSubmitting(false);
             return;
         }
@@ -248,19 +248,19 @@ export default function Clients() {
             const created = await clientService.create(cleanData);
             setClients(prev => [created, ...prev]);
             setTotalCount(prev => prev + 1);
-            toast.success(t('clients:messages.create_success'));
+            gooeyToast.success(t('clients:messages.create_success'));
         } else if (formData.id) {
             const updated = await clientService.update(formData.id, cleanData);
             setClients(prev => prev.map(c => c.id === updated.id ? updated : c));
             if (selectedClient?.id === updated.id) {
                 setSelectedClient(updated);
             }
-            toast.success(t('clients:messages.update_success'));
+            gooeyToast.success(t('clients:messages.update_success'));
         }
         setIsFormModalOpen(false);
     } catch (err: unknown) {
         const axiosErr = err as { response?: { data?: { message?: string } } };
-        toast.error(axiosErr.response?.data?.message || t('clients:messages.error_save'));
+        gooeyToast.error(axiosErr.response?.data?.message || t('clients:messages.error_save'));
     } finally {
         setIsSubmitting(false);
     }
@@ -298,12 +298,12 @@ export default function Clients() {
             setTotalCount(prev => prev - 1);
             handleDeselectClient();
             await clientService.delete(deletedId);
-            toast.success(t('clients:messages.delete_success'));
+            gooeyToast.success(t('clients:messages.delete_success'));
             setTimeout(() => fetchClients(true), 500);
         } catch (err: unknown) {
             const axiosErr = err as { response?: { data?: { detail?: string } } };
             logger.error('[Clients] Delete error:', err);
-            toast.error(axiosErr.response?.data?.detail || t('clients:messages.error_delete'));
+            gooeyToast.error(axiosErr.response?.data?.detail || t('clients:messages.error_delete'));
             fetchClients(true);
         }
     }
@@ -313,11 +313,11 @@ export default function Clients() {
     if (!selectedClient) return;
     try {
         const res = await clientService.toggleActive(selectedClient.id);
-        toast.success(res.is_active ? t('clients:messages.status_active') : t('clients:messages.status_inactive'));
+        gooeyToast.success(res.is_active ? t('clients:messages.status_active') : t('clients:messages.status_inactive'));
         setSelectedClient({...selectedClient, is_active: res.is_active});
         setTimeout(() => fetchClients(true), 500);
     } catch {
-        toast.error(t('clients:messages.error_status'));
+        gooeyToast.error(t('clients:messages.error_status'));
     }
   };
 
@@ -352,13 +352,13 @@ export default function Clients() {
 
         try {
             await clientService.bulkDelete(selectedIds);
-            toast.success(t('clients:messages.bulk_delete_success', { count: selectedIds.length }));
+            gooeyToast.success(t('clients:messages.bulk_delete_success', { count: selectedIds.length }));
             setSelectedIds([]);
             setTimeout(() => fetchClients(true), 500);
         } catch (err: unknown) {
             const axiosErr = err as { response?: { data?: { detail?: string } } };
             logger.error('[Clients] Bulk delete error:', err);
-            toast.error(axiosErr.response?.data?.detail || t('clients:messages.error_bulk_delete'));
+            gooeyToast.error(axiosErr.response?.data?.detail || t('clients:messages.error_bulk_delete'));
             fetchClients(true);
         }
     }

@@ -1,6 +1,6 @@
 import React from 'react'
 import { normalizeNumberInput } from '../utils/formatters'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import type { LigneFacture } from '../types'
 
 interface UseCartRowStateParams {
@@ -62,7 +62,7 @@ export function useCartRowState({
   const handleRemiseSubmit = () => {
     const numValue = normalizeNumberInput(localRemise)
     if (!isNaN(numValue) && numValue > maxDiscount) {
-      toast.error(t('facturation:messages.discount_limit_error', { rate: maxDiscount }))
+      gooeyToast.error(t('facturation:messages.discount_limit_error', { rate: maxDiscount }))
       setLocalRemise(String(maxDiscount))
       updateRemiseProduit(ligne.produit.id, String(maxDiscount))
     } else if (localRemise !== ligne.remise_produit) {

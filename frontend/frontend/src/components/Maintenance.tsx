@@ -6,7 +6,7 @@ import {
   Wrench, ChevronDown, ChevronUp, Database, Clock, Save, Upload,
   Package, FileUp, FileDown, RefreshCw, Rocket, ScrollText
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
@@ -113,7 +113,7 @@ const downloadRapport = (filename: string, t: (key: string) => string) => {
       document.body.appendChild(a); a.click(); a.remove();
       window.URL.revokeObjectURL(url);
     })
-    .catch(() => toast.error(t('toasts.download_report_error')));
+    .catch(() => gooeyToast.error(t('toasts.download_report_error')));
 };
 
 export default function Maintenance() {
@@ -178,7 +178,7 @@ export default function Maintenance() {
   useEffect(() => {
     api.get('maintenance/tables/')
       .then(res => setTables(res.data))
-      .catch(() => toast.error(t('common:error_loading_data')));
+      .catch(() => gooeyToast.error(t('common:error_loading_data')));
 
     api.get('pharmacy-settings/')
       .then(res => setPharmacySettings(res.data))
@@ -229,9 +229,9 @@ export default function Maintenance() {
           setUpdateRunning(false);
           clearInterval(poll);
           if (d.status === 'done') {
-            toast.success(t('toasts.update_success'));
+            gooeyToast.success(t('toasts.update_success'));
           } else if (d.status === 'error') {
-            toast.error(t('toasts.update_error', { error: d.step || t('common:messages.error_generic') }));
+            gooeyToast.error(t('toasts.update_error', { error: d.step || t('common:messages.error_generic') }));
             setUpdateError(d.step || t('common:messages.error_generic'));
           }
         }
@@ -245,7 +245,7 @@ export default function Maintenance() {
   }, [updateRunning, t]);
 
   const handleRunUpdate = async () => {
-    if (!updatePassword) { toast.error(t('toasts.password_required')); return; }
+    if (!updatePassword) { gooeyToast.error(t('toasts.password_required')); return; }
     setUpdateRunning(true);
     setUpdateProgress(0);
     setUpdateStep(t('toasts.starting'));
@@ -255,15 +255,15 @@ export default function Maintenance() {
       const res = await api.post('maintenance/run_update/', { password: updatePassword });
       setUpdatePassword('');
       setShowUpdateConfirm(false);
-      toast.success(res.data.message || t('toasts.update_started'));
+      gooeyToast.success(res.data.message || t('toasts.update_started'));
     } catch (err) {
       setUpdateRunning(false);
-      toast.error(getApiErrorDetail(err, t('toasts.update_launch_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('toasts.update_launch_error')));
     }
   };
 
   const handleImportProduits = async () => {
-    if (!importFile) { toast.error(t('toasts.select_excel_file')); return; }
+    if (!importFile) { gooeyToast.error(t('toasts.select_excel_file')); return; }
     setImporting(true);
     setImportResult(null);
     setImportProgress(0);
@@ -292,13 +292,13 @@ export default function Maintenance() {
             setImporting(false);
             setImportResult(d);
             importJobIdRef.current = null;
-            toast.success(d.message);
+            gooeyToast.success(d.message);
             api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {});
           } else if (d.status === 'error') {
             clearInterval(poll);
             setImporting(false);
             importJobIdRef.current = null;
-            toast.error(d.message);
+            gooeyToast.error(d.message);
           }
         } catch {
           clearInterval(poll);
@@ -308,7 +308,7 @@ export default function Maintenance() {
       }, 2000);
 
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('toasts.import_launch_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('toasts.import_launch_error')));
       setImporting(false);
     }
   };
@@ -327,16 +327,16 @@ export default function Maintenance() {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      toast.success(t('maintenance:export_success'));
+      gooeyToast.success(t('maintenance:export_success'));
     } catch (err) {
-      toast.error(getApiErrorError(err, t('maintenance:export_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('maintenance:export_error')));
     } finally {
       setExportingProduits(false);
     }
   };
 
   const handlePurgeProduits = async () => {
-    if (!purgePassword) { toast.error(t('toasts.password_required')); return; }
+    if (!purgePassword) { gooeyToast.error(t('toasts.password_required')); return; }
     setPurging2(true);
     try {
       const res = await api.post('maintenance/purge_produits/', {
@@ -346,10 +346,10 @@ export default function Maintenance() {
       setPurgeResult(res.data);
       setShowPurgeModal(false);
       setPurgePassword('');
-      toast.success(res.data.message);
+      gooeyToast.success(res.data.message);
       api.get('maintenance/produits_count/').then(r => setProduitsCount(r.data.count)).catch(() => {});
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('toasts.purge_launch_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('toasts.purge_launch_error')));
     } finally {
       setPurging2(false);
     }
@@ -403,7 +403,7 @@ export default function Maintenance() {
 
   const handlePreview = async () => {
     if (selectedTables.size === 0) {
-      toast.error(t('toasts.select_table'));
+      gooeyToast.error(t('toasts.select_table'));
       return;
     }
     setLoading(true);
@@ -416,7 +416,7 @@ export default function Maintenance() {
       });
       setPreview(res.data);
     } catch {
-      toast.error(t('toasts.preview_error'));
+      gooeyToast.error(t('toasts.preview_error'));
     } finally {
       setLoading(false);
     }
@@ -424,7 +424,7 @@ export default function Maintenance() {
 
   const handleExport = async () => {
     if (selectedTables.size === 0) {
-      toast.error(t('toasts.select_table'));
+      gooeyToast.error(t('toasts.select_table'));
       return;
     }
     setExporting(true);
@@ -443,9 +443,9 @@ export default function Maintenance() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(t('toasts.export_success'));
+      gooeyToast.success(t('toasts.export_success'));
     } catch {
-      toast.error(t('toasts.export_error'));
+      gooeyToast.error(t('toasts.export_error'));
     } finally {
       setExporting(false);
     }
@@ -453,7 +453,7 @@ export default function Maintenance() {
 
   const handlePurge = async () => {
     if (!password) {
-      toast.error(t('toasts.password_required'));
+      gooeyToast.error(t('toasts.password_required'));
       return;
     }
     setPurging(true);
@@ -468,9 +468,9 @@ export default function Maintenance() {
       setPreview(null);
       setShowConfirmModal(false);
       setPassword('');
-      toast.success(t('toasts.purge_success'));
+      gooeyToast.success(t('toasts.purge_success'));
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('toasts.purge_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('toasts.purge_error')));
     } finally {
       setPurging(false);
     }
@@ -505,8 +505,8 @@ export default function Maintenance() {
       const res = await api.post('maintenance/backup/');
       clearInterval(progressInterval);
       setBackupProgress(100);
-      toast.success(t('toasts.backup_success'));
-      toast.success(res.data.message || t('toasts.backup_finished'));
+      gooeyToast.success(t('toasts.backup_success'));
+      gooeyToast.success(res.data.message || t('toasts.backup_finished'));
       
       // Reset after success
       setTimeout(() => {
@@ -519,7 +519,7 @@ export default function Maintenance() {
       setBackupLoading(false);
       setBackupProgress(0);
       setBackupStep('');
-      toast.error(getApiErrorDetail(err, t('toasts.backup_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('toasts.backup_error')));
     }
   };
 
@@ -532,9 +532,9 @@ export default function Maintenance() {
         backup_time: pharmacySettings.backup_time,
         secondary_backup_path: pharmacySettings.secondary_backup_path,
       });
-      toast.success(t('toasts.settings_saved'));
+      gooeyToast.success(t('toasts.settings_saved'));
     } catch {
-      toast.error(t('toasts.save_error'));
+      gooeyToast.error(t('toasts.save_error'));
     } finally {
       setSavingSettings(false);
     }
@@ -542,7 +542,7 @@ export default function Maintenance() {
 
   const handleRestore = async () => {
     if (!restoreFile || !restorePassword) {
-      toast.error(t('toasts.restore_input_required'));
+      gooeyToast.error(t('toasts.restore_input_required'));
       return;
     }
 
@@ -579,7 +579,7 @@ export default function Maintenance() {
       clearInterval(progressInterval);
       setRestoreProgress(100);
       setRestoreStep('Restauration terminée !');
-      toast.success(t('toasts.restore_success'));
+      gooeyToast.success(t('toasts.restore_success'));
       setShowRestoreConfirm(false);
       setRestoreFile(null);
       setRestorePassword('');
@@ -591,7 +591,7 @@ export default function Maintenance() {
       setRestoring(false);
       setRestoreProgress(0);
       setRestoreStep('');
-      toast.error(getApiErrorDetail(err, t('toasts.restore_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('toasts.restore_error')));
     }
   };
 
@@ -607,9 +607,9 @@ export default function Maintenance() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(t('code_management.backup_success'));
+      gooeyToast.success(t('code_management.backup_success'));
     } catch {
-      toast.error(t('common:error_occurred'));
+      gooeyToast.error(t('common:error_occurred'));
     } finally {
       setCodeBackupLoading(false);
     }
@@ -617,7 +617,7 @@ export default function Maintenance() {
 
   const handleCodeRestore = async () => {
     if (!codeRestoreFile) {
-      toast.error(t('common:select_file'));
+      gooeyToast.error(t('common:select_file'));
       return;
     }
     setCodeRestoring(true);
@@ -625,10 +625,10 @@ export default function Maintenance() {
     formData.append('file', codeRestoreFile);
     try {
       await api.post('code-backup/restore/', formData);
-      toast.success(t('code_management.restore_success'));
+      gooeyToast.success(t('code_management.restore_success'));
       setCodeRestoreFile(null);
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('common:error_occurred')));
+      gooeyToast.error(getApiErrorDetail(err, t('common:error_occurred')));
     } finally {
       setCodeRestoring(false);
     }
@@ -846,7 +846,7 @@ export default function Maintenance() {
                 variant="destructive"
                 size="sm"
                 className="w-full gap-2 !whitespace-normal"
-                onClick={() => { if (selectedTables.size > 0) setShowConfirmModal(true); else toast.error(t('common:select_tables')); }}
+                onClick={() => { if (selectedTables.size > 0) setShowConfirmModal(true); else gooeyToast.error(t('common:select_tables')); }}
                 disabled={selectedTables.size === 0}
               >
                 <Trash2 className="size-4" />
@@ -1141,7 +1141,7 @@ export default function Maintenance() {
                   variant="destructive"
                   size="sm"
                   className="w-full gap-2 !whitespace-normal"
-                  onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else toast.error(t('common:select_file')); }}
+                  onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else gooeyToast.error(t('common:select_file')); }}
                   disabled={restoring || !restoreFile}
                 >
                   {restoring ? <Loader2 className="size-4 animate-spin" /> : <ShieldAlert className="size-4" />}

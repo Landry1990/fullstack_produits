@@ -4,7 +4,7 @@ import { Store, Plus, Loader2, Trash2, AlertCircle } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../shadcn/input'
 import { Badge } from '../shadcn/badge'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import {
   cashSessionService,
   type PosteVente,
@@ -39,7 +39,7 @@ export default function PosteVenteSettingsSection() {
       setPostes(data)
       setCaissesDisponibles(caisses)
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('messages.pos_load_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.pos_load_error')))
     } finally {
       setLoading(false)
     }
@@ -52,17 +52,17 @@ export default function PosteVenteSettingsSection() {
   const handleCreate = async () => {
     const nom = newNom.trim()
     if (!nom) {
-      toast.error(t('messages.pos_name_required'))
+      gooeyToast.error(t('messages.pos_name_required'))
       return
     }
     setSubmitting(true)
     try {
       await cashSessionService.createPosteVente({ nom })
-      toast.success(t('messages.pos_created'))
+      gooeyToast.success(t('messages.pos_created'))
       setNewNom('')
       await loadData()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('messages.pos_create_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.pos_create_error')))
     } finally {
       setSubmitting(false)
     }
@@ -72,10 +72,10 @@ export default function PosteVenteSettingsSection() {
     if (!window.confirm('Supprimer ce point de vente ?')) return
     try {
       await cashSessionService.deletePosteVente(id)
-      toast.success(t('messages.pos_deleted'))
+      gooeyToast.success(t('messages.pos_deleted'))
       await loadData()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('messages.pos_delete_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.pos_delete_error')))
     }
   }
 
@@ -83,10 +83,10 @@ export default function PosteVenteSettingsSection() {
     if (!window.confirm('Fermer ce point de vente ?')) return
     try {
       await cashSessionService.forcerFermeturePosteVente(id)
-      toast.success(t('messages.pos_closed'))
+      gooeyToast.success(t('messages.pos_closed'))
       await loadData()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('messages.pos_close_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.pos_close_error')))
     }
   }
 

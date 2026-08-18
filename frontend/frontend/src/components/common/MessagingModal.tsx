@@ -9,7 +9,7 @@ import type { SimpleUser } from '../../services/userService';
 import PremiumModal from './PremiumModal';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { logger } from '../../utils/logger'
 
 // ── Composer reducer ────────────────────────────────────────────────────────
@@ -119,7 +119,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       }
     } catch (error) {
       logger.error("Error loading messaging data", error);
-      toast.error(t('common:error_loading'));
+      gooeyToast.error(t('common:error_loading'));
     }
   };
 
@@ -168,12 +168,12 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
         parent: replyingTo?.id || null,
         attachment: attachmentFile
       });
-      toast.success(t('new.success_sent'));
+      gooeyToast.success(t('new.success_sent'));
       dispatchComposer({ type: 'RESET' });
       setActiveTab('sent');
       loadData();
     } catch {
-      toast.error(t('new.error_sent'));
+      gooeyToast.error(t('new.error_sent'));
     }
   };
 
@@ -183,7 +183,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       setMessages((prev: InternalMessage[]) => prev.map((m: InternalMessage) => m.id === id ? { ...m, is_read: true } : m));
       if (onMessageRead) onMessageRead();
     } catch {
-      toast.error(t('common:error'));
+      gooeyToast.error(t('common:error'));
     }
   };
 
@@ -192,9 +192,9 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
     try {
       await communicationService.archiveMessage(id);
       setMessages((prev: InternalMessage[]) => prev.map((m: InternalMessage) => m.id === id ? { ...m, is_archived: true } : m));
-      toast.success(t('messaging:messages.archived'));
+      gooeyToast.success(t('messaging:messages.archived'));
     } catch {
-      toast.error(t('common:error'));
+      gooeyToast.error(t('common:error'));
     }
   };
 
@@ -208,10 +208,10 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
     if (!window.confirm(t('templates.delete_confirm'))) return;
     try {
       await communicationService.deleteTemplate(id);
-      toast.success(t('templates.success_deleted'));
+      gooeyToast.success(t('templates.success_deleted'));
       loadData();
     } catch {
-      toast.error(t('common:error'));
+      gooeyToast.error(t('common:error'));
     }
   };
 
@@ -220,16 +220,16 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
     try {
       if (editingTemplate) {
         await communicationService.updateTemplate(editingTemplate.id, templateForm);
-        toast.success(t('templates.success_saved'));
+        gooeyToast.success(t('templates.success_saved'));
       } else {
         await communicationService.createTemplate(templateForm);
-        toast.success(t('templates.success_saved'));
+        gooeyToast.success(t('templates.success_saved'));
       }
       setEditingTemplate(null);
       setTemplateForm({ title: '', content: '' });
       loadData();
     } catch {
-      toast.error(t('common:error'));
+      gooeyToast.error(t('common:error'));
     }
   };
 

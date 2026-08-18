@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings, Check, RotateCcw, Info } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { stockHealthSettingsSchema } from '../../schemas/stockSchema';
 import { logger } from '../../utils/logger'
@@ -37,7 +37,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
 
             if (!validation.success) {
                 const message = validation.error.issues[0]?.message ?? t('common:validation_error', { defaultValue: 'Erreur de validation' });
-                toast.error(message);
+                gooeyToast.error(message);
                 return;
             }
 

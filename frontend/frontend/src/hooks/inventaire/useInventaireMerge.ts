@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { Inventaire } from '../../types';
@@ -106,7 +106,7 @@ export const useInventaireMerge = ({
                 ));
                 successCount = sources.length;
 
-                toast.success(t('inventaire.merge.success_count', { count: successCount }));
+                gooeyToast.success(t('inventaire.merge.success_count', { count: successCount }));
                 setSelectedInventaireIds(new Set());
                 fetchInventaires();
             } else {
@@ -114,7 +114,7 @@ export const useInventaireMerge = ({
                 await api.post(`inventaires/${activeInventaire?.id}/merge/`, {
                     source_inventaire_id: selectedMergeSource
                 });
-                toast.success(t('inventaire.merge.success'));
+                gooeyToast.success(t('inventaire.merge.success'));
                 if (activeInventaire) handleEdit(activeInventaire);
             }
 
@@ -122,7 +122,7 @@ export const useInventaireMerge = ({
             setSelectedMergeSource(null);
         } catch (err: unknown) {
             logger.error("Erreur fusion", err);
-            toast.error(getApiErrorDetail(err, t('inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' })));
+            gooeyToast.error(getApiErrorDetail(err, t('inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' })));
         } finally {
             setMerging(false);
         }

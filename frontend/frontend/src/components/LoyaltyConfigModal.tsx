@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
 import PremiumModal from './common/PremiumModal'
 import { Button } from './shadcn/button'
@@ -67,7 +67,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                 auto_reward_threshold: 0,
                 auto_reward_percent: "0"
             } as LoyaltySetting)
-            toast.error(t('common:messages.error_loading'))
+            gooeyToast.error(t('common:messages.error_loading'))
         } finally {
             setLoading(false)
         }
@@ -87,9 +87,9 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                 await api.post('loyalty-settings/', settings)
             }
             onClose()
-            toast.success(t('common:messages.saved'))
+            gooeyToast.success(t('common:messages.saved'))
         } catch (err) {
-            toast.error(t('common:messages.error_saving'))
+            gooeyToast.error(t('common:messages.error_saving'))
             logger.error(err)
         } finally {
             setSaving(false)

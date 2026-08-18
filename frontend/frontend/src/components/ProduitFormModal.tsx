@@ -7,7 +7,7 @@ import { useTVA } from '../hooks/useTVA';
 import {
   X, Package, Hash, Layers, DollarSign, AlertTriangle, Loader2
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { normalizeNumberInput } from '../utils/formatters';
 import { getLocale } from '../utils/dateUtils';
 import { productSchema } from '../schemas/productSchema';
@@ -207,10 +207,10 @@ export default function ProduitFormModal({
         const detail = anyErr.response?.data ?? anyErr.message;
         const errorText = typeof detail === 'string' ? detail : formatBackendErrors(detail);
         setError(errorText);
-        toast.error(errorText);
+        gooeyToast.error(errorText);
       } else {
         setError(t('products:form.validation.unknown_error'));
-        toast.error(t('products:form.validation.unknown_error'));
+        gooeyToast.error(t('products:form.validation.unknown_error'));
       }
     } finally {
       setLoading(false);

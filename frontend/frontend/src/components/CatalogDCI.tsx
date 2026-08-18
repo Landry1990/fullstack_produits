@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useSubstances, useSubstanceProduits, type Substance } from '../hooks/useSubstances';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import type { ProduitModel } from '../types';
 import CatalogDCIAddModal from './CatalogDCIAddModal';
@@ -289,11 +289,11 @@ function handleDeleteProduct(produitId: number, substanceId: number | undefined,
     .then(() => {
       queryClient.invalidateQueries({ queryKey: ['substance-produits', substanceId] });
       queryClient.invalidateQueries({ queryKey: ['substances', { search: searchTerm, page }] });
-      toast.success(t('common:messages.success_delete'));
+      gooeyToast.success(t('common:messages.success_delete'));
     })
     .catch((err) => {
       logger.error('Erreur suppression DCI:', err);
-      toast.error(t('common:messages.error_saving'));
+      gooeyToast.error(t('common:messages.error_saving'));
     })
     .finally(() => setDeletingProductId(null));
 }

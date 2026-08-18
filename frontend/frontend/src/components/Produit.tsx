@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
@@ -197,15 +197,15 @@ export default function Produit() {
     const qtyStr = prompt(informMsg, String(suggest));
     if (qtyStr === null) return;
     const qty = parseInt(qtyStr, 10);
-    if (isNaN(qty) || qty <= 0) { toast.error(t('products:messages.invalid_quantity')); return; }
+    if (isNaN(qty) || qty <= 0) { gooeyToast.error(t('products:messages.invalid_quantity')); return; }
 
     setTransferLoading(true);
     try {
       await api.post(`produits/${produit.id}/transfer_to_shelf/`, { quantity: qty });
-      toast.success(t('products:messages.transfer_success', { count: qty }));
+      gooeyToast.success(t('products:messages.transfer_success', { count: qty }));
       queryClient.invalidateQueries({ queryKey: ['produits'] });
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('products:messages.transfer_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('products:messages.transfer_error')));
     } finally { setTransferLoading(false); }
   };
 
@@ -219,7 +219,7 @@ export default function Produit() {
         setShowSalesModal(true);
       } catch (error) {
         logger.error('Error loading invoice from movement:', error);
-        toast.error(t('products:messages.facture_load_error'));
+        gooeyToast.error(t('products:messages.facture_load_error'));
       } finally { setLoadingFacture(false); }
     } else if (item.commande) {
       navigate('/app/commandes', { state: { openDetailsId: item.commande } });
@@ -230,13 +230,13 @@ export default function Produit() {
     try {
       await deleteProduitMutation.mutateAsync(produitId);
       setSelectedProduit(null)
-      toast.success(t('products:messages.delete_success'))
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.delete_error'))) }
+      gooeyToast.success(t('products:messages.delete_success'))
+    } catch (err) { gooeyToast.error(getApiErrorDetail(err, t('products:messages.delete_error'))) }
   }
 
   const handleDeleteProduit = async (produit: ProduitModel) => {
     if (!user?.is_superuser && !user?.profile?.can_delete_product && !user?.can_delete_product) {
-        toast.error(t('products:messages.access_denied_delete'))
+        gooeyToast.error(t('products:messages.access_denied_delete'))
         return
     }
     const confirmed = await confirm({
@@ -258,10 +258,10 @@ export default function Produit() {
     try {
       const response = await api.post(`produits/${produit.id}/toggle_active/`)
       const isActive = response.data.is_active
-      toast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
+      gooeyToast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
       setSelectedProduit(prev => prev ? ({ ...prev, is_active: isActive }) : null)
       queryClient.invalidateQueries({ queryKey: ['produits'] })
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
+    } catch (err) { gooeyToast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
   }
 
   const handleOpenEditModal = (produit: ProduitModel) => {
@@ -305,7 +305,7 @@ export default function Produit() {
         stockLotId: adjustmentForm.stock_lot_id ? parseInt(adjustmentForm.stock_lot_id) : undefined
       });
       const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : '';
-      toast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
+      gooeyToast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
       setSelectedProduit(prev => {
         if (!prev) return null;
         return {
@@ -315,14 +315,14 @@ export default function Produit() {
         };
       });
       setIsAdjustmentModalOpen(false)
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.adjust_error'))) }
+    } catch (err) { gooeyToast.error(getApiErrorDetail(err, t('products:messages.adjust_error'))) }
   }
 
   const handleStockAdjustmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedProduit) return
     if (!user?.is_superuser && !user?.profile?.can_adjust_stock && !user?.can_adjust_stock) {
-        toast.error(t('products:messages.access_denied_adjust')); return;
+        gooeyToast.error(t('products:messages.access_denied_adjust')); return;
     }
     setIsAdjustmentModalOpen(false)
     setPasswordModalConfig({
@@ -355,7 +355,7 @@ export default function Produit() {
         try { await api.delete(`produits/${id}/`); return true; } catch { return false; }
       }));
       successCount = results.filter(Boolean).length;
-      if (successCount > 0) { queryClient.invalidateQueries({ queryKey: ['produits'] }); setSelectedProductIds([]); toast.success(t('products:messages.delete_success_count', { count: successCount })); }
+      if (successCount > 0) { queryClient.invalidateQueries({ queryKey: ['produits'] }); setSelectedProductIds([]); gooeyToast.success(t('products:messages.delete_success_count', { count: successCount })); }
     } finally { setActionLoading(false) }
   }
 
@@ -363,14 +363,14 @@ export default function Produit() {
     const qtyStr = prompt(t('products:messages.labels_prompt', { name: produit.name }), "1")
     if (!qtyStr) return
     const quantity = parseInt(qtyStr, 10)
-    if (isNaN(quantity) || quantity <= 0) { toast.error(t('products:messages.invalid_quantity')); return; }
+    if (isNaN(quantity) || quantity <= 0) { gooeyToast.error(t('products:messages.invalid_quantity')); return; }
     try {
       const resp = await api.post('produits/generate_labels/', { products: [{ id: produit.id, quantity }] }, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([resp.data]));
       const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${t('products:labels.filename_prefix')}_${produit.name}.pdf`);
       document.body.appendChild(link); link.click(); link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.generation_error'))) }
+    } catch (err) { gooeyToast.error(getApiErrorDetail(err, t('products:messages.generation_error'))) }
   }
 
   // Keyboard navigation
@@ -568,7 +568,7 @@ export default function Produit() {
           setSelectedProduit(updated);
           setIsEditModalOpen(false);
           queryClient.invalidateQueries({ queryKey: ['produits'] });
-          toast.success(t('products:messages.update_success'));
+          gooeyToast.success(t('products:messages.update_success'));
         }}
         produitsEndpoint="produits/"
         initialData={editForm}
@@ -593,7 +593,7 @@ export default function Produit() {
           queryClient.invalidateQueries({ queryKey: ['produits'] });
           setIsCreateModalOpen(false);
           setSelectedProduit(produit);
-          toast.success(t('products:messages.create_success_named', { name: produit.name }));
+          gooeyToast.success(t('products:messages.create_success_named', { name: produit.name }));
         }}
         produitsEndpoint={'produits/'}
         rayons={rayons}

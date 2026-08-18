@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import api from '../services/api'
 import type { Facture } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
@@ -33,7 +33,7 @@ export const useInvoiceModification = ({
       const { data: fullFacture } = await api.get<Facture>(`factures/${facture.id}/`)
 
       if (!fullFacture.produits || fullFacture.produits.length === 0) {
-        toast.error(t('messages.empty_invoice_error'))
+        gooeyToast.error(t('messages.empty_invoice_error'))
         setLoading(false)
         return
       }
@@ -83,7 +83,7 @@ export const useInvoiceModification = ({
 
     } catch (err) {
       logger.error('Erreur modification:', err)
-      toast.error(t('messages.load_invoice_error'))
+      gooeyToast.error(t('messages.load_invoice_error'))
     } finally {
       setLoading(false)
     }
@@ -117,12 +117,12 @@ const _response = await api.post(`factures/${factureId}/modifier/`, {
         client_name_override: facture.client_name_override
       })
 
-      toast.success(t('messages.modification_success'))
+      gooeyToast.success(t('messages.modification_success'))
       await fetchFacturesEnAttente()
 
     } catch (err) {
       logger.error('Erreur modification produit:', err)
-      toast.error(getApiErrorDetail(err, t('messages.modification_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.modification_error')))
     } finally {
       setLoading(false)
     }
@@ -160,12 +160,12 @@ const _response = await api.post(`factures/${factureId}/modifier/`, {
         client_name_override: facture.client_name_override
       })
 
-      toast.success(t('messages.product_removed'))
+      gooeyToast.success(t('messages.product_removed'))
       await fetchFacturesEnAttente()
 
     } catch (err) {
       logger.error('Erreur suppression produit:', err)
-      toast.error(getApiErrorDetail(err, t('messages.modification_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.modification_error')))
     } finally {
       setLoading(false)
     }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { cashSessionService, type PosteCaisse, type PosteVente } from '../../services/cashSessionService'
 import { usePosteCaisseMode } from '../../context/PosteCaisseModeContext'
 import { Monitor, Unlock, Wallet, Check, Loader2 } from 'lucide-react'
@@ -52,7 +52,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
         handleOpenSession(available[0].id)
       }
     } catch {
-      toast.error(t('messages.error_loading_posts', { defaultValue: 'Erreur chargement postes de caisse' }))
+      gooeyToast.error(t('messages.error_loading_posts', { defaultValue: 'Erreur chargement postes de caisse' }))
     } finally {
       setLoadingCaisses(false)
     }
@@ -73,7 +73,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
 
     const caisse = allCaisses.find((c) => c.id === id)
     if (caisse?.est_actif) {
-      toast.error(t('messages.caisse_already_open', { defaultValue: 'Ce poste de caisse est déjà ouvert.' }))
+      gooeyToast.error(t('messages.caisse_already_open', { defaultValue: 'Ce poste de caisse est déjà ouvert.' }))
       return
     }
 
@@ -81,12 +81,12 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
     try {
       const poste = await cashSessionService.openPosteVente(id, fondCaisse || undefined)
       setActivePosteVente(poste)
-      toast.success(t('messages.session_opened', { defaultValue: 'Caisse ouverte.' }))
+      gooeyToast.success(t('messages.session_opened', { defaultValue: 'Caisse ouverte.' }))
       onSessionOpened(poste)
       onClose()
       setFondCaisse('')
     } catch (err: unknown) {
-      toast.error(err.response?.data?.detail || t('messages.error_opening', { defaultValue: 'Erreur ouverture.' }))
+      gooeyToast.error(err.response?.data?.detail || t('messages.error_opening', { defaultValue: 'Erreur ouverture.' }))
     } finally {
       setIsLoading(false)
     }
@@ -94,7 +94,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
 
   const handleOpen = () => {
     if (!selectedPosteId) {
-      toast.error(t('messages.select_post', { defaultValue: 'Veuillez sélectionner un poste de caisse.' }))
+      gooeyToast.error(t('messages.select_post', { defaultValue: 'Veuillez sélectionner un poste de caisse.' }))
       return
     }
     handleOpenSession(selectedPosteId)

@@ -1,7 +1,7 @@
 import { createContext, use, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useAuth } from './AuthContext';
 import { useLicence } from './LicenceContext';
 import { logger } from '../utils/logger'
@@ -167,11 +167,11 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
     try {
       const { data } = await api.put<PharmacySettings>('pharmacy-settings/', updates);
       setSettings(data);
-      toast.success(t('messages.settings_saved'));
+      gooeyToast.success(t('messages.settings_saved'));
       return data;
     } catch (err) {
       logger.error('Error updating pharmacy settings:', err);
-      toast.error(t('messages.settings_save_error'));
+      gooeyToast.error(t('messages.settings_save_error'));
       throw err;
     }
   }, [t]);
@@ -184,11 +184,11 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setSettings(data);
-      toast.success(t('messages.logo_uploaded'));
+      gooeyToast.success(t('messages.logo_uploaded'));
       return data;
     } catch (err) {
       logger.error('Error uploading logo:', err);
-      toast.error(t('messages.logo_upload_error'));
+      gooeyToast.error(t('messages.logo_upload_error'));
       throw err;
     }
   }, [t]);
@@ -197,11 +197,11 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
     try {
       const { data } = await api.put<PharmacySettings>('pharmacy-settings/', { logo: '' });
       setSettings(data);
-      toast.success(t('messages.logo_removed'));
+      gooeyToast.success(t('messages.logo_removed'));
       return data;
     } catch (err) {
       logger.error('Error removing logo:', err);
-      toast.error(t('messages.logo_remove_error'));
+      gooeyToast.error(t('messages.logo_remove_error'));
       throw err;
     }
   }, [t]);

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useDebounce } from 'use-debounce'
 import { isCancel } from 'axios'
 import clientService from '../services/clientService'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import type { Client, AyantDroit } from '../types'
 import { facturationClientCreateSchema } from '../schemas/clientSchema'
 import { logger } from '../utils/logger'
@@ -63,7 +63,7 @@ export function useFacturationClients() {
         } catch (error) {
             if (isCancel(error)) return
             logger.error('Erreur chargement clients:', error)
-            toast.error(t('messages.client_load_error'))
+            gooeyToast.error(t('messages.client_load_error'))
         } finally {
             setLoading(false)
         }
@@ -155,7 +155,7 @@ export function useFacturationClients() {
             // 1. Deposit reminder
             const solde = parseFloat(selectedClientData.solde_depot || '0')
             if (solde > 0) {
-                toast.success(t('facturation:client.deposit_reminder', { solde }), {
+                gooeyToast.success(t('facturation:client.deposit_reminder', { solde }), {
                     icon: '💡',
                     duration: 4000,
                     id: `deposit-reminder-${selectedClient}`
@@ -165,7 +165,7 @@ export function useFacturationClients() {
             // 2. Reward reminder
             const discount = parseFloat(selectedClientData.pending_discount || '0')
             if (discount > 0) {
-                toast.success(t('facturation:messages.reward_reminder', { discount }), {
+                gooeyToast.success(t('facturation:messages.reward_reminder', { discount }), {
                     icon: '⭐',
                     duration: 5000,
                     id: `reward-reminder-${selectedClient}`
@@ -179,7 +179,7 @@ export function useFacturationClients() {
             
             if (isPro && plafond !== -1) {
                 if (debt > 0 && debt >= plafond) {
-                    toast.error(
+                    gooeyToast.error(
                         `⚠️ PLAFOND ATTEINT : ${Math.round(debt).toLocaleString()} / ${Math.round(plafond).toLocaleString()} F. Ce client ne peut plus prendre de produits à crédit.`,
                         {
                             duration: 6000,
@@ -188,7 +188,7 @@ export function useFacturationClients() {
                         }
                     )
                 } else if (debt > 0 && debt > plafond * 0.8) {
-                     toast.success(
+                     gooeyToast.success(
                         `⚠️ Attention : Plafond de crédit presque atteint (${Math.round(debt).toLocaleString()} / ${Math.round(plafond).toLocaleString()} F)`,
                         { icon: '⚠️', duration: 4000, id: `limit-warning-${selectedClient}` }
                     )
@@ -224,7 +224,7 @@ export function useFacturationClients() {
 
             if (!validation.success) {
                 const messages = validation.error.issues.map((issue) => issue.message).join(' | ')
-                toast.error(messages || 'Le formulaire client contient des erreurs')
+                gooeyToast.error(messages || 'Le formulaire client contient des erreurs')
                 return
             }
 
@@ -259,15 +259,15 @@ export function useFacturationClients() {
                 is_loyalty_member: true
             })
 
-            toast.success(t('messages.client_created_selected', { name: createdClient.name }))
+            gooeyToast.success(t('messages.client_created_selected', { name: createdClient.name }))
         } catch (err) {
             logger.error('Erreur création client:', err)
             const errorData = (err as { response?: { data?: Record<string, unknown> } })?.response?.data
             if (errorData && typeof errorData === 'object') {
                 const messages = Object.entries(errorData).map(([k, v]) => `${k}: ${v}`).join(', ')
-                toast.error(t('messages.client_create_field_error', { message: messages }))
+                gooeyToast.error(t('messages.client_create_field_error', { message: messages }))
             } else {
-                toast.error(t('messages.client_create_error'))
+                gooeyToast.error(t('messages.client_create_error'))
             }
         } finally {
             setIsCreatingClient(false)
@@ -296,7 +296,7 @@ export function useFacturationClients() {
             setShowNewAyantDroit(false)
         } catch (err) {
             logger.error('Erreur chargement client ayant droit:', err)
-            toast.error(t('messages.client_load_error'))
+            gooeyToast.error(t('messages.client_load_error'))
         }
     }, [clients, t])
 

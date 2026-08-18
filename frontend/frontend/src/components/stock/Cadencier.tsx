@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronRight, RotateCcw, ChevronDown, ChevronUp
 } from 'lucide-react';
 import api from '../../services/api';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { cn } from '../../lib/utils';
 
 import { Button } from '../ui/Button';
@@ -114,7 +114,7 @@ const Cadencier: React.FC = () => {
       setPage(targetPage);
     } catch (error) {
       logger.error('Erreur chargement cadencier:', error);
-      toast.error(t('stock:cadencier.error_loading', 'Erreur de chargement du cadencier'));
+      gooeyToast.error(t('stock:cadencier.error_loading', 'Erreur de chargement du cadencier'));
     } finally {
       setLoading(false);
     }
@@ -155,7 +155,7 @@ const Cadencier: React.FC = () => {
 
   const handleGenerateOrder = (orderType: 'LOC' | 'DIV') => {
     if (selectedItems.length === 0) {
-      toast.error(t('stock:cadencier.no_selection', 'Veuillez sélectionner au moins un produit'));
+      gooeyToast.error(t('stock:cadencier.no_selection', 'Veuillez sélectionner au moins un produit'));
       return;
     }
 

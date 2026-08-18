@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { normalizeNumberInput } from '../../utils/formatters';
 import { X, Save, TrendingUp, Target, Hand, Loader2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 
@@ -70,14 +70,14 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
     const mutation = useMutation({
         mutationFn: updateConfig,
         onSuccess: () => {
-            toast.success(t('manager_dashboard.settings.save_success', 'Configuration enregistrée'));
+            gooeyToast.success(t('manager_dashboard.settings.save_success', 'Configuration enregistrée'));
             queryClient.invalidateQueries({ queryKey: ['objectives-config'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard', 'managerStats'] });
             queryClient.invalidateQueries({ queryKey: ['objectifs'] });
             onClose();
         },
         onError: () => {
-            toast.error(t('manager_dashboard.settings.save_error', 'Erreur lors de l\'enregistrement'));
+            gooeyToast.error(t('manager_dashboard.settings.save_error', 'Erreur lors de l\'enregistrement'));
         }
     });
 

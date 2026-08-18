@@ -1,5 +1,5 @@
 import type React from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import type { CommandeProduit, ProduitModel } from '../../types';
@@ -90,7 +90,7 @@ export function useCommandeCsv({
                 matchedProducts = await produitService.getByCips(Array.from(seenCips));
             } catch (err) {
                 console.error('Failed to match CSV CIPs:', err);
-                toast.error(t('orders:messages.import_load_error'));
+                gooeyToast.error(t('orders:messages.import_load_error'));
                 setIsImporting(false);
                 return;
             }
@@ -191,9 +191,9 @@ export function useCommandeCsv({
                 document.body.removeChild(link);
                 URL.revokeObjectURL(importReportUrl);
 
-                toast.error(t('orders:messages.csv_partial_import', { found: productsFound, notFound: productsNotFound }));
+                gooeyToast.error(t('orders:messages.csv_partial_import', { found: productsFound, notFound: productsNotFound }));
             } else {
-                toast.success(t('orders:messages.csv_import_success', { count: productsFound }));
+                gooeyToast.success(t('orders:messages.csv_import_success', { count: productsFound }));
             }
 
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -204,7 +204,7 @@ export function useCommandeCsv({
 
     const handleCsvExport = (wholesaler: 'PRINCIPAL' | 'SECONDAIRE' | 'SECONDAIRE_CIP3') => {
         if (commandeProduits.length === 0) {
-            toast(t('orders:messages.csv_empty_order'), { icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> });
+            gooeyToast(t('orders:messages.csv_empty_order'), { icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> });
             return;
         }
 
@@ -273,12 +273,12 @@ export function useCommandeCsv({
             URL.revokeObjectURL(txtUrl);
 
             if (exportedCount === 0) {
-                toast(t('orders:messages.csv_no_exported', { skipped: skippedProducts.length, code: cipLabel }), { icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> });
+                gooeyToast(t('orders:messages.csv_no_exported', { skipped: skippedProducts.length, code: cipLabel }), { icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> });
             } else {
-                toast(t('orders:messages.csv_partial_exported', { exported: exportedCount, skipped: skippedProducts.length, code: cipLabel }), { icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> });
+                gooeyToast(t('orders:messages.csv_partial_exported', { exported: exportedCount, skipped: skippedProducts.length, code: cipLabel }), { icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> });
             }
         } else if (exportedCount > 0) {
-            toast.success(t('orders:messages.csv_export_success', { count: exportedCount, wholesaler }));
+            gooeyToast.success(t('orders:messages.csv_export_success', { count: exportedCount, wholesaler }));
         }
     };
 

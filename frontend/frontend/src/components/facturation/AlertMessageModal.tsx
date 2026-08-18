@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from '../common/PremiumModal';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 
 export type AlertTarget = {
     type: 'product' | 'client';
@@ -35,11 +35,11 @@ export default function AlertMessageModal({ isOpen, onClose, target, onSuccess }
         try {
             const endpoint = target.type === 'product' ? `produits/${target.id}/` : `clients/${target.id}/`;
             await api.patch(endpoint, { message_alerte: message.trim() || null });
-            toast.success(t('facturation:alert_message.save_success', { name: target.name }));
+            gooeyToast.success(t('facturation:alert_message.save_success', { name: target.name }));
             onSuccess({ ...target, currentMessage: message.trim() });
             onClose();
         } catch {
-            toast.error(t('facturation:alert_message.save_error'));
+            gooeyToast.error(t('facturation:alert_message.save_error'));
         } finally {
             setLoading(false);
         }

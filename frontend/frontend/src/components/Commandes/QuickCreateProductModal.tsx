@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { Zap, Pencil, Loader2 } from 'lucide-react';
 import api from '../../services/api';
 import { useTVA } from '../../hooks/useTVA';
@@ -127,7 +127,7 @@ export default function QuickCreateProductModal({
       if (isEditMode && editProduct) {
         const res = await api.patch<ProduitModel>(`produits/${editProduct.id}/`, payload);
         data = res.data;
-        toast.success(t('orders:messages.quick_product_updated', { name: data.name }));
+        gooeyToast.success(t('orders:messages.quick_product_updated', { name: data.name }));
       } else {
         payload.stock = 0;
         payload.stock_alert = 0;
@@ -136,7 +136,7 @@ export default function QuickCreateProductModal({
         payload.use_lot_management = true;
         const res = await api.post<ProduitModel>('produits/', payload);
         data = res.data;
-        toast.success(t('orders:messages.quick_product_created', { name: data.name }));
+        gooeyToast.success(t('orders:messages.quick_product_created', { name: data.name }));
       }
       onCreated(data);
       onClose();

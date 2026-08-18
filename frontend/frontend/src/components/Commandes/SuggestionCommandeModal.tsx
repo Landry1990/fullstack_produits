@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { formatPrice } from '../../utils/formatters'
 import type { Fournisseur, ProduitModel, CommandeProduit } from '../../types'
 import {
@@ -129,7 +129,7 @@ export default function SuggestionCommandeModal({
       setStepSuggestion(2)
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } }; message?: string }
-      toast.error(e.response?.data?.message || e.message || t('orders:suggestion_modal.generation_error'))
+      gooeyToast.error(e.response?.data?.message || e.message || t('orders:suggestion_modal.generation_error'))
     } finally {
       setLoadingSuggestions(false)
     }
@@ -138,7 +138,7 @@ export default function SuggestionCommandeModal({
   function handleApply() {
     const selectedItems = suggestions.filter((_, i) => selectedSuggestions.has(i))
     if (selectedItems.length === 0) {
-      toast.error(t('orders:suggestion_modal.no_selection'))
+      gooeyToast.error(t('orders:suggestion_modal.no_selection'))
       return
     }
 

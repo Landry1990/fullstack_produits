@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Toaster } from 'react-hot-toast';
 
 import { useCreancesData } from '../hooks/useCreancesData';
 import { useCreanceActions } from '../hooks/useCreanceActions';
@@ -36,7 +35,6 @@ export default function Creances() {
 
     return (
         <div className="h-full flex flex-col bg-slate-100 p-4 sm:p-6 gap-4 sm:gap-6 font-sans overflow-auto">
-            <Toaster position="top-center" />
 
             {/* Header Area */}
             <div className="flex flex-col gap-6">

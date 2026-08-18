@@ -65,9 +65,9 @@ export default function PharmacySettingsForm() {
     if (result.success) {
         setNewTvaRate('');
         setNewTvaLabel('');
-        import('react-hot-toast').then(({ toast }) => toast.success(t('tva.success_add')));
+        import('goey-toast').then(({ gooeyToast }) => gooeyToast.success(t('tva.success_add')));
     } else {
-        import('react-hot-toast').then(({ toast }) => toast.error(result.message || t('tva.error_add')));
+        import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(result.message || t('tva.error_add')));
     }
     setAddingTva(false);
   }
@@ -75,7 +75,7 @@ export default function PharmacySettingsForm() {
   const handleGetChatId = async () => {
     const bot_token = formData.telegram_bot_token
     if (!bot_token) {
-      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.telegram_token_required')))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(t('messages.telegram_token_required')))
       return
     }
     setGettingChatId(true)
@@ -84,13 +84,13 @@ export default function PharmacySettingsForm() {
       const res = await api.post('telegram/get-chat-id/', { bot_token })
       if (res.data.status === 'ok') {
         handleChange('telegram_chat_id', res.data.chat_id)
-        import('react-hot-toast').then(({ toast }) => toast.success(t('messages.telegram_chat_retrieved', { id: res.data.chat_id, name: res.data.chat_name || t('common:unknown') })))
+        import('goey-toast').then(({ gooeyToast }) => gooeyToast.success(t('messages.telegram_chat_retrieved', { id: res.data.chat_id, name: res.data.chat_name || t('common:unknown') })))
       } else {
-        import('react-hot-toast').then(({ toast }) => toast.error(res.data.message, { duration: 8000 }))
+        import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(res.data.message, { duration: 8000 }))
       }
     } catch (err) {
       const msg = getApiErrorDetail(err, t('messages.unknown_error'))
-      import('react-hot-toast').then(({ toast }) => toast.error(msg, { duration: 8000 }))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(msg, { duration: 8000 }))
     } finally {
       setGettingChatId(false)
     }
@@ -98,11 +98,11 @@ export default function PharmacySettingsForm() {
 
   const handleTestTelegram = async () => {
     if (!formData.telegram_bot_token) {
-      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.telegram_token_required')))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(t('messages.telegram_token_required')))
       return
     }
     if (!formData.telegram_chat_id) {
-      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.telegram_chat_id_missing')))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(t('messages.telegram_chat_id_missing')))
       return
     }
     setTestingTelegram(true)
@@ -112,10 +112,10 @@ export default function PharmacySettingsForm() {
         bot_token: formData.telegram_bot_token,
         chat_id: formData.telegram_chat_id,
       })
-      import('react-hot-toast').then(({ toast }) => toast.success(res.data.message || t('messages.test_sent')))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.success(res.data.message || t('messages.test_sent')))
     } catch (err) {
       const msg = getApiErrorDetail(err, t('messages.unknown_error'))
-      import('react-hot-toast').then(({ toast }) => toast.error(msg, { duration: 8000 }))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(msg, { duration: 8000 }))
     } finally {
       setTestingTelegram(false)
     }
@@ -124,17 +124,17 @@ export default function PharmacySettingsForm() {
   const handleTestWhatsapp = async () => {
     const numero = formData.pharmacist_whatsapp_number
     if (!numero) {
-      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.whatsapp_number_required')))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(t('messages.whatsapp_number_required')))
       return
     }
     setTestingWhatsapp(true)
     try {
       const { default: api } = await import('../../services/api')
       const res = await api.post('whatsapp/test/', { numero: numero.replace('+', '') })
-      import('react-hot-toast').then(({ toast }) => toast.success(res.data.message || t('messages.test_sent')))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.success(res.data.message || t('messages.test_sent')))
     } catch (err) {
       const msg = getApiErrorDetail(err, t('messages.unknown_error'))
-      import('react-hot-toast').then(({ toast }) => toast.error(msg, { duration: 8000 }))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(msg, { duration: 8000 }))
     } finally {
       setTestingWhatsapp(false)
     }
@@ -144,7 +144,7 @@ export default function PharmacySettingsForm() {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 2 * 1024 * 1024) {
-      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.logo_size')))
+      import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(t('messages.logo_size')))
       return
     }
     setUploadingLogo(true)

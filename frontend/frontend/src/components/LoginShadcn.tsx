@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useAuth } from '../context/AuthContext';
 import { useLicence } from '../context/LicenceContext';
 import api from '../services/api';
@@ -189,7 +189,7 @@ export default function LoginShadcn() {
         msg = t('common:messages.error_generic', { defaultValue: 'Une erreur s\'est produite.' });
       }
       setError(msg);
-      toast.error(msg, { duration: 5000 });
+      gooeyToast.error(msg, { duration: 5000 });
     } finally {
       setLoading(false);
     }

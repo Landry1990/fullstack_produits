@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { logger } from '../../utils/logger'
 
@@ -62,7 +62,7 @@ export const useInventaireAudit = () => {
         } catch (error) {
             if (error instanceof Error && error.name === 'CanceledError') return;
             logger.error("Erreur audit", error);
-            toast.error(t('common:messages.error_loading'));
+            gooeyToast.error(t('common:messages.error_loading'));
         } finally {
             setLoading(false);
         }

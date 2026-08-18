@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 
@@ -49,10 +49,10 @@ export default function PasswordConfirmModal({
         const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 403) {
              setError(t('password_confirm.incorrect'));
-             toast.error(t('password_confirm.incorrect'));
+             gooeyToast.error(t('password_confirm.incorrect'));
         } else {
              setError(t('password_confirm.tech_error'));
-             toast.error(t('password_confirm.tech_error'));
+             gooeyToast.error(t('password_confirm.tech_error'));
         }
     } finally {
       setLoading(false);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import type { Ordonnancier } from '../types';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
@@ -57,7 +57,7 @@ const OrdonnancierPage: React.FC = () => {
             setOrdonnancier(Array.isArray(data) ? data : []);
         } catch (error: unknown) {
             logger.error('Erreur chargement ordonnancier:', error);
-            toast.error(t('common:messages.error_loading'));
+            gooeyToast.error(t('common:messages.error_loading'));
         } finally {
             setLoading(false);
         }

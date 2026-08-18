@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useExpirationAlerts, type ExpirationAlert } from '../hooks/useExpirationAlerts';
 
 /**
  * Composant qui affiche automatiquement les toasts d'alerte péremption
  * au chargement de l'application (après login).
- * 
+ *
  * À placer dans le layout principal (ex: App.tsx ou Dashboard)
  */
 export function ExpirationAlertToasts() {
@@ -18,7 +18,7 @@ export function ExpirationAlertToasts() {
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-    
+
     // Ne montrer qu'une seule fois au chargement
     if (hasShownRef.current || !isSuccess || !data) {
       return () => {
@@ -42,31 +42,10 @@ export function ExpirationAlertToasts() {
 
     // Toast critique - persistant avec son
     if (critical.length > 0) {
-      toast.error(
-        (t) => (
-          <div
-            onClick={() => toast.dismiss(t.id)}
-            style={{ cursor: 'pointer' }}
-          >
-            <strong style={{ fontSize: '1.1em' }}>🚨 ALERTE PÉREMPTION CRITIQUE</strong>
-            <br />
-            <span>{critical.length} produit(s) expirent dans ≤ 7 jours</span>
-            <br />
-            <small style={{ opacity: 0.8 }}>Cliquez pour fermer</small>
-          </div>
-        ),
-        {
-          duration: Infinity,
-          id: 'expiration-critical-login',
-          style: {
-            border: '3px solid #dc2626',
-            background: '#fef2f2',
-            color: '#991b1b',
-            fontWeight: 'bold',
-            minWidth: '350px',
-          },
-        }
-      );
+      gooeyToast.error('🚨 Alerte péremption critique', {
+        description: `${critical.length} produit(s) expirent dans ≤ 7 jours`,
+        duration: Infinity,
+      });
 
       // Son d'alerte (optionnel)
       try {
@@ -82,25 +61,10 @@ export function ExpirationAlertToasts() {
     if (warning.length > 0) {
       timers.push(
         setTimeout(() => {
-          toast(
-            (t) => (
-              <div onClick={() => toast.dismiss(t.id)} style={{ cursor: 'pointer' }}>
-                <strong>⚠️ Péremption imminente</strong>
-                <br />
-                <span>{warning.length} produit(s) expirent dans 8-14 jours</span>
-              </div>
-            ),
-            {
-              duration: 10000,
-              id: 'expiration-warning-login',
-              style: {
-                border: '2px solid #f97316',
-                background: '#fff7ed',
-                color: '#c2410c',
-                minWidth: '300px',
-              },
-            }
-          );
+          gooeyToast.warning('⚠️ Péremption imminente', {
+            description: `${warning.length} produit(s) expirent dans 8-14 jours`,
+            duration: 10000,
+          });
         }, critical.length > 0 ? 500 : 0)
       );
     }
@@ -109,11 +73,10 @@ export function ExpirationAlertToasts() {
     if (others.length > 0 && (critical.length > 0 || warning.length > 0)) {
       timers.push(
         setTimeout(() => {
-          toast.success(
+          gooeyToast.success(
             `📦 ${others.length} autre(s) produit(s) en surveillance péremption`,
             {
               duration: 5000,
-              id: 'expiration-others-login',
             }
           );
         }, (critical.length > 0 ? 500 : 0) + (warning.length > 0 ? 500 : 0))
@@ -122,16 +85,10 @@ export function ExpirationAlertToasts() {
 
     // Toast récapitulatif si beaucoup d'alertes sans critiques
     if (critical.length === 0 && warning.length === 0 && others.length > 5) {
-      toast(
+      gooeyToast.info(
         `📦 ${stats.total_alerts} produits en péremption imminente (valeur: ${stats.total_valeur.toFixed(2)} F)`,
         {
           duration: 8000,
-          id: 'expiration-summary-login',
-          icon: '📦',
-          style: {
-            border: '1px solid #f97316',
-            background: '#ffedd5',
-          },
         }
       );
     }
@@ -146,4 +103,3 @@ export function ExpirationAlertToasts() {
   // Ce composant ne rend rien visuellement
   return null;
 }
-

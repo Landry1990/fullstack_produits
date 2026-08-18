@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from './useConfirm';
 import promisService from '../services/promisService';
@@ -152,7 +152,7 @@ export function usePromisData(): UsePromisDataReturn {
             await promisService.delivrer(id);
             fetchPromis();
         } catch (err) {
-            toast.error(t('stock:promis.messages.deliver_error', 'Erreur lors de la livraison'));
+            gooeyToast.error(t('stock:promis.messages.deliver_error', 'Erreur lors de la livraison'));
             logger.error(err);
         }
     };
@@ -171,10 +171,10 @@ export function usePromisData(): UsePromisDataReturn {
     const verifySudoAndCancel = async (id: number) => {
         try {
             const data = await promisService.annulerEtReintegrer(id);
-            toast.success(data.message);
+            gooeyToast.success(data.message);
             fetchPromis();
         } catch (err) {
-            toast.error(t('stock:promis.messages.cancel_error', 'Erreur lors de l\'annulation'));
+            gooeyToast.error(t('stock:promis.messages.cancel_error', 'Erreur lors de l\'annulation'));
             logger.error(err);
         }
     };
@@ -184,11 +184,11 @@ export function usePromisData(): UsePromisDataReturn {
             const blob = await promisService.imprimerTicket(id);
             const url = window.URL.createObjectURL(blob);
             const w = window.open(url, '_blank');
-            if (!w) toast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
+            if (!w) gooeyToast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
             setTimeout(() => window.URL.revokeObjectURL(url), 10000);
         } catch (err) {
             logger.error('Erreur impression ticket:', err);
-            toast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
+            gooeyToast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
         }
     };
 
@@ -196,10 +196,10 @@ export function usePromisData(): UsePromisDataReturn {
         setLoading(true);
         try {
             const data = await promisService.sendWhatsAppReminder(id);
-            toast.success(data.message);
+            gooeyToast.success(data.message);
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || t('stock:promis.messages.whatsapp_error', "Erreur lors de l'envoi du rappel WhatsApp"));
+            gooeyToast.error(error.response?.data?.detail || t('stock:promis.messages.whatsapp_error', "Erreur lors de l'envoi du rappel WhatsApp"));
             logger.error(err);
         } finally {
             setLoading(false);
@@ -238,11 +238,11 @@ export function usePromisData(): UsePromisDataReturn {
         setBulkLoading(true);
         try {
             const data = await promisService.bulkDelivrer(Array.from(selectedIds));
-            toast.success(t('stock:promis.messages.bulk_delivery_success', { count: data.delivered, defaultValue: `${data.delivered} promis livrés` }));
+            gooeyToast.success(t('stock:promis.messages.bulk_delivery_success', { count: data.delivered, defaultValue: `${data.delivered} promis livrés` }));
             setSelectedIds(new Set());
             fetchPromis();
         } catch (err) {
-            toast.error(t('stock:promis.messages.bulk_delivery_error', 'Erreur lors de la livraison multiple'));
+            gooeyToast.error(t('stock:promis.messages.bulk_delivery_error', 'Erreur lors de la livraison multiple'));
             logger.error(err);
         } finally {
             setBulkLoading(false);
@@ -265,11 +265,11 @@ export function usePromisData(): UsePromisDataReturn {
         setBulkLoading(true);
         try {
             const data = await promisService.bulkAnnuler(Array.from(selectedIds));
-            toast.success(t('stock:promis.messages.bulk_cancel_success', { count: data.cancelled, defaultValue: `${data.cancelled} promis annulés` }));
+            gooeyToast.success(t('stock:promis.messages.bulk_cancel_success', { count: data.cancelled, defaultValue: `${data.cancelled} promis annulés` }));
             setSelectedIds(new Set());
             fetchPromis();
         } catch (err) {
-            toast.error(t('stock:promis.messages.bulk_cancel_error', 'Erreur lors de l\'annulation multiple'));
+            gooeyToast.error(t('stock:promis.messages.bulk_cancel_error', 'Erreur lors de l\'annulation multiple'));
             logger.error(err);
         } finally {
             setBulkLoading(false);

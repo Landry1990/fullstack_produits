@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import api from '../services/api'
 import type { Facture } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
@@ -105,15 +105,15 @@ export const useBulkCancel = ({
             }
           }
 
-          toast.success(t('messages.bulk_cancel_success', { count: totalSuccess, stock: totalStockReintegrated }))
+          gooeyToast.success(t('messages.bulk_cancel_success', { count: totalSuccess, stock: totalStockReintegrated }))
           if (totalError > 0) {
-            toast.error(t('messages.bulk_cancel_total_errors', { count: totalError }))
+            gooeyToast.error(t('messages.bulk_cancel_total_errors', { count: totalError }))
           }
           setSelectedFactureIds(new Set())
           setShowBulkCancelModal(false)
           fetchFacturesEnAttente()
         } catch (err: unknown) {
-          toast.error(getApiErrorDetail(err, t('messages.bulk_cancel_error')))
+          gooeyToast.error(getApiErrorDetail(err, t('messages.bulk_cancel_error')))
           throw err
         } finally {
           setBulkCancelLoading(false)
