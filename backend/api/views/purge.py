@@ -615,6 +615,54 @@ class PurgeViewSet(ViewSet):
             return Response({'status': 'not_found'}, status=status.HTTP_404_NOT_FOUND)
         return Response({**state, 'job_id': job_id})
 
+    @action(detail=False, methods=['get'])
+    def export_produits(self, request):
+        """
+        Exporte tous les produits au format Excel (.xlsx) compatible avec l'import.
+        Format: cip1, cip2, cip3, nom, prix_achat, prix_vente, tva, stock
+        Permet à une autre pharmacie d'importer ce fichier sans repartir de zéro.
+        """
+        import openpyxl
+        from io import BytesIO
+        from django.http import HttpResponse
+
+        from api.models import Produit
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Produits"
+        ws.append(['cip1', 'cip2', 'cip3', 'nom', 'prix_achat', 'prix_vente', 'tva', 'stock'])
+
+        produits = Produit.objects.all().order_by('name').only(
+            'cip1', 'cip2', 'cip3', 'name', 'cost_price', 'selling_price', 'tva', 'stock'
+        )
+
+        for p in produits:
+            ws.append([
+                p.cip1 or '',
+                p.cip2 or '',
+                p.cip3 or '',
+                p.name or '',
+                float(p.cost_price) if p.cost_price else 0,
+                float(p.selling_price) if p.selling_price else 0,
+                float(p.tva) if p.tva else 0,
+                p.stock or 0,
+            ])
+
+        buf = BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+
+        timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"export_produits_{timestamp}.xlsx"
+
+        resp = HttpResponse(
+            buf.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return resp
+
     @action(detail=False, methods=['post'])
     def purge_produits(self, request):
         """
