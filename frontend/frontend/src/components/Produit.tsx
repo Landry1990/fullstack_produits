@@ -26,6 +26,7 @@ import {
   useRecalculateRotation
 } from '../hooks/useProduits';
 import { useTVA } from '../hooks/useTVA';
+import type { StockMovement } from '../hooks/useProduits';
 
 import ProduitCreateModal from './ProduitFormModal'
 import { ProductDetailsModal as SalesDetailsModal } from './sales/modals/ProductDetailsModal';
@@ -209,7 +210,7 @@ export default function Produit() {
     } finally { setTransferLoading(false); }
   };
 
-  const handleMovementClick = async (item: unknown) => {
+  const handleMovementClick = async (item: StockMovement) => {
     if (!item) return;
     if (item.facture) {
       try {
@@ -297,13 +298,13 @@ export default function Produit() {
   const executeStockAdjustment = async () => {
     if (!selectedProduit) return
     try {
-      const data = await adjustStockMutation.mutateAsync({
+      const data = (await adjustStockMutation.mutateAsync({
         id: selectedProduit.id,
         quantity: parseInt(adjustmentForm.new_quantity),
         newReserveQuantity: selectedProduit.has_reserve_storage ? parseInt(adjustmentForm.new_reserve_quantity || '0') : undefined,
         reason: adjustmentForm.reason_type,
         stockLotId: adjustmentForm.stock_lot_id ? parseInt(adjustmentForm.stock_lot_id) : undefined
-      });
+      })) as { quantity_change?: number; reserve_change?: number };
       const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : '';
       gooeyToast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
       setSelectedProduit(prev => {
@@ -311,7 +312,7 @@ export default function Produit() {
         return {
           ...prev,
           stock: (prev.stock ?? 0) + (data.quantity_change ?? 0),
-          stock_reserve: (prev.stock_reserve ?? 0) + ((data as unknown).reserve_change ?? 0)
+          stock_reserve: (prev.stock_reserve ?? 0) + (data.reserve_change ?? 0)
         };
       });
       setIsAdjustmentModalOpen(false)

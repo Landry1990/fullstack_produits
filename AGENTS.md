@@ -234,3 +234,152 @@ docker exec fullstack_produits-backend-1 python manage.py shell -c "from api.key
 Dans l'écran d'activation de licence, saisir le code à 6 caractères dans le champ
 "Mot de passe admin ou code journalier". Le système détecte automatiquement que c'est
 un code keyday (6 caractères alphanumériques) et l'envoie au backend.
+
+---
+
+## Fichiers et points d'entrée clés
+
+### Import/Export produits
+
+- `backend/api/management/commands/import_excel_csv.py` — commande d'import Excel/CSV
+- `backend/api/views/purge.py` — endpoint `maintenance/import_produits/` et `maintenance/export_produits/`
+- `backend/api/models/products.py` — modèle `Produit`
+- `frontend/frontend/src/components/Maintenance.tsx` — écran de maintenance (import/export/purge)
+- `frontend/frontend/src/components/products/ImportProductsModal.tsx` — modal d'import alternatif (non utilisé par l'écran Maintenance)
+
+### Toasts
+
+- `frontend/frontend/src/App.tsx` — point de montage du `<GooeyToaster />`
+- `goey-toast` remplace `react-hot-toast` dans tout le projet
+
+### i18n
+
+- `frontend/frontend/src/i18n.ts` — configuration
+- `frontend/frontend/public/locales/fr/` et `.../en/` — fichiers JSON
+
+---
+
+## Import Produits — Pièges connus
+
+Le workflow UI actuel passe par `maintenance/import_produits/` (dans `PurgeViewSet`), qui invoque la commande `import_excel_csv`. Le fichier `backend/api/views/import_views.py` existe mais n'est pas la route active de l'écran Maintenance.
+
+### Format attendu
+
+Colonnes supportées (ordre et noms) :
+```
+cip1, cip2, cip3, nom, prix_achat, prix_vente, tva, stock
+```
+
+### Normalisations gérées
+
+- CIP flottants (`8017017.0`) → convertis en entier chaîne
+- Cellules vides → `None`, jamais `"nan"`, `"none"` ou `"0"`
+- Prix et TVA lus comme nombres
+- Stock entier
+
+### Règles de matching
+
+- On matche uniquement par `cip1` et `cip2`
+- `cip3` est ignoré pour le matching car il s'agit souvent d'un code partagé/référence
+- Si un CIP entrant (`cip2` ou `cip3`) entre en conflit avec un autre produit, on saute ce CIP plutôt que de fusionner
+- `cip1` absent → `None` (autorise plusieurs produits sans `cip1`)
+
+### Tests de référence (base vide)
+
+| Fichier | Créés | Mis à jour | Erreurs |
+|---------|-------|------------|---------|
+| `Listing_Laborex_Mapped_FINAL.xlsx` (4 934 lignes) | 4 930 | 4 | 0 |
+| `Listing_Ubipharm_Mapped_FINAL.xlsx` (8 251 lignes) | 8 237 | 14 | 0 |
+| Laborex puis Ubipharm | 5 837 | 2 414 | 0 |
+
+---
+
+## Backup / Restore DB — Procédure exacte
+
+### Sauvegarder
+
+```bash
+docker exec fullstack_produits-db-1 pg_dump -U fullstack_user -d fullstack_db > backup-AAAAMMJJ-HHMMSS.sql
+```
+
+### Restaurer (destructif)
+
+```bash
+docker compose stop backend
+docker cp /chemin/vers/backup.sql fullstack_produits-db-1:/tmp/restore.sql
+docker exec fullstack_produits-db-1 psql -U fullstack_user -d postgres -c "DROP DATABASE IF EXISTS fullstack_db WITH (FORCE);"
+docker exec fullstack_produits-db-1 psql -U fullstack_user -d postgres -c "CREATE DATABASE fullstack_db OWNER fullstack_user;"
+docker exec fullstack_produits-db-1 psql -U fullstack_user -d fullstack_db -f /tmp/restore.sql
+docker exec fullstack_produits-db-1 rm /tmp/restore.sql
+docker compose start backend
+```
+
+### Vérifier
+
+```bash
+docker exec fullstack_produits-db-1 psql -U fullstack_user -d fullstack_db -c "SELECT count(*) FROM api_produit;"
+```
+
+---
+
+## Erreurs fréquentes déjà rencontrées
+
+| Erreur | Cause probable | Solution |
+|--------|---------------|----------|
+| `django.db.utils.ProgrammingError: relation "authtoken_token" does not exist` | Base partiellement corrompue | Restaurer depuis un backup complet |
+| `column api_produit.deleted_by_id does not exist` | Migrations non appliquées | `python manage.py migrate` avant l'import |
+| Redis timeout au démarrage du backend | `django-axes` mal configuré | Vérifier `backend/backend/urls.py`, retirer `path('axes/', include('axes.urls'))` si obsolète |
+| Import bloqué à 50% | CIP `NaN` / `.0` / `cip3` mal géré | Vérifier `clean_cip()` et `get_value()` dans `import_excel_csv.py` |
+| `duplicate key value violates unique constraint "api_produit_cip1_key"` | CIP vide devenu `"nan"` ou `''` | S'assurer que `clean_cip()` renvoie `None` pour les CIP vides |
+| Build frontend échoue sur `The symbol "..." has already been declared` | Doublon de `useState` après copier-coller | Renommer l'un des deux états |
+
+---
+
+## Conventions de code — complément
+
+### Notifications
+
+- `react-hot-toast` est remplacé par `goey-toast` sur tout le projet
+- Importer : `import { gooeyToast } from 'goey-toast'`
+- Un seul `<GooeyToaster />` dans `App.tsx`
+- Ne pas monter de `<GooeyToaster />` dans les sous-composants
+- Pas de render functions `(t) => JSX`, utiliser `description` et `title`
+
+### UI / UX
+
+- Tout nouvel élément graphique en **shadcn/ui**
+- **Jamais** de nouveaux composants DaisyUI
+- Toute chaîne visible en `fr` **et** `en`
+
+### Dépendances
+
+- Préférer une version publiée depuis au moins 7 jours
+- Ne pas utiliser `latest`, `*`, ou des plages ouvertes
+- Ajouter via le gestionnaire de paquets (`npm install`, `pip install`) plutôt qu'à la main
+
+---
+
+## Sécurité — Règles rouges
+
+Ne jamais (même pour débloquer un build) :
+- Modifier `minimumReleaseAge`, `.npmrc`, `.piprc` ou les politiques de sécurité
+- Générer, logger, ou commiter des secrets (clés, tokens, mots de passe)
+- Contourner la compilation Cython en production
+- Forcer un `docker exec -it` ou `sudo` sans confirmation
+- Effectuer `rm -rf` ou DROP sur une base de données sans backup explicite
+
+---
+
+## Checklist déploiement client
+
+Avant toute release en production :
+
+- [ ] `npm run build` passe sans erreur
+- [ ] `python manage.py test` (ou tests backend pertinents) passent
+- [ ] `git status` et `git diff` revus
+- [ ] Pas de secrets dans les diff
+- [ ] Backup DB si le changement touche les données
+- [ ] Build Docker prod : `docker compose -f docker-compose.prod.yml build backend [frontend]`
+- [ ] Redémarrage : `docker compose -f docker-compose.prod.yml up -d`
+- [ ] Client prévenu de faire **Ctrl+F5** pour invalider le cache PWA
+

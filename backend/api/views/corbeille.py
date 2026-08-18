@@ -290,7 +290,7 @@ class CorbeilleViewSet(ViewSet):
                     action=AuditLog.Action.DELETE,
                     model_name=Model.__name__,
                     object_id=0,
-                    description=f"Suppression définitive (corbeille): {count} {model_key}(s) - {', '.join(names[:5])}",
+                    description=f"Suppression définitive (corbeille): {count} {model_key}(s) - {', '.join(str(n) for n in names[:5] if n is not None)}",
                     details={'ids': ids, 'names': names},
                     request=request
                 )
