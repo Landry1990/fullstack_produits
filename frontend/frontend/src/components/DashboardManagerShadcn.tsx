@@ -7,7 +7,6 @@ import {
   TrendingDown, PackageX, CreditCard, Archive, Clock, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import { useManagerDashboard, type EditingObjectif } from '../hooks/useManagerDashboard';
 import type { ObjectifCommercial } from '../hooks/useDashboard';
 import { ObjectivesSettings } from './dashboard/ObjectivesSettings';
@@ -488,7 +487,6 @@ export default function DashboardManagerShadcn() {
 
   return (
     <div className="h-full flex flex-col bg-slate-50 p-4 sm:p-6 font-sans overflow-hidden">
-      <Toaster position="top-right" />
 
       <div className="max-w-[1400px] mx-auto w-full flex-1 overflow-y-auto space-y-6">
         <HeaderShadcn

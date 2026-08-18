@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useDebounce } from 'use-debounce';
 import { useLocation } from 'react-router-dom';
 import type { Fournisseur, ProduitModel, Avoir, LigneAvoir, StockLot, SudoState, SudoOptions, PaginatedResponse } from '../types';
@@ -304,11 +304,11 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const handleSave = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
         if (!selectedFournisseurId) {
-            toast.error(t('avoirs.toasts.select_supplier'));
+            gooeyToast.error(t('avoirs.toasts.select_supplier'));
             return;
         }
         if (lignes.length === 0) {
-            toast.error(t('avoirs.toasts.add_product'));
+            gooeyToast.error(t('avoirs.toasts.add_product'));
             return;
         }
 
@@ -349,7 +349,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             });
 
             await Promise.all(linePromises);
-            toast.success(editingAvoirId ? 'Avoir modifié avec succès' : 'Avoir créé avec succès (Brouillon)');
+            gooeyToast.success(editingAvoirId ? 'Avoir modifié avec succès' : 'Avoir créé avec succès (Brouillon)');
             setEditingAvoirId(null);
             const updatedAvoir = await avoirService.getById(avoirId);
             setSelectedAvoir(updatedAvoir);
@@ -358,7 +358,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             fetchAvoirs();
         } catch (err: unknown) {
             const error = err as { response?: { data?: { message?: string } }; message?: string };
-            toast.error(t('avoirs.toasts.save_error') + ': ' + (error.response?.data?.message || error.message));
+            gooeyToast.error(t('avoirs.toasts.save_error') + ': ' + (error.response?.data?.message || error.message));
         } finally {
             setLoading(false);
         }
@@ -369,12 +369,12 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         try {
             setLoading(true);
             await avoirService.delete(avoir.id);
-            toast.success(t('avoirs.toasts.delete_success'));
+            gooeyToast.success(t('avoirs.toasts.delete_success'));
             setAvoirs(avoirs.filter(a => a.id !== avoir.id));
             if (viewMode === 'DETAILS') setViewMode('LIST');
         } catch (err: unknown) {
             const error = err as { response?: { data?: { error?: string } }; message?: string };
-            toast.error(t('avoirs.toasts.delete_error') + ': ' + (error.response?.data?.error || error.message));
+            gooeyToast.error(t('avoirs.toasts.delete_error') + ': ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
@@ -385,12 +385,12 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         try {
             setSavingValidation(true);
             const updated = await avoirService.valider(avoir.id);
-            toast.success(t('avoirs.toasts.validate_success'));
+            gooeyToast.success(t('avoirs.toasts.validate_success'));
             setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
             if (viewMode === 'DETAILS') setSelectedAvoir(updated);
         } catch (err: unknown) {
             const error = err as { response?: { data?: { error?: string } }; message?: string };
-            toast.error(t('avoirs.toasts.validate_error') + ': ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
+            gooeyToast.error(t('avoirs.toasts.validate_error') + ': ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
         } finally {
             setSavingValidation(false);
         }
@@ -404,13 +404,13 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                     validated_by_id: validatorId,
                     password: password
                 });
-                toast.success(t('sales:messages.stock_unloaded'));
+                gooeyToast.success(t('sales:messages.stock_unloaded'));
                 setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
                 setSelectedAvoir(updated);
             } catch (err: unknown) {
                 const error = err as { response?: { data?: { error?: string } }; message?: string };
                 const msg = error.response?.data?.error || error.message || t('common:messages.error_generic');
-                toast.error(t('common:messages.error_with_message', { message: msg }));
+                gooeyToast.error(t('common:messages.error_with_message', { message: msg }));
                 throw err;
             } finally {
                 setLoading(false);
@@ -430,13 +430,13 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                     validated_by_id: validatorId,
                     password: password
                 });
-                toast.success(t('stock:avoirs.toasts.dechargement_cancelled', 'Déchargement annulé. Stock réintégré.'));
+                gooeyToast.success(t('stock:avoirs.toasts.dechargement_cancelled', 'Déchargement annulé. Stock réintégré.'));
                 setAvoirs(avoirs.map(a => a.id === avoir.id ? updated : a));
                 setSelectedAvoir(updated);
             } catch (err: unknown) {
                 const error = err as { response?: { data?: { error?: string } }; message?: string };
                 const msg = error.response?.data?.error || error.message || t('common:messages.error_generic');
-                toast.error(t('common:messages.error_with_message', { message: msg }));
+                gooeyToast.error(t('common:messages.error_with_message', { message: msg }));
                 throw err;
             } finally {
                 setLoading(false);
@@ -482,9 +482,9 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         updateState(newStatus);
         try {
             await avoirService.updateLigne(ligneId, { est_cloture: newStatus });
-            toast.success(newStatus ? t('avoirs.toasts.line_closed') : t('avoirs.toasts.line_reopened'));
+            gooeyToast.success(newStatus ? t('avoirs.toasts.line_closed') : t('avoirs.toasts.line_reopened'));
         } catch {
-            toast.error(t('avoirs.toasts.update_line_error'));
+            gooeyToast.error(t('avoirs.toasts.update_line_error'));
             updateState(!newStatus);
         }
     };
@@ -525,12 +525,12 @@ export function useAvoirsData(): UseAvoirsDataReturn {
                 promises.push(avoirService.updateLigne(p.id, { est_cloture: targetStatus }));
             }
             await Promise.all(promises);
-            toast.success(targetStatus ? t('avoirs.toasts.bulk_lines_closed') : t('avoirs.toasts.bulk_lines_reopened'));
+            gooeyToast.success(targetStatus ? t('avoirs.toasts.bulk_lines_closed') : t('avoirs.toasts.bulk_lines_reopened'));
             if (targetStatus && selectedAvoir.status === 'BROUILLON') {
-                toast.success(t('avoirs.toasts.auto_validated', { defaultValue: 'Avoir validé automatiquement (toutes lignes clôturées)' }));
+                gooeyToast.success(t('avoirs.toasts.auto_validated', { defaultValue: 'Avoir validé automatiquement (toutes lignes clôturées)' }));
             }
         } catch {
-            toast.error(t('avoirs.toasts.bulk_update_error'));
+            gooeyToast.error(t('avoirs.toasts.bulk_update_error'));
             // Rollback
             setSelectedAvoir(prev => prev ? { ...prev, produits: originalProduits } : null);
         }
@@ -540,7 +540,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const selectProduct = (product: ProduitModel) => {
         const existing = lignes.find(l => (typeof l.produit === 'object' ? l.produit.id : l.produit) === product.id);
         if (existing) {
-            toast.error(t('avoirs.toasts.product_exists'));
+            gooeyToast.error(t('avoirs.toasts.product_exists'));
             return;
         }
         const newLine: LigneAvoir = {
@@ -587,9 +587,9 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             const newTotal = updatedProduits.reduce((sum, p) => sum + Number(p.total || (Number(p.quantity) * Number(p.price))), 0);
             setSelectedAvoir(prev => prev ? { ...prev, produits: updatedProduits, total_ht: newTotal.toString() } : null);
             setAvoirs(prev => prev.map(a => a.id === selectedAvoir.id ? { ...a, produits: updatedProduits, total_ht: newTotal.toString() } : a));
-            toast.success(t('stock:avoirs.toasts.ligne_deleted', 'Ligne supprimée'));
+            gooeyToast.success(t('stock:avoirs.toasts.ligne_deleted', 'Ligne supprimée'));
         } catch {
-            toast.error(t('stock:avoirs.toasts.ligne_delete_error', 'Erreur lors de la suppression'));
+            gooeyToast.error(t('stock:avoirs.toasts.ligne_delete_error', 'Erreur lors de la suppression'));
         } finally {
             setLoading(false);
         }
@@ -608,7 +608,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             const lots = await produitService.getLots(produitId);
             setAvailableLots(lots.filter((l: StockLot) => l.quantity_remaining > 0));
         } catch {
-            toast.error(t('avoirs.toasts.load_lots_error'));
+            gooeyToast.error(t('avoirs.toasts.load_lots_error'));
         } finally {
             setLoadingLots(false);
         }
@@ -665,11 +665,11 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         try {
             const idsToDelete = Array.from(selectedIds);
             await Promise.all(idsToDelete.map(id => avoirService.delete(id)));
-            toast.success(t('avoirs.toasts.bulk_delete_success', { count }));
+            gooeyToast.success(t('avoirs.toasts.bulk_delete_success', { count }));
             setAvoirs(avoirs.filter(a => !selectedIds.has(a.id)));
             setSelectedIds(new Set());
         } catch {
-            toast.error(t('avoirs.toasts.bulk_delete_error'));
+            gooeyToast.error(t('avoirs.toasts.bulk_delete_error'));
         } finally {
             setBulkLoading(false);
         }
@@ -683,11 +683,11 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         setBulkLoading(true);
         try {
             await Promise.all(Array.from(selectedIds).map(id => avoirService.valider(id)));
-            toast.success(t('avoirs.toasts.bulk_validate_success', { count }));
+            gooeyToast.success(t('avoirs.toasts.bulk_validate_success', { count }));
             setSelectedIds(new Set());
             fetchAvoirs();
         } catch {
-            toast.error(t('avoirs.toasts.bulk_validate_error'));
+            gooeyToast.error(t('avoirs.toasts.bulk_validate_error'));
         } finally {
             setBulkLoading(false);
         }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, ShieldAlert, Copy, Send, FileUp, Info, UserCheck, Hospital, Calendar, AlertTriangle } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLicence } from '../context/LicenceContext';
@@ -50,7 +50,7 @@ const LicenceScreen = () => {
 
     const handleCopy = () => {
         navigator.clipboard.writeText(hardwareId);
-        toast.success(t('licence.copy_success'));
+        gooeyToast.success(t('licence.copy_success'));
     };
 
 
@@ -68,10 +68,10 @@ const LicenceScreen = () => {
                     const res = await api.post('/licence/', { cle: content.trim(), preview: true });
                     setCle(content.trim()); // <--- CRITIQUE : On mémorise la clé ici
                     setPreviewData(res.data);
-                    toast.success(t('licence.file_loaded'));
+                    gooeyToast.success(t('licence.file_loaded'));
                 } catch (error: unknown) {
                     const detail = error && typeof error === 'object' && 'response' in error ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail : undefined;
-                    toast.error(detail || t('licence.file_invalid'));
+                    gooeyToast.error(detail || t('licence.file_invalid'));
                     setCle('');
                     setPreviewData(null);
                 } finally {
@@ -85,7 +85,7 @@ const LicenceScreen = () => {
     const handleConfirmActivation = async () => {
         if (!cle) return;
         if (!sudoPassword) {
-            toast.error(t('licence.sudo_required', { defaultValue: 'Mot de passe ou code journalier requis' }));
+            gooeyToast.error(t('licence.sudo_required', { defaultValue: 'Mot de passe ou code journalier requis' }));
             return;
         }
         setLoading(true);
@@ -100,14 +100,14 @@ const LicenceScreen = () => {
                 payload.sudo_password = sudoPassword;
             }
             const res = await api.post('/licence/', payload);
-            toast.success(res.data.detail || t('licence.activate_success'));
+            gooeyToast.success(res.data.detail || t('licence.activate_success'));
             await refreshLicence(); // On rafraîchit les infos globales (nom pharmacie, etc)
             setTimeout(() => {
                 window.location.href = '/'; 
             }, 1500);
         } catch (error: unknown) {
             const detail = error && typeof error === 'object' && 'response' in error ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail : undefined;
-            toast.error(detail || t('licence.activate_error'));
+            gooeyToast.error(detail || t('licence.activate_error'));
         } finally {
             setLoading(false);
         }

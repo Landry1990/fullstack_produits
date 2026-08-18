@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import type { Creance } from '../types';
 import { useSudo } from './useSudo';
@@ -100,7 +100,7 @@ export const useCreanceActions = ({
         } catch (err: unknown) {
             logger.error('Erreur lors de l\'impression du reçu:', err);
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || t('creances:toasts.error_print_receipt'));
+            gooeyToast.error(error.response?.data?.detail || t('creances:toasts.error_print_receipt'));
         } finally {
             if (blobUrl) window.URL.revokeObjectURL(blobUrl);
         }
@@ -129,7 +129,7 @@ export const useCreanceActions = ({
         } catch (err: unknown) {
             logger.error('Erreur lors de l\'impression du relevé:', err);
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || t('creances:toasts.error_print_statement'));
+            gooeyToast.error(error.response?.data?.detail || t('creances:toasts.error_print_statement'));
         } finally {
             if (url) window.URL.revokeObjectURL(url);
         }
@@ -159,14 +159,14 @@ export const useCreanceActions = ({
                 refresh();
             }
 
-            toast.success(t('creances:toasts.payment_success'));
+            gooeyToast.success(t('creances:toasts.payment_success'));
 
             if (window.confirm(t('creances:toasts.confirm_print_receipt'))) {
                 await handlePrintDirectReceipt(selectedCreance.id, paiementId);
             }
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
+            gooeyToast.error(error.response?.data?.detail || t('common:messages.error_saving'));
             logger.error('Erreur:', err);
             throw err;
         }
@@ -199,7 +199,7 @@ export const useCreanceActions = ({
             setSelectedIds([]);
             setMontantTotalBulk(''); // Reset après paiement
             refresh();
-            toast.success(t('creances:toasts.bulk_success'));
+            gooeyToast.success(t('creances:toasts.bulk_success'));
 
             // Générer le ticket de confirmation avec les détails
             if (data.paiements && data.paiements.length > 0) {
@@ -241,7 +241,7 @@ export const useCreanceActions = ({
                     const errMsg = ticketErr instanceof Error
                         ? `${ticketErr.name}: ${ticketErr.message}`
                         : String(ticketErr);
-                    toast.error(t('creances:toasts.ticket_generation_error', { error: errMsg }));
+                    gooeyToast.error(t('creances:toasts.ticket_generation_error', { error: errMsg }));
                 }
             }
 
@@ -250,7 +250,7 @@ export const useCreanceActions = ({
             }
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || t('common:messages.error_saving'));
+            gooeyToast.error(error.response?.data?.detail || t('common:messages.error_saving'));
             logger.error('Erreur:', err);
             throw err;
         }
@@ -263,11 +263,11 @@ export const useCreanceActions = ({
 
     const handleImprimerReleve = useCallback(async (selectedClient: string, dateDebut: string, dateFin: string, includeProducts: boolean = false) => {
         if (!selectedClient) {
-            toast.error(t('creances:toasts.select_client_error'));
+            gooeyToast.error(t('creances:toasts.select_client_error'));
             return;
         }
 
-        const loadingToast = toast.loading(t('creances:toasts.releve_loading'));
+        const loadingToast = gooeyToast.loading(t('creances:toasts.releve_loading'));
         try {
             const releveData = await creanceService.getReleve({
                 client_id: selectedClient,
@@ -290,9 +290,9 @@ export const useCreanceActions = ({
                 : selectedClient;
             const suffix = includeProducts ? '_detaille' : '';
             doc.save(`releve_${clientSlug}${suffix}_${new Date().toISOString().slice(0, 10)}.pdf`);
-            toast.success(t('creances:toasts.releve_generated'), { id: loadingToast });
+            gooeyToast.success(t('creances:toasts.releve_generated'), { id: loadingToast });
         } catch {
-            toast.error(t('creances:toasts.error_print_statement'), { id: loadingToast });
+            gooeyToast.error(t('creances:toasts.error_print_statement'), { id: loadingToast });
         }
     }, [t, pharmacySettings]);
 
@@ -302,7 +302,7 @@ export const useCreanceActions = ({
         date_fin?: string;
         history?: boolean;
     }) => {
-        const loadingToast = toast.loading(t('creances:toasts.excel_loading'));
+        const loadingToast = gooeyToast.loading(t('creances:toasts.excel_loading'));
         try {
             const blob = await creanceService.exportExcel(params);
             const url = window.URL.createObjectURL(blob);
@@ -314,10 +314,10 @@ export const useCreanceActions = ({
             link.click();
             link.parentNode?.removeChild(link);
             setTimeout(() => window.URL.revokeObjectURL(url), 100);
-            toast.success(t('creances:toasts.excel_export_success'), { id: loadingToast });
+            gooeyToast.success(t('creances:toasts.excel_export_success'), { id: loadingToast });
         } catch (err) {
             logger.error('Erreur export Excel:', err);
-            toast.error(t('creances:toasts.excel_export_error'), { id: loadingToast });
+            gooeyToast.error(t('creances:toasts.excel_export_error'), { id: loadingToast });
         }
     }, [t]);
 

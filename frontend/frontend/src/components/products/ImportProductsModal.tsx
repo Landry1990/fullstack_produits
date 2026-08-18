@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { logger } from '../../utils/logger'
 
@@ -76,20 +76,20 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
             setUploading(false)
             setResult(d)
             jobIdRef.current = null
-            toast.success(d.message || t('products:import.done'))
+            gooeyToast.success(d.message || t('products:import.done'))
             onSuccess()
           } else if (d.status === 'error') {
             clearInterval(poll)
             setUploading(false)
             jobIdRef.current = null
-            toast.error(d.message || t('products:import.import_error'))
+            gooeyToast.error(d.message || t('products:import.import_error'))
             setResult({ created: 0, updated: 0, errors: 1, message: d.message || t('common:error') })
           }
         } catch {
           clearInterval(poll)
           setUploading(false)
           jobIdRef.current = null
-          toast.error(t('products:import.comm_error'))
+          gooeyToast.error(t('products:import.comm_error'))
         }
       }, 2000)
 
@@ -97,7 +97,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
       logger.error('Import error:', error)
       const errData = (error as { response?: { data?: { detail?: string } } })?.response?.data
       const message = errData?.detail || t('products:import.error_toast')
-      toast.error(message)
+      gooeyToast.error(message)
       setResult({ created: 0, updated: 0, errors: 1, message })
     } finally {
       if (!jobIdRef.current) setUploading(false)

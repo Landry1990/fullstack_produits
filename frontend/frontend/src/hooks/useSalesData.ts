@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import venteService, { type SalesFilters, type SalesStats, type SimpleUser } from '../services/venteService';
 import type { Facture, PaginatedResponse } from '../types';
 import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getLocalDateString, toApiDateEnd } from '../utils/dateUtils';
 import { logger } from '../utils/logger'
 
@@ -72,7 +72,7 @@ export const useSalesData = () => {
 
         } catch (error) {
             logger.error('Erreur chargement page_init:', error);
-            toast.error(t('messages.load_error'));
+            gooeyToast.error(t('messages.load_error'));
             setFactures([]);
         } finally {
             setLoading(false);
@@ -89,7 +89,7 @@ export const useSalesData = () => {
             processFacturesData(data);
         } catch (error) {
             logger.error('Erreur chargement factures:', error);
-            toast.error(t('messages.load_error'));
+            gooeyToast.error(t('messages.load_error'));
             setFactures([]);
         } finally {
             setLoading(false);
@@ -128,11 +128,11 @@ export const useSalesData = () => {
         if (!window.confirm(t('messages.delete_drafts_confirm'))) return;
         try {
             await venteService.deleteBrouillons();
-            toast.success(t('messages.delete_drafts_success'));
+            gooeyToast.success(t('messages.delete_drafts_success'));
             fetchFactures(currentPage);
         } catch (error) {
             logger.error(error);
-            toast.error(t('messages.delete_drafts_error'));
+            gooeyToast.error(t('messages.delete_drafts_error'));
         }
     };
 
@@ -140,11 +140,11 @@ export const useSalesData = () => {
         if (!window.confirm(t('confirm_delete'))) return;
         try {
             await venteService.deleteFacture(id);
-            toast.success(t('messages.delete_success'));
+            gooeyToast.success(t('messages.delete_success'));
             fetchFactures(currentPage);
         } catch (error) {
             logger.error(error);
-            toast.error(t('messages.delete_error'));
+            gooeyToast.error(t('messages.delete_error'));
         }
     };
 
@@ -152,11 +152,11 @@ export const useSalesData = () => {
         if (!window.confirm(t('confirm_bulk_delete', { count: ids.length }))) return;
         try {
             await venteService.bulkDelete(ids);
-            toast.success(t('messages.bulk_delete_success'));
+            gooeyToast.success(t('messages.bulk_delete_success'));
             fetchFactures(currentPage);
         } catch (error) {
             logger.error(error);
-            toast.error(t('messages.bulk_delete_error'));
+            gooeyToast.error(t('messages.bulk_delete_error'));
         }
     };
 

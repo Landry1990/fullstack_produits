@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
 import { formatNumber as utilsFormatNumber } from '../utils/formatters'
 import { logger } from '../utils/logger'
@@ -282,7 +282,7 @@ export default function AnalyseABC() {
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(tsv)
-        toast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
+        gooeyToast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
       } else {
         const textarea = document.createElement('textarea')
         textarea.value = tsv
@@ -293,14 +293,14 @@ export default function AnalyseABC() {
         const ok = document.execCommand('copy')
         document.body.removeChild(textarea)
         if (ok) {
-          toast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
+          gooeyToast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
         } else {
           throw new Error('execCommand copy failed')
         }
       }
     } catch (err) {
       logger.error('Failed to copy:', err)
-      toast.error(t('stock:abc.messages.copy_error'))
+      gooeyToast.error(t('stock:abc.messages.copy_error'))
     }
   }
 

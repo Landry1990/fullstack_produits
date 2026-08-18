@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { TFunction } from 'i18next';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { safeStorage } from '../utils/storage';
 import { useConfirm } from './useConfirm';
@@ -71,7 +71,7 @@ export function useFacturationActions({
             printWindow = window.open('about:blank', '_blank')
         } catch { /* ignore */ }
         if (!printWindow) {
-            toast.error(t('common:popup_blocked'))
+            gooeyToast.error(t('common:popup_blocked'))
             setLoading(false)
             return
         }
@@ -115,7 +115,7 @@ export function useFacturationActions({
 
             printWindow.location.href = `/app/print-invoice/${createdFacture.id}?type=proforma`
             printWindow.focus?.()
-            toast.success(t('facturation:messages.proforma_success'))
+            gooeyToast.success(t('facturation:messages.proforma_success'))
 
             cart.setLignesFacture([])
             ui.setMontantPaye('')
@@ -126,7 +126,7 @@ export function useFacturationActions({
             ui.setTicketCaisse(null)
         } catch (_error) {
             try { printWindow.close() } catch { /* ignore */ }
-            toast.error(t('facturation:messages.proforma_error'))
+            gooeyToast.error(t('facturation:messages.proforma_error'))
         } finally {
             setLoading(false)
         }
@@ -135,12 +135,12 @@ export function useFacturationActions({
 
     const handleBonDeLivraison = useCallback(async () => {
         if (cart.lignesFacture.length === 0) {
-            toast.error(t('facturation:messages.cart_empty'))
+            gooeyToast.error(t('facturation:messages.cart_empty'))
             return
         }
         if (ui.isModificationMode && ui.modificationInvoiceId) {
             const w = window.open(`/app/print-invoice/${ui.modificationInvoiceId}?type=BL`, '_blank')
-            if (!w) toast.error(t('common:popup_blocked'))
+            if (!w) gooeyToast.error(t('common:popup_blocked'))
             return
         }
 
@@ -152,7 +152,7 @@ export function useFacturationActions({
             printWindow = window.open('about:blank', '_blank')
         } catch { /* ignore */ }
         if (!printWindow) {
-            toast.error(t('common:popup_blocked'))
+            gooeyToast.error(t('common:popup_blocked'))
             setLoading(false)
             return
         }
@@ -207,10 +207,10 @@ export function useFacturationActions({
             ui.setModificationInvoiceStatus('PROF')
             ui.setIsModificationMode(true)
 
-            toast.success(t('facturation:messages.delivery_note_success'))
+            gooeyToast.success(t('facturation:messages.delivery_note_success'))
         } catch (error) {
             try { printWindow.close() } catch { /* ignore */ }
-            toast.error(t('facturation:messages.delivery_note_error', { error: error instanceof Error ? error.message : t('common:messages.error_generic') }))
+            gooeyToast.error(t('facturation:messages.delivery_note_error', { error: error instanceof Error ? error.message : t('common:messages.error_generic') }))
         } finally {
             setLoading(false)
         }
@@ -240,7 +240,7 @@ export function useFacturationActions({
             printWindow = window.open('about:blank', '_blank');
         } catch { /* ignore */ }
         if (!printWindow) {
-            toast.error(t('common:popup_blocked'));
+            gooeyToast.error(t('common:popup_blocked'));
             setShowClientNameModal(false);
             setPendingPrintFacture(null);
             setTimeout(() => searchInputRef.current?.focus(), 100);
@@ -251,14 +251,14 @@ export function useFacturationActions({
             await api.patch(`factures/${pendingPrintFacture.id}/`,
                 { client_name_override: clientNameInput }
             );
-            toast.success(t('facturation:messages.client_name_updated', { defaultValue: 'Nom du client mis à jour' }));
+            gooeyToast.success(t('facturation:messages.client_name_updated', { defaultValue: 'Nom du client mis à jour' }));
             let url = `/app/print-invoice/${pendingPrintFacture.id}`;
             if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
             printWindow.location.href = url;
             printWindow.focus?.();
         } catch (err) {
             try { printWindow.close(); } catch { /* ignore */ }
-            toast.error(getApiErrorDetail(err, t('facturation:messages.client_name_update_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('facturation:messages.client_name_update_error')));
         } finally {
             setShowClientNameModal(false);
             setPendingPrintFacture(null);
@@ -307,9 +307,9 @@ export function useFacturationActions({
         setLoading(true)
         try {
             const response = await api.post(`factures/${facture.id}/send_whatsapp/`, { phone: phone })
-            toast.success(response.data.detail || t('facturation:messages.whatsapp_sent'))
+            gooeyToast.success(response.data.detail || t('facturation:messages.whatsapp_sent'))
         } catch (err) {
-            toast.error(getApiErrorDetail(err, t('facturation:messages.whatsapp_send_error')))
+            gooeyToast.error(getApiErrorDetail(err, t('facturation:messages.whatsapp_send_error')))
         } finally {
             setLoading(false)
         }
@@ -331,11 +331,11 @@ export function useFacturationActions({
                 lignes: lignesForBackend
             };
             await api.post('ordonnancier/', payload);
-            toast.success(t('prescriptions:messages.save_success'));
+            gooeyToast.success(t('prescriptions:messages.save_success'));
             ui.setShowOrdonnanceModal(false);
             ui.setPendingOrdonnanceFacture(null);
         } catch (err) {
-            toast.error(t('prescriptions:messages.save_error') + ": " + getApiErrorDetail(err, err instanceof Error ? err.message : t('common:messages.error_generic')));
+            gooeyToast.error(t('prescriptions:messages.save_error') + ": " + getApiErrorDetail(err, err instanceof Error ? err.message : t('common:messages.error_generic')));
         } finally {
             setLoading(false);
         }
@@ -345,9 +345,9 @@ export function useFacturationActions({
         if (cart.lignesFacture.length > 0) {
             const lastLine = cart.lignesFacture[cart.lignesFacture.length - 1];
             secureUpdateQuantite(lastLine.produit.id, qty);
-            toast.success(t('facturation:messages.quantity_updated', { qty, product: lastLine.produit.name }));
+            gooeyToast.success(t('facturation:messages.quantity_updated', { qty, product: lastLine.produit.name }));
         } else {
-            toast.error(t('facturation:messages.quantity_cart_empty'));
+            gooeyToast.error(t('facturation:messages.quantity_cart_empty'));
         }
     }, [cart.lignesFacture, secureUpdateQuantite, t])
 
@@ -466,7 +466,7 @@ export function useFacturationActions({
             ayantDroit: ayantDroitData
         })
         _resetSale()
-        toast.success(t('facturation:messages.pending_sale_success'))
+        gooeyToast.success(t('facturation:messages.pending_sale_success'))
     }, [cart.lignesFacture, clientsHook, pendingSales, ui, setError, _resetSale, t])
 
     const annulerVente = useCallback(() => {
@@ -510,7 +510,7 @@ export function useFacturationActions({
         }
         pendingSales.deletePendingSale(id)
         pendingSales.setShowPendingSales(false)
-        toast.success(t('facturation:messages.save_success'))
+        gooeyToast.success(t('facturation:messages.save_success'))
     }, [pendingSales, cart, clientsHook, ui, t, confirm])
 
     const supprimerVenteEnAttente = useCallback((id: number) => {
@@ -520,7 +520,7 @@ export function useFacturationActions({
             onConfirm: () => {
                 pendingSales.deletePendingSale(id);
                 ui.setConfirmModal(null);
-                toast.success(t('facturation:messages.pending_sale_deleted'));
+                gooeyToast.success(t('facturation:messages.pending_sale_deleted'));
             }
         });
     }, [ui, pendingSales, t])

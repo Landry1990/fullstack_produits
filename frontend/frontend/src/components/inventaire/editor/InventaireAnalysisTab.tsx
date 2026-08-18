@@ -4,7 +4,7 @@ import { Download, AlertTriangle, TrendingUp, PieChart, Send } from 'lucide-reac
 import { formatCurrency } from '../../../utils/formatters';
 import type { InventoryStats } from '../../../types';
 import api from '../../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 
 interface StatsListItem {
     produit_nom: string;
@@ -86,9 +86,9 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
         setSendingTelegram(true);
         try {
             await api.post('telegram/rapport-inventaire/', inventaireId ? { inventaire_id: inventaireId } : {});
-            toast.success(t('common:telegram.send_success'), { icon: <Send className="h-4 w-4 text-[#229ED9]" /> });
+            gooeyToast.success(t('common:telegram.send_success'), { icon: <Send className="h-4 w-4 text-[#229ED9]" /> });
         } catch (err: unknown) {
-            toast.error(err?.response?.data?.message || t('common:telegram.send_error'));
+            gooeyToast.error(err?.response?.data?.message || t('common:telegram.send_error'));
         } finally {
             setSendingTelegram(false);
         }

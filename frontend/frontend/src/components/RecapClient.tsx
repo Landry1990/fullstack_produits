@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { FileText, Plus, X, Search, Printer, Loader2, AlertTriangle } from 'lucide-react'
 import api from '../services/api'
 import { Button } from './shadcn/button'
@@ -73,12 +73,12 @@ export default function RecapClient() {
       const found = data.results && data.results.length > 0
       if (!found) {
         setNumerosStatus(prev => ({ ...prev, [numero]: 'not_found' }))
-        toast.error(t('recap:errors.ticket_not_found', { numero }))
+        gooeyToast.error(t('recap:errors.ticket_not_found', { numero }))
       } else {
         const facture = data.results[0]
         if (facture.status === 'ANN' || facture.status === 'ANNULEE') {
           setNumerosStatus(prev => ({ ...prev, [numero]: 'cancelled' }))
-          toast(t('recap:errors.ticket_cancelled', { numero }), { icon: <AlertTriangle className="h-4 w-4 text-amber-600" /> })
+          gooeyToast(t('recap:errors.ticket_cancelled', { numero }), { icon: <AlertTriangle className="h-4 w-4 text-amber-600" /> })
         } else {
           setNumerosStatus(prev => ({ ...prev, [numero]: 'found' }))
         }
@@ -117,7 +117,7 @@ export default function RecapClient() {
 
   const handleSearch = async () => {
     if (numeros.length === 0) {
-      toast.error(t('recap:errors.no_numbers'))
+      gooeyToast.error(t('recap:errors.no_numbers'))
       return
     }
     setLoading(true)
@@ -129,12 +129,12 @@ export default function RecapClient() {
       })
       setResult(data)
       if (data.not_found.length > 0) {
-        toast.error(t('recap:errors.some_not_found', { count: data.not_found.length }))
+        gooeyToast.error(t('recap:errors.some_not_found', { count: data.not_found.length }))
       } else {
-        toast.success(t('recap:messages.found', { count: data.recap.nombre_factures }))
+        gooeyToast.success(t('recap:messages.found', { count: data.recap.nombre_factures }))
       }
     } catch {
-      toast.error(t('recap:errors.fetch_error'))
+      gooeyToast.error(t('recap:errors.fetch_error'))
     } finally {
       setLoading(false)
     }
@@ -152,7 +152,7 @@ export default function RecapClient() {
 
     // Ouvrir la page d'impression avec le même template que les factures
     const w = window.open('/app/print-invoice/recap?type=RECAP', '_blank')
-    if (!w) toast.error(t('common:popup_blocked'))
+    if (!w) gooeyToast.error(t('common:popup_blocked'))
   }
 
   return (

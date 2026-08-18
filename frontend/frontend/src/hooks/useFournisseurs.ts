@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useConfirm } from './useConfirm';
 import { useAuth } from '../context/AuthContext';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Fournisseur, PaginatedResponse } from '../types';
 import { useSudo } from './useSudo';
@@ -300,7 +300,7 @@ export function useFournisseurs() {
       setSelectedFournisseur(addedFournisseur);
       setNewFournisseur(emptyForm);
       closeAddModal();
-      toast.success(t('providers:messages.save_success'));
+      gooeyToast.success(t('providers:messages.save_success'));
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: unknown }; message?: string };
       if (axiosErr?.response) {
@@ -326,7 +326,7 @@ export function useFournisseurs() {
       setFournisseurs(prev => prev.map(f => (f.id === updatedFournisseur.id ? updatedFournisseur : f)));
       setSelectedFournisseur(updatedFournisseur);
       closeEditModal();
-      toast.success(t('providers:messages.update_success'));
+      gooeyToast.success(t('providers:messages.update_success'));
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: unknown }; message?: string };
       if (axiosErr?.response) {
@@ -344,18 +344,18 @@ export function useFournisseurs() {
       await api.delete(`fournisseurs/${id}/`, { data: { validated_by_id: validatorId, sudo_password: password } });
       setFournisseurs(prev => prev.filter(f => f.id !== id));
       setSelectedFournisseur(null);
-      toast.success(t('providers:messages.delete_success'));
+      gooeyToast.success(t('providers:messages.delete_success'));
     } catch (err: unknown) {
       const axiosErr = err as { response?: { status?: number; data?: { detail?: string; message?: string; error?: string } }; message?: string };
       if (axiosErr?.response) {
         if (axiosErr.response?.status === 500 || (axiosErr.response?.data?.detail && String(axiosErr.response.data.detail).includes('protected'))) {
-             toast.error(t('providers:messages.delete_protected'));
+             gooeyToast.error(t('providers:messages.delete_protected'));
         } else {
              const msg = axiosErr.response?.data?.message ?? axiosErr.message ?? t('common:network_error');
-             toast.error(t('common:messages.error_with_message', { message: msg }));
+             gooeyToast.error(t('common:messages.error_with_message', { message: msg }));
         }
       } else {
-        toast.error(t('providers:messages.delete_error'));
+        gooeyToast.error(t('providers:messages.delete_error'));
       }
       logger.error('Erreur lors de la suppression du fournisseur:', err);
       throw err;
@@ -371,9 +371,9 @@ export function useFournisseurs() {
       if (selectedFournisseur && selectedIdsSet.has(selectedFournisseur.id!)) {
         setSelectedFournisseur(null);
       }
-      toast.success(t('providers:messages.bulk_delete_success', { count: selectedIds.length }));
+      gooeyToast.success(t('providers:messages.bulk_delete_success', { count: selectedIds.length }));
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('providers:messages.bulk_delete_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('providers:messages.bulk_delete_error')));
       logger.error(err);
       throw err;
     }
@@ -382,7 +382,7 @@ export function useFournisseurs() {
   async function handleBulkDelete() {
     if (selectedIds.length === 0) return;
     if (!user?.is_superuser && !user?.can_delete_fournisseur) {
-        toast.error(t('providers:messages.access_denied_delete'))
+        gooeyToast.error(t('providers:messages.access_denied_delete'))
         return;
     }
     const confirmMessage = selectedIds.length === 1 
@@ -422,7 +422,7 @@ export function useFournisseurs() {
   async function handleDeleteFournisseur() {
     if (!selectedFournisseur) return;
     if (!user?.is_superuser && !user?.can_delete_fournisseur) {
-        toast.error(t('providers:messages.access_denied_delete'));
+        gooeyToast.error(t('providers:messages.access_denied_delete'));
         return;
     }
     const confirmed = await confirm({
@@ -448,11 +448,11 @@ export function useFournisseurs() {
     try {
       const response = await api.post(`fournisseurs/${selectedFournisseur.id}/toggle_active/`);
       const isActive = response.data.is_active;
-      toast.success(isActive ? t('providers:messages.reactivated') : t('providers:messages.hidden'));
+      gooeyToast.success(isActive ? t('providers:messages.reactivated') : t('providers:messages.hidden'));
       setSelectedFournisseur(prev => prev ? ({ ...prev, is_active: isActive }) : null);
       fetchFournisseurs();
     } catch (err) {
-      toast.error(t('providers:messages.status_change_error'));
+      gooeyToast.error(t('providers:messages.status_change_error'));
       logger.error(err);
     }
   }

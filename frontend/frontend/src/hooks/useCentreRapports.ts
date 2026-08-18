@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { usePharmacySettings } from './usePharmacySettings';
 import { exportToExcel, downloadBlob } from '../utils/excelExport';
@@ -212,7 +212,7 @@ export function useCentreRapports() {
         const updated = [...presets, newPreset];
         setPresets(updated);
         localStorage.setItem('report_presets:v1', JSON.stringify(updated));
-        toast.success(t('reports.preset_saved', { defaultValue: 'Configuration enregistrée !' }));
+        gooeyToast.success(t('reports.preset_saved', { defaultValue: 'Configuration enregistrée !' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedQuery, params, presets]);
 
@@ -228,7 +228,7 @@ export function useCentreRapports() {
         if (query) {
             setSelectedQuery(query);
             setParams(p.params);
-            toast.success(t('reports.preset_loaded', { name: p.name, defaultValue: `Chargement de : ${p.name}` }));
+            gooeyToast.success(t('reports.preset_loaded', { name: p.name, defaultValue: `Chargement de : ${p.name}` }));
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -279,7 +279,7 @@ export function useCentreRapports() {
                 const filename = `Balance_Stocks_${params.date_debut}_${params.date_fin}.xlsx`;
                 downloadBlob(response.data, filename);
                 
-                toast.success(t('results.export_success', { filename }));
+                gooeyToast.success(t('results.export_success', { filename }));
                 setResults({ status: 'success', filename });
                 setLoading(false);
                 return;
@@ -294,7 +294,7 @@ export function useCentreRapports() {
                 const filename = `Export_Sage_i7_${params.date_debut}_${params.date_fin}.csv`;
                 downloadBlob(response.data, filename, 'text/csv');
                 
-                toast.success(t('results.export_success', { filename }));
+                gooeyToast.success(t('results.export_success', { filename }));
                 setResults({ status: 'success', filename });
                 setLoading(false);
                 return;
@@ -317,11 +317,11 @@ export function useCentreRapports() {
                 setPagination(null);
             }
 
-            if (!urlOverride) toast.success(t('reports.results.execute_success', { name: selectedQuery.name, defaultValue: `Requête "${selectedQuery.name}" exécutée` }));
+            if (!urlOverride) gooeyToast.success(t('reports.results.execute_success', { name: selectedQuery.name, defaultValue: `Requête "${selectedQuery.name}" exécutée` }));
         } catch (err) {
             logger.error('Erreur requête:', err);
             setError(getApiErrorDetail(err, err instanceof Error ? err.message : t('reports.results.error_execution', { defaultValue: 'Erreur lors de l\'exécution de la requête' })));
-            toast.error(t('reports.results.error_execution_toast', { defaultValue: 'Erreur lors de l\'exécution' }));
+            gooeyToast.error(t('reports.results.error_execution_toast', { defaultValue: 'Erreur lors de l\'exécution' }));
         } finally {
             setLoading(false);
         }
@@ -333,7 +333,7 @@ export function useCentreRapports() {
 
     const downloadExcel = useCallback(async () => {
         if (!results || !selectedQuery) {
-            toast.error(t('results.export_no_result'));
+            gooeyToast.error(t('results.export_no_result'));
             return;
         }
 
@@ -350,10 +350,10 @@ export function useCentreRapports() {
                 });
                 
                 downloadBlob(response.data, filename);
-                toast.success(t('results.export_success', { filename }));
+                gooeyToast.success(t('results.export_success', { filename }));
             } catch (err) {
                 logger.error('Excel download error:', err);
-                toast.error(t('results.export_error'));
+                gooeyToast.error(t('results.export_error'));
             }
             return;
         }
@@ -430,7 +430,7 @@ export function useCentreRapports() {
                 data.push(row);
             });
         } else {
-            toast.error(t('results.export_unsupported'));
+            gooeyToast.error(t('results.export_unsupported'));
             return;
         }
 
@@ -441,7 +441,7 @@ export function useCentreRapports() {
             filename,
             title: selectedQuery.name,
         });
-        toast.success(t('results.export_success', { filename }));
+        gooeyToast.success(t('results.export_success', { filename }));
     }, [results, selectedQuery, t, params, pharmacySettings]);
 
     useEffect(() => {

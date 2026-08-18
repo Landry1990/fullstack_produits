@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { ProduitModel, LigneInventaire, StockLot } from '../../types';
@@ -68,7 +68,7 @@ export const useProductSearch = (
             } catch (err) {
                 if (err instanceof Error && err.name === 'CanceledError') return;
                 logger.error("Erreur recherche produits", err);
-                toast.error(getApiErrorDetail(err, t('common:messages.error_loading', { defaultValue: 'Erreur recherche' })));
+                gooeyToast.error(getApiErrorDetail(err, t('common:messages.error_loading', { defaultValue: 'Erreur recherche' })));
             } finally {
                 setLoadingSearch(false);
             }
@@ -114,7 +114,7 @@ export const useProductSearch = (
             setLotQuantities(initialQtys);
         } catch (err) {
             logger.error("Erreur chargement lots", err);
-            toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
+            gooeyToast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
         } finally {
             setLoadingLots(false);
         }
@@ -246,7 +246,7 @@ export const useProductSearch = (
         );
 
         if (existsLocally) {
-            toast.error(t('inventaire.detail.already_added'));
+            gooeyToast.error(t('inventaire.detail.already_added'));
             setSearchQuery('');
             setSearchResults([]);
             setSelectedItemIndex(-1);

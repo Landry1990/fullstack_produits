@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { X, Send, Bug, Lightbulb, TrendingUp, HelpCircle, MoreHorizontal, Loader2 } from 'lucide-react';
 import feedbackService, { type Feedback } from '../../services/feedbackService';
 import { logger } from '../../utils/logger'
@@ -43,16 +43,16 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     e.preventDefault();
     
     if (!formData.subject.trim() || !formData.description.trim()) {
-      toast.error(t('feedback.error_required', 'Veuillez remplir le sujet et la description'));
+      gooeyToast.error(t('feedback.error_required', 'Veuillez remplir le sujet et la description'));
       return;
     }
 
     setLoading(true);
     try {
       const result = await feedbackService.create(formData);
-      toast.success(t('feedback.success', 'Feedback envoyé avec succès'));
+      gooeyToast.success(t('feedback.success', 'Feedback envoyé avec succès'));
       if (result.email_sent === false) {
-        toast.error(t('feedback.email_failed', "L'email de notification n'a pas pu être envoyé — vérifiez la configuration SMTP"), { duration: 6000 });
+        gooeyToast.error(t('feedback.email_failed', "L'email de notification n'a pas pu être envoyé — vérifiez la configuration SMTP"), { duration: 6000 });
       }
       setFormData({
         category: 'OTHER',
@@ -65,7 +65,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       onClose();
     } catch (error) {
       logger.error('Error submitting feedback:', error);
-      toast.error(t('feedback.error', 'Erreur lors de l\'envoi du feedback'));
+      gooeyToast.error(t('feedback.error', 'Erreur lors de l\'envoi du feedback'));
     } finally {
       setLoading(false);
     }

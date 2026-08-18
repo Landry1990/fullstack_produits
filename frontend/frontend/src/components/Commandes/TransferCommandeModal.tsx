@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
@@ -117,7 +117,7 @@ export default function TransferCommandeModal({
 
     const handleTransfer = async () => {
         if (!transferTargetFournisseur) {
-            toast.error(t('orders:transfer_modal.select_supplier_error'));
+            gooeyToast.error(t('orders:transfer_modal.select_supplier_error'));
             return;
         }
 
@@ -153,7 +153,7 @@ export default function TransferCommandeModal({
 
         } catch (err) {
             logger.error('Erreur lors du transfert:', err);
-            toast.error(t('orders:transfer_modal.transfer_error'));
+            gooeyToast.error(t('orders:transfer_modal.transfer_error'));
         }
     };
 

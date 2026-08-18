@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import type { StockAdjustment, PaginatedResponse, StockAdjustmentStats } from '../types';
 import { toApiDateEnd } from '../utils/dateUtils';
@@ -73,7 +73,7 @@ export const useAjustementsData = () => {
 
         } catch (err) {
             if (err instanceof Error && err.name === 'AbortError') return;
-            toast.error(t('common:messages.error_loading'));
+            gooeyToast.error(t('common:messages.error_loading'));
             logger.error(err);
         } finally {
             setLoading(false);
@@ -111,9 +111,9 @@ export const useAjustementsData = () => {
             link.remove();
             window.URL.revokeObjectURL(url);
 
-            toast.success(t('common:messages.export_success'));
+            gooeyToast.success(t('common:messages.export_success'));
         } catch (err) {
-            toast.error(t('common:messages.export_error'));
+            gooeyToast.error(t('common:messages.export_error'));
             logger.error(err);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps

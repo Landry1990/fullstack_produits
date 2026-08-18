@@ -3,7 +3,7 @@ import { PackageOpen, Calendar, Download, RefreshCw, Banknote, Printer, Search, 
 import api from '../services/api';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import toast, { Toaster } from 'react-hot-toast';
+import { gooeyToast, GoeyToaster } from 'goey-toast';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 import { writePrintDocument, escHtml } from '../utils/print/printHelpers';
 import { getLocale } from '../utils/dateUtils';
@@ -54,7 +54,7 @@ export default function StockUGReportShadcn() {
       setData(response.data);
     } catch (error) {
       logger.error('Error fetching UG report:', error);
-      toast.error(t('common:messages.error_loading'));
+      gooeyToast.error(t('common:messages.error_loading'));
     } finally {
       setLoading(false);
     }
@@ -236,7 +236,7 @@ export default function StockUGReportShadcn() {
 
   return (
     <div className="h-full flex flex-col bg-base-200 p-3 sm:p-4 lg:p-6">
-      <Toaster position="top-right" />
+      <GoeyToaster position="top-right" />
 
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}

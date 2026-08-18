@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import {
   CalendarDays, Settings, FileText, Sparkles, Send, ChevronLeft, ChevronRight,
@@ -100,10 +100,10 @@ function ConfigTab() {
   const saveMutation = useMutation({
     mutationFn: (data: Partial<ShiftConfig>) => planningService.updateConfig(data),
     onSuccess: () => {
-      toast.success(t('toast.config_saved'));
+      gooeyToast.success(t('gooeyToast.config_saved'));
       qc.invalidateQueries({ queryKey: ['shift-config'] });
     },
-    onError: () => toast.error(t('toast.config_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.config_error')),
   });
 
   if (isLoading) {
@@ -252,30 +252,30 @@ function TeamsTab() {
   const createMutation = useMutation({
     mutationFn: (data: typeof formData) => planningService.createTeam(data),
     onSuccess: () => {
-      toast.success(t('toast.team_created'));
+      gooeyToast.success(t('gooeyToast.team_created'));
       qc.invalidateQueries({ queryKey: ['teams'] });
       resetForm();
     },
-    onError: () => toast.error(t('toast.team_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.team_error')),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: typeof formData }) => planningService.updateTeam(id, data),
     onSuccess: () => {
-      toast.success(t('toast.team_updated'));
+      gooeyToast.success(t('gooeyToast.team_updated'));
       qc.invalidateQueries({ queryKey: ['teams'] });
       resetForm();
     },
-    onError: () => toast.error(t('toast.team_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.team_error')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => planningService.deleteTeam(id),
     onSuccess: () => {
-      toast.success(t('toast.team_deleted'));
+      gooeyToast.success(t('gooeyToast.team_deleted'));
       qc.invalidateQueries({ queryKey: ['teams'] });
     },
-    onError: () => toast.error(t('toast.team_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.team_error')),
   });
 
   const resetForm = () => {
@@ -535,56 +535,56 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
   const createScheduleMutation = useMutation({
     mutationFn: () => planningService.createSchedule(effectiveMonthISO),
     onSuccess: () => {
-      toast.success(t('toast.schedule_created'));
+      gooeyToast.success(t('gooeyToast.schedule_created'));
       qc.invalidateQueries({ queryKey: ['shift-schedule', effectiveMonthISO] });
     },
-    onError: () => toast.error(t('toast.schedule_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.schedule_error')),
   });
 
   const generateMutation = useMutation({
     mutationFn: (id: number) => planningService.generateSchedule(id),
     onSuccess: () => {
-      toast.success(t('toast.generated'));
+      gooeyToast.success(t('gooeyToast.generated'));
       qc.invalidateQueries({ queryKey: ['shift-schedule', effectiveMonthISO] });
     },
-    onError: () => toast.error(t('toast.generate_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.generate_error')),
   });
 
   const generateFullMutation = useMutation({
     mutationFn: (id: number) => planningService.generateSchedule(id, 1),
     onSuccess: () => {
-      toast.success(t('toast.generated_full'));
+      gooeyToast.success(t('gooeyToast.generated_full'));
       qc.invalidateQueries({ queryKey: ['shift-schedule', effectiveMonthISO] });
     },
-    onError: () => toast.error(t('toast.generate_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.generate_error')),
   });
 
   const publishMutation = useMutation({
     mutationFn: (id: number) => planningService.publishSchedule(id),
     onSuccess: () => {
-      toast.success(t('toast.published'));
+      gooeyToast.success(t('gooeyToast.published'));
       qc.invalidateQueries({ queryKey: ['shift-schedule', effectiveMonthISO] });
     },
-    onError: () => toast.error(t('toast.publish_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.publish_error')),
   });
 
   const sendToOperatorsMutation = useMutation({
     mutationFn: (id: number) => planningService.sendScheduleToOperators(id),
     onSuccess: (data) => {
-      toast.success(t('toast.schedule_sent', { count: data.sent, month: data.month }));
+      gooeyToast.success(t('gooeyToast.schedule_sent', { count: data.sent, month: data.month }));
     },
-    onError: () => toast.error(t('toast.schedule_send_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.schedule_send_error')),
   });
 
   const updateAssignmentMutation = useMutation({
     mutationFn: ({ scheduleId, data }: { scheduleId: number; data: { user_id: number; date: string; shift_type: ShiftType } }) =>
       planningService.updateAssignment(scheduleId, data),
     onSuccess: () => {
-      toast.success(t('toast.assignment_updated'));
+      gooeyToast.success(t('gooeyToast.assignment_updated'));
       qc.invalidateQueries({ queryKey: ['shift-schedule', effectiveMonthISO] });
       setEditingCell(null);
     },
-    onError: () => toast.error(t('toast.assignment_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.assignment_error')),
   });
 
   const days = useMemo(() => viewMode === 'month'
@@ -865,31 +865,31 @@ function LeavesTab({ isAdmin }: { isAdmin: boolean }) {
   const createMutation = useMutation({
     mutationFn: (data: typeof formData) => planningService.createLeaveRequest(data),
     onSuccess: () => {
-      toast.success(t('toast.leave_created'));
+      gooeyToast.success(t('gooeyToast.leave_created'));
       qc.invalidateQueries({ queryKey: ['leave-requests'] });
       qc.invalidateQueries({ queryKey: ['leave-balance'] });
       setShowForm(false);
       setFormData({ start_date: '', end_date: '', leave_type: 'CONGE', notes: '' });
     },
-    onError: () => toast.error(t('toast.leave_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.leave_error')),
   });
 
   const approveMutation = useMutation({
     mutationFn: (id: number) => planningService.approveLeave(id),
     onSuccess: () => {
-      toast.success(t('toast.leave_approved'));
+      gooeyToast.success(t('gooeyToast.leave_approved'));
       qc.invalidateQueries({ queryKey: ['leave-requests'] });
     },
-    onError: () => toast.error(t('toast.leave_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.leave_error')),
   });
 
   const rejectMutation = useMutation({
     mutationFn: (id: number) => planningService.rejectLeave(id),
     onSuccess: () => {
-      toast.success(t('toast.leave_rejected'));
+      gooeyToast.success(t('gooeyToast.leave_rejected'));
       qc.invalidateQueries({ queryKey: ['leave-requests'] });
     },
-    onError: () => toast.error(t('toast.leave_error')),
+    onError: () => gooeyToast.error(t('gooeyToast.leave_error')),
   });
 
   return (

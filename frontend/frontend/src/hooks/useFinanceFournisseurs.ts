@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import financeService from '../services/financeService';
 import fournisseurService from '../services/fournisseurService';
 import type { PaiementFournisseur, Fournisseur } from '../types';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useInvalidateSupplierDashboard } from './useSupplierDashboard';
 import { logger } from '../utils/logger'
 
@@ -20,7 +20,7 @@ export function useFinanceFournisseurs() {
             setFournisseurs(Array.isArray(data) ? data : (data.results || []));
         } catch (error) {
             logger.error('Erreur lors du chargement des fournisseurs:', error);
-            toast.error(t('suppliers:messages.load_suppliers_error'));
+            gooeyToast.error(t('suppliers:messages.load_suppliers_error'));
         }
     }, [t]);
 
@@ -31,7 +31,7 @@ export function useFinanceFournisseurs() {
             setPaiements(Array.isArray(data) ? data : (data.results || []));
         } catch (error) {
             logger.error('Erreur lors du chargement des paiements:', error);
-            toast.error(t('suppliers:messages.load_payments_error'));
+            gooeyToast.error(t('suppliers:messages.load_payments_error'));
         } finally {
             setLoading(false);
         }
@@ -40,7 +40,7 @@ export function useFinanceFournisseurs() {
     const createPaiement = async (data: Partial<PaiementFournisseur>) => {
         try {
             const result = await financeService.createPaiement(data);
-            toast.success(t('suppliers:messages.payment_saved'));
+            gooeyToast.success(t('suppliers:messages.payment_saved'));
             fetchPaiements(data.fournisseur);
             fetchFournisseurs();
             invalidateDashboard();
@@ -49,7 +49,7 @@ export function useFinanceFournisseurs() {
             logger.error('Erreur lors de l\'enregistrement du paiement:', error);
             const err = error as { response?: { data?: { detail?: string } } };
             const msg = err.response?.data?.detail || t('suppliers:messages.payment_save_error');
-            toast.error(msg);
+            gooeyToast.error(msg);
             throw error;
         }
     };
@@ -57,13 +57,13 @@ export function useFinanceFournisseurs() {
     const deletePaiement = async (id: number) => {
         try {
             await financeService.deletePaiement(id);
-            toast.success(t('suppliers:messages.payment_deleted'));
+            gooeyToast.success(t('suppliers:messages.payment_deleted'));
             setPaiements(prev => prev.filter(p => p.id !== id));
             fetchFournisseurs();
             invalidateDashboard();
         } catch (error) {
             logger.error('Erreur lors de la suppression du paiement:', error);
-            toast.error(t('suppliers:messages.payment_delete_error'));
+            gooeyToast.error(t('suppliers:messages.payment_delete_error'));
         }
     };
 

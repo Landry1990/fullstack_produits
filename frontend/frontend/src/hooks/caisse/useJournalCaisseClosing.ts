@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import { normalizeNumberInput } from '../../utils/formatters';
 import { toApiDateTime, toApiDateEnd } from '../../utils/dateUtils';
@@ -142,7 +142,7 @@ export function useJournalCaisseClosing({
         mouvements_manuels: manualMovements.map(m => ({ motif: m.motif, montant: m.montant, type: m.type }))
       });
 
-      toast.success(t('messages.close_success'));
+      gooeyToast.success(t('messages.close_success'));
       const completeData = response.data.cloture;
       if (completeData) {
         setClosingTotals(completeData);
@@ -158,7 +158,7 @@ export function useJournalCaisseClosing({
       logger.error('Erreur clôture:', err);
       const errorMessage = getApiErrorDetail(err, err instanceof Error ? err.message : 'Erreur inconnue');
       setError(`${t('messages.close_error')}: ${errorMessage}`);
-      toast.error(errorMessage);
+      gooeyToast.error(errorMessage);
     } finally {
       setLoading(false);
     }

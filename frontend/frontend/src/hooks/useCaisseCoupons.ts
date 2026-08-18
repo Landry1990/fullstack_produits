@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import api from '../services/api'
 import type { Facture, CouponMonnaie } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
@@ -48,7 +48,7 @@ export const useCaisseCoupons = ({
     factureId: number | null
   ) => {
     if (!montant || Number(montant) <= 0) {
-      toast.error(t('messages.invalid_amount'))
+      gooeyToast.error(t('messages.invalid_amount'))
       return
     }
 
@@ -61,7 +61,7 @@ export const useCaisseCoupons = ({
       }
 
       const { data } = await api.post<CouponMonnaie>('coupons/', payload)
-      toast.success(t('messages.coupon_generated', { numero: data.numero }))
+      gooeyToast.success(t('messages.coupon_generated', { numero: data.numero }))
 
       setCoupons(prev => [data, ...prev])
       setIsGenererCouponModalOpen(false)
@@ -70,7 +70,7 @@ export const useCaisseCoupons = ({
       onSuccess?.()
     } catch (err) {
       logger.error('Erreur génération coupon:', err)
-      toast.error(getApiErrorDetail(err, t('messages.error_generation')))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.error_generation')))
     } finally {
       setLoading(false)
     }
@@ -90,11 +90,11 @@ export const useCaisseCoupons = ({
         setCouponTrouve(results[0])
         setIsDetailsCouponModalOpen(true)
       } else {
-        toast.error(t('messages.coupon_not_found'))
+        gooeyToast.error(t('messages.coupon_not_found'))
       }
     } catch (err) {
       logger.error('Erreur recherche coupon:', err)
-      toast.error(t('messages.search_error'))
+      gooeyToast.error(t('messages.search_error'))
     } finally {
       setLoading(false)
     }
@@ -105,7 +105,7 @@ export const useCaisseCoupons = ({
     facture: Facture
   ) => {
     if (coupon.status !== 'ACTIF') {
-      toast.error(t('messages.coupon_not_active'))
+      gooeyToast.error(t('messages.coupon_not_active'))
       return
     }
 
@@ -114,12 +114,12 @@ export const useCaisseCoupons = ({
       id => couponsParFacture[Number(id)]?.id === coupon.id
     )
     if (existingFactureId && Number(existingFactureId) !== facture.id) {
-      toast.error(t('messages.coupon_already_applied'))
+      gooeyToast.error(t('messages.coupon_already_applied'))
       return
     }
 
     setCouponsParFacture(prev => ({ ...prev, [facture.id]: coupon }))
-    toast.success(t('messages.coupon_applied_to', {
+    gooeyToast.success(t('messages.coupon_applied_to', {
       numero: coupon.numero,
       ticket: facture.session_ticket_number || facture.numero_facture
     }))
@@ -131,7 +131,7 @@ export const useCaisseCoupons = ({
       delete updated[factureId]
       return updated
     })
-    toast(t('messages.coupon_removed'))
+    gooeyToast(t('messages.coupon_removed'))
   }, [setCouponsParFacture, t])
 
   const utiliserCouponApresEncaissement = useCallback(async (couponId: number, factureId: number) => {

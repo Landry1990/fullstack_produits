@@ -1,7 +1,7 @@
 import { useEffect, type RefObject } from 'react'
 import { usePosteCaisseMode } from '../context/PosteCaisseModeContext'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import type { Facture } from '../types'
 
 interface UseFacturationKeyboardShortcutsProps {
@@ -175,11 +175,11 @@ export function useFacturationKeyboardShortcuts({
         e.preventDefault()
         if (isPosMode && activePoste) {
           if (lignesFacture.length > 0) {
-            toast.error(t('messages.close_pos_cart_not_empty'))
+            gooeyToast.error(t('messages.close_pos_cart_not_empty'))
             return
           }
           closePoste(false).catch(() => {
-            toast.error(t('messages.close_pos_error'))
+            gooeyToast.error(t('messages.close_pos_error'))
           })
         }
         return

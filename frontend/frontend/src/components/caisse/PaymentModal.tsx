@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import type { Facture, CouponMonnaie } from '../../types'
 import PremiumModal from '../common/PremiumModal'
 import { getCaissePaymentModes, getPaymentModeLabel } from '../../config/paymentModes'
@@ -112,7 +112,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         .reduce((acc, p) => acc + p.montant, 0)
       
       if (montant + alreadyPaidWithDepot > soldeDepot) {
-        toast.error(t('messages.insufficient_deposit'))
+        gooeyToast.error(t('messages.insufficient_deposit'))
         return
       }
     }

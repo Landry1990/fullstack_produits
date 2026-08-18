@@ -1,4 +1,3 @@
-import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
     PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight,
@@ -97,7 +96,6 @@ const StockAnalysis = () => {
 
     return (
         <div className="h-screen overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
-            <Toaster position="top-right" />
 
             <div className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col">
                 {/* Header */}

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { escHtml, writePrintDocument } from '../utils/print/printHelpers';
 import { usePharmacySettings } from './usePharmacySettings';
 import { formatDateTime } from '../utils/dateUtils';
@@ -278,7 +278,7 @@ function usePrint(): UsePrintReturn {
    */
   const openPrintPage = useCallback((url: string) => {
     const w = window.open(url, '_blank');
-    if (!w) toast.error(t('popup_blocked'));
+    if (!w) gooeyToast.error(t('popup_blocked'));
   }, [t]);
 
   /**

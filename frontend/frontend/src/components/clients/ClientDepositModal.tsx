@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
 import { Plus, Minus, History, CreditCard, Banknote, Calendar } from 'lucide-react'
 import PremiumModal from '../common/PremiumModal'
@@ -43,7 +43,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
             setHistory(data.results || data)
         } catch (err) {
             logger.error(err)
-            toast.error(t('common:messages.error_loading'))
+            gooeyToast.error(t('common:messages.error_loading'))
         } finally {
             setLoadingHistory(false)
         }
@@ -53,12 +53,12 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
         e.preventDefault()
         const amount = parseFloat(montant)
         if (isNaN(amount) || amount <= 0) {
-            toast.error(t('common:messages.invalid_amount'))
+            gooeyToast.error(t('common:messages.invalid_amount'))
             return
         }
 
         if (type === 'RETRAIT' && amount > parseFloat(client.solde_depot || '0')) {
-            toast.error(t('common:messages.insufficient_deposit'))
+            gooeyToast.error(t('common:messages.insufficient_deposit'))
             return
         }
 
@@ -70,14 +70,14 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                 mode_paiement: modePaiement,
                 notes
             })
-            toast.success(t('common:messages.saved'))
+            gooeyToast.success(t('common:messages.saved'))
             setMontant('')
             setNotes('')
             if (onSuccess) onSuccess()
             setActiveTab('history')
         } catch (err: unknown) {
             logger.error(err)
-            toast.error(err.response?.data?.error || t('common:messages.error_saving'))
+            gooeyToast.error(err.response?.data?.error || t('common:messages.error_saving'))
         } finally {
             setLoading(false)
         }

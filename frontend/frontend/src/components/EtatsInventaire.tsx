@@ -10,7 +10,7 @@ import {
   SlidersHorizontal, Eye, Building2, Tag, FlaskConical,
   Grid3X3, Info, ChevronDown
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { downloadBlob } from '../utils/excelExport';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -163,9 +163,9 @@ export default function EtatsInventaire() {
       });
       const filename = `listing_${source}_${groupBy}_${new Date().toISOString().slice(0, 10)}.xlsx`;
       downloadBlob(res.data, filename);
-      toast.success(t('stock:etats.excel_success'));
+      gooeyToast.success(t('stock:etats.excel_success'));
     } catch {
-      toast.error(t('stock:etats.excel_error'));
+      gooeyToast.error(t('stock:etats.excel_error'));
     } finally {
       setExporting(false);
     }

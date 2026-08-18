@@ -17,7 +17,7 @@ import {
 import api from '../../services/api';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import Commandes from '../Commandes';
 import { useCommandesStore } from '../../stores/useCommandesStore';
 import { Button } from '../ui/Button';
@@ -132,7 +132,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       setTotalCount(response.data.count);
     } catch (error) {
       logger.error('Error fetching divers sales:', error);
-      toast.error(t('divers.error_load_detail'));
+      gooeyToast.error(t('divers.error_load_detail'));
     } finally {
       setLoading(false);
     }
@@ -154,7 +154,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       setTotalCount(response.data.count);
     } catch (error) {
       logger.error('Error fetching daily divers sales:', error);
-      toast.error(t('divers.error_load_daily'));
+      gooeyToast.error(t('divers.error_load_daily'));
     } finally {
       setDailyLoading(false);
     }
@@ -198,7 +198,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
       setStockData(response.data);
     } catch (error) {
       logger.error('Error fetching divers stock:', error);
-      toast.error(t('divers.error_load_stock'));
+      gooeyToast.error(t('divers.error_load_stock'));
     } finally {
       setStockLoading(false);
     }

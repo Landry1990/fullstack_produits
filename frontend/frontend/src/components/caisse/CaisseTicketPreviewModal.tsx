@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FileText, Receipt } from 'lucide-react'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import PremiumModal from '../common/PremiumModal'
 import { TicketTemplate } from '../printing/TicketTemplate'
 import { ClientNameModal } from '../sales/modals/ClientNameModal'
@@ -69,7 +69,7 @@ export function CaisseTicketPreviewModal({
     preparePrintAuthSync()
     const printWindow = window.open(url, '_blank', 'noopener,noreferrer')
     if (!printWindow) {
-      toast.error(t('common:popup_blocked'))
+      gooeyToast.error(t('common:popup_blocked'))
     }
   }, [ticket, t])
 
@@ -84,16 +84,16 @@ export function CaisseTicketPreviewModal({
       await api.patch(`factures/${pendingFacture.id}/`,
         { client_name_override: upperName }
       )
-      toast.success(t('common:messages.saved'))
+      gooeyToast.success(t('common:messages.saved'))
     } catch (err) {
       console.error('Erreur mise à jour nom client facture :', err)
-      toast.error(t('common:save_error'))
+      gooeyToast.error(t('common:save_error'))
     }
     const url = `/app/print-invoice/${pendingFacture.id}${upperName ? `?client_name=${encodeURIComponent(upperName)}` : ''}`
     if (printWindow) {
       printWindow.location.href = url
     } else {
-      toast.error(t('common:popup_blocked'))
+      gooeyToast.error(t('common:popup_blocked'))
     }
     setShowClientNameModal(false)
     setPendingFacture(null)
@@ -152,7 +152,7 @@ export function CaisseTicketPreviewModal({
     const content = ticketElement.outerHTML
     const win = window.open('about:blank', '_blank', 'noopener,height=800,width=600')
     if (!win) {
-      toast.error(t('common:popup_blocked'))
+      gooeyToast.error(t('common:popup_blocked'))
       return
     }
     const html = buildTicketPrintHtml(ticketWidth, content, styleTags)

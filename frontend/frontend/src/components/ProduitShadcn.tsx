@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import {
   Package, Upload, RefreshCw, Search, X,
   ChevronLeft, ChevronRight, AlertTriangle,
@@ -169,7 +169,7 @@ export default function ProduitShadcn() {
   /* ── Handlers ── */
   const handleDelete = async (produit: ProduitModel) => {
     if (!user?.is_superuser && !user?.profile?.can_delete_product && !user?.can_delete_product) {
-      toast.error(t('products:messages.access_denied_delete')); return
+      gooeyToast.error(t('products:messages.access_denied_delete')); return
     }
     const ok = await confirm({
       title: t('products:messages.delete_confirm_title'),
@@ -186,7 +186,7 @@ export default function ProduitShadcn() {
       await api.delete(`produits/${produit.id}/`)
       setSelectedProduit(null)
       refetch()
-      toast.success(t('products:messages.delete_success'))
+      gooeyToast.success(t('products:messages.delete_success'))
     }
     setIsPasswordOpen(true)
   }
@@ -204,12 +204,12 @@ export default function ProduitShadcn() {
         newLotExpiration: adjustForm.new_lot_expiration || undefined
       })
       const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : ''
-      toast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
+      gooeyToast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
       setSelectedProduit(prev => prev ? { ...prev, stock: (prev.stock ?? 0) + (data.quantity_change ?? 0), stock_reserve: (prev.stock_reserve ?? 0) + ((data as unknown as Record<string, number>).reserve_change ?? 0) } : null)
       setIsAdjustOpen(false)
       refetch()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('products:messages.adjust_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('products:messages.adjust_error')))
     }
   }
 
@@ -217,7 +217,7 @@ export default function ProduitShadcn() {
     e.preventDefault()
     if (!selectedProduit) return
     if (!user?.is_superuser && !user?.profile?.can_adjust_stock && !user?.can_adjust_stock) {
-      toast.error(t('products:messages.access_denied_adjust')); return
+      gooeyToast.error(t('products:messages.access_denied_adjust')); return
     }
     setIsAdjustOpen(false)
     setPasswordConfig({
@@ -237,24 +237,24 @@ export default function ProduitShadcn() {
     try {
       const response = await api.post(`produits/${produit.id}/toggle_active/`)
       const isActive = response.data.is_active
-      toast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
+      gooeyToast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
       setSelectedProduit(prev => prev ? { ...prev, is_active: isActive } : null)
       refetch()
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
+    } catch (err) { gooeyToast.error(getApiErrorDetail(err, t('products:messages.status_error'))) }
   }
 
   const handleGenerateLabels = async (produit: ProduitModel) => {
     const qtyStr = prompt(t('products:messages.labels_prompt', { name: produit.name, defaultValue: `Quantit\u00e9 \u00e9tiquettes pour ${produit.name}` }), "1")
     if (!qtyStr) return
     const quantity = parseInt(qtyStr, 10)
-    if (isNaN(quantity) || quantity <= 0) { toast.error(t('products:messages.invalid_quantity')); return }
+    if (isNaN(quantity) || quantity <= 0) { gooeyToast.error(t('products:messages.invalid_quantity')); return }
     try {
       const resp = await api.post('produits/generate_labels/', { products: [{ id: produit.id, quantity }] }, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([resp.data]))
       const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${produit.name}.pdf`)
       document.body.appendChild(link); link.click(); link.remove()
       window.URL.revokeObjectURL(url)
-    } catch (err) { toast.error(getApiErrorDetail(err, t('products:messages.generation_error'))) }
+    } catch (err) { gooeyToast.error(getApiErrorDetail(err, t('products:messages.generation_error'))) }
   }
 
   const handleTransferToRayon = async (produit: ProduitModel) => {
@@ -264,14 +264,14 @@ export default function ProduitShadcn() {
     const qtyStr = prompt(t('products:messages.transfer_prompt', { reserve: produit.stock_reserve, capacity: produit.capacite_rayon, needed }), String(suggest))
     if (qtyStr === null) return
     const qty = parseInt(qtyStr, 10)
-    if (isNaN(qty) || qty <= 0) { toast.error(t('products:messages.invalid_quantity')); return }
+    if (isNaN(qty) || qty <= 0) { gooeyToast.error(t('products:messages.invalid_quantity')); return }
     setTransferLoading(true)
     try {
       await api.post(`produits/${produit.id}/transfer_to_shelf/`, { quantity: qty })
-      toast.success(t('products:messages.transfer_success', { count: qty }))
+      gooeyToast.success(t('products:messages.transfer_success', { count: qty }))
       refetch()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('products:messages.transfer_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('products:messages.transfer_error')))
     } finally { setTransferLoading(false) }
   }
 
@@ -284,7 +284,7 @@ export default function ProduitShadcn() {
         const { data } = await api.get(`factures/${item.facture}/`)
         setSelectedFacture(data)
       } catch {
-        toast.error(t('products:messages.facture_load_error'))
+        gooeyToast.error(t('products:messages.facture_load_error'))
         setShowSalesModal(false)
       } finally {
         setLoadingFacture(false)
@@ -656,7 +656,7 @@ export default function ProduitShadcn() {
       <ProduitCreateModal
         open={isEditOpen}
         onClose={() => setIsEditOpen(false)}
-        onSuccess={(updated: ProduitModel) => { setSelectedProduit(updated); setIsEditOpen(false); refetch(); toast.success(t('products:messages.update_success')); }}
+        onSuccess={(updated: ProduitModel) => { setSelectedProduit(updated); setIsEditOpen(false); refetch(); gooeyToast.success(t('products:messages.update_success')); }}
         produitsEndpoint="produits/"
         initialData={editForm}
         rayons={rayons}
@@ -679,7 +679,7 @@ export default function ProduitShadcn() {
       <ProduitCreateModal
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onCreated={(produit: ProduitModel) => { refetch(); setIsCreateOpen(false); setSelectedProduit(produit); toast.success(t('products:messages.create_success_named', { name: produit.name })); }}
+        onCreated={(produit: ProduitModel) => { refetch(); setIsCreateOpen(false); setSelectedProduit(produit); gooeyToast.success(t('products:messages.create_success_named', { name: produit.name })); }}
         produitsEndpoint={'produits/'}
         rayons={rayons}
         fournisseurs={fournisseurs}

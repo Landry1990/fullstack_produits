@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { getApiErrorDetail } from '../utils/errorHandling';
@@ -63,13 +63,13 @@ export function useCommandeActions({
         if (!isAutoSave) setExecutingAction(true);
 
         if (!commandeData.fournisseur) {
-            if (!isAutoSave) toast.error(t('messages.provider_required'));
+            if (!isAutoSave) gooeyToast.error(t('messages.provider_required'));
             if (!isAutoSave) setExecutingAction(false);
             return;
         }
 
         if (viewMode === 'EDIT' && !selectedCommande?.id) {
-            if (!isAutoSave) toast.error(t('messages.no_selection'));
+            if (!isAutoSave) gooeyToast.error(t('messages.no_selection'));
             if (!isAutoSave) setExecutingAction(false);
             return;
         }
@@ -81,7 +81,7 @@ export function useCommandeActions({
             if (viewMode === 'CREATE') {
                 const newCmd = await commandeService.create(commandeData);
                 commandeId = newCmd.id;
-                if (!isAutoSave) toast.success(t('messages.create_success', { id: commandeId }));
+                if (!isAutoSave) gooeyToast.success(t('messages.create_success', { id: commandeId }));
 
                 if (isAutoSave) {
                     const createdCmd = await commandeService.getById(commandeId);
@@ -90,7 +90,7 @@ export function useCommandeActions({
                 }
             } else if (viewMode === 'EDIT' && commandeId) {
                 await commandeService.update(commandeId, commandeData);
-                if (!isAutoSave) toast.success(t('messages.update_success'));
+                if (!isAutoSave) gooeyToast.success(t('messages.update_success'));
             }
 
             if (!commandeId) {
@@ -135,7 +135,7 @@ export function useCommandeActions({
             }
 
         } catch (err) {
-            toast.error(getApiErrorDetail(err, t('messages.save_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('messages.save_error')));
         } finally {
             if (!isAutoSave) setExecutingAction(false);
         }
@@ -148,13 +148,13 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             await commandeService.delete(commande.id, sudoCredentials);
-            toast.success(t('messages.delete_success'));
+            gooeyToast.success(t('messages.delete_success'));
             removeCommandeFromCache(queryClient, commande.id);
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
         } catch (err) {
-            toast.error(getApiErrorDetail(err, t('messages.delete_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('messages.delete_error')));
             throw err;
         } finally {
             setExecutingAction(false);
@@ -166,13 +166,13 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             const res = await commandeService.cloturer(commande.id, sudoCredentials);
-            toast.success(res.message || t('messages.close_success'));
+            gooeyToast.success(res.message || t('messages.close_success'));
             fetchCommandes();
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
             setViewMode('DETAILS');
         } catch (err) {
-            toast.error(getApiErrorDetail(err, t('messages.close_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('messages.close_error')));
             throw err;
         } finally {
             setExecutingAction(false);
@@ -186,12 +186,12 @@ export function useCommandeActions({
             const newStatus = commande.status === 'ATT' ? 'PREP' : 'ATT';
             await commandeService.update(commande.id, { status: newStatus });
             const statusDisplay = newStatus === 'ATT' ? t('status.pending') : t('status.prep');
-            toast.success(t('messages.status_update_success', { status: statusDisplay }));
+            gooeyToast.success(t('messages.status_update_success', { status: statusDisplay }));
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
             fetchCommandes();
         } catch (err) {
-            toast.error(getApiErrorDetail(err, t('messages.status_change_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('messages.status_change_error')));
         } finally {
             setExecutingAction(false);
         }
@@ -202,12 +202,12 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             await commandeService.annulerReception(commande.id, sudoCredentials);
-            toast.success(t('messages.cancel_reception_success'));
+            gooeyToast.success(t('messages.cancel_reception_success'));
             fetchCommandes();
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
         } catch (err) {
-            toast.error(getApiErrorDetail(err, t('messages.cancel_reception_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('messages.cancel_reception_error')));
             throw err;
         } finally {
             setExecutingAction(false);
@@ -283,7 +283,7 @@ export function useCommandeActions({
 
             const win = window.open('about:blank', '', 'height=800,width=1000');
             if (!win) {
-                toast.error(t('messages.popup_blocked'));
+                gooeyToast.error(t('messages.popup_blocked'));
                 return;
             }
 
@@ -520,7 +520,7 @@ export function useCommandeActions({
             `);
 
         } catch {
-            toast.error(t('messages.print_error'));
+            gooeyToast.error(t('messages.print_error'));
         } finally {
             setExecutingAction(false);
         }
@@ -531,13 +531,13 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             await commandeService.bulkDelete(ids, sudoCredentials);
-            toast.success(t('messages.bulk_delete_success', { count: ids.length }));
+            gooeyToast.success(t('messages.bulk_delete_success', { count: ids.length }));
             removeCommandesFromCache(queryClient, ids);
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
         } catch (err) {
-            toast.error(t('messages.bulk_delete_error'));
+            gooeyToast.error(t('messages.bulk_delete_error'));
             throw err;
         } finally {
             setExecutingAction(false);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, type FormEvent, useRef, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { useConfirm } from './useConfirm';
@@ -258,11 +258,11 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const onSave = (e: FormEvent) => {
       e.preventDefault();
       if (commandeProduits.length === 0) {
-          toast.error(t('orders:messages.add_at_least_one'));
+          gooeyToast.error(t('orders:messages.add_at_least_one'));
           return;
       }
       if (isMiseEnPlace && !payeALaCloture && !delaiPaiementNegocieJours.trim()) {
-          toast.error(t('orders:messages.mise_en_place_delai_required'));
+          gooeyToast.error(t('orders:messages.mise_en_place_delai_required'));
           return;
       }
       const cleanCommande: Partial<Commande> = {

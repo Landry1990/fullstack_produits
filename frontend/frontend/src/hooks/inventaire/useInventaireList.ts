@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../useConfirm';
 import { getApiErrorDetail } from '../../utils/errorHandling';
@@ -101,7 +101,7 @@ export const useInventaireList = () => {
         } catch (error) {
             if (error instanceof Error && error.name === 'CanceledError') return;
             logger.error(error);
-            toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
+            gooeyToast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement' }));
         } finally {
             setLoading(false);
         }
@@ -147,12 +147,12 @@ export const useInventaireList = () => {
         setDeleting(true);
         try {
             await api.delete(`inventaires/${id}/`);
-            toast.success(t('common:messages.success_delete'));
+            gooeyToast.success(t('common:messages.success_delete'));
             setInventaires(prev => prev.filter(inv => inv.id !== id));
             setTotalCount(prev => Math.max(0, prev - 1));
         } catch (error) {
             logger.error(error);
-            toast.error(getApiErrorDetail(error, t('common:messages.error_deleting')));
+            gooeyToast.error(getApiErrorDetail(error, t('common:messages.error_deleting')));
         } finally {
             setDeleting(false);
         }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import type { Facture, TicketCaisse, Client, FactureProduit, Paiement, PaymentDetails } from '../types';
 import { safeStorage } from '../utils/storage';
 import { PAYMENT_MODES } from '../config/paymentModes';
@@ -31,7 +31,7 @@ const printInvoicePDF = (factureId: number, clientName?: string | null, type?: s
         'PrintInvoice',
         `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
     );
-    if (!w) toast.error(t('common:popup_blocked'));
+    if (!w) gooeyToast.error(t('common:popup_blocked'));
 };
 
 const isGenericClient = (facture: Facture): boolean => {
@@ -67,7 +67,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 setSelectedFacture(response.data);
             } catch (error) {
                 logger.error("Erreur chargement détails", error);
-                toast.error(t('messages.load_details_error'));
+                gooeyToast.error(t('messages.load_details_error'));
             } finally {
                 setDetailsLoading(false);
             }
@@ -121,7 +121,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         } catch (error) {
             logger.error('Erreur sauvegarde nom client:', error);
-            toast.error(t('messages.save_error'));
+            gooeyToast.error(t('messages.save_error'));
             // Fallback print
             printInvoicePDF(pendingPrintFacture.id, clientNameInput);
         } finally {
@@ -136,15 +136,15 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Charger détails si manquants
         if (!facture.produits || facture.produits.length === 0) {
-            const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
+            const toastId = gooeyToast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
             try {
                 const response = await api.get(`factures/${facture.id}/`);
                 fullFacture = response.data;
-                toast.dismiss(toastId);
+                gooeyToast.dismiss(toastId);
             } catch (error) {
                 logger.error("Erreur chargement pour ticket", error);
-                toast.error(t('messages.load_details_error'));
-                toast.dismiss(toastId);
+                gooeyToast.error(t('messages.load_details_error'));
+                gooeyToast.dismiss(toastId);
                 return;
             }
         }
@@ -219,15 +219,15 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Si les produits ne sont pas complets, on charge le détail
         if (!facture.produits || facture.produits.length === 0) {
-            const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
+            const toastId = gooeyToast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
             try {
                 const response = await api.get(`factures/${facture.id}/`);
                 fullFacture = response.data;
-                toast.dismiss(toastId);
+                gooeyToast.dismiss(toastId);
             } catch (error) {
                 logger.error("Erreur chargement détails pour modification", error);
-                toast.error(t('messages.sale_details_load_error'));
-                toast.dismiss(toastId);
+                gooeyToast.error(t('messages.sale_details_load_error'));
+                gooeyToast.dismiss(toastId);
                 return;
             }
         }
@@ -245,15 +245,15 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Si les produits ne sont pas complets, on charge le détail
         if (!facture.produits || facture.produits.length === 0) {
-            const toastId = toast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
+            const toastId = gooeyToast.loading(t('messages.loading_details', { defaultValue: 'Chargement...' }));
             try {
                 const response = await api.get(`factures/${facture.id}/`);
                 fullFacture = response.data;
-                toast.dismiss(toastId);
+                gooeyToast.dismiss(toastId);
             } catch (error) {
                 logger.error("Erreur chargement détails pour duplication", error);
-                toast.error(t('messages.sale_details_load_error'));
-                toast.dismiss(toastId);
+                gooeyToast.error(t('messages.sale_details_load_error'));
+                gooeyToast.dismiss(toastId);
                 return;
             }
         }
@@ -280,7 +280,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
         // Sauvegarder la facture "dupliquée" pour le chargement dans Facturation
         safeStorage.setItem('devis_to_load', JSON.stringify(duplicatedFacture), 'local');
-        toast.success(t('messages.duplicated_to_cart', { defaultValue: 'Facture copiée vers la facturation' }));
+        gooeyToast.success(t('messages.duplicated_to_cart', { defaultValue: 'Facture copiée vers la facturation' }));
         
         // Rediriger vers la facturation
         navigate('/app/facturation');
@@ -288,11 +288,11 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
     // --- GENERER AVOIR ---
     const handleGenerateAvoir = async (facture: Facture) => {
-        const toastId = toast.loading(t('sales.messages.loading_details', { defaultValue: 'Génération de l\'avoir...' }));
+        const toastId = gooeyToast.loading(t('sales.messages.loading_details', { defaultValue: 'Génération de l\'avoir...' }));
         try {
             const response = await api.get(`factures/${facture.id}/generer_avoir/`);
             const avoirData = response.data;
-            toast.dismiss(toastId);
+            gooeyToast.dismiss(toastId);
 
             // Create a pseudo-Facture to load in Facturation
             const newDraftAvoir: Partial<Facture> = {
@@ -310,7 +310,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
 
             // Sauvegarder la facture "avoir" pour le chargement dans Facturation
             safeStorage.setItem('devis_to_load', JSON.stringify(newDraftAvoir), 'local');
-            toast.success(t('messages.avoir_to_cart', { defaultValue: 'Produits en négatif ajoutés à la facturation' }));
+            gooeyToast.success(t('messages.avoir_to_cart', { defaultValue: 'Produits en négatif ajoutés à la facturation' }));
             
             // Rediriger vers la facturation
             navigate('/app/facturation');
@@ -319,8 +319,8 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             logger.error("Erreur génération avoir", error);
             const err = error as { response?: { data?: { detail?: string } } };
             const detail = err.response?.data?.detail;
-            toast.error(detail || t('messages.avoir_generate_error'));
-            toast.dismiss(toastId);
+            gooeyToast.error(detail || t('messages.avoir_generate_error'));
+            gooeyToast.dismiss(toastId);
         }
     };
 

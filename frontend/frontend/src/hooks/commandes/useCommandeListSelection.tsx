@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Commande } from '../../types';
@@ -59,7 +59,7 @@ export function useCommandeListSelection(commandes: Commande[]): UseCommandeList
     const openMergeModal = useCallback(() => {
         const { canMerge, reason } = canMergeSelectedOrders();
         if (!canMerge) {
-            toast.error(reason || t('orders:messages.merge_impossible'));
+            gooeyToast.error(reason || t('orders:messages.merge_impossible'));
             return;
         }
         setIsMergeModalOpen(true);
@@ -68,7 +68,7 @@ export function useCommandeListSelection(commandes: Commande[]): UseCommandeList
     const handleMergeSuccess = useCallback(async (mergedCount: number, targetOrderId: number) => {
         setIsMergeModalOpen(false);
         setSelectedOrderIds(new Set());
-        toast.success(t('orders:messages.merge_success_detailed', { count: mergedCount, id: targetOrderId }), { icon: <Handshake className="h-4 w-4 text-emerald-600" /> });
+        gooeyToast.success(t('orders:messages.merge_success_detailed', { count: mergedCount, id: targetOrderId }), { icon: <Handshake className="h-4 w-4 text-emerald-600" /> });
         await queryClient.refetchQueries({ queryKey: ['commandes'] });
         await queryClient.refetchQueries({ queryKey: ['commande'] });
         setViewMode('LIST');

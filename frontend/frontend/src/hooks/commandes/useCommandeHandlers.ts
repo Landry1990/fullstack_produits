@@ -1,4 +1,4 @@
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import type { Commande, CommandeProduit, ProduitModel } from '../../types';
 import { normalizeNumberInput } from '../../utils/formatters';
 
@@ -209,12 +209,12 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
         });
 
         if (deletableIds.length === 0) {
-            toast.error(t('orders:messages.no_deletable_orders'));
+            gooeyToast.error(t('orders:messages.no_deletable_orders'));
             return;
         }
 
         if (deletableIds.length < selectedIds.length) {
-            toast.error(t('orders:messages.some_orders_closed_warning'));
+            gooeyToast.error(t('orders:messages.some_orders_closed_warning'));
         }
 
         requireSudo(

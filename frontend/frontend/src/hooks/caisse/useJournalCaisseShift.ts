@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { logger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 
@@ -53,7 +53,7 @@ export function useJournalCaisseShift({
           posteCaisseNom: poste_caisse_nom,
         });
         onShiftDetected(start, end);
-        toast.success(t('messages.shift_detected'));
+        gooeyToast.success(t('messages.shift_detected'));
       } else {
         setDetectedShift(null);
         const today = getServerDate();
@@ -61,12 +61,12 @@ export function useJournalCaisseShift({
         const endToday = getServerDate();
         endToday.setHours(23, 59, 59, 999);
         onNoShift(today, endToday);
-        toast(t('messages.no_shift_found', { defaultValue: 'Aucune activité pour ce caissier...' }));
+        gooeyToast(t('messages.no_shift_found', { defaultValue: 'Aucune activité pour ce caissier...' }));
       }
     } catch (err) {
       logger.error("Erreur détection shift:", err);
       setDetectedShift(null);
-      toast.error(t('messages.shift_error', { defaultValue: 'Erreur lors de la détection du shift' }));
+      gooeyToast.error(t('messages.shift_error', { defaultValue: 'Erreur lors de la détection du shift' }));
     } finally {
       setIsDetectingShift(false);
     }

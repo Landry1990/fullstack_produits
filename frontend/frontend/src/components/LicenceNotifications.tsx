@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { licenceService, type LicenceNotification } from '../services/licenceService';
 import { useAuth } from '../context/AuthContext';
@@ -50,9 +50,9 @@ export function LicenceNotifications() {
       await licenceService.dismissNotification(notification.id);
       dismissedIdsRef.current.add(notification.id);
       setTick(t => t + 1);
-      toast.success(t('licence.notification_dismissed'));
+      gooeyToast.success(t('licence.notification_dismissed'));
     } catch {
-      toast.error(t('licence.notification_dismiss_error'));
+      gooeyToast.error(t('licence.notification_dismiss_error'));
     }
   }, [t]);
 
@@ -68,9 +68,9 @@ export function LicenceNotifications() {
       // Afficher comme toast persistant selon la sévérité
       switch (notification.severity) {
         case 'CRITICAL':
-          toast.error(
+          gooeyToast.error(
             (t) => <LicenceToastContent notification={notification} onDismiss={() => {
-              toast.dismiss(t.id);
+              gooeyToast.dismiss(t.id);
               handleDismiss(notification);
             }} />,
             {
@@ -88,9 +88,9 @@ export function LicenceNotifications() {
           break;
 
         case 'WARNING':
-          toast.error(
+          gooeyToast.error(
             (t) => <LicenceToastContent notification={notification} onDismiss={() => {
-              toast.dismiss(t.id);
+              gooeyToast.dismiss(t.id);
               handleDismiss(notification);
             }} />,
             {
@@ -108,9 +108,9 @@ export function LicenceNotifications() {
           break;
 
         case 'INFO':
-          toast.success(
+          gooeyToast.success(
             (t) => <LicenceToastContent notification={notification} onDismiss={() => {
-              toast.dismiss(t.id);
+              gooeyToast.dismiss(t.id);
               handleDismiss(notification);
             }} />,
             {

@@ -1,7 +1,7 @@
 import React, { type FormEvent, type RefObject, useState, useCallback, lazy, Suspense } from 'react';
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { ArrowLeft, FileDown, FolderOpen, Plus, RotateCcw, Pause, Play, Check, Save, ScanLine, AlertTriangle } from 'lucide-react';
 import CommandeProductTable from './CommandeProductTable';
 import { formatCurrency } from '../../utils/formatters';
@@ -362,7 +362,7 @@ export default function CommandeForm({
                       className="size-9 text-slate-500"
                       onClick={() => {
                         if (commandeProduits.length === 0) {
-                          toast(t('orders:messages.csv_empty_order'), { icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> });
+                          gooeyToast(t('orders:messages.csv_empty_order'), { icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> });
                           return;
                         }
                         setIsExportModalOpen(true);

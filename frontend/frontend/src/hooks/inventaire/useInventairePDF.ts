@@ -1,4 +1,4 @@
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire } from '../../types';
 
@@ -10,13 +10,13 @@ export const useInventairePDF = () => {
   const generateEtatPDF = (activeInventaire: Inventaire, groupBy: string = 'rayon') => {
     if (!activeInventaire?.id) return;
     const w = window.open(`/app/printing/${activeInventaire.id}?type=INVENTAIRE_TAKE&group_by=${groupBy}`, '_blank');
-    if (!w) toast.error(t('popup_blocked'));
+    if (!w) gooeyToast.error(t('popup_blocked'));
   };
 
   const generateEcartsPDF = (activeInventaire: Inventaire, groupBy: string = 'rayon') => {
     if (!activeInventaire?.id) return;
     const w = window.open(`/app/printing/${activeInventaire.id}?type=INVENTAIRE_REPORT&group_by=${groupBy}`, '_blank');
-    if (!w) toast.error(t('popup_blocked'));
+    if (!w) gooeyToast.error(t('popup_blocked'));
   };
 
   return {

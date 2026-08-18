@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
@@ -134,11 +134,11 @@ export default function InteractionsManager() {
         setShowModal(false);
         fetchInteractions();
         fetchStats();
-        toast.success(t('common:messages.success_save'));
+        gooeyToast.success(t('common:messages.success_save'));
       })
       .catch(err => {
         logger.error(err);
-        toast.error(getApiErrorDetail(err, t('common:messages.error_saving')));
+        gooeyToast.error(getApiErrorDetail(err, t('common:messages.error_saving')));
       })
       .finally(() => setSaving(false));
   };
@@ -155,11 +155,11 @@ export default function InteractionsManager() {
       .then(() => {
         fetchInteractions();
         fetchStats();
-        toast.success(t('common:messages.success_delete'));
+        gooeyToast.success(t('common:messages.success_delete'));
       })
       .catch(err => {
         logger.error(err);
-        toast.error(getApiErrorDetail(err, t('common:messages.error_deleting')));
+        gooeyToast.error(getApiErrorDetail(err, t('common:messages.error_deleting')));
       });
   };
 
@@ -175,11 +175,11 @@ export default function InteractionsManager() {
         setUploadResult(r.data);
         fetchInteractions();
         fetchStats();
-        toast.success(t('common:messages.import_success'));
+        gooeyToast.success(t('common:messages.import_success'));
       })
       .catch(err => {
         logger.error(err);
-        toast.error(getApiErrorDetail(err, t('common:messages.error_saving')));
+        gooeyToast.error(getApiErrorDetail(err, t('common:messages.error_saving')));
       })
       .finally(() => setUploading(false));
   };

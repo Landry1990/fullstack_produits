@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import api from '../services/api'
 import type { Facture, TicketCaisse, CouponMonnaie, PaymentDetails } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
@@ -132,7 +132,7 @@ export const useCaissePayment = ({
     const montantTotal = paiementsValides.reduce((acc, p) => acc + p.montant, 0)
 
     if (montantTotal === 0) {
-      toast.error(t('messages.invalid_amount'))
+      gooeyToast.error(t('messages.invalid_amount'))
       return
     }
 
@@ -196,11 +196,11 @@ export const useCaissePayment = ({
         })
       }
 
-      toast.success(successMessage)
+      gooeyToast.success(successMessage)
       onSuccess?.()
     } catch (err) {
       logger.error('Erreur lors du paiement:', err)
-      toast.error(getApiErrorDetail(err, t('messages.save_payment_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.save_payment_error')))
     } finally {
       setLoading(false)
     }

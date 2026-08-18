@@ -10,7 +10,7 @@ import { InventaireListTable } from '../InventaireListTable';
 import Pagination from '../../ui/Pagination';
 import { useInventaireList } from '../../../hooks/inventaire/useInventaireList';
 import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { usePharmacySettings } from '../../../hooks/usePharmacySettings';
 import { generateInventorySummaryText, openWhatsApp } from '../../../utils/whatsapp';
 import type { Inventaire } from '../../../types';
@@ -56,7 +56,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
         if (!inventaire) return;
 
         if (!pharmSettings?.pharmacist_whatsapp_number) {
-            toast.error(t('inventaire.whatsapp_not_configured'));
+            gooeyToast.error(t('inventaire.whatsapp_not_configured'));
             return;
         }
 
@@ -66,10 +66,10 @@ export const InventaireList: React.FC<InventaireListProps> = ({
             const success = openWhatsApp(pharmSettings.pharmacist_whatsapp_number, text);
             
             if (success) {
-                toast.success(t('inventaire.whatsapp_prepared'), { icon: <MessageCircle className="h-4 w-4 text-[#25D366]" /> });
+                gooeyToast.success(t('inventaire.whatsapp_prepared'), { icon: <MessageCircle className="h-4 w-4 text-[#25D366]" /> });
             }
         } catch {
-            toast.error(t('inventaire.whatsapp_share_error'));
+            gooeyToast.error(t('inventaire.whatsapp_share_error'));
         } finally {
             setSharingId(null);
         }

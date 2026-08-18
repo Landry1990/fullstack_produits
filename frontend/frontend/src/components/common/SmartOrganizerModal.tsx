@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useMemo } from 'react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { Search, Sparkles, AlertCircle, ArrowRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import PremiumModal from './PremiumModal';
@@ -55,7 +55,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
             setAllProducts(res.data);
         } catch (err) {
             logger.error("Error fetching products for organizer:", err);
-            toast.error(t('stock:organisation.smart_organizer.load_error'));
+            gooeyToast.error(t('stock:organisation.smart_organizer.load_error'));
         } finally {
             setLoading(false);
         }
@@ -112,12 +112,12 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                 category_id: targetCategory.id
             });
 
-            toast.success(t('stock:organisation.smart_organizer.success_message', { count: res.data.updated_count, name: targetCategory.name }));
+            gooeyToast.success(t('stock:organisation.smart_organizer.success_message', { count: res.data.updated_count, name: targetCategory.name }));
             onSuccess();
             onClose();
         } catch (err: unknown) {
             logger.error("Error bulk categorizing:", err);
-            toast.error(err.response?.data?.detail || t('stock:organisation.smart_organizer.bulk_error'));
+            gooeyToast.error(err.response?.data?.detail || t('stock:organisation.smart_organizer.bulk_error'));
         } finally {
             setProcessing(false);
         }

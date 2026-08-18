@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation, type TFunction } from 'react-i18next';
 import { Package } from 'lucide-react';
 import { useCommandesStore } from '../../stores/useCommandesStore';
@@ -83,7 +83,7 @@ export function useCommandeNavigation({
           setViewMode('DETAILS');
         } catch (err) {
           logger.error('Erreur lors du chargement de la commande via navigation:', err);
-          toast.error(t('orders:messages.details_load_error'));
+          gooeyToast.error(t('orders:messages.details_load_error'));
         } finally {
           navigate(location.pathname, { replace: true, state: {} });
         }
@@ -107,7 +107,7 @@ export function useCommandeNavigation({
         }
       } catch (err) {
         logger.error('Erreur lors de la restauration de la commande après rechargement:', err);
-        toast.error(t('orders:messages.details_load_error'));
+        gooeyToast.error(t('orders:messages.details_load_error'));
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -216,7 +216,7 @@ export function useCommandeNavigation({
         }
 
         const msgKey = isCadencier ? 'orders:messages.products_added_from_cadencier' : 'orders:messages.products_added_from_alerts';
-        toast.success(t(msgKey, { count: newLines.length }), { icon: <Package className="h-4 w-4 text-emerald-600" /> });
+        gooeyToast.success(t(msgKey, { count: newLines.length }), { icon: <Package className="h-4 w-4 text-emerald-600" /> });
       };
 
       loadProducts();
@@ -335,7 +335,7 @@ export function useCommandeNavigation({
       setViewMode('DETAILS');
       navigate(location.pathname, { replace: true, state: { viewState: { mode: 'DETAILS', commandeId: commande.id } } });
     } catch {
-      toast.error(t('orders:messages.details_load_error'));
+      gooeyToast.error(t('orders:messages.details_load_error'));
     }
   }
 

@@ -8,7 +8,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Input } from '../shadcn/input';
 import { Textarea } from '../shadcn/textarea';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useConfirm } from '../../hooks/useConfirm';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import PremiumModal from './PremiumModal';
@@ -95,7 +95,7 @@ export default function CategoryManager({
       setCategories(Array.isArray(data) ? data : []);
     } catch (err) {
       logger.error(`Error fetching ${type}s:`, err);
-      toast.error(t('stock:organisation.category_manager.load_error', { type }));
+      gooeyToast.error(t('stock:organisation.category_manager.load_error', { type }));
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export default function CategoryManager({
       }
     } catch (err) {
       logger.error("Error fetching products:", err);
-      toast.error(t('common:messages.load_error', { defaultValue: "Erreur lors du chargement des produits" }));
+      gooeyToast.error(t('common:messages.load_error', { defaultValue: "Erreur lors du chargement des produits" }));
     } finally {
       setProductsLoading(false);
     }
@@ -163,10 +163,10 @@ export default function CategoryManager({
       link.remove();
       window.URL.revokeObjectURL(downloadUrl);
       
-      toast.success(t('common:export_success'));
+      gooeyToast.success(t('common:export_success'));
     } catch (err) {
       logger.error("Export error:", err);
-      toast.error(t('common:export_error'));
+      gooeyToast.error(t('common:export_error'));
     }
   };
 
@@ -190,7 +190,7 @@ export default function CategoryManager({
         const { data: updatedCat } = await api.put(`${basePath}${editingCategory.id}/`, payload);
         setCategories(prev => prev.map(c => c.id === updatedCat.id ? updatedCat : c));
         if (selectedCategory?.id === updatedCat.id) setSelectedCategory(updatedCat);
-        toast.success(t('stock:organisation.category_manager.success_save', { type: title }));
+        gooeyToast.success(t('stock:organisation.category_manager.success_save', { type: title }));
       } else {
         // Bulk create: filter out empty names
         const validEntries = entries.filter(en => en.name.trim() !== '');
@@ -225,16 +225,16 @@ export default function CategoryManager({
           const msgKey = createdCats.length > 1
             ? t('stock:organisation.category_manager.bulk_create_success', { count: createdCats.length, type: title })
             : t('stock:organisation.category_manager.success_save', { type: title });
-          toast.success(msgKey);
+          gooeyToast.success(msgKey);
         }
         if (errorCount > 0) {
-          toast.error(t('stock:organisation.category_manager.bulk_create_error', { count: errorCount }));
+          gooeyToast.error(t('stock:organisation.category_manager.bulk_create_error', { count: errorCount }));
         }
       }
       setEntries([{ name: '', description: '', parent: '' }]);
       setIsModalOpen(false);
     } catch {
-      toast.error(t('common:messages.error_saving'));
+      gooeyToast.error(t('common:messages.error_saving'));
     }
   };
 
@@ -249,17 +249,17 @@ export default function CategoryManager({
 
     try {
       await api.delete(`${apiPath.replace(/^\/api\//, '')}${id}/`);
-      toast.success(t('stock:organisation.category_manager.trash_success', { name }));
+      gooeyToast.success(t('stock:organisation.category_manager.trash_success', { name }));
       if (selectedCategory?.id === id) setSelectedCategory(null);
       fetchCategories();
     } catch {
-      toast.error(t('common:messages.error_deleting'));
+      gooeyToast.error(t('common:messages.error_deleting'));
     }
   };
 
   const handleDeleteAll = async () => {
     if (categories.length === 0) {
-      toast.error(t('stock:organisation.category_manager.delete_all_empty', { type }));
+      gooeyToast.error(t('stock:organisation.category_manager.delete_all_empty', { type }));
       return;
     }
 
@@ -286,10 +286,10 @@ export default function CategoryManager({
     }
 
     if (successCount > 0) {
-      toast.success(t('stock:organisation.category_manager.delete_all_success', { count: successCount, type }));
+      gooeyToast.success(t('stock:organisation.category_manager.delete_all_success', { count: successCount, type }));
     }
     if (errorCount > 0) {
-      toast.error(t('stock:organisation.category_manager.delete_all_error'));
+      gooeyToast.error(t('stock:organisation.category_manager.delete_all_error'));
     }
 
     setSelectedCategory(null);
@@ -340,7 +340,7 @@ export default function CategoryManager({
       payload[type] = selectedCategory.id;
 
       const { data: updatedProduct } = await api.patch(`produits/${product.id}/`, payload);
-      toast.success(t('stock:organisation.category_manager.product_added', { name: product.name, type }));
+      gooeyToast.success(t('stock:organisation.category_manager.product_added', { name: product.name, type }));
       
       // Update local products list
       setProducts(prev => [...prev, updatedProduct].slice().sort((a, b) => a.name.localeCompare(b.name)));
@@ -349,7 +349,7 @@ export default function CategoryManager({
       // Remove from search results to avoid double add
       setSearchResults(prev => prev.filter(p => p.id !== product.id));
     } catch {
-      toast.error(t('common:messages.error_update'));
+      gooeyToast.error(t('common:messages.error_update'));
     }
   };
 
@@ -365,11 +365,11 @@ export default function CategoryManager({
       payload[type] = null;
 
       await api.patch(`produits/${product.id}/`, payload);
-      toast.success(t('stock:organisation.category_manager.product_removed'));
+      gooeyToast.success(t('stock:organisation.category_manager.product_removed'));
       setProducts(prev => prev.filter(p => p.id !== product.id));
       setTotalCount(prev => Math.max(0, prev - 1));
     } catch {
-      toast.error(t('common:messages.error_deleting'));
+      gooeyToast.error(t('common:messages.error_deleting'));
     }
   };
 

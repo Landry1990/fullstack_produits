@@ -1,7 +1,7 @@
 import { extractErrorMessage } from '../utils/errorHandling';
 import { generateUUID } from '../utils/uuid';
 import { useState, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import type {
     Client,
@@ -137,12 +137,12 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
 
         const difference = modResult.difference;
         if (difference > 0) {
-            toast.success(t('messages.additional_payment', { amount: formatNumber(Math.round(difference)) }));
+            gooeyToast.success(t('messages.additional_payment', { amount: formatNumber(Math.round(difference)) }));
         } else if (difference < 0) {
-            toast.success(t('messages.refund_amount', { amount: formatNumber(Math.round(Math.abs(difference))) }));
+            gooeyToast.success(t('messages.refund_amount', { amount: formatNumber(Math.round(Math.abs(difference))) }));
         }
         else {
-            toast.success(t('messages.same_total'));
+            gooeyToast.success(t('messages.same_total'));
         }
 
         return { success: true, facture: modResult.facture };
@@ -173,7 +173,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 if (clientError) {
                     setError(clientError);
                     onError?.(clientError);
-                    toast.error(t('messages.credit_limit_exceeded'), {
+                    gooeyToast.error(t('messages.credit_limit_exceeded'), {
                         duration: 6000,
                         style: { background: '#dc2626', color: 'white', fontWeight: 'bold' }
                     });
@@ -184,7 +184,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 if (client.client_type === 'PARTICULIER' && (parseFloat(client.solde_depot || '0') > 0)) {
                     const solde = parseFloat(client.solde_depot || '0');
                     if (params.totals.totalTtc > solde) {
-                        toast.error(
+                        gooeyToast.error(
                             t('facturation:client.insufficient_deposit_warning', { solde }),
                             { duration: 5000, icon: '⚠️' }
                         );
@@ -210,7 +210,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                             const errorMsg = `⚠️ STOCK INSUFFISANT EN TEMPS RÉEL !\nLe produit "${ligne.produit.name}" a été vendu sur un autre poste.\nStock actuel disponible : ${realProd.stock}\nQuantité demandée : ${effectiveQty}`;
                             setError(errorMsg);
                             onError?.(errorMsg);
-                            toast.error(errorMsg, {
+                            gooeyToast.error(errorMsg, {
                                 duration: 8000,
                                 style: { background: '#dc2626', color: 'white', fontWeight: 'bold' }
                             });
@@ -355,7 +355,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
 
                 if (params.isFactureA4) {
                     const w = window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
-                    if (!w) toast.error(t('common:popup_blocked'));
+                    if (!w) gooeyToast.error(t('common:popup_blocked'));
                 }
 
                 const ticketCaisse: TicketCaisse = {
@@ -373,7 +373,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                     reference: params.reference || null
                 };
 
-                toast.success(t('messages.success_with_id', { id: finalFacture.numero_facture || finalFacture.id }));
+                gooeyToast.success(t('messages.success_with_id', { id: finalFacture.numero_facture || finalFacture.id }));
 
                 const result: SaleCompletionResult = { success: true, facture: finalFacture, ticketCaisse, rendu };
                 setLastResult(result);
@@ -384,9 +384,9 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 // Envoi à la caisse centralisée — générer la facture A4 si demandé
                 if (params.isFactureA4) {
                     const w = window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
-                    if (!w) toast.error(t('common:popup_blocked'));
+                    if (!w) gooeyToast.error(t('common:popup_blocked'));
                 }
-                toast.success(t('messages.sent_to_caisse', { id: finalFacture.numero_facture || finalFacture.id }));
+                gooeyToast.success(t('messages.sent_to_caisse', { id: finalFacture.numero_facture || finalFacture.id }));
                 const result: SaleCompletionResult = { success: true, facture: finalFacture };
                 setLastResult(result);
                 onSuccess?.(result);
@@ -399,7 +399,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             const errorMessage = extractErrorMessage(err);
             setError(errorMessage);
             onError?.(errorMessage);
-            toast.error(errorMessage, {
+            gooeyToast.error(errorMessage, {
                 duration: 5000,
                 style: { background: '#ef4444', color: '#fff' }
             });
@@ -509,7 +509,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                             facture_id: updatedFacture.numero_facture || updatedFacture.id,
                             is_paid: true
                         });
-                        toast.success(t('messages.promis_recorded'));
+                        gooeyToast.success(t('messages.promis_recorded'));
                     } catch (err) {
                         logger.error("Erreur promis:", err);
                     }
@@ -531,7 +531,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                                 surveillance_category: l.surveillance_category || 'NONE'
                             }))
                         });
-                        toast.success(t('messages.prescription_recorded'));
+                        gooeyToast.success(t('messages.prescription_recorded'));
                     } catch (err) {
                         logger.error("Erreur ordonnancier:", err);
                     }
@@ -544,7 +544,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
 
             // 6. Impression Facture A4
             const printWin = window.open(`/app/print-invoice/${updatedFacture.id}`, '_blank');
-            if (!printWin) toast.error(t('common:popup_blocked'));
+            if (!printWin) gooeyToast.error(t('common:popup_blocked'));
 
             // 7. Ticket UI
             // Priorité: client_name_override > client_name > nom du client > 'Client de passage'

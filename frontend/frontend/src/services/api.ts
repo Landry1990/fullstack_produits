@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { safeStorage } from '../utils/storage';
 import * as navigationService from './navigationService';
 import i18n from '../i18n';
@@ -55,7 +55,7 @@ let hasShownOfflineToast = false;
 
 window.addEventListener('online', () => {
     hasShownOfflineToast = false;
-    toast.success(t('messages.connection_restored', 'Connexion serveur rétablie.'), {
+    gooeyToast.success(t('messages.connection_restored', 'Connexion serveur rétablie.'), {
         id: 'back-online',
         duration: 3000,
         style: {
@@ -71,7 +71,7 @@ window.addEventListener('online', () => {
 });
 
 window.addEventListener('offline', () => {
-    toast.error(t('messages.network_offline', 'Connexion réseau perdue. Vérifiez votre réseau.'), {
+    gooeyToast.error(t('messages.network_offline', 'Connexion réseau perdue. Vérifiez votre réseau.'), {
         id: 'offline-warning',
         duration: Infinity,
         style: {
@@ -122,8 +122,8 @@ api.interceptors.response.use(
         // Si on était hors-ligne et qu'une requête réussit, le serveur est de nouveau accessible
         if (hasShownOfflineToast) {
             hasShownOfflineToast = false;
-            toast.dismiss('network-error');
-            toast.success(t('messages.connection_restored', 'Connexion serveur rétablie.'), {
+            gooeyToast.dismiss('network-error');
+            gooeyToast.success(t('messages.connection_restored', 'Connexion serveur rétablie.'), {
                 id: 'back-online',
                 duration: 3000,
                 style: {
@@ -154,7 +154,7 @@ api.interceptors.response.use(
 
         if (isNetworkError(error) && !hasShownOfflineToast) {
             hasShownOfflineToast = true;
-            toast.error(t('messages.server_unreachable', 'Impossible de joindre le serveur. Vérifiez la connexion.'), {
+            gooeyToast.error(t('messages.server_unreachable', 'Impossible de joindre le serveur. Vérifiez la connexion.'), {
                 id: 'network-error',
                 duration: Infinity,
                 style: {
@@ -179,7 +179,7 @@ api.interceptors.response.use(
 
             if (!hasShownExpiredToast && !onLoginPage) {
                 hasShownExpiredToast = true;
-                toast.error(t('messages.session_expired', 'Session expirée. Veuillez vous reconnecter.'), {
+                gooeyToast.error(t('messages.session_expired', 'Session expirée. Veuillez vous reconnecter.'), {
                     duration: 5000,
                     id: 'session-expired',
                 });
@@ -199,12 +199,12 @@ api.interceptors.response.use(
                     navigationService.navigate('/licence', { replace: true });
                 }
             } else if (!requestUrl.includes('verify-password')) {
-                toast.error(t('messages.access_denied', 'Accès refusé : permissions insuffisantes'), { id: 'access-denied' });
+                gooeyToast.error(t('messages.access_denied', 'Accès refusé : permissions insuffisantes'), { id: 'access-denied' });
             }
         } else if (status === 429) {
-            toast.error(i18n.t('common:messages.rate_limited', { defaultValue: 'Trop de tentatives. Attendez quelques instants.' }), { id: 'rate-limited', duration: 6000 });
+            gooeyToast.error(i18n.t('common:messages.rate_limited', { defaultValue: 'Trop de tentatives. Attendez quelques instants.' }), { id: 'rate-limited', duration: 6000 });
         } else if (status !== undefined && status >= 500) {
-            toast.error(t('messages.server_error', 'Erreur serveur. Réessayez plus tard.'), { id: 'server-error' });
+            gooeyToast.error(t('messages.server_error', 'Erreur serveur. Réessayez plus tard.'), { id: 'server-error' });
         }
 
         return Promise.reject(err);

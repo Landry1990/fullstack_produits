@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { X, Search } from 'lucide-react';
 import type { ProduitModel, Client } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
@@ -59,11 +59,11 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
         e.preventDefault();
         
         if (!formData.produit) {
-            toast.error(t('stock:promis.validation.product_required'));
+            gooeyToast.error(t('stock:promis.validation.product_required'));
             return;
         }
         if (!formData.client && !formData.client_name.trim()) {
-            toast.error(t('stock:promis.validation.client_required'));
+            gooeyToast.error(t('stock:promis.validation.client_required'));
             return;
         }
 
@@ -73,12 +73,12 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                 ...formData,
                 client: formData.client || null
             });
-            toast.success(t('common:messages.created'));
+            gooeyToast.success(t('common:messages.created'));
             onSuccess();
             handleClose();
         } catch (err: unknown) {
             const apiErr = err as { response?: { data?: { detail?: string } } };
-            toast.error(apiErr.response?.data?.detail ?? t('stock:promis.validation.create_error'));
+            gooeyToast.error(apiErr.response?.data?.detail ?? t('stock:promis.validation.create_error'));
             logger.error(err);
         } finally {
             setSaving(false);

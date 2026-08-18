@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { useManagerStats, useCurrentObjectifs } from './useDashboard';
 import { usePharmacySettings } from './usePharmacySettings';
@@ -57,7 +57,7 @@ export const useManagerDashboard = () => {
                 link.click();
                 link.remove();
                 window.URL.revokeObjectURL(downloadUrl);
-                toast.success(t('common:export_success', 'Export réussi'));
+                gooeyToast.success(t('common:export_success', 'Export réussi'));
                 return;
             } else if (type === 'csv') {
                 url = `rapports/export_comptable_csv/?date_debut=${firstDay}&date_fin=${lastDay}`;
@@ -88,9 +88,9 @@ export const useManagerDashboard = () => {
                         filename,
                         title: 'Rapport Stocks Morts',
                     });
-                    toast.success(t('common:export_success', 'Export réussi'));
+                    gooeyToast.success(t('common:export_success', 'Export réussi'));
                 } else {
-                    toast(t('manager_dashboard.no_dead_stock', 'Aucun stock mort trouvé.'));
+                    gooeyToast(t('manager_dashboard.no_dead_stock', 'Aucun stock mort trouvé.'));
                 }
                 return;
             }
@@ -109,10 +109,10 @@ export const useManagerDashboard = () => {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(downloadUrl);
-            toast.success(t('common:export_success', 'Export réussi'));
+            gooeyToast.success(t('common:export_success', 'Export réussi'));
         } catch (error: unknown) {
             logger.error('Export error:', error);
-            toast.error(t('common:export_error', 'Erreur lors de l\'export'));
+            gooeyToast.error(t('common:export_error', 'Erreur lors de l\'export'));
         } finally {
             setExporting(false);
         }
@@ -121,13 +121,13 @@ export const useManagerDashboard = () => {
     const handleSaveObjectif = async () => {
         try {
             await api.post('objectifs-commerciaux/', editingObjectif);
-            toast.success(t('manager_dashboard.messages.save_success'));
+            gooeyToast.success(t('manager_dashboard.messages.save_success'));
             setIsModalOpen(false);
             queryClient.invalidateQueries({ queryKey: ['objectifs'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard', 'managerStats'] });
         } catch (error: unknown) {
             const err = error as { response?: { data?: { error?: string } } };
-            toast.error(err.response?.data?.error || t('manager_dashboard.messages.save_error'));
+            gooeyToast.error(err.response?.data?.error || t('manager_dashboard.messages.save_error'));
         }
     };
 

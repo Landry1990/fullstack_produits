@@ -8,7 +8,8 @@ import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
 import { PosteCaisseModeProvider } from './context/PosteCaisseModeContext'
 import { LicenceProvider } from './context/LicenceContext'
-import { Toaster } from 'react-hot-toast'
+import { GooeyToaster } from 'goey-toast'
+import 'goey-toast/styles.css'
 import ErrorBoundary from './components/ErrorBoundary'
 import { LicenceNotifications } from './components/LicenceNotifications'
 import { ClockSyncAlert } from './components/ClockSyncAlert'
@@ -142,7 +143,7 @@ export default function App() {
         <LicenceProvider>
           <PharmacySettingsProvider>
             <ConfirmProvider>
-              <Toaster position="top-right" />
+              <GooeyToaster position="bottom-right" />
               <LicenceNotifications />
               <ClockSyncAlert />
               <GlobalAlerts />
