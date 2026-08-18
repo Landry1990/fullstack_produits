@@ -243,6 +243,8 @@ export function useFacturationClients() {
             const updatedClients = [...clients, createdClient].slice().sort((a, b) => a.name.localeCompare(b.name))
             setClients(updatedClients)
             setSelectedClient(createdClient.id)
+            setUseManualClient(false)
+            setManualClientName('')
             setShowClientCreateModal(false)
             setClientSearch('')
 

@@ -43,6 +43,7 @@ export interface SalesFilters {
     status?: string;
     created_by?: string;
     search?: string;
+    include_pending?: 'true' | 'false';
 }
 
 const venteService = {

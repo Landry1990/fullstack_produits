@@ -39,6 +39,7 @@ export const useSalesData = () => {
         if (statusFilter !== 'ALL') params.status = statusFilter;
         if (sellerFilter) params.created_by = sellerFilter;
         if (searchTerm) params.search = searchTerm;
+        params.include_pending = 'true';
         return params;
     }, [startDate, endDate, statusFilter, sellerFilter, searchTerm]);
 

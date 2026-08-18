@@ -232,7 +232,10 @@
         "print_error": "Error printing invoice",
         "no_invoice_to_print": "No invoice to print.",
         "devis_loaded_for_edit": "Quote #{{num}} loaded for editing",
-        "invoice_loaded_for_edit": "Invoice #{{num}} loaded in edit mode",
+        "invoice_loaded_for_edit": "Invoice #{{num}} loaded in edit mode — stock restored",
+        "invoice_not_found": "Invoice not found",
+        "invoice_not_modifiable": "This invoice is not modifiable",
+        "recall_cancel_error": "Cannot cancel original invoice to restore stock",
         "devis_loaded": "Quote #{{num}} loaded",
         "cart_prefilled_from_copy": "Cart pre-filled from copy",
         "devis_load_error": "Could not load quote",
@@ -355,6 +358,12 @@
         "error_ocr": "Error during OCR processing: {{error}}",
         "error_console": "Details in console (possible antivirus blocking)",
         "products_added": "{{count}} products added"
+    },
+    "recall_invoice": {
+        "title": "Recall a sale",
+        "placeholder": "123",
+        "button": "Recall",
+        "loading": "Loading..."
     },
     "datamatrix": {
         "placeholder": "Scan the box datamatrix…",

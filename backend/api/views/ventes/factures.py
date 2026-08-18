@@ -6,6 +6,7 @@ from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from api.audit_helpers import log_audit
@@ -194,6 +195,55 @@ class FactureViewSet(
             'stats': stats,
             'users': users_data,
         })
+
+    @action(detail=False, methods=['get'])
+    def by_number(self, request):
+        """Récupère une facture modifiable par son numéro pour la recharger en facturation."""
+        numero = request.query_params.get('numero', '').strip().upper()
+        if not numero:
+            return Response(
+                {'detail': 'Numéro de facture requis.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Normaliser les préfixes courants : FAC-123, F123, #123, 123
+        numero_clean = numero
+        for prefix in ('FAC-', 'F', '#'):
+            if numero_clean.startswith(prefix):
+                numero_clean = numero_clean[len(prefix):]
+
+        # Recherche exacte d'abord
+        q_exact = (
+            Q(numero_facture__iexact=numero)
+            | Q(numero_facture__iexact=f'FAC-{numero_clean}')
+            | Q(numero_facture__iexact=numero_clean)
+        )
+        facture = Facture.objects.filter(q_exact, is_active=True).first()
+
+        # Si non trouvé, recherche contient les derniers caractères (zéros initiaux, formats variables)
+        if not facture and numero_clean:
+            q_contains = Q(numero_facture__icontains=numero_clean) | Q(numero_facture__icontains=numero)
+            facture = Facture.objects.filter(q_contains, is_active=True).order_by('-date').first()
+
+        # Si toujours pas trouvé, chercher par ID numérique
+        if not facture and numero_clean.isdigit():
+            facture = Facture.objects.filter(id=int(numero_clean), is_active=True).first()
+
+        if not facture:
+            logger.warning('Facture introuvable pour rappel : numero=%s numero_clean=%s', numero, numero_clean)
+            return Response(
+                {'detail': f'Facture {numero} introuvable.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if facture.status in (Facture.Status.PAYEE, Facture.Status.ANNULEE):
+            return Response(
+                {'detail': 'Cette facture est déjà payée ou annulée et ne peut pas être modifiée.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(facture)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
