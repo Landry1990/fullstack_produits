@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-08-18 — Fix : import produits Excel (61% d'échecs → 0.9%)
+
+### 🐛 Corrections
+
+- **`backend/api/management/commands/import_excel_csv.py`** : 3 bugs corrigés qui provoquaient ~61% d'échecs lors de l'import Ubipharm après Laborex :
+  1. **Recherche produit existant incomplète** : la recherche n'utilisait que `cip1` (code) pour trouver un produit existant, jamais les valeurs `cip2`/`cip3` de la ligne entrante. Si un produit Laborex existait avec `cip2="X"` et qu'Ubipharm envoyait `cip1="Y", cip2="X"`, le produit n'était pas trouvé → tentative de création → `IntegrityError` sur la contrainte `unique=True` de `cip2`. **Fix** : la recherche itère maintenant sur tous les CIP fournis (`cip1`, `cip2`, `cip3`).
+  2. **Pas de nettoyage des CIP float** : les valeurs Excel float (`8017017.0`) étaient stockées comme `"8017017.0"` au lieu de `"8017017"`, empêchant le matching et créant des données incohérentes. **Fix** : ajout d'une méthode `clean_cip()` qui supprime le suffixe `.0` et gère les valeurs `NaN`/`None`/`"0"`.
+  3. **`cip1` vide mis à `''` au lieu de `None`** : `defaults['cip1'] = code or ''` provoquait des violations de contrainte unique (une seule `''` autorisée, mais plusieurs `NULL` oui). **Fix** : `defaults['cip1'] = code or None`.
+- **`get_value()`** : filtrage des valeurs `NaN`/`"nan"`/`"none"`/`"null"` d'Excel/pandas (`float('nan')` n'est pas `None` en Python).
+
+### Résultat testé
+
+- Import Ubipharm (8251 lignes) après Laborex en base : **6127 erreurs → 75 erreurs** (0.9%).
+- Les 75 erreurs restantes sont des doublons de CIP légitimes dans le fichier source Ubipharm lui-même.
+
+### Fichiers modifiés
+
+- `backend/api/management/commands/import_excel_csv.py`
+
+---
+
+## 2026-08-18 — Fix : démarrage backend Docker local et connexion Redis
+
+### 🐛 Corrections
+
+- **`backend/backend/urls.py`** : suppression de `path('axes/', include('axes.urls'))` car `django-axes` 7.x n'expose plus de module `urls` (plantage `ModuleNotFoundError: No module named 'axes.urls'` au démarrage).
+- **Rebuild Docker** : reconstruction de l'image backend via `deploy.ps1 -Target backend -Rebuild` pour réinstaller les dépendances à jour (`django-axes`, etc.).
+- **Cache Redis** : vérification OK (`cache.set/get`) ; le timeout Redis signalé était un effet du redémarrage en boucle du backend sur l'image obsolète.
+- **`backend/backend/settings.py`** : remplacement du setting déprécié `AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP` par `AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]` (même comportement, sans warning).
+
+### Fichiers modifiés
+
+- `backend/backend/urls.py`
+- `backend/backend/settings.py`
+
+---
+
 ## 2026-08-18 — Sécurité : protection anti brute-force sur le login
 
 ### 🔒 Sécurité

@@ -145,15 +145,33 @@ class Command(BaseCommand):
         
         return stats
 
+    @staticmethod
+    def clean_cip(value):
+        """Nettoie un code CIP : supprime le suffixe .0 des floats Excel, gère NaN, limite à 20 caractères."""
+        if value is None:
+            return None
+        # Gérer les NaN d'Excel/pandas (float('nan') n'est pas None en Python !)
+        s = str(value).strip()
+        if not s or s.lower() in ('nan', 'none', 'null', ''):
+            return None
+        s = s[:20]
+        # Supprimer la partie décimale (.0) des floats Excel (ex: "8017017.0" -> "8017017")
+        if '.' in s:
+            s = s.split('.')[0]
+        # "0" n'est pas un CIP valide
+        if not s or s == '0':
+            return None
+        return s
+
     def process_row(self, row, dry_run):
         """Traite une ligne de données"""
         # Normaliser les noms de colonnes (lowercase, strip)
         row = {str(k).lower().strip(): v for k, v in row.items() if k}
         
-        # Mapping des colonnes courantes
-        code = self.get_value(row, ['code', 'cip', 'cip1', 'code_cip', 'id'])
-        cip2 = self.get_value(row, ['cip2', 'code_cip2'])
-        cip3 = self.get_value(row, ['cip3', 'code_cip3'])
+        # Mapping des colonnes courantes — nettoyage des CIP (suppression .0 des floats Excel)
+        code = self.clean_cip(self.get_value(row, ['code', 'cip', 'cip1', 'code_cip', 'id']))
+        cip2 = self.clean_cip(self.get_value(row, ['cip2', 'code_cip2']))
+        cip3 = self.clean_cip(self.get_value(row, ['cip3', 'code_cip3']))
         nom = self.get_value(row, ['nom', 'name', 'libelle', 'produit', 'designation'])
         
         if not code and not nom:
@@ -258,12 +276,18 @@ class Command(BaseCommand):
         if not identifier:
             return None
         
-        # Chercher produit existant
+        # Chercher produit existant — recherche par TOUS les CIP fournis (cip1, cip2, cip3)
+        # pour éviter les IntegrityError sur contraintes unique si le produit existe déjà
+        # sous un autre CIP (ex: Laborex cip2 = Ubipharm cip1)
         produit = None
-        if code:
-            produit = Produit.objects.filter(cip1=code).first() or \
-                     Produit.objects.filter(cip2=code).first() or \
-                     Produit.objects.filter(cip3=code).first()
+        for cip_val in [code, cip2, cip3]:
+            if not cip_val:
+                continue
+            produit = Produit.objects.filter(cip1=cip_val).first() or \
+                     Produit.objects.filter(cip2=cip_val).first() or \
+                     Produit.objects.filter(cip3=cip_val).first()
+            if produit:
+                break
         
         if not produit and nom:
             produit = Produit.objects.filter(name__iexact=nom).first()
@@ -275,8 +299,8 @@ class Command(BaseCommand):
             produit.save()
             return 'updated'
         else:
-            # Création
-            defaults['cip1'] = code or ''
+            # Création — cip1 = None (pas '') si absent pour éviter violation unique
+            defaults['cip1'] = code or None
             Produit.objects.create(**defaults)
             return 'created'
 
@@ -339,10 +363,13 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f"⚠ Rapport Excel non généré: {e}"))
 
     def get_value(self, row, keys):
-        """Récupère la première valeur trouvée parmi les clés"""
+        """Récupère la première valeur trouvée parmi les clés — gère les NaN d'Excel/pandas."""
         for key in keys:
             if key in row and row[key] is not None:
                 val = str(row[key]).strip()
+                # Ignorer les NaN d'Excel/pandas (float('nan') n'est pas None en Python !)
+                if val.lower() in ('nan', 'none', 'null'):
+                    continue
                 return val if val else None
         return None
 
