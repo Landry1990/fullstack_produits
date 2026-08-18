@@ -9,6 +9,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('api-token-auth/', CustomAuthToken.as_view()), # Direct mapping to token view
+    path('axes/', include('axes.urls')),  # Pages de verrouillage/déblocage
 ]
 
 if hasattr(settings, 'ENABLE_SILK') and settings.ENABLE_SILK:

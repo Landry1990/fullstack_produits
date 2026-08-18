@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-08-18 — Sécurité : protection anti brute-force sur le login
+
+### 🔒 Sécurité
+
+- **`django-axes` intégré** : blocage du login admin après 10 échecs, verrouillage 30 min, combiné IP + username.
+- **`backend/backend/settings.py`** :
+  - Ajout de `axes` à `INSTALLED_APPS` et `AxesMiddleware` en fin de `MIDDLEWARE`.
+  - Ajout des `AUTHENTICATION_BACKENDS` avec `AxesBackend`.
+  - Configuration `AXES_FAILURE_LIMIT`, `AXES_COOLOFF_TIME`, `AXES_RESET_ON_SUCCESS`, `AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP`.
+- **`backend/backend/urls.py`** : ajout du chemin `axes/` pour les pages de verrouillage/déblocage.
+- **`backend/api/views/users.py`** : `LoginRateThrottle` passé de 10/min à 5/min.
+- **`backend/requirements.txt`** : ajout de `django-axes>=7.0,<8.0`.
+
+### Fichiers modifiés
+
+- `backend/backend/settings.py`
+- `backend/backend/urls.py`
+- `backend/api/views/users.py`
+- `backend/requirements.txt`
+
+---
+
 ## 2026-08-18 — Installation : support Linux Mint et optimisations
 
 ### 🛠 Corrections

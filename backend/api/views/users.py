@@ -10,7 +10,7 @@ from rest_framework.throttling import AnonRateThrottle
 
 class LoginRateThrottle(AnonRateThrottle):
     scope = 'login'
-    THROTTLE_RATES = {'login': '10/min'}
+    THROTTLE_RATES = {'login': '5/min'}
 
 
 class SudoRateThrottle(AnonRateThrottle):
