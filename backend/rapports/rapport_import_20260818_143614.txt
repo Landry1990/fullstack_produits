@@ -1,0 +1,142 @@
+RAPPORT D'IMPORT — 18/08/2026 14:36:14
+============================================================
+  Total traité   : 8251
+  Créés          : 4632
+  Mis à jour     : 3586
+  Échecs         : 33
+============================================================
+
+LIGNES EN ÉCHEC (33):
+------------------------------------------------------------
+  Ligne 418 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000941249) already exists.
+
+    Produit: AMADAY TRIO 5MG/1,25MG/4MG CPR B/30 | Code: 3000000840818
+  Ligne 439 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000787373) already exists.
+
+    Produit: AMFOCIN 500/62,5MG PDRE SUSP ORALE F60ML | Code: 3000000787380
+  Ligne 816 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(8034518) already exists.
+
+    Produit: ASTAPH 250MG SP F/60ML | Code: 8034518
+  Ligne 877 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000437353) already exists.
+
+    Produit: AUGMENTIN 1G/125MG PDR SUSP BUV SACH/12 | Code: 3445116
+  Ligne 1081 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(9100001753821) already exists.
+
+    Produit: BACTOX 500MG PDRE SUSP BUV F/60ML | Code: 3408925
+  Ligne 1345 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3041093562751) already exists.
+
+    Produit: BLEDINE LACTEE BISCUITEE 250G | Code: 6151651
+  Ligne 1607 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3400935788924) already exists.
+
+    Produit: CARTEOL 2% LP COLL F/3ML | Code: 3400935789525
+  Ligne 2762 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(9100001177461) already exists.
+
+    Produit: DUCRAY KERACNYL LOT PURIF F/200ML | Code: 6264875
+  Ligne 2986 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000176665) already exists.
+
+    Produit: ERLUS 2,5MG/5ML SP F/60ML | Code: 3000000378762
+  Ligne 3557 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000176665) already exists.
+
+    Produit: GENSET 5MG/5ML SUSP BUV F/60ML | Code: 3000000176665
+  Ligne 3923 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000841129) already exists.
+
+    Produit: IMUCLAV DUO 100/12,5MG PDRE SOL BUV/60ML | Code: 3000000374245
+  Ligne 3971 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000302019) already exists.
+
+    Produit: INTRAXONE 1G IM/IV PDR SOL INJ + SOLV B1 | Code: 3990000000483
+  Ligne 4012 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000886021) already exists.
+
+    Produit: JERSEY TUBUL LABELL ECRU 5MX15CM SM | Code: 8277296
+  Ligne 4418 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000176665) already exists.
+
+    Produit: LORIT 0,5MG/5ML SP F/60ML | Code: 3000000550502
+  Ligne 4469 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(9100000736161) already exists.
+
+    Produit: LUMITER 15/90MG SUSP BUV F/60ML | Code: 8025382
+  Ligne 4793 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(8054509) already exists.
+
+    Produit: METRONIDAZOLE UBI 500MG SOL INJ F/100ML | Code: 8054509
+  Ligne 5283 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3041093912235) already exists.
+
+    Produit: NURSIE EXPERTISE 2 LAIT PDRE B/400G | Code: 3041093912211
+  Ligne 5451 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(9100001087231) already exists.
+
+    Produit: OREX 250MG/5ML F/60ML | Code: 8030408
+  Ligne 5995 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3532281684404) already exists.
+
+    Produit: PRESERV MANIX CONTACT 3 B/3 | Code: 4787468
+  Ligne 5996 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3532281684404) already exists.
+
+    Produit: PRESERV MANIX CONTACT B/28 | Code: 3532281400806
+  Ligne 5997 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3532281684404) already exists.
+
+    Produit: PRESERV MANIX CONTACT B/6 | Code: 6676112
+  Ligne 6001 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3532281484103) already exists.
+
+    Produit: PRESERV MANIX CONTACT PLUS B/6 | Code: 3532281684404
+  Ligne 6383 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(9100000804441) already exists.
+
+    Produit: RICHFER PLUS SP F/200ML | Code: 3000000115770
+  Ligne 6443 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3400932674886) already exists.
+
+    Produit: ROCEPHINE 1G IV FL+AMP B/1 | Code: 3267488
+  Ligne 6446 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3400932674886) already exists.
+
+    Produit: ROCEPHINE 500MG IV FL+AMP B/1 | Code: 3267465
+  Ligne 6616 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3401373973026) already exists.
+
+    Produit: SAFORELLE SOIN SOL LAV DOUX F/250ML | Code: 6533424
+  Ligne 6824 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000611227) already exists.
+
+    Produit: SEVOTROY 1MG/ML LIQ INH VAPEUR F/250ML | Code: 3000000611234
+  Ligne 7040 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3331300097382) already exists.
+
+    Produit: STERIMAR NEZ BOUCHE NN/ENF SOL NAS/50ML | Code: 3331300097498
+  Ligne 7054 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3583316669316) already exists.
+
+    Produit: STIMOL 1G SOL BUV SACH 10ML B/18 | Code: 3583313345190
+  Ligne 7434 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3700281704488) already exists.
+
+    Produit: TOPICREM AC EAU MICEL PURIF F/400ML | Code: 3700281704495
+  Ligne 8025 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3400931632405) already exists.
+
+    Produit: VOGALENE 0,4% BUV GTTE FL 30ML | Code: 3114968
+  Ligne 8073 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000258453) already exists.
+
+    Produit: WORMINIX 200MG/5ML SUSP ORAL F/10ML | Code: 3990000016071
+  Ligne 8137 — duplicate key value violates unique constraint "api_produit_cip3_key"
+DETAIL:  Key (cip3)=(3000000393925) already exists.
+
+    Produit: ZAMOX 100MG/12,5MG PDRE SUSP F/60ML | Code: 3000000037362
