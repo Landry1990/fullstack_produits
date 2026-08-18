@@ -36,6 +36,7 @@
   - Usage uniforme de `sudo docker` pour le build, le démarrage et Portainer (suppression du `build --quiet` en double).
   - Vérification du superuser : message `ok` ou `warn` selon le résultat réel.
   - Authentification `sudo` en début de script avec rafraîchissement du cache toutes les 60s pour éviter les prompts cachés par les spinners.
+  - Génère `REDIS_PASSWORD` et `REDIS_URL` avec authentification pour correspondre au `requirepass` de Redis.
 
 ### Fichiers modifiés
 

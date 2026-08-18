@@ -141,6 +141,7 @@ else
     DEPLOY_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
     DB_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
     EMERGENCY_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+    REDIS_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
     cat > .env <<EOF
 # Base de données
 DB_NAME=pharma_db
@@ -160,7 +161,8 @@ CORS_ALLOWED_ORIGINS=http://localhost,http://frontend
 CSRF_TRUSTED_ORIGINS=http://localhost,http://frontend
 
 # Cache
-REDIS_URL=redis://redis:6379/0
+REDIS_PASSWORD=$REDIS_PASS
+REDIS_URL=redis://:$REDIS_PASS@redis:6379/0
 
 # Admin par défaut (créé automatiquement au 1er démarrage)
 DEFAULT_ADMIN_USER=admin
