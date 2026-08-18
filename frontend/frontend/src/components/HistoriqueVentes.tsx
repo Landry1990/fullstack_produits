@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import type { Locale } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { formatCurrency } from '../utils/formatters';
 import { Button } from './shadcn/button';
@@ -98,7 +98,7 @@ const HistoriqueVentes = () => {
       setGlobalTotals(totals || null);
     } catch (error) {
       logger.error('Error fetching sales history:', error);
-      toast.error(t('messages.error_loading'));
+      gooeyToast.error(t('messages.error_loading'));
     } finally {
       setLoading(false);
     }
@@ -129,10 +129,10 @@ const HistoriqueVentes = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(t('messages.export_success'));
+      gooeyToast.success(t('messages.export_success'));
     } catch (error) {
       logger.error('Export Error:', error);
-      toast.error(t('messages.export_error'));
+      gooeyToast.error(t('messages.export_error'));
     } finally {
       setExporting(false);
     }
@@ -142,9 +142,9 @@ const HistoriqueVentes = () => {
     setSendingTelegram(row.date);
     try {
       await api.post('telegram/rapport-flash-date/', { date: row.date });
-      toast.success(t('common:telegram.send_success'), { icon: '📨' });
+      gooeyToast.success(t('common:telegram.send_success'), { icon: '📨' });
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
     } finally {
       setSendingTelegram(null);
     }

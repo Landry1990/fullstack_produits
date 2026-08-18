@@ -1,4 +1,4 @@
-﻿import { Toaster } from 'react-hot-toast';
+﻿import { GoeyToaster } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useAjustementsData } from '../hooks/useAjustementsData';
 import { AjustementsFilters } from './adjustments/AjustementsFilters';
@@ -20,7 +20,7 @@ export default function JournalAjustements() {
 
     return (
         <div className="h-screen bg-slate-100 p-2 sm:p-3 lg:p-4 flex flex-col overflow-hidden">
-            <Toaster position="top-right" />
+            <GoeyToaster position="top-right" />
 
             <div className="max-w-[1600px] mx-auto w-full flex flex-col h-full gap-2 lg:gap-4">
                 {/* Header Section */}

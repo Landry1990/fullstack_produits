@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel } from '../../types';
 import { useRayons } from '../../hooks/useProduits';
@@ -78,7 +78,7 @@ export default function ReapproRayon() {
         setSelectedIds(new Set());
     } catch (error) {
       logger.error('Error fetching refill needs:', error);
-      toast.error(t('reappro.messages.error_loading_products'));
+      gooeyToast.error(t('reappro.messages.error_loading_products'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +139,7 @@ export default function ReapproRayon() {
     const suggest = Math.min(needed, produit.stock_reserve ?? 0);
     
     if (suggest <= 0) {
-      toast.error(t('reappro.messages.no_refill_needed'));
+      gooeyToast.error(t('reappro.messages.no_refill_needed'));
       return;
     }
 
@@ -178,7 +178,7 @@ export default function ReapproRayon() {
     setLoading(true);
     try {
         const res = await produitService.bulkTransferToShelf(ids, sudoCreds);
-        toast.success(res.detail || t('reappro.messages.bulk_success', { success: ids.length, total: ids.length }));
+        gooeyToast.success(res.detail || t('reappro.messages.bulk_success', { success: ids.length, total: ids.length }));
         
         if (res.session_id) {
             lastSessionIdRef.current = res.session_id;
@@ -188,7 +188,7 @@ export default function ReapproRayon() {
 
         fetchNeedsRefill();
     } catch (error) {
-        toast.error(getApiErrorDetail(error, t('common:error_generic')));
+        gooeyToast.error(getApiErrorDetail(error, t('common:error_generic')));
     } finally {
         setLoading(false);
         setPendingIds([]);
@@ -601,7 +601,7 @@ export default function ReapproRayon() {
                         `reappro_session_${session.id}_${new Date(session.created_at).toISOString().slice(0, 10).replace(/-/g, '')}.pdf`
                       );
                     } catch {
-                      toast.error(t('stock:reappro.messages.pdf_generation_error'));
+                      gooeyToast.error(t('stock:reappro.messages.pdf_generation_error'));
                     }
                   }
                   setShowSuccessModal(false);

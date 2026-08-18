@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { cashSessionService, type PosteVente } from '../../services/cashSessionService'
 import { usePosteCaisseMode } from '../../context/PosteCaisseModeContext'
 import { useAuth } from '../../context/AuthContext'
@@ -69,7 +69,7 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
         handleOpenSessionRef.current(available[0].id)
       }
     } catch {
-      toast.error(t('messages.error_loading_posts', { defaultValue: 'Erreur chargement points de vente' }))
+      gooeyToast.error(t('messages.error_loading_posts', { defaultValue: 'Erreur chargement points de vente' }))
     } finally {
       setLoadingPostes(false)
     }
@@ -125,19 +125,19 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
   const handleOpenSession = useCallback(async (posteId?: number) => {
     const id = posteId ?? selectedPosteId
     if (!id) {
-      toast.error(t('messages.select_poste', { defaultValue: 'Veuillez sélectionner un point de vente.' }))
+      gooeyToast.error(t('messages.select_poste', { defaultValue: 'Veuillez sélectionner un point de vente.' }))
       return
     }
 
     const poste = allPostes.find((p) => p.id === id)
     if (!poste) {
-      toast.error(t('messages.select_poste', { defaultValue: 'Veuillez sélectionner un point de vente.' }))
+      gooeyToast.error(t('messages.select_poste', { defaultValue: 'Veuillez sélectionner un point de vente.' }))
       return
     }
 
     const isMyActivePoste = poste.est_actif && (poste.vendeur === user?.id || poste.vendeur_name === (user?.username || '') || user?.is_superuser)
     if (poste.est_actif && !isMyActivePoste) {
-      toast.error(t('messages.poste_occupied', { defaultValue: 'Ce point de vente est déjà ouvert par un autre utilisateur.' }))
+      gooeyToast.error(t('messages.poste_occupied', { defaultValue: 'Ce point de vente est déjà ouvert par un autre utilisateur.' }))
       return
     }
 
@@ -146,15 +146,15 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
       if (isMyActivePoste) {
         // Réactivation locale: le poste est déjà actif côté backend, on le rattache à cet onglet
         setActivePosteVente(poste)
-        toast.success(t('messages.session_reactivated', { defaultValue: 'Point de vente réactivé.' }))
+        gooeyToast.success(t('messages.session_reactivated', { defaultValue: 'Point de vente réactivé.' }))
       } else {
         await openPoste(id)
-        toast.success(t('messages.session_opened', { defaultValue: 'Point de vente ouvert.' }))
+        gooeyToast.success(t('messages.session_opened', { defaultValue: 'Point de vente ouvert.' }))
       }
       onSessionOpened?.()
       onClose()
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('messages.error_opening', { defaultValue: 'Erreur ouverture.' })))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.error_opening', { defaultValue: 'Erreur ouverture.' })))
     } finally {
       setIsLoading(false)
     }

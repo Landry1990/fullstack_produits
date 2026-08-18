@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire, LigneInventaire, InventoryStats, ProduitModel } from '../../types';
 import { getProduitId } from '../../types/inventory';
@@ -137,11 +137,11 @@ export const useInventaireEditor = (
                 setInventoryStats(null);
             }
 
-            toast.success(t('stock:inventaire.detail.create_success'));
+            gooeyToast.success(t('stock:inventaire.detail.create_success'));
             return newInv;
         } catch (error) {
             logger.error(error);
-            toast.error(t('inventaire.detail.auto_create_error'));
+            gooeyToast.error(t('inventaire.detail.auto_create_error'));
         } finally {
             setSaving(false);
         }
@@ -167,7 +167,7 @@ export const useInventaireEditor = (
             await fetchInventoryStats(inv.id);
         } catch (error) {
             logger.error(error);
-            toast.error(t('common:messages.error_loading'));
+            gooeyToast.error(t('common:messages.error_loading'));
         }
     };
 
@@ -178,11 +178,11 @@ export const useInventaireEditor = (
                 date: dateInventaire,
                 description
             });
-            toast.success(t('inventaire.detail.header_saved'));
+            gooeyToast.success(t('inventaire.detail.header_saved'));
             // Optionally update the active inventaire object
             setActiveInventaire(prev => prev ? { ...prev, date: dateInventaire, description } : null);
         } catch {
-            toast.error(t('inventaire.detail.save_error'));
+            gooeyToast.error(t('inventaire.detail.save_error'));
         }
     };
 
@@ -327,10 +327,10 @@ export const useInventaireEditor = (
                 next.delete(lineId);
                 return next;
             });
-            toast.success(t('stock:inventaire.lines.delete_success'));
+            gooeyToast.success(t('stock:inventaire.lines.delete_success'));
         } catch (err) {
             logger.error("Erreur suppression ligne", err);
-            toast.error(t('inventaire.lines.delete_error'));
+            gooeyToast.error(t('inventaire.lines.delete_error'));
         }
     };
 
@@ -382,11 +382,11 @@ export const useInventaireEditor = (
             // 2. Mise à jour locale
             setLignes(prev => prev.filter(l => !selectedLines.has(l.id)));
             setSelectedLines(new Set());
-            toast.success(t('inventaire.detail.bulk_delete_success', { count: idsToDelete.length }));
+            gooeyToast.success(t('inventaire.detail.bulk_delete_success', { count: idsToDelete.length }));
 
         } catch (err) {
             logger.error("Erreur suppression bulk", err);
-            toast.error(t('inventaire.detail.save_error'));
+            gooeyToast.error(t('inventaire.detail.save_error'));
         } finally {
             setSaving(false);
         }
@@ -407,12 +407,12 @@ export const useInventaireEditor = (
         try {
             setSaving(true);
             await api.post(`inventaires/${activeInventaire.id}/validate/`, creds);
-            toast.success(t('inventaire.validation.success'));
+            gooeyToast.success(t('inventaire.validation.success'));
             setViewMode('LIST');
             fetchInventaires();
         } catch (err: unknown) {
             const error = err as { response?: { data?: { detail?: string } } };
-            toast.error(error.response?.data?.detail || t('inventaire.validation.error'));
+            gooeyToast.error(error.response?.data?.detail || t('inventaire.validation.error'));
             logger.error(err);
             throw err;
         } finally {
@@ -433,7 +433,7 @@ export const useInventaireEditor = (
                 await flushPendingChanges();
             } catch (err) {
                 logger.error("Flush before validate failed", err);
-                toast.error(t('inventaire.detail.save_error'));
+                gooeyToast.error(t('inventaire.detail.save_error'));
                 setSaving(false);
                 return;
             } finally {
@@ -452,7 +452,7 @@ export const useInventaireEditor = (
                 setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
             } catch (err) {
                 logger.error("Auto-save before validate failed", err);
-                toast.error(t('inventaire.detail.save_error'));
+                gooeyToast.error(t('inventaire.detail.save_error'));
                 setSaving(false);
                 return; // Stop if auto-save fails
             } finally {
@@ -499,10 +499,10 @@ export const useInventaireEditor = (
                 await fetchInventoryStats(activeInventaire.id);
             }
 
-            toast.success(t('common:messages.saved'));
+            gooeyToast.success(t('common:messages.saved'));
         } catch (error) {
             logger.error("Erreur save manual", error);
-            toast.error(t('inventaire.detail.save_error'));
+            gooeyToast.error(t('inventaire.detail.save_error'));
         } finally {
             setSaving(false);
         }
@@ -519,7 +519,7 @@ export const useInventaireEditor = (
             const response = await api.get('produits/for_import/');
             allProducts = Array.isArray(response.data) ? response.data : (response.data.results || []);
         } catch (err) {
-            toast.error(t('inventaire.import.loading_products_error'));
+            gooeyToast.error(t('inventaire.import.loading_products_error'));
             logger.error(err);
             setImporting(false);
             return;
@@ -613,11 +613,11 @@ export const useInventaireEditor = (
                 document.body.removeChild(link);
                 URL.revokeObjectURL(objectUrl);
 
-                toast.error(t('inventaire.import.not_found_toast', { count: notFoundItems.length }));
+                gooeyToast.error(t('inventaire.import.not_found_toast', { count: notFoundItems.length }));
             }
 
             if (importMap.size === 0) {
-                toast.error(t('inventaire.import.no_valid_product'));
+                gooeyToast.error(t('inventaire.import.no_valid_product'));
                 setImporting(false);
                 return;
             }
@@ -634,7 +634,7 @@ export const useInventaireEditor = (
 
                 await api.post(`inventaires/${activeInventaire.id}/lignes/bulk/`, payload);
 
-                toast.success(t('inventaire.import.success', { count: importMap.size, lines: productsFoundCount }));
+                gooeyToast.success(t('inventaire.import.success', { count: importMap.size, lines: productsFoundCount }));
 
                 // Recharger les lignes et stats
                 const res = await api.get(`inventaires/${activeInventaire.id}/lignes/`);
@@ -643,14 +643,14 @@ export const useInventaireEditor = (
             } catch (error: unknown) {
                 logger.error("Erreur lors de l'envoi bulk", error);
                 const err = error as { response?: { data?: { detail?: string } } };
-                toast.error(err.response?.data?.detail || t('inventaire.import.bulk_send_error'));
+                gooeyToast.error(err.response?.data?.detail || t('inventaire.import.bulk_send_error'));
             } finally {
                 setImporting(false);
             }
         };
 
         reader.onerror = () => {
-            toast.error(t('inventaire.import.reader_error'));
+            gooeyToast.error(t('inventaire.import.reader_error'));
             setImporting(false);
         };
 

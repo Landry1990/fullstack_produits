@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 import DatePicker, { registerLocale } from 'react-datepicker'
@@ -192,7 +192,7 @@ export default function HistoriqueClotures() {
       setGlobalTotals(totals || null)
     } catch (err) {
       logger.error('Erreur chargement clôtures:', err)
-      toast.error(t('messages.loading_closures'))
+      gooeyToast.error(t('messages.loading_closures'))
     } finally {
       setLoading(false)
     }
@@ -231,7 +231,7 @@ export default function HistoriqueClotures() {
       setSessions(data)
     } catch (err) {
       logger.error('Erreur chargement sessions:', err)
-      toast.error(t('messages.loading_sessions'))
+      gooeyToast.error(t('messages.loading_sessions'))
     } finally {
       setSessionsLoading(false)
     }

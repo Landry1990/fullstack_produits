@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -74,7 +74,7 @@ export default function ReapproHistory() {
       setHistory(results as ReapproSession[]);
     } catch (error) {
       logger.error('Error fetching history:', error);
-      toast.error(t('stock:reappro.messages.history_load_error'));
+      gooeyToast.error(t('stock:reappro.messages.history_load_error'));
     } finally {
       setLoading(false);
     }
@@ -90,10 +90,10 @@ export default function ReapproHistory() {
       generateReapproSessionPdfDraft(session, settings).save(
         `reappro_session_${session.id}_${new Date(session.created_at).toISOString().slice(0, 10).replace(/-/g, '')}.pdf`
       );
-      toast.success(t('stock:reappro.messages.pdf_generated'));
+      gooeyToast.success(t('stock:reappro.messages.pdf_generated'));
     } catch (error) {
       logger.error('Error generating PDF:', error);
-      toast.error(t('stock:reappro.messages.pdf_generation_error'));
+      gooeyToast.error(t('stock:reappro.messages.pdf_generation_error'));
     } finally {
       setDownloadingId(null);
     }

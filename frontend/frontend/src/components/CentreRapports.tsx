@@ -6,7 +6,6 @@ import { ReportSidebar } from './dashboard/reports/ReportSidebar';
 import { ReportFilters } from './dashboard/reports/ReportFilters';
 import { ReportResults } from './dashboard/reports/ReportResults';
 import { Menu, Printer, Download, LayoutPanelTop, Play } from 'lucide-react';
-import { Toaster } from 'react-hot-toast';
 import type { QueryDefinition } from '../hooks/useCentreRapports';
 
 export default function CentreRapports() {
@@ -59,7 +58,6 @@ export default function CentreRapports() {
 
     return (
         <div className="h-screen flex bg-slate-100 overflow-hidden">
-            <Toaster position="top-right" />
             
             {/* Mobile drawer backdrop */}
             {mobileMenuOpen && (

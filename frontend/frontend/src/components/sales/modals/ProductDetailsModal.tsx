@@ -4,7 +4,7 @@ import { X, Calendar, User, CreditCard, Smartphone, CheckCircle2 } from 'lucide-
 import type { Facture } from '../../../types';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../../../utils/formatters';
 import { logger } from '../../../utils/logger'
 
@@ -31,11 +31,11 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         setSendingReminder(lineId);
         try {
             const response = await api.post(`facture-produits/${lineId}/envoi_rappel_renouvellement/`, {});
-            toast.success(response.data.detail || `Rappel envoyé pour ${productName}`);
+            gooeyToast.success(response.data.detail || `Rappel envoyé pour ${productName}`);
         } catch (error: unknown) {
             logger.error('Error sending renewal reminder:', error);
             const msg = error.response?.data?.detail || "Erreur lors de l'envoi du rappel";
-            toast.error(msg);
+            gooeyToast.error(msg);
         } finally {
             setSendingReminder(null);
         }

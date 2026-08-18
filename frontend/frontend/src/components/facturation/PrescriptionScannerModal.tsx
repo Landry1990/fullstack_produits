@@ -6,7 +6,7 @@ import { prescriptionOcrService } from '../../services/prescriptionOcrService';
 import type { ScannedPrescription } from '../../services/prescriptionOcrService';
 import fuzzysort from 'fuzzysort';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import type { ProduitModel } from '../../types';
 import { logger } from '../../utils/logger'
 
@@ -92,7 +92,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       productsRef.current = results || [];
     } catch (error) {
       logger.error('Failed to load products for OCR matching', error);
-      toast.error(t('facturation:prescription_scanner.error_load_products'));
+      gooeyToast.error(t('facturation:prescription_scanner.error_load_products'));
     } finally {
       setLoadingProducts(false);
     }
@@ -120,7 +120,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
         }
       }
     } catch {
-      toast.error(t('facturation:prescription_scanner.error_camera'));
+      gooeyToast.error(t('facturation:prescription_scanner.error_camera'));
       setShowCamera(false);
     }
   };
@@ -203,12 +203,12 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
       }
       
       if (matches.length === 0) {
-        toast.error(t('facturation:prescription_scanner.error_no_products'));
+        gooeyToast.error(t('facturation:prescription_scanner.error_no_products'));
       }
     } catch (err: unknown) {
       logger.error('OCR Error:', err);
       const errorMessage = err && typeof err === 'object' && 'message' in err ? err.message : t('facturation:prescription_scanner.error_console');
-      toast.error(t('facturation:prescription_scanner.error_ocr', { error: errorMessage }));
+      gooeyToast.error(t('facturation:prescription_scanner.error_ocr', { error: errorMessage }));
     } finally {
       setIsProcessing(false);
     }
@@ -236,7 +236,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
     }
     
     onClose();
-    toast.success(t('facturation:prescription_scanner.products_added', { count: selectedProducts.length }));
+    gooeyToast.success(t('facturation:prescription_scanner.products_added', { count: selectedProducts.length }));
   };
 
   const reset = () => {

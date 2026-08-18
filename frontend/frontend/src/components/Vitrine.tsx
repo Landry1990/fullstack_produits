@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import {
   Search,
   Globe,
@@ -317,7 +317,7 @@ function SimulateurClient() {
       setSearchTerm('');
       setHighlightedIndex(-1);
     } else {
-      toast.error(t('simulateur.already_in_list'));
+      gooeyToast.error(t('simulateur.already_in_list'));
     }
   };
 
@@ -543,14 +543,14 @@ export default function Vitrine() {
         ['vitrine-products', debouncedSearch, showPublicOnly],
         context?.previousProducts
       );
-      toast.error(t('messages.update_error'));
+      gooeyToast.error(t('messages.update_error'));
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['vitrine-products'] });
       queryClient.invalidateQueries({ queryKey: ['vitrine-stats-count'] });
     },
     onSuccess: () => {
-      toast.success(t('messages.visibility_updated'));
+      gooeyToast.success(t('messages.visibility_updated'));
     },
   });
 
@@ -560,9 +560,9 @@ export default function Vitrine() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vitrine-products'] });
-      toast.success(t('messages.price_updated'));
+      gooeyToast.success(t('messages.price_updated'));
     },
-    onError: () => toast.error(t('messages.generic_error')),
+    onError: () => gooeyToast.error(t('messages.generic_error')),
   });
 
   const bulkToggle = useMutation({
@@ -572,11 +572,11 @@ export default function Vitrine() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['vitrine-products'] });
       queryClient.invalidateQueries({ queryKey: ['vitrine-stats-count'] });
-      toast.success(
+      gooeyToast.success(
         variables.target_status ? t('messages.bulk_published') : t('messages.bulk_unpublished')
       );
     },
-    onError: () => toast.error(t('messages.bulk_error')),
+    onError: () => gooeyToast.error(t('messages.bulk_error')),
   });
 
   return (

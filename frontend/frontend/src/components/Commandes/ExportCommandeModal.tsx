@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import {
   Download,
   FileText,
@@ -105,7 +105,7 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
       setPreview(response.data);
     } catch (err: unknown) {
       const axiosErr = err instanceof AxiosError ? err : undefined;
-      toast.error(axiosErr?.response?.data?.error || t('errors.load_failed'));
+      gooeyToast.error(axiosErr?.response?.data?.error || t('errors.load_failed'));
     } finally {
       setLoading(false);
     }
@@ -121,9 +121,9 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
         { responseType: 'blob' }
       );
       downloadBlob(response.data, `commande_${commande.id}.csv`, response.headers['content-disposition']);
-      toast.success(t('messages.export_success'));
+      gooeyToast.success(t('messages.export_success'));
     } catch {
-      toast.error(t('errors.export_failed'));
+      gooeyToast.error(t('errors.export_failed'));
     } finally {
       setExporting(false);
     }
@@ -139,9 +139,9 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
         { responseType: 'blob' }
       );
       downloadBlob(response.data, `commande_${commande.id}_sans_cip.txt`, response.headers['content-disposition']);
-      toast.success(t('messages.txt_export_success'));
+      gooeyToast.success(t('messages.txt_export_success'));
     } catch {
-      toast.error(t('errors.export_failed'));
+      gooeyToast.error(t('errors.export_failed'));
     } finally {
       setExporting(false);
     }

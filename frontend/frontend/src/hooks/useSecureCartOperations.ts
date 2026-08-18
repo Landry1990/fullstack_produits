@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import type { TFunction } from 'i18next'
-import toast from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import type { LigneFacture } from '../types'
 
 export interface UseSecureCartOperationsOptions {
@@ -129,7 +129,7 @@ export function useSecureCartOperations({
             const plafondAffiche = mode === 'taux'
                 ? `${maxDiscountRate}%`
                 : `${Math.round(totalTTC * maxDiscountRate / 100)} F`
-            toast.error(t('facturation:messages.discount_limit_error', { rate: maxDiscountRate }) + ` (max: ${plafondAffiche})`)
+            gooeyToast.error(t('facturation:messages.discount_limit_error', { rate: maxDiscountRate }) + ` (max: ${plafondAffiche})`)
             // Capper à la valeur max autorisée
             const cappedValue = mode === 'taux'
                 ? String(maxDiscountRate)

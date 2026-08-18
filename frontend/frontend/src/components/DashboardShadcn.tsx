@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import {
   LayoutDashboard,
@@ -100,25 +100,25 @@ export default function DashboardShadcn() {
       refetchLowStock(),
       refetchExpiring(),
     ]);
-    toast.success(t('refresh_success'), { icon: '🔄' });
+    gooeyToast.success(t('refresh_success'), { icon: '🔄' });
   };
 
   const handleSendTelegramReport = async () => {
     if (!pharmSettings?.telegram_enabled) {
-      toast.error(t('common:telegram.not_enabled'));
+      gooeyToast.error(t('common:telegram.not_enabled'));
       return;
     }
     if (!pharmSettings?.telegram_chat_id) {
-      toast.error(t('common:telegram.chat_id_missing'));
+      gooeyToast.error(t('common:telegram.chat_id_missing'));
       return;
     }
 
     setSendingReport(true);
     try {
       await api.post('telegram/rapport-flash/', { stats });
-      toast.success(t('common:telegram.send_success'), { icon: '📊' });
+      gooeyToast.success(t('common:telegram.send_success'), { icon: '📊' });
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
     } finally {
       setSendingReport(false);
     }
@@ -126,15 +126,15 @@ export default function DashboardShadcn() {
 
   const handleSendTelegramInventaire = async () => {
     if (!pharmSettings?.telegram_enabled) {
-      toast.error(t('common:telegram.not_enabled'));
+      gooeyToast.error(t('common:telegram.not_enabled'));
       return;
     }
     setSendingInventaire(true);
     try {
       await api.post('telegram/rapport-inventaire/');
-      toast.success(t('common:telegram.send_success'), { icon: '📦' });
+      gooeyToast.success(t('common:telegram.send_success'), { icon: '📦' });
     } catch (err) {
-      toast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
+      gooeyToast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
     } finally {
       setSendingInventaire(false);
     }
@@ -154,7 +154,7 @@ export default function DashboardShadcn() {
   useEffect(() => {
     const retards = echeances.filter(e => e.status === 'EN RETARD');
     if (retards.length > 0) {
-      toast.error(
+      gooeyToast.error(
         retards.length > 1
           ? t('echeances_overdue_toast_plural', '{{count}} échéances fournisseurs en retard !', { count: retards.length })
           : t('echeances_overdue_toast', '{{count}} échéance fournisseur en retard !', { count: retards.length }),
@@ -166,7 +166,7 @@ export default function DashboardShadcn() {
 
   useEffect(() => {
     if (promisDisponibles.length > 0) {
-      toast.success(
+      gooeyToast.success(
         t('alerts.promis_toast', { count: promisDisponibles.length }),
         { duration: 5000, id: 'promis-dispo-dashboard' }
       );

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
 import { Button } from './ui/Button';
@@ -98,7 +98,7 @@ export default function Corbeille() {
       const res = await api.get('corbeille/');
       setData(res.data);
       setSelectedIds(new Set());
-    } catch { toast.error(t('messages.fetch_error')); }
+    } catch { gooeyToast.error(t('messages.fetch_error')); }
     finally { setLoading(false); }
   };
 
@@ -144,9 +144,9 @@ export default function Corbeille() {
         return res.data.restored;
       }));
       restored = res_all.reduce((acc, r) => acc + r, 0);
-      toast.success(t('messages.restore_success', { count: restored }));
+      gooeyToast.success(t('messages.restore_success', { count: restored }));
       fetchData();
-    } catch { toast.error(t('messages.restore_error')); }
+    } catch { gooeyToast.error(t('messages.restore_error')); }
     finally { setActionLoading(false); }
   };
 
@@ -168,13 +168,13 @@ export default function Corbeille() {
         return res.data.deleted;
       }));
       deleted = res_all.reduce((acc, r) => acc + r, 0);
-      toast.success(t('messages.purge_success', { count: deleted }));
+      gooeyToast.success(t('messages.purge_success', { count: deleted }));
       fetchData();
     } catch (err: unknown) {
       const detail = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
         : undefined;
-      toast.error(detail || t('messages.purge_error'));
+      gooeyToast.error(detail || t('messages.purge_error'));
     }
     finally { setActionLoading(false); }
   };
@@ -190,10 +190,10 @@ export default function Corbeille() {
     setActionLoading(true);
     try {
       const res = await api.post('corbeille/empty/');
-      toast.success(res.data.message);
-      if (res.data.errors?.length) res.data.errors.forEach((e: string) => toast.error(e, { duration: 5000 }));
+      gooeyToast.success(res.data.message);
+      if (res.data.errors?.length) res.data.errors.forEach((e: string) => gooeyToast.error(e, { duration: 5000 }));
       fetchData();
-    } catch { toast.error(t('messages.empty_error')); }
+    } catch { gooeyToast.error(t('messages.empty_error')); }
     finally { setActionLoading(false); }
   };
 

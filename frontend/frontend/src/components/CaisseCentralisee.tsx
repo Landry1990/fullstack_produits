@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
@@ -181,7 +181,7 @@ const _navigate = useNavigate()
 
     // Vérifier si des ventes en attente sont présentes
     if (facturesEnAttente.length > 0) {
-      toast.error(
+      gooeyToast.error(
         t('cash_session.pending_sales_error', {
           defaultValue: `Impossible de fermer : ${facturesEnAttente.length} vente(s) en attente de règlement. Veuillez régler ou annuler les ventes avant de clôturer.`,
           count: facturesEnAttente.length
@@ -200,7 +200,7 @@ const _navigate = useNavigate()
       setSessionRecap(null)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } }
-      toast.error(axiosErr.response?.data?.detail || t('cash_session.close_error', { defaultValue: 'Erreur fermeture' }))
+      gooeyToast.error(axiosErr.response?.data?.detail || t('cash_session.close_error', { defaultValue: 'Erreur fermeture' }))
     }
   }
 
@@ -217,7 +217,7 @@ const _navigate = useNavigate()
       onViewProducts: (facture) => setPreviewFactureId(facture.id),
       onRefresh: () => {
         refreshFromRealtime()
-        toast.success(t('messages.refreshed'))
+        gooeyToast.success(t('messages.refreshed'))
       },
       onToggleCouponPanel: () => {
         setIsCouponPanelOpen(false)
@@ -265,7 +265,7 @@ const _navigate = useNavigate()
     fetchSessionRecap,
     fetchCoupons,
     utiliserCouponApresEncaissement,
-    onSuccess: () => toast.success(t('messages.modification_success'))
+    onSuccess: () => gooeyToast.success(t('messages.modification_success'))
   })
 
   // Wrapper pour adapter la signature au PaymentModal
@@ -292,10 +292,10 @@ const _navigate = useNavigate()
       const response = await api.post(`factures/${facture.id}/send_whatsapp/`, {
         phone: phone
       })
-      toast.success(response.data.detail || t('messages.whatsapp_sent'))
+      gooeyToast.success(response.data.detail || t('messages.whatsapp_sent'))
     } catch (err) {
       logger.error('Erreur envoi WhatsApp:', err)
-      toast.error(getApiErrorDetail(err, t('messages.whatsapp_send_error')))
+      gooeyToast.error(getApiErrorDetail(err, t('messages.whatsapp_send_error')))
     } finally {
       setLoading(false)
     }
@@ -310,11 +310,11 @@ const _navigate = useNavigate()
 
     try {
       await api.post(`factures/${facture.id}/annuler/`, { motif: 'Annulation depuis Caisse Centrale' })
-      toast.success(t('messages.cancel_invoice_success'))
+      gooeyToast.success(t('messages.cancel_invoice_success'))
       fetchFacturesEnAttente()
     } catch (err) {
       logger.error('Erreur annulation:', err)
-      toast.error(t('messages.cancel_invoice_error'))
+      gooeyToast.error(t('messages.cancel_invoice_error'))
     }
   }
 

@@ -7,7 +7,7 @@ import {
     Download, Save, Upload, Send, MoreHorizontal
 } from 'lucide-react';
 import api from '../../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 
 import type { Inventaire } from '../../../types';
 import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
@@ -44,10 +44,10 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         setSendingTelegram(true);
         try {
             await api.post('telegram/rapport-inventaire/', activeInventaire?.id ? { inventaire_id: activeInventaire.id } : {});
-            toast.success(t('inventaire.telegram_report_sent'), { icon: <Send className="h-4 w-4 text-[#229ED9]" /> });
+            gooeyToast.success(t('inventaire.telegram_report_sent'), { icon: <Send className="h-4 w-4 text-[#229ED9]" /> });
         } catch (err: unknown) {
             const apiError = err as { response?: { data?: { message?: string } } } | undefined;
-            toast.error(apiError?.response?.data?.message || t('common:telegram.send_error'));
+            gooeyToast.error(apiError?.response?.data?.message || t('common:telegram.send_error'));
         } finally {
             setSendingTelegram(false);
         }
@@ -93,7 +93,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
             await flushPendingChanges();
             const ok = await syncLocalOnlyLines();
             if (!ok) {
-                toast.error(t('inventaire.detail.save_error'));
+                gooeyToast.error(t('inventaire.detail.save_error'));
                 return;
             }
             generateEtatPDF(activeInventaire, printGroupBy);

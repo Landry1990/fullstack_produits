@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useSidebar } from '../../hooks/useSidebar';
 import { useTranslation } from 'react-i18next';
@@ -33,7 +33,7 @@ export default function UserHeader() {
         playNotificationSound();
 
         if (!isMessagingOpen) {
-          toast.success(
+          gooeyToast.success(
             (toastObj: { id: string }) => (
               <div className="flex items-center gap-3">
                 <div className="flex-1">
@@ -43,7 +43,7 @@ export default function UserHeader() {
                 <button 
                   onClick={() => {
                     setIsMessagingOpen(true);
-                    toast.dismiss(toastObj.id);
+                    gooeyToast.dismiss(toastObj.id);
                   }}
                   className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
                 >

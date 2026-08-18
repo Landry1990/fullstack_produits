@@ -327,7 +327,7 @@ export function GeneralTab({ formData, handleChange, t, logo, logoInputRef, hand
                       if (!value) return
                       const existing = [...(formData.custom_payment_modes || [])]
                       if (existing.some((m: { value: string }) => m.value === value)) {
-                        import('react-hot-toast').then(({ toast }) => toast.error(t('messages.payment_mode_exists')))
+                        import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(t('messages.payment_mode_exists')))
                         return
                       }
                       handleChange('custom_payment_modes', [...existing, { value, label }])
@@ -348,7 +348,7 @@ export function GeneralTab({ formData, handleChange, t, logo, logoInputRef, hand
                     if (!value) return
                     const existing = [...(formData.custom_payment_modes || [])]
                     if (existing.some((m: { value: string }) => m.value === value)) {
-                      import('react-hot-toast').then(({ toast }) => toast.error(t('messages.payment_mode_exists')))
+                      import('goey-toast').then(({ gooeyToast }) => gooeyToast.error(t('messages.payment_mode_exists')))
                       return
                     }
                     handleChange('custom_payment_modes', [...existing, { value, label }])

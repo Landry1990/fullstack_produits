@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
@@ -270,7 +270,7 @@ const Transformations: React.FC = () => {
       setLoading(false);
     } catch (error) {
       logger.error("Erreur fetch:", error);
-      toast.error(t('transformations.messages.load_error'));
+      gooeyToast.error(t('transformations.messages.load_error'));
       setLoading(false);
     }
   };
@@ -285,13 +285,13 @@ const Transformations: React.FC = () => {
         produit_destination: selectedDestination.id,
         ratio: normalizeNumberInput(ratioValue)
       });
-      toast.success(t('transformations.messages.create_success'));
+      gooeyToast.success(t('transformations.messages.create_success'));
       setIsRelationModalOpen(false);
       resetRelationForm();
       fetchData();
     } catch (error) {
       logger.error(error);
-      toast.error(getApiErrorDetail(error, t('transformations.messages.create_error')));
+      gooeyToast.error(getApiErrorDetail(error, t('transformations.messages.create_error')));
     }
   };
 
@@ -311,10 +311,10 @@ const Transformations: React.FC = () => {
     if (!confirmed) return;
     try {
       await api.delete(`relations-transformation/${id}/`);
-      toast.success(t('transformations.messages.delete_success'));
+      gooeyToast.success(t('transformations.messages.delete_success'));
       fetchData();
     } catch {
-      toast.error(t('transformations.messages.delete_error'));
+      gooeyToast.error(t('transformations.messages.delete_error'));
     }
   };
 
@@ -351,12 +351,12 @@ const Transformations: React.FC = () => {
       });
 
       if (res.data.success) {
-        toast.success(res.data.message || t('transformations.messages.transform_success'));
+        gooeyToast.success(res.data.message || t('transformations.messages.transform_success'));
         setIsTransformerModalOpen(false);
         fetchData();
       }
     } catch (error) {
-      toast.error(getApiErrorDetail(error, t('transformations.messages.transform_error')));
+      gooeyToast.error(getApiErrorDetail(error, t('transformations.messages.transform_error')));
       setSubmitting(false);
     }
   };
@@ -374,11 +374,11 @@ const Transformations: React.FC = () => {
     try {
       const res = await api.post(`historique-transformation/${histId}/reverser/`, {});
       if (res.data.success) {
-        toast.success(res.data.message || t('transformations.messages.reverse_success', { defaultValue: 'Transformation annulée avec succès' }));
+        gooeyToast.success(res.data.message || t('transformations.messages.reverse_success', { defaultValue: 'Transformation annulée avec succès' }));
         fetchData();
       }
     } catch (error) {
-      toast.error(getApiErrorDetail(error, t('transformations.messages.reverse_error', { defaultValue: 'Erreur lors de l\'annulation' })));
+      gooeyToast.error(getApiErrorDetail(error, t('transformations.messages.reverse_error', { defaultValue: 'Erreur lors de l\'annulation' })));
     } finally {
       setReversingId(null);
     }

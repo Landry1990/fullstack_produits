@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
 import { safeStorage } from '../utils/storage'
 import type { ProduitModel, Facture, FactureProduit, LigneFacture } from '../types'
@@ -100,18 +100,18 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                     ui.setModificationInvoiceStatus(devis.status || null)
                     ui.setOriginalTotalTtc(Number(devis.total_ttc || 0))
                     if (isDevis) {
-                        toast.success(t('messages.devis_loaded_for_edit', { num: devis.numero_facture || devis.id }))
+                        gooeyToast.success(t('messages.devis_loaded_for_edit', { num: devis.numero_facture || devis.id }))
                     } else {
-                        toast.success(t('messages.invoice_loaded_for_edit', { num: devis.numero_facture || devis.id }))
+                        gooeyToast.success(t('messages.invoice_loaded_for_edit', { num: devis.numero_facture || devis.id }))
                     }
                 } else if (devis.id) {
-                    toast.success(t('messages.devis_loaded', { num: devis.numero_facture || devis.id }))
+                    gooeyToast.success(t('messages.devis_loaded', { num: devis.numero_facture || devis.id }))
                 } else {
-                    toast.success(t('messages.cart_prefilled_from_copy'))
+                    gooeyToast.success(t('messages.cart_prefilled_from_copy'))
                 }
                 safeStorage.removeItem('devis_to_load', 'local')
             } catch {
-                toast.error(t('messages.devis_load_error'))
+                gooeyToast.error(t('messages.devis_load_error'))
                 safeStorage.removeItem('devis_to_load', 'local')
             }
         }

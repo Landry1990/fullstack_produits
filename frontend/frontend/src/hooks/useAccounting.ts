@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 
 export interface Compte {
     id: number;
@@ -169,7 +169,7 @@ export const useAccounting = () => {
         mutationFn: (data: Partial<Ecriture>) => api.post('compta/ecritures/', data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting'] });
-            toast.success(t('messages.entry_saved'));
+            gooeyToast.success(t('messages.entry_saved'));
         },
         onError: (error: unknown) => {
             const e = error as { response?: { data?: { detail?: string; message?: string; [key: string]: unknown } } };
@@ -178,9 +178,9 @@ export const useAccounting = () => {
                 // Si c'est une erreur de validation DRF (dictionnaire de champs)
                 const firstError = Object.values(data)[0];
                 const msg = Array.isArray(firstError) ? firstError[0] : (data.detail || data.message || t('messages.entry_save_error'));
-                toast.error(msg);
+                gooeyToast.error(msg);
             } else {
-                toast.error(t('messages.entry_save_error'));
+                gooeyToast.error(t('messages.entry_save_error'));
             }
         }
     });
@@ -189,7 +189,7 @@ export const useAccounting = () => {
         mutationFn: () => api.post('compta/ecritures/initialiser_historique/'),
         onSuccess: (res) => {
             queryClient.invalidateQueries({ queryKey: ['accounting'] });
-            toast.success(t('messages.history_initialized', { count: res.data.entries_processed }));
+            gooeyToast.success(t('messages.history_initialized', { count: res.data.entries_processed }));
         }
     });
 
@@ -197,12 +197,12 @@ export const useAccounting = () => {
         mutationFn: (data: Omit<Compte, 'id'>) => api.post('compta/comptes/', data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
-            toast.success(t('messages.account_created'));
+            gooeyToast.success(t('messages.account_created'));
         },
         onError: (error: unknown) => {
             const e = error as { response?: { data?: { numero?: string[]; detail?: string } } };
             const msg = e.response?.data?.numero?.[0] || e.response?.data?.detail || t('messages.account_create_error');
-            toast.error(msg);
+            gooeyToast.error(msg);
         }
     });
 
@@ -210,12 +210,12 @@ export const useAccounting = () => {
         mutationFn: ({ id, ...data }: Compte) => api.patch(`compta/comptes/${id}/`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
-            toast.success(t('messages.account_updated'));
+            gooeyToast.success(t('messages.account_updated'));
         },
         onError: (error: unknown) => {
             const e = error as { response?: { data?: { numero?: string[]; detail?: string } } };
             const msg = e.response?.data?.numero?.[0] || e.response?.data?.detail || t('messages.account_update_error');
-            toast.error(msg);
+            gooeyToast.error(msg);
         }
     });
 
@@ -223,12 +223,12 @@ export const useAccounting = () => {
         mutationFn: (id: number) => api.delete(`compta/comptes/${id}/`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['accounting', 'comptes'] });
-            toast.success(t('messages.account_deleted'));
+            gooeyToast.success(t('messages.account_deleted'));
         },
         onError: (error: unknown) => {
             const e = error as { response?: { data?: { detail?: string } } };
             const msg = e.response?.data?.detail || t('messages.account_delete_error');
-            toast.error(msg);
+            gooeyToast.error(msg);
         }
     });
 

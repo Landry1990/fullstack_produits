@@ -20,7 +20,7 @@ import {
 } from '../shadcn/table';
 import { cn } from '../../lib/utils';
 import api from '../../services/api';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useQueryClient } from '@tanstack/react-query';
 
 
@@ -169,9 +169,9 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
       if (editLotValues.produitId) {
         queryClient.invalidateQueries({ queryKey: ['produit-lots', editLotValues.produitId] });
       }
-      toast.success(t('orders:messages.lot_update_success'));
+      gooeyToast.success(t('orders:messages.lot_update_success'));
     } catch {
-      toast.error(t('orders:messages.lot_update_error'));
+      gooeyToast.error(t('orders:messages.lot_update_error'));
     } finally {
       setSavingLot(false);
     }

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import type { ProduitModel } from '../../types'
 import type { SearchMode, PackResult, DciResult, SearchResult } from '../../components/common/ProductSearch/types'
 import { logger } from '../../utils/logger'
@@ -57,7 +57,7 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
       setPackResults(Array.isArray(data) ? data : data.results || [])
     } catch (e) {
       logger.error('Pack search error', e)
-      toast.error(t('facturation:search.error_search_packs'))
+      gooeyToast.error(t('facturation:search.error_search_packs'))
     } finally {
       setPackLoading(false)
     }

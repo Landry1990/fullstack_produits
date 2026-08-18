@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { logger } from '../utils/logger'
 
 export interface InvoiceSettings {
@@ -38,11 +38,11 @@ export function useInvoiceSettings() {
         try {
             const { data } = await api.put<InvoiceSettings>('invoice-settings/', updates);
             setSettings(data);
-            toast.success(t('facturation:messages.invoice_settings_updated'));
+            gooeyToast.success(t('facturation:messages.invoice_settings_updated'));
             return data;
         } catch (err) {
             logger.error('Error updating invoice settings:', err);
-            toast.error(t('facturation:messages.invoice_settings_update_error'));
+            gooeyToast.error(t('facturation:messages.invoice_settings_update_error'));
             throw err;
         }
     }, [t]);

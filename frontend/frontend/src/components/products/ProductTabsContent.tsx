@@ -8,7 +8,7 @@ import type { StockMovement } from '../../hooks/useProduits';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
 import api from '../../services/api';
-import toast from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Input } from '../shadcn/input';
@@ -231,9 +231,9 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
             setLocalLots(prev => prev.map(l => l.id === lotId ? { ...l, ...payload } : l));
             setEditingId(null);
             queryClient.invalidateQueries({ queryKey: ['produit-lots', produitId] });
-            toast.success(t('products:messages.lot_update_success'));
+            gooeyToast.success(t('products:messages.lot_update_success'));
         } catch {
-            toast.error(t('products:messages.lot_update_error'));
+            gooeyToast.error(t('products:messages.lot_update_error'));
         } finally {
             setSaving(false);
         }
@@ -412,10 +412,10 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                 filename: `${t('products:detail.movements.export_filename', { product: produitName })}_${today}.xlsx`,
                 title: t('products:detail.movements.export_title', { product: produitName }),
             });
-            toast.success(t('products:messages.export_success', { defaultValue: 'Export généré' }));
+            gooeyToast.success(t('products:messages.export_success', { defaultValue: 'Export généré' }));
         } catch (err) {
             logger.error('Erreur export Excel mouvements:', err);
-            toast.error(t('products:detail.movements.export_error'));
+            gooeyToast.error(t('products:detail.movements.export_error'));
         }
     }, [stockHistory, settings, produitName, t]);
 

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import type { ProduitModel, LigneFacture, StockLot } from '../types'
 import { normalizeNumberInput } from '../utils/formatters'
 import { calculateLineTotal, calculateCartStats } from '../utils/finance'
@@ -112,7 +112,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
                     if (conflict) {
                         // Trigger toast outside of render cycle
                         setTimeout(() => {
-                            toast.error(
+                            gooeyToast.error(
                                 `⚠️ Interaction / Redondance\n${fullProduit.name} est de la même famille (${fullProduit.famille_risque_nom}) que ${conflict.produit.name} déjà présent.`,
                                 {
                                     duration: 6000,
@@ -182,7 +182,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
 
             if (requiresOrdonnance && onRequirePrescription) {
                 onRequirePrescription()
-                toast(t('prescriptions:messages.prescription_product_detected'))
+                gooeyToast(t('prescriptions:messages.prescription_product_detected'))
             }
 
             // CHECKOUT ALERT MESSAGE CHECK
@@ -225,7 +225,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
             return fullProduit
         } catch (err) {
             logger.error('Erreur lors du chargement des détails du produit:', err)
-            toast.error(t('facturation:messages.product_detail_load_error'))
+            gooeyToast.error(t('facturation:messages.product_detail_load_error'))
         } finally {
             setLoading(false)
         }
@@ -240,7 +240,7 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
         // Vérifier les permissions pour les retours (quantité négative)
         if (finalQuantite < 0 && !user?.can_do_returns) {
             const msg = "Vous n'avez pas la permission d'effectuer des retours (quantités négatives)."
-            toast.error(msg)
+            gooeyToast.error(msg)
             if (callback) callback(msg)
             return
         }

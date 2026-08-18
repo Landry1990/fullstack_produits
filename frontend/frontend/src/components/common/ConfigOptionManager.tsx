@@ -6,7 +6,7 @@ import {
   Type, CheckCircle2, XCircle
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { useConfirm } from '../../hooks/useConfirm';
 import PremiumModal from './PremiumModal';
 import { logger } from '../../utils/logger'
@@ -59,7 +59,7 @@ export default function ConfigOptionManager({
       setOptions(Array.isArray(data) ? data : []);
     } catch (err) {
       logger.error(`Error fetching config options:`, err);
-      toast.error(t('common:messages.load_error'));
+      gooeyToast.error(t('common:messages.load_error'));
     } finally {
       setLoading(false);
     }
@@ -82,16 +82,16 @@ export default function ConfigOptionManager({
       if (editingOption) {
         const { data: updated } = await api.put(`configuration-options/${editingOption.id}/`, payload);
         setOptions(prev => prev.map(o => o.id === updated.id ? updated : o));
-        toast.success(t('common:messages.success_save'));
+        gooeyToast.success(t('common:messages.success_save'));
       } else {
         const { data: created } = await api.post('configuration-options/', payload);
         setOptions(prev => [...prev, created].slice().sort((a, b) => a.order - b.order || a.label.localeCompare(b.label)));
-        toast.success(t('common:messages.success_save'));
+        gooeyToast.success(t('common:messages.success_save'));
       }
       setIsModalOpen(false);
     } catch (err: unknown) {
       const errorMsg = err.response?.data?.non_field_errors?.[0] || err.response?.data?.detail || t('common:messages.error_saving');
-      toast.error(errorMsg);
+      gooeyToast.error(errorMsg);
     }
   };
 
@@ -105,10 +105,10 @@ export default function ConfigOptionManager({
 
     try {
       await api.delete(`configuration-options/${id}/`);
-      toast.success(t('common:messages.success_delete'));
+      gooeyToast.success(t('common:messages.success_delete'));
       setOptions(prev => prev.filter(o => o.id !== id));
     } catch {
-      toast.error(t('common:messages.error_deleting'));
+      gooeyToast.error(t('common:messages.error_deleting'));
     }
   };
 

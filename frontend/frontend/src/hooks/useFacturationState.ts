@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProduitModel, Facture, LigneFacture, PaginatedResponse } from '../types'
 import type { SaleCompletionResult } from '../types/finance'
@@ -113,7 +113,7 @@ export function useFacturationState() {
   const handleBarcodeMatch = useCallback((product: ProduitModel) => {
     if (addProductRef.current) {
       addProductRef.current(product, { isRetrocession, preventFocus: true, markupPercentage: currentMarkup })
-      toast.success(t('facturation:messages.scan_added', { name: product.name }), { duration: 1500 })
+      gooeyToast.success(t('facturation:messages.scan_added', { name: product.name }), { duration: 1500 })
     }
   }, [isRetrocession, t, currentMarkup])
 
@@ -210,7 +210,7 @@ export function useFacturationState() {
               let url = `/app/print-invoice/${result.facture.id}`
               if (nameToUse) url += `?client_name=${encodeURIComponent(nameToUse)}`
               const w = window.open(url, '_blank')
-              if (!w) toast.error(t('common:popup_blocked'))
+              if (!w) gooeyToast.error(t('common:popup_blocked'))
             }
             setIsFactureA4(false)
           } else {
@@ -354,7 +354,7 @@ export function useFacturationState() {
       ui.setRemiseGlobale(client.pending_discount)
       ui.setRemiseMode('taux')
       setUsePendingDiscount(true)
-      toast.success(t('facturation:messages.reward_applied', { discount: client.pending_discount }))
+      gooeyToast.success(t('facturation:messages.reward_applied', { discount: client.pending_discount }))
     }
   }, [clientsHook.selectedClient, clientsHook.clients, clientsHook.useManualClient, ui, t])
 
@@ -382,7 +382,7 @@ export function useFacturationState() {
         return ligne
       })
     } catch {
-      toast.error(t('facturation.messages.refresh_failed') || "Erreur de rafraîchissement des stocks")
+      gooeyToast.error(t('facturation.messages.refresh_failed') || "Erreur de rafraîchissement des stocks")
     }
 
     cart.setLignesFacture(freshLignes)
@@ -520,7 +520,7 @@ export function useFacturationState() {
     if (cart.lignesFacture.length > 0) {
       handlePaymentClick()
     } else {
-      toast.error(t('facturation.messages.cart_empty'))
+      gooeyToast.error(t('facturation.messages.cart_empty'))
     }
   }, [cart.lignesFacture.length, handlePaymentClick, t])
 

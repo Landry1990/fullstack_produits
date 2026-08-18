@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatDateFr } from '../../utils/formatters';
 import clientService from '../../services/clientService';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 
 interface PurchaseProduct {
   id: number | null;
@@ -108,11 +108,11 @@ export default function PurchaseHistoryDrawer({
         message_alerte: alerteText,
         blocking_alerte: alerteBlocking,
       });
-      toast.success(t('clients:history.alerte_saved', 'Alerte enregistrée'));
+      gooeyToast.success(t('clients:history.alerte_saved', 'Alerte enregistrée'));
       onAlerteSaved?.(alerteText, alerteBlocking);
       setEditingAlerte(false);
     } catch {
-      toast.error(t('clients:history.alerte_error', 'Erreur lors de la sauvegarde'));
+      gooeyToast.error(t('clients:history.alerte_error', 'Erreur lors de la sauvegarde'));
     } finally {
       setSavingAlerte(false);
     }

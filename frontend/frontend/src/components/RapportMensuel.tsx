@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../utils/formatters';
 import { formatDate, getLocale } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
@@ -173,7 +173,7 @@ export default function RapportMensuel() {
       setRapport(response.data);
     } catch (error) {
       logger.error("Erreur lors du chargement du rapport", error);
-      toast.error(t('messages.load_error'));
+      gooeyToast.error(t('messages.load_error'));
     } finally {
       setLoading(false);
     }
@@ -226,10 +226,10 @@ export default function RapportMensuel() {
                 setPdfLoading(true);
                 try {
                   await generateMonthlyReportPdfDraft(rapport, settings, periodeLabel, t);
-                  toast.success(t('messages.pdf_success', { defaultValue: 'PDF généré avec succès' }));
+                  gooeyToast.success(t('messages.pdf_success', { defaultValue: 'PDF généré avec succès' }));
                 } catch (error) {
                   logger.error('Erreur génération PDF:', error);
-                  toast.error(t('messages.download_error'));
+                  gooeyToast.error(t('messages.download_error'));
                 } finally {
                   setPdfLoading(false);
                 }
@@ -256,10 +256,10 @@ export default function RapportMensuel() {
                     rapport,
                     periode: periodeLabel,
                   });
-                  toast.success(t('common:telegram.send_success'), { icon: '📨' });
+                  gooeyToast.success(t('common:telegram.send_success'), { icon: '📨' });
                 } catch (err: unknown) {
                   const msg = err?.response?.data?.message || t('common:telegram.send_error');
-                  toast.error(msg);
+                  gooeyToast.error(msg);
                 }
               }}
               disabled={!rapport}

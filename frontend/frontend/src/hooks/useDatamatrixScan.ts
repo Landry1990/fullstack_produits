@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { parseGS1Datamatrix } from '../utils/gs1Parser';
 import type { LigneFacture, ProduitModel } from '../types';
@@ -49,7 +49,7 @@ export function useDatamatrixScan({
 
         if (!cip || !lot) {
             setScanStatus('error');
-            toast.error(t('messages.datamatrix_unrecognized'));
+            gooeyToast.error(t('messages.datamatrix_unrecognized'));
             setTimeout(() => setScanStatus('idle'), 2500);
             return;
         }
@@ -115,16 +115,16 @@ export function useDatamatrixScan({
             setScanStatus('success');
             setLastScanned(`${data.produit.name} — Lot ${data.lot_numero}`);
             if (data.quantity_remaining <= 0) {
-                toast(t('messages.datamatrix_lot_out_of_stock', { produit: data.produit.name }), {
+                gooeyToast(t('messages.datamatrix_lot_out_of_stock', { produit: data.produit.name }), {
                     style: { background: '#fef3c7', color: '#92400e' },
                 });
             } else {
-                toast.success(t('messages.datamatrix_added', { produit: data.produit.name, lot: data.lot_numero }));
+                gooeyToast.success(t('messages.datamatrix_added', { produit: data.produit.name, lot: data.lot_numero }));
             }
         } catch (err: unknown) {
             setScanStatus('error');
             const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || t('orders:messages.lot_or_product_not_found', { defaultValue: 'Lot ou produit introuvable.' });
-            toast.error(detail);
+            gooeyToast.error(detail);
         } finally {
             setScanInput('');
             setTimeout(() => setScanStatus('idle'), 2000);

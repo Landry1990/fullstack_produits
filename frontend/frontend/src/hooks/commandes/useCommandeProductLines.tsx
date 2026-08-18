@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 import type { TFunction } from 'react-i18next';
 import { useCommandesStore } from '../../stores/useCommandesStore';
@@ -176,7 +176,7 @@ export function useCommandeProductLines(
         if (e.ctrlKey || isFullySelected || isEmpty) {
           e.preventDefault();
           removeProductFromCommande(rowIndex);
-          toast.success(t('orders:messages.product_removed'), { icon: <Trash2 className="h-4 w-4 text-emerald-600" />, duration: 1000 });
+          gooeyToast.success(t('orders:messages.product_removed'), { icon: <Trash2 className="h-4 w-4 text-emerald-600" />, duration: 1000 });
 
           setTimeout(() => {
             const nextRow = Math.min(rowIndex, commandeProduits.length - 1);
@@ -360,7 +360,7 @@ export function useCommandeProductLines(
 
   function openTransferModal() {
     if (selectedRows.size === 0) {
-      toast.error(t('orders:messages.transfer_select_products'));
+      gooeyToast.error(t('orders:messages.transfer_select_products'));
       return;
     }
     setIsTransferModalOpen(true);
@@ -455,7 +455,7 @@ export function useCommandeProductLines(
             unites_gratuites: mergedUG,
           };
 
-          toast.success(t('orders:messages.lots_merged', { product: typeof currentItem.produit === 'object' ? currentItem.produit.name : 'produit' }), { icon: <RefreshCw className="h-4 w-4 text-emerald-600" /> });
+          gooeyToast.success(t('orders:messages.lots_merged', { product: typeof currentItem.produit === 'object' ? currentItem.produit.name : 'produit' }), { icon: <RefreshCw className="h-4 w-4 text-emerald-600" /> });
 
           setTimeout(() => {
             const targetInput = document.querySelector(`input[data-row="${finalIndex}"][data-field="${fieldsConfig[0].name}"]`) as HTMLInputElement;
@@ -479,7 +479,7 @@ export function useCommandeProductLines(
       const sellingHT = selling / (1 + tva / 100);
       if (sellingHT < price) {
         const productName = typeof item.produit === 'object' ? item.produit?.name : '';
-        toast(t('orders:messages.selling_below_cost', {
+        gooeyToast(t('orders:messages.selling_below_cost', {
           selling: Math.round(selling),
           cost: Math.round(price),
           product: productName || `#${item.id || '?'}`,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail, extractErrorMessage } from '../utils/errorHandling';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
@@ -223,7 +223,7 @@ export default function GestionUtilisateurs() {
       setUsers(Array.isArray(data) ? data : (Array.isArray((data as { results?: unknown })?.results) ? (data as { results: unknown[] }).results : []));
     } catch (error) {
       logger.error('Error fetching users:', error);
-      toast.error(t('messages.load_error'));
+      gooeyToast.error(t('messages.load_error'));
     } finally {
       setLoading(false);
     }
@@ -262,7 +262,7 @@ export default function GestionUtilisateurs() {
       max_discount_rate: Number(sourceUser.profile?.max_discount_rate || 0),
     }));
 
-    toast.success(t('messages.permissions_copied', { username: sourceUser.username, defaultValue: `Droits copiés de ${sourceUser.username}` }));
+    gooeyToast.success(t('messages.permissions_copied', { username: sourceUser.username, defaultValue: `Droits copiés de ${sourceUser.username}` }));
   };
 
   const handleRoleChange = (role: string, preserveMenus: boolean = false) => {
@@ -469,11 +469,11 @@ export default function GestionUtilisateurs() {
   const executeDeleteUser = async (userId: number, username: string) => {
     try {
       await api.patch(`users/${userId}/`, { is_active: false });
-      toast.success(t('messages.deactivated', { username, defaultValue: `${username} a été désactivé. Vous pouvez le restaurer depuis le menu Corbeille.` }));
+      gooeyToast.success(t('messages.deactivated', { username, defaultValue: `${username} a été désactivé. Vous pouvez le restaurer depuis le menu Corbeille.` }));
       fetchUsers();
     } catch (error) {
       logger.error('Error deleting/deactivating user:', error);
-      toast.error(getApiErrorDetail(error, t('messages.deactivate_error', { defaultValue: 'Erreur lors de la désactivation.' })));
+      gooeyToast.error(getApiErrorDetail(error, t('messages.deactivate_error', { defaultValue: 'Erreur lors de la désactivation.' })));
     }
   };
 
@@ -559,18 +559,18 @@ export default function GestionUtilisateurs() {
           };
           login(updatedSession);
         }
-        toast.success(t('messages.updated'));
+        gooeyToast.success(t('messages.updated'));
       } else {
         const { data: newUser } = await api.post('users/', payload);
         setUsers(prev => [...prev, newUser].slice().sort((a, b) => a.username.localeCompare(b.username)));
-        toast.success(t('messages.created'));
+        gooeyToast.success(t('messages.created'));
       }
       
       setModalOpen(false);
     } catch (error) {
       logger.error('Error saving user:', error);
       const msg = extractErrorMessage(error) || t('messages.save_error');
-      toast.error(msg, { duration: 6000 });
+      gooeyToast.error(msg, { duration: 6000 });
     }
   };
 

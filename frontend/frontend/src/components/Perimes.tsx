@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { toast } from 'react-hot-toast'
+import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { 
@@ -169,7 +169,7 @@ export default function Perimes() {
       setStats(response.data)
     } catch (err) {
       logger.error('Erreur chargement stats:', err)
-      toast.error(t('perimes.messages.error_stats'))
+      gooeyToast.error(t('perimes.messages.error_stats'))
     } finally {
       setLoadingStats(false)
     }
@@ -190,7 +190,7 @@ export default function Perimes() {
       setAdjustments(Array.isArray(data) ? data : (data.results || []))
     } catch (err) {
       logger.error('Erreur chargement historiques:', err)
-      toast.error(t('perimes.messages.error_history'))
+      gooeyToast.error(t('perimes.messages.error_history'))
     } finally {
       setLoadingAdjustments(false)
     }
@@ -237,7 +237,7 @@ export default function Perimes() {
     
     const qty = parseInt(quantity, 10)
     if (isNaN(qty) || qty <= 0 || qty > lot.quantity_remaining) {
-      toast.error(t('perimes.messages.invalid_qty'))
+      gooeyToast.error(t('perimes.messages.invalid_qty'))
       return
     }
 
@@ -250,12 +250,12 @@ export default function Perimes() {
           validated_by_id: validatorId,
           sudo_password: password
         })
-        toast.success(t('perimes.messages.success_exit'))
+        gooeyToast.success(t('perimes.messages.success_exit'))
         fetchLots()
         fetchStats() 
       } catch (err) {
         logger.error('Erreur sortie stock:', err);
-        toast.error(t('perimes.messages.error_exit') + ': ' + getApiErrorDetail(err, t('common:messages.error_generic')))
+        gooeyToast.error(t('perimes.messages.error_exit') + ': ' + getApiErrorDetail(err, t('common:messages.error_generic')))
         throw err;
       } finally {
         setProcessing(false)
@@ -278,12 +278,12 @@ export default function Perimes() {
                   validated_by_id: validatorId,
                   sudo_password: password
               })
-              toast.success(t('perimes.messages.success_bulk_exit', { count: selectedLotIds.size }))
+              gooeyToast.success(t('perimes.messages.success_bulk_exit', { count: selectedLotIds.size }))
               fetchLots()
               fetchStats()
           } catch (err) {
               logger.error('Erreur sortie groupée:', err)
-              toast.error(getApiErrorDetail(err, t('perimes.messages.error_bulk_exit')))
+              gooeyToast.error(getApiErrorDetail(err, t('perimes.messages.error_bulk_exit')))
               throw err;
           } finally {
               setProcessing(false)

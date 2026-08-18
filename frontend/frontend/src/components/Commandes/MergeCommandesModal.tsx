@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import api from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
@@ -57,7 +57,7 @@ export default function MergeCommandesModal({
             setMergeOrdersDetails(responses.map(r => r.data));
         } catch (err) {
             logger.error('Erreur chargement détails commandes:', err);
-            toast.error(t('orders:merge_modal.load_error'));
+            gooeyToast.error(t('orders:merge_modal.load_error'));
             onClose();
         } finally {
             setLoadingMergeDetails(false);
@@ -66,13 +66,13 @@ export default function MergeCommandesModal({
 
     const handleMergeOrders = async () => {
         if (!mergeTargetOrderId) {
-            toast.error(t('orders:merge_modal.select_main_error'));
+            gooeyToast.error(t('orders:merge_modal.select_main_error'));
             return;
         }
 
         const orderIdsToMerge = Array.from(selectedOrderIds).filter(id => id !== mergeTargetOrderId);
         if (orderIdsToMerge.length === 0) {
-            toast.error(t('orders:merge_modal.no_orders_error'));
+            gooeyToast.error(t('orders:merge_modal.no_orders_error'));
             return;
         }
 
@@ -90,7 +90,7 @@ export default function MergeCommandesModal({
             logger.error('Erreur lors de la fusion:', err);
             const errObj = err as { response?: { data?: { error?: string } } };
             const msg = errObj?.response?.data?.error || t('orders:merge_modal.merge_error');
-            toast.error(msg);
+            gooeyToast.error(msg);
         }
     };
 

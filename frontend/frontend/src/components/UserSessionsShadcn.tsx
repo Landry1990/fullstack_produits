@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { LogOut, Monitor, Users, Clock, CalendarDays, Search, Loader2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { getLocale } from '../utils/dateUtils';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './shadcn/card';
@@ -145,11 +145,11 @@ const UserSessionsShadcn: React.FC = () => {
     setDisconnectingId(sessionId);
     try {
       await api.post(`user-sessions/${sessionId}/force_logout/`);
-      toast.success(t('sessions.force_logout_success', { username }));
+      gooeyToast.success(t('sessions.force_logout_success', { username }));
       fetchSessions();
     } catch (err) {
       logger.error('Error during force logout:', err);
-      toast.error(t('sessions.force_logout_error'));
+      gooeyToast.error(t('sessions.force_logout_error'));
     } finally {
       setDisconnectingId(null);
     }

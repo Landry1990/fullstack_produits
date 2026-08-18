@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../utils/formatters';
 import { useRecharts } from '../hooks/useRecharts';
 import { logger } from '../utils/logger'
@@ -84,7 +84,7 @@ export default function ClassementVendeurs() {
           setSelectedVendeur(res.data.data[0].vendeur_id);
         }
       } catch (err) {
-        toast.error(t('common:messages.error_loading'));
+        gooeyToast.error(t('common:messages.error_loading'));
         logger.error(err);
       } finally {
         setLoading(false);
