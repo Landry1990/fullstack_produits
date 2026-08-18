@@ -151,6 +151,7 @@ export default function Maintenance() {
   const [importProgress, setImportProgress] = useState(0);
   const [importMessage, setImportMessage] = useState('');
   const importJobIdRef = useRef<string | null>(null);
+  const [exportingProduits, setExportingProduits] = useState(false);
   const [showPurgeModal, setShowPurgeModal] = useState(false);
   const [purgePassword, setPurgePassword] = useState('');
   const [activeRightTab, setActiveRightTab] = useState<'nettoyage' | 'sauvegardes'>('nettoyage');
@@ -309,6 +310,28 @@ export default function Maintenance() {
     } catch (err) {
       toast.error(getApiErrorDetail(err, t('toasts.import_launch_error')));
       setImporting(false);
+    }
+  };
+
+  const handleExportProduits = async () => {
+    setExportingProduits(true);
+    try {
+      const res = await api.get('maintenance/export_produits/', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      const now = new Date();
+      const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+      a.download = `export_produits_${ts}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success(t('maintenance:export_success'));
+    } catch (err) {
+      toast.error(getApiErrorError(err, t('maintenance:export_error')));
+    } finally {
+      setExportingProduits(false);
     }
   };
 
@@ -926,6 +949,23 @@ export default function Maintenance() {
                     )}
                   </div>
                 )}
+              </div>
+
+              <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">EXPORT</div>
+
+              {/* Export Excel */}
+              <div className="space-y-2">
+                <p className="text-xs text-slate-500">{t('maintenance:export_description')}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                  onClick={handleExportProduits}
+                  disabled={exportingProduits || produitsCount === 0}
+                >
+                  {exportingProduits ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
+                  {exportingProduits ? t('maintenance:exporting') : t('maintenance:export_button')}
+                </Button>
               </div>
 
               <div className="border-t border-slate-200 my-0 text-xs text-center text-slate-400 py-1">PURGE</div>

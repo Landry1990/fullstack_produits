@@ -226,11 +226,16 @@ class Command(BaseCommand):
         if groupe:
             defaults['groupe'] = groupe
         
-        # CIP2 et CIP3
+        # CIP2 et CIP3 — cip3 est ignoré s'il est déjà utilisé par un autre produit
+        # (cip3 est un code de référence partagé entre plusieurs produits chez Ubipharm)
         if cip2:
             defaults['cip2'] = cip2
         if cip3:
-            defaults['cip3'] = cip3
+            # Vérifier si cip3 est déjà pris par un autre produit
+            existing_cip3 = Produit.objects.filter(cip3=cip3).first()
+            if not existing_cip3:
+                defaults['cip3'] = cip3
+            # Sinon: cip3 ignoré (le produit est quand même créé sans cip3)
 
         # Champs optionnels
         if 'stock_alert' in row or 'alerte' in row:
@@ -276,16 +281,15 @@ class Command(BaseCommand):
         if not identifier:
             return None
         
-        # Chercher produit existant — recherche par TOUS les CIP fournis (cip1, cip2, cip3)
-        # pour éviter les IntegrityError sur contraintes unique si le produit existe déjà
-        # sous un autre CIP (ex: Laborex cip2 = Ubipharm cip1)
+        # Chercher produit existant — recherche par cip1 et cip2 seulement (identifiants du produit)
+        # PAS par cip3 : cip3 est un code de référence (molécule d'origine) partagé entre
+        # plusieurs produits différents, pas un identifiant unique.
         produit = None
-        for cip_val in [code, cip2, cip3]:
+        for cip_val in [code, cip2]:
             if not cip_val:
                 continue
             produit = Produit.objects.filter(cip1=cip_val).first() or \
-                     Produit.objects.filter(cip2=cip_val).first() or \
-                     Produit.objects.filter(cip3=cip_val).first()
+                     Produit.objects.filter(cip2=cip_val).first()
             if produit:
                 break
         
@@ -293,8 +297,13 @@ class Command(BaseCommand):
             produit = Produit.objects.filter(name__iexact=nom).first()
         
         if produit:
-            # Mise à jour
+            # Mise à jour — ne pas écraser cip3 si déjà pris par un AUTRE produit
             for key, value in defaults.items():
+                if key == 'cip3' and value:
+                    # Vérifier que cip3 n'appartient pas à un autre produit
+                    other = Produit.objects.filter(cip3=value).exclude(pk=produit.pk).first()
+                    if other:
+                        continue  # Skip: cip3 déjà pris par un autre produit
                 setattr(produit, key, value)
             produit.save()
             return 'updated'

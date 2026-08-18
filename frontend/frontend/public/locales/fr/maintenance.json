@@ -117,5 +117,10 @@
     },
     "period": "Période",
     "from": "Du",
-    "to": "Au"
+    "to": "Au",
+    "export_description": "Exportez tous les produits au format Excel (.xlsx) compatible avec l'import. Une autre pharmacie peut importer ce fichier directement.",
+    "export_button": "Exporter les produits (Excel)",
+    "exporting": "Exportation en cours...",
+    "export_success": "Export Excel téléchargé !",
+    "export_error": "Erreur lors de l'export Excel"
 }
