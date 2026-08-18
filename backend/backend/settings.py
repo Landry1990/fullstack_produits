@@ -1,6 +1,7 @@
 
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -56,6 +57,7 @@ PASSWORD_HASHERS = [
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'axes',  # Protection anti brute-force sur le login
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -92,6 +94,7 @@ MIDDLEWARE += [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'api.middleware_cache.CacheControlMiddleware',  # Headers Cache-Control sur API
+    'axes.middleware.AxesMiddleware',  # Doit être en dernier
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -204,6 +207,20 @@ AUTH_PASSWORD_VALIDATORS = [
         'OPTIONS': {'min_length': 4},
     },
 ]
+
+# Backends d'authentification : axes bloque les IPs après trop de tentatives,
+# puis ModelBackend valide le mot de passe.
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# django-axes : protection brute-force du login
+AXES_FAILURE_LIMIT = int(os.getenv('AXES_FAILURE_LIMIT', '10'))
+AXES_COOLOFF_TIME = timedelta(minutes=int(os.getenv('AXES_COOLOFF_TIME_MINUTES', '30')))
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+AXES_USERNAME_FORM_FIELD = 'username'
 
 
 # Internationalization
