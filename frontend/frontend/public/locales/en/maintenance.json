@@ -117,5 +117,10 @@
     },
     "period": "Period",
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "export_description": "Export all products to Excel (.xlsx) format compatible with import. Another pharmacy can import this file directly.",
+    "export_button": "Export products (Excel)",
+    "exporting": "Exporting...",
+    "export_success": "Excel export downloaded!",
+    "export_error": "Error during Excel export"
 }

@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-08-18 — Feat : export Excel des produits pour partage entre pharmacies
+
+### ✨ Nouvelle fonctionnalité
+
+- **Export Excel des produits** : un nouveau bouton "Exporter les produits (Excel)" dans l'écran Maintenance permet de générer un fichier `.xlsx` au format compatible avec l'import (`cip1, cip2, cip3, nom, prix_achat, prix_vente, tva, stock`).
+- Une pharmacie peut ainsi exporter son catalogue (avec ses prix et modifications) pour qu'une autre pharmacie l'importe directement, sans repartir des fichiers Laborex/Ubipharm.
+
+### 🔧 Implémentation
+
+- **Backend** : nouvel endpoint `GET maintenance/export_produits/` dans `PurgeViewSet` qui génère l'Excel avec `openpyxl` et renvoie un fichier téléchargeable.
+- **Frontend** : bouton d'export ajouté dans `Maintenance.tsx` (section EXPORT entre IMPORT et PURGE), avec traductions fr/en.
+- **Testé** : export de 4940 produits → re-import sur base vide → **4940 créés, 0 erreurs, 0 pertes**.
+
+### Fichiers modifiés
+
+- `backend/api/views/purge.py` — endpoint `export_produits`
+- `frontend/frontend/src/components/Maintenance.tsx` — bouton + fonction `handleExportProduits`
+- `frontend/frontend/public/locales/fr/maintenance.json` — traductions fr
+- `frontend/frontend/public/locales/en/maintenance.json` — traductions en
+
+---
+
+## 2026-08-18 — Fix : import produits Excel (0% d'erreurs sur les deux fichiers)
+
+### 🐛 Corrections
+
+- **`backend/api/management/commands/import_excel_csv.py`** : 4 bugs corrigés qui provoquaient ~74% d'échecs lors de l'import Ubipharm et ~54% chez Laborex :
+  1. **NaN non filtré** (cause principale chez le client) : les cellules vides d'Excel deviennent `float('nan')` en Python, pas `None`. `str(nan)` → `"nan"` était stocké en base → la 2e ligne sans cip3/cip2 → `IntegrityError: duplicate key (cip3)=(nan)`. **Fix** : `clean_cip()` et `get_value()` filtrent `NaN`/`"nan"`/`"none"`/`"null"` → `None` → stocké comme `NULL`.
+  2. **Recherche produit existant incomplète** : la recherche n'utilisait que `cip1`. **Fix** : recherche par `cip1` et `cip2` (pas `cip3` — c'est un code de référence partagé, pas un identifiant unique).
+  3. **Pas de nettoyage des CIP float** : les valeurs Excel float (`8017017.0`) étaient stockées comme `"8017017.0"`. **Fix** : `clean_cip()` supprime le suffixe `.0`.
+  4. **`cip1` vide → `''` au lieu de `None`** : violation de contrainte unique. **Fix** : `defaults['cip1'] = code or None`.
+- **Gestion des doublons de cip3** : `cip3` est un code de référence (molécule) partagé entre plusieurs produits chez Ubipharm (105 valeurs dupliquées). Au lieu d'échouer avec `IntegrityError`, l'import ignore maintenant le `cip3` s'il est déjà pris par un autre produit (le produit est quand même créé/mis à jour sans cip3).
+
+### Résultats testés
+
+| Fichier | Avant le fix | Après le fix |
+|---------|-------------|--------------|
+| Laborex seul (base vide) | ~54% d'erreurs + 36 produits perdus par fusion | **0 erreurs, 4930 créés, 4 fusions** |
+| Ubipharm seul (base vide) | ~74% d'erreurs | **0 erreurs, 8237 créés, 14 fusions** |
+| Ubipharm après Laborex | 6127 erreurs (74%) | **0 erreurs, 5837 créés, 2414 mis à jour** |
+
+### Fichiers modifiés
+
+- `backend/api/management/commands/import_excel_csv.py`
+
+---
+
 ## 2026-08-18 — Fix : import produits Excel (61% d'échecs → 0.9%)
 
 ### 🐛 Corrections
