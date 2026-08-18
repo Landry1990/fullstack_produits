@@ -233,7 +233,10 @@
         "print_error": "Erreur lors de l'impression de la facture",
         "no_invoice_to_print": "Aucune facture à imprimer.",
         "devis_loaded_for_edit": "Devis #{{num}} chargé en modification",
-        "invoice_loaded_for_edit": "Facture #{{num}} chargée en mode modification",
+        "invoice_loaded_for_edit": "Facture #{{num}} chargée en mode modification — stock réintégré",
+        "invoice_not_found": "Facture introuvable",
+        "invoice_not_modifiable": "Cette facture n'est pas modifiable",
+        "recall_cancel_error": "Impossible d'annuler la facture originale pour réintégrer le stock",
         "devis_loaded": "Devis #{{num}} chargé",
         "cart_prefilled_from_copy": "Panier pré-rempli à partir de la copie",
         "devis_load_error": "Impossible de charger le devis",
@@ -356,6 +359,12 @@
         "error_ocr": "Erreur lors du traitement OCR: {{error}}",
         "error_console": "Détails dans la console (possible blocage antivirus)",
         "products_added": "{{count}} produits ajoutés"
+    },
+    "recall_invoice": {
+        "title": "Rappeler une vente",
+        "placeholder": "123",
+        "button": "Rappeler",
+        "loading": "Chargement..."
     },
     "datamatrix": {
         "placeholder": "Scanner le datamatrix de la boîte…",

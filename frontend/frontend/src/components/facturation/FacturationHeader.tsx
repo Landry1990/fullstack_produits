@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle, Monitor, ScanLine } from 'lucide-react'
+import { Eye, EyeOff, Moon, Sun, FileText, ShoppingCart, AlertTriangle, Monitor, ScanLine, Loader2 } from 'lucide-react'
 import { formatCurrency } from '../../utils/formatters'
 import { formatDateShort } from '../../utils/dateUtils'
 import { Button } from '../shadcn/button'
+import { Input } from '../shadcn/input'
 import { Badge } from '../shadcn/badge'
 import { cn } from '../../lib/utils'
 import PosteRequisOverlay from './PosteRequisOverlay'
@@ -95,6 +96,39 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
             <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600 font-mono text-[10px]">F9</kbd> {hook.t('facturation:shortcuts.pay')}</span>
           </div>
         </div>
+      </div>
+
+      {/* ── BARRE RAPPEL DE VENTE ── */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border-b border-slate-200 shrink-0">
+        <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">{hook.t('facturation:recall_invoice.title')}</span>
+        <div className="relative flex items-center">
+          <span className="absolute left-2.5 text-sm text-slate-500 pointer-events-none">FAC-</span>
+          <Input
+            type="text"
+            value={hook.recallNumber}
+            onChange={(e) => {
+              const raw = e.target.value.toUpperCase()
+              hook.setRecallNumber(raw.startsWith('FAC-') ? raw.slice(4) : raw)
+            }}
+            placeholder={hook.t('facturation:recall_invoice.placeholder')}
+            disabled={hook.isRecalling}
+            onKeyDown={(e) => { if (e.key === 'Enter') hook.handleRecallInvoice() }}
+            className="h-8 w-36 pl-11 pr-2 text-sm uppercase rounded-md border-slate-200 focus-visible:ring-emerald-600"
+          />
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          onClick={hook.handleRecallInvoice}
+          disabled={hook.isRecalling || !hook.recallNumber.trim()}
+          className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg disabled:opacity-50"
+        >
+          {hook.isRecalling ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            hook.t('facturation:recall_invoice.button')
+          )}
+        </Button>
       </div>
 
       {/* ── BANNIÈRE POINT DE VENTE NON ACTIF ── */}

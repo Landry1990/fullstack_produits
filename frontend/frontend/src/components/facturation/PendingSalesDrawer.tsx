@@ -1,7 +1,14 @@
 import { useTranslation } from 'react-i18next'
+import { X } from 'lucide-react'
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters'
 import { Button } from '../shadcn/button'
 import { Badge } from '../ui/Badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../shadcn/dialog'
 
 interface PendingSale {
   id: number
@@ -73,133 +80,133 @@ export default function PendingSalesDrawer({
 }: PendingSalesDrawerProps) {
   const { t } = useTranslation(['facturation', 'common'])
 
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-base-100 rounded-2xl shadow-2xl border border-base-300 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg">{t('facturation:pending_sales.title')}</h3>
-          <Button onClick={onClose} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0">✕</Button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <DialogTitle>{t('facturation:pending_sales.title')}</DialogTitle>
+        </DialogHeader>
 
-        {ventesEnAttente.length === 0 ? (
-          <div className="text-center py-8 text-base-content/40">
-            {t('facturation:pending_sales.no_sales')}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {ventesEnAttente.map((vente, idx) => {
-              const total = vente.lignes.reduce((sum: number, ligne) => sum + (normalizeNumberInput(ligne.total_ligne) || 0), 0)
-              const remiseMontant = vente.remiseMode === 'montant'
-                ? normalizeNumberInput(vente.remise)
-                : total * (normalizeNumberInput(vente.remise) / 100)
-              const totalNet = total - remiseMontant
-              const vendeur = getVendorStyle(vente.vendeurId)
-              const previewLines = vente.lignes.slice(0, 4)
-              const diff = Date.now() - new Date(Number(vente.timestamp)).getTime()
+        <div className="px-6 pb-6">
+          {ventesEnAttente.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              {t('facturation:pending_sales.no_sales')}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {ventesEnAttente.map((vente, idx) => {
+                const total = vente.lignes.reduce((sum: number, ligne) => sum + (normalizeNumberInput(ligne.total_ligne) || 0), 0)
+                const remiseMontant = vente.remiseMode === 'montant'
+                  ? normalizeNumberInput(vente.remise)
+                  : total * (normalizeNumberInput(vente.remise) / 100)
+                const totalNet = total - remiseMontant
+                const vendeur = getVendorStyle(vente.vendeurId)
+                const previewLines = vente.lignes.slice(0, 4)
+                const diff = Date.now() - new Date(Number(vente.timestamp)).getTime()
 
-              return (
-                <div key={vente.id} className="group/preview relative hover:bg-base-200/50 transition-all rounded-xl border border-base-200 p-2 sm:p-3 shadow-sm">
-                  <div className="flex items-center gap-2 sm:gap-3 w-full">
-                    {/* ID + Vendor */}
-                    <div className="flex flex-col items-center gap-1 shrink-0">
-                      <Badge variant="primary" size="sm" className="shrink-0 font-black">#{idx + 1}</Badge>
-                      {vendeur && (
-                        <span title={vente.vendeurName || t('facturation:pending_sales.unknown_vendor')} className={`text-[10px] font-black size-5 rounded-full flex items-center justify-center border ${vendeur.bg} ${vendeur.text} ${vendeur.border}`}>
-                          {getInitials(vente.vendeurName || '')}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Client Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm truncate" title={vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}>
-                        {vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}
-                      </div>
-                      <div className="text-[10px] text-base-content/40 flex items-center gap-1 sm:hidden">
-                        {vente.lignes.length} {t('facturation:pending_sales.articles_short')}
-                      </div>
-                    </div>
-
-                    {/* Stats, Duration, Total */}
-                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                      <div className="hidden sm:flex flex-col items-end">
-                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">
-                          {t('facturation:cart.items_count', { count: vente.lignes.length })}
-                        </span>
-                        <span className="text-xs font-medium tabular-nums opacity-60">
-                           {vente.lignes.length} {t('facturation:pending_sales.articles_short')}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col items-end">
-                        <span className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider font-sans">{t('facturation:pending_sales.total')}</span>
-                        <span className="text-sm font-black text-primary tabular-nums">
-                          {formatCurrency(totalNet)}
-                        </span>
-                      </div>
-
-                      <div className="hidden sm:flex flex-col items-end">
-                        <Badge size="sm" className={`text-[10px] tabular-nums border font-semibold ${durationColor(diff)}`}>
-                          {formatDurationAgo(vente.timestamp, t)}
-                        </Badge>
-                        <span className="text-[10px] font-medium opacity-40 tabular-nums mt-0.5">
-                          {new Date(Number(vente.timestamp)).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                      <Button
-                        onClick={() => onRestore(vente.id)}
-                        variant="default" size="sm" className="h-8 px-3 rounded-lg font-bold shadow-sm"
-                        title={t('common:restore')}
-                      >
-                        {t('common:restore')}
-                      </Button>
-                      <Button
-                        onClick={() => onDelete(vente.id)}
-                        variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-50 border-none transition-colors"
-                        title={t('common:delete')}
-                      >
-                         ✕
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Hover preview */}
-                  <div className="pointer-events-none absolute left-0 right-0 top-full z-10 mt-1 opacity-0 invisible group-hover/preview:opacity-100 group-hover/preview:visible transition-all duration-200">
-                    <div className="bg-white border border-base-300 rounded-xl shadow-xl p-3 mx-1">
-                      <p className="text-[10px] uppercase font-bold text-base-content/40 tracking-wider mb-2">
-                        {t('facturation:pending_sales.preview_title')}
-                      </p>
-                      <div className="space-y-1 mb-2">
-                        {previewLines.map((ligne, i) => (
-                          <div key={i} className="flex justify-between text-xs">
-                            <span className="truncate max-w-[70%] text-slate-700">{ligne.quantite}x {ligne.produit?.name || 'Produit'}</span>
-                            <span className="tabular-nums text-slate-500">{formatCurrency(normalizeNumberInput(ligne.total_ligne) || 0)}</span>
-                          </div>
-                        ))}
-                        {vente.lignes.length > 4 && (
-                          <p className="text-[10px] text-slate-400 italic">+ {vente.lignes.length - 4} {t('facturation:pending_sales.more_items')}</p>
+                return (
+                  <div key={vente.id} className="group/preview relative hover:bg-slate-50 transition-all rounded-xl border border-slate-200 p-2 sm:p-3 shadow-sm bg-white">
+                    <div className="flex items-center gap-2 sm:gap-3 w-full">
+                      {/* ID + Vendor */}
+                      <div className="flex flex-col items-center gap-1 shrink-0">
+                        <Badge variant="primary" size="sm" className="shrink-0 font-black">#{idx + 1}</Badge>
+                        {vendeur && (
+                          <span title={vente.vendeurName || t('facturation:pending_sales.unknown_vendor')} className={`text-[10px] font-black size-5 rounded-full flex items-center justify-center border ${vendeur.bg} ${vendeur.text} ${vendeur.border}`}>
+                            {getInitials(vente.vendeurName || '')}
+                          </span>
                         )}
                       </div>
-                      <div className="flex justify-between items-center border-t border-base-200 pt-2">
-                        <span className="text-xs font-bold text-slate-700">{t('facturation:pending_sales.total')}</span>
-                        <span className="text-sm font-black text-primary tabular-nums">{formatCurrency(totalNet)}</span>
+
+                      {/* Client Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm truncate" title={vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}>
+                          {vente.clientName || vente.manualClientName || t('facturation:pending_sales.unspecified_client')}
+                        </div>
+                        <div className="text-[10px] text-slate-400 flex items-center gap-1 sm:hidden">
+                          {vente.lignes.length} {t('facturation:pending_sales.articles_short')}
+                        </div>
+                      </div>
+
+                      {/* Stats, Duration, Total */}
+                      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                        <div className="hidden sm:flex flex-col items-end">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                            {t('facturation:cart.items_count', { count: vente.lignes.length })}
+                          </span>
+                          <span className="text-xs font-medium tabular-nums text-slate-500">
+                            {vente.lignes.length} {t('facturation:pending_sales.articles_short')}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col items-end">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{t('facturation:pending_sales.total')}</span>
+                          <span className="text-sm font-black text-emerald-600 tabular-nums">
+                            {formatCurrency(totalNet)}
+                          </span>
+                        </div>
+
+                        <div className="hidden sm:flex flex-col items-end">
+                          <Badge size="sm" className={`text-[10px] tabular-nums border font-semibold ${durationColor(diff)}`}>
+                            {formatDurationAgo(vente.timestamp, t)}
+                          </Badge>
+                          <span className="text-[10px] font-medium text-slate-400 tabular-nums mt-0.5">
+                            {new Date(Number(vente.timestamp)).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                        <Button
+                          onClick={() => onRestore(vente.id)}
+                          size="sm"
+                          className="h-8 px-3 rounded-lg font-bold shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+                          title={t('common:restore')}
+                        >
+                          {t('common:restore')}
+                        </Button>
+                        <Button
+                          onClick={() => onDelete(vente.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-50 border-none transition-colors"
+                          title={t('common:delete')}
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Hover preview */}
+                    <div className="pointer-events-none absolute left-0 right-0 top-full z-10 mt-1 opacity-0 invisible group-hover/preview:opacity-100 group-hover/preview:visible transition-all duration-200">
+                      <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-3 mx-1">
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
+                          {t('facturation:pending_sales.preview_title')}
+                        </p>
+                        <div className="space-y-1 mb-2">
+                          {previewLines.map((ligne, i) => (
+                            <div key={i} className="flex justify-between text-xs">
+                              <span className="truncate max-w-[70%] text-slate-700">{ligne.quantite}x {ligne.produit?.name || 'Produit'}</span>
+                              <span className="tabular-nums text-slate-500">{formatCurrency(normalizeNumberInput(ligne.total_ligne) || 0)}</span>
+                            </div>
+                          ))}
+                          {vente.lignes.length > 4 && (
+                            <p className="text-[10px] text-slate-400 italic">+ {vente.lignes.length - 4} {t('facturation:pending_sales.more_items')}</p>
+                          )}
+                        </div>
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-2">
+                          <span className="text-xs font-bold text-slate-700">{t('facturation:pending_sales.total')}</span>
+                          <span className="text-sm font-black text-emerald-600 tabular-nums">{formatCurrency(totalNet)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-      <div className="modal-backdrop" onClick={onClose}></div>
-    </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
-

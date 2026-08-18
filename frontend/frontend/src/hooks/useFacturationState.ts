@@ -24,6 +24,7 @@ import { useMultiCaisse } from './useMultiCaisse'
 import { useSecureCartOperations } from './useSecureCartOperations'
 import { useDevisLoader } from './useDevisLoader'
 import { useFacturationImport } from './useFacturationImport'
+import { useRecallInvoice } from './useRecallInvoice'
 
 export type FacturationState = ReturnType<typeof useFacturationState>
 
@@ -155,6 +156,97 @@ export function useFacturationState() {
 
   // --- Devis Loader (on mount) ---
   useDevisLoader({ clientsHook, cart, ui })
+
+  // --- Recall invoice ---
+  const onInvoiceLoaded = useCallback(async (invoice: Facture) => {
+    // 1. Annuler la facture originale pour réintégrer le stock
+    //    (comme le fait handleFullModification de la caisse centrale)
+    if (invoice.id && invoice.status && invoice.status !== 'BROU') {
+      try {
+        await api.post(`factures/${invoice.id}/annuler/`, {
+          motif: `Rappel pour modification (depuis Facturation)`
+        })
+      } catch {
+        gooeyToast.error(t('facturation:messages.recall_cancel_error') || 'Impossible d\'annuler la facture originale')
+        return
+      }
+    }
+
+    // 2. Charger les produits avec le stock réintégré
+    if (invoice.produits && invoice.produits.length > 0) {
+      const lignes: LigneFacture[] = await Promise.all(invoice.produits.map(async (p) => {
+        let produitData: ProduitModel
+        if (typeof p.produit === 'object' && p.produit !== null && 'stock' in p.produit) {
+          produitData = p.produit as ProduitModel
+        } else {
+          const produitId = typeof p.produit === 'object' && p.produit !== null ? p.produit.id : (p.produit as number)
+          try {
+            const { data: fullProduct } = await api.get<ProduitModel>(`produits/${produitId}/`)
+            produitData = fullProduct
+          } catch {
+            produitData = {
+              id: produitId,
+              name: p.produit_nom || `Produit #${produitId}`,
+              stock: 0,
+              is_deleted: true
+            } as unknown as ProduitModel
+          }
+        }
+
+        const raw = p as unknown as { stock_lot?: number | string | null }
+        const lotId = raw.stock_lot ? String(raw.stock_lot) : (p.lot || null)
+        const unitPrice = Number(p.selling_price || 0)
+        const lineDiscount = Number(p.discount || 0)
+
+        return {
+          produit: produitData,
+          quantite: p.quantity,
+          prix_unitaire: p.selling_price,
+          remise_produit: p.discount ?? '0',
+          total_ligne: (p.quantity * unitPrice) - lineDiscount,
+          lotId,
+          lotText: p.lot || null,
+          lotExpiration: p.date_expiration || null,
+          lotSellingPrice: p.selling_price || null,
+          treatment_duration_days: p.treatment_duration_days
+        }
+      }))
+      cart.setLignesFacture(lignes)
+    } else {
+      cart.setLignesFacture([])
+    }
+
+    // 3. Restaurer le client / ayant droit / remise
+    if (invoice.client) {
+      clientsHook.setSelectedClient(invoice.client)
+      clientsHook.setUseManualClient(false)
+      if (invoice.ayant_droit) clientsHook.setSelectedAyantDroit(invoice.ayant_droit)
+    } else if (invoice.client_name_override) {
+      clientsHook.setUseManualClient(true)
+      clientsHook.setManualClientName(invoice.client_name_override)
+    } else {
+      clientsHook.setSelectedClient(null)
+      clientsHook.setUseManualClient(false)
+    }
+
+    if (invoice.remise) {
+      ui.setRemiseGlobale(invoice.remise)
+      ui.setRemiseMode('montant')
+    } else {
+      ui.setRemiseGlobale('0')
+      ui.setRemiseMode('montant')
+    }
+
+    // 4. Mode modification (sans l'ID puisque la facture est annulée)
+    ui.setIsModificationMode(true)
+    ui.setModificationInvoiceId(null)
+    if (ui.setModificationInvoiceStatus) ui.setModificationInvoiceStatus(null)
+    ui.setOriginalTotalTtc(Number(invoice.total_ttc || 0))
+
+    gooeyToast.success(t('facturation:messages.invoice_loaded_for_edit', { num: invoice.numero_facture || invoice.id }))
+  }, [clientsHook, cart, ui, t])
+
+  const { recallNumber, setRecallNumber, isRecalling, handleRecallInvoice } = useRecallInvoice({ onInvoiceLoaded, t })
 
   // --- Totals ---
   const totals = useMemo(() =>
@@ -702,6 +794,12 @@ export function useFacturationState() {
     quantityInputsRef,
     paymentInputRef,
     applyLoyaltyReward,
-    user
+    user,
+
+    // Recall invoice
+    recallNumber,
+    setRecallNumber,
+    isRecalling,
+    handleRecallInvoice
   }
 }

@@ -165,6 +165,14 @@ export default function ClientSection({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [setShowClientDropdown])
 
+  // Scroller l'élément highlighted dans la vue
+  useEffect(() => {
+    if (highlightedIndex >= 0) {
+      const el = document.getElementById(`client-option-${highlightedIndex}`)
+      el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [highlightedIndex])
+
   const handleSelectClient = (client: Client) => {
     setSelectedClient(client.id)
     setClientSearch('')
@@ -293,7 +301,7 @@ export default function ClientSection({
             className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all pr-8"
           />
           {ayantDroitSearchLoading && !selectedClient && (
-            <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 size-4 text-slate-400 animate-spin" />
+            <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-slate-400 animate-spin" />
           )}
           {selectedClient && (
             <Button
@@ -366,6 +374,7 @@ export default function ClientSection({
                           </div>
                         )}
                         <div
+                          id={`client-option-${index}`}
                           onClick={() => {
                             if (item.type === 'client') {
                               handleSelectClient(item.data)

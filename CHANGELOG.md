@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-08-19 — Feat : Rappeler une vente dans la page Facturation
+
+### ✨ Nouvelle fonctionnalité
+
+- **Rappeler une vente** : ajout d'une barre de rappel dans le header de Facturation pour recharger une facture existante via son numéro (`FAC-XXX`) et la modifier.
+- L'endpoint `GET /api/factures/by-number/?numero=FAC-XXX&include_details=true` est appelé ; les produits, le client, l'ayant droit, la remise globale et le mode modification sont restaurés.
+- Reconstruction des lignes de facture inspirée du `useDevisLoader` avec chargement des produits complets si nécessaire.
+- Messages d'erreur traduits (introuvable / non modifiable / chargement impossible).
+
+### 🔧 Implémentation
+
+- `frontend/frontend/src/hooks/useRecallInvoice.ts` : hook de rappel de facture (`recallNumber`, `isRecalling`, `handleRecallInvoice`).
+- `frontend/frontend/src/hooks/useFacturationState.ts` : intégration du hook + callback `onInvoiceLoaded` pour reconstruire le panier.
+- `frontend/frontend/src/components/facturation/FacturationHeader.tsx` : barre compacte avec préfixe `FAC-`, champ de saisie et bouton `Rappeler`.
+- `frontend/frontend/public/locales/fr/facturation.json` et `en/facturation.json` : clés `recall_invoice.*` et `messages.invoice_not_found` / `messages.invoice_not_modifiable`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useRecallInvoice.ts` (créé)
+- `frontend/frontend/src/hooks/useFacturationState.ts`
+- `frontend/frontend/src/components/facturation/FacturationHeader.tsx`
+- `frontend/frontend/public/locales/fr/facturation.json`
+- `frontend/frontend/public/locales/en/facturation.json`
+
+---
+
 ## 2026-08-18 — i18n : ajout des traductions "Configuration" pour États/Inventaire
 
 ### 🌐 Traductions
