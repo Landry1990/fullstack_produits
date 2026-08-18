@@ -143,7 +143,7 @@ export default function App() {
         <LicenceProvider>
           <PharmacySettingsProvider>
             <ConfirmProvider>
-              <GooeyToaster position="bottom-right" />
+              <GooeyToaster position="top-center" />
               <LicenceNotifications />
               <ClockSyncAlert />
               <GlobalAlerts />

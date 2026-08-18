@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-08-18 — i18n : ajout des traductions "Configuration" pour États/Inventaire
+
+### 🌐 Traductions
+
+- Ajout des clés `etats.card_configuration` et `etats.card_configuration_desc` dans `stock.json` (fr/en) pour la page **États/Inventaire**.
+- Les libellés existants pour les sections *Regroupement*, *Filtres* et *Récapitulatif* sont déjà présents et inchangés.
+
+### Fichiers modifiés
+
+- `frontend/frontend/public/locales/fr/stock.json`
+- `frontend/frontend/public/locales/en/stock.json`
+
+---
+
 ## 2026-08-18 — Feat : export Excel des produits pour partage entre pharmacies
 
 ### ✨ Nouvelle fonctionnalité

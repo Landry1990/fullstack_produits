@@ -16,7 +16,8 @@ try:
 except ImportError:
     HAS_OPENPYXL = False
 
-from api.models import PharmacySettings, Produit, StockLot
+from api.models import PharmacySettings, Produit, StockLot, MouvementStock
+from django.db.models import Q
 
 # ---------------------------------------------------------------------------
 # Helpers style
@@ -515,16 +516,28 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
     # else 'tous' : pas de filtre supplémentaire sur l'emplacement
 
     # Filtre stock (sur quantity_remaining du lot)
+    produit_ids_avec_mouvement: set[int] = set()
     if stock_filter == 'zero':
         qs = qs.filter(quantity_remaining__lte=0)
     elif stock_filter == 'non_zero':
         qs = qs.filter(quantity_remaining__gt=0)
     else:
-        # 'tous' : exclure les lots épuisés (quantity_remaining = 0)
-        # sauf si on est en mode réserve (où quantity_remaining peut être 0
-        # mais quantity_reserved > 0)
-        if stock_location != 'reserve':
-            qs = qs.filter(quantity_remaining__gt=0)
+        # 'tous' : conserver un lot par ligne pour les lots encore en stock,
+        # et ajouter UNE ligne synthétique (lot vide) par produit à stock nul
+        # ayant au moins un mouvement d'achat ou vente.
+        produit_ids_avec_mouvement = set(
+            MouvementStock.objects.filter(
+                type_mouvement__in=['ENTREE', 'SORTIE'],
+                produit_id__isnull=False,
+            ).values_list('produit_id', flat=True).distinct()
+        )
+        # Garder les lots avec stock restant != 0 (positif ou négatif).
+        # Un stock négatif est une anomalie qu'il faut voir pour correction.
+        # Les lots à 0 sont regroupés en une seule ligne synthétique par produit.
+        if stock_location == 'reserve':
+            qs = qs.filter(Q(quantity_reserved__gt=0) | Q(quantity_reserved__lt=0))
+        else:
+            qs = qs.filter(Q(quantity_remaining__gt=0) | Q(quantity_remaining__lt=0))
 
     # Filtre entité
     if filter_id:
@@ -607,6 +620,45 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
                 grouped[group_name] = []
             pmp = float(p.pmp or p.cost_price or 0)
             grouped[group_name].append({
+                'cip': p.cip1 or '',
+                'name': p.name,
+                'forme': p.forme.nom if p.forme else '',
+                'rayon': p.rayon.name if p.rayon else '',
+                'fournisseur': p.fournisseur.name if p.fournisseur else '',
+                'lot_numero': '',
+                'lot_expiration': '',
+                'stock': 0,
+                'stock_reserve': 0,
+                'pmp': round(pmp, 2),
+                'valeur_stock': 0.0,
+                'prix_vente': float(p.selling_price or 0),
+            })
+
+    # En mode "tous" : inclure aussi les produits actifs avec mouvement mais sans lot
+    if stock_filter == 'tous':
+        remaining_ids = produit_ids_avec_mouvement - seen_produit_ids
+        prod_qs = Produit.objects.filter(
+            id__in=remaining_ids,
+            is_active=True,
+        ).select_related('rayon', 'forme', 'groupe', 'fournisseur')
+
+        if filter_id:
+            if group_by == 'rayon':
+                prod_qs = prod_qs.filter(rayon_id=filter_id)
+            elif group_by == 'forme':
+                prod_qs = prod_qs.filter(forme_id=filter_id)
+            elif group_by == 'groupe':
+                prod_qs = prod_qs.filter(groupe_id=filter_id)
+            elif group_by == 'fournisseur':
+                prod_qs = prod_qs.filter(fournisseur_id=filter_id)
+
+        for p in prod_qs.order_by('name'):
+            group_name = _get_group_name(p, group_by)
+            if group_name not in grouped:
+                grouped[group_name] = []
+            pmp = float(p.pmp or p.cost_price or 0)
+            grouped[group_name].append({
+                'produit_id': p.id,
                 'cip': p.cip1 or '',
                 'name': p.name,
                 'forme': p.forme.nom if p.forme else '',
