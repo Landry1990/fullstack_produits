@@ -6,6 +6,7 @@ import { ProductSearch, type SearchResult, type PackResult, type DciResult, type
 import { useFacturationSearch } from '../../hooks/product-search/useFacturationSearch'
 import DatamatrixScanField from './DatamatrixScanField'
 import type { ScanStatus } from '../../hooks/useDatamatrixScan'
+import { getRecentProducts } from '../../utils/recentProducts'
 
 interface ProductSearchSectionProps {
   searchQuery: string
@@ -54,9 +55,7 @@ const ProductSearchSection = React.memo(({
   useEffect(() => {
     const loadAndRefresh = async () => {
       try {
-        const raw = safeStorage.getItem(RECENT_PRODUCTS_KEY, 'session')
-        if (!raw) return
-        const parsed = JSON.parse(raw) as SearchResult[]
+        const parsed = getRecentProducts()
         const refreshed = await Promise.all(parsed.map(async (p) => {
           try {
             const { data } = await api.get<ProduitModel>(`produits/${p.id}/`)
@@ -77,18 +76,20 @@ const ProductSearchSection = React.memo(({
       } catch { /* ignore */ }
     }
     loadAndRefresh()
+
+    const handleUpdate = (e: CustomEvent<SearchResult[]>) => {
+      setRecentProducts(e.detail)
+    }
+    window.addEventListener('recent-products-updated', handleUpdate as EventListener)
+    return () => {
+      window.removeEventListener('recent-products-updated', handleUpdate as EventListener)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     safeStorage.setItem(RECENT_PRODUCTS_KEY, JSON.stringify(recentProducts), 'session')
   }, [recentProducts])
-
-  const addRecentProduct = (produit: SearchResult) => {
-    setRecentProducts(prev =>
-      [produit, ...prev.filter(p => p.id !== produit.id)].slice(0, 5)
-    )
-  }
 
   const {
     packResults,
@@ -103,11 +104,8 @@ const ProductSearchSection = React.memo(({
 
   // Wrapper that clears search after adding product
   const handleAddProduit = async (produit: ProduitModel | SearchResult) => {
-    const fullProduit = await addProduitToFacture(produit as ProduitModel)
+    await addProduitToFacture(produit as ProduitModel)
     setSearchQuery('')
-    if (fullProduit) {
-      addRecentProduct(fullProduit as unknown as SearchResult)
-    }
   }
 
   const handleAddPack = (pack: PackResult) => {

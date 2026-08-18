@@ -188,7 +188,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
         />
         <Search className="size-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         {loading && (
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 inline-block size-5 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 inline-block size-3.5 border-2 border-slate-200 border-t-slate-500 rounded-full animate-spin" />
         )}
       </div>
     )

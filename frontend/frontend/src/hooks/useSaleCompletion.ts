@@ -20,6 +20,7 @@ import type { PromisItem } from '../utils/print/promisPdfDraft';
 import { buildPaymentsList } from '../utils/finance';
 import { validateSaleData, validateClientCreditLimit } from '../utils/validation';
 import { usePharmacySettings } from './usePharmacySettings';
+import { addRecentProducts } from '../utils/recentProducts';
 import clientService from '../services/clientService';
 import produitService from '../services/produitService';
 import venteService from '../services/venteService';
@@ -372,6 +373,17 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                     user_details: { id: 0, username: finalFacture.validated_by_name || finalFacture.created_by_name || '' },
                     reference: params.reference || null
                 };
+
+                // Mettre à jour les derniers produits vendus
+                addRecentProducts(params.lignesFacture.map(l => ({
+                    id: l.produit.id,
+                    name: l.produit.name,
+                    stock: l.produit.stock,
+                    stock_minimum: l.produit.stock_minimum,
+                    selling_price: l.produit.selling_price,
+                    cip1: l.produit.cip1,
+                    rayon_name: l.produit.rayon_name,
+                })));
 
                 gooeyToast.success(t('messages.success_with_id', { id: finalFacture.numero_facture || finalFacture.id }));
 
