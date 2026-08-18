@@ -4,11 +4,12 @@ import api from '../services/api';
 import { cn } from '../lib/utils';
 import { Button } from './shadcn/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './shadcn/card';
+import { Select } from './ui/Select';
 import {
   FileSpreadsheet, Printer, Layers,
   Package, TrendingUp, AlertCircle, CheckCircle2, BarChart3,
   SlidersHorizontal, Eye, Building2, Tag, FlaskConical,
-  Grid3X3, Info, ChevronDown
+  Grid3X3, Info
 } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
 import { downloadBlob } from '../utils/excelExport';
@@ -22,55 +23,26 @@ type StockLocationOption = 'tous' | 'rayon' | 'reserve';
 
 interface EntityOption { id: number; name: string; }
 
-// ─── Sous-composant : Sélecteur Radio Card ────────────────────────────────────
+// ─── Styles utilitaires pour tuiles et chips ──────────────────────────────────
 
-const radioCardAccents: Record<string, string> = {
-  emerald: 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20',
-  blue:    'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20',
-  violet:  'border-violet-500 bg-violet-50 ring-2 ring-violet-500/20',
-  amber:   'border-amber-500 bg-amber-50 ring-2 ring-amber-500/20',
-};
-const radioCardDotColors: Record<string, string> = {
-  emerald: 'bg-emerald-500', blue: 'bg-blue-500', violet: 'bg-violet-500', amber: 'bg-amber-500',
+const tileActive = {
+  violet:  'border-violet-500 bg-violet-50 ring-1 ring-violet-500/20',
+  emerald: 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500/20',
+  blue:    'border-blue-500 bg-blue-50 ring-1 ring-blue-500/20',
 };
 
-function RadioCard({
-  value, current, label, description, icon, accent = 'emerald', onChange,
-}: {
-  value: string; current: string; label: string; description?: string;
-  icon: React.ReactNode; accent?: 'emerald' | 'blue' | 'violet' | 'amber';
-  onChange: (v: string) => void;
-}) {
-  const active = current === value;
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(value)}
-      className={cn(
-        'w-full text-left flex items-start gap-2 lg:gap-3 p-2 lg:p-3 rounded-xl border-2 transition-all duration-150 cursor-pointer',
-        active ? radioCardAccents[accent] : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
-      )}
-    >
-      <div className={cn(
-        'mt-0.5 shrink-0 size-7 lg:size-8 rounded-lg flex items-center justify-center transition-colors',
-        active ? `${radioCardDotColors[accent].replace('bg-', 'bg-').replace('500','100')} text-${accent}-600` : 'bg-slate-100 text-slate-400'
-      )}>
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className={cn('text-xs lg:text-sm font-semibold truncate', active ? 'text-slate-800' : 'text-slate-600')}>{label}</p>
-        {description && <p className="text-[10px] lg:text-[11px] text-slate-400 mt-0.5 truncate">{description}</p>}
-      </div>
-      {active && (
-        <div className={cn('shrink-0 size-4 rounded-full flex items-center justify-center mt-1', radioCardDotColors[accent])}>
-          <div className="size-1.5 rounded-full bg-white" />
-        </div>
-      )}
-    </button>
-  );
-}
+const tileIconActive = {
+  violet:  'bg-violet-100 text-violet-600',
+  emerald: 'bg-emerald-100 text-emerald-600',
+  blue:    'bg-blue-100 text-blue-600',
+};
 
-// ─── Sous-composant : Badge résumé ────────────────────────────────────────────
+const pillActive = {
+  blue:    'bg-blue-100 text-blue-700 border-blue-300',
+  emerald: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+  amber:   'bg-amber-100 text-amber-700 border-amber-300',
+  violet:  'bg-violet-100 text-violet-700 border-violet-300',
+};
 
 const summaryLineColors: Record<string, string> = {
   blue:    'bg-blue-100 text-blue-700',
@@ -93,7 +65,6 @@ function SummaryLine({ label, value, color }: { label: string; value: string; co
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-
 export default function EtatsInventaire() {
   const { t } = useTranslation(['stock', 'common']);
 
@@ -108,6 +79,11 @@ export default function EtatsInventaire() {
     { value: 'forme',       label: t('stock:etats.group_by_forme'),       desc: t('stock:etats.group_by_forme_desc'),       icon: <FlaskConical className="size-4" /> },
     { value: 'groupe',      label: t('stock:etats.group_by_groupe'),      desc: t('stock:etats.group_by_groupe_desc'),      icon: <Tag className="size-4" /> },
     { value: 'fournisseur', label: t('stock:etats.group_by_fournisseur'),  desc: t('stock:etats.group_by_fournisseur_desc'), icon: <Building2 className="size-4" /> },
+  ], [t]);
+
+  const sourceOptions: { value: SourceOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' }[] = useMemo(() => [
+    { value: 'stock', label: t('stock:etats.source_stock'), desc: t('stock:etats.source_stock_desc'), icon: <TrendingUp className="size-4" />, accent: 'emerald' },
+    { value: 'blind', label: t('stock:etats.source_blind'), desc: t('stock:etats.source_blind_desc'), icon: <BarChart3 className="size-4" />, accent: 'blue' },
   ], [t]);
 
   const stockFilterOptions: { value: StockFilterOption; label: string; desc: string; icon: React.ReactNode; accent: 'emerald' | 'blue' | 'amber' }[] = useMemo(() => [
@@ -191,7 +167,7 @@ export default function EtatsInventaire() {
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-3 lg:space-y-5 animate-in fade-in duration-300">
+    <div className="space-y-4 lg:space-y-5 animate-in fade-in duration-300">
 
       {/* ── En-tête ── */}
       <div className="flex items-center gap-2 lg:gap-3">
@@ -204,148 +180,178 @@ export default function EtatsInventaire() {
         </div>
       </div>
 
-      {/* ── Grille principale ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-[1fr_1fr_1fr_300px] gap-3 lg:gap-4">
+      {/* ── Grille principale : 2 colonnes ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_340px] gap-4 lg:gap-6 items-start">
 
-        {/* ── Colonne 1 : Regroupement ── */}
-        <Card>
-          <CardHeader className="pb-2 lg:pb-3 pt-3 lg:pt-4 px-3 lg:px-4">
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal className="size-4 text-slate-400" />
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_grouping')}</CardTitle>
-            </div>
-            <CardDescription className="text-[11px]">{t('stock:etats.card_grouping_desc')}</CardDescription>
-          </CardHeader>
-          <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-1.5">
-            {groupByOptions.map(o => (
-              <RadioCard
-                key={o.value}
-                value={o.value}
-                current={groupBy}
-                label={o.label}
-                description={o.desc}
-                icon={o.icon}
-                accent="violet"
-                onChange={(v) => setGroupBy(v as GroupByOption)}
-              />
-            ))}
-          </CardContent>
-        </Card>
+        {/* ── Colonne gauche : paramètres ── */}
+        <div className="space-y-4">
 
-        {/* ── Colonne 2 : Source + Entité ── */}
-        <Card>
-          <CardHeader className="pb-2 lg:pb-3 pt-3 lg:pt-4 px-3 lg:px-4">
-            <div className="flex items-center gap-2">
-              <Layers className="size-4 text-slate-400" />
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_source')}</CardTitle>
-            </div>
-            <CardDescription className="text-[11px]">{t('stock:etats.card_source_desc')}</CardDescription>
-          </CardHeader>
-          <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-3">
-            <div className="space-y-1.5">
-              <RadioCard
-                value="stock"
-                current={source}
-                label={t('stock:etats.source_stock')}
-                description={t('stock:etats.source_stock_desc')}
-                icon={<TrendingUp className="size-4" />}
-                accent="emerald"
-                onChange={(v) => setSource(v as SourceOption)}
-              />
-              <RadioCard
-                value="blind"
-                current={source}
-                label={t('stock:etats.source_blind')}
-                description={t('stock:etats.source_blind_desc')}
-                icon={<BarChart3 className="size-4" />}
-                accent="blue"
-                onChange={(v) => setSource(v as SourceOption)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+          {/* 1. Regroupement */}
+          <Card>
+            <CardHeader className="pb-2 pt-3 px-3 lg:px-4">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="size-4 text-slate-400" />
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_grouping')}</CardTitle>
+              </div>
+              <CardDescription className="text-[11px]">{t('stock:etats.card_grouping_desc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4">
+              <div className="grid grid-cols-2 gap-2">
+                {groupByOptions.map(o => {
+                  const active = groupBy === o.value;
+                  return (
+                    <button
+                      key={o.value}
+                      type="button"
+                      onClick={() => setGroupBy(o.value)}
+                      className={cn(
+                        'flex flex-col gap-1.5 p-3 rounded-xl border-2 text-left transition-all duration-150',
+                        active ? tileActive.violet : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                      )}
+                    >
+                      <div className={cn(
+                        'shrink-0 size-8 rounded-lg flex items-center justify-center transition-colors',
+                        active ? tileIconActive.violet : 'bg-slate-100 text-slate-400'
+                      )}>
+                        {o.icon}
+                      </div>
+                      <div>
+                        <p className={cn('text-xs font-semibold', active ? 'text-slate-800' : 'text-slate-700')}>{o.label}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5 leading-tight line-clamp-2">{o.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* ── Colonne 3 : Filtre entité + stock ── */}
-        <Card>
-          <CardHeader className="pb-2 lg:pb-3 pt-3 lg:pt-4 px-3 lg:px-4">
-            <div className="flex items-center gap-2">
-              <Package className="size-4 text-slate-400" />
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_filters')}</CardTitle>
-            </div>
-            <CardDescription className="text-[11px]">{t('stock:etats.card_filters_desc')}</CardDescription>
-          </CardHeader>
-          <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-4">
-            {/* Filtre entité */}
-            <div className="space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                {t('stock:etats.filter_by_entity', { entity: entityLabel })}
-              </p>
-              <div className="relative">
-                <select
-                  className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 pr-8 text-sm text-slate-700 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all appearance-none disabled:opacity-50"
-                  value={selectedEntity ?? ''}
-                  onChange={(e) => setSelectedEntity(e.target.value ? Number(e.target.value) : null)}
-                  disabled={loadingEntities}
-                >
-                  <option value="">{t('stock:etats.all_option')}</option>
-                  {entities.map(ent => (
-                    <option key={ent.id} value={ent.id}>{ent.name}</option>
-                  ))}
-                </select>
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                  {loadingEntities
-                    ? <span className="size-3.5 border-2 border-slate-300 border-t-violet-500 rounded-full animate-spin inline-block" />
-                    : <ChevronDown className="size-4" />
-                  }
+          {/* 2. Source de données */}
+          <Card>
+            <CardHeader className="pb-2 pt-3 px-3 lg:px-4">
+              <div className="flex items-center gap-2">
+                <Layers className="size-4 text-slate-400" />
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_source')}</CardTitle>
+              </div>
+              <CardDescription className="text-[11px]">{t('stock:etats.card_source_desc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4">
+              <div className="grid grid-cols-2 gap-2">
+                {sourceOptions.map(o => {
+                  const active = source === o.value;
+                  return (
+                    <button
+                      key={o.value}
+                      type="button"
+                      onClick={() => setSource(o.value)}
+                      className={cn(
+                        'flex items-start gap-2.5 p-3 rounded-xl border-2 text-left transition-all duration-150',
+                        active ? tileActive[o.accent] : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                      )}
+                    >
+                      <div className={cn(
+                        'shrink-0 size-8 rounded-lg flex items-center justify-center transition-colors',
+                        active ? tileIconActive[o.accent] : 'bg-slate-100 text-slate-400'
+                      )}>
+                        {o.icon}
+                      </div>
+                      <div className="min-w-0 pt-0.5">
+                        <p className={cn('text-xs font-semibold', active ? 'text-slate-800' : 'text-slate-700')}>{o.label}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5 leading-tight line-clamp-2">{o.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 3. Filtres */}
+          <Card>
+            <CardHeader className="pb-2 pt-3 px-3 lg:px-4">
+              <div className="flex items-center gap-2">
+                <Package className="size-4 text-slate-400" />
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_filters')}</CardTitle>
+              </div>
+              <CardDescription className="text-[11px]">{t('stock:etats.card_filters_desc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-4">
+
+              {/* Filtre entité */}
+              <Select
+                size="sm"
+                label={t('stock:etats.filter_by_entity', { entity: entityLabel })}
+                value={selectedEntity ?? ''}
+                onChange={(e) => setSelectedEntity(e.target.value ? Number(e.target.value) : null)}
+                disabled={loadingEntities}
+              >
+                <option value="">{t('stock:etats.all_option')}</option>
+                {entities.map(ent => (
+                  <option key={ent.id} value={ent.id}>{ent.name}</option>
+                ))}
+              </Select>
+
+              <div className="h-px bg-slate-100" />
+
+              {/* Filtre stock — chips */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.filter_stock_label')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {stockFilterOptions.map(o => {
+                    const active = stockFilter === o.value;
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => setStockFilter(o.value)}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150',
+                          active ? pillActive[o.accent] : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                        )}
+                      >
+                        {active ? <CheckCircle2 className="size-3.5" /> : o.icon}
+                        {o.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
 
-            <div className="h-px bg-slate-100" />
+              {/* Filtre emplacement — chips (uniquement en mode stock) */}
+              {source === 'stock' && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.location_label')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {stockLocationOptions.map(o => {
+                      const active = stockLocation === o.value;
+                      return (
+                        <button
+                          key={o.value}
+                          type="button"
+                          onClick={() => setStockLocation(o.value)}
+                          className={cn(
+                            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150',
+                            active ? pillActive[o.accent] : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                          )}
+                        >
+                          {active ? <CheckCircle2 className="size-3.5" /> : o.icon}
+                          {o.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-            {/* Filtre stock */}
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.filter_stock_label')}</p>
-              {stockFilterOptions.map(o => (
-                <RadioCard
-                  key={o.value}
-                  value={o.value}
-                  current={stockFilter}
-                  label={o.label}
-                  description={o.desc}
-                  icon={o.icon}
-                  accent={o.accent}
-                  onChange={(v) => setStockFilter(v as StockFilterOption)}
-                />
-              ))}
-            </div>
+        {/* ── Colonne droite : résumé + actions (sticky) ── */}
+        <div className="lg:sticky lg:top-4 space-y-4">
 
-            {/* Filtre emplacement (rayon / réserve) — visible uniquement en mode stock */}
-            {source === 'stock' && (
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.location_label')}</p>
-                {stockLocationOptions.map(o => (
-                  <RadioCard
-                    key={o.value}
-                    value={o.value}
-                    current={stockLocation}
-                    label={o.label}
-                    description={o.desc}
-                    icon={o.icon}
-                    accent={o.accent}
-                    onChange={(v) => setStockLocation(v as StockLocationOption)}
-                  />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ── Colonne 4 : Résumé + Actions ── */}
-        <div className="flex flex-col gap-3 lg:gap-4">
-          {/* Résumé */}
-          <Card className="flex-1">
-            <CardHeader className="pb-2 lg:pb-3 pt-3 lg:pt-4 px-3 lg:px-4">
+          {/* Récapitulatif */}
+          <Card>
+            <CardHeader className="pb-2 pt-3 px-3 lg:px-4">
               <div className="flex items-center gap-2">
                 <Eye className="size-4 text-slate-400" />
                 <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_summary')}</CardTitle>
@@ -379,12 +385,11 @@ export default function EtatsInventaire() {
                   color="amber"
                 />
               )}
-
             </CardContent>
           </Card>
 
           {/* Boutons d'action */}
-          <div className="grid grid-cols-2 xl:grid-cols-1 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <Button
               onClick={handleExportExcel}
               disabled={exporting || !canExport}

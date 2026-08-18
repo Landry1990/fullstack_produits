@@ -255,11 +255,13 @@ export default function Corbeille() {
         </div>
 
         {/* Type filter */}
-        <Select size="sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeKey)} className="w-40">
-          {TYPE_CONFIG.map(c => (
-            <option key={c.key} value={c.key}>{c.label}</option>
-          ))}
-        </Select>
+        <div className="w-40 shrink-0">
+          <Select size="sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeKey)}>
+            {TYPE_CONFIG.map(c => (
+              <option key={c.key} value={c.key}>{c.label}</option>
+            ))}
+          </Select>
+        </div>
 
         {/* Select all */}
         {allItems.length > 0 && (
@@ -344,21 +346,28 @@ export default function Corbeille() {
                         </div>
                       </div>
                       {/* Actions */}
-                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] text-success border-success/20 hover:bg-success/10 hover:text-success"
+                      <div className="flex items-center gap-0.5">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50"
                           onClick={e => { e.stopPropagation(); handleRestore([{ model: item.type, id: item.id }]); }}
                           disabled={actionLoading}
-                          title="Restaurer">
-                          <ArrowUpFromLine className="size-3.5 mr-1" />
-                          <span className="hidden sm:inline">Restaurer</span>
+                          title="Restaurer"
+                        >
+                          <ArrowUpFromLine className="size-4" />
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] text-error border-error/20 hover:bg-error/10 hover:text-error"
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
                           onClick={e => { e.stopPropagation(); handlePurge([{ model: item.type, id: item.id }]); }}
                           disabled={actionLoading}
-                          title="Supprimer définitivement">
-                          <Trash2 className="size-3.5" />
+                          title="Supprimer définitivement"
+                        >
+                          <Trash2 className="size-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={e => { e.stopPropagation(); setExpandedId(isExp ? null : key); }}>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={e => { e.stopPropagation(); setExpandedId(isExp ? null : key); }}>
                           {isExp ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
                         </Button>
                       </div>
@@ -389,18 +398,28 @@ export default function Corbeille() {
 
       {/* Bulk actions bar */}
       {selectedIds.size > 0 && (
-        <div className="shrink-0 bg-base-100 border-t border-base-200 px-6 py-3 flex items-center justify-between">
-          <span className="text-sm font-semibold text-base-content">
+        <div className="shrink-0 bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between">
+          <span className="text-sm font-medium text-slate-700">
             {selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
           </span>
           <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => handleRestore(selectedItems)} disabled={actionLoading}>
+            <Button
+              size="sm"
+              onClick={() => handleRestore(selectedItems)}
+              disabled={actionLoading}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
               <ArrowUpFromLine className="size-3.5 mr-1.5" />
               Restaurer
             </Button>
-            <Button size="sm" variant="danger" onClick={() => handlePurge(selectedItems)} disabled={actionLoading}>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => handlePurge(selectedItems)}
+              disabled={actionLoading}
+            >
               <Trash2 className="size-3.5 mr-1.5" />
-              Supprimer définitivement
+              Supprimer
             </Button>
           </div>
         </div>
