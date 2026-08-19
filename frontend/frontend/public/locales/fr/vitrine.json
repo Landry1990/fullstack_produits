@@ -30,10 +30,19 @@
         "available": "En Stock",
         "out_of_stock": "Rupture",
         "available_full": "Disponible",
+        "public_price": "Prix public",
         "no_results": "Aucun produit disponible trouvé.",
         "already_in_list": "Produit déjà dans la liste",
         "my_list": "Ma Liste",
-        "empty_list": "Votre liste est vide"
+        "empty_list": "Votre liste est vide",
+        "empty_list_hint": "Cliquez sur un produit dans la liste de gauche pour l'ajouter.",
+        "items": "articles",
+        "item": "article",
+        "total": "Total",
+        "print": "Imprimer",
+        "clear": "Vider",
+        "list_cleared": "Liste vidée",
+        "added_to_list": "Ajouté à la liste"
     },
     "messages": {
         "visibility_updated": "Visibilité mise à jour",
