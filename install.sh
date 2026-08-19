@@ -214,7 +214,7 @@ ok "Variables CPU écrites dans .env"
 # ── 7. Permissions ────────────────────────────────────
 step "7. Permissions des scripts"
 chmod +x auto-deploy.sh deploy.sh rollback.sh backup-db.sh watchdog.sh start-watchdog.sh setup-cron.sh init-db.sh 2>/dev/null || true
-chmod +x nightly-update.sh zenith-update.sh install-desktop-shortcut.sh set-update-time.sh 2>/dev/null || true
+chmod +x nightly-update.sh zenith-update.sh install-desktop-shortcut.sh set-update-time.sh update-app.sh 2>/dev/null || true
 chmod +x webhook-deploy.py 2>/dev/null || true
 mkdir -p logs backups
 ok "Scripts prêts"
@@ -305,6 +305,20 @@ sudo systemctl enable zenith-nightly-update.timer 2>/dev/null || warn "zenith-ni
 sudo systemctl start zenith-nightly-update.timer 2>/dev/null || true
 ok "Services systemd configurés"
 
+# Sauvegarde automatique (cron : backup horaire + quotidien 02h + vérification 6h)
+if [ -f setup-backup-cron.sh ]; then
+    sudo chmod +x setup-backup-cron.sh 2>/dev/null || true
+    # Lance en tant qu'utilisateur propriétaire du dossier (SUDO_USER si présent)
+    if sudo -n true 2>/dev/null; then
+        sudo -E ./setup-backup-cron.sh 2>/dev/null || warn "setup-backup-cron.sh a échoué"
+    else
+        ./setup-backup-cron.sh 2>/dev/null || warn "setup-backup-cron.sh a échoué"
+    fi
+    ok "Sauvegarde automatique planifiée (cron : horaire + quotidien 02h + vérif 6h)"
+else
+    warn "setup-backup-cron.sh absent — sauvegarde automatique NON configurée"
+fi
+
 # Installer le raccourci "Mettre à jour Zenith Pharma" sur le bureau
 if [ -f install-desktop-shortcut.sh ]; then
     bash install-desktop-shortcut.sh 2>/dev/null || true
@@ -344,6 +358,7 @@ echo -e "  ${BLUE}Accès application :${NC}  http://localhost/"
 echo -e "  ${BLUE}Accès Portainer   :${NC}  http://localhost:9001/"
 echo -e "  ${BLUE}Webhook deploy    :${NC}  http://localhost:9000/deploy"
 echo -e "  ${BLUE}MàJ auto nocturne :${NC}  chaque soir à 02:00 (systemd timer)"
+echo -e "  ${BLUE}Backup auto       :${NC}  horaire + 02h00 + vérif 6h (cron)"
 echo -e "  ${BLUE}Superutilisateur  :${NC}  admin / admin123"
 echo -e "  ${BLUE}Dossier projet    :${NC}  $ZENITH_DIR"
 
@@ -362,6 +377,7 @@ echo -e "    cd $ZENITH_DIR && sudo docker compose -f docker-compose.prod.yml ps
 echo -e "    sudo journalctl -u zenith-webhook -f"
 echo -e "    sudo journalctl -u zenith-nightly-update -f   # logs mise à jour auto"
 echo -e "    sudo systemctl list-timers                    # voir le timer"
-echo -e "    ./backup-db.sh"
+echo -e "    crontab -l | grep ZENITH-BACKUP               # voir les cron backup"
+echo -e "    ./backup-db.sh                                # backup manuel"
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

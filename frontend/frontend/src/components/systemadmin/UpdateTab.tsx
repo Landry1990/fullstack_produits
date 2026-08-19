@@ -294,15 +294,24 @@ export function UpdateTab({
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>{t('update_info_1')}</span>
+                  <span>
+                    {t('update_info_1_prefix')}
+                    <span className="font-semibold text-gray-800">{t('update_info_1_strong')}</span>
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>{t('update_info_2')}</span>
+                  <span>
+                    {t('update_info_2_prefix')}
+                    <span className="font-semibold text-gray-800">{t('update_info_2_strong')}</span>
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>{t('update_info_3')}</span>
+                  <span>
+                    {t('update_info_3_prefix')}
+                    <span className="font-semibold text-gray-800">{t('update_info_3_strong')}</span>
+                  </span>
                 </div>
               </div>
             </div>

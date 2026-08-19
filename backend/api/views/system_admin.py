@@ -539,12 +539,22 @@ class SystemAdminViewSet(ViewSet):
 
     @action(detail=False, methods=['post'])
     def run_update(self, request):
-        """Lance le script nightly-update.sh pour mettre à jour le système."""
+        """Lance le script update-app.sh pour mettre à jour le système (hot deploy).
+
+        Contrairement à nightly-update.sh qui fait un full rebuild Docker,
+        update-app.sh copie directement le code dans les conteneurs existants.
+        L'app reste accessible pendant la mise à jour (seul le backend redémarre
+        brièvement, le frontend nginx ne redémarre jamais).
+        """
         import threading
         import subprocess as sp
 
         app_dir = os.environ.get('APP_DIR', '/opt/zenith-pharma')
-        script_path = os.path.join(app_dir, 'nightly-update.sh')
+        # Préférer update-app.sh (hot deploy rapide ~30s)
+        # Fallback sur nightly-update.sh si update-app.sh n'existe pas
+        script_path = os.path.join(app_dir, 'update-app.sh')
+        if not os.path.exists(script_path):
+            script_path = os.path.join(app_dir, 'nightly-update.sh')
 
         if not os.path.exists(script_path):
             return Response({
@@ -572,7 +582,9 @@ class SystemAdminViewSet(ViewSet):
         with open(status_file, 'w') as f:
             json.dump({'status': 'running', 'started_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'step': 'Démarrage...'}, f)
 
-        # Lancer le script en arrière-plan (peut prendre plusieurs minutes)
+        # Lancer le script en arrière-plan
+        # update-app.sh écrit lui-même le statut "done" AVANT le docker restart,
+        # donc même si le thread est tué par le restart, le statut est déjà écrit.
         def _run_update():
             try:
                 os.chmod(script_path, 0o755)
@@ -581,13 +593,19 @@ class SystemAdminViewSet(ViewSet):
             result = sp.run(
                 ['bash', script_path],
                 capture_output=True,
-                timeout=900,  # 15 min max
+                timeout=900,  # 15 min max (hot deploy ~30s, mais rebuild possible si requirements.txt change)
                 cwd=app_dir,
             )
-            # Écrire le statut final
-            # NB : le script sort en code 2 s'il n'a pas pu joindre Internet (skip volontaire,
-            # aucune mise à jour effectuée) — ne pas confondre avec un succès (code 0).
+            # Si le script a écrit "done" lui-même, ne pas écraser le statut.
+            # Sinon, écrire le statut final basé sur le code de retour.
+            # NB : code 2 = pas de connexion Internet (skip volontaire)
             try:
+                existing = {}
+                if os.path.exists(status_file):
+                    with open(status_file, 'r') as f:
+                        existing = json.load(f)
+                if existing.get('status') == 'done':
+                    return  # Le script a déjà écrit le succès
                 if result.returncode == 0:
                     status_data = {'status': 'done', 'started_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'finished_at': time.strftime('%Y-%m-%d %H:%M:%S'), 'step': 'Mise à jour terminée avec succès'}
                 elif result.returncode == 2:
@@ -605,7 +623,7 @@ class SystemAdminViewSet(ViewSet):
 
         return Response({
             'success': True,
-            'message': 'Mise à jour lancée — l\'application sera temporairement indisponible pendant quelques minutes',
+            'message': 'Mise à jour lancée — l\'application reste accessible pendant la mise à jour',
         }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'])
@@ -619,10 +637,11 @@ class SystemAdminViewSet(ViewSet):
         try:
             with open(status_file, 'r') as f:
                 data = json.load(f)
-            # Si running depuis plus de 15 min, considérer comme terminé
+            # Si running depuis plus de 16 min, considérer comme terminé
+            # (hot deploy ~30s, mais rebuild Docker possible si requirements.txt change)
             if data.get('status') == 'running':
                 started = time.mktime(time.strptime(data.get('started_at', ''), '%Y-%m-%d %H:%M:%S'))
-                if time.time() - started > 920:
+                if time.time() - started > 960:
                     data['status'] = 'done'
                     data['step'] = 'Mise à jour terminée (timeout)'
             return Response(data)
@@ -681,21 +700,32 @@ class SystemAdminViewSet(ViewSet):
         script_path = os.path.join(app_dir, 'set-update-time.sh')
 
         if not auto_update_enabled:
-            # Désactiver la mise à jour automatique
+            # Désactiver la mise à jour automatique en exécutant systemctl sur l'hôte via nsenter
             try:
                 with open(conf_file, 'w') as f:
                     f.write('DISABLED')
-                sp.run(['docker', 'run', '--rm', '--privileged', '--pid=host',
-                        '-v', '/etc/systemd/system:/etc/systemd/system',
-                        'alpine:latest', 'sh', '-c',
-                        'systemctl stop zenith-nightly-update.timer 2>/dev/null; '
-                        'systemctl disable zenith-nightly-update.timer 2>/dev/null; '
-                        'true'],
-                       capture_output=True, timeout=30)
-                return Response({
-                    'success': True,
-                    'message': 'Mise à jour automatique désactivée. Vous devrez lancer les mises à jour manuellement.',
-                })
+                result = sp.run([
+                    'docker', 'run', '--rm', '--privileged', '--pid=host',
+                    '-v', f'{app_dir}:{app_dir}',
+                    'alpine:latest', 'sh', '-c',
+                    'apk add --no-cache util-linux bash >/dev/null 2>&1; '
+                    'nsenter -t 1 -m -u -n -i '
+                    'sh -c "'
+                    'systemctl stop zenith-nightly-update.timer 2>/dev/null; '
+                    'systemctl disable zenith-nightly-update.timer 2>/dev/null; '
+                    '(crontab -l 2>/dev/null | grep -v \"# zenith-nightly-update\" || true) | crontab - 2>/dev/null; '
+                    'true"'
+                ], capture_output=True, text=True, timeout=60)
+                if result.returncode == 0:
+                    return Response({
+                        'success': True,
+                        'message': 'Mise à jour automatique désactivée. Vous devrez lancer les mises à jour manuellement.',
+                    })
+                else:
+                    return Response({
+                        'success': False,
+                        'message': result.stderr.strip() or 'Erreur lors de la désactivation',
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             except Exception as e:
                 return Response({
                     'success': False,
@@ -721,15 +751,17 @@ class SystemAdminViewSet(ViewSet):
             with open(conf_file, 'w') as f:
                 f.write(update_time)
 
-            # Lancer le script via un conteneur privilégié (accès systemd sur l'hôte)
+            # Exécuter set-update-time.sh sur l'hôte (via nsenter) pour pouvoir utiliser
+            # systemctl / crontab du système hôte. Le conteneur backend n'a pas systemd.
+            # On lance un conteneur privilégié avec --pid=host, puis nsenter dans le PID 1
+            # pour avoir accès aux namespaces (montage, UTS, network, IPC) de l'hôte.
             result = sp.run([
                 'docker', 'run', '--rm', '--privileged', '--pid=host',
-                '-v', '/etc/systemd/system:/etc/systemd/system',
                 '-v', f'{app_dir}:{app_dir}',
                 'alpine:latest', 'sh', '-c',
-                f'apk add --no-cache bash >/dev/null 2>&1; '
-                f'bash {script_path} {update_time}'
-            ], capture_output=True, text=True, timeout=60)
+                'apk add --no-cache util-linux bash >/dev/null 2>&1; '
+                f'nsenter -t 1 -m -u -n -i /bin/bash {script_path} {update_time}'
+            ], capture_output=True, text=True, timeout=90)
 
             if result.returncode == 0:
                 return Response({
