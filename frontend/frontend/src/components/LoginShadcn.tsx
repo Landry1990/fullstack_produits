@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gooeyToast } from 'goey-toast';
 import { useAuth } from '../context/AuthContext';
@@ -6,9 +6,8 @@ import { useLicence } from '../context/LicenceContext';
 import api from '../services/api';
 import ZenithLogo from './ZenithLogo';
 import {
-  User, Lock, ArrowRight, Loader2, AlertCircle, Monitor,
-  ChevronDown, Shield, Eye, EyeOff, RefreshCcw, Sun, Moon,
-  Search, Check
+  Lock, ArrowRight, Loader2, AlertCircle, Monitor,
+  Shield, Eye, EyeOff, RefreshCcw, Sun, Moon
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -37,7 +36,6 @@ const handleResetLicence = async () => {
 
 export default function LoginShadcn() {
   const { t } = useTranslation(['auth', 'common']);
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,34 +49,7 @@ export default function LoginShadcn() {
   const { login } = useAuth();
   const { licence, loading: licenceLoading } = useLicence();
   const navigate = useNavigate();
-  const [users, setUsers] = useState<{ username: string; full_name: string }[]>([]);
   const [showResetButton, setShowResetButton] = useState(false);
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
-  const listRef = useRef<HTMLDivElement>(null);
-
-  const filteredUsers = users.filter(u =>
-    u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Fetch users
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await api.get('users/login_options/');
-        if (Array.isArray(response.data)) {
-          setUsers(response.data);
-        }
-      } catch (err) {
-        logger.error('Error fetching users:', err);
-      }
-    };
-    fetchUsers();
-  }, []);
 
   // Secret shortcut Ctrl+Shift+Alt+L for reset licence
   useEffect(() => {
@@ -90,61 +61,6 @@ export default function LoginShadcn() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  // Click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Keyboard navigation for dropdown
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (filteredUsers.length === 0) return;
-
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          setHighlightedIndex(prev => {
-            const next = prev < filteredUsers.length - 1 ? prev + 1 : 0;
-            return next;
-          });
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setHighlightedIndex(prev => {
-            const next = prev > 0 ? prev - 1 : filteredUsers.length - 1;
-            return next;
-          });
-          break;
-        case 'Enter':
-          e.preventDefault();
-          if (highlightedIndex >= 0 && highlightedIndex < filteredUsers.length) {
-            const u = filteredUsers[highlightedIndex];
-            setUsername(u.username);
-            setIsOpen(false);
-            setError('');
-          }
-          break;
-        case 'Escape':
-          setIsOpen(false);
-          break;
-        case 'Tab':
-          setIsOpen(false);
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, filteredUsers, highlightedIndex]);
 
   const [workstationName, setWorkstationName] = useState(() => {
     const saved = localStorage.getItem('zenith_workstation');
@@ -163,13 +79,12 @@ export default function LoginShadcn() {
       localStorage.setItem('zenith_workstation', workstationName);
 
       const response = await api.post('auth/token/', {
-        username,
         password,
         workstation: workstationName
       });
 
-      const { token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role } = response.data;
-      login({ username, token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role });
+      const { token, username: loggedInUsername, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role } = response.data;
+      login({ username: loggedInUsername, token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock, role });
       navigate('/app');
     } catch (err) {
       logger.error('Login error:', err);
@@ -383,250 +298,108 @@ export default function LoginShadcn() {
                   </div>
                 )}
 
-                {/* Username Field */}
-                <div className="space-y-2">
-                  <label className={cn(
-                    "text-sm font-bold",
-                    isDark ? 'text-slate-200' : 'text-slate-800'
-                  )}>
-                    {t('username')}
-                  </label>
-
-                  {users.length > 0 ? (
-                    <div className="relative" ref={dropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = !isOpen;
-                          setIsOpen(next);
-                          if (next) {
-                            setSearchTerm('');
-                            setHighlightedIndex(0);
-                          }
-                        }}
-                        className={cn(
-                          "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
-                          isDark
-                            ? 'bg-slate-800 border border-slate-600 hover:border-slate-500 text-white focus-visible:ring-offset-slate-950'
-                            : 'bg-white border border-slate-300 hover:border-slate-400 text-slate-900 focus-visible:ring-offset-white',
-                          isOpen && (isDark ? 'border-emerald-500/50 ring-1 ring-emerald-500/20' : 'border-emerald-500 ring-1 ring-emerald-500/20')
-                        )}
-                      >
-                        <span className="flex items-center gap-2">
-                          <User className={cn(
-                            "size-4",
-                            isDark ? 'text-slate-400' : 'text-slate-500'
-                          )} />
-                          {users.find(u => u.username === username)?.full_name || "Sélectionner un utilisateur"}
-                        </span>
-                        <ChevronDown className={cn(
-                          "size-4 transition-transform duration-200",
-                          isOpen && 'rotate-180',
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        )} />
-                      </button>
-
-                      {isOpen && (
-                        <div className={cn(
-                          "absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50 shadow-2xl",
-                          isDark
-                            ? 'bg-slate-800 border border-slate-700'
-                            : 'bg-white border border-slate-200'
-                        )}>
-                          {/* Search */}
-                          <div className={cn(
-                            "p-3 border-b",
-                            isDark ? 'border-slate-700' : 'border-slate-100'
-                          )}>
-                            <div className="relative">
-                              <Search className={cn(
-                                "absolute left-3 top-1/2 -translate-y-1/2 size-4",
-                                isDark ? 'text-slate-400' : 'text-slate-400'
-                              )} />
-                              <input
-                                type="text"
-                                autoFocus
-                                placeholder="Rechercher..."
-                                value={searchTerm}
-                                onChange={(e) => { setSearchTerm(e.target.value); setHighlightedIndex(0); }}
-                                onClick={(e) => e.stopPropagation()}
-                                className={cn(
-                                  "w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none transition-all",
-                                  isDark
-                                    ? 'bg-slate-900 border border-slate-700 focus:border-emerald-500/50 text-white placeholder:text-slate-500'
-                                    : 'bg-slate-50 border border-slate-200 focus:border-emerald-500 text-slate-900 placeholder:text-slate-400'
-                                )}
-                              />
-                            </div>
-                          </div>
-
-                          {/* User list */}
-                          <div ref={listRef} className="max-h-64 overflow-y-auto">
-                            {filteredUsers.map((u, index) => (
-                              <button
-                                key={u.username}
-                                type="button"
-                                ref={index === highlightedIndex ? (el) => {
-                                  if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                                } : undefined}
-                                onClick={() => {
-                                  setUsername(u.username);
-                                  setIsOpen(false);
-                                  setError('');
-                                }}
-                                className={cn(
-                                  "w-full flex items-center justify-between px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset",
-                                  isDark
-                                    ? 'hover:bg-slate-700/50 focus-visible:ring-emerald-500/50'
-                                    : 'hover:bg-slate-50 focus-visible:ring-emerald-500',
-                                  index === highlightedIndex && (isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'),
-                                  username === u.username && (isDark ? 'bg-emerald-500/10' : 'bg-emerald-50')
-                                )}
-                              >
-                                <div>
-                                  <p className={cn(
-                                    "font-medium text-sm",
-                                    isDark ? 'text-slate-200' : 'text-slate-800'
-                                  )}>{u.full_name}</p>
-                                  <p className={cn(
-                                    "text-xs",
-                                    isDark ? 'text-slate-500' : 'text-slate-400'
-                                  )}>@{u.username}</p>
-                                </div>
-                                {username === u.username && (
-                                  <Check className={cn(
-                                    "size-4",
-                                    isDark ? 'text-emerald-400' : 'text-emerald-600'
-                                  )} />
-                                )}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <User className={cn(
+                {/* Password Field (login par mot de passe seul) */}
+                <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div>
+                    <label className={cn(
+                      "text-sm font-bold",
+                      isDark ? 'text-slate-200' : 'text-slate-800'
+                    )}>
+                      {t('password')}
+                    </label>
+                    <div className="relative mt-4">
+                      <Lock className={cn(
                         "absolute left-3 top-1/2 -translate-y-1/2 size-4",
                         isDark ? 'text-slate-400' : 'text-slate-500'
                       )} />
                       <input
-                        type="text"
+                        type={showPassword ? 'text' : 'password'}
                         required
                         autoFocus
-                        placeholder="ADMIN"
-                        value={username}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                         className={cn(
-                          "pl-10 py-3 rounded-xl transition-all shadow-sm flex h-10 w-full border bg-white px-3 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                          "pl-10 pr-10 py-3 rounded-xl transition-all shadow-sm flex h-11 w-full border bg-white px-3 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                           isDark
                             ? 'bg-slate-800 border-slate-600 focus:border-emerald-500/50 text-white placeholder:text-slate-500'
                             : 'bg-white border-slate-300 focus:border-emerald-500'
                         )}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={cn(
+                          "absolute right-3 top-1/2 -translate-y-1/2 transition-colors p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
+                          isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
+                        )}
+                      >
+                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
                     </div>
-                  )}
-                </div>
-
-                {/* Password Field (shown when username selected) */}
-                {username && (
-                  <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="space-y-2">
-                      <label className={cn(
-                        "text-sm font-bold",
-                        isDark ? 'text-slate-200' : 'text-slate-800'
-                      )}>
-                        {t('password')}
-                      </label>
-                      <div className="relative">
-                        <Lock className={cn(
-                          "absolute left-3 top-1/2 -translate-y-1/2 size-4",
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        )} />
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          autoFocus
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                          className={cn(
-                            "pl-10 pr-10 py-3 rounded-xl transition-all shadow-sm flex h-10 w-full border bg-white px-3 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                            isDark
-                              ? 'bg-slate-800 border-slate-600 focus:border-emerald-500/50 text-white placeholder:text-slate-500'
-                              : 'bg-white border-slate-300 focus:border-emerald-500'
-                          )}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className={cn(
-                            "absolute right-3 top-1/2 -translate-y-1/2 transition-colors p-1 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
-                            isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
-                          )}
-                        >
-                          {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Workstation */}
-                    <div className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl",
-                      isDark
-                        ? 'bg-slate-800 border border-slate-700'
-                        : 'bg-slate-100 border border-slate-200'
+                    <p className={cn(
+                      "text-xs mt-3",
+                      isDark ? 'text-slate-500' : 'text-slate-400'
                     )}>
-                      <Monitor className={cn(
-                        "size-4",
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      )} />
-                      <div className="flex-1">
-                        <input
-                          type="text"
-                          value={workstationName}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWorkstationName(e.target.value)}
-                          spellCheck={false}
-                          className={cn(
-                            "border-0 p-0 h-auto text-sm font-medium bg-transparent focus-visible:ring-0 w-full outline-none",
-                            isDark ? 'text-slate-200' : 'text-slate-800'
-                          )}
-                        />
-                        <p className={cn(
-                          "text-xs",
-                          isDark ? 'text-slate-500' : 'text-slate-400'
-                        )}>
-                          {t('workstation_label')} • {getDeviceType()}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Submit Button */}
-                    <Button
-                      type="submit"
-                      disabled={loading}
-                      className={cn(
-                        "w-full py-3 h-auto text-base font-semibold rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
-                        isDark
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 focus-visible:ring-offset-slate-950'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 focus-visible:ring-offset-white'
-                      )}
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="size-5 mr-2 animate-spin" />
-                          {t('loading')}
-                        </>
-                      ) : (
-                        <>
-                          {t('submit')}
-                          <ArrowRight className="size-5 ml-2" />
-                        </>
-                      )}
-                    </Button>
+                      {t('login_form.password_only_hint')}
+                    </p>
                   </div>
-                )}
+
+                  {/* Workstation */}
+                  <div className={cn(
+                    "flex items-center gap-3 p-3 rounded-xl",
+                    isDark
+                      ? 'bg-slate-800 border border-slate-700'
+                      : 'bg-slate-100 border border-slate-200'
+                  )}>
+                    <Monitor className={cn(
+                      "size-4",
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    )} />
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={workstationName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWorkstationName(e.target.value)}
+                        spellCheck={false}
+                        className={cn(
+                          "border-0 p-0 h-auto text-sm font-medium bg-transparent focus-visible:ring-0 w-full outline-none",
+                          isDark ? 'text-slate-200' : 'text-slate-800'
+                        )}
+                      />
+                      <p className={cn(
+                        "text-xs",
+                        isDark ? 'text-slate-500' : 'text-slate-400'
+                      )}>
+                        {t('workstation_label')} • {getDeviceType()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className={cn(
+                      "w-full py-3 h-auto text-base font-semibold rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
+                      isDark
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 focus-visible:ring-offset-slate-950'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 focus-visible:ring-offset-white'
+                    )}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="size-5 mr-2 animate-spin" />
+                        {t('loading')}
+                      </>
+                    ) : (
+                      <>
+                        {t('submit')}
+                        <ArrowRight className="size-5 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </div>
 
                 {/* Footer */}
                 <p className={cn(

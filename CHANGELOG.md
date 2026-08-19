@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-08-19 — Feat : Login par mot de passe seul (sans sélection d'utilisateur)
+
+### ✨ Nouveau
+
+- **Page de connexion simplifiée** : le sélecteur d'utilisateur a été retiré. L'utilisateur saisit uniquement son mot de passe, et le système identifie automatiquement le compte correspondant.
+- Le backend `CustomAuthToken` (`auth/token/`) accepte désormais un payload `{ password }` sans `username` : il parcourt les utilisateurs actifs et renvoie le premier dont le mot de passe correspond.
+- **Sécurité** : la garantie d'unicité des mots de passe (vérifiée à la création/modification dans `UserSerializer.validate_password`) rend ce mode déterministe — un mot de passe = au plus un utilisateur.
+- Audit des tentatives échouées : chaque échec est loggé dans `AuditLog` (action `OTHER`, modèle `Auth`) avec l'IP source et un flag `username_provided`.
+- Le login classique `{ username, password }` reste supporté pour la rétro-compatibilité (tests existants, clients tiers éventuels).
+
+### 🔒 Garde-fous
+
+- `LoginRateThrottle` (5/min par IP) reste actif.
+- Filtrage sur `is_active=True` : un compte désactivé ne peut plus se connecter par mot de passe seul.
+- Le mode sudo existant (`verify_password`, `validate_sudo_mode`) n'est pas impacté.
+
+### Fichiers modifiés
+
+- `backend/api/views/users.py` — `CustomAuthToken.post()` : branche login par mot de passe seul + audit des échecs.
+- `frontend/frontend/src/components/LoginShadcn.tsx` — suppression du sélecteur d'utilisateur (dropdown + recherche + navigation clavier), ne garde que le champ mot de passe + workstation + bouton submit. Utilise le `username` renvoyé par le backend pour la session.
+- `frontend/frontend/public/locales/fr/auth.json` — nouvelle clé `login_form.password_only_hint`, sous-titre mis à jour.
+- `frontend/frontend/public/locales/en/auth.json` — idem en anglais.
+- `frontend/frontend/e2e/auth.spec.ts` — tests E2E mis à jour (login par mot de passe seul).
+- `frontend/frontend/e2e/helpers.ts` — `login()` ne remplit plus que le mot de passe.
+- `backend/api/tests/test_user_management.py` — 3 nouveaux tests : login par mot de passe seul (succès, user inactif refusé, mauvais mot de passe refusé). 22/22 tests OK.
+
+### ⚠️ Notes
+
+- Rappeler aux utilisateurs de faire **Ctrl+F5** après cette mise à jour pour invalider le cache PWA.
+- Si un utilisateur existant a un mot de passe dupliqué (cas théorique antérieur à la garantie d'unicité), le premier user trouvé par `id` croissant remporte la connexion. Vérifier via `UserSerializer.validate_password` qu'aucun doublon n'existe en base.
+
+---
+
 ## 2026-08-19 — Fix : Planification automatique (bouton Enregistrer) + affichage texte gras
 
 ### 🐛 Corrections

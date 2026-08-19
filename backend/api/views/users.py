@@ -69,14 +69,38 @@ class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
-        
+
         user = None
         if username and password:
+            # Login classique : username + password
             user_obj = User.objects.filter(username__iexact=username).first()
             if user_obj and user_obj.check_password(password):
                 user = user_obj
-                    
+        elif password:
+            # Login par mot de passe seul : on cherche l'utilisateur actif dont le
+            # mot de passe correspond. La garantie d'unicité des mots de passe
+            # (voir UserSerializer.validate_password) rend ce mode déterministe.
+            # Sécurité : on ne teste que les comptes actifs, et le throttle
+            # LoginRateThrottle (5/min par IP) limite le bruteforce.
+            for candidate in User.objects.filter(is_active=True).order_by('id'):
+                if candidate.check_password(password):
+                    user = candidate
+                    break
+
         if not user or not user.is_active:
+            # Audit : tentative échouée (sans user identifié, on logge l'IP)
+            try:
+                log_audit(
+                    user=None,
+                    action=AuditLog.Action.OTHER,
+                    model_name='Auth',
+                    object_id=None,
+                    description=f"Tentative de connexion échouée depuis {request.META.get('REMOTE_ADDR', '?')}",
+                    details={'username_provided': bool(username), 'path': request.path},
+                    request=request,
+                )
+            except Exception:
+                pass
             return Response({'non_field_errors': ['Impossible de se connecter avec les identifiants fournis.']}, status=status.HTTP_400_BAD_REQUEST)
 
         # Method A: Delete existing tokens to ensure single session
