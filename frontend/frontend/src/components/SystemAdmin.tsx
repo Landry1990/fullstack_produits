@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
+import { gooeyToast } from 'goey-toast';
 import { Server, HardDrive, DownloadCloud } from 'lucide-react';
 import type {
   TabId, SystemStatus, BackupListData, WalStatus, BackupSettings, UpdateStatus,
@@ -321,7 +322,7 @@ export default function SystemAdmin() {
       await api.post('/system-admin/run_update/');
       setUpdateMessage(t('update_started'));
       let pollCount = 0;
-      const maxPolls = 400; // ~20 min à 3s d'intervalle (un build Docker peut prendre 10-15 min)
+      const maxPolls = 450; // ~15 min à 2s d'intervalle (hot deploy ~30s, rebuild ~10-15 min)
       const pollInterval = setInterval(async () => {
         pollCount++;
         if (pollCount > maxPolls) {
@@ -334,7 +335,7 @@ export default function SystemAdmin() {
           const statusRes = await api.get('/system-admin/update_status/');
           const s = statusRes.data;
           if (s.status === 'running') {
-            setUpdateProgress((prev) => Math.min(prev + 5, 90));
+            setUpdateProgress((prev) => Math.min(prev + 8, 90));
             setUpdateStep(s.step || t('update_step_running'));
           } else if (s.status === 'done') {
             setUpdateProgress(100);
@@ -344,10 +345,20 @@ export default function SystemAdmin() {
             setUpdateStatus(null);
             setRunningUpdate(false);
             clearInterval(pollInterval);
+            // Toast de succès
+            gooeyToast.success(t('update_success_title'), {
+              description: t('update_success_desc'),
+              duration: 4000,
+            });
+            // Ctrl+F5 auto après 2s (laisse le temps au toast de s'afficher)
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
           } else if (s.status === 'failed') {
             setUpdateError(t('update_failed') + (s.error ? ': ' + s.error : ''));
             setRunningUpdate(false);
             clearInterval(pollInterval);
+            gooeyToast.error(t('update_failed'));
           } else if (s.status === 'idle') {
             // Backend a redémarré et perdu le statut — probablement terminé
             setUpdateProgress(100);
@@ -357,13 +368,20 @@ export default function SystemAdmin() {
             setUpdateStatus(null);
             setRunningUpdate(false);
             clearInterval(pollInterval);
+            gooeyToast.success(t('update_success_title'), {
+              description: t('update_success_desc'),
+              duration: 4000,
+            });
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
           }
         } catch {
           // Le backend redémarre pendant la mise à jour, c'est normal
-          setUpdateProgress((prev) => Math.min(prev + 3, 95));
+          setUpdateProgress((prev) => Math.min(prev + 5, 95));
           setUpdateStep(t('update_step_restarting'));
         }
-      }, 3000);
+      }, 2000);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string; message?: string } } };
       setUpdateError(err?.response?.data?.detail || err?.response?.data?.message || t('update_run_error'));
