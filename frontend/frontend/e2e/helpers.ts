@@ -12,17 +12,13 @@ export const TEST_USER = {
 
 /**
  * Connexion via la page de login.
- * Utilise le sélecteur de username + champ password.
+ * Login par mot de passe seul (le système identifie l'utilisateur automatiquement).
  */
 export async function login(page: Page) {
   await page.goto('/login')
 
   // Attendre que la page de login soit chargée
   await page.waitForLoadState('networkidle')
-
-  // Sélectionner l'utilisateur (dropdown ou input)
-  const usernameInput = page.locator('input[name="username"], input[placeholder*="utilisateur"], input[placeholder*="user" i]').first()
-  await usernameInput.fill(TEST_USER.username)
 
   // Remplir le mot de passe
   const passwordInput = page.locator('input[type="password"]').first()
