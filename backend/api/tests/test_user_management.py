@@ -232,6 +232,32 @@ class UserManagementTest(TestCase):
         response = client.post(url, {'username': 'auth_fail', 'password': 'WrongPass99'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_login_by_password_only_identifies_user(self):
+        """Login par mot de passe seul : le système identifie automatiquement l'utilisateur."""
+        User.objects.create_user(username='solo_user', password='SoloPass55')
+        client = APIClient()
+        url = reverse('token-auth')
+        response = client.post(url, {'password': 'SoloPass55'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+        self.assertEqual(response.data['username'], 'solo_user')
+
+    def test_login_by_password_only_fails_for_inactive_user(self):
+        """Un compte désactivé ne peut pas se connecter par mot de passe seul."""
+        User.objects.create_user(username='inactive_solo', password='InactivePass55', is_active=False)
+        client = APIClient()
+        url = reverse('token-auth')
+        response = client.post(url, {'password': 'InactivePass55'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_login_by_password_only_fails_with_wrong_password(self):
+        """Login par mot de passe seul avec un mauvais mot de passe échoue."""
+        User.objects.create_user(username='solo_fail', password='CorrectSolo55')
+        client = APIClient()
+        url = reverse('token-auth')
+        response = client.post(url, {'password': 'WrongSolo99'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     # --- Désactivation ---
 
     def test_deactivate_user(self):
