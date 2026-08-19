@@ -14,6 +14,9 @@ import {
   Eye,
   EyeOff,
   Package,
+  Plus,
+  Printer,
+  RotateCcw,
 } from 'lucide-react';
 import { formatCurrency, normalizeNumberInput, formatNumber } from '../utils/formatters';
 import { Button } from './ui/Button';
@@ -281,11 +284,16 @@ function GestionVitrine({
 }
 
 // --- Composant Simulateur (Client) ---
+interface CartItem extends Product {
+  quantity: number;
+}
+
+// --- Composant Simulateur (Client) ---
 function SimulateurClient() {
   const { t } = useTranslation(['vitrine', 'common']);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [cart, setCart] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   useEffect(() => {
@@ -311,18 +319,44 @@ function SimulateurClient() {
     },
   });
 
+  const getUnitPrice = (product: Product) =>
+    normalizeNumberInput(product.public_price || product.selling_price);
+
   const addToCart = (product: Product) => {
-    if (!cart.find((p) => p.id === product.id)) {
-      setCart([...cart, product]);
-      setSearchTerm('');
-      setHighlightedIndex(-1);
-    } else {
-      gooeyToast.error(t('simulateur.already_in_list'));
-    }
+    setCart((prev) => {
+      const existing = prev.find((p) => p.id === product.id);
+      if (existing) {
+        return prev.map((p) => (p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p));
+      }
+      gooeyToast.success(t('simulateur.added_to_list'), { duration: 1500 });
+      return [...prev, { ...product, quantity: 1 }];
+    });
+    setSearchTerm('');
+    setHighlightedIndex(-1);
   };
 
   const removeFromCart = (id: number) => {
-    setCart(cart.filter((p) => p.id !== id));
+    setCart((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    gooeyToast.success(t('simulateur.list_cleared'), { duration: 1500 });
+  };
+
+  const updateQuantity = (id: number, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((p) => (p.id === id ? { ...p, quantity: Math.max(1, p.quantity + delta) } : p))
+        .filter((p) => p.quantity > 0)
+    );
+  };
+
+  const cartTotal = cart.reduce((sum, item) => sum + getUnitPrice(item) * item.quantity, 0);
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -374,15 +408,15 @@ function SimulateurClient() {
                   <button
                     key={p.id}
                     onClick={() => addToCart(p)}
-                    className={`w-full flex justify-between items-center py-3 px-4 rounded-lg transition-all text-left ${
+                    className={`w-full flex justify-between items-center py-3 px-4 rounded-lg transition-all text-left gap-3 ${
                       index === highlightedIndex
                         ? 'bg-primary text-primary-content shadow-md'
                         : 'hover:bg-base-100'
                     }`}
                     onMouseEnter={() => setHighlightedIndex(index)}
                   >
-                    <div className="text-left w-full">
-                      <div className={`font-bold text-base ${index === highlightedIndex ? 'text-primary-content' : 'text-base-content'}`}>
+                    <div className="text-left flex-1 min-w-0">
+                      <div className={`font-bold text-base truncate ${index === highlightedIndex ? 'text-primary-content' : 'text-base-content'}`}>
                         {p.name}
                       </div>
                       <div className="flex flex-wrap gap-2 items-center mt-1">
@@ -402,6 +436,17 @@ function SimulateurClient() {
                         )}
                       </div>
                     </div>
+                    <div className="text-right shrink-0">
+                      <div className={`font-bold font-mono ${index === highlightedIndex ? 'text-primary-content' : 'text-emerald-600'}`}>
+                        {formatCurrency(getUnitPrice(p))}
+                      </div>
+                      <div className={`text-xs ${index === highlightedIndex ? 'text-primary-content/80' : 'text-base-content/40'}`}>
+                        {t('simulateur.public_price')}
+                      </div>
+                    </div>
+                    <div className={`shrink-0 p-1.5 rounded-full ${index === highlightedIndex ? 'bg-primary-content/20' : 'bg-primary/10 text-primary'}`}>
+                      <Plus className="size-4" />
+                    </div>
                   </button>
                 ))}
               </div>
@@ -417,32 +462,44 @@ function SimulateurClient() {
 
       {/* Colonne "Panier" */}
       <div className="lg:col-span-1 order-2 lg:order-none">
-        <Card variant="elevated" className="h-full sticky top-4 overflow-hidden" padding="none">
+        <Card variant="elevated" className="h-full sticky top-4 overflow-hidden flex flex-col" padding="none">
           <div className="bg-primary/5 p-5 border-b border-primary/10">
             <div className="flex justify-between items-center">
-              <span className="font-bold text-base">{t('simulateur.my_list')}</span>
+              <div>
+                <span className="font-bold text-base">{t('simulateur.my_list')}</span>
+                {cart.length > 0 && (
+                  <div className="text-xs text-base-content/60 mt-0.5">
+                    {cartCount} {cartCount > 1 ? t('simulateur.items') : t('simulateur.item')}
+                  </div>
+                )}
+              </div>
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" size="md">
-                  {cart.length}
-                </Badge>
-                <ShoppingCart className="size-5 text-base-content/70" />
+                <div className="text-right mr-2">
+                  <div className="text-xs text-base-content/60 uppercase tracking-wide">{t('simulateur.total')}</div>
+                  <div className="text-lg font-bold font-mono text-emerald-600 leading-none">{formatCurrency(cartTotal)}</div>
+                </div>
+                <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                  <ShoppingCart className="size-5" />
+                </div>
               </div>
             </div>
           </div>
-          <div className="p-5 bg-base-100">
-            <div className="space-y-3 overflow-y-auto max-h-[300px] lg:max-h-[500px] pr-1">
+
+          <div className="p-5 bg-base-100 flex-1 flex flex-col">
+            <div className="space-y-3 overflow-y-auto max-h-[300px] lg:max-h-[500px] pr-1 flex-1">
               {cart.length === 0 ? (
-                <div className="text-center text-base-content/40 py-10">
+                <div className="text-center text-base-content/40 py-10 flex flex-col items-center h-full justify-center">
                   <div className="h-16 w-16 rounded-2xl bg-base-200 flex items-center justify-center mx-auto mb-3">
                     <ShoppingCart className="size-8 text-base-content/20" />
                   </div>
                   <p className="text-sm font-medium">{t('simulateur.empty_list')}</p>
+                  <p className="text-xs mt-1 max-w-[200px]">{t('simulateur.empty_list_hint')}</p>
                 </div>
               ) : (
                 cart.map((item) => (
                   <div
                     key={item.id}
-                    className="flex justify-between items-center bg-base-200/70 p-3 rounded-xl group animate-in fade-in slide-in-from-right-4"
+                    className="flex justify-between items-center bg-base-200/70 p-3 rounded-xl group animate-in fade-in slide-in-from-right-4 gap-2"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate text-sm">{item.name}</div>
@@ -459,15 +516,34 @@ function SimulateurClient() {
                           </Badge>
                         )}
                         <span className="font-mono text-sm text-base-content/70">
-                          {formatCurrency(normalizeNumberInput(item.public_price || item.selling_price))}
+                          {formatCurrency(getUnitPrice(item))}
                         </span>
                       </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 min-w-0"
+                        onClick={() => updateQuantity(item.id, -1)}
+                      >
+                        −
+                      </Button>
+                      <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 min-w-0"
+                        onClick={() => updateQuantity(item.id, +1)}
+                      >
+                        +
+                      </Button>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFromCart(item.id)}
-                      className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-error hover:bg-red-50"
+                      className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-error hover:bg-red-50 shrink-0"
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -475,6 +551,34 @@ function SimulateurClient() {
                 ))
               )}
             </div>
+
+            {cart.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-base-200 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-base-content/60">{t('simulateur.total')}</span>
+                  <span className="text-xl font-bold font-mono text-emerald-600">{formatCurrency(cartTotal)}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<Printer className="size-4" />}
+                    onClick={handlePrint}
+                  >
+                    {t('simulateur.print')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    leftIcon={<RotateCcw className="size-4" />}
+                    onClick={clearCart}
+                    className="text-error hover:bg-red-50"
+                  >
+                    {t('simulateur.clear')}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>

@@ -30,10 +30,19 @@
         "available": "In Stock",
         "out_of_stock": "Out of Stock",
         "available_full": "Available",
+        "public_price": "Public price",
         "no_results": "No available product found.",
         "already_in_list": "Product already in list",
         "my_list": "My List",
-        "empty_list": "Your list is empty"
+        "empty_list": "Your list is empty",
+        "empty_list_hint": "Click a product from the list on the left to add it.",
+        "items": "items",
+        "item": "item",
+        "total": "Total",
+        "print": "Print",
+        "clear": "Clear",
+        "list_cleared": "List cleared",
+        "added_to_list": "Added to list"
     },
     "messages": {
         "visibility_updated": "Visibility updated",

@@ -103,8 +103,8 @@ export default function CatalogDCI() {
               }`}
             >
               <div className="flex flex-col">
-                <span className="font-bold text-sm leading-tight">{sub.nom}</span>
-                <span className={`text-[10px] uppercase tracking-wider font-semibold text-base-content/70 ${selectedSubstance?.id === sub.id ? 'text-primary-content' : 'text-primary'}`}>
+                <span className="font-semibold text-sm leading-tight">{sub.nom}</span>
+                <span className={`text-xs tracking-wide font-medium text-base-content/60 ${selectedSubstance?.id === sub.id ? 'text-primary-content/90' : 'text-primary'}`}>
                   {sub.produits_count} produits liés
                 </span>
               </div>
@@ -128,7 +128,7 @@ export default function CatalogDCI() {
               disabled={!substancesData.previous}
               onClick={() => setPage(p => p - 1)}
             >Précédent</Button>
-            <span className="text-xs font-bold text-base-content/50">Page {page}</span>
+            <span className="text-xs font-medium text-base-content/50">Page {page}</span>
             <Button 
               variant="ghost" size="sm" 
               disabled={!substancesData.next}
@@ -149,7 +149,7 @@ export default function CatalogDCI() {
                   <div className="p-3 bg-primary/10 rounded-2xl text-primary">
                     <Icons.Pill />
                   </div>
-                  <h1 className="text-3xl font-black tracking-tight">{selectedSubstance.nom}</h1>
+                  <h1 className="text-2xl font-semibold tracking-tight text-base-content truncate">{selectedSubstance.nom}</h1>
                 </div>
                 <p className="text-base-content/60 font-medium">Gestion du groupe générique et des substitutions</p>
               </div>
@@ -166,11 +166,11 @@ export default function CatalogDCI() {
               {/* Produits en Stock */}
               <div className="flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
                 <div className="p-6 border-b border-base-200 flex items-center justify-between">
-                  <h3 className="font-bold flex items-center gap-2">
+                  <h3 className="font-semibold flex items-center gap-2">
                     <Icons.Box />
                     Produits en pharmacie
                   </h3>
-                  <Badge variant="primary" className="font-bold">{(produitsData as { count?: number })?.count || 0}</Badge>
+                  <Badge variant="primary" className="font-medium">{(produitsData as { count?: number })?.count || 0}</Badge>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                   {loadingProduits ? (
@@ -180,10 +180,10 @@ export default function CatalogDCI() {
                   ) : (produitsData as { results?: ProduitModel[] })?.results?.map((p: ProduitModel) => (
                     <div key={p.id} className="p-4 rounded-2xl border border-base-200 hover:border-primary/30 transition-all bg-base-200/20 group relative">
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-sm uppercase group-hover:text-primary transition-colors">{p.name}</h4>
+                        <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">{p.name}</h4>
                         <div className="flex items-center gap-2">
                           {p.stock > 0 && (
-                            <Badge variant="success" size="sm" className="font-bold">
+                            <Badge variant="success" size="sm" className="font-medium">
                               {p.stock} en stock
                             </Badge>
                           )}
@@ -204,16 +204,16 @@ export default function CatalogDCI() {
                           </Button>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-xs opacity-60">
+                      <div className="flex items-center justify-between text-sm text-base-content/60">
                         <span>{p.forme_name || 'Forme inconnue'}</span>
-                        <span className="font-bold text-primary">{p.selling_price} F</span>
+                        <span className="font-semibold text-primary">{p.selling_price} F</span>
                       </div>
                     </div>
                   ))}
                   {(produitsData as { results?: { length: number } })?.results?.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center p-12 text-center text-base-content/30">
                       <Icons.Box />
-                      <p className="mt-4 font-bold">Aucun produit associé à cette DCI dans votre stock</p>
+                      <p className="mt-4 font-medium text-base">Aucun produit associé à cette DCI dans votre stock</p>
                     </div>
                   )}
                 </div>
@@ -223,11 +223,11 @@ export default function CatalogDCI() {
                 /* Références ANSM */
                 <div className="flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
                   <div className="p-6 border-b border-base-200 flex items-center justify-between bg-secondary/5">
-                    <h3 className="font-bold flex items-center gap-2 text-secondary">
+                    <h3 className="font-semibold flex items-center gap-2 text-secondary">
                       <Icons.Search />
                       Références Base ANSM
                     </h3>
-                    <Badge variant="secondary" className="font-bold">{refMedsData?.count || 0}</Badge>
+                    <Badge variant="secondary" className="font-medium">{refMedsData?.count || 0}</Badge>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                     {loadingRef ? (
@@ -236,17 +236,17 @@ export default function CatalogDCI() {
                       </div>
                     ) : (refMedsData as { results?: { cis: string; nom: string; forme: string }[] })?.results?.map((ref) => (
                       <div key={ref.cis} className="p-4 rounded-2xl border border-base-200 hover:border-secondary/30 transition-all bg-base-200/5 group">
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className="font-bold text-[11px] uppercase group-hover:text-secondary transition-colors leading-tight">{ref.nom}</h4>
-                          <span className="text-[10px] font-mono bg-base-300 px-2 rounded-lg text-base-content/50">CIS: {ref.cis}</span>
+                        <div className="flex justify-between items-start gap-3 mb-2">
+                          <h4 className="font-medium text-sm group-hover:text-secondary transition-colors leading-snug">{ref.nom}</h4>
+                          <span className="text-xs font-medium bg-base-200 px-2 py-0.5 rounded-lg text-base-content/50 shrink-0">CIS {ref.cis}</span>
                         </div>
-                        <p className="text-[10px] opacity-60 mb-2">{ref.forme}</p>
+                        <p className="text-xs text-base-content/60">{ref.forme}</p>
                       </div>
                     ))}
                     {(refMedsData as { results?: { length: number } })?.results?.length === 0 && (
                       <div className="h-full flex flex-col items-center justify-center p-12 text-center text-base-content/30">
                         <Icons.Search />
-                        <p className="mt-4 font-bold">Aucune référence trouvée dans la base nationale</p>
+                        <p className="mt-4 font-medium text-base">Aucune référence trouvée dans la base nationale</p>
                       </div>
                     )}
                   </div>
@@ -259,7 +259,7 @@ export default function CatalogDCI() {
             <div className="scale-[3]">
               <Icons.Pill />
             </div>
-            <p className="mt-12 text-xl font-black uppercase tracking-widest">Sélectionnez une DCI pour gérer ses produits</p>
+            <p className="mt-12 text-xl font-medium text-base-content/40">Sélectionnez une DCI pour gérer ses produits</p>
           </div>
         )}
       </div>
