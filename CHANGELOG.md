@@ -2,6 +2,77 @@
 
 ---
 
+## 2026-08-19 — Fix : Planification automatique (bouton Enregistrer) + affichage texte gras
+
+### 🐛 Corrections
+
+- **Bouton "Enregistrer" de la planification automatique** : l'ancien code lançait `set-update-time.sh` dans un conteneur Alpine sans `systemd` ni `cron` → échec silencieux chez le client.
+- `backend/api/views/system_admin.py` : `set_update_schedule` utilise maintenant `nsenter -t 1 -m -u -n -i` pour exécuter `set-update-time.sh` directement sur l'hôte Ubuntu. Le conteneur Alpine installe `util-linux` pour avoir `nsenter`, puis exécute `systemctl`/`crontab` du système hôte. Désactivation également corrigée (stop + disable systemd + suppression cron).
+- **Affichage des infos** : les clés `update_info_*` contenaient des balises `<strong>` qui s'affichaient en texte brut dans React. Split en `*_prefix` + `*_strong` et rendu avec `<span className="font-semibold">`.
+- Traductions fr/en mises à jour pour supprimer le HTML brut.
+
+### Fichiers modifiés
+
+- `backend/api/views/system_admin.py`
+- `frontend/frontend/src/components/systemadmin/UpdateTab.tsx`
+- `frontend/frontend/public/locales/fr/system_admin.json`
+- `frontend/frontend/public/locales/en/system_admin.json`
+
+---
+
+## 2026-08-19 — Feat : Mise à jour depuis l'app en hot deploy (plus de rebuild Docker)
+
+### ✨ Nouveau mécanisme
+
+- **Hot deploy** : le bouton "Mettre à jour" de l'onglet Système → Mise à jour utilise désormais `update-app.sh` au lieu de `nightly-update.sh`.
+- Le hot deploy copie directement le code dans les conteneurs existants (`docker cp` + `docker restart`) au lieu de faire un full rebuild Docker.
+- **Durée** : ~30s au lieu de 10-15 min.
+- **Disponibilité** : l'application reste accessible pendant toute la mise à jour. Seul le backend redémarre brièvement (~5s), le frontend nginx ne redémarre jamais.
+- **Résilience** : si internet coupe pendant `git pull`, la mise à jour est annulée et l'app continue de tourner normalement.
+
+### 🔄 Détection automatique requirements.txt
+
+- `update-app.sh` compare le hash SHA-256 de `backend/requirements.txt` avant et après le `git pull`.
+- **Si inchangé** → hot deploy (~30s) : `docker cp` + `docker restart`.
+- **Si modifié** → délégation automatique à `nightly-update.sh` (rebuild Docker complet ~10-15 min) car les nouvelles dépendances Python doivent être installées dans l'image.
+- Le `exec bash nightly-update.sh` remplace le processus — `nightly-update.sh` gère le rebuild, le basculement via conteneur helper, et le rollback automatique en cas d'échec.
+- Le frontend poll pendant jusqu'à 15 min (450 polls × 2s) pour couvrir les deux cas.
+
+### 🔧 Implémentation
+
+- `update-app.sh` (créé) : script de hot deploy — git pull → détection requirements.txt → backup DB → docker cp backend → migrate → collectstatic → docker restart backend → docker cp frontend → nginx reload. Écrit le statut `done` dans `update_status.json` **avant** le restart du backend pour que le frontend récupère le succès même si le thread est tué.
+- `backend/api/views/system_admin.py` : `run_update` utilise `update-app.sh` en priorité (fallback `nightly-update.sh`). Timeout 15 min. Ne réécrit pas le statut si le script a déjà écrit `done`.
+- `backend/api/views/system_admin.py` : `update_status` timeout 16 min.
+- `frontend/frontend/src/components/SystemAdmin.tsx` : polling accéléré (2s au lieu de 3s, 450 polls pour couvrir rebuild). Ajout d'un toast `gooeyToast.success` + `window.location.reload()` (Ctrl+F5 auto) 2s après la détection du statut `done`.
+- `install.sh` : `update-app.sh` ajouté au `chmod +x` de la section 7.
+- Traductions fr/en : `update_started` et `update_success_desc` mises à jour pour refléter que l'app reste accessible et que la page se recharge automatiquement.
+
+### Fichiers modifiés
+
+- `update-app.sh` (créé)
+- `backend/api/views/system_admin.py`
+- `frontend/frontend/src/components/SystemAdmin.tsx`
+- `frontend/frontend/public/locales/fr/system_admin.json`
+- `frontend/frontend/public/locales/en/system_admin.json`
+- `install.sh`
+
+---
+
+## 2026-08-19 — Ops : Sauvegarde automatique activée dans install.sh
+
+### 🛠️ Infrastructure
+
+- **`install.sh`** : activation automatique de `setup-backup-cron.sh` à l'installation, en plus du timer systemd `zenith-nightly-update` (mise à jour auto) déjà en place.
+- Avant : la sauvegarde auto n'était pas lancée par `install.sh` (seuls les scripts étaient rendus exécutables, le backup restait manuel via `./backup-db.sh`).
+- Maintenant : 3 tâches cron installées automatiquement — backup horaire (rétention 7j), backup quotidien 02h (rétention 30j), vérification d'ancienneté toutes les 6h.
+- Résumé final mis à jour pour mentionner le backup auto + commande `crontab -l | grep ZENITH-BACKUP` pour vérifier les cron jobs.
+
+### Fichiers modifiés
+
+- `install.sh` (section 11 + résumé section 13)
+
+---
+
 ## 2026-08-19 — Feat : Rappeler une vente dans la page Facturation
 
 ### ✨ Nouvelle fonctionnalité
