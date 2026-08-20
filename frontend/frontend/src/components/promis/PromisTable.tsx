@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -7,8 +7,6 @@ import {
     Clock, CheckCircle2, XCircle
 } from 'lucide-react';
 import type { Promis } from '../../types';
-import ActionIcon from '../ui/ActionIcon';
-import SelectionHeader from '../ui/SelectionHeader';
 import { Checkbox } from '../shadcn/checkbox';
 import { Badge } from '../shadcn/badge';
 import { Button } from '../shadcn/button';
@@ -16,9 +14,11 @@ import {
     DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
     DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel
 } from '../shadcn/dropdown-menu';
+import {
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '../ui/Table';
 import { cn } from '../../lib/utils';
 
-// Composant séparé pour éviter les re-renders inutiles
 interface BulkActionsMenuProps {
     selectedIds: Set<number>;
     promisList: Promis[];
@@ -104,6 +104,57 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
     );
 });
 
+interface SelectionBarProps {
+    selectedCount: number;
+    onClear: () => void;
+    actions: React.ReactNode;
+}
+
+const SelectionBar: React.FC<SelectionBarProps> = ({ selectedCount, onClear, actions }) => {
+    const { t } = useTranslation(['common']);
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
+
+    return (
+        <div className="flex items-center justify-between w-full h-8 px-3">
+            <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-200">
+                <div ref={containerRef} className="relative">
+                    <Button variant="default" size="sm" className="gap-2 h-8" onClick={() => setIsOpen(prev => !prev)}>
+                        <MoreVertical className="size-4" />
+                        {t('common:actions_title', { defaultValue: 'Actions' })}
+                        <Badge className="bg-white/20 text-white">{selectedCount}</Badge>
+                    </Button>
+                    {isOpen && (
+                        <ul className="absolute z-[50] p-2 shadow-2xl bg-white rounded-xl w-60 border border-slate-200 mt-2">
+                            {actions}
+                        </ul>
+                    )}
+                </div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClear}
+                    className="text-slate-500 hover:text-slate-900 h-8"
+                >
+                    <X className="size-4" />
+                    {t('common:actions.cancel', { defaultValue: 'Annuler' })}
+                </Button>
+            </div>
+        </div>
+    );
+};
+
 interface PromisTableProps {
     promisList: Promis[];
     loading: boolean;
@@ -140,6 +191,16 @@ const statusIcon = (status: Promis['status']) => {
     }
 };
 
+const headers = [
+    { key: 'date', label: 'stock:promis.table.date', align: 'left', width: 'w-28' },
+    { key: 'client', label: 'stock:promis.table.client', align: 'left', width: 'w-[22%]' },
+    { key: 'phone', label: 'stock:promis.table.phone', align: 'left', width: 'w-28' },
+    { key: 'product', label: 'stock:promis.table.product', align: 'left', width: 'w-[28%]' },
+    { key: 'qty', label: 'stock:promis.table.qty', align: 'center', width: 'w-16' },
+    { key: 'status', label: 'stock:promis.table.status', align: 'center', width: 'w-24' },
+    { key: 'actions', label: 'stock:promis.table.actions', align: 'right', width: 'w-24' },
+];
+
 export const PromisTable: React.FC<PromisTableProps> = ({
     promisList,
     loading,
@@ -162,22 +223,51 @@ export const PromisTable: React.FC<PromisTableProps> = ({
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-slate-400 gap-4">
-                <span className="size-6 border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin" />
-                <p>{t('stock:promis.messages.loading')}</p>
+            <div className="overflow-auto flex-1 min-h-0">
+                <Table className="w-full table-fixed text-sm">
+                    <TableHeader className="sticky top-0 z-10">
+                        <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
+                            <TableHead className="w-12 px-3 py-3 text-center">
+                                <span className="sr-only">Sélection</span>
+                            </TableHead>
+                            {headers.map((h, i) => (
+                                <TableHead
+                                    key={h.key}
+                                    className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${h.width} ${
+                                        h.align === 'left' ? 'text-left' : h.align === 'right' ? 'text-right' : 'text-center'
+                                    }`}
+                                >
+                                    {t(h.label)}
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <TableRow key={i} className="border-b border-slate-100 animate-pulse hover:bg-transparent">
+                                <TableCell className="py-2 px-3 text-center"><div className="size-4 rounded bg-slate-200 mx-auto" /></TableCell>
+                                {headers.map((h) => (
+                                    <TableCell key={h.key} className="py-2 px-3">
+                                        <div className="h-4 rounded bg-slate-200" style={{ width: `${60 + Math.random() * 30}%` }} />
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </div>
         );
     }
 
     if (promisList.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-slate-400 gap-4">
-                <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center">
-                    <svg className="size-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="p-4 bg-slate-100 rounded-2xl mb-4">
+                    <svg className="size-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </div>
-                <p>{t('stock:promis.messages.empty')}</p>
+                <h3 className="text-base font-semibold text-slate-700">{t('stock:promis.messages.empty')}</h3>
             </div>
         );
     }
@@ -186,201 +276,208 @@ export const PromisTable: React.FC<PromisTableProps> = ({
     const allSelected = attPromisCount > 0 && selectedIds.size === attPromisCount;
 
     return (
-        <div className="overflow-auto size-full relative">
-            <table className="w-full text-sm border-separate border-spacing-0">
-                <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100">
-                        <th className="w-12 text-center sticky top-0 z-30 bg-slate-50 border-b border-slate-100">
-                            <label className="cursor-pointer flex items-center justify-center p-4">
+        <div className="overflow-auto flex-1 min-h-0">
+            <Table className="w-full table-fixed text-sm">
+                <TableHeader className="sticky top-0 z-10">
+                    {selectedIds.size > 0 ? (
+                        <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
+                            <TableHead colSpan={8} className="px-3 py-2">
+                                <SelectionBar
+                                    selectedCount={selectedIds.size}
+                                    onClear={onClearSelection}
+                                    actions={
+                                        <BulkActionsMenu
+                                            selectedIds={selectedIds}
+                                            promisList={promisList}
+                                            onDeliver={onDeliver}
+                                            onCancel={onCancel}
+                                            onPrint={onPrint}
+                                            onSms={onSms}
+                                            onWhatsApp={onWhatsApp}
+                                            onBulkDeliver={onBulkDeliver}
+                                            onBulkCancel={onBulkCancel}
+                                            bulkLoading={bulkLoading}
+                                        />
+                                    }
+                                />
+                            </TableHead>
+                        </TableRow>
+                    ) : (
+                        <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
+                            <TableHead className="w-12 px-3 py-2 text-center">
                                 <Checkbox
                                     checked={allSelected}
                                     onCheckedChange={() => onToggleSelectAll()}
                                     disabled={attPromisCount === 0}
                                     className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                                 />
-                            </label>
-                        </th>
-                        {selectedIds.size > 0 ? (
-                            <SelectionHeader
-                                selectedCount={selectedIds.size}
-                                onClear={onClearSelection}
-                                colSpan={7}
-                                actions={
-                                    <BulkActionsMenu
-                                        selectedIds={selectedIds}
-                                        promisList={promisList}
-                                        onDeliver={onDeliver}
-                                        onCancel={onCancel}
-                                        onPrint={onPrint}
-                                        onSms={onSms}
-                                        onWhatsApp={onWhatsApp}
-                                        onBulkDeliver={onBulkDeliver}
-                                        onBulkCancel={onBulkCancel}
-                                        bulkLoading={bulkLoading}
-                                    />
-                                }
+                            </TableHead>
+                            {headers.map((h) => (
+                                <TableHead
+                                    key={h.key}
+                                    className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${h.width} ${
+                                        h.align === 'left' ? 'text-left' : h.align === 'right' ? 'text-right' : 'text-center'
+                                    }`}
+                                >
+                                    {t(h.label)}
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    )}
+                </TableHeader>
+                <TableBody className="text-sm">
+                    {promisList.map(p => {
+                        const isSelected = selectedIds.has(p.id);
+                        return (
+                            <TableRow
+                                key={p.id}
+                                onClick={() => onView(p)}
+                                className={cn(
+                                    'border-b border-slate-100 transition-colors hover:bg-slate-50/80 cursor-pointer',
+                                    isSelected && 'bg-emerald-50/40'
+                                )}
                             >
-                                <></>
-                            </SelectionHeader>
-                        ) : (
-                            <>
-                                <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-4">{t('stock:promis.table.date')}</th>
-                                <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-4">{t('stock:promis.table.client')}</th>
-                                <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-4">{t('stock:promis.table.phone')}</th>
-                                <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-4">{t('stock:promis.table.product')}</th>
-                                <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-4 text-center">{t('stock:promis.table.qty')}</th>
-                                <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-4 text-center">{t('stock:promis.table.status')}</th>
-                                <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 px-6 py-4 text-right pr-6">{t('stock:promis.table.actions')}</th>
-                            </>
-                        )}
-                    </tr>
-                </thead>
-                <tbody className="text-slate-700 font-medium">
-                    {promisList.map(p => (
-                        <tr
-                            key={p.id}
-                            onClick={() => onView(p)}
-                            className={cn(
-                                'hover:bg-slate-50 transition-colors group cursor-pointer',
-                                selectedIds.has(p.id) && 'bg-emerald-50/40'
-                            )}
-                        >
-                            <td className="text-center px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                                {p.status === 'ATT' && (
-                                    <div className="flex justify-center">
-                                        <Checkbox
-                                            checked={selectedIds.has(p.id)}
-                                            onCheckedChange={() => onToggleSelection(p.id)}
-                                            className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                                        />
-                                    </div>
-                                )}
-                            </td>
-                            <td className="px-6 py-3">
-                                <div className="flex flex-col">
-                                    <span className="font-semibold text-slate-700">{format(new Date(p.date_promis), 'dd/MM/yyyy', { locale: currentLocale })}</span>
-                                    <span className="text-xs text-slate-400">{format(new Date(p.date_promis), 'HH:mm', { locale: currentLocale })}</span>
-                                </div>
-                            </td>
-                            <td className="px-6 py-3">
-                                <div className="font-medium text-slate-800">{p.client_display}</div>
-                            </td>
-                            <td className="px-6 py-3">
-                                <div className="text-slate-400 font-mono text-xs">{p.client_phone_display || '-'}</div>
-                            </td>
-                            <td className="px-6 py-3">
-                                <div className="max-w-[200px] truncate" title={p.produit_name}>
-                                    <span className="font-semibold text-slate-700">{p.produit_name}</span>
-                                </div>
-                                {p.produit_cip && <div className="text-xs text-slate-400 font-mono mt-0.5">{p.produit_cip}</div>}
-                            </td>
-                            <td className="px-6 py-3 text-center">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono font-bold text-xs border border-slate-200">
-                                    {p.quantite}
-                                </span>
-                            </td>
-                            <td className="px-6 py-3 text-center">
-                                <Badge variant="outline" className={cn('gap-1 uppercase tracking-wider', statusBadgeClass(p.status))}>
-                                    {statusIcon(p.status)}
-                                    {p.status_display}
-                                </Badge>
-                                {p.status === 'DEL' && p.date_livraison && (
-                                    <div className="text-[10px] text-emerald-500 mt-1 opacity-80">
-                                        {t('stock:promis.messages.delivered_on', { date: format(new Date(p.date_livraison), 'dd/MM/yyyy', { locale: currentLocale }) })}
-                                    </div>
-                                )}
-                            </td>
-                            <td className="px-6 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center justify-end gap-1">
-                                    {/* Actions rapides visibles (statut ATT) */}
-                                    {p.status === 'ATT' && selectedIds.size === 0 && (
-                                        <>
-                                            <ActionIcon
-                                                icon={Check}
-                                                onClick={() => onDeliver(p.id)}
-                                                title={t('stock:promis.actions.deliver')}
-                                                variant="success"
+                                <TableCell className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
+                                    {p.status === 'ATT' && (
+                                        <div className="flex justify-center">
+                                            <Checkbox
+                                                checked={isSelected}
+                                                onCheckedChange={() => onToggleSelection(p.id)}
+                                                className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                                             />
-                                            <ActionIcon
-                                                icon={X}
-                                                onClick={() => onCancel(p.id)}
-                                                title={t('stock:promis.actions.cancel')}
-                                                variant="error"
-                                            />
-                                        </>
+                                        </div>
                                     )}
+                                </TableCell>
+                                <TableCell className="px-3 py-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold text-slate-900 text-sm">{format(new Date(p.date_promis), 'dd/MM/yyyy', { locale: currentLocale })}</span>
+                                        <span className="text-[10px] text-slate-500">{format(new Date(p.date_promis), 'HH:mm', { locale: currentLocale })}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="px-3 py-2">
+                                    <div className="font-medium text-slate-800 text-sm truncate" title={p.client_display}>{p.client_display}</div>
+                                </TableCell>
+                                <TableCell className="px-3 py-2">
+                                    <div className="text-slate-500 font-mono text-xs">{p.client_phone_display || '-'}</div>
+                                </TableCell>
+                                <TableCell className="px-3 py-2">
+                                    <div className="truncate" title={p.produit_name}>
+                                        <span className="font-semibold text-slate-900 text-sm">{p.produit_name}</span>
+                                    </div>
+                                    {p.produit_cip && <div className="text-[10px] text-slate-500 font-mono mt-0.5">{p.produit_cip}</div>}
+                                </TableCell>
+                                <TableCell className="px-3 py-2 text-center">
+                                    <Badge variant="outline" className="font-mono text-xs">
+                                        {p.quantite}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="px-3 py-2 text-center">
+                                    <Badge variant="outline" className={cn('gap-1 uppercase tracking-wider text-xs', statusBadgeClass(p.status))}>
+                                        {statusIcon(p.status)}
+                                        {p.status_display}
+                                    </Badge>
+                                    {p.status === 'DEL' && p.date_livraison && (
+                                        <div className="text-[10px] text-emerald-600 mt-1">
+                                            {t('stock:promis.messages.delivered_on', { date: format(new Date(p.date_livraison), 'dd/MM/yyyy', { locale: currentLocale }) })}
+                                        </div>
+                                    )}
+                                </TableCell>
+                                <TableCell className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-end gap-1">
+                                        {p.status === 'ATT' && selectedIds.size === 0 && (
+                                            <>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-7 text-emerald-600 hover:bg-emerald-50"
+                                                    onClick={() => onDeliver(p.id)}
+                                                    title={t('stock:promis.actions.deliver')}
+                                                >
+                                                    <Check className="size-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-7 text-red-600 hover:bg-red-50"
+                                                    onClick={() => onCancel(p.id)}
+                                                    title={t('stock:promis.actions.cancel')}
+                                                >
+                                                    <X className="size-4" />
+                                                </Button>
+                                            </>
+                                        )}
 
-                                    {/* Menu d'actions complet (clic, accessible, mobile-friendly) */}
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-100" title={t('common:actions_title')}>
-                                                <MoreVertical className="size-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-52">
-                                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-slate-400">
-                                                {t('common:actions_title')}
-                                            </DropdownMenuLabel>
-                                            <DropdownMenuItem onClick={() => onView(p)} className="gap-2 cursor-pointer">
-                                                <Eye className="size-4" />
-                                                {t('common:view')}
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onPrint(p.id)} className="gap-2 cursor-pointer">
-                                                <Printer className="size-4" />
-                                                {t('stock:promis.actions.print')}
-                                            </DropdownMenuItem>
-                                            {p.client_phone_display && (
-                                                <>
-                                                    <DropdownMenuItem onClick={() => onSms(p)} className="gap-2 cursor-pointer text-blue-600 focus:text-blue-700">
-                                                        <MessageCircle className="size-4" />
-                                                        {t('stock:promis.actions.sms')}
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => onWhatsApp(p.id)} className="gap-2 cursor-pointer text-emerald-600 focus:text-emerald-700 font-semibold">
-                                                        <svg className="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg>
-                                                        {t('stock:promis.actions.whatsapp')}
-                                                    </DropdownMenuItem>
-                                                </>
-                                            )}
-                                            {p.status === 'ATT' && (
-                                                <>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => onDeliver(p.id)} className="gap-2 cursor-pointer text-emerald-600 focus:text-emerald-700 font-semibold">
-                                                        <Check className="size-4" />
-                                                        {t('stock:promis.actions.deliver')}
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => onCancel(p.id)} className="gap-2 cursor-pointer text-red-600 focus:text-red-700">
-                                                        <X className="size-4" />
-                                                        {t('stock:promis.actions.cancel')}
-                                                    </DropdownMenuItem>
-                                                </>
-                                            )}
-                                            {p.status !== 'ATT' && (
-                                                <>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem disabled className="gap-2 text-slate-400">
-                                                        <Check className="size-4" />
-                                                        {t('stock:promis.actions.deliver')}
-                                                        <span className="ml-auto text-[10px] text-slate-400">
-                                                            {p.status === 'DEL' ? t('stock:promis.actions.already_delivered') : t('stock:promis.actions.already_cancelled')}
-                                                        </span>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem disabled className="gap-2 text-slate-400">
-                                                        <X className="size-4" />
-                                                        {t('stock:promis.actions.cancel')}
-                                                        <span className="ml-auto text-[10px] text-slate-400">
-                                                            {p.status === 'DEL' ? t('stock:promis.actions.already_delivered') : t('stock:promis.actions.already_cancelled')}
-                                                        </span>
-                                                    </DropdownMenuItem>
-                                                </>
-                                            )}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="size-7 text-slate-400 hover:text-slate-700 hover:bg-slate-100" title={t('common:actions_title')}>
+                                                    <MoreVertical className="size-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-52">
+                                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-slate-400">
+                                                    {t('common:actions_title')}
+                                                </DropdownMenuLabel>
+                                                <DropdownMenuItem onClick={() => onView(p)} className="gap-2 cursor-pointer">
+                                                    <Eye className="size-4" />
+                                                    {t('common:view')}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onPrint(p.id)} className="gap-2 cursor-pointer">
+                                                    <Printer className="size-4" />
+                                                    {t('stock:promis.actions.print')}
+                                                </DropdownMenuItem>
+                                                {p.client_phone_display && (
+                                                    <>
+                                                        <DropdownMenuItem onClick={() => onSms(p)} className="gap-2 cursor-pointer text-blue-600 focus:text-blue-700">
+                                                            <MessageCircle className="size-4" />
+                                                            {t('stock:promis.actions.sms')}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => onWhatsApp(p.id)} className="gap-2 cursor-pointer text-emerald-600 focus:text-emerald-700 font-semibold">
+                                                            <svg className="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg>
+                                                            {t('stock:promis.actions.whatsapp')}
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
+                                                {p.status === 'ATT' && (
+                                                    <>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem onClick={() => onDeliver(p.id)} className="gap-2 cursor-pointer text-emerald-600 focus:text-emerald-700 font-semibold">
+                                                            <Check className="size-4" />
+                                                            {t('stock:promis.actions.deliver')}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => onCancel(p.id)} className="gap-2 cursor-pointer text-red-600 focus:text-red-700">
+                                                            <X className="size-4" />
+                                                            {t('stock:promis.actions.cancel')}
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
+                                                {p.status !== 'ATT' && (
+                                                    <>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem disabled className="gap-2 text-slate-400">
+                                                            <Check className="size-4" />
+                                                            {t('stock:promis.actions.deliver')}
+                                                            <span className="ml-auto text-[10px] text-slate-400">
+                                                                {p.status === 'DEL' ? t('stock:promis.actions.already_delivered') : t('stock:promis.actions.already_cancelled')}
+                                                            </span>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem disabled className="gap-2 text-slate-400">
+                                                            <X className="size-4" />
+                                                            {t('stock:promis.actions.cancel')}
+                                                            <span className="ml-auto text-[10px] text-slate-400">
+                                                                {p.status === 'DEL' ? t('stock:promis.actions.already_delivered') : t('stock:promis.actions.already_cancelled')}
+                                                            </span>
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
+                </TableBody>
+            </Table>
         </div>
     );
 };
