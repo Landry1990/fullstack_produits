@@ -398,8 +398,11 @@ def generate_listing_excel(
             qte_col = None  # Pas de total quantité en mode aveugle
             val_col = None
         else:
-            qte_col = 7
-            val_col = 10
+            # Les colonnes dépendent du nombre de colonnes de stock (1 ou 2)
+            # Layout: ID(1) CIP(2) Désignation(3) Forme(4) Rayon(5) N°Lot(6) ExpLot(7) [Stock cols] PMP ValStock PrixVente
+            nb_stock_cols_local = len(stock_cols)
+            qte_col = 8  # Première colonne de stock (Stock Rayon)
+            val_col = 8 + nb_stock_cols_local + 1  # PMP = 8+nb_stock, Val. Stock = 9+nb_stock
 
         for col_idx in range(1, nb_cols + 1):
             c = ws.cell(row=row, column=col_idx)
@@ -443,7 +446,10 @@ def generate_listing_excel(
     elif listing_type == 'blind':
         qte_col, val_col = None, None
     else:
-        qte_col, val_col = 7, 10
+        # Les colonnes dépendent du nombre de colonnes de stock (1 ou 2)
+        nb_stock_cols_total = len(stock_cols)
+        qte_col = 8  # Première colonne de stock (Stock Rayon)
+        val_col = 8 + nb_stock_cols_total + 1  # Val. Stock = après PMP
 
     if qte_col:
         c_stock = ws.cell(row=row, column=qte_col, value=grand_total_stock)
@@ -573,7 +579,9 @@ def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock
 
         stock_val = int(lot.quantity_remaining or 0)
         stock_reserve = int(lot.quantity_reserved or 0)
-        pmp = float(lot.price_cost or p.pmp or p.cost_price or 0)
+        # Utiliser p.pmp (PMP du produit) pour aligner avec le dashboard
+        # qui calcule stock_value = Produit.stock * Produit.pmp
+        pmp = float(p.pmp or p.cost_price or 0)
         valeur_stock = stock_val * pmp
 
         lot_expiration = ''

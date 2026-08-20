@@ -217,7 +217,7 @@ class FactureSalesMixin:
         if not facture:
             facture = self.get_object()
 
-        required_permission = 'can_validate_zero_amount' if facture.total_ttc <= 0 else None
+        required_permission = 'can_validate_zero_amount' if facture.total_ttc <= 0 else 'can_validate_sales'
         validation_user, error_res = validate_sudo_mode(request, permission_attr=required_permission)
         if error_res:
             return error_res

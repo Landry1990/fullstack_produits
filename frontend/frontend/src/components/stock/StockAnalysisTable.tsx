@@ -260,8 +260,8 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 ) : (
                                     <>
                                         <TableCell className="px-3 py-2 text-center font-mono text-xs text-slate-700">
-                                            {item.avg_daily_sales}
-                                            <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_day')}</span>
+                                            {item.avg_daily_sales ? Math.ceil(item.avg_daily_sales * 30) : 0}
+                                            <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_month')}</span>
                                         </TableCell>
                                         <TableCell className="px-3 py-2 text-center font-semibold text-sm">
                                             <span className={`text-xs ${

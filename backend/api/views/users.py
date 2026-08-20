@@ -301,30 +301,46 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
     def verify_password(self, request):
         """
         Vérifie le mot de passe (mode sudo) et identifie automatiquement l'utilisateur.
-        POST { "password": "xxx" }
+        POST { "password": "xxx", "permission?": "can_validate_sales" }
         Retourne l'utilisateur correspondant si le mot de passe est valide.
 
-        Sécurité :
-        - Seuls les superusers (titulaires/admins) sont éligibles au mode sudo.
-        - Throttle renforcé pour limiter les attaques par force brute.
+        Si 'permission' est fourni, l'utilisateur doit être superuser ou posséder
+        profile.<permission> pour être éligible. Sinon, seuls les superusers sont
+        éligibles (compatibilité).
         """
         password = request.data.get('password')
+        permission = request.data.get('permission') or request.query_params.get('permission')
 
         if not password:
             return Response({'valid': False, 'detail': 'password requis.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Sécurité : ne vérifier que les superusers actifs (pas tous les users)
-        for target_user in User.objects.filter(is_active=True, is_superuser=True):
+        if not permission:
+            candidates = User.objects.filter(is_active=True, is_superuser=True)
+        else:
+            candidates = User.objects.filter(is_active=True)
+
+        for target_user in candidates:
             if target_user.check_password(password):
-                return Response({
-                    'valid': True,
-                    'user': {
-                        'id': target_user.id,
-                        'username': target_user.username,
-                        'first_name': target_user.first_name,
-                        'last_name': target_user.last_name,
-                    }
-                })
+                if not permission:
+                    return Response({
+                        'valid': True,
+                        'user': {
+                            'id': target_user.id,
+                            'username': target_user.username,
+                            'first_name': target_user.first_name,
+                            'last_name': target_user.last_name,
+                        }
+                    })
+                if target_user.is_superuser or (hasattr(target_user, 'profile') and getattr(target_user.profile, permission, False)):
+                    return Response({
+                        'valid': True,
+                        'user': {
+                            'id': target_user.id,
+                            'username': target_user.username,
+                            'first_name': target_user.first_name,
+                            'last_name': target_user.last_name,
+                        }
+                    })
 
         return Response({'valid': False, 'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
 
