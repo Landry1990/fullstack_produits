@@ -494,7 +494,7 @@
             "threshold": "Threshold (1.7x)",
             "excess_qty": "Excess Qty",
             "excess_value": "Excess Value",
-            "avg_daily_sales": "Avg. Sales/Day",
+            "avg_daily_sales": "Avg. Sales/Month",
             "days_until_stockout": "Days until stockout",
             "urgency": "Urgency",
             "value_at_risk": "Value at risk"

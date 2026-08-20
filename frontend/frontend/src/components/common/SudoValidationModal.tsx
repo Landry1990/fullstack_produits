@@ -14,6 +14,7 @@ interface SudoValidationModalProps {
     message?: string;
     className?: string;
     forceCurrentUser?: boolean;
+    permission?: string;
 }
 
 interface VerifiedUser {
@@ -30,7 +31,8 @@ export default function SudoValidationModal({
     saving,
     title,
     message,
-    className
+    className,
+    permission
 }: SudoValidationModalProps) {
     const { t } = useTranslation(['common']);
     const [password, setPassword] = useState('');
@@ -53,7 +55,7 @@ export default function SudoValidationModal({
         setPasswordError(null);
         let verifiedUser: VerifiedUser | null = null;
         try {
-            const checkRes = await api.post('users/verify_password/', { password });
+            const checkRes = await api.post('users/verify_password/', permission ? { password, permission } : { password });
             if (!checkRes.data?.valid || !checkRes.data?.user?.id) {
                 setPassword('');
                 setPasswordError(t('common:sudo.invalid_password'));

@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-08-20 — Cohérence valeur stock dashboard vs Excel
+
+### 🐛 Correction
+
+Deux bugs corrigés sur l'export Excel "états-inventaires" :
+
+1. **Total sur la mauvaise colonne** : avec `stock_location='tous'` (2 colonnes stock), le total général atterrissait sur la colonne PMP au lieu de Val. Stock. Les colonnes `qte_col` et `val_col` sont maintenant calculées dynamiquement selon le nombre de colonnes de stock.
+
+2. **Écart de valeur** : le dashboard calculait `Produit.stock × Produit.pmp` (niveau produit) tandis que l'Excel utilisait `StockLot.quantity_remaining × lot.price_cost` (niveau lot, avec `lot.price_cost` en priorité). Désormais les deux utilisent `quantity_remaining × p.pmp` (PMP du produit) pour une valeur identique.
+
+### Fichiers modifiés
+
+- `backend/api/views/stocks/inventaire/listing_excel.py` — colonnes de total dynamiques + PMP aligné sur `p.pmp`
+- `backend/api/views/dashboard/core.py` — stock_value calculé depuis les lots (`StockLot.quantity_remaining × produit.pmp`)
+
+## 2026-08-15 — Permission de validation des ventes
+
+### ✨ Ajout
+
+Ajout de la permission `can_validate_sales` sur le profil utilisateur et modification du backend pour permettre aux non-superusers de valider une facture (y compris `verify_password` filtrant par permission).
+
+### Fichiers modifiés
+
+- `backend/api/models/users.py` — ajout du champ `can_validate_sales` sur `Profile`
+- `backend/api/serializers/users.py` — `can_validate_sales` dans `ProfileSerializer` et prise en charge en create/update
+- `backend/api/views/users.py` — `verify_password` accepte un paramètre `permission` (body/query)
+- `backend/api/views/ventes/facture_mixins/sales_actions.py` — `valider` exige `can_validate_sales` si `total_ttc > 0`
+- `backend/api/migrations/0234_profile_can_validate_sales.py` — migration du nouveau champ
+
 ## 2026-08-20 — Recherche commande : nettoyage des logs
 
 ### 🔧 Correction
