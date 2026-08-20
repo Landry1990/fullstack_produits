@@ -24,36 +24,40 @@ export const AvoirsQuickStats: React.FC<AvoirsQuickStatsProps> = ({ avoirs }) =>
         {
             title: t('stock:avoirs.stats.total'),
             value: stats.total,
-            icon: <FileText className="size-5" />,
+            icon: <FileText className="size-4" />,
             colorClass: 'text-slate-700',
             bgClass: 'bg-slate-100',
         },
         {
             title: t('stock:avoirs.stats.valides'),
             value: stats.valides,
-            icon: <CheckCircle2 className="size-5" />,
+            icon: <CheckCircle2 className="size-4" />,
             colorClass: 'text-emerald-600',
             bgClass: 'bg-emerald-50',
         },
         {
             title: t('stock:avoirs.stats.brouillons'),
             value: stats.brouillons,
-            icon: <AlertCircle className="size-5" />,
+            icon: <AlertCircle className="size-4" />,
             colorClass: 'text-amber-600',
             bgClass: 'bg-amber-50',
         }
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {statItems.map((item) => (
-                <Card key={item.title} className="flex items-center gap-4 p-5 transition-all hover:shadow-md hover:border-slate-300">
-                    <div className={`size-12 rounded-xl flex items-center justify-center ${item.bgClass} ${item.colorClass}`}>
-                        {item.icon}
-                    </div>
-                    <CardContent className="p-0">
-                        <p className="text-sm font-medium text-slate-500">{item.title}</p>
-                        <p className={`text-2xl font-bold ${item.colorClass}`}>{item.value}</p>
+                <Card key={item.title}>
+                    <CardContent className="p-3 flex items-center gap-3">
+                        <div className={`size-9 rounded-lg flex items-center justify-center shrink-0 ${item.bgClass} ${item.colorClass}`}>
+                            {item.icon}
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                                {item.title}
+                            </p>
+                            <p className={`text-xl font-bold ${item.colorClass}`}>{item.value}</p>
+                        </div>
                     </CardContent>
                 </Card>
             ))}

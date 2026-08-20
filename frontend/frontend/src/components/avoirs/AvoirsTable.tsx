@@ -116,20 +116,50 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-slate-500 gap-4">
-                <Loader2 className="size-8 animate-spin text-emerald-600" />
-                <p>{t('stock:avoirs.loading')}</p>
+            <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
+                <Table className="w-full table-fixed text-sm">
+                    <TableHeader className="sticky top-0 z-10">
+                        <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
+                            <TableHead className="w-12 px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                <span className="sr-only">Sélection</span>
+                            </TableHead>
+                            <TableHead className="w-28 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.date')}</TableHead>
+                            <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.numero')}</TableHead>
+                            <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.fournisseur')}</TableHead>
+                            <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.type')}</TableHead>
+                            <TableHead className="w-16 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.lines')}</TableHead>
+                            <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('stock:avoirs.table.montant')}</TableHead>
+                            <TableHead className="w-28 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.status')}</TableHead>
+                            <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-right"></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <TableRow key={i} className="border-b border-slate-100 animate-pulse hover:bg-transparent">
+                                <TableCell className="py-2 px-3 text-center"><div className="size-4 rounded bg-slate-200 mx-auto" /></TableCell>
+                                <TableCell className="py-2 px-3"><div className="h-4 rounded bg-slate-200" style={{ width: '70%' }} /></TableCell>
+                                <TableCell className="py-2 px-3"><div className="h-4 rounded bg-slate-200" style={{ width: '60%' }} /></TableCell>
+                                <TableCell className="py-2 px-3"><div className="h-4 rounded bg-slate-200" style={{ width: '80%' }} /></TableCell>
+                                <TableCell className="py-2 px-3"><div className="h-4 rounded bg-slate-200" style={{ width: '50%' }} /></TableCell>
+                                <TableCell className="py-2 px-3 text-center"><div className="size-4 rounded bg-slate-200 mx-auto" /></TableCell>
+                                <TableCell className="py-2 px-3"><div className="h-4 rounded bg-slate-200 ml-auto" style={{ width: '60%' }} /></TableCell>
+                                <TableCell className="py-2 px-3 text-center"><div className="h-4 rounded bg-slate-200 mx-auto" style={{ width: '50%' }} /></TableCell>
+                                <TableCell className="py-2 px-3"></TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </div>
         );
     }
 
     if (avoirs.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-slate-500 gap-4">
-                <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center">
-                    <Inbox className="size-8 text-slate-400" />
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="p-4 bg-slate-100 rounded-2xl mb-4">
+                    <Inbox className="size-10 text-slate-300" />
                 </div>
-                <p>{t('stock:avoirs.empty')}</p>
+                <h3 className="text-base font-semibold text-slate-700">{t('stock:avoirs.empty')}</h3>
             </div>
         );
     }
@@ -139,11 +169,11 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
     const allSelected = draftAvoirsCount > 0 && selectedIds.size === draftAvoirsCount;
 
     return (
-        <div className="overflow-auto size-full relative">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-10 text-center">
+        <div className="overflow-auto flex-1 min-h-0">
+            <Table className="w-full table-fixed text-sm">
+                <TableHeader className="sticky top-0 z-10">
+                    <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
+                        <TableHead className="w-12 px-3 py-2 text-center">
                             <Checkbox
                                 checked={allSelected}
                                 onCheckedChange={onToggleSelectAll}
@@ -152,7 +182,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             />
                         </TableHead>
                         {selectedIds.size > 0 ? (
-                            <TableHead colSpan={7} className="bg-slate-50">
+                            <TableHead colSpan={8} className="bg-slate-50 px-3 py-2">
                                 <div className="flex items-center justify-between w-full">
                                     <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-200">
                                         <DropdownMenu>
@@ -186,19 +216,19 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             </TableHead>
                         ) : (
                             <>
-                                <TableHead className="w-32">{t('stock:avoirs.table.date')}</TableHead>
-                                <TableHead className="w-36">{t('stock:avoirs.table.numero')}</TableHead>
-                                <TableHead>{t('stock:avoirs.table.fournisseur')}</TableHead>
-                                <TableHead className="w-36">{t('stock:avoirs.table.type')}</TableHead>
-                                <TableHead className="text-center w-16">{t('stock:avoirs.table.lines')}</TableHead>
-                                <TableHead className="text-right w-32">{t('stock:avoirs.table.montant')}</TableHead>
-                                <TableHead className="text-center w-28">{t('stock:avoirs.table.status')}</TableHead>
-                                <TableHead className="w-28"></TableHead>
+                                <TableHead className="w-28 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.date')}</TableHead>
+                                <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.numero')}</TableHead>
+                                <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.fournisseur')}</TableHead>
+                                <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.type')}</TableHead>
+                                <TableHead className="w-16 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.lines')}</TableHead>
+                                <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('stock:avoirs.table.montant')}</TableHead>
+                                <TableHead className="w-28 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.status')}</TableHead>
+                                <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-right"></TableHead>
                             </>
                         )}
                     </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="text-sm">
                     {avoirs.map((avoir) => {
                         const isDraft = isDraftStatus(avoir.status);
                         const montant = Number(avoir.total_ht) || 0;
@@ -207,11 +237,11 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                         return (
                             <TableRow
                                 key={avoir.id}
-                                className={`group cursor-pointer ${selectedIds.has(avoir.id) ? 'bg-emerald-50 hover:bg-emerald-50' : ''}`}
+                                className={`group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80 ${selectedIds.has(avoir.id) ? 'bg-emerald-50/40' : ''}`}
                                 onClick={() => selectedIds.size === 0 && onView(avoir)}
                                 data-state={selectedIds.has(avoir.id) ? 'selected' : undefined}
                             >
-                                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                                <TableCell className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                                     {isDraft && (
                                         <Checkbox
                                             checked={selectedIds.has(avoir.id)}
@@ -220,30 +250,30 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                         />
                                     )}
                                 </TableCell>
-                                <TableCell>
-                                    <div className="font-semibold text-slate-700 text-[13px]">
+                                <TableCell className="px-3 py-2">
+                                    <div className="font-semibold text-slate-900 text-sm">
                                         {format(new Date(avoir.created_at || avoir.date), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS })}
                                     </div>
-                                    <div className="text-[11px] text-slate-400 font-medium">
+                                    <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
                                         {format(new Date(avoir.created_at || avoir.date), 'HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })}
                                     </div>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="px-3 py-2">
                                     <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
                                         {avoir.numero}
                                     </span>
                                 </TableCell>
-                                <TableCell>
-                                    <div className="font-semibold text-slate-700 text-[13px] leading-tight">
+                                <TableCell className="px-3 py-2">
+                                    <div className="font-semibold text-slate-700 text-sm leading-tight truncate" title={avoir.fournisseur_name || ''}>
                                         {avoir.fournisseur_name || <span className="text-slate-300 italic text-xs">—</span>}
                                     </div>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="px-3 py-2">
                                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wide ${getTypeAvoirStyle(avoir.type_avoir)}`}>
                                         {getTypeAvoirLabel(avoir.type_avoir, t)}
                                     </span>
                                 </TableCell>
-                                <TableCell className="text-center">
+                                <TableCell className="px-3 py-2 text-center">
                                     {nbLignes !== null ? (
                                         <span className="inline-flex items-center justify-center size-6 rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">
                                             {nbLignes}
@@ -252,17 +282,17 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                         <span className="text-slate-300">—</span>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-right">
-                                    <span className={`font-mono font-black text-sm ${montant > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
+                                <TableCell className="px-3 py-2 text-right">
+                                    <span className={`font-mono font-bold text-sm ${montant > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
                                         {formatCurrency(montant)}
                                     </span>
                                 </TableCell>
-                                <TableCell className="text-center">
+                                <TableCell className="px-3 py-2 text-center">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wide ${getStatusStyle(avoir.status_display || avoir.status)}`}>
                                         {getStatusLabel(avoir.status_display || avoir.status, t)}
                                     </span>
                                 </TableCell>
-                                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                <TableCell className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                                     {selectedIds.size === 0 && (
                                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Button
