@@ -263,9 +263,9 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                     radius={[0, 4, 4, 0]}
                                     animationDuration={1500}
                                 >
-                                    {(groupBy === 'RAYON' ? data?.par_rayon : data?.par_groupe)?.map((entry: AuditChartDatum, index: number) => (
-                                        <Cell 
-                                            key={`cell-${groupBy}-${index}`} 
+                                    {(groupBy === 'RAYON' ? data?.par_rayon : data?.par_groupe)?.map((entry: AuditChartDatum) => (
+                                        <Cell
+                                            key={`cell-${groupBy}-${entry.produit__rayon__name ?? entry.produit__groupe__name}`}
                                             fill={metric === 'VALEUR' 
                                                 ? (entry.total_valeur < 0 ? '#ff5252' : '#4caf50') 
                                                 : '#2196f3'

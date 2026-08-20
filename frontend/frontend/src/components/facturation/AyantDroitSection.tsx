@@ -17,6 +17,16 @@ interface AyantDroitSectionProps {
   setAyantDroitSociete: (v: string) => void
 }
 
+const handleInputKeyDown = (
+  e: React.KeyboardEvent<HTMLInputElement>,
+  nextRef: React.RefObject<HTMLInputElement | null>
+) => {
+  if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
+    e.preventDefault()
+    nextRef.current?.focus()
+  }
+}
+
 export default function AyantDroitSection({
   ayantsDroitList,
   selectedAyantDroit,
@@ -48,16 +58,6 @@ export default function AyantDroitSection({
       ad.id !== selectedAyantDroit
     ) || null
   }, [ayantsDroitList, ayantDroitMatricule, selectedAyantDroit])
-
-  const handleInputKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    nextRef: React.RefObject<HTMLInputElement | null>
-  ) => {
-    if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
-      e.preventDefault()
-      nextRef.current?.focus()
-    }
-  }
 
   const [showCard, setShowCard] = useState(false)
 

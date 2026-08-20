@@ -15,6 +15,11 @@ const modeConfig: Record<SearchMode, { icon: React.ReactNode; color: string; lab
   dci: { icon: <FlaskConical className="size-3.5" />, color: 'amber', label: 'dci' }
 }
 
+const isActiveItem = (itemProps: { className?: string; style?: React.CSSProperties }) =>
+  Object.keys(itemProps.style || {}).length > 0 ||
+  itemProps.className?.includes('active') ||
+  itemProps.className?.includes('shadow')
+
 export const ProductSearch: React.FC<ProductSearchProps> = ({
   searchQuery,
   setSearchQuery,
@@ -58,10 +63,6 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   const activeResultCount = searchMode === 'packs' ? packResults.length :
     searchMode === 'dci' ? (selectedDci ? dciProducts.length : dciResults.length) :
     (searchMode === 'products' && !searchQuery ? recentProducts.length : results.length)
-  const isActiveItem = (itemProps: { className?: string; style?: React.CSSProperties }) =>
-    Object.keys(itemProps.style || {}).length > 0 ||
-    itemProps.className?.includes('active') ||
-    itemProps.className?.includes('shadow')
 
   const activeIndex = React.useMemo(() => {
     if (!getItemProps) return -1

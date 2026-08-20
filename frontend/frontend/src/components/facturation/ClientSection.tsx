@@ -20,9 +20,12 @@ function HighlightText({ text, query }: { text: string; query: string }) {
   const parts = text.split(new RegExp(`(${safeQuery})`, 'gi'))
   return (
     <span>
-      {parts.map((part, i) =>
-        regex.test(part) ? <strong key={i} className="font-bold text-emerald-700">{part}</strong> : <span key={i}>{part}</span>
-      )}
+      {parts.map((part, i) => {
+        const isMatch = regex.test(part)
+        return isMatch
+          ? <strong key={`m-${part}`} className="font-bold text-emerald-700">{part}</strong>
+          : <span key={`p-${part}`}>{part}</span>
+      })}
     </span>
   )
 }
@@ -329,7 +332,7 @@ export default function ClientSection({
                   </div>
                   {recentItems.map((r, idx) => (
                     <div
-                      key={`recent-${r.type}-${r.id}-${idx}`}
+                      key={`recent-${r.type}-${r.id}`}
                       onClick={() => {
                         if (r.type === 'client') {
                           const client = clients.find(c => c.id === r.id)
@@ -367,7 +370,7 @@ export default function ClientSection({
                   {mixedItems.map((item, index) => {
                     const isFirstAyant = item.type === 'ayant_droit' && (index === 0 || mixedItems[index - 1].type === 'client')
                     return (
-                      <React.Fragment key={item.type === 'client' ? `client-${item.data.id}` : `ad-${item.data.id ?? index}`}>
+                      <React.Fragment key={item.type === 'client' ? `client-${item.data.id}` : `ad-${item.data.id ?? item.data.nom}`}>
                         {isFirstAyant && (
                           <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
                             {t('facturation:client.ayant_droit.label')}

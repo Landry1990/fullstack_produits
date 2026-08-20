@@ -9,6 +9,8 @@ interface CommandeProductExpandedRowProps {
     colSpan: number;
 }
 
+const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+
 export function CommandeProductExpandedRow({ p, colSpan }: CommandeProductExpandedRowProps) {
     const { t, i18n } = useTranslation(['orders', 'common']);
 
@@ -25,9 +27,8 @@ export function CommandeProductExpandedRow({ p, colSpan }: CommandeProductExpand
         stock: pObj?.stock ?? p.produit_stock ?? 0,
     };
 
-    const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-    const formatAchat = s.dernier_achat ? new Date(s.dernier_achat).toLocaleDateString(i18n.language, dateOptions) : t('orders:product_table.info_row.unknown');
-    const formatVente = s.dernier_vente ? new Date(s.dernier_vente).toLocaleDateString(i18n.language, dateOptions) : t('orders:product_table.info_row.never');
+    const formatAchat = s.dernier_achat ? new Date(s.dernier_achat).toLocaleDateString(i18n.language, DATE_OPTIONS) : t('orders:product_table.info_row.unknown');
+    const formatVente = s.dernier_vente ? new Date(s.dernier_vente).toLocaleDateString(i18n.language, DATE_OPTIONS) : t('orders:product_table.info_row.never');
 
     return (
         <TableRow className="bg-blue-50/30 border-b border-slate-200">

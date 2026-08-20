@@ -330,6 +330,7 @@
             "rotation": "Rot."
         },
         "exclusivity_tooltip": "Exclusive product for supplier: {{provider}}",
+        "promis_tooltip": "{{count}} active promis(s) waiting",
         "specific_provider": "specific supplier",
         "unknown_product_id": "Product #{{id}}",
         "low_margin_tooltip": "Low margin (threshold: {{threshold}})",

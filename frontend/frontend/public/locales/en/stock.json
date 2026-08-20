@@ -760,7 +760,9 @@
             "print": "Print Ticket",
             "sms": "Send SMS",
             "whatsapp": "WhatsApp Reminder",
-            "sms_send": "Send 📨"
+            "sms_send": "Send 📨",
+            "already_delivered": "Already delivered",
+            "already_cancelled": "Already cancelled"
         },
         "modal": {
             "title_new": "New Promised Product",
@@ -778,6 +780,12 @@
             "create": "Save",
             "sms_number": "Recipient number",
             "sms_message": "Message content"
+        },
+        "detail": {
+            "title": "Promised Product Details",
+            "id_label": "Promised",
+            "date_promis": "Promise date",
+            "date_livraison": "Delivery date"
         },
         "validation": {
             "product_required": "Please select a product",
@@ -957,7 +965,8 @@
             "unit": "UNIT",
             "units": "UNITS",
             "transformer": "Transformer",
-            "no_relations": "No relation configured"
+            "no_relations": "No relation configured",
+            "no_stock_tooltip": "Insufficient source stock to transform"
         }
     },
     "organisation": {

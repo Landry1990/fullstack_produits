@@ -7,6 +7,8 @@ import { Select } from './ui/Select';
 import { Badge } from './shadcn/badge';
 import { Loader2 } from 'lucide-react';
 
+const fmt = (v: number | undefined | null) => formatCurrency(Math.round(v || 0));
+
 type Periode = 'mois' | 'trimestre' | 'annee';
 
 export default function AnalyseMargesProduit() {
@@ -16,8 +18,6 @@ export default function AnalyseMargesProduit() {
 
   const { data: margeData, isLoading: loadingMarge } = useMargeParProduit(periode);
   const { data: promoData, isLoading: loadingPromo } = useImpactPromotions(periode);
-
-  const fmt = (v: number | undefined | null) => formatCurrency(Math.round(v || 0));
 
   const tabs = [
     { id: 'top' as const, label: t('marge_produit.top_20', 'Top 20 (Marge)'), icon: <TrendingUp size={16} /> },

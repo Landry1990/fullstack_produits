@@ -10,11 +10,11 @@ interface ReportSidebarProps {
     onClose?: () => void;
 }
 
+const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
 export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onSelect, onClose }) => {
     const { t } = useTranslation(['reports', 'common']);
     const [search, setSearch] = useState('');
-
-    const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
     const filteredQueries = useMemo(() => {
         const q = normalize(search);
