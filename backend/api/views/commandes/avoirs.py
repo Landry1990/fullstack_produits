@@ -189,7 +189,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                         produit.calculate_stock_from_lots()
                     else:
                         produit.stock = F('stock') - ligne.quantity
-                        produit.save()
+                        produit.save(update_fields=['stock'])
                         produit.refresh_from_db()
 
                     # Mouvement de stock (AVOIR = sortie négative)
@@ -299,7 +299,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
                         produit.calculate_stock_from_lots()
                     else:
                         produit.stock = F('stock') + ligne.quantity
-                        produit.save()
+                        produit.save(update_fields=['stock'])
                         produit.refresh_from_db()
 
                     # Mouvement de stock (RETOUR = annulation du déchargement)

@@ -43,7 +43,7 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
                     </div>
                 ) : (
                     data.map((p, i) => (
-                        <div key={`${type}-${i}-${p.produit_nom}`} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
+                        <div key={`${type}-${p.produit_nom}-${p.ecart}`} className="group flex items-center justify-between p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors last:border-0">
                             <div className="flex items-center gap-4">
                                 <div className={`size-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 group-hover:${bgColorClass} group-hover:${colorClass} transition-colors`}>
                                     {i + 1}

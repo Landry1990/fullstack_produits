@@ -62,7 +62,7 @@ export function CommandeProductRow({
     const { t } = useTranslation(['orders', 'common']);
     const [isMargeFocused, setIsMargeFocused] = useState(false);
 
-    const { produitName, isExclusive, supplierName, isDeleted } = resolveProductInfo(p, produitsList, t);
+    const { produitName, isExclusive, supplierName, isDeleted, activePromisCount } = resolveProductInfo(p, produitsList, t);
 
     // Local search filter
     if (searchQuery) {
@@ -127,6 +127,16 @@ export function CommandeProductRow({
                                 >
                                     <span className="inline-flex items-center justify-center size-4 rounded text-[8px] font-bold bg-emerald-100 text-emerald-600">
                                         E
+                                    </span>
+                                </div>
+                            )}
+                            {activePromisCount > 0 && (
+                                <div
+                                    className="group relative z-50 inline-flex shrink-0"
+                                    title={t('orders:product_table.promis_tooltip', { count: activePromisCount })}
+                                >
+                                    <span className="inline-flex items-center justify-center size-4 rounded text-[8px] font-bold bg-amber-100 text-amber-600">
+                                        P
                                     </span>
                                 </div>
                             )}

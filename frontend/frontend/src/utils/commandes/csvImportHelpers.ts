@@ -33,7 +33,7 @@ export function normalizeText(value: string | null | undefined): string {
 
 // Calcule le score de similarité entre deux noms (0-100%)
 // Basé sur les tokens/mots communs avec vérification stricte
-export function calculateNameScore(csvName: string, dbName: string): number {
+function calculateNameScore(csvName: string, dbName: string): number {
     // Ignorer les codes/numéros (CIP, dosage, etc.)
     const csvTokens = normalizeText(csvName)
         .split(/\s+/)

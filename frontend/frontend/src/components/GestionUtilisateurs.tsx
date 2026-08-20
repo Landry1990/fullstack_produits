@@ -606,119 +606,123 @@ export default function GestionUtilisateurs() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {users.filter(u => u.is_active).map(user => (
-              <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                <td className="px-4 py-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="inline-flex items-center justify-center">
-                      <div className="text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm bg-slate-700">
-                        {user.username.charAt(0).toUpperCase()}
+            {users.reduce<React.JSX.Element[]>((acc, user) => {
+              if (!user.is_active) return acc;
+              acc.push(
+                <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="inline-flex items-center justify-center">
+                        <div className="text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm bg-slate-700">
+                          {user.username.charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-bold flex items-center gap-2 text-slate-800">
+                          {user.username}
+                        </div>
+                        <div className="text-sm text-slate-400">{user.first_name} {user.last_name}</div>
+                        <div className="text-xs text-slate-400">{user.email}</div>
                       </div>
                     </div>
-                    <div>
-                      <div className="font-bold flex items-center gap-2 text-slate-800">
-                        {user.username}
-                      </div>
-                      <div className="text-sm text-slate-400">{user.first_name} {user.last_name}</div>
-                      <div className="text-xs text-slate-400">{user.email}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-col gap-1">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                      user.is_superuser ? 'bg-blue-100 text-blue-700' : 
-                      user.profile?.role === 'COMPTABLE' ? 'bg-purple-100 text-purple-700' :
-                      user.profile?.role === 'CAISSIER' ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      {user.is_superuser 
-                        ? t('badges.pharmacist') 
-                        : user.profile?.role === 'COMPTABLE'
-                            ? t('roles.accountant', 'COMPTABLE')
-                        : user.profile?.role === 'CAISSIER' 
-                            ? t('roles.cashier') 
-                            : t('roles.seller')}
-                    </span>
-                    <div className="flex flex-wrap gap-1 mt-1 max-w-md">
-                      {user.is_superuser ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">{t('badges.full_access')}</span>
-                      ) : (() => {
-                        const allowedMenus = user.profile?.allowed_menus || [];
-                        const allKeys = getAllMenuKeys();
-                        // If they have all keys (or all but a few), show full access
-                        const isFullAccess = allowedMenus.length >= allKeys.length - 2;
-                        
-                        if (isFullAccess && allowedMenus.length > 0) {
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        user.is_superuser ? 'bg-blue-100 text-blue-700' : 
+                        user.profile?.role === 'COMPTABLE' ? 'bg-purple-100 text-purple-700' :
+                        user.profile?.role === 'CAISSIER' ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {user.is_superuser 
+                          ? t('badges.pharmacist') 
+                          : user.profile?.role === 'COMPTABLE'
+                              ? t('roles.accountant', 'COMPTABLE')
+                          : user.profile?.role === 'CAISSIER' 
+                              ? t('roles.cashier') 
+                              : t('roles.seller')}
+                      </span>
+                      <div className="flex flex-wrap gap-1 mt-1 max-w-md">
+                        {user.is_superuser ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">{t('badges.full_access')}</span>
+                        ) : (() => {
+                          const allowedMenus = user.profile?.allowed_menus || [];
+                          const allKeys = getAllMenuKeys();
+                          // If they have all keys (or all but a few), show full access
+                          const isFullAccess = allowedMenus.length >= allKeys.length - 2;
+                          
+                          if (isFullAccess && allowedMenus.length > 0) {
+                            return (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                                {t('badges.full_access', 'Accès complet')}
+                              </span>
+                            );
+                          }
+                          
+                          const limit = 4;
+                          const visibleMenus = allowedMenus.slice(0, limit);
+                          const hiddenCount = allowedMenus.length - limit;
+                          
                           return (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
-                              {t('badges.full_access', 'Accès complet')}
-                            </span>
+                            <>
+                              {visibleMenus.map(menu => (
+                                <span key={menu} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                  {getMenuLabel(menu, t)}
+                                </span>
+                              ))}
+                              {hiddenCount > 0 && (
+                                <span 
+                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300 cursor-help"
+                                  title={allowedMenus.slice(limit).map(m => getMenuLabel(m, t)).join(', ')}
+                                >
+                                  +{hiddenCount} {t('common:others', 'autres')}
+                                </span>
+                              )}
+                              {allowedMenus.length === 0 && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-500 border border-red-100">
+                                  {t('badges.no_access')}
+                                </span>
+                              )}
+                            </>
                           );
-                        }
-                        
-                        const limit = 4;
-                        const visibleMenus = allowedMenus.slice(0, limit);
-                        const hiddenCount = allowedMenus.length - limit;
-                        
-                        return (
-                          <>
-                            {visibleMenus.map(menu => (
-                              <span key={menu} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                {getMenuLabel(menu, t)}
-                              </span>
-                            ))}
-                            {hiddenCount > 0 && (
-                              <span 
-                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300 cursor-help"
-                                title={allowedMenus.slice(limit).map(m => getMenuLabel(m, t)).join(', ')}
-                              >
-                                +{hiddenCount} {t('common:others', 'autres')}
-                              </span>
-                            )}
-                            {allowedMenus.length === 0 && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-500 border border-red-100">
-                                {t('badges.no_access')}
-                              </span>
-                            )}
-                          </>
-                        );
-                      })()}
+                        })()}
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    {user.profile?.can_cash_out && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200" title={t('permissions.cash_out')}>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      </div>
-                    )}
-                    {user.profile?.can_sell_negative_stock && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200" title={t('permissions.negative_stock')}>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-slate-500 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors"
-                    onClick={() => handleOpenModal(user)}
-                  >
-                    {t('actions.edit')}
-                  </button>
-                  {currentUser?.username !== user.username && (
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      {user.profile?.can_cash_out && (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200" title={t('permissions.cash_out')}>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                      )}
+                      {user.profile?.can_sell_negative_stock && (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200" title={t('permissions.negative_stock')}>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right">
                     <button
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
-                      onClick={() => handleDeleteUser(user.id, user.username)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-slate-500 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors"
+                      onClick={() => handleOpenModal(user)}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      {t('actions.deactivate', 'Désactiver')}
+                      {t('actions.edit')}
                     </button>
-                  )}
-                </td>
-              </tr>
-            ))}
+                    {currentUser?.username !== user.username && (
+                      <button
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+                        onClick={() => handleDeleteUser(user.id, user.username)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        {t('actions.deactivate', 'Désactiver')}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+              return acc;
+            }, [])}
           </tbody>
         </table>
       </div>

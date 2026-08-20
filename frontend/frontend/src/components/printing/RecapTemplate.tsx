@@ -192,8 +192,8 @@ const RecapTemplate: React.FC<RecapTemplateProps> = ({ settings, data }) => {
                 </tr>
             </thead>
             <tbody className="text-[10px]">
-                {allLines.map((line, idx) => (
-                  <tr key={idx} className={`group border-b border-slate-50 hover:bg-base-200/30 transition-colors break-inside-avoid ${line.cancelled ? 'opacity-40' : ''}`}>
+                {allLines.map((line) => (
+                  <tr key={`${line.ticket}-${line.name}-${line.qty}-${line.price}-${line.total}`} className={`group border-b border-slate-50 hover:bg-base-200/30 transition-colors break-inside-avoid ${line.cancelled ? 'opacity-40' : ''}`}>
                       <td className="py-2 px-3 font-mono font-bold text-base-content/80">
                         <span className={line.cancelled ? 'line-through' : ''}>{line.ticket}</span>
                         {line.ticket && line.cancelled && <div className="text-[7px] font-sans uppercase font-black text-base-content/60 no-underline">{t('recap.cancelled_label', { defaultValue: 'ANNULÉ' })}</div>}

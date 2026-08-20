@@ -15,7 +15,7 @@ import type { SettingsTabProps } from './types'
 
 type TFunc = SettingsTabProps['t']
 
-export function TVARow({ tva, onDelete, t }: { tva: TVA; onDelete: (id: number) => void; t: TFunc }) {
+function TVARow({ tva, onDelete, t }: { tva: TVA; onDelete: (id: number) => void; t: TFunc }) {
   return (
     <TableRow className="hover:bg-indigo-50/50 transition-colors group">
       <TableCell className="font-black text-2xl text-indigo-600">{tva.taux}%</TableCell>

@@ -203,15 +203,18 @@ export function useFacturationClients() {
         if (!query || clients.length === 0) {
             return clients.slice().sort((a, b) => a.name.localeCompare(b.name)).slice(0, 10)
         }
-        const scored = clients.map(client => {
+        const scored = clients.reduce<{ client: Client; score: number }[]>((acc, client) => {
             const name = client.name.toLowerCase()
             const phone = (client.phone || '').toLowerCase()
             let score = 0
             if (name.startsWith(query)) score = 3
             else if (name.includes(query)) score = 2
             if (phone.includes(query)) score = Math.max(score, 1)
-            return { client, score }
-        }).filter(item => item.score > 0)
+            if (score > 0) {
+                acc.push({ client, score })
+            }
+            return acc
+        }, [])
         scored.sort((a, b) => b.score - a.score || a.client.name.localeCompare(b.client.name))
         return scored.map(item => item.client).slice(0, 10)
     }, [clients, clientSearch])

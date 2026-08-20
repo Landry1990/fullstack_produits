@@ -288,6 +288,13 @@ interface CartItem extends Product {
   quantity: number;
 }
 
+const getUnitPrice = (product: Product) =>
+  normalizeNumberInput(product.public_price || product.selling_price);
+
+const handlePrint = () => {
+  window.print();
+};
+
 // --- Composant Simulateur (Client) ---
 function SimulateurClient() {
   const { t } = useTranslation(['vitrine', 'common']);
@@ -319,9 +326,6 @@ function SimulateurClient() {
     },
   });
 
-  const getUnitPrice = (product: Product) =>
-    normalizeNumberInput(product.public_price || product.selling_price);
-
   const addToCart = (product: Product) => {
     setCart((prev) => {
       const existing = prev.find((p) => p.id === product.id);
@@ -346,18 +350,18 @@ function SimulateurClient() {
 
   const updateQuantity = (id: number, delta: number) => {
     setCart((prev) =>
-      prev
-        .map((p) => (p.id === id ? { ...p, quantity: Math.max(1, p.quantity + delta) } : p))
-        .filter((p) => p.quantity > 0)
+      prev.reduce<CartItem[]>((acc, p) => {
+        const updated = p.id === id ? { ...p, quantity: Math.max(1, p.quantity + delta) } : p;
+        if (updated.quantity > 0) {
+          acc.push(updated);
+        }
+        return acc;
+      }, [])
     );
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + getUnitPrice(item) * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {

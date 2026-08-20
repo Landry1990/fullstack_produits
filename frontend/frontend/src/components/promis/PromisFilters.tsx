@@ -1,7 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Filter, Plus } from 'lucide-react';
+import { Search, Filter, RefreshCw } from 'lucide-react';
 import type { UsePromisDataReturn } from '../../hooks/usePromisData';
+import { Input } from '../shadcn/input';
+import { Select } from '../shadcn/select';
+import { Button } from '../shadcn/button';
 
 interface PromisFiltersProps {
     filterStatus: UsePromisDataReturn['filterStatus'];
@@ -9,7 +12,6 @@ interface PromisFiltersProps {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     onRefresh: () => void;
-    onNew: () => void;
 }
 
 export const PromisFilters: React.FC<PromisFiltersProps> = ({
@@ -17,8 +19,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
     setFilterStatus,
     searchQuery,
     setSearchQuery,
-    onRefresh,
-    onNew
+    onRefresh
 }) => {
     const { t } = useTranslation(['stock', 'common']);
 
@@ -27,47 +28,42 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
                 <div className="flex flex-1 gap-4 items-center w-full md:w-auto">
                     <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
-                        <input
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none z-10" />
+                        <Input
                             type="text"
+                            disableUppercase
                             placeholder={t('common:search')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                            className="pl-9 border-slate-200 bg-slate-50 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500"
                         />
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <Filter className="size-4 text-slate-300" />
-                        <select
-                            className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all min-w-[140px]"
+                        <Filter className="size-4 text-slate-400" />
+                        <Select
+                            className="min-w-[140px] border-slate-200 bg-slate-50 focus-visible:ring-emerald-500/30"
                             value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value as unknown)}
+                            onChange={(e) => setFilterStatus(e.target.value as UsePromisDataReturn['filterStatus'])}
                         >
                             <option value="ALL">{t('stock:promis.status_all')}</option>
                             <option value="ATT">{t('stock:promis.status_att')}</option>
                             <option value="DEL">{t('stock:promis.status_del')}</option>
                             <option value="ANN">{t('stock:promis.status_ann')}</option>
-                        </select>
+                        </Select>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                    <button
-                        className="inline-flex items-center justify-center size-10 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 transition-colors"
+                    <Button
+                        variant="outline"
+                        size="icon"
                         onClick={onRefresh}
                         title={t('common:refresh')}
+                        className="border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-500"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                    </button>
-                    <button
-                        className="inline-flex items-center justify-center gap-2 h-10 px-5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-sm"
-                        onClick={onNew}
-                    >
-                        <Plus className="size-4" />
-                        <span className="hidden sm:inline">{t('stock:promis.new_btn')}</span>
-                        <span className="sm:hidden">{t('common:add')}</span>
-                    </button>
+                        <RefreshCw className="size-4" />
+                    </Button>
                 </div>
             </div>
         </div>

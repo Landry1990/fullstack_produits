@@ -1,10 +1,11 @@
+
 import { useState } from 'react';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Commande, CommandeProduit, User, PaginatedResponse } from '../types';
-import commandeService, { type SudoCredentials } from '../services/commandeService';
+import commandeService, { type SudoCredentials, type TransformationDisponible } from '../services/commandeService';
 import { usePharmacySettings } from './usePharmacySettings';
 import { formatDate as formatDateUtil, formatDateTime, getLocale } from '../utils/dateUtils';
 import { escHtml, writePrintDocument } from '../utils/print/printHelpers';
@@ -167,16 +168,52 @@ export function useCommandeActions({
         try {
             const res = await commandeService.cloturer(commande.id, sudoCredentials);
             gooeyToast.success(res.message || t('messages.close_success'));
-            fetchCommandes();
+
+            // Récupérer la commande mise à jour AVANT d'invalider le cache
+            // pour éviter toute race condition avec le refetch de la liste
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
             setViewMode('DETAILS');
+
+            // Après clôture réussie, vérifier si des produits peuvent être reconditionnés
+            try {
+                const transformations = await commandeService.getTransformationsDisponibles(commande.id);
+                if (transformations.length > 0) {
+                    setReconditionnementModal({
+                        open: true,
+                        commandeId: commande.id,
+                        commandeNumero: commande.numero_facture || String(commande.id),
+                        transformations,
+                    });
+                }
+            } catch {
+                // Silencieux : le reconditionnement est une commodité, pas un blocage
+            }
+
+            // Invalider le cache de la liste en dernier (refetch async)
+            fetchCommandes();
         } catch (err) {
             gooeyToast.error(getApiErrorDetail(err, t('messages.close_error')));
             throw err;
         } finally {
             setExecutingAction(false);
         }
+    };
+
+    // --- Reconditionnement automatique après clôture ---
+    // Le hook gère uniquement l'état du modal ; la logique de transformation
+    // (appels à l'endpoint existant relations-transformation/{id}/transformer/)
+    // est dans le composant ReconditionnementModal.
+    const [reconditionnementModal, setReconditionnementModal] = useState<{
+        open: boolean;
+        commandeId: number;
+        commandeNumero: string;
+        transformations: TransformationDisponible[];
+    }>({ open: false, commandeId: 0, commandeNumero: '', transformations: [] });
+
+    const handleReconditionnementDone = () => {
+        setReconditionnementModal((prev) => ({ ...prev, open: false }));
+        fetchCommandes();
     };
 
     const handleMettreEnAttente = async (commande: Commande) => {
@@ -552,7 +589,12 @@ export function useCommandeActions({
         handleMettreEnAttente,
         handleAnnulerReception,
         handleImprimerReception,
-        executingAction
+        executingAction,
+        reconditionnement: {
+            modal: reconditionnementModal,
+            setModal: setReconditionnementModal,
+            onDone: handleReconditionnementDone,
+        },
     };
 }
 

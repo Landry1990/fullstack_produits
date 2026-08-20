@@ -30,6 +30,7 @@ const SimplePrintLabelsModal = lazy(() => import('./SimplePrintLabelsModal'));
 const TransferCommandeModal = lazy(() => import('./Commandes/TransferCommandeModal'));
 const MergeCommandesModal = lazy(() => import('./Commandes/MergeCommandesModal'));
 const SuggestionCommandeModal = lazy(() => import('./Commandes/SuggestionCommandeModal'));
+const ReconditionnementModal = lazy(() => import('./Commandes/ReconditionnementModal'));
 
 interface CommandesProps {
     forcedType?: 'LOC' | 'DIR' | 'DIV';
@@ -37,7 +38,7 @@ interface CommandesProps {
 
 export default function Commandes({ forcedType }: CommandesProps) {
   const hook = useCommandesState(forcedType);
-  const { state, listProps, detailsProps, formProps, modals } = hook;
+  const { state, listProps, detailsProps, formProps, modals, reconditionnement } = hook;
   const queryClient = useQueryClient();
   const setCommandeProduits = useCommandesStore((s) => s.setCommandeProduits);
   const [detailProduitId, setDetailProduitId] = useState<number | null>(null);
@@ -279,6 +280,19 @@ export default function Commandes({ forcedType }: CommandesProps) {
             onOpenAdjustment={() => {}}
             onOpenEdit={() => {}}
             onDelete={() => {}}
+          />
+        </Suspense>
+      )}
+
+      {reconditionnement.modal.open && (
+        <Suspense fallback={<LoadingScreen size="sm" overlay={false} />}>
+          <ReconditionnementModal
+            open={reconditionnement.modal.open}
+            onOpenChange={(v) => reconditionnement.setModal((prev) => ({ ...prev, open: v }))}
+            commandeId={reconditionnement.modal.commandeId}
+            commandeNumero={reconditionnement.modal.commandeNumero}
+            transformations={reconditionnement.modal.transformations}
+            onDone={reconditionnement.onDone}
           />
         </Suspense>
       )}

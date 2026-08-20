@@ -119,7 +119,29 @@ const commandeService = {
     getSuggestions: async (filters: SuggestionFilters = {}): Promise<Commande[]> => {
         const response = await api.get<Commande[]>('commandes/suggestions/', { params: filters });
         return response.data;
-    }
+    },
+
+    getTransformationsDisponibles: async (id: number): Promise<TransformationDisponible[]> => {
+        const response = await api.get<{ count: number; items: TransformationDisponible[] }>(
+            `commandes/${id}/transformations_disponibles/`
+        );
+        return response.data.items;
+    },
 };
+
+export interface TransformationDisponible {
+    relation_id: number;
+    source_id: number;
+    source_name: string;
+    source_cip: string;
+    source_stock: number;
+    qty_recue: number;
+    qty_transformable: number;
+    destination_id: number;
+    destination_name: string;
+    destination_stock: number;
+    ratio: number;
+    qty_dest_obtained: number;
+}
 
 export default commandeService;

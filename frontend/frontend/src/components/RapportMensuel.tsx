@@ -258,7 +258,7 @@ export default function RapportMensuel() {
                   });
                   gooeyToast.success(t('common:telegram.send_success'), { icon: '📨' });
                 } catch (err: unknown) {
-                  const msg = err?.response?.data?.message || t('common:telegram.send_error');
+                  const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || t('common:telegram.send_error');
                   gooeyToast.error(msg);
                 }
               }}

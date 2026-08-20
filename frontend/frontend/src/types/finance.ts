@@ -342,6 +342,8 @@ export interface SaleCompletionParams {
     prescriptionImage?: File | null;
     is_avoir_client?: boolean;
     isFactureA4?: boolean;
+    promisClientName?: string;
+    promisPhone?: string;
 }
 
 export interface SaleCompletionResult {

@@ -21,6 +21,8 @@ interface RelationTransformation {
   id: number;
   produit_source: number;
   produit_source_nom: string;
+  produit_source_stock?: number;
+  produit_source_use_lot_management?: boolean;
   produit_destination: number;
   produit_destination_nom: string;
   ratio: number;
@@ -543,6 +545,12 @@ const Transformations: React.FC = () => {
                       <div className="min-w-0">
                         <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
                         <div className="font-bold text-sm text-slate-700 truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
+                        <div className="text-[10px] flex items-center gap-1.5 mt-0.5">
+                          <span className="text-slate-400">{t('common:stock', { defaultValue: 'Stock' })}:</span>
+                          <b className={(relation.produit_source_stock ?? 0) <= 0 ? 'text-red-500' : 'text-emerald-600'}>
+                            {formatNumber(relation.produit_source_stock ?? 0)}
+                          </b>
+                        </div>
                       </div>
                     </div>
 
@@ -562,9 +570,11 @@ const Transformations: React.FC = () => {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 shrink-0">
-                      <button 
-                        className="h-9 px-5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors"
+                      <button
+                        className="h-9 px-5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                         onClick={() => openTransformerModal(relation)}
+                        disabled={(relation.produit_source_stock ?? 0) <= 0}
+                        title={(relation.produit_source_stock ?? 0) <= 0 ? t('stock:transformations.labels.no_stock_tooltip', { defaultValue: 'Stock source insuffisant pour transformer' }) : undefined}
                       >
                         {t('stock:transformations.labels.transformer')}
                       </button>

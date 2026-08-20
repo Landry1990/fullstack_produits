@@ -186,6 +186,10 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
 class RelationTransformationSerializer(serializers.ModelSerializer):
     produit_source_nom = serializers.CharField(source='produit_source.name', read_only=True)
     produit_destination_nom = serializers.CharField(source='produit_destination.name', read_only=True)
+    produit_source_stock = serializers.IntegerField(source='produit_source.stock', read_only=True)
+    produit_source_use_lot_management = serializers.BooleanField(
+        source='produit_source.use_lot_management', read_only=True
+    )
 
     class Meta:
         model = RelationTransformation

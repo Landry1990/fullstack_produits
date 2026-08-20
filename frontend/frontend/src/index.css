@@ -741,6 +741,33 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
   display: none;
 }
 
+/* === GOOEY TOAST — Tailles de police augmentées === */
+.gooey-title {
+  font-size: 14px !important;
+}
+
+.gooey-timestamp {
+  font-size: 12px !important;
+}
+
+.gooey-description {
+  font-size: 15px !important;
+}
+
+.gooey-actionButton {
+  font-size: 14px !important;
+}
+
+.gooey-contentCompact {
+  padding: 9px 12px 9px 12px !important;
+}
+
+.gooey-contentExpanded {
+  padding: 9px 12px 18px 12px !important;
+  min-width: 320px !important;
+  max-width: 420px !important;
+}
+
 /* === UTILITAIRES DE LAYOUT OPTIMISÉ === */
 /* Header compact pour toutes les pages */
 .page-header-compact {

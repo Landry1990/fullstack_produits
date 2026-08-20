@@ -57,7 +57,9 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
                     reference: hook.ui.reference,
                     lignesFacture: hook.lignesFacture,
                     tempOrdonnanceData: hook.tempOrdonnanceData,
-                    prescriptionImage: hook.ui.prescriptionImage
+                    prescriptionImage: hook.ui.prescriptionImage,
+                    promisClientName: hook.ui.promisClientName,
+                    promisPhone: hook.ui.promisPhone,
                  })
              }
           }}

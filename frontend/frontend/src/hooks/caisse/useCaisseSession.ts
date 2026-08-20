@@ -73,9 +73,12 @@ export function useCaisseSession() {
         }
 
         // Détecter si on est en mode multi-caisse (plusieurs caisses actives globalement)
-        const activeCaisseIds = new Set(
-          allActivePostes.filter((p: PosteVente) => !!p.caisse).map((p: PosteVente) => p.caisse)
-        )
+        const activeCaisseIds = new Set<number>()
+        for (const p of allActivePostes) {
+          if (p.caisse) {
+            activeCaisseIds.add(p.caisse)
+          }
+        }
         setIsMultiCaisse(activeCaisseIds.size > 1)
       } catch (err) {
         logger.error('Erreur initialisation page:', err)

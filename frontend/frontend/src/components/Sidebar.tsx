@@ -377,9 +377,12 @@ export default function Sidebar() {
       return acc;
     }, {} as Record<CategoryKey, typeof menuItems>);
 
-    return categoryOrder
-      .filter((cat) => grouped[cat]?.length > 0)
-      .map((cat) => ({ category: cat, items: grouped[cat] }));
+    return categoryOrder.reduce<{ category: CategoryKey; items: typeof menuItems }[]>((acc, cat) => {
+      if (grouped[cat]?.length > 0) {
+        acc.push({ category: cat, items: grouped[cat] });
+      }
+      return acc;
+    }, []);
   }, [menuItems, categoryOrder]);
 
 

@@ -61,11 +61,13 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             if source.use_lot_management:
                 # Vérification de cohérence
                 total_lots = source.stock_lots.filter(quantity_remaining__gt=0).aggregate(total=Sum('quantity_remaining'))['total'] or 0
-                
+
                 # Si le stock global dit qu'on en a, mais les lots sont vides/insuffisants
                 if total_lots < quantite:
-                    # On pourrait bloquer, mais pour la résilience, on prévient juste ou on log
-                    pass
+                    return Response(
+                        {'error': f'Stock en lots insuffisant pour {source.name} (disponible: {total_lots}, requis: {quantite}). Le stock global ({source.stock}) est désynchronisé des lots.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # Sélection manuelle des lots possible via request.data.lots
                 selected_lots = request.data.get('lots')
