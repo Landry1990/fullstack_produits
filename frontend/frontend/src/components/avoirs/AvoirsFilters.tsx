@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Search, Plus, RotateCcw } from 'lucide-react';
 import type { UseAvoirsDataReturn } from '../../hooks/useAvoirsData';
 import { Button } from '../shadcn/button';
-import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
 import { getTypeOptions } from './utils';
 
 interface AvoirsFiltersProps {
@@ -31,35 +29,37 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
     const { t } = useTranslation(['stock', 'common']);
 
     return (
-        <div className="px-4 py-3 bg-white border-b border-slate-200">
-            <div className="flex flex-wrap gap-3 items-center justify-between">
-                <Input
-                    type="text"
-                    placeholder={t('stock:avoirs.search_placeholder')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    icon={<Search className="size-4" />}
-                    size="sm"
-                    containerClassName="w-full sm:w-64"
-                    className="pl-10"
-                />
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-2 lg:gap-3 items-center">
+            <div className="md:col-span-4">
+                <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-slate-200 bg-white focus-within:ring-1 focus-within:ring-emerald-500">
+                    <Search className="size-4 text-slate-400 shrink-0" />
+                    <input
+                        type="text"
+                        placeholder={t('stock:avoirs.search_placeholder')}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-full border-0 focus:outline-none focus:ring-0 p-0 text-sm bg-transparent w-full"
+                    />
+                </div>
+            </div>
 
-                <Select
+            <div className="md:col-span-3">
+                <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    size="sm"
-                    className="w-full sm:w-40"
+                    className={`h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none ${statusFilter === '' ? 'text-slate-400' : 'text-slate-900'}`}
                 >
                     <option value="">{t('common:all_statuses', { defaultValue: 'Tous statuts' })}</option>
                     <option value="BROUILLON">{t('stock:avoirs.statuses.brouillon', { defaultValue: 'Brouillon' })}</option>
                     <option value="VAL">{t('stock:avoirs.statuses.valide', { defaultValue: 'Validé' })}</option>
-                </Select>
+                </select>
+            </div>
 
-                <Select
+            <div className="md:col-span-3">
+                <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    size="sm"
-                    className="w-full sm:w-48"
+                    className={`h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none ${typeFilter === '' ? 'text-slate-400' : 'text-slate-900'}`}
                 >
                     <option value="">{t('common:all_types', { defaultValue: 'Tous types' })}</option>
                     {getTypeOptions().map(opt => (
@@ -67,29 +67,30 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
                             {t(opt.labelKey, { defaultValue: opt.defaultLabel })}
                         </option>
                     ))}
-                </Select>
+                </select>
+            </div>
 
-                <div className="flex items-center gap-2 ml-auto">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={onRefresh}
-                        title={t('common:refresh')}
-                    >
-                        <RotateCcw className="size-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        onClick={onNew}
-                        size="sm"
-                        className="gap-2"
-                    >
-                        <Plus className="size-4" />
-                        <span className="hidden sm:inline">{t('stock:avoirs.create_btn')}</span>
-                        <span className="sm:hidden">{t('common:add')}</span>
-                    </Button>
-                </div>
+            <div className="md:col-span-2 flex items-center justify-end gap-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={onRefresh}
+                    title={t('common:refresh')}
+                    className="h-9 w-9 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                >
+                    <RotateCcw className="size-4 text-emerald-600" />
+                </Button>
+                <Button
+                    type="button"
+                    onClick={onNew}
+                    size="sm"
+                    className="gap-1.5 h-9"
+                >
+                    <Plus className="size-4" />
+                    <span className="hidden sm:inline">{t('stock:avoirs.create_btn')}</span>
+                    <span className="sm:hidden">{t('common:add')}</span>
+                </Button>
             </div>
         </div>
     );
