@@ -184,8 +184,8 @@ export default function PendingSalesDrawer({
                           {t('facturation:pending_sales.preview_title')}
                         </p>
                         <div className="space-y-1 mb-2">
-                          {previewLines.map((ligne, i) => (
-                            <div key={i} className="flex justify-between text-xs">
+                          {previewLines.map((ligne) => (
+                            <div key={`${ligne.produit?.name ?? 'prod'}-${ligne.quantite}-${ligne.total_ligne}`} className="flex justify-between text-xs">
                               <span className="truncate max-w-[70%] text-slate-700">{ligne.quantite}x {ligne.produit?.name || 'Produit'}</span>
                               <span className="tabular-nums text-slate-500">{formatCurrency(normalizeNumberInput(ligne.total_ligne) || 0)}</span>
                             </div>

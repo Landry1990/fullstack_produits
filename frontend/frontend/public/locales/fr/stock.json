@@ -233,7 +233,8 @@
             "unit": "UNITE",
             "units": "UNITES",
             "transformer": "Transformer",
-            "no_relations": "Aucune relation configurée"
+            "no_relations": "Aucune relation configurée",
+            "no_stock_tooltip": "Stock source insuffisant pour transformer"
         }
     },
     "organisation": {
@@ -798,7 +799,9 @@
             "print": "Imprimer Ticket",
             "sms": "Envoyer SMS",
             "whatsapp": "Rappel WhatsApp",
-            "sms_send": "Envoyer 📨"
+            "sms_send": "Envoyer 📨",
+            "already_delivered": "Déjà délivré",
+            "already_cancelled": "Déjà annulé"
         },
         "modal": {
             "title_new": "Nouveau Promis",
@@ -816,6 +819,12 @@
             "create": "Enregistrer",
             "sms_number": "Numéro destinataire",
             "sms_message": "Contenu du message"
+        },
+        "detail": {
+            "title": "Détails du Promis",
+            "id_label": "Promis",
+            "date_promis": "Date du promis",
+            "date_livraison": "Date de livraison"
         },
         "validation": {
             "product_required": "Veuillez sélectionner un produit",

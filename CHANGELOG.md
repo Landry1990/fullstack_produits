@@ -2,6 +2,281 @@
 
 ---
 
+## 2026-08-20 — Performance : Recherche produit instantanée en mémoire
+
+### ⚡ Optimisation
+
+La recherche produit dans l'écran de facturation/caisse faisait un **appel API à chaque frappe** (avec 400ms de debounce). Pour ~5000 produits, chaque recherche prenait 200-400ms de round-trip serveur.
+
+**Solution** : précharger tous les produits une seule fois au montage de l'app, construire un index en mémoire, et faire la recherche localement.
+
+- **Index en mémoire** : tous les produits actifs sont chargés en une seule requête paginée au démarrage, puis indexés par nom normalisé + CIP.
+- **Recherche instantanée** : la recherche se fait en < 1ms en mémoire, sans aucun appel réseau.
+- **Scoring** : match exact CIP (score 100) > nom exact (80) > nom commence par (70) > tous tokens matchent (60) > nom contient (50) > match partiel (30).
+- **Fallback API** : si l'index n'est pas encore chargé (premier rendu), on retombe sur l'appel API classique.
+- **Cache module-level** : l'index est partagé entre tous les composants via un cache module-level (TTL 5 min).
+- **Pas de nouvelle dépendance** : index Map simple avec normalisation de texte, pas de Fuse.js.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useProductSearchIndex.ts` (nouveau) — hook d'index de recherche en mémoire
+- `frontend/frontend/src/hooks/useProductSearch.ts` — utilise l'index local en priorité, fallback API
+
+---
+
+## 2026-08-20 — Feature : Proposition de reconditionnement automatique après clôture de commande
+
+### ✨ Nouvelle fonctionnalité
+
+Après la clôture d'une commande, si certains produits reçus ont une **relation de transformation (reconditionnement) active**, un modal shadcn s'ouvre automatiquement pour proposer de les reconditionner.
+
+- **Liste des produits reconditionnables** : pour chaque produit source de la commande ayant une relation active, on affiche le produit source → destination, la quantité reçue, le stock actuel, le ratio, et la quantité destination calculée.
+- **Quantités modifiables** : l'utilisateur peut ajuster la quantité à reconditionner pour chaque ligne (bornée par le stock disponible). Cases à cocher pour sélectionner/désélectionner chaque ligne.
+- **Réutilisation de l'endpoint existant** : au confirm, le modal appelle `relations-transformation/{id}/transformer/` pour chaque ligne sélectionnée (FEFO automatique, historique renseigné). Pas de nouvelle logique backend de transformation.
+- **Vue résultat** : après exécution, affichage du succès/échec par ligne avec messages d'erreur détaillés.
+- **Bouton "Passer"** : l'utilisateur peut ignorer la proposition (le reconditionnement reste possible manuellement via l'écran Transformations).
+
+### 🔧 Changements
+
+- **Backend** : nouvel endpoint `GET commandes/{id}/transformations_disponibles/` sur `CommandeClotureMixin` — retourne les produits de la commande ayant une relation de transformation active, avec quantité reçue, stock source, quantité transformable, ratio, quantité destination.
+- **Frontend** :
+  - `commandeService.ts` : ajout de `getTransformationsDisponibles(id)` et du type `TransformationDisponible`.
+  - `ReconditionnementModal.tsx` (nouveau) : modal shadcn (Dialog, Checkbox, Input, Button) avec liste modifiable + vue résultat.
+  - `useCommandeActions.ts` : après clôture réussie, appel `getTransformationsDisponibles` et ouverture du modal si non vide. État `reconditionnementModal` géré par le hook.
+  - `useCommandesState.tsx` : propage `reconditionnement` depuis `useCommandeActions`.
+  - `Commandes.tsx` : rend le `ReconditionnementModal` (lazy import).
+
+### Fichiers modifiés
+
+- `backend/api/views/commandes/cloture_mixin.py` — ajout endpoint `transformations_disponibles`
+- `frontend/frontend/src/services/commandeService.ts` — `getTransformationsDisponibles` + type `TransformationDisponible`
+- `frontend/frontend/src/components/Commandes/ReconditionnementModal.tsx` — **nouveau**
+- `frontend/frontend/src/hooks/useCommandeActions.ts` — ouverture auto du modal après clôture + état
+- `frontend/frontend/src/hooks/useCommandesState.tsx` — propagation `reconditionnement`
+- `frontend/frontend/src/components/Commandes.tsx` — rendu du modal
+
+### ✅ Vérification
+
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK (chunk `feature-commandes` régénéré)
+- Non déployé (attente validation)
+
+---
+
+## 2026-08-20 — Fix : Bloquer la transformation quand le produit source n'a pas de stock
+
+### 🔴 Bug
+
+- **Problème** : Sur l'écran Reconditionnements (Transformations), le bouton "Transformer" était toujours actif, même quand le produit source avait un stock à 0. L'utilisateur pouvait ouvrir le modal de transformation, saisir une quantité, et se faire rejeter par le backend (`Stock insuffisant pour {source}`) — mauvaise UX.
+- **Fix** :
+  - **Backend** : `RelationTransformationSerializer` expose désormais `produit_source_stock` et `produit_source_use_lot_management` (read-only) pour que le frontend connaisse l'état du stock source sans appel supplémentaire.
+  - **Frontend** (`Transformations.tsx`) :
+    - Le bouton "Transformer" est **désactivé** (`disabled`) quand `produit_source_stock <= 0`, avec un tooltip expliquant "Stock source insuffisant pour transformer".
+    - Le stock source est désormais **affiché** sous le nom du produit dans chaque ligne de relation (en rouge si ≤ 0, en vert sinon), pour donner une visibilité immédiate.
+- **Traductions** : ajout de `stock.transformations.labels.no_stock_tooltip` en fr et en.
+
+### Fichiers modifiés
+
+- `backend/api/serializers/inventory.py` — ajout champs `produit_source_stock` / `produit_source_use_lot_management` au serializer
+- `frontend/frontend/src/components/Transformations.tsx` — interface + bouton désactivé + affichage stock source
+- `frontend/frontend/public/locales/fr/stock.json` — clé `no_stock_tooltip`
+- `frontend/frontend/public/locales/en/stock.json` — clé `no_stock_tooltip`
+
+### ✅ Vérification
+
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK (chunk `Transformations` régénéré)
+- Non déployé (attente validation)
+
+---
+
+## 2026-08-19 — UI/UX : Modernisation de l'écran Promis avec shadcn/ui + consultation des promis
+
+### ✨ Refonte UI/UX
+
+L'écran `Promis.tsx` était en styles Tailwind personnalisés et souffrait de trois problèmes bloquants :
+1. **Menu d'actions par ligne uniquement au survol** (`group-hover/menu:flex`) — peu fiable, inaccessible au clavier et sur mobile, donnant l'impression que des boutons d'actions manquaient.
+2. **Lignes non cliquables** — impossible de sélectionner/consulter un promis (aucune vue détaillée).
+3. Composants non conformes à la migration shadcn/ui en cours.
+
+### 🔧 Changements
+
+- **Nouveau `PromisDetailModal`** (shadcn `Dialog`) : consultation complète d'un promis (client, téléphone, produit, CIP, quantité, statut, date du promis, date de livraison, notes) avec bandeau coloré selon le statut et footer d'actions contextuelles (Imprimer, SMS, WhatsApp, Annuler/Délivrer si ATT).
+- **`PromisTable` modernisé** :
+  - shadcn `Checkbox` (sélection ligne + "tout sélectionner") avec accent emerald.
+  - shadcn `Badge` pour les statuts (ATT/DEL/ANN) avec icônes.
+  - **Remplacement du menu hover par un vrai `DropdownMenu` shadcn** (clic, accessible, mobile-friendly) contenant **toutes** les actions : Voir, Imprimer, SMS, WhatsApp, Délivrer, Annuler (ces deux dernières seulement si ATT).
+  - **Lignes cliquables** → ouvre le `PromisDetailModal`. La checkbox et le menu d'actions stoppent la propagation pour ne pas déclencher l'ouverture.
+- **`PromisFilters`** : shadcn `Input` (recherche), `Select` (filtre statut), `Button` (rafraîchir / nouveau).
+- **`PromisQuickStats`** : shadcn `Card` pour les cartes de statistiques.
+- **`Promis.tsx`** : shadcn `Card` (conteneurs) + `Button` (toggle header). Nouvel état `detailModalState` pour le modal de consultation.
+
+### 🌍 Traductions
+
+- Ajout section `stock.promis.detail` (`title`, `id_label`, `date_promis`, `date_livraison`) en fr et en.
+- Clés `common.view` / `common.actions_title` / `common.single_selection` / `common.bulk_actions` déjà existantes, réutilisées.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/promis/modals/PromisDetailModal.tsx` — **nouveau**
+- `frontend/frontend/src/components/promis/PromisTable.tsx` — refonte shadcn + DropdownMenu + row clickable
+- `frontend/frontend/src/components/promis/PromisFilters.tsx` — shadcn Input/Select/Button
+- `frontend/frontend/src/components/promis/PromisQuickStats.tsx` — shadcn Card
+- `frontend/frontend/src/components/Promis.tsx` — shadcn Card/Button + état détail
+- `frontend/frontend/public/locales/fr/stock.json` — section `promis.detail`
+- `frontend/frontend/public/locales/en/stock.json` — section `promis.detail`
+
+### ✅ Vérification
+
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK (chunk `Promis` généré)
+- Non déployé (attente validation)
+
+---
+
+## 2026-08-19 — Fix : Promis orphelins après modification de vente + UI modal résolution de stock
+
+### 🔴 Bug #1 (CRITIQUE) — Promis orphelins après modification de vente
+
+- **Problème** : `SaleModifier.modify_sale()` ne touchait jamais aux promis liés à la facture modifiée. Quand une vente avec stock insuffisant était validée (promis créé), puis rappelée et modifiée/supprimée, les promis restaient `EN_ATTENTE` indéfiniment — alors qu'ils ne correspondaient plus à aucune ligne de vente.
+- **Fix** : Ajout de `SaleModifier._cancel_pending_promis(facture)` appelé en début de `modify_sale()`, qui annule les promis `EN_ATTENTE` liés à la facture (les `DELIVRE` sont préservés car déjà honorés). Le frontend recréera des promis propres si le nouveau panier a encore du stock insuffisant.
+- **Rappel de vente (F8)** : déjà couvert par `SaleCanceller._cancel_linked_promis()` car le rappel passe par `factures/{id}/annuler/`.
+
+### 🟡 Bug #2 (MOYEN) — `promisClientName` non transmis à l'API
+
+- **Problème** : Le champ "Nom du client" saisi dans le modal de résolution de stock n'était jamais envoyé au backend lors de la création des promis. `SaleCompletionParams` ne contenait pas les champs `promisClientName` / `promisPhone`, donc `useSaleCompletion.completeSale()` recevait `undefined` et enregistrait `client_name: ''` → "clients divers" côté backend.
+- **Fix** :
+  - `types/finance.ts` : ajout de `promisClientName?` et `promisPhone?` à `SaleCompletionParams`.
+  - `useFacturationState.ts` : `handleCompleteSale` transmet désormais `ui.promisClientName` et `ui.promisPhone` dans `params`.
+  - `FacturationModals.tsx` : `completeExistingInvoicePayment` reçoit aussi ces deux champs.
+
+### ✨ UI/UX — Modal "Résolution de stock"
+
+- Palette harmonisée : bandeau supérieur en `slate-50` neutre au lieu d'amber saturé.
+- Boutons d'action globaux compacts avec `whitespace-nowrap` (plus de retour à la ligne).
+- Actions par produit : segment plus petit avec ring subtil au lieu d'aplats colorés criards.
+- Section Promis : fond `slate-50` au lieu du bleu fort.
+- Footer responsive avec warning "forcer" isolé dans un tag amber.
+
+### Fichiers modifiés
+
+- `backend/api/services/sale_modifier.py` — ajout `_cancel_pending_promis()` + import `Promis`
+- `frontend/frontend/src/types/finance.ts` — ajout `promisClientName` / `promisPhone` à `SaleCompletionParams`
+- `frontend/frontend/src/hooks/useFacturationState.ts` — transmission des champs promis
+- `frontend/frontend/src/components/facturation/FacturationModals.tsx` — transmission des champs promis
+- `frontend/frontend/src/components/facturation/StockResolutionModal.tsx` — refonte UI
+
+### ✅ Vérification
+
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK
+- Déploiement frontend + backend : OK
+
+---
+
+## 2026-08-19 — UI/UX : Amélioration du modal "Résolution de stock"
+
+### ✨ Améliorations
+
+- **Palette harmonisée** : remplacement du bandeau amber saturé par un fond `slate-50` plus neutre. Seules les icônes conservent un accent de couleur (amber/blue/red/emerald).
+- **Boutons d'action globaux** : regroupés dans un bloc compact avec icônes + labels courts, `whitespace-nowrap`, et flex adaptatif pour éviter le retour à la ligne.
+- **Actions par produit** : segment de 3 boutons plus petits (`h-7 px-2 text-[10px]`) avec `whitespace-nowrap`, fond `slate-100`, et état actif avec ring subtil au lieu d'arrière-plans colorés criards.
+- **Section Promis** : fond `slate-50` et bordure `slate-200` au lieu du bleu fort, labels plus lisibles, inputs `text-sm`.
+- **Footer** : warning "forcer" isolé dans un petit tag amber, boutons principaux avec `whitespace-nowrap`, disposition responsive `sm:flex-row`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/facturation/StockResolutionModal.tsx`
+
+### ✅ Vérification
+
+- `npx eslint` : OK
+- Build frontend `npm run build` : OK
+- Non déployé (attente validation)
+
+---
+
+## 2026-08-19 — Feat : Badge "P" promis sur les produits en saisie de commande
+
+### ✨ Nouvelle fonctionnalité
+
+- **Signalement des produits en promis** : dans la saisie d'une commande, un badge coloré "P" (amber) s'affiche désormais juste après le libellé du produit dès qu'il a des promis actifs en attente (`active_promis_count > 0`).
+- Le badge reprend le même style compact que le badge "E" (exclusivité) avec un tooltip indiquant le nombre de promis en attente.
+
+### 🔧 Implémentation
+
+- `frontend/frontend/src/components/Commandes/productTableUtils.ts` : `resolveProductInfo` renvoie maintenant `activePromisCount` en plus des champs existants.
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx` : affichage du badge "P" à côté du nom du produit lorsque `activePromisCount > 0`.
+- `frontend/frontend/public/locales/fr/orders.json` et `en/orders.json` : ajout de la clé `product_table.promis_tooltip`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/productTableUtils.ts`
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx`
+- `frontend/frontend/public/locales/fr/orders.json`
+- `frontend/frontend/public/locales/en/orders.json`
+
+### ✅ Vérification
+
+- Build frontend `npm run build` OK (exit 0).
+
+---
+
+## 2026-08-19 — Fix : Intégrité du stock — 4 bugs corrigés
+
+### 🔴 Bug #1 (CRITIQUE) — Condition tautologique dans `sale_modifier.py`
+
+- **Problème** : La condition `not produit.use_lot_management or produit.use_lot_management` était toujours vraie, causant une décrémentation manuelle de `Produit.stock` même pour les produits gérés par lots dont l'allocation FIFO avait échoué.
+- **Conséquence** : Soit le stock était désynchronisé des lots (décrémentation non resyncée), soit la vente ne décrémentait pas le stock (resync écrasant la décrémentation).
+- **Fix** : Condition corrigée en `not produit.use_lot_management` — seuls les produits non gérés par lots sont décrémentés manuellement.
+
+### 🟡 Bug #2 (MOYEN) — `validate_inventaire` sans transaction interne
+
+- **Problème** : La fonction `validate_inventaire()` faisait des écritures multiples (lots, ajustements, mouvements, produits) sans `transaction.atomic()` interne, dépendant uniquement du décorateur de la vue appelante.
+- **Fix** : Ajout d'un `with transaction.atomic():` interne comme defense-in-depth.
+
+### 🟡 Bug #3 (MOYEN) — Transformation avec lots insuffisants silencieux
+
+- **Problème** : Dans `transformations.py`, si la somme des `quantity_remaining` des lots était inférieure à la quantité demandée, le code continuait silencieusement (`pass`), pouvant créer des `quantity_remaining` négatifs.
+- **Fix** : Retourne maintenant une erreur 400 avec un message clair indiquant la désynchronisation stock global ↔ lots.
+
+### 🟢 Bug #4 (FAIBLE) — `save()` sans `update_fields` dans `avoirs.py`
+
+- **Problème** : `produit.save()` sans `update_fields` dans `decharger_stock` et `annuler_dechargement` pouvait écraser des modifications concurrentes sur d'autres champs du produit.
+- **Fix** : Ajout de `update_fields=['stock']` aux deux appels `save()`.
+
+### Fichiers modifiés
+
+- `backend/api/services/sale_modifier.py` — condition tautologique corrigée
+- `backend/api/views/stocks/inventaire/validation.py` — `transaction.atomic()` interne ajouté
+- `backend/api/views/stocks/transformations.py` — blocage au lieu de `pass` silencieux
+- `backend/api/views/commandes/avoirs.py` — `update_fields=['stock']` ajouté
+
+---
+
+## 2026-08-19 — UI/UX : Tentative de modernisation du Rapport Mensuel (rollback)
+
+### 🚫 Problème rencontré
+
+- La refonte de `RapportMensuel.tsx` avec les composants shadcn (`Button`, `Card`, `Tabs`, `Input`, `Badge`, `Progress`) et les icônes Lucide a provoqué une dépendance circulaire à l'exécution entre les chunks `feature-reports` et `feature-dashboard`.
+- Erreur en console : `Uncaught ReferenceError: can't access lexical declaration 'ls' before initialization` dans `feature-reports-*.js` → page blanche à l'ouverture du rapport mensuel.
+
+### ✅ Correctif
+
+- Rollback immédiat de `frontend/frontend/src/components/RapportMensuel.tsx` et `frontend/frontend/vite.config.ts` à leur état fonctionnel antérieur.
+- Redéploiement frontend. La page `rapports-mensuels` est à nouveau accessible.
+
+### Fichiers concernés
+
+- `frontend/frontend/src/components/RapportMensuel.tsx` — rollback
+- `frontend/frontend/vite.config.ts` — rollback
+
+### 💡 Note pour la suite
+
+- Pour moderniser cette page en toute sécurité, il faudra revoir la stratégie de chunking (`manualChunks`) afin d'isoler les composants shadcn partagés dans un chunk commun (`vendor-ui` ou `vendor-shadcn`) et éviter les cycles entre `feature-reports` et `feature-dashboard`.
+
+---
+
 ## 2026-08-19 — Feat : Login par mot de passe seul (sans sélection d'utilisateur)
 
 ### ✨ Nouveau

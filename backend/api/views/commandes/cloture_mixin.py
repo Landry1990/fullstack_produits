@@ -637,3 +637,78 @@ class CommandeClotureMixin:
             }
         })
 
+    @action(detail=True, methods=['get'])
+    def transformations_disponibles(self, request, pk=None):
+        """Retourne les produits de la commande qui ont une relation de
+        transformation (reconditionnement) active, avec la quantité reçue
+        et le stock source actuel.
+
+        Permet au frontend de proposer un reconditionnement automatique
+        après la clôture de la commande.
+        """
+        from ...models import RelationTransformation
+
+        commande = self.get_object()
+
+        if commande.status != Commande.Status.CLOTUREE:
+            return Response(
+                {'detail': 'La commande doit être clôturée pour proposer un reconditionnement.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        items = list(
+            commande.produits.select_related('produit').all()
+        )
+        if not items:
+            return Response({'count': 0, 'items': []})
+
+        # Produit source → quantité totale reçue dans cette commande
+        source_qty_map = {}
+        produit_map = {}
+        for item in items:
+            if not item.produit_id:
+                continue
+            total_qty = item.quantity + item.unites_gratuites
+            if total_qty <= 0:
+                continue
+            source_qty_map[item.produit_id] = source_qty_map.get(item.produit_id, 0) + total_qty
+            produit_map[item.produit_id] = item.produit
+
+        if not source_qty_map:
+            return Response({'count': 0, 'items': []})
+
+        relations = RelationTransformation.objects.filter(
+            actif=True,
+            produit_source_id__in=list(source_qty_map.keys()),
+        ).select_related('produit_source', 'produit_destination')
+
+        items_result = []
+        for rel in relations:
+            source = rel.produit_source
+            dest = rel.produit_destination
+            qty_recue = source_qty_map.get(source.id, 0)
+            # Quantité reconditionnable = min(qty reçue, stock actuel)
+            # (le stock actuel peut être < qty reçue si des ventes ont eu lieu)
+            stock_source = int(source.stock)
+            qty_transformable = min(qty_recue, stock_source)
+            if qty_transformable <= 0:
+                continue
+            from decimal import Decimal
+            qty_dest_obtained = int(Decimal(str(qty_transformable)) * Decimal(str(rel.ratio)))
+            items_result.append({
+                'relation_id': rel.id,
+                'source_id': source.id,
+                'source_name': source.name,
+                'source_cip': source.cip1 or '',
+                'source_stock': stock_source,
+                'qty_recue': qty_recue,
+                'qty_transformable': qty_transformable,
+                'destination_id': dest.id,
+                'destination_name': dest.name,
+                'destination_stock': int(dest.stock),
+                'ratio': float(rel.ratio),
+                'qty_dest_obtained': qty_dest_obtained,
+            })
+
+        return Response({'count': len(items_result), 'items': items_result})
+

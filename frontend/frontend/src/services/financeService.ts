@@ -127,13 +127,14 @@ const financeService = {
     }): Promise<PaiementFournisseur[]> => {
         const PAGE_SIZE = 500;
         const first = await financeService.getPaiementsHistory({ ...params, page: 1, page_size: PAGE_SIZE });
-        const all: PaiementFournisseur[] = [...first.results];
         const totalPages = Math.max(1, Math.ceil(first.count / PAGE_SIZE));
-        for (let page = 2; page <= totalPages; page++) {
-            const next = await financeService.getPaiementsHistory({ ...params, page, page_size: PAGE_SIZE });
-            all.push(...next.results);
-        }
-        return all;
+        const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+        const rest = await Promise.all(
+            remainingPages.map((page) =>
+                financeService.getPaiementsHistory({ ...params, page, page_size: PAGE_SIZE }),
+            ),
+        );
+        return [...first.results, ...rest.flatMap((r) => r.results)];
     },
 
     createPaiement: async (data: Partial<PaiementFournisseur>): Promise<PaiementFournisseur> => {

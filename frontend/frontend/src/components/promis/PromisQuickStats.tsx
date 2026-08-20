@@ -2,6 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { PackageOpen, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import type { UsePromisDataReturn } from '../../hooks/usePromisData';
+import { Card } from '../shadcn/card';
+import { cn } from '../../lib/utils';
 
 interface PromisQuickStatsProps {
     stats: UsePromisDataReturn['stats'];
@@ -44,15 +46,18 @@ export const PromisQuickStats: React.FC<PromisQuickStatsProps> = ({ stats }) => 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {statItems.map((item) => (
-                <div key={item.title} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-slate-300">
-                    <div className={`size-12 rounded-xl flex items-center justify-center ${item.bgClass} ${item.colorClass}`}>
+                <Card
+                    key={item.title}
+                    className="p-5 flex items-center gap-4 transition-all hover:shadow-md hover:-translate-y-0.5 border-slate-200"
+                >
+                    <div className={cn('size-12 rounded-xl flex items-center justify-center', item.bgClass, item.colorClass)}>
                         {item.icon}
                     </div>
                     <div>
                         <p className="text-sm font-medium text-slate-500">{item.title}</p>
-                        <p className={`text-2xl font-bold ${item.colorClass}`}>{item.value}</p>
+                        <p className={cn('text-2xl font-bold', item.colorClass)}>{item.value}</p>
                     </div>
-                </div>
+                </Card>
             ))}
         </div>
     );

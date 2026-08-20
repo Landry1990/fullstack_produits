@@ -12,6 +12,20 @@ type FeedbackState =
 const SCAN_TIMEOUT_MS = 80;
 const MIN_SCAN_LENGTH = 18;
 
+const FEEDBACK_COLORS: Record<FeedbackState['type'], string> = {
+    idle: 'bg-slate-800/90 border-slate-600',
+    success: 'bg-emerald-800/90 border-emerald-500',
+    warning: 'bg-amber-800/90 border-amber-500',
+    error: 'bg-red-800/90 border-red-500',
+};
+
+const FEEDBACK_ICONS = {
+    idle: <ScanLine className="size-4 text-slate-300 animate-pulse" />,
+    success: <CheckCircle2 className="size-4 text-emerald-300" />,
+    warning: <AlertTriangle className="size-4 text-amber-300" />,
+    error: <XCircle className="size-4 text-red-300" />,
+};
+
 interface DataMatrixScanBarProps {
     onScan: (raw: string) => ScanResult;
     searchInputRef?: React.RefObject<HTMLInputElement>;
@@ -31,20 +45,6 @@ export default function DataMatrixScanBar({
     const bufferRef = useRef('');
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const feedbackColors: Record<FeedbackState['type'], string> = {
-        idle: 'bg-slate-800/90 border-slate-600',
-        success: 'bg-emerald-800/90 border-emerald-500',
-        warning: 'bg-amber-800/90 border-amber-500',
-        error: 'bg-red-800/90 border-red-500',
-    };
-
-    const feedbackIcons = {
-        idle: <ScanLine className="size-4 text-slate-300 animate-pulse" />,
-        success: <CheckCircle2 className="size-4 text-emerald-300" />,
-        warning: <AlertTriangle className="size-4 text-amber-300" />,
-        error: <XCircle className="size-4 text-red-300" />,
-    };
 
     const showFeedback = useCallback((state: FeedbackState, autoClearMs = 4000) => {
         setFeedback(state);
@@ -161,9 +161,9 @@ export default function DataMatrixScanBar({
 
     return (
         <div
-            className={`fixed top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-xl backdrop-blur-sm transition-all duration-300 ${feedbackColors[feedback.type]}`}
+            className={`fixed top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-xl backdrop-blur-sm transition-all duration-300 ${FEEDBACK_COLORS[feedback.type]}`}
         >
-            {feedbackIcons[feedback.type]}
+            {FEEDBACK_ICONS[feedback.type]}
             <span className="text-xs font-medium text-white max-w-[480px] truncate">
                 {feedback.type === 'idle'
                     ? t('orders:data_matrix_scanner.active')

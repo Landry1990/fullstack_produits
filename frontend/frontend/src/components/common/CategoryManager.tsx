@@ -14,6 +14,7 @@ import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import PremiumModal from './PremiumModal';
 import SmartOrganizerModal from './SmartOrganizerModal';
 import { logger } from '../../utils/logger'
+import { generateUUID } from '../../utils/uuid'
 
 
 interface Category {
@@ -68,7 +69,7 @@ export default function CategoryManager({
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [entries, setEntries] = useState<Array<{ name: string; description: string; parent: string }>>([{ name: '', description: '', parent: '' }]);
+  const [entries, setEntries] = useState<Array<{ id: string; name: string; description: string; parent: string }>>([{ id: generateUUID(), name: '', description: '', parent: '' }]);
   
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [productSearchTerm, setProductSearchTerm] = useState('');
@@ -139,7 +140,7 @@ export default function CategoryManager({
 
   useEffect(() => {
     if (isModalOpen && !editingCategory) {
-      setEntries([{ name: '', description: '', parent: '' }]);
+      setEntries([{ id: generateUUID(), name: '', description: '', parent: '' }]);
     }
   }, [isModalOpen, editingCategory]);
 
@@ -196,25 +197,26 @@ export default function CategoryManager({
         const validEntries = entries.filter(en => en.name.trim() !== '');
         if (validEntries.length === 0) return;
 
-        const createdCats: Category[] = [];
-        let errorCount = 0;
-
-        for (const entry of validEntries) {
-          const payload: Record<string, unknown> = {};
-          if (type === 'rayon') {
-            payload.name = entry.name;
-            payload.parent = entry.parent ? parseInt(entry.parent) : null;
-          } else {
-            payload.nom = entry.name;
-            payload.description = entry.description;
-          }
-          try {
-            const { data: newCat } = await api.post(basePath, payload);
-            createdCats.push(newCat);
-          } catch {
-            errorCount++;
-          }
-        }
+        const results = await Promise.all(
+          validEntries.map(async (entry) => {
+            const payload: Record<string, unknown> = {};
+            if (type === 'rayon') {
+              payload.name = entry.name;
+              payload.parent = entry.parent ? parseInt(entry.parent) : null;
+            } else {
+              payload.nom = entry.name;
+              payload.description = entry.description;
+            }
+            try {
+              const { data: newCat } = await api.post(basePath, payload);
+              return { cat: newCat as Category, error: false };
+            } catch {
+              return { cat: null as Category | null, error: true };
+            }
+          }),
+        );
+        const createdCats: Category[] = results.filter((r): r is { cat: Category; error: false } => r.cat !== null).map((r) => r.cat);
+        const errorCount = results.filter((r) => r.error).length;
 
         if (createdCats.length > 0) {
           setCategories(prev => [...prev, ...createdCats].slice().sort((a, b) => {
@@ -231,7 +233,7 @@ export default function CategoryManager({
           gooeyToast.error(t('stock:organisation.category_manager.bulk_create_error', { count: errorCount }));
         }
       }
-      setEntries([{ name: '', description: '', parent: '' }]);
+      setEntries([{ id: generateUUID(), name: '', description: '', parent: '' }]);
       setIsModalOpen(false);
     } catch {
       gooeyToast.error(t('common:messages.error_saving'));
@@ -275,15 +277,18 @@ export default function CategoryManager({
     let successCount = 0;
     let errorCount = 0;
 
-    // Delete sequentially to avoid overwhelming the server
-    for (const cat of categories) {
-      try {
-        await api.delete(`${basePath}${cat.id}/`);
-        successCount++;
-      } catch {
-        errorCount++;
-      }
-    }
+    const deleteResults = await Promise.all(
+      categories.map(async (cat) => {
+        try {
+          await api.delete(`${basePath}${cat.id}/`);
+          return true;
+        } catch {
+          return false;
+        }
+      }),
+    );
+    successCount = deleteResults.filter(Boolean).length;
+    errorCount = deleteResults.filter((r) => !r).length;
 
     if (successCount > 0) {
       gooeyToast.success(t('stock:organisation.category_manager.delete_all_success', { count: successCount, type }));
@@ -424,7 +429,7 @@ export default function CategoryManager({
                    className="inline-flex items-center justify-center size-8 bg-emerald-600 text-white rounded-full text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
                    onClick={() => {
                      setEditingCategory(null);
-                     setEntries([{ name: '', description: '', parent: '' }]);
+                     setEntries([{ id: generateUUID(), name: '', description: '', parent: '' }]);
                      setIsModalOpen(true);
                    }}
                  >
@@ -488,6 +493,7 @@ export default function CategoryManager({
                            e.stopPropagation();
                            setEditingCategory(cat);
                            setEntries([{
+                             id: generateUUID(),
                              name: getCategoryName(cat),
                              description: cat.description || '',
                              parent: cat.parent?.toString() || ''
@@ -700,7 +706,7 @@ export default function CategoryManager({
       >
         <form onSubmit={handleSubmit} className="p-6 space-y-4" autoComplete="off">
            {entries.map((entry, idx) => (
-              <div key={idx} className="space-y-3 p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+              <div key={entry.id} className="space-y-3 p-4 rounded-xl border border-slate-100 bg-slate-50/50">
                  <div className="flex items-center justify-between">
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
                        {t('stock:organisation.category_manager.name_label', { type })}
@@ -763,7 +769,7 @@ export default function CategoryManager({
               <button
                 type="button"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-emerald-300 text-emerald-600 text-sm font-bold hover:bg-emerald-50 transition-colors w-full justify-center"
-                onClick={() => setEntries(prev => [...prev, { name: '', description: '', parent: '' }])}
+                onClick={() => setEntries(prev => [...prev, { id: generateUUID(), name: '', description: '', parent: '' }])}
               >
                  <Plus size={16} />
                  {t('stock:organisation.category_manager.add_another_entry', { type })}

@@ -46,6 +46,13 @@ interface RecapResponse {
   client_name: string
 }
 
+const fmt = (val: number | string | null | undefined) => {
+  if (val == null || val === '') return '0'
+  const num = Number(val)
+  if (isNaN(num)) return '0'
+  return formatNumber(Math.round(num))
+}
+
 export default function RecapClient() {
   const { t } = useTranslation(['recap', 'common'])
   const inputRef = useRef<HTMLInputElement>(null)
@@ -56,13 +63,6 @@ export default function RecapClient() {
   const [clientName, setClientName] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<RecapResponse | null>(null)
-
-  const fmt = (val: number | string | null | undefined) => {
-    if (val == null || val === '') return '0'
-    const num = Number(val)
-    if (isNaN(num)) return '0'
-    return formatNumber(Math.round(num))
-  }
 
   const checkNumero = async (numero: string) => {
     setNumerosStatus(prev => ({ ...prev, [numero]: 'checking' }))
@@ -228,7 +228,7 @@ export default function RecapClient() {
                   ? 'bg-red-50 border-red-200 text-red-700'
                   : 'bg-slate-100 border-slate-200 text-slate-700'
                 return (
-                  <Badge key={idx} variant="outline" className={`px-3 py-1.5 text-sm font-mono flex items-center gap-1.5 ${badgeClass}`}>
+                  <Badge key={num} variant="outline" className={`px-3 py-1.5 text-sm font-mono flex items-center gap-1.5 ${badgeClass}`}>
                     {status === 'checking' && <Loader2 className="size-3 animate-spin" />}
                     {status === 'found' && <span className="size-2 rounded-full bg-emerald-500" />}
                     {status === 'cancelled' && <span className="size-2 rounded-full bg-amber-500" />}
@@ -338,7 +338,7 @@ export default function RecapClient() {
                           const qty = p.quantity || p.quantite || 1
                           const price = Number(p.selling_price || p.prix_vente || 0)
                           return (
-                            <div key={idx} className="flex items-center justify-between text-xs text-slate-600">
+                            <div key={`${name}-${qty}-${price}`} className="flex items-center justify-between text-xs text-slate-600">
                               <span>{name} <span className="text-slate-400">x{qty}</span></span>
                               <span className="font-mono">{fmt(qty * price)} F</span>
                             </div>

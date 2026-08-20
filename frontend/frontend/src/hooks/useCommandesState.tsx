@@ -234,6 +234,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       handleImprimerReception,
       handleBulkDelete,
       executingAction,
+      reconditionnement,
   } = useCommandeActions({
       fetchCommandes: async () => { queryClient.invalidateQueries({ queryKey: ['commandes'] }); },
       setSelectedCommande,
@@ -557,6 +558,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       handleTransferSuccess,
       selectedOrderIds,
       handleMergeSuccess,
-    }
+    },
+    reconditionnement,
   };
 }

@@ -3,6 +3,7 @@ import autoTable, { type RowInput } from 'jspdf-autotable';
 import { formatCurrency, formatDateFr } from '../formatters';
 import { getLocale } from '../dateUtils';
 import type { PharmacySettings } from '../../context/PharmacySettingsContext';
+import type { TFunction } from 'i18next';
 
 interface RapportData {
   mois: string;
@@ -86,7 +87,7 @@ export async function generateMonthlyReportPdfDraft(
   data: RapportData,
   settings: PharmacySettings,
   periodeLabel: string,
-  t: (key: string, options?: unknown) => string
+  t: TFunction
 ) {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.getWidth();

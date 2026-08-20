@@ -18,6 +18,7 @@ from ..models import (
     FactureProduitAllocation,
     MouvementStock,
     Produit,
+    Promis,
     StockLot,
 )
 from .lot_allocation_service import LotAllocationService
@@ -52,6 +53,11 @@ class SaleModifier:
         # 1. Restore stock (temporary)
         old_quantity_by_product, _old_product_ids, old_product_ids_with_allocations = \
             SaleModifier._restore_stock(facture)
+
+        # 1b. Cancel pending promis linked to this invoice (they will be recreated by the
+        # frontend if the new cart still has insufficient stock). Promis already DELIVRE
+        # are preserved since they were honored.
+        SaleModifier._cancel_pending_promis(facture)
 
         # 2. Apply changes to facture
         facture.remise = Decimal(str(data.get('remise', '0')))
@@ -89,6 +95,23 @@ class SaleModifier:
     # ──────────────────────────────────────────────
     #  Private helpers
     # ──────────────────────────────────────────────
+
+    @staticmethod
+    def _cancel_pending_promis(facture):
+        """Annule les promis EN_ATTENTE liés à cette facture avant modification.
+        Les promis DELIVRE sont préservés (ils ont été honorés)."""
+        pending_promis = Promis.objects.filter(
+            facture=facture, is_active=True, status=Promis.Status.EN_ATTENTE
+        )
+        for promis in pending_promis:
+            promis.status = Promis.Status.ANNULE
+            promis.date_livraison = None
+            promis.notes = (
+                f"{promis.notes or ''}\n"
+                f"[Annulé automatiquement - Modification Facture #{facture.numero_facture or facture.id} "
+                f"le {timezone.now().strftime('%d/%m/%Y %H:%M')}]"
+            ).strip()
+            promis.save(update_fields=['status', 'date_livraison', 'notes'])
 
     @staticmethod
     def _restore_stock(facture):
@@ -154,7 +177,7 @@ class SaleModifier:
 
             if lots_allocated:
                 new_product_ids_with_allocations.add(produit_id)
-            elif produit and not produit.use_lot_management or produit and produit.use_lot_management:
+            elif produit and not produit.use_lot_management:
                 Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
 
             # Sync FactureProduit fields from allocated lots

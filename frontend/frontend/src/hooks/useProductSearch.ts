@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { useDebounce } from 'use-debounce'
 import api from '../services/api'
 import { useQuery } from '@tanstack/react-query'
 import type { ProduitModel, PaginatedResponse } from '../types'
+import { useProductSearchIndex } from './useProductSearchIndex'
 
 interface UseProductSearchOptions {
     minSearchLength?: number
@@ -51,6 +52,9 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
     const [debouncedSearch] = useDebounce(searchQuery, debounceMs)
     const [wasBarcodeScanned, setWasBarcodeScanned] = useState(false)
 
+    // Index de recherche en mémoire — précharge tous les produits une fois
+    const { search: searchInIndex, isReady: indexReady, isLoading: indexLoading } = useProductSearchIndex()
+
     // Barcode scan detection
     const lastInputTime = useRef<number>(0)
     const inputSpeedBuffer = useRef<number[]>([])
@@ -86,7 +90,15 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         setSearchQuery(query)
     }, [detectBarcodeInput])
 
-    // Fetch function for React Query
+    // Recherche locale dans l'index en mémoire (instantanée, < 1ms)
+    const localResults = useMemo(() => {
+        if (!indexReady || !debouncedSearch || debouncedSearch.length < minSearchLength) {
+            return null // null = pas de recherche locale, fallback vers API
+        }
+        return searchInIndex(debouncedSearch, pageSize)
+    }, [indexReady, debouncedSearch, minSearchLength, searchInIndex, pageSize])
+
+    // Fetch function for React Query — utilisé uniquement si l'index n'est pas prêt
     const fetchProducts = async (search: string, auto: boolean): Promise<ProduitModel[]> => {
         if (!auto && (!search || search.length < minSearchLength)) {
             return []
@@ -98,16 +110,20 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         return Array.isArray(produitsData) ? produitsData : (produitsData.results || [])
     }
 
-    // Determine if query should run
-    const shouldFetch = autoLoad || (!!debouncedSearch && debouncedSearch.length >= minSearchLength)
+    // Détermine si on doit faire un appel API (fallback quand l'index n'est pas prêt)
+    const shouldFetch = !indexReady && (autoLoad || (!!debouncedSearch && debouncedSearch.length >= minSearchLength))
 
-    const { data: produits = [], isLoading: loading, isFetching, error, refetch } = useQuery({
+    const { data: apiProduits = [], isLoading: apiLoading, isFetching, error, refetch } = useQuery({
         queryKey: ['products', 'search', debouncedSearch, autoLoad, pageSize],
         queryFn: () => fetchProducts(debouncedSearch, autoLoad),
         enabled: shouldFetch,
         staleTime: 1000 * 30, // 30 secondes — réduit les requêtes lors de la navigation rapide
         gcTime: 1000 * 60 * 5,
     })
+
+    // Utiliser les résultats locaux si disponibles, sinon les résultats API
+    const produits = localResults ?? apiProduits
+    const loading = indexLoading || (shouldFetch && apiLoading)
 
     // Handle Barcode matching effect
     // We use a separate effect to trigger the callback when data arrives

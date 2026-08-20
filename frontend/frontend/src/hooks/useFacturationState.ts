@@ -430,7 +430,9 @@ export function useFacturationState() {
       prescriptionImage: ui.prescriptionImage,
       modificationInvoiceId: ui.modificationInvoiceId,
       isFactureA4: isFactureA4,
-      is_avoir_client: ui.isAvoirClient
+      is_avoir_client: ui.isAvoirClient,
+      promisClientName: ui.promisClientName,
+      promisPhone: ui.promisPhone,
     }
     try {
       await completeSale(params)

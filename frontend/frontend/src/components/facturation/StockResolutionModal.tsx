@@ -84,20 +84,20 @@ export default function StockResolutionModal({
       icon={<ShieldAlert className="h-6 w-6 text-amber-500" />}
       maxWidth="max-w-5xl"
       footer={
-        <div className="flex justify-between items-center w-full">
-            <div className="text-xs text-slate-400 italic px-4">
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 w-full">
+            <div className="text-xs px-4">
                 {hasForce && (
-                    <span className="flex items-center gap-1.5 text-amber-600 font-bold">
+                    <span className="inline-flex items-center gap-1.5 text-amber-700 font-semibold bg-amber-50 border border-amber-100 px-2.5 py-1.5 rounded-lg">
                         <ShieldAlert className="size-3.5" />
                         {t('stock_resolution.force_warning')}
                     </span>
                 )}
             </div>
-            <div className="flex gap-3">
-                <button className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose}>
+            <div className="flex gap-3 justify-end">
+                <button className="inline-flex items-center justify-center whitespace-nowrap h-9 px-4 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose}>
                     {t('stock_resolution.cancel_and_edit_cart')}
                 </button>
-                <button className="inline-flex items-center justify-center h-9 px-8 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors gap-2" onClick={handleConfirm} autoFocus>
+                <button className="inline-flex items-center justify-center whitespace-nowrap h-9 px-6 rounded-lg text-sm font-semibold bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors gap-2" onClick={handleConfirm} autoFocus>
                     {t('stock_resolution.validate_and_cash')}
                 </button>
             </div>
@@ -105,29 +105,33 @@ export default function StockResolutionModal({
       }
     >
       <div className="p-6">
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-800">
-                <ShieldAlert className="h-5 w-5" />
-                <span className="font-medium">{t('stock_resolution.message')}</span>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <div className="flex items-center gap-2 text-slate-700">
+                <ShieldAlert className="h-5 w-5 text-amber-500" />
+                <span className="text-sm font-medium">{t('stock_resolution.message')}</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2 w-full lg:w-auto">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mr-1 hidden lg:inline">{t('common:actions')}</span>
                 <button
                     onClick={() => handleBulkAction('reduce')}
-                    className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-xs font-medium border border-amber-200 text-amber-700 bg-white hover:bg-amber-50 transition-colors gap-1"
+                    className="inline-flex flex-1 lg:flex-none items-center justify-center whitespace-nowrap h-7 px-2.5 rounded-lg text-[11px] font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-emerald-200 hover:text-emerald-600 transition-colors gap-1.5"
+                    title={t('stock_resolution.reduce_all')}
                 >
-                    <ArrowDown className="size-3" /> {t('stock_resolution.reduce_all')}
+                    <ArrowDown className="size-3.5 text-emerald-500" /> <span className="hidden sm:inline">{t('stock_resolution.reduce')}</span>
                 </button>
                 <button
                     onClick={() => handleBulkAction('promis')}
-                    className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-xs font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors gap-1"
+                    className="inline-flex flex-1 lg:flex-none items-center justify-center whitespace-nowrap h-7 px-2.5 rounded-lg text-[11px] font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-blue-200 hover:text-blue-600 transition-colors gap-1.5"
+                    title={t('stock_resolution.promis_all')}
                 >
-                    <History className="size-3" /> {t('stock_resolution.promis_all')}
+                    <History className="size-3.5 text-blue-500" /> <span className="hidden sm:inline">{t('stock_resolution.promised')}</span>
                 </button>
                 <button
                     onClick={() => handleBulkAction('force')}
-                    className="inline-flex items-center justify-center h-7 px-3 rounded-lg text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors gap-1 shadow-sm"
+                    className="inline-flex flex-1 lg:flex-none items-center justify-center whitespace-nowrap h-7 px-2.5 rounded-lg text-[11px] font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-red-200 hover:text-red-600 transition-colors gap-1.5"
+                    title={t('stock_resolution.force_all')}
                 >
-                    <Zap className="size-3" /> {t('stock_resolution.force_all')}
+                    <Zap className="size-3.5 text-red-500" /> <span className="hidden sm:inline">{t('stock_resolution.force')}</span>
                 </button>
             </div>
         </div>
@@ -170,11 +174,13 @@ export default function StockResolutionModal({
                         </span>
                     </td>
                     <td className="text-center px-4 py-3">
-                        <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1">
+                        <div className="inline-flex p-0.5 bg-slate-100 rounded-lg gap-0.5">
                             <button
                                 onClick={() => handleSetAction(item.id, 'reduce')}
-                                className={`inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-medium transition-all gap-1.5 border-none ${
-                                    currentAction === 'reduce' ? 'bg-white shadow-sm text-emerald-600 font-bold' : 'text-slate-400 hover:bg-white/50'
+                                className={`inline-flex items-center justify-center whitespace-nowrap h-7 px-2 rounded-md text-[10px] font-semibold transition-all gap-1 border-none ${
+                                    currentAction === 'reduce'
+                                        ? 'bg-white shadow-sm text-emerald-600 ring-1 ring-emerald-100'
+                                        : 'text-slate-500 hover:bg-white/70 hover:text-emerald-600'
                                 }`}
                                 title={t('stock_resolution.reduce')}
                             >
@@ -182,17 +188,23 @@ export default function StockResolutionModal({
                             </button>
                             <button
                                 onClick={() => handleSetAction(item.id, 'promis')}
-                                className={`inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-medium transition-all gap-1.5 border-none ${
-                                    currentAction === 'promis' ? 'bg-blue-500 text-white shadow-md font-bold' : 'text-slate-400 hover:bg-white/50'
+                                className={`inline-flex items-center justify-center whitespace-nowrap h-7 px-2 rounded-md text-[10px] font-semibold transition-all gap-1 border-none ${
+                                    currentAction === 'promis'
+                                        ? 'bg-white shadow-sm text-blue-600 ring-1 ring-blue-100'
+                                        : 'text-slate-500 hover:bg-white/70 hover:text-blue-600'
                                 }`}
+                                title={t('stock_resolution.promised')}
                             >
                                 <History className="size-3" /> {t('stock_resolution.promised')}
                             </button>
                             <button
                                 onClick={() => handleSetAction(item.id, 'force')}
-                                className={`inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-medium transition-all gap-1.5 border-none ${
-                                    currentAction === 'force' ? 'bg-red-600 text-white shadow-md font-bold' : 'text-slate-400 hover:bg-white/50'
+                                className={`inline-flex items-center justify-center whitespace-nowrap h-7 px-2 rounded-md text-[10px] font-semibold transition-all gap-1 border-none ${
+                                    currentAction === 'force'
+                                        ? 'bg-white shadow-sm text-red-600 ring-1 ring-red-100'
+                                        : 'text-slate-500 hover:bg-white/70 hover:text-red-600'
                                 }`}
+                                title={t('stock_resolution.force')}
                             >
                                 <Zap className="size-3" /> {t('stock_resolution.force')}
                             </button>
@@ -206,31 +218,31 @@ export default function StockResolutionModal({
         </div>
 
         {hasPromis && (
-            <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-inner space-y-4">
-                <div className="flex items-center gap-2 text-blue-600 mb-1">
-                    <History className="size-4" />
+            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                <div className="flex items-center gap-2 text-slate-700 mb-1">
+                    <History className="size-4 text-blue-500" />
                     <h4 className="text-xs font-black uppercase tracking-widest">{t('facturation:stock_resolution.promised')}</h4>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="w-full">
-                        <label className="block py-1 text-xs font-bold uppercase text-slate-400">
+                        <label className="block pb-1.5 text-[11px] font-bold uppercase text-slate-500 tracking-wide">
                             {t('stock_resolution.client_name')} <span className="lowercase font-normal text-slate-400">({t('stock_resolution.optional')})</span>
                         </label>
                         <input
                             type="text"
-                            className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                            className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                             value={promisClientName}
                             onChange={(e) => setPromisClientName(e.target.value)}
                             placeholder={t('client.manual_placeholder')}
                         />
                     </div>
                     <div className="w-full">
-                        <label className="block py-1 text-xs font-bold uppercase text-slate-400">
+                        <label className="block pb-1.5 text-[11px] font-bold uppercase text-slate-500 tracking-wide">
                             {t('stock_resolution.client_phone_for_promised_ticket')}
                         </label>
                         <input
                             type="text"
-                            className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                            className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                             value={promisPhone}
                             onChange={(e) => setPromisPhone(e.target.value)}
                             placeholder={t('stock_resolution.phone_number_placeholder')}

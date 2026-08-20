@@ -176,12 +176,12 @@ export default function TransferCommandeModal({
                             className="w-full h-10 text-sm"
                         >
                             <option value="">{t('orders:transfer_modal.select_supplier')}</option>
-                            {fournisseurs
-                                .filter(f => f.id !== parseInt(currentSupplierId || '0'))
-                                .map(f => (
-                                    <option key={f.id} value={String(f.id)}>{f.name}</option>
-                                ))
-                            }
+                            {fournisseurs.reduce<JSX.Element[]>((acc, f) => {
+                                if (f.id !== parseInt(currentSupplierId || '0')) {
+                                    acc.push(<option key={f.id} value={String(f.id)}>{f.name}</option>);
+                                }
+                                return acc;
+                            }, [])}
                         </Select>
                     </div>
 
