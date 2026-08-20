@@ -65,6 +65,7 @@ export interface CommandeFormProps {
     setSearchProduitQuery: (q: string) => void;
     handleSearchKeyDown: (e: React.KeyboardEvent) => void;
     filteredProduits: ProduitModel[];
+    searchLoading?: boolean;
     selectProduct: (p: ProduitModel) => void;
     getItemProps: (index: number) => { 'data-search-index': number; className: string; style: React.CSSProperties };
     
@@ -145,6 +146,7 @@ export default function CommandeForm({
     setSearchProduitQuery,
     handleSearchKeyDown,
     filteredProduits,
+    searchLoading,
     selectProduct,
     getItemProps,
     
@@ -341,7 +343,7 @@ export default function CommandeForm({
                       searchQuery={searchProduitQuery}
                       setSearchQuery={setSearchProduitQuery}
                       results={filteredProduits as unknown as SearchResult[]}
-                      loading={false}
+                      loading={searchLoading}
                       modes={['products']}
                       compact
                       skipStockCheck

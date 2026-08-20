@@ -120,6 +120,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
 
   const {
     produits: produitsList,
+    loading: searchLoading,
     searchQuery: searchProduitQuery,
     setSearchQuery: setSearchProduitQuery,
     refetch: _refetchProduits
@@ -211,19 +212,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const isMergeModalOpen = useCommandesStore((s) => s.isMergeModalOpen);
   const setIsMergeModalOpen = useCommandesStore((s) => s.setIsMergeModalOpen);
 
-  const filteredProduits = useMemo(() => {
-    if (!searchProduitQuery) return [];
-    const terms = searchProduitQuery.toLowerCase().split(/\s+/).filter(Boolean);
-    if (terms.length === 0) return [];
-    return produitsList.filter(p => {
-      const name = p.name.toLowerCase();
-      const cip1 = p.cip1 || '';
-      const cip2 = p.cip2 || '';
-      const cip3 = p.cip3 || '';
-      const haystack = `${name} ${cip1} ${cip2} ${cip3}`;
-      return terms.every(term => haystack.includes(term));
-    });
-  }, [produitsList, searchProduitQuery]);
+  // Les produits sont déjà filtrés et triés par l'index local (useProductSearch)
+  // Pas besoin de re-filtrer — l'index fait un scoring par pertinence
+  const filteredProduits = produitsList;
 
   const {
       handleSaveCommande,
@@ -513,6 +504,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
       setSearchProduitQuery,
       handleSearchKeyDown,
       filteredProduits,
+      searchLoading,
       selectProduct,
       getItemProps,
       commandeProduits,
