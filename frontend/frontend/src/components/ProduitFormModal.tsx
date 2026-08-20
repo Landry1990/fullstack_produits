@@ -78,6 +78,12 @@ export default function ProduitFormModal({
     if (open) {
       setLoading(false);
       setError(null);
+      // Convertir le selling_price HT du backend en TTC pour l'affichage
+      const initialTva = parseFloat((initialData?.tva as string) || '19.25') || 0;
+      const htPrice = normalizeNumberInput(String(initialData?.selling_price ?? ''));
+      const ttcPrice = htPrice > 0 && initialTva > 0
+        ? Math.round(htPrice * (1 + initialTva / 100)).toString()
+        : initialData?.selling_price ?? '';
       setForm({
         name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '',
         expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
@@ -90,6 +96,7 @@ export default function ProduitFormModal({
         default_treatment_days: '30',
         message_alerte: '',
         ...initialData,
+        selling_price: ttcPrice, // Override avec la valeur TTC
       });
     }
   }, [open, initialData]);
@@ -98,30 +105,74 @@ export default function ProduitFormModal({
   const [error, setError] = useState<string | null>(null);
 
   const costPrice = normalizeNumberInput(form.cost_price);
-  const sellingPrice = normalizeNumberInput(form.selling_price);
+  const sellingPriceTTC = normalizeNumberInput(form.selling_price);
   const tvaRate = parseFloat(form.tva) || 0;
 
-  // Calcul des marges
+  // Le prix de vente saisi est TTC — on déduit le HT
+  const sellingPriceHT = tvaRate > 0 ? sellingPriceTTC / (1 + tvaRate / 100) : sellingPriceTTC;
+
+  // Calcul des marges (déduits du cost_price, selling_price TTC et tva)
   let margeHT = 0;
   let coefMultiplicateur = 0;
   let pourcMarge = 0;
-  let prixVenteHT = 0;
-  let prixVenteTTC = 0;
 
   if (costPrice > 0) {
-    // Le prix de vente saisi est HT (comme le prix de revient)
-    prixVenteHT = sellingPrice;
-    prixVenteTTC = sellingPrice * (1 + tvaRate / 100);
-
     // Marge HT = PV HT - PR HT
-    margeHT = prixVenteHT - costPrice;
+    margeHT = sellingPriceHT - costPrice;
 
     // Coefficient multiplicateur = PV HT / PR HT
-    coefMultiplicateur = prixVenteHT / costPrice;
+    coefMultiplicateur = sellingPriceHT / costPrice;
 
     // % Marge = (Marge HT / PV HT) × 100  — harmonisé avec MarginService backend
-    pourcMarge = prixVenteHT > 0 ? (margeHT / prixVenteHT) * 100 : 0;
+    pourcMarge = sellingPriceHT > 0 ? (margeHT / sellingPriceHT) * 100 : 0;
   }
+
+  // Recalcul bidirectionnel : coef ↔ selling_price (TTC)
+  // Quand l'utilisateur change le coef → selling_price_TTC = cost_price × coef × (1 + tva/100)
+  const handleCoefChange = (value: string) => {
+    const coef = normalizeNumberInput(value);
+    const cp = normalizeNumberInput(form.cost_price);
+    const tva = parseFloat(form.tva) || 0;
+    if (cp > 0 && coef > 0) {
+      const sellingHT = cp * coef;
+      const sellingTTC = sellingHT * (1 + tva / 100);
+      setForm(p => ({ ...p, selling_price: Math.round(sellingTTC).toString() }));
+    }
+  };
+
+  // Quand l'utilisateur change le cost_price → selling_price TTC se recalcule si coef déjà défini
+  const handleCostPriceChange = (value: string) => {
+    const cp = normalizeNumberInput(value);
+    const spTTC = normalizeNumberInput(form.selling_price);
+    const tva = parseFloat(form.tva) || 0;
+    if (cp > 0 && spTTC > 0) {
+      // Calculer le coef actuel à partir du selling_price TTC
+      const spHT = tva > 0 ? spTTC / (1 + tva / 100) : spTTC;
+      const currentCoef = spHT / cp;
+      const newSellingHT = cp * currentCoef;
+      const newSellingTTC = newSellingHT * (1 + tva / 100);
+      setForm(p => ({ ...p, cost_price: value, selling_price: Math.round(newSellingTTC).toString() }));
+    } else {
+      setForm(p => ({ ...p, cost_price: value }));
+    }
+  };
+
+  // Quand l'utilisateur change la TVA → selling_price TTC se recalcule à partir du HT
+  const handleTvaChange = (value: string) => {
+    const spTTC = normalizeNumberInput(form.selling_price);
+    const oldTva = parseFloat(form.tva) || 0;
+    const newTva = parseFloat(value) || 0;
+    if (spTTC > 0 && oldTva !== newTva) {
+      // Convertir l'ancien TTC en HT, puis recalculer le nouveau TTC
+      const spHT = oldTva > 0 ? spTTC / (1 + oldTva / 100) : spTTC;
+      const newSellingTTC = spHT * (1 + newTva / 100);
+      setForm(p => ({ ...p, tva: value, selling_price: Math.round(newSellingTTC).toString() }));
+    } else {
+      setForm(p => ({ ...p, tva: value }));
+    }
+  };
+
+  // Quand l'utilisateur change le selling_price → le coef s'affiche automatiquement (calcul dérivé)
 
   function formatBackendErrors(data: unknown): string {
     if (data == null) return t('common:messages.server_error');
@@ -148,12 +199,16 @@ export default function ProduitFormModal({
     setError(null);
     try {
       const stockValue = parseInt(form.stock, 10);
+      // Le selling_price saisi est TTC — convertir en HT pour le backend
+      const sellingTTC = normalizeNumberInput(form.selling_price);
+      const tvaPct = parseFloat(form.tva) || 0;
+      const sellingHT = tvaPct > 0 ? sellingTTC / (1 + tvaPct / 100) : sellingTTC;
       const payload = {
         name: form.name.trim().toUpperCase(),
         description: '',
         stock: Number.isFinite(stockValue) ? stockValue : undefined,
         cost_price: form.cost_price.trim(),
-        selling_price: form.selling_price.trim(),
+        selling_price: Math.round(sellingHT * 100) / 100, // HT, arrondi à 2 décimales
         cip1: form.cip1.trim() || null,
         cip2: form.cip2.trim() || null,
         cip3: form.cip3.trim() || null,
@@ -355,23 +410,35 @@ export default function ProduitFormModal({
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cost_price')} (HT)</label>
                 <div className="flex">
-                  <Input type="number" className={`${inputBase} rounded-r-none border-r-0`} value={form.cost_price} onChange={(e) => setForm((p) => ({ ...p, cost_price: e.target.value }))} step="0.01" required />
+                  <Input type="number" className={`${inputBase} rounded-r-none border-r-0`} value={form.cost_price} onChange={(e) => handleCostPriceChange(e.target.value)} step="0.01" required />
                   <span className="px-3 flex items-center bg-slate-100 border border-slate-200 border-l-0 rounded-r-lg text-slate-500 text-sm font-medium">F</span>
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.selling_price')} (HT)</label>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_coeff')}</label>
+                <Input
+                  type="number"
+                  className={`${inputBase} font-bold ${coefMultiplicateur < 1 ? 'text-red-600' : 'text-indigo-600'}`}
+                  value={costPrice > 0 ? coefMultiplicateur.toFixed(3) : ''}
+                  onChange={(e) => handleCoefChange(e.target.value)}
+                  step="0.01"
+                  min="0"
+                  placeholder="1.30"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.selling_price')} (TTC)</label>
                 <div className="flex">
                   <Input type="number" className={`${inputBase} rounded-r-none border-r-0 font-semibold text-indigo-600`} value={form.selling_price} onChange={(e) => setForm((p) => ({ ...p, selling_price: e.target.value }))} step="0.01" required />
                   <span className="px-3 flex items-center bg-slate-100 border border-slate-200 border-l-0 rounded-r-lg text-slate-500 text-sm font-medium">F</span>
                 </div>
-                {sellingPrice > 0 && (
-                  <p className="text-[10px] text-slate-400 mt-1">TTC : {prixVenteTTC.toFixed(2)} F</p>
+                {sellingPriceHT > 0 && (
+                  <p className="text-[10px] text-slate-400 mt-1">HT : {sellingPriceHT.toFixed(2)} F</p>
                 )}
               </div>
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.tva')}</label>
-                <Select className={selectSm} value={form.tva} onChange={(e) => setForm((p) => ({ ...p, tva: e.target.value }))} disabled={loadingTVA}>
+                <Select className={selectSm} value={form.tva} onChange={(e) => handleTvaChange(e.target.value)} disabled={loadingTVA}>
                   {tvaList.map((t) => (
                     <option key={t.id} value={t.taux}>{t.taux}% {t.libelle ? `(${t.libelle})` : ''}</option>
                   ))}
@@ -380,10 +447,6 @@ export default function ProduitFormModal({
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Marge HT (F)</label>
                 <div className={`${inputSm} flex items-center justify-center font-bold ${margeHT < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{margeHT.toFixed(2)} F</div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_coeff')}</label>
-                <div className={`${inputSm} flex items-center justify-center font-bold ${coefMultiplicateur < 1 ? 'text-red-600' : 'text-emerald-600'}`}>{coefMultiplicateur.toFixed(2)}</div>
               </div>
               <div>
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_percent')}</label>

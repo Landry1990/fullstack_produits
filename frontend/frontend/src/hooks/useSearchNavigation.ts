@@ -1,4 +1,4 @@
-import { useState, type RefObject } from 'react';
+import { useState, useEffect, type RefObject } from 'react';
 
 export interface UseSearchNavigationOptions {
     resetOnSelect?: boolean;
@@ -19,6 +19,11 @@ export function useSearchNavigation<T>(
 ) {
     const { resetOnSelect = true, searchInputRef } = options;
     const [selectedIndex, setSelectedIndex] = useState(-1);
+
+    // Réinitialiser la sélection quand les résultats changent
+    useEffect(() => {
+        setSelectedIndex(-1);
+    }, [searchResults]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (searchResults.length === 0) return;

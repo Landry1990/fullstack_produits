@@ -36,8 +36,10 @@ class CachedSearchMixin:
             if key not in ['search', 'page', 'page_size', 'ordering']:
                 filters[key] = value
         
-        # Si c'est une recherche ou s'il y a des filtres, utiliser le cache de recherche
-        if search_query or filters:
+        # Si c'est une recherche textuelle, utiliser le cache de recherche
+        # Les requêtes avec seulement des filtres/pagination passent par le cache de liste
+        # pour que page/page_size soient pris en compte dans la clé de cache.
+        if search_query:
             cached_results = SearchCache.get_search_results(search_query, filters)
             if cached_results is not None:
                 # Ajouter un header pour indiquer que c'est du cache
@@ -58,8 +60,8 @@ class CachedSearchMixin:
             response['X-Cache-Hit'] = 'false'
             return response
         
-        # Pour les listes sans recherche, utiliser le cache de liste
-        # MAIS si des filtres sont présents, utiliser le cache de recherche (qui prend en compte les filtres)
+        # Pour les listes sans recherche textuelle, utiliser le cache de liste
+        # (gère correctement filtres + pagination)
         try:
             page_num = int(page)
             page_size_num = int(page_size)

@@ -96,6 +96,9 @@ export function useCommandeNavigation({
   useEffect(() => {
     const viewState = (location.state as { viewState?: { mode: 'EDIT' | 'DETAILS'; commandeId: number } } | undefined)?.viewState;
     if (!viewState?.commandeId) return;
+    // Éviter un refetch inutile si on est déjà sur la bonne vue
+    const currentState = useCommandesStore.getState();
+    if (currentState.viewMode === viewState.mode && currentState.selectedCommande?.id === viewState.commandeId) return;
     (async () => {
       try {
         const data = await commandeService.getById(viewState.commandeId);
@@ -111,7 +114,7 @@ export function useCommandeNavigation({
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.state]);
 
   useEffect(() => {
     interface CadencierProduct {

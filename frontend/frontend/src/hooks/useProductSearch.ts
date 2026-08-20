@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useDebounce } from 'use-debounce'
 import api from '../services/api'
 import { useQuery } from '@tanstack/react-query'
@@ -49,11 +49,15 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
     } = options
 
     const [searchQuery, setSearchQuery] = useState('')
-    const [debouncedSearch] = useDebounce(searchQuery, debounceMs)
     const [wasBarcodeScanned, setWasBarcodeScanned] = useState(false)
 
     // Index de recherche en mémoire — précharge tous les produits une fois
     const { search: searchInIndex, isReady: indexReady, isLoading: indexLoading } = useProductSearchIndex()
+
+    // Debounce court quand l'index local est prêt (recherche instantanée < 1ms)
+    // Debounce normal seulement pour le fallback API
+    const effectiveDebounce = indexReady ? 50 : debounceMs
+    const [debouncedSearch] = useDebounce(searchQuery, effectiveDebounce)
 
     // Barcode scan detection
     const lastInputTime = useRef<number>(0)
