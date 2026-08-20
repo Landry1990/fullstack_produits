@@ -88,6 +88,7 @@
         "manage_perimes": "Manage Expired",
         "manage_avoirs": "Manage Credits",
         "validate_zero_amount": "Allow 0F sales",
+        "can_validate_sales": "Validate sales",
         "view_cash_sessions": "View cash sessions"
     },
     "messages": {

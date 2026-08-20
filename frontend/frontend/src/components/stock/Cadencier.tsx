@@ -3,19 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Package, TrendingUp, Calendar, Search, ShoppingCart, Truck, Boxes,
-  ChevronLeft, ChevronRight, RotateCcw, ChevronDown, ChevronUp
+  ChevronLeft, ChevronRight, RotateCcw, ChevronDown, ChevronUp, AlertTriangle
 } from 'lucide-react';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import { cn } from '../../lib/utils';
+import { formatCurrency } from '../../utils/formatters';
 
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Card } from '../ui/Card';
-import { Select } from '../ui/Select';
-import { Badge } from '../ui/Badge';
-import { Checkbox } from '../ui/Checkbox';
-import SkeletonTable from '../ui/SkeletonTable';
+import { Button } from '../shadcn/button';
+import { Input } from '../shadcn/input';
+import { Badge } from '../shadcn/badge';
+import { Checkbox } from '../shadcn/checkbox';
+import {
+  Card, CardContent, CardHeader, CardTitle, CardDescription
+} from '../shadcn/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
 import { logger } from '../../utils/logger'
 
@@ -189,320 +190,437 @@ const Cadencier: React.FC = () => {
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  const urgenceBadge = (urgence: CadencierItem['urgence']) => {
-    const config = {
-      rupture: { variant: 'error' as const, label: t('stock:cadencier.urgence.rupture', 'Rupture') },
-      alerte: { variant: 'error' as const, label: t('stock:cadencier.urgence.alerte', 'Alerte') },
-      surveillance: { variant: 'warning' as const, label: t('stock:cadencier.urgence.surveillance', 'Surveillance') },
-      ok: { variant: 'success' as const, label: t('stock:cadencier.urgence.ok', 'OK') },
-    };
-    const c = config[urgence];
-    return <Badge variant={c.variant} size="sm">{c.label}</Badge>;
+  const getUrgencyBadge = (urgence: CadencierItem['urgence']) => {
+    switch (urgence) {
+      case 'rupture':
+        return <Badge className="bg-red-700 hover:bg-red-800 text-white">{t('stock:cadencier.urgence.rupture', 'RUPTURE')}</Badge>;
+      case 'alerte':
+        return <Badge variant="destructive">{t('stock:cadencier.urgence.alerte', 'Alerte')}</Badge>;
+      case 'surveillance':
+        return <Badge className="bg-amber-500 hover:bg-amber-600 text-white">{t('stock:cadencier.urgence.surveillance', 'Surveillance')}</Badge>;
+      case 'ok':
+        return <Badge variant="secondary">{t('stock:cadencier.urgence.ok', 'OK')}</Badge>;
+      default:
+        return null;
+    }
   };
 
+  const allSelected = items.length > 0 && selectedIds.size === items.length;
+
+  const headers = [
+    t('stock:cadencier.product', 'Produit'),
+    t('stock:cadencier.stock', 'Stock'),
+    t('stock:cadencier.rotation', 'Rotation'),
+    t('stock:cadencier.coverage', 'Couverture'),
+    t('stock:cadencier.target', 'Cible'),
+    t('stock:cadencier.suggested', 'Qté suggérée'),
+    t('stock:cadencier.unit_price', 'Prix achat'),
+    t('stock:cadencier.amount', 'Montant HT'),
+    t('stock:cadencier.urgency', 'Urgence'),
+    t('stock:cadencier.supplier', 'Fournisseur'),
+  ];
+  const widths = ['w-[28%]', 'w-16', 'w-24', 'w-20', 'w-16', 'w-24', 'w-28', 'w-28', 'w-24', 'w-[14%]'];
+
   return (
-    <div className="p-2 lg:p-4 h-full flex flex-col space-y-2 lg:space-y-4">
-      {!headerCollapsed && (
-        <>
-      <div className="flex items-center gap-2 lg:gap-3">
-        <div className="p-1.5 lg:p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-          <TrendingUp className="h-5 w-5 lg:h-6 lg:w-6 text-emerald-600 dark:text-emerald-400" />
-        </div>
-        <div>
-          <h1 className="text-lg lg:text-2xl font-bold tracking-tight">{t('stock:cadencier.title', 'Cadencier de Stock')}</h1>
-          <p className="text-xs lg:text-sm text-muted-foreground hidden lg:block">{t('stock:cadencier.subtitle', 'Planification des approvisionnements par rotation et couverture')}</p>
-        </div>
-      </div>
-
-      <Card className="p-2 lg:p-3">
-        <div className="grid grid-cols-2 md:grid-cols-12 gap-2 lg:gap-3 items-end">
-          <div className="md:col-span-3">
-            <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-transparent focus-within:ring-1 focus-within:ring-emerald-500">
-              <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-              <Input
-                type="text"
-                placeholder={t('stock:cadencier.search_placeholder', 'Rechercher un produit, CIP...')}
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="h-full border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0"
-              />
+    <div className="h-screen overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
+      <div className="h-full max-w-[1600px] mx-auto space-y-3 overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
+              <TrendingUp className="size-5" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                {t('stock:cadencier.title', 'Cadencier de Stock')}
+              </h1>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">
+                {t('stock:cadencier.subtitle', 'Planification des approvisionnements par rotation et couverture')}
+              </p>
             </div>
           </div>
 
-          <div className="md:col-span-2">
-            <Select
-              label={t('stock:cadencier.type', 'Type')}
-              value={filters.type}
-              onChange={(e) => handleFilterChange('type', e.target.value)}
-              size="sm"
-            >
-              <option value="grossiste">{t('stock:cadencier.type_grossiste', 'Grossiste')}</option>
-              <option value="divers">{t('stock:cadencier.type_divers', 'Divers')}</option>
-            </Select>
-          </div>
-
-          <div className="md:col-span-2">
-            <Select
-              label={t('stock:cadencier.coverage', 'Couverture')}
-              value={String(filters.coverage_days)}
-              onChange={(e) => handleFilterChange('coverage_days', parseInt(e.target.value))}
-              size="sm"
-            >
-              <option value="7">7 jours</option>
-              <option value="15">15 jours</option>
-              <option value="30">30 jours</option>
-              <option value="45">45 jours</option>
-              <option value="60">60 jours</option>
-              <option value="90">90 jours</option>
-            </Select>
-          </div>
-
-          <div className="md:col-span-2">
-            <Select
-              label={t('stock:cadencier.rayon', 'Rayon')}
-              value={filters.rayon}
-              onChange={(e) => handleFilterChange('rayon', e.target.value)}
-              size="sm"
-            >
-              <option value="">{t('common:all', 'Tous')}</option>
-              {rayons.map(r => <option key={r.id} value={String(r.id)}>{r.name}</option>)}
-            </Select>
-          </div>
-
-          <div className="md:col-span-2">
-            <Select
-              label={t('stock:cadencier.fournisseur', 'Fournisseur')}
-              value={filters.fournisseur}
-              onChange={(e) => handleFilterChange('fournisseur', e.target.value)}
-              size="sm"
-            >
-              <option value="">{t('common:all', 'Tous')}</option>
-              {fournisseurs.map(f => <option key={f.id} value={String(f.id)}>{f.name}</option>)}
-            </Select>
-          </div>
-
-          <div className="md:col-span-1 flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchCadencier(1)}
-              className="gap-1 h-9 px-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-              title={t('common:refresh', 'Rafraîchir')}
-            >
-              <RotateCcw className="h-4 w-4 text-emerald-600" />
-            </Button>
-          </div>
+          <button
+            onClick={() => setHeaderCollapsed(!headerCollapsed)}
+            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 transition-colors px-2 py-1 rounded hover:bg-emerald-50"
+            title={headerCollapsed ? t('common:show_header', 'Afficher en-tête') : t('common:hide_header', 'Masquer en-tête')}
+          >
+            {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
+            {headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
+          </button>
         </div>
 
-        <div className="mt-1 lg:mt-2 flex items-center gap-2">
-          <Checkbox
-            checked={filters.only_below_target}
-            onChange={(checked) => handleFilterChange('only_below_target', checked)}
-          />
-          <label className="text-xs text-muted-foreground cursor-pointer select-none">
-            {t('stock:cadencier.only_below_target', 'Uniquement les produits sous le seuil')}
-          </label>
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
-        <Card className="p-2 lg:p-4 flex flex-col justify-center border-slate-200">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="p-1.5 bg-emerald-50 rounded-md">
-              <Boxes className="h-4 w-4 text-emerald-600" />
-            </div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t('stock:cadencier.total_products', 'Produits à commander')}</p>
-          </div>
-          <h2 className="text-lg lg:text-2xl font-bold text-slate-800">{totalCount}</h2>
-          <p className="text-xs text-slate-400">{totalQuantite} {t('stock:cadencier.units', 'unités suggérées')}</p>
-        </Card>
-
-        <Card className="p-2 lg:p-4 flex flex-col justify-center border-slate-200">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="p-1.5 bg-emerald-50 rounded-md">
-              <Calendar className="h-4 w-4 text-emerald-600" />
-            </div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t('stock:cadencier.total_ht', 'Montant total HT')}</p>
-          </div>
-          <h2 className="text-lg lg:text-2xl font-bold text-slate-800">{totalHt.toLocaleString('fr-FR')} F</h2>
-          <p className="text-xs text-slate-400">{t('stock:cadencier.coverage', 'Couverture')}: {filters.coverage_days} jours</p>
-        </Card>
-
-        <Card className="p-2 lg:p-4 flex flex-col justify-center col-span-2 lg:col-span-2 border-slate-200">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="p-1.5 bg-emerald-50 rounded-md">
-              <ShoppingCart className="h-4 w-4 text-emerald-600" />
-            </div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t('stock:cadencier.selection', 'Sélection')}</p>
-          </div>
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg lg:text-2xl font-bold text-slate-800">{selectedItems.length} <span className="text-sm lg:text-base font-normal text-slate-500">{t('stock:cadencier.products', 'produits')}</span></h2>
-            <span className="text-base lg:text-xl font-bold text-slate-800">{selectedTotal.toLocaleString('fr-FR')} F</span>
-          </div>
-          <div className="mt-1 lg:mt-2 flex gap-2">
-            <Button
-              onClick={() => handleGenerateOrder('LOC')}
-              disabled={selectedItems.length === 0}
-              variant="outline"
-              size="sm"
-              className="gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
-            >
-              <Truck className="h-4 w-4" />
-              {t('stock:cadencier.generate_grossiste', 'Commande Grossiste')}
-            </Button>
-            <Button
-              onClick={() => handleGenerateOrder('DIV')}
-              disabled={selectedItems.length === 0}
-              variant="outline"
-              size="sm"
-              className="gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              {t('stock:cadencier.generate_divers', 'Commande Divers')}
-            </Button>
-          </div>
-        </Card>
-      </div>
-      </>
-      )}
-
-      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden p-0">
-        <div className="px-3 lg:px-4 py-2 lg:py-3 border-b flex justify-between items-center bg-muted/30">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold flex items-center gap-2 text-sm">
-              <Package className="h-4 w-4 text-emerald-600" />
-              {t('stock:cadencier.list', 'Lignes du cadencier')}
-            </h3>
-            <button
-              onClick={() => setHeaderCollapsed(!headerCollapsed)}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-emerald-600 transition-colors ml-2 px-2 py-1 rounded hover:bg-emerald-50"
-              title={headerCollapsed ? t('common:show_header', 'Afficher en-tête') : t('common:hide_header', 'Masquer en-tête')}
-            >
-              {headerCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
-              {headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
-            </button>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {t('stock:cadencier.showing', { count: items.length, total: totalCount })}
-          </span>
-        </div>
-
-        <div className="flex-1 overflow-auto">
-          <Table>
-            <TableHeader className="sticky top-0 z-10 bg-white shadow-sm">
-              <TableRow className="bg-white hover:bg-white">
-                <TableHead className="w-10 py-2">
-                  <Checkbox
-                    checked={items.length > 0 && selectedIds.size === items.length}
-                    onChange={toggleAll}
-                  />
-                </TableHead>
-                <TableHead className="py-2">{t('stock:cadencier.product', 'Produit')}</TableHead>
-                <TableHead className="text-right py-2">{t('stock:cadencier.stock', 'Stock')}</TableHead>
-                <TableHead className="text-right py-2">{t('stock:cadencier.rotation', 'Rotation')}</TableHead>
-                <TableHead className="text-right py-2">{t('stock:cadencier.coverage', 'Couverture')}</TableHead>
-                <TableHead className="text-right py-2">{t('stock:cadencier.target', 'Cible')}</TableHead>
-                <TableHead className="text-right py-2">{t('stock:cadencier.suggested', 'Qté suggérée')}</TableHead>
-                <TableHead className="text-right py-2">{t('stock:cadencier.unit_price', 'Prix achat')}</TableHead>
-                <TableHead className="text-right py-2">{t('stock:cadencier.amount', 'Montant HT')}</TableHead>
-                <TableHead className="py-2">{t('stock:cadencier.urgency', 'Urgence')}</TableHead>
-                <TableHead className="py-2">{t('stock:cadencier.supplier', 'Fournisseur')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={11}>
-                      <SkeletonTable rows={1} columns={11} />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : items.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center text-muted-foreground py-12">
-                    {t('stock:cadencier.empty', 'Aucun produit à afficher dans le cadencier')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                items.map((item) => (
-                  <TableRow
-                    key={item.produit_id}
-                    className={cn(
-                      'cursor-pointer transition-colors',
-                      selectedIds.has(item.produit_id) ? 'bg-emerald-50/50' : 'hover:bg-slate-50/50'
-                    )}
-                    onClick={() => toggleSelection(item.produit_id)}
-                  >
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={selectedIds.has(item.produit_id)}
-                        onChange={() => toggleSelection(item.produit_id)}
+        {!headerCollapsed && (
+          <>
+            {/* Filters Card */}
+            <Card className="py-3">
+              <CardContent className="pb-2">
+                <div className="grid grid-cols-2 md:grid-cols-12 gap-2 lg:gap-3 items-end">
+                  <div className="md:col-span-3">
+                    <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-slate-200 bg-white focus-within:ring-1 focus-within:ring-emerald-500">
+                      <Search className="size-4 text-slate-400 shrink-0" />
+                      <input
+                        type="text"
+                        placeholder={t('stock:cadencier.search_placeholder', 'Rechercher un produit, CIP...')}
+                        value={filters.search}
+                        onChange={(e) => handleFilterChange('search', e.target.value)}
+                        className="h-full border-0 focus:outline-none focus:ring-0 p-0 text-sm bg-transparent w-full"
                       />
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-sm">{item.produit_nom}</div>
-                      <div className="text-xs text-muted-foreground font-mono">{item.cip1 || '-'}</div>
-                      {item.rayon_nom && <div className="text-[10px] text-muted-foreground mt-1">{item.rayon_nom}</div>}
-                    </TableCell>
-                    <TableCell className={cn(
-                      'text-right font-medium',
-                      item.stock <= 0 ? 'text-red-600' : item.stock < item.stock_minimum ? 'text-amber-600' : 'text-slate-700'
-                    )}>
-                      {item.stock}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      <div>{item.rotation_moyenne.toFixed(2)}/mois</div>
-                      <div className="text-[10px]">({item.rotation_jour.toFixed(2)}/j)</div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {item.couverture_jours === 9999 ? '∞' : `${item.couverture_jours} j`}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {item.stock_cible}
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-emerald-600">
-                      {item.quantite_suggeree}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {item.prix_achat.toLocaleString('fr-FR')}
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-emerald-600">
-                      {item.montant_ht.toLocaleString('fr-FR')} F
-                    </TableCell>
-                    <TableCell>{urgenceBadge(item.urgence)}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">{item.fournisseur_nom || '-'}</div>
-                      {item.is_supplier_exclusive && (
-                        <Badge variant="outline" size="sm" className="mt-1">{t('stock:cadencier.exclusive', 'Exclusif')}</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                    </div>
+                  </div>
 
-        {totalPages > 1 && (
-          <div className="px-3 lg:px-6 py-2 lg:py-4 border-t flex items-center justify-between bg-muted/30">
-            <span className="text-xs lg:text-sm text-muted-foreground">
-              Page {page} / {totalPages} · {totalCount} {t('common:results', 'résultats')}
-            </span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => fetchCadencier(Math.max(1, page - 1))} disabled={page <= 1}>
-                <ChevronLeft className="h-4 w-4 mr-1" /> {t('common:previous', 'Précédent')}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => fetchCadencier(Math.min(totalPages, page + 1))} disabled={page >= totalPages}>
-                {t('common:next', 'Suivant')} <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+                  <div className="md:col-span-2">
+                    <select
+                      value={filters.type}
+                      onChange={(e) => handleFilterChange('type', e.target.value)}
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                    >
+                      <option value="grossiste">{t('stock:cadencier.type_grossiste', 'Grossiste')}</option>
+                      <option value="divers">{t('stock:cadencier.type_divers', 'Divers')}</option>
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <select
+                      value={String(filters.coverage_days)}
+                      onChange={(e) => handleFilterChange('coverage_days', parseInt(e.target.value))}
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                    >
+                      <option value="7">7 jours</option>
+                      <option value="15">15 jours</option>
+                      <option value="30">30 jours</option>
+                      <option value="45">45 jours</option>
+                      <option value="60">60 jours</option>
+                      <option value="90">90 jours</option>
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <select
+                      value={filters.rayon}
+                      onChange={(e) => handleFilterChange('rayon', e.target.value)}
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                    >
+                      <option value="">{t('common:all', 'Tous')}</option>
+                      {rayons.map(r => <option key={r.id} value={String(r.id)}>{r.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <select
+                      value={filters.fournisseur}
+                      onChange={(e) => handleFilterChange('fournisseur', e.target.value)}
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                    >
+                      <option value="">{t('common:all', 'Tous')}</option>
+                      {fournisseurs.map(f => <option key={f.id} value={String(f.id)}>{f.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-1 flex items-center justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchCadencier(1)}
+                      className="gap-1 h-9 px-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                      title={t('common:refresh', 'Rafraîchir')}
+                    >
+                      <RotateCcw className="size-4 text-emerald-600" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-2 flex items-center gap-2">
+                  <Checkbox
+                    checked={filters.only_below_target}
+                    onCheckedChange={(checked) => handleFilterChange('only_below_target', checked)}
+                  />
+                  <label className="text-xs text-slate-500 cursor-pointer select-none">
+                    {t('stock:cadencier.only_below_target', 'Uniquement les produits sous le seuil')}
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <Card>
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="size-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <Boxes className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                      {t('stock:cadencier.total_products', 'Produits à commander')}
+                    </p>
+                    <p className="text-xl font-bold text-slate-900">{totalCount}</p>
+                    <p className="text-xs text-slate-400">{totalQuantite} {t('stock:cadencier.units', 'unités suggérées')}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="size-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <Calendar className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                      {t('stock:cadencier.total_ht', 'Montant total HT')}
+                    </p>
+                    <p className="text-xl font-bold text-slate-900">{formatCurrency(Math.round(totalHt))}</p>
+                    <p className="text-xs text-slate-400">{t('stock:cadencier.coverage', 'Couverture')}: {filters.coverage_days} j</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="col-span-2">
+                <CardContent className="p-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="size-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                      <ShoppingCart className="size-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                        {t('stock:cadencier.selection', 'Sélection')}
+                      </p>
+                      <p className="text-xl font-bold text-slate-900">
+                        {selectedItems.length} <span className="text-sm font-normal text-slate-500">{t('stock:cadencier.products', 'produits')}</span>
+                      </p>
+                      <p className="text-xs text-slate-400">{formatCurrency(Math.round(selectedTotal))}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => handleGenerateOrder('LOC')}
+                      disabled={selectedItems.length === 0}
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                    >
+                      <Truck className="size-4" />
+                      <span className="hidden sm:inline">{t('stock:cadencier.generate_grossiste', 'Commande Grossiste')}</span>
+                    </Button>
+                    <Button
+                      onClick={() => handleGenerateOrder('DIV')}
+                      disabled={selectedItems.length === 0}
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                    >
+                      <ShoppingCart className="size-4" />
+                      <span className="hidden sm:inline">{t('stock:cadencier.generate_divers', 'Commande Divers')}</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
+          </>
         )}
-      </Card>
+
+        {/* Table Card */}
+        <Card className="overflow-hidden flex flex-col flex-1 min-h-0">
+          <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="flex items-center gap-2">
+              <Package className="size-4 text-emerald-600" />
+              <h3 className="font-semibold text-sm text-slate-700">
+                {t('stock:cadencier.list', 'Lignes du cadencier')}
+              </h3>
+            </div>
+            <span className="text-xs text-slate-500">
+              {t('stock:cadencier.showing', { count: items.length, total: totalCount })}
+            </span>
+          </div>
+
+          <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
+            {loading ? (
+              <div className="overflow-auto flex-1 min-h-0">
+                <Table className="w-full table-fixed text-sm">
+                  <TableHeader className="sticky top-0 z-10">
+                    <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
+                      <TableHead className="w-12 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <span className="sr-only">Sélection</span>
+                      </TableHead>
+                      {headers.map((h, i) => (
+                        <TableHead
+                          key={h}
+                          className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
+                            i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
+                          }`}
+                        >
+                          {h}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <TableRow key={i} className="border-b border-slate-100 animate-pulse hover:bg-transparent">
+                        <TableCell className="py-2 px-3 text-center"><div className="size-4 rounded bg-slate-200 mx-auto" /></TableCell>
+                        {widths.map((w, j) => (
+                          <TableCell key={j} className="py-2 px-3">
+                            <div className="h-4 rounded bg-slate-200" style={{ width: `${60 + Math.random() * 30}%` }} />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="p-4 bg-slate-100 rounded-2xl mb-4">
+                  <AlertTriangle className="size-10 text-slate-300" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-700">
+                  {t('stock:cadencier.empty', 'Aucun produit à afficher dans le cadencier')}
+                </h3>
+                <p className="text-sm text-slate-500 mt-1 max-w-sm">
+                  {t('stock:analyse.empty.all_good', 'Tout est à jour.')}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-auto flex-1 min-h-0">
+                <Table className="w-full table-fixed text-sm">
+                  <TableHeader className="sticky top-0 z-10">
+                    <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
+                      <TableHead className="w-12 px-3 py-2 text-center">
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={toggleAll}
+                          aria-label="Sélectionner tout"
+                        />
+                      </TableHead>
+                      {headers.map((h, i) => (
+                        <TableHead
+                          key={h}
+                          className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
+                            i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
+                          }`}
+                        >
+                          {i === 0 ? (
+                            <div className="flex items-center gap-1.5">
+                              <Package className="size-3.5" /> {h}
+                            </div>
+                          ) : h}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="text-sm">
+                    {items.map((item) => {
+                      const isSelected = selectedIds.has(item.produit_id);
+                      return (
+                        <TableRow
+                          key={item.produit_id}
+                          className={cn(
+                            'border-b border-slate-100 transition-colors cursor-pointer',
+                            isSelected ? 'bg-emerald-50/40' : 'hover:bg-slate-50/80'
+                          )}
+                          onClick={() => toggleSelection(item.produit_id)}
+                        >
+                          <TableCell className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleSelection(item.produit_id)}
+                              aria-label={`Sélectionner ${item.produit_nom}`}
+                            />
+                          </TableCell>
+                          <TableCell className="px-3 py-2">
+                            <div className="font-semibold text-slate-900 truncate text-sm" title={item.produit_nom}>{item.produit_nom}</div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              CIP: {item.cip1 || '-'}
+                              {item.rayon_nom && <span className="ml-2">· {item.rayon_nom}</span>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-center">
+                            <Badge variant="outline" className={cn(
+                              'font-mono text-xs',
+                              item.stock <= 0 ? 'text-red-600 border-red-200' :
+                              item.stock < item.stock_minimum ? 'text-amber-600 border-amber-200' : 'text-slate-700'
+                            )}>
+                              {item.stock}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-center font-mono text-xs text-slate-700">
+                            {Math.ceil(item.rotation_moyenne)}
+                            <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_month', 'mois')}</span>
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-center">
+                            <span className={cn(
+                              'text-xs font-semibold',
+                              item.couverture_jours === 9999 ? 'text-slate-400' :
+                              item.couverture_jours < 7 ? 'text-red-600' :
+                              item.couverture_jours < 14 ? 'text-amber-600' : 'text-blue-600'
+                            )}>
+                              {item.couverture_jours === 9999 ? '∞' : `${item.couverture_jours} j`}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-center font-semibold text-slate-700 text-sm">
+                            {item.stock_cible}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-center font-bold text-emerald-600 text-sm">
+                            {item.quantite_suggeree}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-right font-mono text-xs text-slate-600">
+                            {formatCurrency(Math.round(item.prix_achat))}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-right font-semibold text-emerald-600 text-sm">
+                            {formatCurrency(Math.round(item.montant_ht))}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-center">
+                            {getUrgencyBadge(item.urgence)}
+                          </TableCell>
+                          <TableCell className="px-3 py-2">
+                            <div className="text-sm text-slate-700 truncate" title={item.fournisseur_nom || ''}>
+                              {item.fournisseur_nom || '-'}
+                            </div>
+                            {item.is_supplier_exclusive && (
+                              <Badge variant="outline" className="mt-0.5 text-[10px]">{t('stock:cadencier.exclusive', 'Exclusif')}</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-4 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <p className="text-sm text-slate-500">
+                Page <span className="font-semibold text-slate-900">{page}</span> sur <span className="font-semibold text-slate-900">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fetchCadencier(Math.max(1, page - 1))}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <span className="min-w-[3rem] text-center text-sm font-semibold text-slate-900">
+                  {page}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fetchCadencier(Math.min(totalPages, page + 1))}
+                  disabled={page >= totalPages}
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 };
 
 export default Cadencier;
-

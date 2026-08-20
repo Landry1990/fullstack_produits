@@ -23,6 +23,7 @@ export interface User {
         can_close_commande?: boolean;
         can_generate_coupon?: boolean;
         can_modify_price?: boolean;
+        can_validate_sales?: boolean;
         max_discount_rate?: number;
     };
 

@@ -283,6 +283,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
         saving={hook.sudoState.isValidating}
         title={hook.sudoState.title || hook.t('facturation.payment.sudo_title')}
         message={hook.sudoState.message || ""}
+        permission={hook.sudoState.permission}
         forceCurrentUser={hook.sudoState.forceCurrentUser}
         className="z-[9999]"
       />

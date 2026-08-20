@@ -38,6 +38,7 @@ interface User {
     can_manage_perimes?: boolean;
     can_manage_avoirs?: boolean;
     can_validate_zero_amount?: boolean;
+    can_validate_sales?: boolean;
     can_modify_price?: boolean;
     can_modify_invoice?: boolean;
     can_view_cash_sessions?: boolean;
@@ -205,6 +206,7 @@ export default function GestionUtilisateurs() {
     can_manage_perimes: false,
     can_manage_avoirs: false,
     can_validate_zero_amount: false,
+    can_validate_sales: false,
     can_modify_price: false,
     can_modify_invoice: false,
     can_view_cash_sessions: false,
@@ -256,6 +258,7 @@ export default function GestionUtilisateurs() {
       can_manage_perimes: sourceUser.profile?.can_manage_perimes || false,
       can_manage_avoirs: sourceUser.profile?.can_manage_avoirs || false,
       can_validate_zero_amount: sourceUser.profile?.can_validate_zero_amount || false,
+      can_validate_sales: sourceUser.profile?.can_validate_sales || false,
       can_modify_price: sourceUser.profile?.can_modify_price || false,
       can_modify_invoice: sourceUser.profile?.can_modify_invoice || false,
       can_view_cash_sessions: sourceUser.profile?.can_view_cash_sessions || false,
@@ -284,6 +287,7 @@ export default function GestionUtilisateurs() {
       updates.can_manage_perimes = true;
       updates.can_manage_avoirs = true;
       updates.can_validate_zero_amount = true;
+      updates.can_validate_sales = true;
       updates.can_modify_price = true;
       updates.can_modify_invoice = true;
       updates.can_view_cash_sessions = true;
@@ -301,6 +305,7 @@ export default function GestionUtilisateurs() {
       updates.can_close_commande = false;
       updates.can_generate_coupon = false;
       updates.can_modify_invoice = true;
+      updates.can_validate_sales = false;
       if (!preserveMenus) updates.allowed_menus = ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'];
     } else if (role === 'VENDEUR') {
       updates.is_superuser = false;
@@ -318,6 +323,7 @@ export default function GestionUtilisateurs() {
       updates.can_manage_perimes = false;
       updates.can_manage_avoirs = false;
       updates.can_validate_zero_amount = false;
+      updates.can_validate_sales = false;
       updates.can_modify_price = false;
       updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
@@ -338,6 +344,7 @@ export default function GestionUtilisateurs() {
       updates.can_manage_perimes = false;
       updates.can_manage_avoirs = false;
       updates.can_validate_zero_amount = false;
+      updates.can_validate_sales = false;
       updates.can_modify_price = false;
       updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
@@ -379,6 +386,7 @@ export default function GestionUtilisateurs() {
         can_manage_perimes: user.profile?.can_manage_perimes || false,
         can_manage_avoirs: user.profile?.can_manage_avoirs || false,
         can_validate_zero_amount: user.profile?.can_validate_zero_amount || false,
+        can_validate_sales: user.profile?.can_validate_sales || false,
         can_modify_price: user.profile?.can_modify_price || false,
         can_modify_invoice: user.profile?.can_modify_invoice || false,
         can_view_cash_sessions: user.profile?.can_view_cash_sessions || false,
@@ -410,6 +418,7 @@ export default function GestionUtilisateurs() {
         can_manage_perimes: false,
         can_manage_avoirs: false,
         can_validate_zero_amount: false,
+        can_validate_sales: false,
         can_modify_price: false,
         can_modify_invoice: false,
         can_view_cash_sessions: false,
@@ -531,6 +540,7 @@ export default function GestionUtilisateurs() {
           can_manage_perimes: formData.can_manage_perimes,
           can_manage_avoirs: formData.can_manage_avoirs,
           can_validate_zero_amount: formData.can_validate_zero_amount,
+          can_validate_sales: formData.can_validate_sales,
           can_modify_price: formData.can_modify_price,
           can_modify_invoice: formData.can_modify_invoice,
           can_view_cash_sessions: formData.can_view_cash_sessions,
@@ -698,6 +708,11 @@ export default function GestionUtilisateurs() {
                       {user.profile?.can_sell_negative_stock && (
                         <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200" title={t('permissions.negative_stock')}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                      )}
+                      {user.profile?.can_validate_sales && (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200" title={t('permissions.can_validate_sales')}>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </div>
                       )}
                     </div>
@@ -956,6 +971,13 @@ export default function GestionUtilisateurs() {
                           checked={formData.can_view_cash_sessions} 
                           onChange={checked => setFormData({...formData, can_view_cash_sessions: checked})} 
                           label={t('permissions.view_cash_sessions', 'Voir les sessions de caisse')} 
+                          className="p-2 bg-white rounded-lg border border-slate-200"
+                        />
+                        <Checkbox 
+                          size="xs"
+                          checked={formData.can_validate_sales} 
+                          onChange={checked => setFormData({...formData, can_validate_sales: checked})} 
+                          label={t('permissions.can_validate_sales')} 
                           className="p-2 bg-white rounded-lg border border-slate-200"
                         />
                       </div>

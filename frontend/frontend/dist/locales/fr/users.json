@@ -88,6 +88,7 @@
         "manage_perimes": "Gérer Périmés",
         "manage_avoirs": "Gérer Avoirs",
         "validate_zero_amount": "Autoriser ventes à 0F",
+        "can_validate_sales": "Valider les ventes",
         "view_cash_sessions": "Voir les sessions de caisse"
     },
     "messages": {

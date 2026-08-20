@@ -379,7 +379,7 @@ export function useFacturationState() {
         message: isPosteCaisseActive
           ? 'Ce poste est partagé. Veuillez saisir vos identifiants de vendeur pour cette vente.'
           : t('facturation:payment.sudo_send_to_caisse'),
-        permission: 'can_cash_out',
+        permission: 'can_validate_sales',
         forceCurrentUser: false,
       })
       return

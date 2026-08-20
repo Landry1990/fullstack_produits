@@ -986,7 +986,7 @@
             "threshold": "Seuil",
             "excess_qty": "Excédent",
             "excess_value": "Valeur excédent",
-            "avg_daily_sales": "Ventes/jour",
+            "avg_daily_sales": "Ventes/mois",
             "days_until_stockout": "Jours restants",
             "urgency": "Urgence",
             "value_at_risk": "Valeur à risque"

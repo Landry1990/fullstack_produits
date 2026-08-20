@@ -132,8 +132,30 @@ class DashboardCoreMixin(viewsets.ViewSet):
                     then=Value(1)
                 )))
             )
+            # Stock value from lots (aligned with Excel export)
+            # Fallback pmp → cost_price (comme l'Excel: p.pmp or p.cost_price or 0)
+            from ...models import StockLot
+            effective_pmp = Case(
+                When(produit__pmp__gt=0, then=F('produit__pmp')),
+                default=F('produit__cost_price'),
+                output_field=DecimalField(),
+            )
+            lot_stock_value = StockLot.objects.filter(
+                produit__is_active=True,
+            ).aggregate(
+                total=Coalesce(
+                    Sum(
+                        ExpressionWrapper(
+                            F('quantity_remaining') * effective_pmp,
+                            output_field=DecimalField()
+                        )
+                    ),
+                    Decimal(0)
+                )
+            )
             stock_critique = product_stats['stock_critique']
-            stock_agg = {'total': product_stats['stock_value'], 'count': product_stats['stock_count']}
+            # Utiliser la valeur calculée depuis les lots (cohérent avec l'export Excel)
+            stock_agg = {'total': lot_stock_value['total'], 'count': product_stats['stock_count']}
     
             # 3. Receivables (Créances) — Resté séparé car nécessite une sous-requête complexe sur Caisse
             from django.db.models import Subquery
