@@ -217,7 +217,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                         ) : (
                             <>
                                 <TableHead className="w-28 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.date')}</TableHead>
-                                <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.numero')}</TableHead>
+                                <TableHead className="w-36 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.numero')}</TableHead>
                                 <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.fournisseur')}</TableHead>
                                 <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.type')}</TableHead>
                                 <TableHead className="w-16 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.lines')}</TableHead>
@@ -259,7 +259,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                     </div>
                                 </TableCell>
                                 <TableCell className="px-3 py-2">
-                                    <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                                    <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded whitespace-nowrap inline-block max-w-full overflow-hidden text-ellipsis">
                                         {avoir.numero}
                                     </span>
                                 </TableCell>
