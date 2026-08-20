@@ -16,6 +16,8 @@ import type { ProduitModel, PaginatedResponse } from '../types'
 interface SearchIndexEntry {
   product: ProduitModel
   nameNorm: string
+  // Nom sans espaces ni ponctuation : "FRA 1" → "fra1"
+  nameCompact: string
   cip1: string
   cip2: string
   cip3: string
@@ -28,7 +30,7 @@ let cachedAt = 0
 const CACHE_TTL = 1000 * 60 * 5 // 5 minutes
 
 /** Normalise une chaîne pour la comparaison (sans accents, minuscules) */
-function normalize(s: string | null | undefined): string {
+export function normalize(s: string | null | undefined): string {
   if (!s) return ''
   return s
     .normalize('NFD')
@@ -38,12 +40,13 @@ function normalize(s: string | null | undefined): string {
 }
 
 /** Construit l'index de recherche à partir d'une liste de produits */
-function buildIndex(products: ProduitModel[]): SearchIndexEntry[] {
+export function buildIndex(products: ProduitModel[]): SearchIndexEntry[] {
   return products.map(p => {
     const nameNorm = normalize(p.name)
     return {
       product: p,
       nameNorm,
+      nameCompact: nameNorm.replace(/[^a-z0-9]/g, ''),
       cip1: normalize(p.cip1),
       cip2: normalize(p.cip2),
       cip3: normalize(p.cip3),
@@ -53,17 +56,22 @@ function buildIndex(products: ProduitModel[]): SearchIndexEntry[] {
 }
 
 /** Recherche dans l'index en mémoire */
-function searchInIndex(index: SearchIndexEntry[], query: string, limit: number = 50): ProduitModel[] {
+export function searchInIndex(index: SearchIndexEntry[], query: string, limit: number = 50): ProduitModel[] {
   const q = normalize(query)
   if (!q) return []
 
   const isNumeric = /^\d+$/.test(q)
   const results: { product: ProduitModel; score: number }[] = []
 
+  // Séparer la partie texte et la partie numérique de la requête
+  // ex: "doli 500" → tokens ["doli", "500"]
+  // ex: "fra1" → un seul token "fra1" (pas d'espace)
+  const qTokens = q.split(/\s+/).filter(t => t.length >= 2)
+
   for (const entry of index) {
     let score = 0
 
-    // Recherche par CIP (priorité maximale — match exact)
+    // --- Recherche par CIP (priorité maximale) ---
     if (isNumeric) {
       if (entry.cip1 === q) score = 100
       else if (entry.cip2 === q) score = 99
@@ -73,29 +81,80 @@ function searchInIndex(index: SearchIndexEntry[], query: string, limit: number =
       else if (entry.cip3.startsWith(q)) score = 88
     }
 
-    // Recherche par nom
+    // --- Recherche par nom (uniquement si pas de match CIP global) ---
     if (score === 0) {
+      // Match exact sur le nom complet
       if (entry.nameNorm === q) {
-        score = 80 // Match exact
-      } else if (entry.nameNorm.startsWith(q)) {
-        score = 70 // Commence par
-      } else if (entry.nameNorm.includes(q)) {
-        score = 50 // Contient
-      } else {
-        // Recherche par tokens (mots individuels)
-        const qTokens = q.split(/\s+/).filter(t => t.length >= 2)
-        if (qTokens.length > 0) {
-          let matchedTokens = 0
-          for (const qt of qTokens) {
-            const tokenMatch = entry.nameTokens.some(nt => nt.startsWith(qt))
-            if (tokenMatch) matchedTokens++
+        score = 80
+      }
+      // Le nom compact (sans espaces/ponctuation) commence par la requête complète
+      // ex: "FRA1" match "FRA 1 DOLIPRANE"
+      else if (entry.nameCompact.startsWith(q)) {
+        score = 78
+      }
+      // Le nom normalisé commence par la requête
+      else if (entry.nameNorm.startsWith(q)) {
+        score = 75
+      }
+      // Un des mots du nom commence par la requête complète
+      else if (entry.nameTokens.some(nt => nt.startsWith(q))) {
+        score = 70
+      }
+      // Recherche multi-termes : chaque terme doit matcher (ET logique)
+      // Comportement proche du backend DRF : premier terme en préfixe, suivants en contient
+      else if (qTokens.length > 1) {
+        let allTermsMatch = true
+        let termScores = 0
+        // Pour chaque terme, déterminer si c'est un CIP potentiel (tout numérique)
+
+        for (let i = 0; i < qTokens.length; i++) {
+          const qt = qTokens[i]
+          const isNum = /^\d+$/.test(qt)
+          let termMatched = false
+          let termScore = 0
+
+          // CIP match pour termes numériques
+          if (isNum && (entry.cip1.startsWith(qt) || entry.cip2.startsWith(qt) || entry.cip3.startsWith(qt))) {
+            termMatched = true
+            termScore = 95
           }
-          if (matchedTokens === qTokens.length) {
-            score = 60 // Tous les tokens matchent
-          } else if (matchedTokens > 0) {
-            score = 30 // Match partiel
+          // Premier terme : préfixe obligatoire (comme le backend DRF)
+          else if (i === 0) {
+            if (entry.nameTokens.some(nt => nt.startsWith(qt))) {
+              termMatched = true
+              termScore = 60
+            } else if (entry.nameCompact.startsWith(qt)) {
+              termMatched = true
+              termScore = 55
+            }
           }
+          // Termes suivants : contient (comme le backend DRF icontains)
+          else {
+            if (entry.nameTokens.some(nt => nt.includes(qt))) {
+              termMatched = true
+              termScore = 50
+            } else if (entry.nameNorm.includes(qt)) {
+              termMatched = true
+              termScore = 40
+            }
+          }
+
+          if (!termMatched) {
+            allTermsMatch = false
+            break
+          }
+          termScores += termScore
         }
+
+        if (allTermsMatch) {
+          score = 50 + termScores / qTokens.length
+        }
+      }
+      // Requête à un seul token : uniquement les préfixes pour éviter le bruit
+      // (ex: "fra" ne doit PAS matcher "acfran" ou "spasfran")
+      else if (qTokens.length === 1) {
+        // Déjà traité plus haut par nameTokens.startsWith(q) / nameNorm.startsWith / nameCompact.startsWith
+        // Si on arrive ici, aucun mot ne commence par la requête → pas de match
       }
     }
 
@@ -123,53 +182,58 @@ export function useProductSearchIndex() {
         return cachedIndex.map(e => e.product)
       }
 
-      // 1. Charger la première page pour connaître le total
-      const pageSize = 1000
-      const firstResponse = await api.get('produits/', {
-        params: { page: 1, page_size: pageSize, include_inactive: false }
-      })
-      const firstData = firstResponse.data as ProduitModel[] | PaginatedResponse<ProduitModel>
+      try {
+        // 1. Charger la première page pour connaître le total
+        const pageSize = 1000
+        const firstResponse = await api.get('produits/', {
+          params: { page: 1, page_size: pageSize, include_inactive: false }
+        })
+        const firstData = firstResponse.data as ProduitModel[] | PaginatedResponse<ProduitModel>
 
-      // Si la réponse est un array simple (pas de pagination), tout est déjà là
-      if (Array.isArray(firstData)) {
-        return firstData
-      }
+        // Si la réponse est un array simple (pas de pagination), tout est déjà là
+        if (Array.isArray(firstData)) {
+          return firstData
+        }
 
-      const firstProducts = firstData.results || []
-      const totalCount = firstData.count || firstProducts.length
+        const firstProducts = firstData.results || []
+        const totalCount = firstData.count || firstProducts.length
 
-      // Si on a tout en une page, on a fini
-      if (firstProducts.length >= totalCount) {
-        return firstProducts
-      }
+        // Si on a tout en une page, on a fini
+        if (firstProducts.length >= totalCount) {
+          return firstProducts
+        }
 
-      // 2. Calculer le nombre de pages restantes et les charger en parallèle
-      const totalPages = Math.ceil(totalCount / pageSize)
-      const remainingPages = Array.from(
-        { length: totalPages - 1 },
-        (_, i) => i + 2 // pages 2, 3, 4, ...
-      )
-
-      // Charger par lots de 5 requêtes parallèles pour ne pas saturer le serveur
-      const BATCH_SIZE = 5
-      const remainingProducts: ProduitModel[] = []
-
-      for (let i = 0; i < remainingPages.length; i += BATCH_SIZE) {
-        const batch = remainingPages.slice(i, i + BATCH_SIZE)
-        const batchResults = await Promise.all(
-          batch.map(page =>
-            api.get('produits/', {
-              params: { page, page_size: pageSize, include_inactive: false }
-            }).then(res => {
-              const data = res.data as ProduitModel[] | PaginatedResponse<ProduitModel>
-              return Array.isArray(data) ? data : (data.results || [])
-            }).catch(() => [] as ProduitModel[])
-          )
+        // 2. Calculer le nombre de pages restantes et les charger en parallèle
+        const totalPages = Math.ceil(totalCount / pageSize)
+        const remainingPages = Array.from(
+          { length: totalPages - 1 },
+          (_, i) => i + 2 // pages 2, 3, 4, ...
         )
-        remainingProducts.push(...batchResults.flat())
-      }
 
-      return [...firstProducts, ...remainingProducts]
+        // Charger par lots de 5 requêtes parallèles pour ne pas saturer le serveur
+        const BATCH_SIZE = 5
+        const remainingProducts: ProduitModel[] = []
+
+        for (let i = 0; i < remainingPages.length; i += BATCH_SIZE) {
+          const batch = remainingPages.slice(i, i + BATCH_SIZE)
+          const batchResults = await Promise.all(
+            batch.map(page =>
+              api.get('produits/', {
+                params: { page, page_size: pageSize, include_inactive: false }
+              }).then(res => {
+                const data = res.data as ProduitModel[] | PaginatedResponse<ProduitModel>
+                const results = Array.isArray(data) ? data : (data.results || [])
+                return results
+              }).catch(() => [] as ProduitModel[])
+            )
+          )
+          remainingProducts.push(...batchResults.flat())
+        }
+
+        return [...firstProducts, ...remainingProducts]
+      } catch (err) {
+        throw err
+      }
     },
     staleTime: CACHE_TTL,
     gcTime: 1000 * 60 * 10,

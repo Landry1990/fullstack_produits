@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-08-20 — Recherche commande : nettoyage des logs
+
+### 🔧 Correction
+
+Suppression des logs de diagnostic console ajoutés temporairement pour le débogage de la recherche. Les logs inutiles ont été retirés de `useProductSearch.ts` et `useProductSearchIndex.ts`. Le fix du cache backend reste actif.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useProductSearch.ts` — logs retirés
+- `frontend/frontend/src/hooks/useProductSearchIndex.ts` — logs retirés
+
+### 🔧 Correction
+
+L'index local ne chargeait que les 1000 premiers produits car le cache backend retournait toujours la page 1, quel que soit le numéro de page demandé. Les 16 produits `FRANCE LAIT` (page ~3-4) n'étaient donc jamais dans l'index.
+
+- **Backend** : dans `CachedSearchMixin.list`, le cache de recherche n'est maintenant utilisé que quand un terme de recherche est présent. Les appels paginés avec seulement des filtres/exclusions passent par le cache de liste qui inclut `page` et `page_size` dans la clé.
+- **Résultat** : l'index local charge correctement tous les produits, y compris `FRANCE LAIT`.
+- **Frontend** : pas de changement, le nouvel index sera reconstruit automatiquement après déploiement backend.
+
+### Fichiers modifiés
+
+- `backend/api/cache_mixins.py` — cache de recherche réservé aux vraies recherches textuelles
+- `frontend/frontend/src/hooks/useProductSearchIndex.ts` — logs de diagnostic index
+- `frontend/frontend/src/hooks/useProductSearch.ts` — logs de diagnostic recherche
+
+### 🔧 Correction
+
+La recherche produit dans la commande était trop stricte (0 résultat pour `fra`, `dol`) et ne correspondait pas au comportement de l'écran Produits (`ProduitShadcn`).
+
+- **Alignement avec le backend** : la recherche locale dans l'index mémorise maintenant le même contrat que l'API `produits/` utilisée par `ProduitShadcn` :
+  - **Premier terme** : un mot du nom doit **commencer par** le terme (`istartswith`).
+  - **Termes suivants** : un mot du nom doit **contenir** le terme (`icontains`).
+  - **ET logique** entre les termes (ex: `france lait` → `france` en préfixe ET `lait` en contient).
+- **Nom compact** : ajout d'un index sans espaces/ponctuation (`FRA 1` → `fra1`) pour que `FRA1` match `FRA 1 DOLIPRANE`.
+- **CIP** : les termes numériques continuent de matcher les CIP en préfixe.
+- **Single-token strict** : `fra` ne matche pas `ACFRAN` ou `SPASFRAN`.
+- **Tests** : ajout de `frontend/frontend/src/hooks/useProductSearchIndex.test.ts` (Vitest) qui valide FRA1, FRA, `DOLI 500`, CIP exact, et le nom compact.
+- **Diagnostic** : logs console dans `useProductSearch.ts` pour savoir si la recherche passe par l'index local ou l'API.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useProductSearchIndex.ts` — alignement du scoring sur le backend DRF
+- `frontend/frontend/src/hooks/useProductSearch.ts` — logs diagnostic
+- `frontend/frontend/src/hooks/useProductSearchIndex.test.ts` — nouveau
+
+---
+
 ## 2026-08-20 — Performance : Recherche produit instantanée en mémoire
 
 ### ⚡ Optimisation

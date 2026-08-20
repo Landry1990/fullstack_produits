@@ -139,6 +139,12 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
                         validated_by_id: validatorId,
                         sudo_password: password
                     });
+                    // Mettre à jour le state de navigation pour refléter la vue DETAILS
+                    // et éviter qu'un re-render (via fetchCommandes) ne reset la vue
+                    navigate(window.location.pathname, {
+                        replace: true,
+                        state: { viewState: { mode: 'DETAILS', commandeId: selectedCommande.id } }
+                    });
                     queryClient.invalidateQueries({ queryKey: ['products'] });
                 },
                 {
