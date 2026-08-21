@@ -144,7 +144,10 @@
         "load_details_error": "Impossible de charger le détail.",
         "sale_details_load_error": "Impossible de charger le détail de la vente.",
         "avoir_generate_error": "Impossible de générer un avoir pour cette vente.",
-        "loading_details": "Chargement des détails..."
+        "loading_details": "Chargement des détails...",
+        "success_with_id": "Vente enregistrée (Facture #{{id}})",
+        "promis_recorded": "Ticket Promis enregistré",
+        "prescription_recorded": "Ordonnance enregistrée"
     },
     "confirm_delete": "Supprimer cette facture ?",
     "confirm_bulk_delete": "Confirmer la suppression de {{count}} factures ? (Seuls les brouillons/annulés seront supprimés)",
@@ -152,6 +155,17 @@
         "passerby_client": "Client de passage",
         "cancel": "Annuler",
         "print": "Imprimer"
+    },
+    "print": {
+        "a4": "Format A4",
+        "ticket": "Ticket Caisse",
+        "delivery_note": "Bon de livraison"
+    },
+    "details": {
+        "cashier": "Caissier",
+        "cancelled_by": "Annulé par",
+        "payments": "Règlements:",
+        "whatsapp_renewal_reminder": "Envoyer un rappel de renouvellement WhatsApp"
     },
     "pos": {
         "ready_for_sale": "Prêt pour la vente",

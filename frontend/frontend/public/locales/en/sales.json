@@ -144,7 +144,10 @@
         "load_details_error": "Failed to load details.",
         "sale_details_load_error": "Failed to load sale details.",
         "avoir_generate_error": "Could not generate a credit note for this sale.",
-        "loading_details": "Loading details..."
+        "loading_details": "Loading details...",
+        "success_with_id": "Sale recorded (Invoice #{{id}})",
+        "promis_recorded": "Promised ticket recorded",
+        "prescription_recorded": "Prescription recorded"
     },
     "confirm_delete": "Delete this invoice?",
     "confirm_bulk_delete": "Confirm deletion of {{count}} invoices? (Only drafts/cancelled will be deleted)",
@@ -152,6 +155,17 @@
         "passerby_client": "Walk-in Customer",
         "cancel": "Cancel",
         "print": "Print"
+    },
+    "print": {
+        "a4": "A4 Format",
+        "ticket": "Cash Receipt",
+        "delivery_note": "Delivery Note"
+    },
+    "details": {
+        "cashier": "Cashier",
+        "cancelled_by": "Cancelled by",
+        "payments": "Payments:",
+        "whatsapp_renewal_reminder": "Send a WhatsApp renewal reminder"
     },
     "pos": {
         "ready_for_sale": "Ready for sale",

@@ -200,5 +200,9 @@
   "update_success_desc": "The system has been updated successfully. The page will reload automatically.",
   "update_ok": "OK",
   "update_failed": "Update failed",
-  "update_no_update": "No update available — your system is up to date"
+  "update_no_update": "No update available — your system is up to date",
+  "licence": {
+    "copy_id": "Copy ID",
+    "dismiss_alert": "Dismiss this alert"
+  }
 }

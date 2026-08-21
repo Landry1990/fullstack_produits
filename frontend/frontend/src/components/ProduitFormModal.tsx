@@ -445,7 +445,7 @@ export default function ProduitFormModal({
                 </Select>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Marge HT (F)</label>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:marge_ht_label')}</label>
                 <div className={`${inputSm} flex items-center justify-center font-bold ${margeHT < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{margeHT.toFixed(2)} F</div>
               </div>
               <div>
@@ -480,15 +480,15 @@ export default function ProduitFormModal({
           {/* Section: Alerte comptoir */}
           <div className="bg-red-50 rounded-lg border border-red-100 p-3">
             <label className="block text-[10px] font-semibold text-red-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <AlertTriangle size={12} /> Message d&apos;alerte comptoir
+              <AlertTriangle size={12} /> {t('products:counter_alert_message')}
             </label>
             <textarea
               className="w-full rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:border-red-400 focus:ring-1 focus:ring-red-100 transition-all min-h-[60px] text-sm p-2 outline-none"
-              placeholder="Ex: Changement de conditionnement, vérifier le code barre..."
+              placeholder={t('products:counter_alert_placeholder')}
               value={form.message_alerte || ''}
               onChange={(e) => setForm((p) => ({ ...p, message_alerte: e.target.value }))}
             />
-            <p className="text-[10px] text-slate-400 mt-1">Ce message s&apos;affichera en plein écran lors du passage de ce produit en caisse.</p>
+            <p className="text-[10px] text-slate-400 mt-1">{t('products:counter_alert_description')}</p>
           </div>
 
           {/* Section: Réserve */}

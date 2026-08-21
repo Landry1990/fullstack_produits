@@ -1,5 +1,6 @@
 import { X, Plus, Save, Building2 } from 'lucide-react';
 import type { useFournisseurs } from '../../hooks/useFournisseurs';
+import type { Fournisseur } from '../../types';
 
 interface Props {
   hook: ReturnType<typeof useFournisseurs>;
@@ -43,12 +44,16 @@ export default function FournisseurFormModals({ hook }: Props) {
   } = state;
 
   const renderForm = (isEdit: boolean) => {
-    const data = isEdit ? editingFournisseur : newFournisseur;
+    const data = (isEdit ? editingFournisseur : newFournisseur) as Fournisseur | null;
     if (!data) return null;
 
-    const setData = isEdit
-      ? (fn: unknown) => state.setEditingFournisseur(fn)
-      : (fn: unknown) => state.setNewFournisseur(fn);
+    const setData = (updater: (prev: Fournisseur) => Fournisseur) => {
+      if (isEdit) {
+        state.setEditingFournisseur(prev => prev ? updater(prev) : prev);
+      } else {
+        state.setNewFournisseur(prev => updater(prev) as Omit<Fournisseur, 'id'>);
+      }
+    };
 
     const handleSubmit = isEdit ? actions.handleEditFournisseur : actions.handleAddFournisseur;
     const close = isEdit ? actions.closeEditModal : actions.closeAddModal;
@@ -86,7 +91,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     type="text"
                     placeholder={t('providers:form.name_placeholder')}
                     value={data.name}
-                    onChange={e => setData((f: unknown) => ({...f, name: e.target.value}))}
+                    onChange={e => setData(f => ({...f, name: e.target.value}))}
                     className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     required
                     disabled={isSubmitting}
@@ -98,7 +103,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     type="tel"
                     placeholder={t('providers:form.phone_placeholder')}
                     value={data.phone}
-                    onChange={e => setData((f: unknown) => ({...f, phone: e.target.value}))}
+                    onChange={e => setData(f => ({...f, phone: e.target.value}))}
                     className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     disabled={isSubmitting}
                   />
@@ -109,7 +114,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                   type="email"
                   placeholder={t('providers:form.email_placeholder')}
                   value={data.email}
-                  onChange={e => setData((f: unknown) => ({...f, email: e.target.value}))}
+                  onChange={e => setData((f) => ({...f, email: e.target.value}))}
                   className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                   disabled={isSubmitting}
                 />
@@ -118,7 +123,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                 <input
                   type="checkbox"
                   checked={data.is_divers || false}
-                  onChange={e => setData((f: unknown) => ({...f, is_divers: e.target.checked}))}
+                  onChange={e => setData(f => ({...f, is_divers: e.target.checked}))}
                   className="size-4 rounded border-base-300 text-primary focus:ring-primary cursor-pointer"
                   disabled={isSubmitting}
                 />
@@ -134,7 +139,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                 <Field label={t('providers:form.payment_type')}>
                   <select
                     value={data.type_reglement}
-                    onChange={e => setData((f: unknown) => ({...f, type_reglement: e.target.value as 'FACTURE'|'RELEVE'}))}
+                    onChange={e => setData((f) => ({...f, type_reglement: e.target.value as 'FACTURE'|'RELEVE'}))}
                     className="w-full h-10 rounded-lg border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                     disabled={isSubmitting}
                   >
@@ -148,7 +153,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     min="0"
                     placeholder={t('providers:form.delay_hint')}
                     value={data.delai_paiement_jours}
-                    onChange={e => setData((f: unknown) => ({...f, delai_paiement_jours: parseInt(e.target.value) || 0}))}
+                    onChange={e => setData((f) => ({...f, delai_paiement_jours: parseInt(e.target.value) || 0}))}
                     className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
                     disabled={isSubmitting}
                   />
@@ -165,7 +170,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     max="31"
                     placeholder="Ex: 10"
                     value={data.periode_releve_jours ?? 10}
-                    onChange={e => setData((f: unknown) => ({...f, periode_releve_jours: parseInt(e.target.value) || 10}))}
+                    onChange={e => setData((f) => ({...f, periode_releve_jours: parseInt(e.target.value) || 10}))}
                     className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-orange-400 focus:ring-1 focus:ring-orange-200"
                     disabled={isSubmitting}
                   />
@@ -174,16 +179,16 @@ export default function FournisseurFormModals({ hook }: Props) {
               )}
             </Section>
 
-            <Section title="Paramètres logistiques">
+            <Section title={t('suppliers:logistics_params')}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Délai de livraison (jours)">
+                <Field label={t('suppliers:delivery_delay_days')}>
                   <input
                     type="number"
                     min="0"
                     max="30"
                     placeholder="2"
                     value={data.delai_livraison_jours ?? 2}
-                    onChange={e => setData((f: unknown) => ({...f, delai_livraison_jours: parseInt(e.target.value) || 2}))}
+                    onChange={e => setData((f) => ({...f, delai_livraison_jours: parseInt(e.target.value) || 2}))}
                     className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                     disabled={isSubmitting}
                   />
@@ -198,7 +203,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                   type="text"
                   placeholder={t('providers:form.address_placeholder')}
                   value={data.address}
-                  onChange={e => setData((f: unknown) => ({...f, address: e.target.value}))}
+                  onChange={e => setData((f) => ({...f, address: e.target.value}))}
                   className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                   disabled={isSubmitting}
                 />

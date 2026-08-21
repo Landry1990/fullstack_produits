@@ -298,30 +298,30 @@ export default function ModuleFinancier() {
                 
                 {varianceReport.suspicious_products.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
+                    <table className="w-full text-xs table-fixed">
                       <thead>
                         <tr className="text-slate-400">
-                          <th className="text-left py-1">{t('variance.product')}</th>
-                          <th className="text-right py-1">{t('variance.margin')}</th>
-                          <th className="text-right py-1">{t('variance.cost_pmp')}</th>
+                          <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('variance.product')}</th>
+                          <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('variance.margin')}</th>
+                          <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('variance.cost_pmp')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {varianceReport.suspicious_products.map((p, _idx) => {
                           const productId = p?.produit__id || p?.id || `prod-${p?.nom}`;
-                          const productName = typeof p?.produit__name === 'string' ? p.produit__name : 
+                          const productName = typeof p?.produit__name === 'string' ? p.produit__name :
                                             typeof p?.nom === 'string' ? p.nom : t('common:unknown_product');
-                          const marginPct = typeof p?.unit_margin_pct === 'number' ? p.unit_margin_pct : 
+                          const marginPct = typeof p?.unit_margin_pct === 'number' ? p.unit_margin_pct :
                                           typeof p?.unit_margin_pct === 'string' ? parseFloat(p.unit_margin_pct) : 0;
-                          const pmp = typeof p?.produit__pmp === 'number' ? p.produit__pmp : 
+                          const pmp = typeof p?.produit__pmp === 'number' ? p.produit__pmp :
                                     typeof p?.produit__pmp === 'string' ? parseFloat(p.produit__pmp) : 0;
                           return (
                             <tr key={productId} className="hover:bg-slate-200/50 transition-colors border-b border-slate-200">
-                              <td className="font-medium max-w-[150px] truncate py-1">{String(productName)}</td>
-                              <td className={`text-right font-bold py-1 ${marginPct > 80 ? 'text-purple-500' : 'text-orange-500'}`}>
+                              <td className="font-medium max-w-[150px] truncate px-3 py-2">{String(productName)}</td>
+                              <td className={`text-right font-bold px-3 py-2 ${marginPct > 80 ? 'text-purple-500' : 'text-orange-500'}`}>
                                 {marginPct.toFixed(1)}%
                               </td>
-                              <td className="text-right text-slate-500 py-1">{formatMoney(pmp)}</td>
+                              <td className="text-right text-slate-500 px-3 py-2">{formatMoney(pmp)}</td>
                             </tr>
                           );
                         })}
@@ -591,26 +591,26 @@ export default function ModuleFinancier() {
               </div>
             ) : topProducts && topProducts.data.length > 0 ? (
               <div className="overflow-x-auto max-h-72">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm table-fixed">
                   <thead>
                     <tr className="text-slate-400 text-xs">
-                      <th className="text-left py-2">#</th>
-                      <th className="text-left py-2">{t('product', 'Produit')}</th>
-                      <th className="text-right py-2">CA</th>
-                      <th className="text-right py-2">{t('margin', 'Marge')}</th>
-                      <th className="text-right py-2">%</th>
+                      <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 w-12">#</th>
+                      <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('product', 'Produit')}</th>
+                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">CA</th>
+                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('margin', 'Marge')}</th>
+                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">%</th>
                     </tr>
                   </thead>
                   <tbody>
                     {topProducts.data.map((product, index) => (
                       <tr key={product.id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="font-bold text-indigo-600 py-2">{index + 1}</td>
-                        <td className="max-w-[150px] truncate py-2" title={product.nom}>
+                        <td className="font-bold text-indigo-600 px-3 py-2">{index + 1}</td>
+                        <td className="max-w-[150px] truncate px-3 py-2" title={product.nom}>
                           {product.nom}
                         </td>
-                        <td className="text-right font-mono py-2">{formatMoneyFull(product.ca)}</td>
-                        <td className="text-right font-mono text-emerald-600 py-2">{formatMoneyFull(product.marge)}</td>
-                        <td className="text-right py-2">{product.taux_marge}%</td>
+                        <td className="text-right font-mono px-3 py-2">{formatMoneyFull(product.ca)}</td>
+                        <td className="text-right font-mono text-emerald-600 px-3 py-2">{formatMoneyFull(product.marge)}</td>
+                        <td className="text-right px-3 py-2">{product.taux_marge}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -686,26 +686,26 @@ export default function ModuleFinancier() {
               
               {/* Table */}
               <div className="overflow-x-auto max-h-80">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm table-fixed">
                   <thead className="sticky top-0 z-10 bg-white">
                     <tr className="text-slate-400 text-xs">
-                      <th className="text-left py-2">{categoryType === 'rayon' ? t('category.rayon', 'Rayon') : categoryType === 'groupe' ? t('category.groupe', 'Groupe') : t('category.forme', 'Forme')}</th>
-                      <th className="text-right py-2">CA</th>
-                      <th className="text-right py-2">{t('margin', 'Marge')}</th>
-                      <th className="text-right py-2">{t('margin_rate', 'Taux')}</th>
-                      <th className="text-right py-2">%</th>
+                      <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{categoryType === 'rayon' ? t('category.rayon', 'Rayon') : categoryType === 'groupe' ? t('category.groupe', 'Groupe') : t('category.forme', 'Forme')}</th>
+                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">CA</th>
+                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('margin', 'Marge')}</th>
+                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('margin_rate', 'Taux')}</th>
+                      <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">%</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categoryAnalysis.data.map((item) => (
                       <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="max-w-[150px] truncate py-2" title={item.nom}>
+                        <td className="max-w-[150px] truncate px-3 py-2" title={item.nom}>
                           {item.nom}
                         </td>
-                        <td className="text-right font-mono py-2">{formatMoneyFull(item.ca)}</td>
-                        <td className="text-right font-mono text-emerald-600 py-2">{formatMoneyFull(item.marge)}</td>
-                        <td className="text-right py-2">{item.taux_marge}%</td>
-                        <td className="text-right py-2">
+                        <td className="text-right font-mono px-3 py-2">{formatMoneyFull(item.ca)}</td>
+                        <td className="text-right font-mono text-emerald-600 px-3 py-2">{formatMoneyFull(item.marge)}</td>
+                        <td className="text-right px-3 py-2">{item.taux_marge}%</td>
+                        <td className="text-right px-3 py-2">
                           <Badge variant="default" className="text-xs">{item.pourcentage_ca}%</Badge>
                         </td>
                       </tr>
@@ -768,12 +768,12 @@ export default function ModuleFinancier() {
                   </p>
                   
                   <div className="overflow-x-auto max-h-60">
-                    <table className="w-full text-xs">
+                    <table className="w-full text-xs table-fixed">
                       <thead>
                         <tr className="text-slate-400">
-                          <th className="text-left py-1">{t('product', 'Produit')}</th>
-                          <th className="text-right py-1">{t('margin', 'Marge')}</th>
-                          <th className="text-right py-1">{t('analysis.gain', 'Gain Pot.')}</th>
+                          <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('product', 'Produit')}</th>
+                          <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('margin', 'Marge')}</th>
+                          <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('analysis.gain', 'Gain Pot.')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -781,26 +781,26 @@ export default function ModuleFinancier() {
                           marginAnalysis.opportunites_nego.map((item, _idx) => {
                             const itemId = item.id || `opportunity-${item.nom}`;
                             const itemName = item.nom;
-                            const tauxMarge = typeof item.taux_marge === 'number' ? item.taux_marge : 
+                            const tauxMarge = typeof item.taux_marge === 'number' ? item.taux_marge :
                                             typeof item.taux_marge === 'string' ? parseFloat(item.taux_marge) : 0;
                             const margePerdue = typeof item.marge_perdue === 'number' ? item.marge_perdue :
                                               typeof item.marge_perdue === 'string' ? parseFloat(item.marge_perdue) : 0;
                             return (
                               <tr key={itemId} className="border-b border-slate-200">
-                                <td className="max-w-[120px] truncate py-1" title={itemName}>
+                                <td className="max-w-[120px] truncate px-3 py-2" title={itemName}>
                                   {itemName}
                                 </td>
-                                <td className="text-right text-amber-600 font-bold py-1">
+                                <td className="text-right text-amber-600 font-bold px-3 py-2">
                                   {tauxMarge}%
                                 </td>
-                                <td className="text-right text-emerald-600 py-1">
+                                <td className="text-right text-emerald-600 px-3 py-2">
                                   +{formatMoney(margePerdue)}
                                 </td>
                               </tr>
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center text-slate-400 py-2">{t('analysis.no_opportunity', 'Aucune opportunité détectée')}</td></tr>
+                          <tr><td colSpan={3} className="text-center text-slate-400 px-3 py-2">{t('analysis.no_opportunity', 'Aucune opportunité détectée')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -820,12 +820,12 @@ export default function ModuleFinancier() {
                   </p>
                   
                   <div className="overflow-x-auto max-h-60">
-                    <table className="w-full text-xs">
+                    <table className="w-full text-xs table-fixed">
                       <thead>
                         <tr className="text-slate-400">
-                          <th className="text-left py-1">{t('product', 'Produit')}</th>
-                          <th className="text-right py-1">{t('margin', 'Marge')}</th>
-                          <th className="text-right py-1">{t('analysis.price', 'Prix')}</th>
+                          <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('product', 'Produit')}</th>
+                          <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('margin', 'Marge')}</th>
+                          <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('analysis.price', 'Prix')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -833,26 +833,26 @@ export default function ModuleFinancier() {
                           marginAnalysis.stock_dormant.map((item, _idx) => {
                             const itemId = item.id || `dormant-${item.nom}`;
                             const itemName = item.nom;
-                            const tauxMarge = typeof item.taux_marge === 'number' ? item.taux_marge : 
+                            const tauxMarge = typeof item.taux_marge === 'number' ? item.taux_marge :
                                             typeof item.taux_marge === 'string' ? parseFloat(item.taux_marge) : 0;
                             const prixActuel = typeof item.prix_actuel === 'number' ? item.prix_actuel :
                                              typeof item.prix_actuel === 'string' ? parseFloat(item.prix_actuel) : 0;
                             return (
                               <tr key={itemId} className="border-b border-slate-200">
-                                <td className="max-w-[120px] truncate py-1" title={itemName}>
+                                <td className="max-w-[120px] truncate px-3 py-2" title={itemName}>
                                   {itemName}
                                 </td>
-                                <td className="text-right text-emerald-600 font-bold py-1">
+                                <td className="text-right text-emerald-600 font-bold px-3 py-2">
                                   {tauxMarge}%
                                 </td>
-                                <td className="text-right py-1">
+                                <td className="text-right px-3 py-2">
                                   {formatMoney(prixActuel)}
                                 </td>
                               </tr>
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center text-slate-400 py-2">{t('analysis.no_dormant', 'Aucun produit dormant détecté')}</td></tr>
+                          <tr><td colSpan={3} className="text-center text-slate-400 px-3 py-2">{t('analysis.no_dormant', 'Aucun produit dormant détecté')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -872,12 +872,12 @@ export default function ModuleFinancier() {
                   </p>
                   
                   <div className="overflow-x-auto max-h-60">
-                    <table className="w-full text-xs">
+                    <table className="w-full text-xs table-fixed">
                       <thead>
                         <tr className="text-slate-400">
-                          <th className="text-left py-1">{t('product', 'Produit')}</th>
-                          <th className="text-right py-1">{t('analysis.current_price', 'Actuel')}</th>
-                          <th className="text-right py-1">{t('analysis.suggested_price', 'Suggéré')}</th>
+                          <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('product', 'Produit')}</th>
+                          <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('analysis.current_price', 'Actuel')}</th>
+                          <th className="text-right px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('analysis.suggested_price', 'Suggéré')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -885,26 +885,26 @@ export default function ModuleFinancier() {
                           marginAnalysis.suggestions_prix.map((item, _idx) => {
                             const itemId = item.id || `suggestion-${item.nom}`;
                             const itemName = item.nom;
-                            const tauxActuel = typeof item.taux_actuel === 'number' ? item.taux_actuel : 
+                            const tauxActuel = typeof item.taux_actuel === 'number' ? item.taux_actuel :
                                              typeof item.taux_actuel === 'string' ? parseFloat(item.taux_actuel) : 0;
                             const prixSuggere = typeof item.prix_suggere === 'number' ? item.prix_suggere :
                                               typeof item.prix_suggere === 'string' ? parseFloat(item.prix_suggere) : 0;
                             return (
                               <tr key={itemId} className="border-b border-slate-200">
-                                <td className="max-w-[120px] truncate py-1" title={itemName}>
+                                <td className="max-w-[120px] truncate px-3 py-2" title={itemName}>
                                   {itemName}
                                 </td>
-                                <td className="text-right text-red-600 font-bold py-1">
+                                <td className="text-right text-red-600 font-bold px-3 py-2">
                                   {tauxActuel}%
                                 </td>
-                                <td className="text-right text-emerald-600 font-bold py-1">
+                                <td className="text-right text-emerald-600 font-bold px-3 py-2">
                                   {formatMoney(prixSuggere)}
                                 </td>
                               </tr>
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center text-slate-400 py-2">{t('analysis.optimized', 'Prix optimisés')}</td></tr>
+                          <tr><td colSpan={3} className="text-center text-slate-400 px-3 py-2">{t('analysis.optimized', 'Prix optimisés')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -936,15 +936,15 @@ export default function ModuleFinancier() {
             </div>
           ) : supplierAnalysis && supplierAnalysis.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-fixed">
                 <thead>
                   <tr className="text-slate-400 text-xs">
-                    <th className="text-left py-2">#</th>
-                    <th className="text-left py-2">{t('supplier.name', 'Fournisseur')}</th>
-                    <th className="text-center py-2">{t('supplier.score', 'Score Global')}</th>
-                    <th className="text-center py-2">{t('supplier.volume', 'Volume (30%)')}</th>
-                    <th className="text-center py-2">{t('supplier.quality', 'Qualité (30%)')}</th>
-                    <th className="text-center py-2">{t('supplier.regularity', 'Régularité (40%)')}</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 w-12">#</th>
+                    <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('supplier.name', 'Fournisseur')}</th>
+                    <th className="text-center px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('supplier.score', 'Score Global')}</th>
+                    <th className="text-center px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('supplier.volume', 'Volume (30%)')}</th>
+                    <th className="text-center px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('supplier.quality', 'Qualité (30%)')}</th>
+                    <th className="text-center px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('supplier.regularity', 'Régularité (40%)')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -960,33 +960,33 @@ export default function ModuleFinancier() {
                     const supplierId = item.id || `supplier-${item.nom}`;
                     return (
                       <tr key={supplierId} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="font-bold py-2">{index + 1}</td>
-                        <td className="py-2">{supplierName}</td>
-                        <td className="text-center py-2">
+                        <td className="font-bold px-3 py-2">{index + 1}</td>
+                        <td className="px-3 py-2">{supplierName}</td>
+                        <td className="text-center px-3 py-2">
                           <div className="flex flex-col items-center">
                             <div className={`text-xs font-bold ${
-                              scoreGlobal >= 80 ? 'text-emerald-600' : 
+                              scoreGlobal >= 80 ? 'text-emerald-600' :
                               scoreGlobal >= 50 ? 'text-amber-600' : 'text-red-600'
                             }`}>
                               {scoreGlobal}
                             </div>
                           </div>
                         </td>
-                        <td className="text-center py-2">
+                        <td className="text-center px-3 py-2">
                           <div className="flex flex-col items-center gap-1" title={`${formatMoneyFull(volumeValeur)}`}>
                             <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${volumeScore}%` }} />
                             </div>
                           </div>
                         </td>
-                        <td className="text-center py-2">
+                        <td className="text-center px-3 py-2">
                           <div className="flex flex-col items-center gap-1" title={`${qualiteIncidents} incidents`}>
                             <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div className={`h-full rounded-full ${qualiteScore >= 90 ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${qualiteScore}%` }} />
                             </div>
                           </div>
                         </td>
-                        <td className="text-center py-2">
+                        <td className="text-center px-3 py-2">
                           <div className="flex flex-col items-center gap-1" title={`${regulariteLivraisons} livraisons`}>
                             <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div className="h-full bg-blue-500 rounded-full" style={{ width: `${regulariteScore}%` }} />

@@ -43,7 +43,7 @@ const getStatusClass = (status: string): 'success' | 'error' | 'primary' | 'warn
 };
 
 const TelegramHistory: React.FC = () => {
-    useTranslation();
+    const { t } = useTranslation();
     const [logs, setLogs] = useState<TelegramLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -107,7 +107,7 @@ const TelegramHistory: React.FC = () => {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-base-content/40" />
                     <input 
                         type="text" 
-                        placeholder="Rechercher par chat ID, nom ou message..." 
+                        placeholder={t('audit:search_telegram_placeholder')} 
                         className="w-full pl-12 rounded-xl bg-base-100 shadow-sm border border-base-200 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}

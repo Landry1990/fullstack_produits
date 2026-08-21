@@ -160,12 +160,12 @@ const PurchasesTabContent = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="w-28">{t('products:detail.purchases.date')}</TableHead>
-                        <TableHead className="w-40">{t('products:detail.purchases.provider')}</TableHead>
-                        <TableHead className="text-right w-20">{t('products:detail.purchases.qty')}</TableHead>
-                        <TableHead className="text-right w-28">{t('products:detail.purchases.price')}</TableHead>
-                        <TableHead className="w-40">{t('products:detail.purchases.lot')}</TableHead>
-                        <TableHead className="w-32">{t('products:detail.purchases.exp')}</TableHead>
+                        <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.date')}</TableHead>
+                        <TableHead className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.provider')}</TableHead>
+                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.purchases.qty')}</TableHead>
+                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.purchases.price')}</TableHead>
+                        <TableHead className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.lot')}</TableHead>
+                        <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.exp')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -255,14 +255,14 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="w-28">{t('products:detail.lots.date_reception')}</TableHead>
-                    <TableHead className="w-36">{t('products:detail.lots.lot_number')}</TableHead>
-                    <TableHead className="w-32">{t('products:detail.lots.expiration')}</TableHead>
-                    <TableHead className="w-40">{t('products:detail.lots.provider')}</TableHead>
-                    <TableHead className="text-right w-28">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</TableHead>
-                    <TableHead className="text-right w-20">{t('products:detail.lots.initial_qty')}</TableHead>
-                    <TableHead className="text-right w-20">{t('products:detail.lots.remaining_qty')}</TableHead>
-                    <TableHead className="w-16 text-center"></TableHead>
+                        <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.date_reception')}</TableHead>
+                    <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.lot_number')}</TableHead>
+                    <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.expiration')}</TableHead>
+                    <TableHead className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.provider')}</TableHead>
+                    <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</TableHead>
+                    <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.initial_qty')}</TableHead>
+                    <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.remaining_qty')}</TableHead>
+                    <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500"></TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -317,14 +317,14 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                                             className="size-7 p-0 text-emerald-600"
                                             onClick={() => saveEdit(lot.id)}
                                             disabled={saving}
-                                            title="Enregistrer"
+                                            title={t('caisse:actions.save')}
                                         ><Check className="size-3.5" /></Button>
                                         <Button
                                             variant="ghost" size="sm"
                                             className="size-7 p-0"
                                             onClick={cancelEdit}
                                             disabled={saving}
-                                            title="Annuler"
+                                            title={t('caisse:actions.cancel')}
                                         ><X className="size-3.5" /></Button>
                                     </div>
                                 ) : (
@@ -332,7 +332,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                                         variant="ghost" size="sm"
                                         className="size-7 p-0 text-slate-400 hover:text-indigo-600"
                                         onClick={() => startEdit(lot)}
-                                        title="Modifier lot / date péremption"
+                                        title={t('caisse:actions.edit_lot_expiry')}
                                     ><Pencil className="size-3" /></Button>
                                 )}
                             </TableCell>
@@ -354,11 +354,11 @@ const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: MonthlyStat[]; t: 
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="w-16"></TableHead>
-                        <TableHead className="w-32">{t('products:detail.stats.month')}</TableHead>
-                        <TableHead className="text-right w-24 text-indigo-600">{t('products:detail.stats.qty_sold')}</TableHead>
-                        <TableHead className="text-right w-24 text-amber-600">{t('products:detail.stats.qty_ordered')}</TableHead>
-                        <TableHead className="text-right w-24 text-blue-600">{t('products:detail.stats.nb_clients')}</TableHead>
+                        <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500"></TableHead>
+                        <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.stats.month')}</TableHead>
+                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24 text-indigo-600">{t('products:detail.stats.qty_sold')}</TableHead>
+                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24 text-amber-600">{t('products:detail.stats.qty_ordered')}</TableHead>
+                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24 text-blue-600">{t('products:detail.stats.nb_clients')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -443,13 +443,13 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="w-28">{t('products:detail.movements.date')}</TableHead>
-                        <TableHead className="w-44">{t('products:detail.movements.type')}</TableHead>
-                        <TableHead className="min-w-[180px]">{t('products:detail.movements.label')}</TableHead>
-                        <TableHead className="w-32">{t('products:detail.movements.operator')}</TableHead>
-                        <TableHead className="text-right w-20">{t('products:detail.movements.before')}</TableHead>
-                        <TableHead className="text-right w-20">{t('products:detail.movements.qty')}</TableHead>
-                        <TableHead className="text-right w-20">{t('products:detail.movements.after')}</TableHead>
+                        <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.date')}</TableHead>
+                        <TableHead className="w-44 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.type')}</TableHead>
+                        <TableHead className="min-w-[180px] px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.label')}</TableHead>
+                        <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.operator')}</TableHead>
+                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.movements.before')}</TableHead>
+                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.movements.qty')}</TableHead>
+                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.movements.after')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -67,7 +67,9 @@
         "confirm": "Confirm",
         "cancel": "Cancel",
         "delete": "Delete",
-        "refresh": "Refresh"
+        "refresh": "Refresh",
+        "search": "Search",
+        "close": "Close"
     },
     "telegram": {
         "send_success": "Report sent to Telegram!",
@@ -450,5 +452,16 @@
     "id": "ID",
     "designation": "Designation",
     "lot": "Lot",
-    "unknown_product_deleted": "Unknown product (deleted)"
+    "unknown_product_deleted": "Unknown product (deleted)",
+    "messaging": "Internal Messaging",
+    "feedback": "Feedback",
+    "french": "French",
+    "english": "English",
+    "account": "Account",
+    "messages": "Messages",
+    "light_mode": "Light Mode",
+    "dark_mode": "Dark Mode",
+    "update_license": "Update License",
+    "logout": "Logout",
+    "command_palette": "Command Palette"
 }

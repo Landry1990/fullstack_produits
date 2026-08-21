@@ -293,7 +293,7 @@ export default function QuickCreateProductModal({
               type="text"
               value={cip1}
               onChange={(e) => setCip1(e.target.value)}
-              placeholder="Code CIP 1"
+              placeholder={t('products:cip1_placeholder')}
               className="h-11 text-sm font-mono"
             />
           </div>
@@ -307,7 +307,7 @@ export default function QuickCreateProductModal({
                 type="text"
                 value={cip2}
                 onChange={(e) => setCip2(e.target.value)}
-                placeholder="CIP 2"
+                placeholder={t('products:cip2_placeholder')}
                 className="h-11 text-sm font-mono"
               />
             </div>
@@ -320,7 +320,7 @@ export default function QuickCreateProductModal({
                 type="text"
                 value={cip3}
                 onChange={(e) => setCip3(e.target.value)}
-                placeholder="CIP 3"
+                placeholder={t('products:cip3_placeholder')}
                 className="h-11 text-sm font-mono"
               />
             </div>

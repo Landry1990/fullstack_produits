@@ -267,7 +267,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
             className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all whitespace-nowrap flex-1 md:flex-none ${activeTab === 'archived' ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-100 text-slate-700'}`}
           >
             <Archive size={18} />
-            <span className="font-medium text-xs md:text-sm">Archivés</span>
+            <span className="font-medium text-xs md:text-sm">{t('tabs.archived')}</span>
           </button>
           <button 
             onClick={() => setActiveTab('sent')}
@@ -289,7 +289,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
               className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all whitespace-nowrap flex-1 md:flex-none ${activeTab === 'supervision' ? 'bg-amber-500 text-white shadow-sm' : 'hover:bg-slate-100 text-slate-700'}`}
             >
               <Shield size={18} />
-              <span className="font-medium text-xs md:text-sm">Supervision</span>
+              <span className="font-medium text-xs md:text-sm">{t('tabs.supervision')}</span>
               <span className="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-amber-500 bg-amber-100 rounded-full">{allMessages.length}</span>
             </button>
           )}
@@ -338,13 +338,13 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                       onClick={() => !m.is_read && handleMarkAsRead(m.id)}
                     >
                       <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-lg shadow-sm border border-slate-200 flex overflow-hidden z-10">
-                        <button className="p-2 hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors" onClick={(e) => handleReplyToMessage(e, m)} title="Répondre"><Reply size={15} /></button>
-                        <button className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors border-l border-slate-200" onClick={(e) => handleArchiveMessage(e, m.id)} title="Archiver"><Archive size={15} /></button>
+                        <button className="p-2 hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors" onClick={(e) => handleReplyToMessage(e, m)} title={t('actions.reply')}><Reply size={15} /></button>
+                        <button className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors border-l border-slate-200" onClick={(e) => handleArchiveMessage(e, m.id)} title={t('actions.archive')}><Archive size={15} /></button>
                       </div>
                       
                       {m.parent_content && (
                         <div className="mb-3 p-2 bg-slate-100 rounded border-l-2 border-indigo-400 text-xs">
-                           <span className="font-medium text-slate-500">En réponse à {m.parent_sender_name} :</span>
+                           <span className="font-medium text-slate-500">{t('reply_to', { name: m.parent_sender_name })}</span>
                            <p className="text-slate-400 truncate">{m.parent_content}</p>
                         </div>
                       )}
@@ -358,7 +358,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                             <span className="font-semibold text-sm text-slate-700 truncate block leading-tight">{m.sender_name}</span>
                             <div className="flex items-center gap-1 mt-0.5">
                               {m.recipient === null && <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-medium text-blue-600 bg-blue-100 rounded">{t('received.broadcast')}</span>}
-                              {!m.is_read && <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-medium text-white bg-red-500 rounded animate-pulse">NOUVEAU</span>}
+                              {!m.is_read && <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-medium text-white bg-red-500 rounded animate-pulse">{t('new_badge')}</span>}
                             </div>
                           </div>
                         </div>
@@ -408,13 +408,13 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                             if (!m.read_by) return null;
                             if (m.recipient === null) {
                               return m.read_by.length === 0 ? 
-                                <span className="inline-flex items-center gap-0.5 text-slate-400" title="Personne n'a encore lu"><Check size={12} /></span> : 
-                                <span className="inline-flex items-center gap-0.5 text-blue-500" title={`Lu par ${m.read_by.length} personne(s)`}><CheckCheck size={12} /> {m.read_by.length}</span>;
+                                <span className="inline-flex items-center gap-0.5 text-slate-400" title={t('read_by_none')}><Check size={12} /></span> :
+                                <span className="inline-flex items-center gap-0.5 text-blue-500" title={t('read_by_count', { count: m.read_by.length })}><CheckCheck size={12} /> {m.read_by.length}</span>;
                             }
                             const isRead = m.read_by.includes(Number(m.recipient));
                             return isRead ? 
-                              <span className="inline-flex items-center gap-0.5 text-emerald-600 font-medium" title="Lu"><CheckCheck size={12} /></span> : 
-                              <span className="inline-flex items-center gap-0.5 text-slate-400" title="Non lu"><Check size={12} /></span>;
+                              <span className="inline-flex items-center gap-0.5 text-emerald-600 font-medium" title={t('read')}><CheckCheck size={12} /></span> :
+                              <span className="inline-flex items-center gap-0.5 text-slate-400" title={t('unread')}><Check size={12} /></span>;
                           })()}
                           <span className="mx-0.5 text-slate-300">•</span>
                           {format(new Date(m.created_at), 'dd/MM HH:mm', { locale: fr })}
@@ -431,11 +431,11 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
           {activeTab === 'archived' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-6 sticky top-0 bg-white z-10 pb-2 border-b border-slate-200">
-                <h4 className="text-lg font-semibold text-slate-700">Messages archivés</h4>
+                <h4 className="text-lg font-semibold text-slate-700">{t('archived_messages')}</h4>
               </div>
               <div className="grid gap-3">
                 {archivedMessages.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400 italic">Aucun message archivé</div>
+                  <div className="text-center py-10 text-slate-400 italic">{t('no_archived')}</div>
                 ) : (
                   archivedMessages.map((m: InternalMessage) => (
                     <div 
@@ -444,7 +444,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                     >
                       {m.parent_content && (
                         <div className="mb-3 p-2 bg-slate-100 rounded border-l-2 border-gray-400 text-xs">
-                           <span className="font-medium text-slate-500">En réponse à {m.parent_sender_name} :</span>
+                           <span className="font-medium text-slate-500">{t('reply_to', { name: m.parent_sender_name })}</span>
                            <p className="text-slate-400 truncate">{m.parent_content}</p>
                         </div>
                       )}
@@ -497,7 +497,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
               </div>
               <div className="grid gap-3">
                 {allMessages.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400 italic">Aucun message dans le système</div>
+                  <div className="text-center py-10 text-slate-400 italic">{t('no_messages')}</div>
                 ) : (
                   allMessages.map((m: InternalMessage) => (
                     <div 
@@ -506,7 +506,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                     >
                       {m.parent_content && (
                         <div className="mb-3 p-2 bg-slate-100 rounded border-l-2 border-indigo-400 text-xs">
-                           <span className="font-medium text-slate-500">En réponse à {m.parent_sender_name} :</span>
+                           <span className="font-medium text-slate-500">{t('reply_to', { name: m.parent_sender_name })}</span>
                            <p className="text-slate-400 truncate">{m.parent_content}</p>
                         </div>
                       )}

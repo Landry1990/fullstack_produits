@@ -79,6 +79,17 @@
             "impact_pts": "{{pts}} pts"
         }
     },
+    "health": {
+        "config_title": "Configuration Expert IA",
+        "config_subtitle": "Ajustez la pondération de votre score de santé",
+        "weight_description": "Définissez l'importance de chaque critère. Par défaut (60/40), nous privilégions la disponibilité pour éviter de perdre des clients.",
+        "availability": "Disponibilité",
+        "rotation": "Rotation",
+        "priority_cash": "Priorité Trésorerie",
+        "priority_balanced": "Équilibré",
+        "priority_service": "Priorité Service Client",
+        "current_logic": "Logique de calcul actuelle"
+    },
     "perimes": {
         "title": "Gestion des Périmés",
         "subtitle": "Analyse des pertes et prévisions",
@@ -1010,7 +1021,15 @@
             "overstock": "Pas de surstock",
             "shortage": "Pas de rupture prévue",
             "all_good": "Tout semble en ordre !"
-        }
+        },
+        "filter_description": "Filtrer et analyser les articles de cette catégorie",
+        "articles": "Articles",
+        "value_unsold": "Valeur invendus",
+        "value_overstock": "Valeur excédents",
+        "value_total": "Valeur totale",
+        "ready_to_order": "Prêts à être ajoutés à une commande",
+        "selection": "Sélection",
+        "select_all": "Sélectionner tout"
     },
     "avoirs": {
         "title": "Gestion des Avoirs",
@@ -1029,7 +1048,9 @@
             "numero": "N° Avoir",
             "fournisseur": "Fournisseur",
             "montant": "Montant HT",
-            "status": "Statut"
+            "status": "Statut",
+            "type": "Motif",
+            "lines": "Lignes"
         },
         "types": {
             "perime": "Périmé",
@@ -1242,6 +1263,7 @@
         "subtitle": "Transférez des produits de la réserve vers le rayon",
         "print_title": "BESOINS EN RÉAPPROVISIONNEMENT",
         "print_hint": "Liste des produits à sortir de réserve pour remplir les rayons.",
+        "search_placeholder": "Rechercher par N° ou utilisateur...",
         "stats": {
             "displayed_products": "{{count}} produit(s) affiché(s)",
             "urgencies": "Urgences",
@@ -1341,6 +1363,7 @@
         "units": "unités suggérées",
         "total_ht": "Montant total HT",
         "selection": "Sélection",
+        "select_all": "Sélectionner tout",
         "products": "produits",
         "generate_grossiste": "Commande Grossiste",
         "generate_divers": "Commande Divers",

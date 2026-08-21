@@ -107,5 +107,15 @@
             "ventes": "Sales",
             "stock_final": "Final Stock"
         }
+    },
+    "reconciliation": {
+        "title": "Turnover Reconciliation",
+        "formula_desc": "How we go from cash to Turnover",
+        "cash_received": "Actual Cash-ins",
+        "credit_part": "Credit portion of the month",
+        "coupons": "Coupons / Vouchers",
+        "insurance": "Insurance portion",
+        "final_ca": "Final Turnover (incl. Tax)",
+        "note": "Recoveries of old debts are excluded from turnover to avoid double entries."
     }
 }

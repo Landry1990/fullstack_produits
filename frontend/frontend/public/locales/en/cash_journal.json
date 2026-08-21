@@ -1,4 +1,5 @@
 {
+    "currency_symbol": "F",
     "title": "Cash Journal",
     "subtitle": "Cash flow history",
     "operations_count": "{{count}} operations",
@@ -83,7 +84,8 @@
         "paid": "PAID",
         "cancelled": "CANCELLED",
         "pending": "PENDING",
-        "grouped_releve": "Grouped Statement"
+        "grouped_releve": "Grouped Statement",
+        "user_who_billed": "User who billed the invoice"
     },
     "pagination": {
         "showing": "Showing",

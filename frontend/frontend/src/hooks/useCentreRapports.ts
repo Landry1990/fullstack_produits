@@ -35,7 +35,7 @@ export function useCentreRapports() {
     const { settings: pharmacySettings } = usePharmacySettings();
 
     const [selectedQuery, setSelectedQuery] = useState<QueryDefinition | null>(null);
-    const [params, setParams] = useState<Record<string, string | number | boolean>>({});
+    const [params, setParams] = useState<Record<string, unknown>>({});
     const [results, setResults] = useState<unknown>(null);
     const [pagination, setPagination] = useState<PaginationData | null>(null);
     const [loading, setLoading] = useState(false);

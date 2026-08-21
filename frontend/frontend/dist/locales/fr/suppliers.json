@@ -18,6 +18,8 @@
         "email": "Email",
         "address": "Adresse"
     },
+    "logistics_params": "Paramètres logistiques",
+    "delivery_delay_days": "Délai de livraison (jours)",
     "messages": {
         "stats_load_error": "Erreur lors de la récupération des statistiques",
         "load_suppliers_error": "Erreur de chargement des fournisseurs",

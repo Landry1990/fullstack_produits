@@ -543,7 +543,7 @@ export default function Sidebar() {
       <button
         onClick={toggleSidebar}
         className="fixed top-3 left-3 z-50 lg:hidden size-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition-colors"
-        aria-label="Toggle menu"
+        aria-label={t('sidebar:toggle_menu')}
       >
         {isOpen ? <X className="size-5" /> : <Menu className="size-5" />}
       </button>
@@ -587,7 +587,7 @@ export default function Sidebar() {
           <button
             onClick={closeSidebar}
             className="lg:hidden shrink-0 size-8 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-all"
-            aria-label="Fermer le menu"
+            aria-label={t('sidebar:close_menu')}
           >
             <X className="size-5" />
           </button>

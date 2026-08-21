@@ -2,6 +2,93 @@
 
 ---
 
+## 2026-08-21 — Uniformisation de l'espacement des tableaux frontend
+
+### 📐 Standardisation
+
+Audit complet de l'espacement de tous les tableaux du frontend via 3 subagents d'analyse
+puis 4 subagents de correction en parallèle. Un standard unique a été appliqué à 22 tableaux
+répartis sur 21 fichiers :
+
+- **Padding** : `px-3 py-2` partout (headers et cellules)
+- **whitespace-nowrap** : ajouté sur tous les headers textuels (sauf checkbox)
+- **Classes header** : `text-xs font-semibold uppercase tracking-wide text-slate-500`
+- **table-fixed** : ajouté sur tous les tableaux sans layout fixe
+- **Largeurs fixes** : ajoutées sur les colonnes qui n'en avaient pas
+- **Colonnes checkbox** : `w-12 px-3 py-2 text-center`
+
+### Fichiers modifiés
+
+**Avoirs / Promis / Stock** :
+- `src/components/avoirs/AvoirsDetails.tsx` — padding + classes + largeurs + table-fixed
+- `src/components/promis/PromisTable.tsx` — py-3→py-2 sur checkbox header + whitespace-nowrap
+- `src/components/stock/Cadencier.tsx` — py-3→py-2 sur checkbox header + whitespace-nowrap
+- `src/components/stock/StockAnalysisTable.tsx` — py-3→py-2 sur checkbox header + whitespace-nowrap
+- `src/components/stock/ReapproHistory.tsx` — padding + classes + largeurs + table-fixed
+
+**Commandes / Produits** :
+- `src/components/Commandes/CommandeDetails.tsx` — classes header + largeurs + table-fixed
+- `src/components/products/ProductTabsContent.tsx` — classes header + whitespace-nowrap
+- `src/components/common/CategoryManager.tsx` — px-4→px-3, py-3→py-2, classes standard
+- `src/components/Ordonnancier.tsx` — px-4→px-3, py-3→py-2, classes + largeurs + table-fixed
+
+**Caisse / Ventes / Facturation** :
+- `src/components/caisse/FacturesTable.tsx` — padding + classes + largeurs + table-fixed
+- `src/components/caisse/JournalCaisseTable.tsx` — pl-6/pr-6→px-3, py-4→py-2, classes + largeurs
+- `src/components/sales/SalesTable.tsx` — px-6→px-3, py-4→py-2, classes + largeurs + table-fixed
+
+**Historique / Transformations** :
+- `src/components/HistoriqueVentes.tsx` — px-2→px-3, py-3→py-2, font-bold→font-semibold
+- `src/components/HistoriqueClotures.tsx` — px-2→px-3, py-3→py-2, classes + largeurs
+- `src/components/HistoriqueAchats.tsx` — pl-8/pr-8→px-3, py-4→py-2, classes + largeurs
+- `src/components/Transformations.tsx` — pl-6/px-4/pr-6→px-3, py-4→py-2, classes + largeurs
+
+**Divers** :
+- `src/components/InteractionsManager.tsx` — padding + classes + largeurs + table-fixed
+- `src/components/Vitrine.tsx` — padding + classes + largeurs + table-fixed
+- `src/components/StatistiquesFournisseur.tsx` — padding + classes + largeurs sur 5 tableaux
+- `src/components/ModuleFinancier.tsx` — py-1→py-2, padding horizontal + classes sur 7 tableaux
+- `src/components/PlanningOperateurs.tsx` — px-2/px-1→px-3, py-1→py-2, classes standard
+
+### Vérification
+
+- `npm run build` : ✅ réussi (warnings préexistants inchangés)
+- Déploiement frontend : ✅ effectué via `deploy.ps1 -Target frontend`
+
+---
+
+## 2026-08-21 — Traductions manquantes : scan complet et correction
+
+### 🌐 Correction
+
+Audit complet des traductions i18n sur tout le frontend, via 4 subagents en parallèle. Trois catégories de problèmes corrigés :
+
+1. **Chaînes en dur dans les composants** (~150 chaînes corrigées) : placeholders, `title`, `aria-label`, texte JSX visible remplacés par des appels `t('namespace:key')` dans ~35 fichiers TSX.
+
+2. **Clés `t()` sans namespace** (~80 corrections) : `useCommandeActions.ts` (18 clés `messages.*` → `orders:messages.*`), `PharmacySettingsForm.tsx` (15 clés → `pharmacy_settings:*`), et plusieurs composants utilisant `t('title')`, `t('tabs.*')`, `t('table.*')` sans namespace.
+
+3. **Harmonisation FR/EN des fichiers JSON** :
+   - **`export.json`** : création du fichier EN complet (22 clés)
+   - **`stock.json`** : ajout des sections manquantes en EN (`perimes`, `transformations`, `organisation`, `etats_inventaire`, `rapport_ug`, `cadencier`, `health`, `analyse`, `reappro`)
+   - **`caisse.json`** : 8 clés `cash_session` ajoutées en EN, 7 clés `open_point_vente` ajoutées en FR
+   - **`sidebar.json`** : `divers`, `catalog_dci`, `sauvegardes` ajoutés en EN ; `parametres.etiquettes` ajouté en FR
+   - **`reports.json`** : section `columns` ajoutée en EN
+   - **`monthly_report.json`** : section `reconciliation` ajoutée en EN
+   - **`accounting.json`**, **`clients.json`**, **`common.json`**, **`dashboard.json`**, **`sales.json`**, **`sales_history.json`**, **`cash_journal.json`**, **`system_admin.json`**, **`messaging.json`**, **`corbeille.json`**, **`audit.json`**, **`products.json`**, **`orders.json`**, **`suppliers.json`**, **`facturation.json`**, **`settings.json`**, **`maintenance.json`** : clés manquantes ajoutées FR et/ou EN
+
+### Fichiers TSX/TS modifiés (principaux)
+
+- `src/components/Corbeille.tsx`, `MessagingModal.tsx`, `UserHeader.tsx`, `Omnisearch.tsx`, `PremiumModal.tsx`, `Sidebar.tsx`, `CentreRapports.tsx`, `JournalAudit.tsx`, `TelegramHistory.tsx`
+- `src/components/StockAnalysis.tsx`, `CommandeForm.tsx`, `ProduitFormModal.tsx`, `QuickCreateProductModal.tsx`, `SmartOrganizerModal.tsx`, `StockAdjustmentModal.tsx`, `StockHealthSettingsModal.tsx`, `Maintenance.tsx`, `Cadencier.tsx`, `StockAnalysisTable.tsx`, `CaisseCentralisee.tsx`, `CategoryManager.tsx`, `CatalogDCI.tsx`, `InteractionsManager.tsx`, `ReapproHistory.tsx`
+- `src/components/ClientFormModal.tsx`, `ClientDepositModal.tsx`, `FournisseurFormModals.tsx`, `SalesTable.tsx`, `ProductDetailsModal.tsx`, `ProductTabsContent.tsx`, `AvoirsDetails.tsx`, `FacturationHeader.tsx`, `FacturesTable.tsx`, `PaymentModal.tsx`, `PharmacySettingsForm.tsx`
+- `src/components/HistoriqueVentes.tsx`, `JournalCaisseTable.tsx`, `LicenceScreen.tsx`, `LicenceNotifications.tsx`
+- `src/hooks/useCommandeActions.ts` (18 corrections de namespace)
+
+### Fichiers JSON modifiés (FR + EN)
+
+- `public/locales/{fr,en}/common.json`, `sidebar.json`, `corbeille.json`, `messaging.json`, `audit.json`, `reports.json`, `products.json`, `orders.json`, `stock.json`, `settings.json`, `maintenance.json`, `caisse.json`, `clients.json`, `suppliers.json`, `pharmacy_settings.json`, `facturation.json`, `sales.json`, `sales_history.json`, `cash_journal.json`, `system_admin.json`, `dashboard.json`, `monthly_report.json`, `accounting.json`
+- `public/locales/en/export.json` (création)
+
 ## 2026-08-20 — Cohérence valeur stock dashboard vs Excel
 
 ### 🐛 Correction

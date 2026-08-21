@@ -18,7 +18,10 @@
         "coupons": "Coupons",
         "en_compte": "On Account",
         "nb_ventes": "Sales Count",
-        "avg_basket": "Avg Basket"
+        "avg_basket": "Avg Basket",
+        "margin": "Margin",
+        "discounts": "Discounts",
+        "telegram": "Telegram"
     },
     "pagination": {
         "showing": "Showing",

@@ -65,8 +65,8 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                             <Settings className="size-6" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-black tracking-tighter text-slate-800">Configuration Expert IA</h3>
-                            <p className="text-sm text-slate-400 font-medium">Ajustez la pondération de votre score de santé</p>
+                            <h3 className="text-2xl font-black tracking-tighter text-slate-800">{t('stock:health.config_title')}</h3>
+                            <p className="text-sm text-slate-400 font-medium">{t('stock:health.config_subtitle')}</p>
                         </div>
                     </div>
                 </div>
@@ -77,8 +77,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                     <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-4">
                         <Info className="size-6 text-blue-500 shrink-0" />
                         <p className="text-sm font-medium leading-relaxed text-slate-600">
-                            Définissez l'importance de chaque critère. Par défaut (60/40), nous privilégions la
-                            disponibilité pour éviter de perdre des clients.
+                            {t('stock:health.weight_description')}
                         </p>
                     </div>
 
@@ -86,11 +85,11 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                     <div className="space-y-6">
                         <div className="flex justify-between items-end">
                             <div className="space-y-1">
-                                <span className="text-xs font-black uppercase tracking-widest text-emerald-600">Disponibilité</span>
+                                <span className="text-xs font-black uppercase tracking-widest text-emerald-600">{t('stock:health.availability')}</span>
                                 <div className="text-3xl font-black text-emerald-600">{availWeight}%</div>
                             </div>
                             <div className="space-y-1 text-right">
-                                <span className="text-xs font-black uppercase tracking-widest text-blue-600">Rotation</span>
+                                <span className="text-xs font-black uppercase tracking-widest text-blue-600">{t('stock:health.rotation')}</span>
                                 <div className="text-3xl font-black text-blue-600">{100 - availWeight}%</div>
                             </div>
                         </div>
@@ -106,15 +105,15 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                         />
 
                         <div className="flex justify-between text-xs px-2 font-bold text-slate-300">
-                            <span>Priorité Trésorerie</span>
-                            <span>Équilibré</span>
-                            <span>Priorité Service Client</span>
+                            <span>{t('stock:health.priority_cash')}</span>
+                            <span>{t('stock:health.priority_balanced')}</span>
+                            <span>{t('stock:health.priority_service')}</span>
                         </div>
                     </div>
 
                     {/* Logic Preview Card */}
                     <div className="bg-slate-50 p-6 rounded-3xl space-y-3">
-                        <div className="text-xs font-black uppercase tracking-widest text-slate-400">Logique de calcul actuelle</div>
+                        <div className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:health.current_logic')}</div>
                         <div className="flex items-center gap-2 font-mono text-sm">
                             <span className="text-emerald-600 font-bold">({availWeight}% × Dispo)</span>
                             <span className="text-slate-300">+</span>

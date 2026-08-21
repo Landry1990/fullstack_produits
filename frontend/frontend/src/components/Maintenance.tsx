@@ -1097,7 +1097,7 @@ export default function Maintenance() {
                       onChange={e => setPharmacySettings({...pharmacySettings, secondary_backup_path: e.target.value})}
                     />
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Chemin Linux dans le conteneur (ex: /mnt/backups). Le volume doit être monté dans docker-compose.
+                      {t('maintenance:backup_path_description')}
                     </p>
                   </div>
 
@@ -1516,7 +1516,7 @@ export default function Maintenance() {
             </label>
             <Input
               type="password"
-              placeholder="Mot de passe admin"
+              placeholder={t('maintenance:admin_password_placeholder')}
               value={purgePassword}
               onChange={e => setPurgePassword(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handlePurgeProduits(); }}
@@ -1570,7 +1570,7 @@ export default function Maintenance() {
             </label>
             <Input
               type="password"
-              placeholder="Mot de passe admin"
+              placeholder={t('maintenance:admin_password_placeholder')}
               value={updatePassword}
               onChange={e => setUpdatePassword(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleRunUpdate(); }}

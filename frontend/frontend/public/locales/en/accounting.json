@@ -16,7 +16,9 @@
       "closed": "CLOSED"
     },
     "dashboard": {
+      "title": "Dashboard",
       "products": "Products (Sales)",
+      "revenue": "Revenue",
       "expenses": "Expenses (Charges)",
       "net_result": "Net Result",
       "profit": "PROFIT",
@@ -40,6 +42,7 @@
             "debit": "Debit",
             "credit": "Credit"
         },
+        "items_label": "{{label}}",
         "no_entry_found": "No entry found"
     },
     "balance": {

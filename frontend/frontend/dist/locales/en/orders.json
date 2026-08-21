@@ -597,6 +597,12 @@
         "table": {
             "ug": "Free units"
         }
-    }
+    },
+    "product_details": "Product details",
+    "price_purchase_ht": "PURCHASE PRICE HT",
+    "price_tva": "VAT",
+    "price_purchase_ttc": "PURCHASE PRICE TTC",
+    "price_selling_ttc": "SELLING PRICE TTC",
+    "margin": "MARGIN"
 }
 

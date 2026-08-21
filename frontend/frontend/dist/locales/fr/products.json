@@ -138,6 +138,10 @@
         "new_reserve_stock": "Nouveau Stock Réserve",
         "difference": "Différence :",
         "reason_type": "Type de motif *",
+        "lot_concerned": "Lot concerné",
+        "lot_number": "Numéro de lot",
+        "lot_placeholder": "Ex: LOT-2026-001",
+        "expiry_date": "Date de péremption",
         "reasons": {
             "INVENTAIRE": "Réajustement inventaire",
             "CASSE": "Casse",
@@ -347,5 +351,61 @@
         "comm_error": "Erreur de communication avec le serveur",
         "errors_count": "{{count}} erreur(s)",
         "download_report": "Télécharger le rapport Excel"
+    },
+    "marge_ht_label": "Marge HT (F)",
+    "counter_alert_message": "Message d'alerte comptoir",
+    "counter_alert_placeholder": "Ex: Changement de conditionnement, vérifier le code barre...",
+    "counter_alert_description": "Ce message s'affichera en plein écran lors du passage de ce produit en caisse.",
+    "cip1_placeholder": "Code CIP 1",
+    "cip2_placeholder": "CIP 2",
+    "cip3_placeholder": "CIP 3",
+    "smart_organizer": {
+        "example_name": "Ex: AMIFER",
+        "example_name_to": "Ex: DAFLON",
+        "example_form": "Ex: CPR"
+    },
+    "category": {
+        "move_to_trash": "Mettre en corbeille",
+        "col_product": "Produit",
+        "col_cip": "CIP",
+        "col_stock": "Stock",
+        "col_price": "Prix",
+        "col_action": "Action"
+    },
+    "dci": {
+        "search_placeholder": "Rechercher une DCI...",
+        "no_substance": "Aucune substance trouvée",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "subtitle": "Gestion du groupe générique et des substitutions",
+        "search_add": "Rechercher et ajouter",
+        "no_associated_products": "Aucun produit associé à cette DCI dans votre stock",
+        "no_national_reference": "Aucune référence trouvée dans la base nationale",
+        "select_dci": "Sélectionnez une DCI pour gérer ses produits"
+    },
+    "interactions": {
+        "search_placeholder": "Rechercher une substance...",
+        "gravity_all": "Toutes gravités",
+        "gravity_contre_indique": "Contre-indiqué",
+        "gravity_deconseille": "Déconseillé",
+        "gravity_a_prendre_en_compte": "À prendre en compte",
+        "gravity_precaution": "Précaution",
+        "add": "+ Ajouter une interaction",
+        "csv_import": "Import CSV d'interactions",
+        "csv_format": "Format: substance_a,substance_b,gravity,description (gravity: PRECAUTION, A_PRENDRE_EN_COMPTE, DECONSEILLE, CONTRE_INDIQUE)",
+        "import_btn": "Importer",
+        "created": "créées",
+        "updated": "mises à jour",
+        "skipped": "ignorées",
+        "col_substance_a": "Substance A",
+        "col_substance_b": "Substance B",
+        "col_gravity": "Gravité",
+        "col_description": "Description",
+        "none_found": "Aucune interaction trouvée",
+        "edit": "Éditer",
+        "delete": "Suppr.",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "risk_placeholder": "Décrire le risque et la conduite à tenir..."
     }
 }

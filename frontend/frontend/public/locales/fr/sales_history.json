@@ -18,7 +18,10 @@
         "coupons": "Coupons",
         "en_compte": "En Compte",
         "nb_ventes": "Nb Ventes",
-        "avg_basket": "Panier Moyen"
+        "avg_basket": "Panier Moyen",
+        "margin": "Marge",
+        "discounts": "Remises",
+        "telegram": "Telegram"
     },
     "pagination": {
         "showing": "Affichage de",

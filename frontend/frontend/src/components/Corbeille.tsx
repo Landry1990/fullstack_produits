@@ -222,13 +222,13 @@ export default function Corbeille() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="p-2 h-9 w-9" onClick={fetchData} disabled={loading} title="Actualiser">
+            <Button variant="ghost" size="sm" className="p-2 h-9 w-9" onClick={fetchData} disabled={loading} title={t('actions.refresh')}>
               {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-primary rounded-full animate-spin" /> : <RotateCcw className="size-4" />}
             </Button>
             {(data?.total ?? 0) > 0 && (
               <Button variant="danger" size="sm" onClick={handleEmptyTrash} disabled={actionLoading}>
                 <Trash2 className="size-3.5 mr-1.5" />
-                <span className="hidden sm:inline">Vider tout</span>
+                <span className="hidden sm:inline">{t('actions.empty_all')}</span>
               </Button>
             )}
           </div>
@@ -242,7 +242,7 @@ export default function Corbeille() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
           <Input
             type="text"
-            placeholder="Rechercher..."
+            placeholder={t('search_placeholder')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="pl-9 pr-8 h-9 text-sm"
@@ -335,7 +335,7 @@ export default function Corbeille() {
                             </span>
                           )}
                           {item.type === 'produit' && (
-                            <span className="text-[10px] text-muted-foreground">Stock: {Number(item.details.stock ?? 0)}</span>
+                            <span className="text-[10px] text-muted-foreground">{t('stock_label')} {Number(item.details.stock ?? 0)}</span>
                           )}
                           {item.type === 'facture' && (
                             <span className="text-[10px] text-muted-foreground">{Number(item.details.total ?? 0).toLocaleString('fr-FR')} FCFA</span>
@@ -353,7 +353,7 @@ export default function Corbeille() {
                           className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50"
                           onClick={e => { e.stopPropagation(); handleRestore([{ model: item.type, id: item.id }]); }}
                           disabled={actionLoading}
-                          title="Restaurer"
+                          title={t('actions.restore')}
                         >
                           <ArrowUpFromLine className="size-4" />
                         </Button>
@@ -363,7 +363,7 @@ export default function Corbeille() {
                           className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
                           onClick={e => { e.stopPropagation(); handlePurge([{ model: item.type, id: item.id }]); }}
                           disabled={actionLoading}
-                          title="Supprimer définitivement"
+                          title={t('actions.delete_permanently')}
                         >
                           <Trash2 className="size-4" />
                         </Button>

@@ -271,7 +271,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               className="inline-flex items-center justify-center h-9 px-3 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors mb-0.5"
               onClick={() => handleAddPayment()}
               disabled={!montantPaye || Number(montantPaye) === 0}
-              title="Entrée dans le montant ou clic"
+              title={t('payment.amount_input_hint')}
             >
               +
             </button>

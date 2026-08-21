@@ -65,6 +65,22 @@ export interface FactureProduit {
     allocations?: FactureProduitAllocation[]
 }
 
+export interface PaiementUserDetails {
+    id: number
+    username: string
+    full_name?: string
+}
+
+export interface Paiement {
+    id: number
+    mode_paiement: string
+    mode_paiement_display?: string
+    montant: string
+    date?: string
+    user_details?: PaiementUserDetails
+    created_by_name?: string
+}
+
 export interface Facture {
     id: number
     client: number
@@ -91,7 +107,7 @@ export interface Facture {
     is_remise_auto?: boolean
     part_client?: string | null
     reste_a_payer?: string
-    paiements?: unknown[]
+    paiements?: Paiement[]
     validated_by_name?: string
     cancelled_by_name?: string
     session_ticket_number?: number
