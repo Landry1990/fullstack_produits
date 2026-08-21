@@ -123,14 +123,14 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             <TableHead className="w-12 px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 <span className="sr-only">Sélection</span>
                             </TableHead>
-                            <TableHead className="w-28 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.date')}</TableHead>
-                            <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.numero')}</TableHead>
-                            <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.fournisseur')}</TableHead>
-                            <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.type')}</TableHead>
-                            <TableHead className="w-16 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.lines')}</TableHead>
-                            <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('stock:avoirs.table.montant')}</TableHead>
-                            <TableHead className="w-28 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.status')}</TableHead>
-                            <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-right"></TableHead>
+                            <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.date')}</TableHead>
+                            <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.numero')}</TableHead>
+                            <TableHead className="w-44 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.fournisseur')}</TableHead>
+                            <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.type')}</TableHead>
+                            <TableHead className="w-14 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.lines')}</TableHead>
+                            <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('stock:avoirs.table.montant')}</TableHead>
+                            <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.status')}</TableHead>
+                            <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -216,14 +216,14 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             </TableHead>
                         ) : (
                             <>
-                                <TableHead className="w-28 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.date')}</TableHead>
-                                <TableHead className="w-36 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.numero')}</TableHead>
-                                <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.fournisseur')}</TableHead>
-                                <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.type')}</TableHead>
-                                <TableHead className="w-16 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.lines')}</TableHead>
-                                <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('stock:avoirs.table.montant')}</TableHead>
-                                <TableHead className="w-28 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.status')}</TableHead>
-                                <TableHead className="w-32 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-right"></TableHead>
+                                <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.date')}</TableHead>
+                                <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.numero')}</TableHead>
+                                <TableHead className="w-44 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.fournisseur')}</TableHead>
+                                <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.table.type')}</TableHead>
+                                <TableHead className="w-14 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.lines')}</TableHead>
+                                <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('stock:avoirs.table.montant')}</TableHead>
+                                <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.status')}</TableHead>
+                                <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right"></TableHead>
                             </>
                         )}
                     </TableRow>
@@ -269,7 +269,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                     </div>
                                 </TableCell>
                                 <TableCell className="px-3 py-2">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wide ${getTypeAvoirStyle(avoir.type_avoir)}`}>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wide whitespace-nowrap ${getTypeAvoirStyle(avoir.type_avoir)}`}>
                                         {getTypeAvoirLabel(avoir.type_avoir, t)}
                                     </span>
                                 </TableCell>

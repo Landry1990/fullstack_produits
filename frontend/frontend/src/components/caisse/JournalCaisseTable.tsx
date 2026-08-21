@@ -111,17 +111,17 @@ export default function JournalCaisseTable({ state }: Props) {
             </div>
 
             {/* Vue Desktop */}
-            <table className="hidden md:table w-full border-collapse text-sm border-separate border-spacing-0">
+            <table className="hidden md:table w-full table-fixed border-collapse text-sm border-separate border-spacing-0">
               <thead className="sticky top-0 z-30 bg-slate-100 opacity-100">
                 <tr className="border-b border-slate-200">
-                  <th className="border-b-2 border-slate-200 text-xs font-bold text-slate-500 py-3 pl-6">{t('table.date_time')}</th>
-                  <th className="border-b-2 border-slate-200 text-xs font-bold text-slate-500 py-3">{t('table.cashier')}</th>
-                  <th className="border-b-2 border-slate-200 text-xs font-bold text-slate-500 py-3">{t('table.entered_by')}</th>
-                  <th className="border-b-2 border-slate-200 text-xs font-bold text-slate-500 py-3">{t('table.client_label')}</th>
-                  <th className="border-b-2 border-slate-200 text-xs font-bold text-slate-500 py-3 min-w-[140px] uppercase tracking-wider">{t('table.piece_num')}</th>
-                  <th className="border-b-2 border-slate-200 text-xs font-bold text-slate-500 py-3 text-right">{t('table.amount')}</th>
-                  <th className="border-b-2 border-slate-200 text-xs font-bold text-slate-500 py-3">{t('table.mode')}</th>
-                  <th className="border-b-2 border-slate-200 text-xs font-bold text-slate-500 py-3 pr-6 text-right">{t('table.status')}</th>
+                  <th className="w-36 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.date_time')}</th>
+                  <th className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.cashier')}</th>
+                  <th className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.entered_by')}</th>
+                  <th className="w-[20%] border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.client_label')}</th>
+                  <th className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.piece_num')}</th>
+                  <th className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.amount')}</th>
+                  <th className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.mode')}</th>
+                  <th className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -130,8 +130,8 @@ export default function JournalCaisseTable({ state }: Props) {
                     const mouv = item as MouvementCaisse;
                     return (
                       <tr key={`mouv-${mouv.id}`} className={cn("hover:bg-slate-50/50 transition-colors", mouv.type === 'ENTREE' ? 'bg-emerald-50/50' : 'bg-red-50/50')}>
-                        <td className="font-mono text-xs whitespace-nowrap pl-6 py-4">{formatDate(mouv.date)}</td>
-                        <td className="py-4">
+                        <td className="font-mono text-xs whitespace-nowrap px-3 py-2">{formatDate(mouv.date)}</td>
+                        <td className="px-3 py-2">
                           <div className="flex items-center gap-3">
                             <div className="size-8 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 border border-slate-200">
                               {(mouv.user_nom || 'U')[0]}
@@ -142,23 +142,23 @@ export default function JournalCaisseTable({ state }: Props) {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="px-3 py-2">
                           <span className="text-xs text-slate-300 italic">-</span>
                         </td>
-                        <td className="py-4">
+                        <td className="px-3 py-2">
                           <div className="font-bold text-sm text-slate-700">{mouv.motif}</div>
                           <div className="text-xs text-slate-500 italic max-w-xs truncate" title={mouv.description}>{mouv.description || t('table.no_description')}</div>
                         </td>
-                        <td className="font-mono text-[10px] py-4 text-slate-500">MOUV-{mouv.id}</td>
-                        <td className={cn("text-right font-black text-base py-4", mouv.type === 'ENTREE' ? 'text-emerald-600' : 'text-red-600')}>
+                        <td className="font-mono text-[10px] px-3 py-2 text-slate-500">MOUV-{mouv.id}</td>
+                        <td className={cn("text-right font-black text-base px-3 py-2", mouv.type === 'ENTREE' ? 'text-emerald-600' : 'text-red-600')}>
                           {mouv.type === 'ENTREE' ? '+' : '-'}{formatCurrencyLocal(normalizeNumberInput(mouv.montant))}
                         </td>
-                        <td className="py-4">
+                        <td className="px-3 py-2">
                           <span className={cn("inline-flex items-center rounded-md font-bold text-[10px] gap-1 py-1 px-2", mouv.type === 'ENTREE' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white')}>
                             {mouv.type === 'ENTREE' ? t('filter_caps.entry') || 'ENTRÉE' : t('filter_caps.exit') || 'SORTIE'}
                           </span>
                         </td>
-                        <td className="py-4 pr-6 text-right">
+                        <td className="px-3 py-2 text-right">
                           <span className="inline-flex items-center gap-1 text-emerald-600 font-bold text-[10px] bg-emerald-50 px-2 py-1 rounded-md uppercase">
                             {t('table.validated')}
                           </span>
@@ -176,7 +176,7 @@ export default function JournalCaisseTable({ state }: Props) {
                         className={cn("hover:bg-slate-50/50 transition-colors group", transaction.isReleveGroup ? 'bg-emerald-50/50 cursor-pointer border-l-2 border-l-emerald-500 ring-1 ring-inset ring-emerald-500/10' : '')}
                         onClick={() => transaction.isReleveGroup && transaction.releve_id && toggleReleve(transaction.releve_id)}
                       >
-                        <td className="font-mono text-xs whitespace-nowrap pl-6 py-4">
+                        <td className="font-mono text-xs whitespace-nowrap px-3 py-2">
                           <div className="flex flex-col">
                             <span>{formatDate(transaction.date_paiement)}</span>
                             {transaction.isReleveGroup && (
@@ -186,7 +186,7 @@ export default function JournalCaisseTable({ state }: Props) {
                             )}
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="px-3 py-2">
                           <div className="flex items-center gap-3">
                             <div className="size-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600 border border-emerald-500/20">
                               {(transaction.user_details?.full_name || 'U')[0]}
@@ -201,13 +201,13 @@ export default function JournalCaisseTable({ state }: Props) {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="px-3 py-2">
                           {transaction.facture_created_by_name ? (
                             <div className="flex items-center gap-2">
                               <div className="size-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
                                 {transaction.facture_created_by_name[0]}
                               </div>
-                              <span className="text-sm border-b border-dashed border-slate-200" title="Utilisateur ayant saisi la facture">
+                              <span className="text-sm border-b border-dashed border-slate-200" title={t('user_who_billed')}>
                                 {transaction.facture_created_by_name}
                               </span>
                             </div>
@@ -215,7 +215,7 @@ export default function JournalCaisseTable({ state }: Props) {
                             <span className="text-xs text-slate-300 italic">-</span>
                           )}
                         </td>
-                        <td className="py-4">
+                        <td className="px-3 py-2">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-sm text-slate-700">{transaction.client_name}</span>
                             {transaction.is_creance_settlement && (
@@ -226,17 +226,17 @@ export default function JournalCaisseTable({ state }: Props) {
                             <div className="text-[10px] text-emerald-600 font-bold mt-1">Réf: {transaction.releve_reference}</div>
                           )}
                         </td>
-                        <td className="font-mono text-xs py-4">
+                        <td className="font-mono text-xs px-3 py-2">
                           {transaction.isReleveGroup ? (
                             <span className="text-emerald-600/70 font-bold italic">{transaction.items?.length} {t('common:pieces') || 'pièces'}</span>
                           ) : (
                             <span className="bg-slate-100 px-2 py-1 rounded font-bold text-slate-600 whitespace-nowrap">{transaction.facture_numero || '-'}</span>
                           )}
                         </td>
-                        <td className="text-right font-black text-base py-4 text-slate-700">
+                        <td className="text-right font-black text-base px-3 py-2 text-slate-700">
                           {formatCurrencyLocal(normalizeNumberInput(transaction.montant))}
                         </td>
-                        <td className="py-4">
+                        <td className="px-3 py-2">
                           {(() => {
                             const mode = transaction.mode_paiement as unknown;
                             const isRecouvrement = mode === 'recouvrement' ||
@@ -256,7 +256,7 @@ export default function JournalCaisseTable({ state }: Props) {
                             );
                           })()}
                         </td>
-                        <td className="py-4 pr-6 text-right">
+                        <td className="px-3 py-2 text-right">
                           {transaction.statut === 'completee' ? (
                             <span className="inline-flex items-center text-emerald-600 font-bold text-[10px] bg-emerald-50 px-2 py-1 rounded-md uppercase">{t('table.paid')}</span>
                           ) : transaction.statut === 'annulee' ? (
@@ -269,17 +269,17 @@ export default function JournalCaisseTable({ state }: Props) {
 
                       {isExpanded && transaction.items?.map(subItem => (
                         <tr key={subItem.id} className="bg-emerald-50/50 border-l-2 border-l-emerald-500/30">
-                          <td className="pl-12 py-3 text-[11px] opacity-60 font-mono">↳ {formatDate(subItem.date_paiement).split(' ')[1]}</td>
-                          <td className="py-3 opacity-40 text-[11px]">-</td>
-                          <td className="py-3 opacity-40 text-[11px]">-</td>
-                          <td className="font-mono text-[11px] py-3 font-bold text-emerald-600/70 whitespace-nowrap">{subItem.facture_numero}</td>
-                          <td className="text-right text-[11px] py-3 pr-4 font-bold text-slate-700">
+                          <td className="pl-12 py-2 text-[11px] opacity-60 font-mono">↳ {formatDate(subItem.date_paiement).split(' ')[1]}</td>
+                          <td className="py-2 opacity-40 text-[11px]">-</td>
+                          <td className="py-2 opacity-40 text-[11px]">-</td>
+                          <td className="font-mono text-[11px] py-2 font-bold text-emerald-600/70 whitespace-nowrap">{subItem.facture_numero}</td>
+                          <td className="text-right text-[11px] py-2 pr-4 font-bold text-slate-700">
                             {formatCurrencyLocal(normalizeNumberInput(subItem.montant))}
                           </td>
-                          <td className="py-3 pr-4">
+                          <td className="py-2 pr-4">
                             <span className="text-[10px] opacity-60 italic">{subItem.reference || '-'}</span>
                           </td>
-                          <td className="py-3 text-[10px] font-black text-emerald-600/40 pr-6 text-right">PIÈCE</td>
+                          <td className="py-2 text-[10px] font-black text-emerald-600/40 pr-6 text-right">PIÈCE</td>
                         </tr>
                       ))}
                     </React.Fragment>

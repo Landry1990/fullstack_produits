@@ -572,17 +572,17 @@ export default function HistoriqueClotures() {
           {/* Sessions Table */}
           <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col min-h-0">
             <div className="flex-1 overflow-auto">
-              <table className="min-w-full divide-y divide-slate-200">
+              <table className="min-w-full table-fixed divide-y divide-slate-200">
                 <thead className="bg-slate-100 sticky top-0 z-10">
                   <tr>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.status')}</th>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.post')}</th>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.cashier')}</th>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.opening')}</th>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.closing')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.fund')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.total_collected')}</th>
-                    <th className="text-center py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('sessions.table.actions')}</th>
+                    <th className="w-20 py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('sessions.table.status')}</th>
+                    <th className="w-20 py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('sessions.table.post')}</th>
+                    <th className="w-28 py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('sessions.table.cashier')}</th>
+                    <th className="w-32 py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('sessions.table.opening')}</th>
+                    <th className="w-32 py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('sessions.table.closing')}</th>
+                    <th className="w-28 text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('sessions.table.fund')}</th>
+                    <th className="w-28 text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('sessions.table.total_collected')}</th>
+                    <th className="w-24 text-center py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('sessions.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -607,7 +607,7 @@ export default function HistoriqueClotures() {
                       const totalVentilation = Object.values(session.ventilation_paiements || {}).reduce((s, v) => s + v, 0)
                       return (
                         <tr key={session.id} className={cn("hover:bg-slate-50 transition-colors", session.est_actif ? 'bg-emerald-50/50' : '')}>
-                          <td className="py-3 px-2">
+                          <td className="py-2 px-3">
                             {session.est_actif ? (
                               <Badge className="bg-emerald-500 text-white gap-1 font-bold text-[10px]">
                                 <PlayCircle className="size-3" />
@@ -620,17 +620,17 @@ export default function HistoriqueClotures() {
                               </Badge>
                             )}
                           </td>
-                          <td className="py-3 px-2">
+                          <td className="py-2 px-3">
                             <div className="flex items-center gap-2">
                               <Monitor className="size-4 text-slate-400" />
                               <span className="font-bold text-sm">{session.poste_nom}</span>
                             </div>
                           </td>
-                          <td className="py-3 px-2 font-medium text-sm">{session.ouvert_par_name}</td>
-                          <td className="py-3 px-2">
+                          <td className="py-2 px-3 font-medium text-sm">{session.ouvert_par_name}</td>
+                          <td className="py-2 px-3">
                             <div className="font-semibold text-sm">{formatDate(session.date_ouverture)}</div>
                           </td>
-                          <td className="py-3 px-2">
+                          <td className="py-2 px-3">
                             {session.date_fermeture ? (
                               <div className="font-semibold text-sm">{formatDate(session.date_fermeture)}</div>
                             ) : session.est_actif ? (
@@ -639,13 +639,13 @@ export default function HistoriqueClotures() {
                               <span className="text-slate-400 font-medium text-xs">{t('sessions.status.not_opened', { defaultValue: 'Non ouvert' })}</span>
                             )}
                           </td>
-                          <td className="text-right py-3 px-2 font-medium text-slate-700 text-sm">
+                          <td className="text-right py-2 px-3 font-medium text-slate-700 text-sm">
                             {session.fond_de_caisse ? formatMoney(session.fond_de_caisse) : '-'}
                           </td>
-                          <td className="text-right py-3 px-2 font-bold text-emerald-600 text-sm">
+                          <td className="text-right py-2 px-3 font-bold text-emerald-600 text-sm">
                             {formatMoney(totalVentilation)}
                           </td>
-                          <td className="text-center py-3 px-2">
+                          <td className="text-center py-2 px-3">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -824,17 +824,17 @@ export default function HistoriqueClotures() {
 
           <div className="overflow-x-auto flex-1">
             {viewMode === 'list' ? (
-              <table className="min-w-full divide-y divide-slate-200">
+              <table className="min-w-full table-fixed divide-y divide-slate-200">
                 <thead className="bg-slate-100 sticky top-0 z-10 opacity-100">
                   <tr>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_date')}</th>
-                    {isMultiCaisse && <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_post')}</th>}
-                    <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_cashier')}</th>
-                    <th className="py-3 px-4 text-left text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_done_by')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_theoretical')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_real')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_gap')}</th>
-                    <th className="text-center py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('table.header_actions')}</th>
+                    <th className="py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('table.header_date')}</th>
+                    {isMultiCaisse && <th className="py-2 px-3 text-left text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('table.header_post')}</th>}
+                    <th className="py-2 px-3 text-left text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('table.header_cashier')}</th>
+                    <th className="py-2 px-3 text-left text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('table.header_done_by')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('table.header_theoretical')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('table.header_real')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('table.header_gap')}</th>
+                    <th className="text-center py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('table.header_actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -857,7 +857,7 @@ export default function HistoriqueClotures() {
                   ) : (
                     clotures.map((cloture) => (
                       <tr key={cloture.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-2">
+                        <td className="py-2 px-3">
                           <div className="font-semibold text-sm whitespace-nowrap">{formatDate(cloture.date)}</div>
                           <div className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
                             {t('table.period_desc', {
@@ -867,30 +867,30 @@ export default function HistoriqueClotures() {
                           </div>
                         </td>
                         {isMultiCaisse && (
-                           <td className="py-3 px-4 align-middle">
+                           <td className="py-2 px-3 align-middle">
                              <span className="font-medium text-sm text-slate-700">
                                {cloture.poste_caisse_nom || '-'}
                              </span>
                            </td>
                         )}
-                        <td className="py-3 px-4 align-middle">
+                        <td className="py-2 px-3 align-middle">
                            <span className="font-medium text-sm text-slate-800">{cloture.user_name || cloture.username || t('common:not_available')}</span>
                         </td>
-                        <td className="py-3 px-4 align-middle">
+                        <td className="py-2 px-3 align-middle">
                            <span className="text-sm font-medium text-slate-500">{cloture.cloture_par_name || '-'}</span>
                         </td>
-                        <td className="text-right py-3 px-2 text-slate-700 font-medium text-sm">
+                        <td className="text-right py-2 px-3 text-slate-700 font-medium text-sm">
                           {formatMoney(cloture.montant_theorique)}
                         </td>
-                        <td className="text-right py-3 px-2 font-bold text-emerald-600 text-sm">
+                        <td className="text-right py-2 px-3 font-bold text-emerald-600 text-sm">
                           {formatMoney(cloture.montant_reel)}
                         </td>
-                        <td className="text-right py-3 px-2">
+                        <td className="text-right py-2 px-3">
                           <Badge className={cn("font-bold px-2 py-0.5 text-[10px]", normalizeNumberInput(cloture.ecart_caisse) < 0 ? 'bg-red-500 text-white' : normalizeNumberInput(cloture.ecart_caisse) > 0 ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 border-slate-200')}>
                             {normalizeNumberInput(cloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(cloture.ecart_caisse)}
                           </Badge>
                         </td>
-                        <td className="text-center py-3 px-2">
+                        <td className="text-center py-2 px-3">
                           <div className="flex justify-center gap-1">
                             <Button
                               variant="ghost"
@@ -921,31 +921,31 @@ export default function HistoriqueClotures() {
                 {globalTotals && clotures.length > 0 && (
                   <tfoot className="bg-slate-50 border-t-2 border-slate-200">
                     <tr className="text-slate-700 font-bold">
-                      <td className="py-3 px-2 whitespace-nowrap" colSpan={isMultiCaisse ? 4 : 3}>
+                      <td className="py-2 px-3 whitespace-nowrap" colSpan={isMultiCaisse ? 4 : 3}>
                         <span className="uppercase text-[10px] tracking-tight">{t('table.period_total', { count: totalItems })}</span>
                       </td>
-                      <td className="text-right py-3 px-2 text-slate-700 font-bold">{formatMoney(globalTotals.montant_theorique)}</td>
-                      <td className="text-right py-3 px-2 text-emerald-600 font-bold">{formatMoney(globalTotals.montant_reel)}</td>
-                      <td className={cn("text-right py-3 px-2 font-bold", normalizeNumberInput(globalTotals.ecart_caisse) < 0 ? 'text-red-600' : normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? 'text-emerald-600' : '')}>
+                      <td className="text-right py-2 px-3 text-slate-700 font-bold">{formatMoney(globalTotals.montant_theorique)}</td>
+                      <td className="text-right py-2 px-3 text-emerald-600 font-bold">{formatMoney(globalTotals.montant_reel)}</td>
+                      <td className={cn("text-right py-2 px-3 font-bold", normalizeNumberInput(globalTotals.ecart_caisse) < 0 ? 'text-red-600' : normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? 'text-emerald-600' : '')}>
                         {normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? '+' : ''}{formatMoney(globalTotals.ecart_caisse)}
                       </td>
-                      <td className="px-2"></td>
+                      <td className="px-3"></td>
                     </tr>
                   </tfoot>
                 )}
               </table>
             ) : (
-              <table className="min-w-full divide-y divide-slate-200">
+              <table className="min-w-full table-fixed divide-y divide-slate-200">
                 <thead className="bg-slate-100 sticky top-0 z-10 opacity-100">
                   <tr>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('daily.header_date', { defaultValue: 'Date' })}</th>
-                    <th className="text-center py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('daily.header_count', { defaultValue: 'Clôtures' })}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('daily.header_theoretical', { defaultValue: 'Théorique' })}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('daily.header_real', { defaultValue: 'Réel' })}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('daily.header_gap', { defaultValue: 'Écart' })}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('daily.header_sales', { defaultValue: 'Ventes' })}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('daily.header_entries', { defaultValue: 'Entrées' })}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('daily.header_exits', { defaultValue: 'Sorties' })}</th>
+                    <th className="py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_date', { defaultValue: 'Date' })}</th>
+                    <th className="text-center py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_count', { defaultValue: 'Clôtures' })}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_theoretical', { defaultValue: 'Théorique' })}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_real', { defaultValue: 'Réel' })}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_gap', { defaultValue: 'Écart' })}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_sales', { defaultValue: 'Ventes' })}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_entries', { defaultValue: 'Entrées' })}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('daily.header_exits', { defaultValue: 'Sorties' })}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -967,24 +967,24 @@ export default function HistoriqueClotures() {
                   ) : (
                     dailyData.map((day) => (
                       <tr key={day.date} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-2">
+                        <td className="py-2 px-3">
                           <div className="font-semibold text-sm">{formatDay(day.date)}</div>
                         </td>
-                        <td className="text-center py-3 px-2">
+                        <td className="text-center py-2 px-3">
                           <Badge variant="outline" className="font-bold text-slate-600 border-slate-200 text-[10px]">
                             {day.count}
                           </Badge>
                         </td>
-                        <td className="text-right py-3 px-2 text-slate-700 font-medium text-sm">{formatMoney(day.montant_theorique)}</td>
-                        <td className="text-right py-3 px-2 font-bold text-emerald-600 text-sm">{formatMoney(day.montant_reel)}</td>
-                        <td className="text-right py-3 px-2">
+                        <td className="text-right py-2 px-3 text-slate-700 font-medium text-sm">{formatMoney(day.montant_theorique)}</td>
+                        <td className="text-right py-2 px-3 font-bold text-emerald-600 text-sm">{formatMoney(day.montant_reel)}</td>
+                        <td className="text-right py-2 px-3">
                           <Badge className={cn("font-bold px-2 py-0.5 text-[10px]", day.ecart_caisse < 0 ? 'bg-red-500 text-white' : day.ecart_caisse > 0 ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 border-slate-200')}>
                             {day.ecart_caisse > 0 ? '+' : ''}{formatMoney(day.ecart_caisse)}
                           </Badge>
                         </td>
-                        <td className="text-right py-3 px-2 font-medium text-slate-700 text-sm">{formatMoney(day.total_ventes)}</td>
-                        <td className="text-right py-3 px-2 font-medium text-emerald-600 text-sm">{formatMoney(day.total_entrees)}</td>
-                        <td className="text-right py-3 px-2 font-medium text-red-600 text-sm">{formatMoney(day.total_sorties)}</td>
+                        <td className="text-right py-2 px-3 font-medium text-slate-700 text-sm">{formatMoney(day.total_ventes)}</td>
+                        <td className="text-right py-2 px-3 font-medium text-emerald-600 text-sm">{formatMoney(day.total_entrees)}</td>
+                        <td className="text-right py-2 px-3 font-medium text-red-600 text-sm">{formatMoney(day.total_sorties)}</td>
                       </tr>
                     ))
                   )}
@@ -992,18 +992,18 @@ export default function HistoriqueClotures() {
                 {dailyData.length > 0 && (
                   <tfoot className="bg-slate-50 border-t-2 border-slate-200">
                     <tr className="text-slate-700 font-bold">
-                      <td className="py-3 px-2 whitespace-nowrap">
+                      <td className="py-2 px-3 whitespace-nowrap">
                         <span className="uppercase text-[10px] tracking-tight">{t('daily.footer_total', { defaultValue: 'Totaux' })}</span>
                       </td>
-                      <td className="text-center py-3 px-2">{dailyData.reduce((s, d) => s + d.count, 0)}</td>
-                      <td className="text-right py-3 px-2 text-slate-700 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.montant_theorique, 0))}</td>
-                      <td className="text-right py-3 px-2 text-emerald-600 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.montant_reel, 0))}</td>
-                      <td className={cn("text-right py-3 px-2 font-bold", dailyData.reduce((s, d) => s + d.ecart_caisse, 0) < 0 ? 'text-red-600' : dailyData.reduce((s, d) => s + d.ecart_caisse, 0) > 0 ? 'text-emerald-600' : '')}>
+                      <td className="text-center py-2 px-3">{dailyData.reduce((s, d) => s + d.count, 0)}</td>
+                      <td className="text-right py-2 px-3 text-slate-700 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.montant_theorique, 0))}</td>
+                      <td className="text-right py-2 px-3 text-emerald-600 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.montant_reel, 0))}</td>
+                      <td className={cn("text-right py-2 px-3 font-bold", dailyData.reduce((s, d) => s + d.ecart_caisse, 0) < 0 ? 'text-red-600' : dailyData.reduce((s, d) => s + d.ecart_caisse, 0) > 0 ? 'text-emerald-600' : '')}>
                         {dailyData.reduce((s, d) => s + d.ecart_caisse, 0) > 0 ? '+' : ''}{formatMoney(dailyData.reduce((s, d) => s + d.ecart_caisse, 0))}
                       </td>
-                      <td className="text-right py-3 px-2 text-slate-700 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.total_ventes, 0))}</td>
-                      <td className="text-right py-3 px-2 text-emerald-600 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.total_entrees, 0))}</td>
-                      <td className="text-right py-3 px-2 text-red-600 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.total_sorties, 0))}</td>
+                      <td className="text-right py-2 px-3 text-slate-700 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.total_ventes, 0))}</td>
+                      <td className="text-right py-2 px-3 text-emerald-600 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.total_entrees, 0))}</td>
+                      <td className="text-right py-2 px-3 text-red-600 font-bold">{formatMoney(dailyData.reduce((s, d) => s + d.total_sorties, 0))}</td>
                     </tr>
                   </tfoot>
                 )}

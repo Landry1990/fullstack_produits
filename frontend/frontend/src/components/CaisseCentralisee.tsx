@@ -562,32 +562,32 @@ const _navigate = useNavigate()
             onClick={() => setShowCaisseHelp(false)}
             className="inline-flex items-center justify-center h-8 px-4 rounded-lg text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
           >
-            {t('shortcuts.close', { defaultValue: 'Fermer' })}
+            {t('settings:shortcuts.close')}
           </button>
         }
       >
         <div className="p-5 space-y-2 text-sm">
           <div className="grid grid-cols-2 gap-2">
             <span className="font-mono font-bold text-slate-700">↑ ↓ / j k</span>
-            <span className="text-slate-600">{t('shortcuts.navigate', { defaultValue: 'Naviguer' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.navigate')}</span>
             <span className="font-mono font-bold text-slate-700">Home / End</span>
-            <span className="text-slate-600">{t('shortcuts.home_end', { defaultValue: 'Début / Fin' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.home_end')}</span>
             <span className="font-mono font-bold text-slate-700">PageUp / PageDown</span>
-            <span className="text-slate-600">{t('shortcuts.page', { defaultValue: 'Page précédente / suivante' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.page')}</span>
             <span className="font-mono font-bold text-slate-700">1 - 9</span>
-            <span className="text-slate-600">{t('shortcuts.quick_select', { defaultValue: 'Sélection rapide' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.quick_select')}</span>
             <span className="font-mono font-bold text-slate-700">Entrée</span>
-            <span className="text-slate-600">{t('shortcuts.cash_in', { defaultValue: 'Encaisser' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.cash_in')}</span>
             <span className="font-mono font-bold text-slate-700">Espace</span>
-            <span className="text-slate-600">{t('shortcuts.view_products', { defaultValue: 'Voir les produits' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.view_products')}</span>
             <span className="font-mono font-bold text-slate-700">c</span>
-            <span className="text-slate-600">{t('shortcuts.coupon', { defaultValue: 'Appliquer coupon' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.coupon')}</span>
             <span className="font-mono font-bold text-slate-700">r</span>
-            <span className="text-slate-600">{t('shortcuts.refresh', { defaultValue: 'Rafraîchir' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.refresh')}</span>
             <span className="font-mono font-bold text-slate-700">?</span>
-            <span className="text-slate-600">{t('shortcuts.help', { defaultValue: 'Aide' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.help')}</span>
             <span className="font-mono font-bold text-slate-700">Esc</span>
-            <span className="text-slate-600">{t('shortcuts.close', { defaultValue: 'Fermer' })}</span>
+            <span className="text-slate-600">{t('settings:shortcuts.close')}</span>
           </div>
         </div>
       </PremiumModal>

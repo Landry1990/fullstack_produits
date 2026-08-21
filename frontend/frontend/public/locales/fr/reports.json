@@ -360,6 +360,9 @@
     "err_load_suppliers": "Erreur chargement fournisseurs",
     "err_load_users": "Erreur chargement utilisateurs",
     "err_load_families": "Erreur chargement familles",
+    "close_menu": "Fermer le menu",
+    "open_menu": "Ouvrir le menu",
+    "export_excel": "Exporter Excel",
     "query_options": {
         "recap_valeur_stock_pdf": {
             "valorisation": {

@@ -11,7 +11,7 @@ interface ClientFormModalProps {
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   data: Partial<Client>;
-  setData: (data: unknown) => void;
+  setData: (data: Partial<Client>) => void;
   isSubmitting: boolean;
   isEdit?: boolean;
 }
@@ -128,7 +128,7 @@ export default function ClientFormModal({
                   onChange={(e) => setData({ ...data, name: e.target.value })}
                   required
                   className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
-                  placeholder="Nom complet"
+                  placeholder={t('clients:placeholders.full_name')}
                 />
               </Field>
 
@@ -147,7 +147,7 @@ export default function ClientFormModal({
                   value={data.email || ''}
                   onChange={(e) => setData({ ...data, email: e.target.value })}
                   className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
-                  placeholder="email@exemple.com"
+                  placeholder={t('clients:placeholders.email')}
                 />
               </Field>
 
@@ -156,7 +156,7 @@ export default function ClientFormModal({
                   value={data.address || ''}
                   onChange={(e) => setData({ ...data, address: e.target.value })}
                   className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
-                  placeholder="Adresse complète"
+                  placeholder={t('clients:placeholders.address')}
                 />
               </Field>
             </div>
@@ -169,20 +169,20 @@ export default function ClientFormModal({
                 {t('clients:sections.pro_info')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="NIU" icon={ShieldCheck}>
+                <Field label={t('clients:fields.niu')} icon={ShieldCheck}>
                   <input
-                    value={(data as unknown).niu || ''}
+                    value={data.niu || ''}
                     onChange={(e) => setData({ ...data, niu: e.target.value })}
                     className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
-                    placeholder="N° Identifiant Unique"
+                    placeholder={t('clients:placeholders.niu')}
                   />
                 </Field>
-                <Field label="RCCM" icon={FileText}>
+                <Field label={t('clients:fields.rccm')} icon={FileText}>
                   <input
-                    value={(data as unknown).registre_commerce || ''}
+                    value={data.registre_commerce || ''}
                     onChange={(e) => setData({ ...data, registre_commerce: e.target.value })}
                     className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
-                    placeholder="Registre du Commerce"
+                    placeholder={t('clients:placeholders.rccm')}
                   />
                 </Field>
               </div>
@@ -328,7 +328,7 @@ export default function ClientFormModal({
                     value={tempAD.societe || ''}
                     onChange={(e) => setTempAD({ ...tempAD, societe: e.target.value })}
                     className="input-ref input-bordered input-sm w-full h-9 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
-                    placeholder="Société"
+                    placeholder={t('clients:placeholders.company')}
                   />
                 </div>
                 <button
@@ -388,7 +388,7 @@ export default function ClientFormModal({
           </button>
           <button
             type="submit"
-            onClick={(e) => { e.preventDefault(); onSubmit(e as unknown); }}
+            onClick={(e) => { e.preventDefault(); onSubmit(e as unknown as React.FormEvent); }}
             disabled={isSubmitting}
             className="inline-flex items-center px-6 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-60 transition-colors gap-2"
           >

@@ -466,5 +466,16 @@
     "id": "ID",
     "designation": "Désignation",
     "lot": "Lot",
-    "unknown_product_deleted": "Produit inconnu (supprimé)"
+    "unknown_product_deleted": "Produit inconnu (supprimé)",
+    "messaging": "Messagerie Interne",
+    "feedback": "Feedback",
+    "french": "Français",
+    "english": "English",
+    "account": "Compte",
+    "messages": "Messages",
+    "light_mode": "Mode Clair",
+    "dark_mode": "Mode Sombre",
+    "update_license": "Mettre à jour la licence",
+    "logout": "Déconnexion",
+    "command_palette": "Command Palette"
 }

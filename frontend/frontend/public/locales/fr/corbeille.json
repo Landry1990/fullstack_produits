@@ -14,6 +14,8 @@
     "users": "Utilisateurs"
   },
   "search": "Rechercher dans la corbeille...",
+  "search_placeholder": "Rechercher...",
+  "stock_label": "Stock :",
   "empty_state": {
     "title": "La corbeille est vide",
     "subtitle": "Les éléments supprimés apparaîtront ici"
@@ -29,6 +31,8 @@
     "restore": "Restaurer",
     "delete_permanently": "Supprimer",
     "empty_trash": "Vider la corbeille",
+    "empty_all": "Vider tout",
+    "refresh": "Actualiser",
     "selected": "{{count}} sélectionné(s)"
   },
   "badges": {

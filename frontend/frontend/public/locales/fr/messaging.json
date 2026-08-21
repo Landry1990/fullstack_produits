@@ -4,8 +4,10 @@
   "tabs": {
     "received": "Reçus",
     "sent": "Envoyés",
+    "archived": "Archivés",
     "templates": "Modèles",
-    "new": "Nouveau"
+    "new": "Nouveau",
+    "supervision": "Supervision"
   },
   "received": {
     "title": "Messages reçus",
@@ -32,6 +34,19 @@
     "archived": "Message archivé",
     "archive_error": "Erreur lors de l'archivage"
   },
+  "actions": {
+    "reply": "Répondre",
+    "archive": "Archiver"
+  },
+  "reply_to": "En réponse à {{name}} :",
+  "new_badge": "NOUVEAU",
+  "read_by_none": "Personne n'a encore lu",
+  "read_by_count": "Lu par {{count}} personne(s)",
+  "read": "Lu",
+  "unread": "Non lu",
+  "archived_messages": "Messages archivés",
+  "no_archived": "Aucun message archivé",
+  "no_messages": "Aucun message dans le système",
   "new": {
     "title": "Nouveau message",
     "recipient": "Destinataire",

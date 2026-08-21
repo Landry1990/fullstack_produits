@@ -4,8 +4,10 @@
   "tabs": {
     "received": "Inbox",
     "sent": "Sent",
+    "archived": "Archived",
     "templates": "Templates",
-    "new": "Compose"
+    "new": "Compose",
+    "supervision": "Supervision"
   },
   "received": {
     "title": "Received messages",
@@ -32,6 +34,19 @@
     "archived": "Message archived",
     "archive_error": "Error while archiving"
   },
+  "actions": {
+    "reply": "Reply",
+    "archive": "Archive"
+  },
+  "reply_to": "In reply to {{name}}:",
+  "new_badge": "NEW",
+  "read_by_none": "Nobody has read it yet",
+  "read_by_count": "Read by {{count}} person(s)",
+  "read": "Read",
+  "unread": "Unread",
+  "archived_messages": "Archived Messages",
+  "no_archived": "No archived messages",
+  "no_messages": "No messages in the system",
   "new": {
     "title": "New message",
     "recipient": "Recipient",

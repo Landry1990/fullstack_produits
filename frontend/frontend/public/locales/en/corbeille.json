@@ -14,6 +14,8 @@
     "users": "Users"
   },
   "search": "Search in the recycle bin...",
+  "search_placeholder": "Search...",
+  "stock_label": "Stock:",
   "empty_state": {
     "title": "Recycle bin is empty",
     "subtitle": "Deleted items will appear here"
@@ -29,6 +31,8 @@
     "restore": "Restore",
     "delete_permanently": "Delete",
     "empty_trash": "Empty Recycle Bin",
+    "empty_all": "Empty All",
+    "refresh": "Refresh",
     "selected": "{{count}} selected"
   },
   "badges": {

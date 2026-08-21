@@ -171,28 +171,28 @@ function GestionVitrine({
       {/* Table */}
       <Card variant="default" padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10">
+                <TableHead className="w-12 px-3 py-2 text-center">
                   <Checkbox
                     checked={isAllSelected}
                     onChange={handleSelectAll}
                     disabled={isLoading || products.length === 0}
                   />
                 </TableHead>
-                <TableHead>{t('gestion.table.product')}</TableHead>
-                <TableHead>{t('gestion.table.rayon')}</TableHead>
-                <TableHead>{t('gestion.table.stock')}</TableHead>
-                <TableHead>{t('gestion.table.pharmacy_price')}</TableHead>
-                <TableHead>{t('gestion.table.public_price')}</TableHead>
-                <TableHead className="text-center">{t('gestion.table.online')}</TableHead>
+                <TableHead className="w-[30%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('gestion.table.product')}</TableHead>
+                <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('gestion.table.rayon')}</TableHead>
+                <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('gestion.table.stock')}</TableHead>
+                <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('gestion.table.pharmacy_price')}</TableHead>
+                <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('gestion.table.public_price')}</TableHead>
+                <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('gestion.table.online')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
+                  <TableCell colSpan={7} className="px-3 py-12 text-center">
                     <div className="flex justify-center">
                       <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     </div>
@@ -200,7 +200,7 @@ function GestionVitrine({
                 </TableRow>
               ) : products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-base-content/60">
+                  <TableCell colSpan={7} className="px-3 py-12 text-center text-base-content/60">
                     {t('gestion.table.empty')}
                   </TableCell>
                 </TableRow>
@@ -210,22 +210,22 @@ function GestionVitrine({
                     key={product.id}
                     className={selectedIds.has(product.id) ? 'bg-base-200' : ''}
                   >
-                    <TableCell>
+                    <TableCell className="px-3 py-2 text-center">
                       <Checkbox
                         checked={selectedIds.has(product.id)}
                         onChange={() => toggleSelection(product.id)}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-3 py-2">
                       <div className="font-bold whitespace-nowrap text-sm">{product.name}</div>
                       <div className="text-xs text-base-content/40">{product.cip1}</div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-3 py-2">
                       <Badge variant="ghost" size="sm">
                         {product.rayon_name || t('gestion.table.uncategorized')}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-3 py-2">
                       <div
                         className={`font-mono font-medium text-sm ${
                           product.stock <= 0 ? 'text-red-500' : 'text-emerald-600'
@@ -234,10 +234,10 @@ function GestionVitrine({
                         {formatNumber(product.stock)}
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono whitespace-nowrap text-sm">
+                    <TableCell className="px-3 py-2 font-mono whitespace-nowrap text-sm">
                       {formatCurrency(product.selling_price)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-3 py-2">
                       <div className="flex items-center gap-1">
                         <span className="text-base-content/40">
                           <DollarSign className="size-3.5" />
@@ -258,7 +258,7 @@ function GestionVitrine({
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="px-3 py-2 text-center">
                       <button
                         onClick={() => toggleVisibility.mutate(product.id)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${

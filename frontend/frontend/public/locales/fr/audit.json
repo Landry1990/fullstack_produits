@@ -76,5 +76,7 @@
         "amount": "Montant: {{amount}}",
         "quantity": "Quantité: {{quantity}}",
         "ecart": "Écart: {{ecart}}"
-    }
+    },
+    "view_technical_details": "Voir les détails techniques",
+    "search_telegram_placeholder": "Rechercher par chat ID, nom ou message..."
 }

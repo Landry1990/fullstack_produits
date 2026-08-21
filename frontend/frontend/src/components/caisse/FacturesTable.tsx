@@ -174,11 +174,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   return (
     <>
       <div className="overflow-auto flex-1 min-h-0">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader className="bg-slate-100 sticky top-0 z-10 border-b border-slate-200">
-            <TableRow className="text-xs uppercase tracking-wider text-slate-600 font-bold hover:bg-slate-100">
+            <TableRow className="hover:bg-slate-100">
               {onToggleSelect && (
-                <TableHead className="w-10">
+                <TableHead className="w-12 px-3 py-2 text-center">
                   <Checkbox
                     checked={selectedIds ? selectedIds.size === pagedFactures.length && pagedFactures.length > 0 : false}
                     onCheckedChange={() => { if (onSelectAll) onSelectAll() }}
@@ -187,14 +187,14 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   />
                 </TableHead>
               )}
-              <TableHead>{t('table.ticket')}</TableHead>
-              <TableHead>{t('table.invoice')}</TableHead>
-              <TableHead>{t('table.client')}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('table.date')}</TableHead>
-              <TableHead className="hidden xl:table-cell">{t('table.products')}</TableHead>
-              <TableHead className="hidden md:table-cell">{t('table.seller', 'Vendeur')}</TableHead>
-              <TableHead className="text-right">{t('table.amount')}</TableHead>
-              <TableHead className="text-center">{t('table.actions')}</TableHead>
+              <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.ticket')}</TableHead>
+              <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.invoice')}</TableHead>
+              <TableHead className="w-[25%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.client')}</TableHead>
+              <TableHead className="hidden lg:table-cell w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.date')}</TableHead>
+              <TableHead className="hidden xl:table-cell w-16 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.products')}</TableHead>
+              <TableHead className="hidden md:table-cell w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.seller', 'Vendeur')}</TableHead>
+              <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.amount')}</TableHead>
+              <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -233,7 +233,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   }}
                 >
                   {onToggleSelect && (
-                    <TableCell onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={isChecked}
                         onCheckedChange={() => { if (onToggleSelect) onToggleSelect(facture.id) }}
@@ -241,12 +241,12 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       />
                     </TableCell>
                   )}
-                  <TableCell>
+                  <TableCell className="px-3 py-2">
                     <span className="inline-flex items-center justify-center min-w-[1.75rem] px-2 h-6 rounded-md bg-slate-800 text-white text-xs font-bold shadow-sm">
                       {facture.session_ticket_number || '?'}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-3 py-2">
                     <div className="font-bold text-sky-600">#{facture.numero_facture}</div>
                     {hasTiersPayant && (
                       <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200 mt-1 text-[10px]">{t('table.tiers_payant')}</Badge>
@@ -255,10 +255,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 mt-1 text-[10px]">{t('table.coupon_applied')}</Badge>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-3 py-2">
                     <div className="font-bold">{facture.client_name || t('table.passerby_client')}</div>
                   </TableCell>
-                  <TableCell className="text-xs hidden lg:table-cell text-slate-600">
+                  <TableCell className="px-3 py-2 text-xs hidden lg:table-cell text-slate-600">
                     <div className="font-medium">{new Date(facture.date).toLocaleDateString(dateLocale, {
                       day: '2-digit',
                       month: '2-digit',
@@ -269,7 +269,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       minute: '2-digit'
                     })}</div>
                   </TableCell>
-                  <TableCell className="text-xs max-w-xs hidden xl:table-cell">
+                  <TableCell className="px-3 py-2 text-xs max-w-xs hidden xl:table-cell">
                     <button
                       type="button"
                       className="text-sky-600 hover:text-sky-700 hover:underline text-left truncate block max-w-[150px] font-medium"
@@ -283,10 +283,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       {getProductsSummary(facture)}
                     </button>
                   </TableCell>
-                  <TableCell className="text-xs hidden md:table-cell">
+                  <TableCell className="px-3 py-2 text-xs hidden md:table-cell">
                     <div className="font-medium">{facture.created_by_name || '-'}</div>
                   </TableCell>
-                  <TableCell className="text-right font-mono font-bold text-lg text-slate-800">
+                  <TableCell className="px-3 py-2 text-right font-mono font-bold text-lg text-slate-800">
                     {montantAPayer} {t('common:currency_symbol', 'F')}
                     {couponPourCetteFacture && (
                       <div className="text-xs font-normal text-emerald-600 line-through text-slate-500 flex items-center justify-end gap-1">
@@ -307,7 +307,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="px-3 py-2 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <div className="flex gap-1">
                         <Button
@@ -399,7 +399,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               value={pageSize}
               onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}
               className="h-7 px-2 rounded-md border border-slate-200 bg-white text-xs text-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none"
-              aria-label="Lignes par page"
+              aria-label={t('rows_per_page')}
             >
               <option value={25}>25</option>
               <option value={50}>50</option>
@@ -445,14 +445,14 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
           <div className="p-6">
             {previewFacture?.produits && previewFacture.produits.length > 0 ? (
               <div className="rounded-xl border border-slate-200 overflow-hidden">
-                <Table>
+                <Table className="table-fixed">
                   <TableHeader>
                     <TableRow className="bg-slate-50 hover:bg-slate-50">
-                      <TableHead>{t('table.product')}</TableHead>
-                      <TableHead className="text-center w-32">{t('table.quantity')}</TableHead>
-                      <TableHead className="text-right w-28">{t('table.unit_price_short')}</TableHead>
-                      <TableHead className="text-right w-28">{t('table.total')}</TableHead>
-                      <TableHead className="w-10"></TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.product')}</TableHead>
+                      <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.quantity')}</TableHead>
+                      <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.unit_price_short')}</TableHead>
+                      <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.total')}</TableHead>
+                      <TableHead className="w-10 px-3 py-2 text-center"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -464,13 +464,13 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
                       return (
                         <TableRow key={p.id ?? p.produit_id ?? p.produit ?? `row-${name}-${p.lot}`} className="group">
-                          <TableCell>
+                          <TableCell className="px-3 py-2">
                             <div className="flex flex-col">
                               <span className="font-semibold text-slate-800">{name}</span>
                               {p.lot && <span className="text-[10px] text-slate-400">Lot: {p.lot}</span>}
                             </div>
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="px-3 py-2 text-center">
                             <div className="flex items-center justify-center gap-1">
                               {canModify ? (
                                 <>
@@ -507,9 +507,9 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right font-mono text-sm text-slate-600">{Math.round(price)} {t('common:currency_symbol', 'F')}</TableCell>
-                          <TableCell className="text-right font-mono font-bold text-sm text-slate-800">{Math.round(qty * price)} {t('common:currency_symbol', 'F')}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="px-3 py-2 text-right font-mono text-sm text-slate-600">{Math.round(price)} {t('common:currency_symbol', 'F')}</TableCell>
+                          <TableCell className="px-3 py-2 text-right font-mono font-bold text-sm text-slate-800">{Math.round(qty * price)} {t('common:currency_symbol', 'F')}</TableCell>
+                          <TableCell className="px-3 py-2 text-right">
                             {canModify && (
                               <Button
                                 variant="ghost"

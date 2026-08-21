@@ -217,7 +217,7 @@ export default function CommandeForm({
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">F2</kbd> {t('orders:form.shortcuts.search')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">F4</kbd> {t('orders:form.shortcuts.provider')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">Ctrl+A</kbd> {t('orders:form.shortcuts.select_all')}</span>
-                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">Shift+Entrée</kbd> Détails produit</span>
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">Shift+Entrée</kbd> {t('orders:product_details')}</span>
                   </div>
                 </div>
             </div>
@@ -231,7 +231,7 @@ export default function CommandeForm({
                   ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}
-              title={datamatrixEnabled ? 'Désactiver le scan Data Matrix' : 'Activer le scan Data Matrix'}
+              title={datamatrixEnabled ? t('orders:form.disable_datamatrix_scan') : t('orders:form.enable_datamatrix_scan')}
               aria-label={datamatrixEnabled ? t('orders:form.disable_datamatrix_scan') : t('orders:form.enable_datamatrix_scan')}
             >
               <ScanLine className="size-4" />
@@ -431,31 +431,31 @@ export default function CommandeForm({
                 <div className="flex flex-wrap gap-2 items-center">
                     {/* PRIX A HT */}
                     <div className="hidden md:flex flex-col items-end">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">PRIX A HT</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:price_purchase_ht')}</span>
                         <span className="text-sm font-bold text-slate-700">{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
                     </div>
 
                     {/* TVA A */}
                     <div className="hidden md:flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">TVA A</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:price_tva')}</span>
                         <span className="text-sm font-bold text-slate-500">{formatCurrency(orderTotals?.totalBuyTVA || 0)}</span>
                     </div>
 
                     {/* PRIX A TTC */}
                     <div className="flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">PRIX A TTC</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:price_purchase_ttc')}</span>
                         <span className="text-base font-black leading-none text-slate-800">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
                     </div>
 
                     {/* PRIX V TTC */}
                     <div className="flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-emerald-600 -mb-1">PRIX V TTC</span>
+                        <span className="text-[10px] uppercase font-bold text-emerald-600 -mb-1">{t('orders:price_selling_ttc')}</span>
                         <span className="text-base font-black leading-none text-emerald-600">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
                     </div>
 
                     {/* MARGE */}
                     <div className="hidden sm:flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">MARGE</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:margin')}</span>
                         <span className={cn("text-sm font-bold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
                     </div>
 

@@ -228,55 +228,55 @@ const HistoriqueVentes = () => {
         ) : (
           <>
             <div className="overflow-auto flex-1 relative">
-              <table className="min-w-full divide-y divide-slate-200">
+              <table className="min-w-full table-fixed divide-y divide-slate-200">
                 <thead className="bg-slate-100 sticky top-0 z-10 opacity-100">
                   <tr>
-                    <th className="py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.date')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.ca_ttc')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.cash')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.card')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.check')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.virement')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.mobiles')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.coupons')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.en_compte')}</th>
-                    <th className="text-center py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.nb_ventes')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">{t('columns.avg_basket')}</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Marge</th>
-                    <th className="text-right py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Remises</th>
-                    <th className="text-center py-3 px-2 text-[10px] lg:text-xs tracking-wider uppercase text-slate-500 font-bold whitespace-nowrap">Telegram</th>
+                    <th className="py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.date')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.ca_ttc')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.cash')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.card')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.check')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.virement')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.mobiles')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.coupons')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.en_compte')}</th>
+                    <th className="text-center py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.nb_ventes')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.avg_basket')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.margin')}</th>
+                    <th className="text-right py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.discounts')}</th>
+                    <th className="text-center py-2 px-3 text-[10px] lg:text-xs tracking-wide uppercase text-slate-500 font-semibold whitespace-nowrap">{t('columns.telegram')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {data.map((row) => (
                     <tr key={row.date} className="hover:bg-slate-50 transition-colors">
-                      <td className="font-semibold text-slate-700 whitespace-nowrap py-3 px-2">
+                      <td className="font-semibold text-slate-700 whitespace-nowrap py-2 px-3">
                         <div className="flex flex-col">
                           <span className="text-sm">{format(new Date(row.date), 'dd/MM/yyyy')}</span>
                           <span className="text-[10px] text-slate-400 font-normal">{format(new Date(row.date), 'EEEE', { locale: (window as unknown as { dateLocale?: Locale }).dateLocale })}</span>
                         </div>
                       </td>
-                      <td className="text-right py-3 px-2">
+                      <td className="text-right py-2 px-3">
                         <Badge variant="default" className="font-bold">
                           {formatMoney(row.ca_ttc)}
                         </Badge>
                       </td>
-                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-700">{formatMoney(row.especes)}</td>
-                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-500">{formatMoney(row.carte)}</td>
-                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-500">{formatMoney(row.cheque)}</td>
-                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-500">{formatMoney(row.virement)}</td>
-                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-700">{formatMoney(row.om + row.momo)}</td>
-                      <td className="text-right font-mono text-sm py-3 px-2 text-slate-500 italic">{formatMoney(row.coupon || 0)}</td>
-                      <td className="text-right font-mono text-sm py-3 px-2 text-amber-600">{formatMoney(row.en_compte || 0)}</td>
-                      <td className="text-center py-3 px-2">
+                      <td className="text-right font-mono text-sm py-2 px-3 text-slate-700">{formatMoney(row.especes)}</td>
+                      <td className="text-right font-mono text-sm py-2 px-3 text-slate-500">{formatMoney(row.carte)}</td>
+                      <td className="text-right font-mono text-sm py-2 px-3 text-slate-500">{formatMoney(row.cheque)}</td>
+                      <td className="text-right font-mono text-sm py-2 px-3 text-slate-500">{formatMoney(row.virement)}</td>
+                      <td className="text-right font-mono text-sm py-2 px-3 text-slate-700">{formatMoney(row.om + row.momo)}</td>
+                      <td className="text-right font-mono text-sm py-2 px-3 text-slate-500 italic">{formatMoney(row.coupon || 0)}</td>
+                      <td className="text-right font-mono text-sm py-2 px-3 text-amber-600">{formatMoney(row.en_compte || 0)}</td>
+                      <td className="text-center py-2 px-3">
                         <Badge variant="outline" className="text-slate-600 border-slate-200">
                           {row.nb_ventes}
                         </Badge>
                       </td>
-                      <td className="text-right font-medium py-3 px-2 text-slate-700">{formatMoney(row.panier_moyen)}</td>
-                      <td className="text-right font-mono text-sm py-3 px-2 text-emerald-600 font-semibold">{formatMoney(row.marge || 0)}</td>
-                      <td className="text-right font-mono text-sm py-3 px-2 text-red-600">{formatMoney(row.remise || 0)}</td>
-                      <td className="text-center py-3 px-2">
+                      <td className="text-right font-medium py-2 px-3 text-slate-700">{formatMoney(row.panier_moyen)}</td>
+                      <td className="text-right font-mono text-sm py-2 px-3 text-emerald-600 font-semibold">{formatMoney(row.marge || 0)}</td>
+                      <td className="text-right font-mono text-sm py-2 px-3 text-red-600">{formatMoney(row.remise || 0)}</td>
+                      <td className="text-center py-2 px-3">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -308,24 +308,24 @@ const HistoriqueVentes = () => {
                 {globalTotals && (
                   <tfoot className="bg-slate-50 border-t-2 border-slate-200">
                     <tr className="text-slate-700 font-bold">
-                      <td className="py-4 px-2 whitespace-nowrap">
+                      <td className="py-2 px-3 whitespace-nowrap">
                         <span className="uppercase text-[10px] tracking-tight">{t('total_period')}</span>
                       </td>
-                      <td className="text-right py-4 px-2 text-emerald-600 text-lg">{formatMoney(globalTotals.ca_ttc)}</td>
-                      <td className="text-right py-4 px-2">{formatMoney(globalTotals.especes)}</td>
-                      <td className="text-right py-4 px-2 text-slate-500">{formatMoney(globalTotals.carte)}</td>
-                      <td className="text-right py-4 px-2 text-slate-500">{formatMoney(globalTotals.cheque)}</td>
-                      <td className="text-right py-4 px-2 text-slate-500">{formatMoney(globalTotals.virement)}</td>
-                      <td className="text-right py-4 px-2">{formatMoney(globalTotals.om + globalTotals.momo)}</td>
-                      <td className="text-right py-4 px-2 text-slate-500">{formatMoney(globalTotals.coupon)}</td>
-                      <td className="text-right py-4 px-2 text-amber-600">{formatMoney(globalTotals.en_compte || 0)}</td>
-                      <td className="text-center py-4 px-2">
+                      <td className="text-right py-2 px-3 text-emerald-600 text-lg">{formatMoney(globalTotals.ca_ttc)}</td>
+                      <td className="text-right py-2 px-3">{formatMoney(globalTotals.especes)}</td>
+                      <td className="text-right py-2 px-3 text-slate-500">{formatMoney(globalTotals.carte)}</td>
+                      <td className="text-right py-2 px-3 text-slate-500">{formatMoney(globalTotals.cheque)}</td>
+                      <td className="text-right py-2 px-3 text-slate-500">{formatMoney(globalTotals.virement)}</td>
+                      <td className="text-right py-2 px-3">{formatMoney(globalTotals.om + globalTotals.momo)}</td>
+                      <td className="text-right py-2 px-3 text-slate-500">{formatMoney(globalTotals.coupon)}</td>
+                      <td className="text-right py-2 px-3 text-amber-600">{formatMoney(globalTotals.en_compte || 0)}</td>
+                      <td className="text-center py-2 px-3">
                         <Badge variant="default">{globalTotals.nb_ventes}</Badge>
                       </td>
-                      <td className="text-right py-4 px-2">-</td>
-                      <td className="text-right py-4 px-2 text-emerald-600 font-semibold">{formatMoney(globalTotals.marge || 0)}</td>
-                      <td className="text-right py-4 px-2 text-red-600">{formatMoney(globalTotals.remise || 0)}</td>
-                      <td className="px-2"></td>
+                      <td className="text-right py-2 px-3">-</td>
+                      <td className="text-right py-2 px-3 text-emerald-600 font-semibold">{formatMoney(globalTotals.marge || 0)}</td>
+                      <td className="text-right py-2 px-3 text-red-600">{formatMoney(globalTotals.remise || 0)}</td>
+                      <td className="px-3"></td>
                     </tr>
                   </tfoot>
                 )}

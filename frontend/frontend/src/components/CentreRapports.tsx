@@ -64,7 +64,7 @@ export default function CentreRapports() {
                 <button
                     type="button"
                     className="md:hidden fixed inset-0 z-40 bg-black/40"
-                    aria-label="Fermer le menu"
+                    aria-label={t('reports:close_menu')}
                     onClick={() => setMobileMenuOpen(false)}
                 />
             )}
@@ -103,7 +103,7 @@ export default function CentreRapports() {
                         type="button"
                         onClick={() => setMobileMenuOpen(v => !v)}
                         className="size-8 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors"
-                        aria-label="Ouvrir le menu"
+                        aria-label={t('reports:open_menu')}
                     >
                         <Menu className="size-5" />
                     </button>
@@ -181,7 +181,7 @@ export default function CentreRapports() {
                                                     className="h-10 rounded-lg gap-2 text-slate-500 hover:text-emerald-600 hover:bg-white transition-colors flex-1 flex items-center justify-center disabled:opacity-40"
                                                     onClick={actions.downloadExcel}
                                                     disabled={!results}
-                                                    title="Exporter Excel"
+                                                    title={t('export_excel')}
                                                 >
                                                     <Download className="size-4" />
                                                 </button>

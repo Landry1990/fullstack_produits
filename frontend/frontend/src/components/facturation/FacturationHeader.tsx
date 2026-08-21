@@ -69,7 +69,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
                   ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}
-              title={datamatrixEnabled ? 'Désactiver le scan Data Matrix' : 'Activer le scan Data Matrix'}
+              title={datamatrixEnabled ? hook.t('facturation:disable_datamatrix') : hook.t('facturation:enable_datamatrix')}
             >
               <ScanLine size={16} />
             </Button>

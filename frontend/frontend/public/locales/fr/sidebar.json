@@ -111,6 +111,7 @@
         "facture": "Paramètres Facture",
         "pharmacie": "Informations Pharmacie",
         "telegram": "Historique Telegram",
+        "etiquettes": "Modèles d'étiquettes",
         "imprimantes": "Configuration Imprimantes"
     },
     "maintenance": "Entretien",
@@ -137,5 +138,7 @@
         "stock": "Stock & Inventaire",
         "rapports": "Rapports & Analyses",
         "parametres": "Paramètres & Admin"
-    }
+    },
+    "toggle_menu": "Basculer le menu",
+    "close_menu": "Fermer le menu"
 }

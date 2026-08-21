@@ -155,7 +155,8 @@
         },
         "deposit_available": "Dépôt disponible : {{amount}} F",
         "confirm": "Valider le paiement",
-        "success": "Paiement enregistré"
+        "success": "Paiement enregistré",
+        "amount_input_hint": "Entrée dans le montant ou clic"
     },
     "stats_pending_title": "En Attente",
     "stats_pending_desc": "facture(s) à encaisser",
@@ -464,7 +465,25 @@
         "create_hint": "Créez-en un dans Paramètres > Points de vente.",
         "cancel": "Annuler",
         "opened_by": "Ouvert par {{name}}",
-        "your_post": "Votre poste actif"
+        "your_post": "Votre poste actif",
+        "active_title": "Actif",
+        "required_title": "Requis",
+        "active_message": "Le point de vente est actuellement actif",
+        "required_message": "Le point de vente doit être ouvert",
+        "activate_long": "Activer le Point de Vente",
+        "open_long": "Ouvrir le Point de Vente",
+        "banner": {
+            "active_message": "Vous avez un point de vente ouvert sur une autre session. Cliquez pour le réactiver.",
+            "required_message": "Aucun point de vente ouvert. Ouvrez un point pour verrouiller ce poste sur la facturation.",
+            "activate": "Réactiver",
+            "open": "Ouvrir un point de vente"
+        }
+    },
+    "rows_per_page": "Lignes par page",
+    "actions": {
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "edit_lot_expiry": "Modifier lot / date péremption"
     },
     "common": {
         "unknown": "Inconnu",

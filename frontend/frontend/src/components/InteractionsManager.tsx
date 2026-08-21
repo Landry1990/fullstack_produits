@@ -207,7 +207,7 @@ export default function InteractionsManager() {
         <div className="flex gap-2 items-center">
           <input
             type="text"
-            placeholder="Rechercher une substance..."
+            placeholder={t('products:interactions.search_placeholder')}
             className="w-64 rounded-xl bg-base-200/50 border-none h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
@@ -217,23 +217,23 @@ export default function InteractionsManager() {
             value={gravityFilter}
             onChange={e => { setGravityFilter(e.target.value); setPage(1); }}
           >
-            <option value="">Toutes gravités</option>
-            <option value="CONTRE_INDIQUE">Contre-indiqué</option>
-            <option value="DECONSEILLE">Déconseillé</option>
-            <option value="A_PRENDRE_EN_COMPTE">À prendre en compte</option>
-            <option value="PRECAUTION">Précaution</option>
+            <option value="">{t('products:interactions.gravity_all')}</option>
+            <option value="CONTRE_INDIQUE">{t('products:interactions.gravity_contre_indique')}</option>
+            <option value="DECONSEILLE">{t('products:interactions.gravity_deconseille')}</option>
+            <option value="A_PRENDRE_EN_COMPTE">{t('products:interactions.gravity_a_prendre_en_compte')}</option>
+            <option value="PRECAUTION">{t('products:interactions.gravity_precaution')}</option>
           </select>
         </div>
         <Button variant="default" size="sm" className="rounded-xl" onClick={openAddModal}>
-          + Ajouter une interaction
+          {t('products:interactions.add')}
         </Button>
       </div>
 
       {/* CSV Upload */}
       <div className="bg-base-100 rounded-2xl border border-base-200 p-4">
-        <h3 className="font-bold text-sm mb-2">Import CSV d'interactions</h3>
+        <h3 className="font-bold text-sm mb-2">{t('products:interactions.csv_import')}</h3>
         <p className="text-xs text-base-content/50 mb-3">
-          Format: substance_a,substance_b,gravity,description (gravity: PRECAUTION, A_PRENDRE_EN_COMPTE, DECONSEILLE, CONTRE_INDIQUE)
+          {t('products:interactions.csv_format')}
         </p>
         <div className="flex items-center gap-3">
           <input
@@ -247,14 +247,14 @@ export default function InteractionsManager() {
             disabled={!csvFile || uploading}
             onClick={handleCsvUpload}
           >
-            {uploading ? <Loader2 className="size-3 animate-spin" /> : 'Importer'}
+            {uploading ? <Loader2 className="size-3 animate-spin" /> : t('products:interactions.import_btn')}
           </Button>
         </div>
         {uploadResult && (
           <div className="mt-2 text-sm">
-            <span className="text-success font-medium">{uploadResult.created} créées</span>
-            {uploadResult.updated > 0 && <span className="text-info">, {uploadResult.updated} mises à jour</span>}
-            {uploadResult.skipped > 0 && <span className="text-warning">, {uploadResult.skipped} ignorées</span>}
+            <span className="text-success font-medium">{uploadResult.created} {t('products:interactions.created')}</span>
+            {uploadResult.updated > 0 && <span className="text-info">, {uploadResult.updated} {t('products:interactions.updated')}</span>}
+            {uploadResult.skipped > 0 && <span className="text-warning">, {uploadResult.skipped} {t('products:interactions.skipped')}</span>}
             {uploadResult.errors.length > 0 && (
               <div className="mt-1 text-error text-xs">
                 {uploadResult.errors.map((e) => <div key={`err-${e}`}>{e}</div>)}
@@ -267,36 +267,36 @@ export default function InteractionsManager() {
       {/* Table */}
       <div className="bg-base-100 rounded-2xl border border-base-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse table-fixed">
             <thead>
               <tr className="border-b border-base-200 bg-base-200/30">
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">Substance A</th>
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">Substance B</th>
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">Gravité</th>
-                <th className="text-xs uppercase tracking-wider opacity-50 font-bold">Description</th>
-                <th></th>
+                <th className="w-[20%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:interactions.col_substance_a')}</th>
+                <th className="w-[20%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:interactions.col_substance_b')}</th>
+                <th className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:interactions.col_gravity')}</th>
+                <th className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:interactions.col_description')}</th>
+                <th className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500"></th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="text-center py-12"><Loader2 className="size-5 animate-spin" /></td></tr>
+                <tr><td colSpan={5} className="px-3 py-12 text-center"><Loader2 className="size-5 animate-spin" /></td></tr>
               ) : interactions.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-12 opacity-40 font-medium">Aucune interaction trouvée</td></tr>
+                <tr><td colSpan={5} className="px-3 py-12 text-center opacity-40 font-medium">{t('products:interactions.none_found')}</td></tr>
               ) : (
                 interactions.map(inter => (
                   <tr key={inter.id} className="border-b border-base-200 hover:bg-base-200/30 transition-colors">
-                    <td className="font-bold text-sm">{inter.substance_a_nom}</td>
-                    <td className="font-bold text-sm">{inter.substance_b_nom}</td>
-                    <td>
+                    <td className="px-3 py-2 font-bold text-sm">{inter.substance_a_nom}</td>
+                    <td className="px-3 py-2 font-bold text-sm">{inter.substance_b_nom}</td>
+                    <td className="px-3 py-2">
                       <Badge variant={GRAVITY_COLORS[inter.gravity] || 'ghost'} size="sm">
                         {GRAVITY_LABELS[inter.gravity] || inter.gravity}
                       </Badge>
                     </td>
-                    <td className="text-xs text-base-content/70 max-w-md truncate" title={inter.description}>{inter.description}</td>
-                    <td>
+                    <td className="px-3 py-2 text-xs text-base-content/70 max-w-md truncate" title={inter.description}>{inter.description}</td>
+                    <td className="px-3 py-2">
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => openEditModal(inter)}>Éditer</Button>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-red-500" onClick={() => handleDelete(inter.id)}>Suppr.</Button>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => openEditModal(inter)}>{t('products:interactions.edit')}</Button>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-red-500" onClick={() => handleDelete(inter.id)}>{t('products:interactions.delete')}</Button>
                       </div>
                     </td>
                   </tr>
@@ -308,9 +308,9 @@ export default function InteractionsManager() {
 
         {totalPages > 1 && (
           <div className="flex justify-center gap-2 p-4 border-t border-base-200">
-            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Précédent</Button>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>{t('products:interactions.previous')}</Button>
             <span className="text-sm py-1 opacity-60 font-medium">Page {page} / {totalPages}</span>
-            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Suivant</Button>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>{t('products:interactions.next')}</Button>
           </div>
         )}
       </div>
@@ -363,7 +363,7 @@ export default function InteractionsManager() {
                   rows={3}
                   value={formDescription}
                   onChange={e => setFormDescription(e.target.value)}
-                  placeholder="Décrire le risque et la conduite à tenir..."
+                  placeholder={t('products:interactions.risk_placeholder')}
                 />
               </div>
               {formSubA && formSubB && formSubA === formSubB && (

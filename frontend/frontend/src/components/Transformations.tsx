@@ -599,21 +599,21 @@ const Transformations: React.FC = () => {
             {activeTab === 'historique' && (
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto whitespace-nowrap">
-                  <table className="w-full border-separate border-spacing-0 text-sm">
+                  <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
                     <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200">
-                      <tr className="text-slate-400 uppercase text-[10px] tracking-widest font-black h-12">
-                        <th className="pl-6 text-left font-black">{t('transformations.table_history.date')}</th>
-                        <th className="px-4 text-left font-black">{t('transformations.table_history.user')}</th>
-                        <th className="px-4 text-left font-black">{t('transformations.table_history.transformation')}</th>
-                        <th className="px-4 text-left font-black">{t('transformations.table_history.quantities')}</th>
-                        <th className="px-4 text-left font-black">{t('transformations.table_history.notes')}</th>
-                        <th className="px-4 pr-6 text-center font-black">{t('common:actions', { defaultValue: 'Actions' })}</th>
+                      <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500 h-12">
+                        <th className="w-28 px-3 py-2 whitespace-nowrap text-left">{t('transformations.table_history.date')}</th>
+                        <th className="w-28 px-3 py-2 whitespace-nowrap text-left">{t('transformations.table_history.user')}</th>
+                        <th className="w-[25%] px-3 py-2 whitespace-nowrap text-left">{t('transformations.table_history.transformation')}</th>
+                        <th className="w-[20%] px-3 py-2 whitespace-nowrap text-left">{t('transformations.table_history.quantities')}</th>
+                        <th className="px-3 py-2 whitespace-nowrap text-left">{t('transformations.table_history.notes')}</th>
+                        <th className="w-24 px-3 py-2 whitespace-nowrap text-center">{t('common:actions', { defaultValue: 'Actions' })}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {filteredHistorique.map(hist => (
                         <tr key={hist.id} className={`hover:bg-slate-50 transition-colors group ${hist.reversed ? 'opacity-50 line-through' : ''} ${hist.reversed_by ? 'bg-amber-50/50' : ''}`}>
-                          <td className="pl-6 py-4">
+                          <td className="w-28 px-3 py-2">
                              <div className="font-bold text-xs text-slate-800">{formatDate(hist.date_transformation)}</div>
                              <div className="text-[10px] text-slate-400 font-mono uppercase tracking-tighter">{formatDateTime(hist.date_transformation).split(' ').slice(1).join(' ')}</div>
                              {hist.reversed && (
@@ -623,25 +623,25 @@ const Transformations: React.FC = () => {
                                <span className="inline-block mt-1 text-[9px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversal', { defaultValue: 'Annulation' })}</span>
                              )}
                           </td>
-                          <td className="px-4 font-black text-xs text-emerald-700">{hist.user_nom}</td>
-                          <td className="px-4 max-w-xs">
+                          <td className="w-28 px-3 py-2 font-black text-xs text-emerald-700">{hist.user_nom}</td>
+                          <td className="w-[25%] px-3 py-2 max-w-xs">
                              <div className="flex items-center gap-2 text-xs font-bold truncate">
                                 <span className="text-slate-400">{hist.produit_source_nom}</span>
                                 <ChevronRight size={12} className="text-slate-300" />
                                 <span className="text-emerald-600">{hist.produit_destination_nom}</span>
                              </div>
                           </td>
-                          <td className="px-4">
+                          <td className="w-[20%] px-3 py-2">
                              <div className="flex items-center gap-3">
                                 <div className="bg-red-50 text-red-500 px-2 py-0.5 rounded text-[10px] font-black font-mono">-{formatNumber(hist.quantite_source)}</div>
                                 <ChevronRight size={12} className="text-slate-200" />
                                 <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-black font-mono">+{formatNumber(hist.quantite_destination)}</div>
                              </div>
                           </td>
-                          <td className="px-4 italic text-slate-400 text-[11px] max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
+                          <td className="px-3 py-2 italic text-slate-400 text-[11px] max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
                              {hist.notes || '-'}
                           </td>
-                          <td className="px-4 pr-6 text-center">
+                          <td className="w-24 px-3 py-2 text-center">
                              {!hist.reversed && !hist.reversed_by && (
                                <button
                                  className="h-8 px-3 rounded-lg text-xs font-bold text-amber-600 hover:bg-amber-50 transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"

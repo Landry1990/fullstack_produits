@@ -114,14 +114,14 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                     <TableHeader className="sticky top-0 z-10">
                         <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
                             {hasSelection && (
-                                <TableHead className="w-12 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                    <span className="sr-only">Sélection</span>
+                                <TableHead className="w-12 px-3 py-2 text-center">
+                                    <span className="sr-only">{t('stock:analyse.selection')}</span>
                                 </TableHead>
                             )}
                             {headers.map((h, i) => (
                                 <TableHead
                                     key={h}
-                                    className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
+                                    className={`px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
                                         i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
                                     }`}
                                 >
@@ -170,14 +170,14 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 <Checkbox
                                     checked={allSelected}
                                     onCheckedChange={onToggleSelectAll}
-                                    aria-label="Sélectionner tout"
+                                    aria-label={t('stock:analyse.select_all')}
                                 />
                             </TableHead>
                         )}
                         {headers.map((h, i) => (
                             <TableHead
                                 key={h}
-                                className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
+                                className={`px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
                                     i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
                                 }`}
                             >

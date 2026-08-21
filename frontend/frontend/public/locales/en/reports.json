@@ -1,4 +1,13 @@
 {
+    "columns": {
+        "cip1": "CIP1",
+        "libelle": "Designation",
+        "qty": "Qty",
+        "ca_ttc_brut": "Revenue (Incl. Tax)",
+        "marge_brute": "Gross Margin",
+        "prix_achat_moyen": "Avg. Purchase Price",
+        "prix_vente_moyen": "Avg. Selling Price"
+    },
     "title": "Report Center",
     "subtitle": "Select a query, configure parameters and view results",
     "queries_title": "Query List",
@@ -349,6 +358,9 @@
     "err_load_suppliers": "Error loading suppliers",
     "err_load_users": "Error loading users",
     "err_load_families": "Error loading families",
+    "close_menu": "Close menu",
+    "open_menu": "Open menu",
+    "export_excel": "Export to Excel",
     "query_options": {
         "recap_valeur_stock_pdf": {
             "valorisation": {

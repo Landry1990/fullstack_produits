@@ -506,7 +506,7 @@ export default function CategoryManager({
                        <button
                          className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-red-300 hover:bg-white/20 hover:text-red-200' : 'text-slate-300 hover:bg-red-50 hover:text-red-500'}`}
                          onClick={(e) => { e.stopPropagation(); handleDelete(cat.id, getCategoryName(cat)); }}
-                         title="Mettre en corbeille"
+                         title={t('products:category.move_to_trash')}
                        >
                          <Trash2 size={12} />
                        </button>
@@ -549,7 +549,7 @@ export default function CategoryManager({
                              <button
                                className="inline-flex items-center justify-center size-6 rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
                                onClick={(e) => { e.stopPropagation(); handleDelete(child.id, getCategoryName(child)); }}
-                               title="Mettre en corbeille"
+                               title={t('products:category.move_to_trash')}
                              >
                                <Trash2 size={10} />
                              </button>
@@ -627,17 +627,17 @@ export default function CategoryManager({
                            <table className="w-full text-sm">
                               <thead className="bg-slate-50 sticky top-0 z-10">
                                  <tr className="border-b border-slate-200 text-left">
-                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Produit</th>
-                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-28">CIP</th>
-                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-20 text-center">Stock</th>
-                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-24 text-right">Prix</th>
-                                    <th className="px-4 py-3 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-14 text-center">Action</th>
+                                    <th className="px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:category.col_product')}</th>
+                                    <th className="px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:category.col_cip')}</th>
+                                    <th className="px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:category.col_stock')}</th>
+                                    <th className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24">{t('products:category.col_price')}</th>
+                                    <th className="px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-14">{t('products:category.col_action')}</th>
                                  </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100">
                                  {products.map(p => (
                                     <tr key={p.id} className="group hover:bg-slate-50 transition-colors">
-                                       <td className="px-4 py-3">
+                                       <td className="px-3 py-2">
                                           <div className="flex items-center gap-3">
                                              <div className="size-9 bg-white rounded-lg flex items-center justify-center border border-slate-100 shadow-sm">
                                                 <Package size={16} className="text-slate-300" />
@@ -645,16 +645,16 @@ export default function CategoryManager({
                                              <div className="font-semibold text-slate-800 truncate">{p.name}</div>
                                           </div>
                                        </td>
-                                       <td className="px-4 py-3 font-mono text-slate-400">{p.cip1}</td>
-                                       <td className="px-4 py-3 text-center">
+                                       <td className="px-3 py-2 font-mono text-slate-400">{p.cip1}</td>
+                                       <td className="px-3 py-2 text-center">
                                           <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md font-bold text-xs ${p.stock <= p.stock_alert ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
                                              {p.stock}
                                           </span>
                                        </td>
-                                       <td className="px-4 py-3 text-right font-bold text-slate-700">
+                                       <td className="px-3 py-2 text-right font-bold text-slate-700">
                                           {formatCurrency(normalizeNumberInput(p.selling_price))}
                                        </td>
-                                       <td className="px-4 py-3 text-center">
+                                       <td className="px-3 py-2 text-center">
                                           <button
                                             onClick={() => handleRemoveProduct(p)}
                                             className="inline-flex items-center justify-center size-7 rounded-full text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"

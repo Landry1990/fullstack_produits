@@ -369,5 +369,14 @@
         "placeholder": "Scan the box datamatrix…",
         "enter_to_validate": "Enter to validate",
         "not_found": "Product or batch not found — check the barcode"
+    },
+    "disable_datamatrix": "Disable Data Matrix Scan",
+    "enable_datamatrix": "Enable Data Matrix Scan",
+    "avoirs": {
+        "unload_stock_title": "Physically remove these quantities from stock and record movements",
+        "unload_stock": "Unload Stock",
+        "stock_unloaded": "Stock Unloaded",
+        "cancel_unload_title": "Cancel unloading and restore stock",
+        "cancel_unload": "Cancel Unloading"
     }
 }
