@@ -39,7 +39,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
     const fetchHistory = async () => {
         setLoadingHistory(true)
         try {
-            const data = await clientService.getDepotHistory(client.id)
+            const data = await clientService.getDepotHistory(client.id) as { results?: DepotClient[] } | DepotClient[]
             setHistory(data.results || data)
         } catch (err) {
             logger.error(err)
@@ -77,7 +77,8 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
             setActiveTab('history')
         } catch (err: unknown) {
             logger.error(err)
-            gooeyToast.error(err.response?.data?.error || t('common:messages.error_saving'))
+            const axiosErr = err as { response?: { data?: { error?: string } } }
+            gooeyToast.error(axiosErr.response?.data?.error || t('common:messages.error_saving'))
         } finally {
             setLoading(false)
         }
@@ -172,7 +173,7 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                     rows={3}
                                     value={notes}
                                     onChange={e => setNotes(e.target.value)}
-                                    placeholder="Description de la transaction..."
+                                    placeholder={t('clients:deposit.description_placeholder')}
                                 ></textarea>
                             </div>
 

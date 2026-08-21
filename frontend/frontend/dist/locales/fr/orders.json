@@ -598,6 +598,12 @@
         "table": {
             "ug": "UG"
         }
-    }
+    },
+    "product_details": "Détails produit",
+    "price_purchase_ht": "PRIX A HT",
+    "price_tva": "TVA A",
+    "price_purchase_ttc": "PRIX A TTC",
+    "price_selling_ttc": "PRIX V TTC",
+    "margin": "MARGE"
 }
 

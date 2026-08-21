@@ -227,13 +227,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                 <Table className="w-full table-fixed text-sm">
                     <TableHeader className="sticky top-0 z-10">
                         <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
-                            <TableHead className="w-12 px-3 py-3 text-center">
+                            <TableHead className="w-12 px-3 py-2 text-center">
                                 <span className="sr-only">Sélection</span>
                             </TableHead>
                             {headers.map((h, i) => (
                                 <TableHead
                                     key={h.key}
-                                    className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${h.width} ${
+                                    className={`px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 ${h.width} ${
                                         h.align === 'left' ? 'text-left' : h.align === 'right' ? 'text-right' : 'text-center'
                                     }`}
                                 >
@@ -315,7 +315,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                             {headers.map((h) => (
                                 <TableHead
                                     key={h.key}
-                                    className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 ${h.width} ${
+                                    className={`px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 ${h.width} ${
                                         h.align === 'left' ? 'text-left' : h.align === 'right' ? 'text-right' : 'text-center'
                                     }`}
                                 >

@@ -122,5 +122,7 @@
     "export_button": "Exporter les produits (Excel)",
     "exporting": "Exportation en cours...",
     "export_success": "Export Excel téléchargé !",
-    "export_error": "Erreur lors de l'export Excel"
+    "export_error": "Erreur lors de l'export Excel",
+    "backup_path_description": "Chemin Linux dans le conteneur (ex: /mnt/backups). Le volume doit être monté dans docker-compose.",
+    "admin_password_placeholder": "Mot de passe admin"
 }

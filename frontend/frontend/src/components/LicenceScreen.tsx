@@ -151,7 +151,7 @@ const LicenceScreen = () => {
                                     type="button"
                                     onClick={handleCopy}
                                     className="p-2 text-base-content/50 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                                    title="Copier l'ID"
+                                    title={t('system_admin:licence.copy_id')}
                                 >
                                     <Copy className="size-5" />
                                 </button>

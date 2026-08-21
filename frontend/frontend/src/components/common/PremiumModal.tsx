@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PremiumModalProps {
   /** Whether the modal is visible */
@@ -63,6 +64,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
   disableClose = false,
   className = '',
 }) => {
+  const { t } = useTranslation('common');
   // Use refs so the effect listener always calls the latest handler
   // without needing to re-subscribe on every render.
   const onCloseRef = useRef(onClose);
@@ -122,7 +124,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
               onClick={onClose}
               className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={disableClose}
-              aria-label="Fermer"
+              aria-label={t('close')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />

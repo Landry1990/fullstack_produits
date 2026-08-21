@@ -175,7 +175,7 @@ function LicenceToastContent({ notification, onDismiss }: LicenceToastContentPro
       <button
         onClick={onDismiss}
         className="flex-shrink-0 p-1 hover:bg-base-100/20 rounded-full transition-colors"
-        title="Ignorer cette alerte"
+        title={t('system_admin:licence.dismiss_alert')}
       >
         <X className="size-5" />
       </button>

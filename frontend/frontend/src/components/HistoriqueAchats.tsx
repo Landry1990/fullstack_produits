@@ -358,22 +358,22 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           {/* Table Container */}
           <div className="flex-1 min-h-0 flex flex-col">
             <div className={`overflow-auto flex-1 rounded-xl border border-slate-200 bg-white shadow-sm transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
-              <table className="w-full border-separate border-spacing-0 text-sm">
+              <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
                 <thead>
-                  <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">
+                  <tr className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     {activeTab === 'summary' ? (
                       <>
-                        <th className="sticky top-0 z-30 py-4 pl-8 text-left border-b border-slate-200 bg-slate-50">{t('history.columns.date')}</th>
-                        <th className="sticky top-0 z-30 text-center py-4 border-b border-slate-200 bg-slate-50">{t('history.columns.nb_orders')}</th>
-                        <th className="sticky top-0 z-30 text-right py-4 pr-8 border-b border-slate-200 bg-slate-50">{t('history.columns.total_purchase')}</th>
+                        <th className="sticky top-0 z-30 w-28 px-3 py-2 whitespace-nowrap text-left border-b border-slate-200 bg-slate-50">{t('history.columns.date')}</th>
+                        <th className="sticky top-0 z-30 w-28 px-3 py-2 whitespace-nowrap text-center border-b border-slate-200 bg-slate-50">{t('history.columns.nb_orders')}</th>
+                        <th className="sticky top-0 z-30 w-32 px-3 py-2 whitespace-nowrap text-right border-b border-slate-200 bg-slate-50">{t('history.columns.total_purchase')}</th>
                       </>
                     ) : (
                       <>
-                        <th className="sticky top-0 z-30 py-4 pl-8 text-left border-b border-slate-200 bg-slate-50">{t('history.columns.product')}</th>
-                        <th className="sticky top-0 z-30 py-4 text-left border-b border-slate-200 bg-slate-50">{t('history.columns.cip')}</th>
-                        <th className="sticky top-0 z-30 text-center py-4 border-b border-slate-200 bg-slate-50">{t('history.columns.quantity')}</th>
-                        <th className="sticky top-0 z-30 text-center py-4 border-b border-slate-200 bg-slate-50">{t('history.columns.nb_purchases')}</th>
-                        <th className="sticky top-0 z-30 text-right py-4 pr-8 border-b border-slate-200 bg-slate-50">{t('history.columns.total_purchase')}</th>
+                        <th className="sticky top-0 z-30 w-[30%] px-3 py-2 whitespace-nowrap text-left border-b border-slate-200 bg-slate-50">{t('history.columns.product')}</th>
+                        <th className="sticky top-0 z-30 w-28 px-3 py-2 whitespace-nowrap text-left border-b border-slate-200 bg-slate-50">{t('history.columns.cip')}</th>
+                        <th className="sticky top-0 z-30 w-20 px-3 py-2 whitespace-nowrap text-center border-b border-slate-200 bg-slate-50">{t('history.columns.quantity')}</th>
+                        <th className="sticky top-0 z-30 w-20 px-3 py-2 whitespace-nowrap text-center border-b border-slate-200 bg-slate-50">{t('history.columns.nb_purchases')}</th>
+                        <th className="sticky top-0 z-30 w-32 px-3 py-2 whitespace-nowrap text-right border-b border-slate-200 bg-slate-50">{t('history.columns.total_purchase')}</th>
                       </>
                     )}
                   </tr>
@@ -392,7 +392,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                     <tr key={activeTab === 'summary' ? summaryRow.date : detailRow.produit_id} className="group hover:bg-blue-50/40 transition-colors">
                       {activeTab === 'summary' ? (
                         <>
-                          <td className="py-3 pl-8">
+                          <td className="w-28 px-3 py-2">
                             <div className="flex items-center gap-3">
                               <div className={`size-1.5 rounded-full ${i === 0 ? 'bg-blue-500' : 'bg-slate-200'}`} />
                               <span className="text-sm font-bold text-slate-600">
@@ -400,12 +400,12 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 text-center">
+                          <td className="w-28 px-3 py-2 text-center">
                             <span className="inline-flex items-center justify-center h-7 px-3 rounded-full bg-slate-100 text-slate-600 text-xs font-black group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
                               {summaryRow.nb_commandes}
                             </span>
                           </td>
-                          <td className="py-3 text-right pr-8">
+                          <td className="w-32 px-3 py-2 text-right">
                             <span className="text-base font-black text-slate-800 group-hover:text-blue-600 transition-colors">
                               {formatMoney(normalizeNumber(summaryRow.total_achat))}
                             </span>
@@ -414,19 +414,19 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                         </>
                       ) : (
                         <>
-                          <td className="py-3 pl-8">
+                          <td className="w-[30%] px-3 py-2">
                             <div className="font-bold text-sm text-slate-700 group-hover:text-blue-600 transition-colors">{detailRow.produit__name}</div>
                           </td>
-                          <td className="py-3">
+                          <td className="w-28 px-3 py-2">
                             <div className="font-mono text-xs text-slate-400">{detailRow.produit__cip1}</div>
                           </td>
-                          <td className="py-3 text-center">
+                          <td className="w-20 px-3 py-2 text-center">
                             <span className="inline-flex items-center justify-center h-6 px-2.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">{detailRow.total_quantite}</span>
                           </td>
-                          <td className="py-3 text-center">
+                          <td className="w-20 px-3 py-2 text-center">
                             <span className="text-xs font-bold text-slate-500">{detailRow.nb_commandes}</span>
                           </td>
-                          <td className="py-3 text-right pr-8">
+                          <td className="w-32 px-3 py-2 text-right">
                             <span className="text-sm font-black text-slate-800">
                               {formatMoney(normalizeNumber(detailRow.total_achat))}
                             </span>

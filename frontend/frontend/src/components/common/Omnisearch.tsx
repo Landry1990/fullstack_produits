@@ -36,7 +36,7 @@ export default function Omnisearch() {
       <DialogContent className="max-w-5xl p-0 overflow-hidden border-slate-200">
         <DialogTitle className="sr-only">{t('omnisearch.title', 'Recherche globale')}</DialogTitle>
         <Command
-          label="Command Palette"
+          label={t('common:command_palette')}
           shouldFilter={false}
           value={activeValue}
           onValueChange={setActiveValue}

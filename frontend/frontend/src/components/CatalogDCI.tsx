@@ -74,7 +74,7 @@ export default function CatalogDCI() {
             </div>
             <input
               type="text"
-              placeholder="Rechercher une DCI..."
+              placeholder={t('products:dci.search_placeholder')}
               className="w-full pl-12 rounded-2xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:ring-2 ring-primary/20 transition-all"
               value={searchTerm}
               onChange={(e) => {
@@ -116,7 +116,7 @@ export default function CatalogDCI() {
           
           {!loadingSubstances && substancesData?.results.length === 0 && (
             <div className="p-8 text-center text-base-content/50">
-              <p className="text-sm">Aucune substance trouvée</p>
+              <p className="text-sm">{t('products:dci.no_substance')}</p>
             </div>
           )}
         </div>
@@ -127,13 +127,13 @@ export default function CatalogDCI() {
               variant="ghost" size="sm" 
               disabled={!substancesData.previous}
               onClick={() => setPage(p => p - 1)}
-            >Précédent</Button>
+            >{t('products:dci.previous')}</Button>
             <span className="text-xs font-medium text-base-content/50">Page {page}</span>
             <Button 
               variant="ghost" size="sm" 
               disabled={!substancesData.next}
               onClick={() => setPage(p => p + 1)}
-            >Suivant</Button>
+            >{t('products:dci.next')}</Button>
           </div>
         )}
       </div>
@@ -151,14 +151,14 @@ export default function CatalogDCI() {
                   </div>
                   <h1 className="text-2xl font-semibold tracking-tight text-base-content truncate">{selectedSubstance.nom}</h1>
                 </div>
-                <p className="text-base-content/60 font-medium">Gestion du groupe générique et des substitutions</p>
+                <p className="text-base-content/60 font-medium">{t('products:dci.subtitle')}</p>
               </div>
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
                 variant="default" className="rounded-2xl shadow-lg shadow-emerald-600/20 px-8"
               >
                 <Icons.Search />
-                Rechercher et ajouter
+                {t('products:dci.search_add')}
               </Button>
             </div>
 
@@ -213,7 +213,7 @@ export default function CatalogDCI() {
                   {(produitsData as { results?: { length: number } })?.results?.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center p-12 text-center text-base-content/30">
                       <Icons.Box />
-                      <p className="mt-4 font-medium text-base">Aucun produit associé à cette DCI dans votre stock</p>
+                      <p className="mt-4 font-medium text-base">{t('products:dci.no_associated_products')}</p>
                     </div>
                   )}
                 </div>
@@ -246,7 +246,7 @@ export default function CatalogDCI() {
                     {(refMedsData as { results?: { length: number } })?.results?.length === 0 && (
                       <div className="h-full flex flex-col items-center justify-center p-12 text-center text-base-content/30">
                         <Icons.Search />
-                        <p className="mt-4 font-medium text-base">Aucune référence trouvée dans la base nationale</p>
+                        <p className="mt-4 font-medium text-base">{t('products:dci.no_national_reference')}</p>
                       </div>
                     )}
                   </div>
@@ -259,7 +259,7 @@ export default function CatalogDCI() {
             <div className="scale-[3]">
               <Icons.Pill />
             </div>
-            <p className="mt-12 text-xl font-medium text-base-content/40">Sélectionnez une DCI pour gérer ses produits</p>
+            <p className="mt-12 text-xl font-medium text-base-content/40">{t('products:dci.select_dci')}</p>
           </div>
         )}
       </div>

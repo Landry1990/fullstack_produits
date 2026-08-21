@@ -441,10 +441,10 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
               <p className="text-sm">{t('orders:details.empty_products')}</p>
             </div>
           ) : (
-            <Table>
+            <Table className="table-fixed">
               <TableHeader className="bg-slate-50">
                 <TableRow className="hover:bg-slate-50">
-                  <TableHead className="w-10 px-3 py-2">
+                  <TableHead className="w-12 px-3 py-2 text-center">
                     <Checkbox
                       checked={selectedRows.size === selectedCommande.produits.length && selectedCommande.produits.length > 0}
                       onCheckedChange={() => {
@@ -456,25 +456,25 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                       }}
                     />
                   </TableHead>
-                  <TableHead className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
+                  <TableHead className="w-[28%] px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
                     {t('orders:product_table.headers.product')} {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
-                  <TableHead className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.cip')}</TableHead>
-                  <TableHead className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">{t('products:table.stock')}</TableHead>
-                  <TableHead className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.rotation', 'Rot.')}</TableHead>
-                  <TableHead className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
+                  <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.cip')}</TableHead>
+                  <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:table.stock')}</TableHead>
+                  <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.rotation', 'Rot.')}</TableHead>
+                  <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
                     {t('orders:product_table.headers.qty')} {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
 
                   </TableHead>
 
-                  <TableHead className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase bg-emerald-50">{t('orders:product_table.headers.ug')}</TableHead>
-                  <TableHead className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }}>
+                  <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500 bg-emerald-50">{t('orders:product_table.headers.ug')}</TableHead>
+                  <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }}>
                     {t('orders:details.price_unit')} {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
-                  <TableHead className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.lot')}</TableHead>
-                  <TableHead className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.headers.exp_date')}</TableHead>
-                  <TableHead className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase">{t('orders:product_table.total_ht')}</TableHead>
-                  {selectedCommande.status === 'CLOT' && <TableHead className="w-8"></TableHead>}
+                  <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.lot')}</TableHead>
+                  <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.exp_date')}</TableHead>
+                  <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.total_ht')}</TableHead>
+                  {selectedCommande.status === 'CLOT' && <TableHead className="w-20"></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody className="bg-white divide-y divide-slate-200">

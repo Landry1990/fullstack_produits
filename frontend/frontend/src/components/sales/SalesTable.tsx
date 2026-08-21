@@ -36,9 +36,9 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
             <>
                 <li className="text-[10px] font-medium text-slate-500 px-4 py-2 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</li>
                 <li><a onClick={() => onView(selectedFacture)} className="gap-3 py-3"><Eye className="size-4 text-slate-500" />{t('common:details')}</a></li>
-                <li><a onClick={() => onPrint(selectedFacture)} className="gap-3 py-3"><Printer className="size-4 text-emerald-600" />Format A4</a></li>
-                <li><a onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3"><Receipt className="size-4 text-emerald-600" />Ticket Caisse</a></li>
-                <li><a onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3"><Truck className="size-4 text-emerald-600" />Bon de livraison</a></li>
+                <li><a onClick={() => onPrint(selectedFacture)} className="gap-3 py-3"><Printer className="size-4 text-emerald-600" />{t('sales:print.a4')}</a></li>
+                <li><a onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3"><Receipt className="size-4 text-emerald-600" />{t('sales:print.ticket')}</a></li>
+                <li><a onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3"><Truck className="size-4 text-emerald-600" />{t('sales:print.delivery_note')}</a></li>
                 <li><a onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3"><Copy className="size-4 text-blue-500" />{t('common:duplicate', { defaultValue: 'Dupliquer' })}</a></li>
                 {(selectedFacture.status === 'PROF' || selectedFacture.status === 'PROFORMA') && (
                     <li><a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><FileEdit className="size-4 text-emerald-600" />{t('sales:load_to_facturation', { defaultValue: 'Charger en facturation' })}</a></li>
@@ -166,10 +166,10 @@ export const SalesTable: React.FC<SalesTableProps> = ({
 
     return (
         <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
-            <table className="w-full border-separate border-spacing-0">
+            <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="sticky top-0 z-30">
-                    <tr className="bg-slate-100 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        <th className="px-4 py-4 w-10 sticky top-0 bg-slate-100 border-b border-slate-200">
+                    <tr className="bg-slate-100 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        <th className="w-12 px-3 py-2 text-center sticky top-0 bg-slate-100 border-b border-slate-200">
                             <input
                                 type="checkbox"
                                 aria-label={t('sales:select_all', { defaultValue: 'Tout sélectionner' })}
@@ -204,15 +204,15 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </SelectionHeader>
                         ) : (
                             <>
-                                <th className="px-6 py-4 sticky top-0 bg-slate-100 border-b border-slate-200">{t('sales:table.invoice_number')}</th>
-                                <th className="px-6 py-4 sticky top-0 bg-slate-100 border-b border-slate-200">{t('sales:table.client')}</th>
-                                <th className="px-6 py-4 sticky top-0 bg-slate-100 border-b border-slate-200 hidden xl:table-cell">{t('sales:table.operator')}</th>
-                                <th className="px-6 py-4 sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.amount')}</th>
-                                <th className="px-6 py-4 sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.amount_settled')}</th>
-                                <th className="px-6 py-4 sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.amount_on_account')}</th>
-                                <th className="px-6 py-4 sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.discount')}</th>
-                                <th className="px-6 py-4 sticky top-0 bg-slate-100 border-b border-slate-200 text-center hidden md:table-cell">{t('sales:table.status')}</th>
-                                <th className="px-6 py-4 sticky top-0 bg-slate-100 border-b border-slate-200 text-right pr-6">{t('sales:table.actions')}</th>
+                                <th className="w-32 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200">{t('sales:table.invoice_number')}</th>
+                                <th className="w-[20%] px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200">{t('sales:table.client')}</th>
+                                <th className="w-28 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 hidden xl:table-cell">{t('sales:table.operator')}</th>
+                                <th className="w-28 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.amount')}</th>
+                                <th className="w-28 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.amount_settled')}</th>
+                                <th className="w-24 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.amount_on_account')}</th>
+                                <th className="w-20 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.discount')}</th>
+                                <th className="w-24 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center hidden md:table-cell">{t('sales:table.status')}</th>
+                                <th className="w-24 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-right">{t('sales:table.actions')}</th>
                             </>
                         )}
                     </tr>
@@ -225,7 +225,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             key={facture.id}
                             className={cn("group transition-colors duration-150", selectedSet.has(facture.id) ? 'bg-emerald-50 hover:bg-emerald-100/50' : 'hover:bg-slate-50')}
                         >
-                             <td className="px-4 py-4">
+                             <td className="w-12 px-3 py-2 text-center">
                                 <input
                                     type="checkbox"
                                     aria-label={t('sales:select_invoice', { defaultValue: 'Sélectionner la facture', number: facture.numero_facture || facture.id })}
@@ -234,7 +234,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     onChange={() => handleSelect(facture.id)}
                                 />
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="w-32 px-3 py-2">
                                 <div className="flex flex-col">
                                     <span className="font-bold text-slate-700 flex items-center gap-2">
                                         #{facture.numero_facture || facture.id}
@@ -251,7 +251,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     </span>
                                 </div>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="w-[20%] px-3 py-2">
                                 <div className="flex items-center gap-2">
                                     <div className={cn("size-8 rounded-full flex items-center justify-center", facture.ayant_droit_details ? 'bg-sky-100 text-sky-600' : 'bg-emerald-100 text-emerald-600')}>
                                         <User className="size-4" />
@@ -268,17 +268,17 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     </div>
                                 </div>
                             </td>
-                            <td className="px-6 py-4 hidden xl:table-cell">
+                            <td className="w-28 px-3 py-2 hidden xl:table-cell">
                                 <div className="text-sm text-slate-600">
                                     {facture.created_by_name || '-'}
                                 </div>
                             </td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="w-28 px-3 py-2 text-center">
                                 <span className="inline-flex items-center px-1.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-mono font-bold text-sm border border-slate-200 group-hover:bg-white group-hover:border-emerald-200 group-hover:text-emerald-600 group-hover:shadow-sm transition-all whitespace-nowrap">
                                     {formatCurrency(normalizeNumberInput(facture.total_ttc))}
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                            <td className="w-28 px-3 py-2 text-center whitespace-nowrap">
                                 {facture.montant_regle === null || facture.montant_regle === undefined ? (
                                     <span className="text-slate-400 italic text-sm">-</span>
                                 ) : (
@@ -287,23 +287,23 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     </span>
                                 )}
                             </td>
-                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                            <td className="w-24 px-3 py-2 text-center whitespace-nowrap">
                                 <span className={cn("font-bold font-mono text-sm uppercase", normalizeNumberInput(facture.montant_en_compte || '0') > 0 ? 'text-amber-600' : 'text-slate-400')}>
                                     {formatCurrency(normalizeNumberInput(facture.montant_en_compte || '0'))}
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                            <td className="w-20 px-3 py-2 text-center whitespace-nowrap">
                                 <span className="text-red-600 font-medium font-mono text-sm uppercase">
                                     {formatCurrency(normalizeNumberInput(facture.remise || '0'))}
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-center hidden md:table-cell">
+                            <td className="w-24 px-3 py-2 text-center hidden md:table-cell">
                                 <span className={cn("inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border", getStatusStyle(facture.status))}>
                                     {getStatusLabel(facture.status)}
                                 </span>
                             </td>
 
-                            <td className="px-6 py-4 text-right">
+                            <td className="w-24 px-3 py-2 text-right">
                                 {selectedIds.length === 0 && (
                                     <div className="flex justify-end gap-1 text-slate-200 group-hover:opacity-100 transition-opacity">
                                         <ActionIcon
@@ -315,19 +315,19 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                         <ActionIcon
                                             icon={Printer}
                                             onClick={() => onPrint(facture)}
-                                            title="Format A4"
+                                            title={t('sales:print.a4')}
                                             variant="primary"
                                         />
                                         <ActionIcon
                                             icon={Receipt}
                                             onClick={() => onPrintTicket(facture)}
-                                            title="Ticket Caisse"
+                                            title={t('sales:print.ticket')}
                                             variant="primary"
                                         />
                                         <ActionIcon
                                             icon={Truck}
                                             onClick={() => onPrintBL(facture)}
-                                            title="Bon de livraison"
+                                            title={t('sales:print.delivery_note')}
                                             variant="primary"
                                         />
                                     </div>

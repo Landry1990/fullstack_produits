@@ -149,7 +149,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               {/* Existing lot selector */}
               {!form.new_lot_number && lots.length > 0 && (
                 <Select
-                  label="Lot concerné"
+                  label={t('products:adjustment.lot_concerned')}
                   value={form.stock_lot_id || ''}
                   onChange={(e) => setForm((prev) => ({ ...prev, stock_lot_id: e.target.value }))}
                 >
@@ -168,16 +168,16 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                 <div className="space-y-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
                   <Input
                     type="text"
-                    label="Numéro de lot"
+                    label={t('products:adjustment.lot_number')}
                     value={form.new_lot_number?.trim() === '' ? '' : form.new_lot_number}
                     onChange={(e) => setForm((prev) => ({ ...prev, new_lot_number: e.target.value }))}
-                    placeholder="Ex: LOT-2026-001"
+                    placeholder={t('products:adjustment.lot_placeholder')}
                     required
                     size="md"
                   />
                   <Input
                     type="date"
-                    label="Date de péremption"
+                    label={t('products:adjustment.expiry_date')}
                     value={form.new_lot_expiration || ''}
                     onChange={(e) => setForm((prev) => ({ ...prev, new_lot_expiration: e.target.value }))}
                     size="md"

@@ -146,7 +146,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         <input
                             type="text"
                             className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                            placeholder="Ex: AMIFER"
+                            placeholder={t('products:smart_organizer.example_name')}
                             value={fromName}
                             onChange={e => setFromName(e.target.value)}
                         />
@@ -156,7 +156,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         <input
                             type="text"
                             className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                            placeholder="Ex: DAFLON"
+                            placeholder={t('products:smart_organizer.example_name_to')}
                             value={toName}
                             onChange={e => setToName(e.target.value)}
                         />
@@ -166,7 +166,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                         <input
                             type="text"
                             className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                            placeholder="Ex: CPR"
+                            placeholder={t('products:smart_organizer.example_form')}
                             value={contains}
                             onChange={e => setContains(e.target.value)}
                         />

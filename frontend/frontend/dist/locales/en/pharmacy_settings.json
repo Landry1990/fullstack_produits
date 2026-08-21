@@ -58,6 +58,7 @@
         "whatsapp_phone_id": "Phone Number ID",
         "whatsapp_token": "Access Token (Permanent)",
         "whatsapp_account_id": "WhatsApp Business Account ID",
+        "pharmacist_whatsapp": "Holder WhatsApp Number",
         "add_custom_mode": "Add a custom payment mode",
         "centralized_cash_register": "Centralized Cash Register",
         "telegram_bot_token": "Telegram Bot Token",
@@ -96,6 +97,7 @@
         "whatsapp_phone_id": "15-digit numerical ID",
         "whatsapp_token": "EAAG...",
         "whatsapp_account_id": "Business account ID",
+        "pharmacist_whatsapp": "International format number (e.g.: 2376XXXXXXXX)",
         "custom_mode": "e.g. PayPal, Stripe, Wave...",
         "telegram_bot_token": "123456789:ABCDefGh...",
         "telegram_chat_id": "Numeric chat identifier",
@@ -117,6 +119,7 @@
         "coeff_formula": "Selling Price = Purchase Price * Coefficient",
         "taux_change": "EUR to FCFA conversion rate. Automatically applied to new direct orders.",
         "whatsapp_help": "Requires a Meta Developer account and WhatsApp Business API configured.",
+        "pharmacist_whatsapp": "The number that will receive strategic and inventory reports (do not include a + prefix).",
         "payment_modes": "Disable payment modes you do not use. They will no longer be offered at the register and invoicing.",
         "custom_mode": "Type a name and press Enter or click Add. Do not forget to save.",
         "multi_pos": "If enabled, the system allows dispatching sales to different physical terminals.",
@@ -175,7 +178,15 @@
         "logo_size": "The logo must not exceed 2 MB",
         "payment_mode_exists": "This mode already exists",
         "unknown_error": "Unknown error",
-        "test_sent": "Sent"
+        "test_sent": "Sent",
+        "pos_load_error": "Error loading sales points",
+        "pos_name_required": "Please enter a name.",
+        "pos_created": "Sales point created successfully.",
+        "pos_create_error": "Error creating sales point",
+        "pos_deleted": "Sales point deleted.",
+        "pos_delete_error": "Error deleting sales point",
+        "pos_closed": "Sales point closed.",
+        "pos_close_error": "Error closing sales point"
     },
     "buttons": {
         "logo_importing": "Import...",
@@ -215,15 +226,5 @@
         "info_simplifie": "Simplified: 5% deposit (+10% CAC = 5.5%) · 3-5% prepayment",
         "info_marge": "Administered margin: 14% on gross margin (pharmacy)",
         "info_common": "Common law: on total revenue (2.2% or 5.5% depending on regime)"
-    },
-    "messages": {
-        "pos_load_error": "Error loading sales points",
-        "pos_name_required": "Please enter a name.",
-        "pos_created": "Sales point created successfully.",
-        "pos_create_error": "Error creating sales point",
-        "pos_deleted": "Sales point deleted.",
-        "pos_delete_error": "Error deleting sales point",
-        "pos_closed": "Sales point closed.",
-        "pos_close_error": "Error closing sales point"
     }
 }

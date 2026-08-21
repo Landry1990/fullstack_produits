@@ -97,16 +97,16 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                             className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
                             onClick={() => handleDechargerStock(selectedAvoir)}
                             disabled={savingValidation}
-                            title="Retirer physiquement ces quantités du stock et enregistrer les mouvements"
+                            title={t('facturation:avoirs.unload_stock_title')}
                         >
                             <PackageX className="size-4" />
-                            Décharger Stock
+                            {t('facturation:avoirs.unload_stock')}
                         </Button>
                     ) : (
                         <div className="inline-flex items-center gap-2">
                             <div className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium">
                                 <CheckCheck className="size-4" />
-                                Stock déchargé
+                                {t('facturation:avoirs.stock_unloaded')}
                             </div>
                             <Button
                                 type="button"
@@ -115,10 +115,10 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 className="gap-2 border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
                                 onClick={() => handleAnnulerDechargement(selectedAvoir)}
                                 disabled={savingValidation}
-                                title="Annuler le déchargement et réintégrer le stock"
+                                title={t('facturation:avoirs.cancel_unload_title')}
                             >
                                 <Undo2 className="size-4" />
-                                Annuler déchargement
+                                {t('facturation:avoirs.cancel_unload')}
                             </Button>
                         </div>
                     )}
@@ -256,23 +256,23 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         </CardHeader>
 
                         <div className="overflow-x-auto">
-                            <Table>
+                            <Table className="table-fixed">
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-12 text-center">{t('stock:avoirs.table.status')}</TableHead>
-                                        <TableHead>{t('stock:avoirs.form.table_product')}</TableHead>
-                                        <TableHead>{t('stock:avoirs.form.table_lot')}</TableHead>
-                                        <TableHead>{t('stock:avoirs.form.table_motif')}</TableHead>
-                                        <TableHead className="text-center">{t('stock:avoirs.form.table_qty')}</TableHead>
-                                        <TableHead className="text-right">{t('stock:avoirs.form.table_price')}</TableHead>
-                                        <TableHead className="text-right">{t('stock:avoirs.form.table_total')}</TableHead>
-                                        {isDraft && <TableHead className="w-10"></TableHead>}
+                                        <TableHead className="w-12 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.table.status')}</TableHead>
+                                        <TableHead className="w-[30%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.form.table_product')}</TableHead>
+                                        <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.form.table_lot')}</TableHead>
+                                        <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-left">{t('stock:avoirs.form.table_motif')}</TableHead>
+                                        <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('stock:avoirs.form.table_qty')}</TableHead>
+                                        <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('stock:avoirs.form.table_price')}</TableHead>
+                                        <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('stock:avoirs.form.table_total')}</TableHead>
+                                        {isDraft && <TableHead className="w-10 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center"></TableHead>}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {selectedAvoir.produits?.map((ligne, _idx) => (
                                         <TableRow key={ligne.id || `ligne-${ligne.produit_nom}-${ligne.lot}`}>
-                                            <TableCell className="text-center">
+                                            <TableCell className="px-3 py-2 text-center">
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
@@ -284,11 +284,11 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                     {ligne.est_cloture ? <Lock className="size-4" /> : <Unlock className="size-4" />}
                                                 </Button>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="px-3 py-2">
                                                 <div className="font-bold text-slate-700">{ligne.produit_nom}</div>
                                                 <div className="text-xs text-slate-500 font-mono mt-0.5">{ligne.produit_cip}</div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="px-3 py-2">
                                                 <div className="font-mono text-xs bg-slate-100 px-2 py-1 rounded w-fit mb-1 font-bold text-slate-600">
                                                     {ligne.lot || t('stock:avoirs.form.no_lot')}
                                                 </div>
@@ -296,24 +296,24 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                     {ligne.date_expiration ? format(new Date(ligne.date_expiration), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : enUS }) : t('stock:avoirs.form.no_date')}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="px-3 py-2">
                                                 <div className="text-sm text-slate-600 max-w-[180px] truncate">
                                                     {ligne.motif || '—'}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-center">
+                                            <TableCell className="px-3 py-2 text-center">
                                                 <span className="font-bold text-base bg-slate-100 text-slate-700 px-3 py-1 rounded-lg">
                                                     {ligne.quantity}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-right font-mono text-slate-700">
+                                            <TableCell className="px-3 py-2 text-right font-mono text-slate-700">
                                                 {formatCurrency(Number(ligne.price || 0))}
                                             </TableCell>
-                                            <TableCell className="text-right font-bold text-indigo-600 font-mono">
+                                            <TableCell className="px-3 py-2 text-right font-bold text-indigo-600 font-mono">
                                                 {formatCurrency(Number(ligne.total || (Number(ligne.quantity) * Number(ligne.price))))}
                                             </TableCell>
                                             {isDraft && (
-                                                <TableCell className="text-center">
+                                                <TableCell className="px-3 py-2 text-center">
                                                     <Button
                                                         type="button"
                                                         variant="ghost"

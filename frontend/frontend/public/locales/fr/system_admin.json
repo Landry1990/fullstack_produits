@@ -200,5 +200,9 @@
   "update_success_desc": "Le système a été mis à jour avec succès. La page va se recharger automatiquement.",
   "update_ok": "OK",
   "update_failed": "Échec de la mise à jour",
-  "update_no_update": "Aucune mise à jour disponible — votre système est à jour"
+  "update_no_update": "Aucune mise à jour disponible — votre système est à jour",
+  "licence": {
+    "copy_id": "Copier l'ID",
+    "dismiss_alert": "Ignorer cette alerte"
+  }
 }

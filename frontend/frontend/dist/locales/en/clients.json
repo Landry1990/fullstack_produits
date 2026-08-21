@@ -17,7 +17,11 @@
         "email": "Email",
         "type": "Customer Type",
         "address": "Address",
-        "status": "Status"
+        "status": "Status",
+        "loyalty_member": "Loyalty Member",
+        "is_deposit_enabled": "Deposit Enabled",
+        "niu": "NIU",
+        "rccm": "RCCM"
     },
     "types": {
         "individual": "Individual",
@@ -26,6 +30,17 @@
         "professionnel": "Professional",
         "pro_short": "Pro",
         "part_short": "Ind"
+    },
+    "placeholders": {
+        "full_name": "Full name",
+        "email": "email@example.com",
+        "address": "Full address",
+        "niu": "Unique Identifier No.",
+        "rccm": "Trade Register",
+        "company": "Company"
+    },
+    "deposit": {
+        "description_placeholder": "Transaction description..."
     },
     "sections": {
         "general_info": "General Information",
@@ -40,6 +55,7 @@
         "auto_discount": "Automatic Discount",
         "credit_limit": "Credit Limit",
         "coverage": "Coverage Rate",
+        "majoration_pro": "Pro Markup",
         "current_debt": "Current Debt",
         "solde_depot": "Deposit Balance",
         "manage_deposit": "Manage Deposit",
@@ -51,7 +67,8 @@
         "name_placeholder": "Beneficiary name",
         "id_placeholder": "ID / Registration No",
         "col_name": "Full Name",
-        "col_id": "ID No"
+        "col_id": "ID No",
+        "company": "Company"
     },
     "history": {
         "total_visits": "Total Visits",

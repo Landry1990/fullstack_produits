@@ -79,6 +79,17 @@
             "impact_pts": "{{pts}} pts"
         }
     },
+    "health": {
+        "config_title": "AI Expert Configuration",
+        "config_subtitle": "Adjust the weighting of your health score",
+        "weight_description": "Define the importance of each criterion. By default (60/40), we prioritize availability to avoid losing customers.",
+        "availability": "Availability",
+        "rotation": "Rotation",
+        "priority_cash": "Cash Priority",
+        "priority_balanced": "Balanced",
+        "priority_service": "Customer Service Priority",
+        "current_logic": "Current calculation logic"
+    },
     "inventaire": {
         "title": "Inventory",
         "subtitle": "Manage and validate your stock inventories",
@@ -415,6 +426,7 @@
             "product_header": "Product",
             "cip_header": "CIP",
             "user_header": "User",
+            "lot_header": "Lot",
             "before_header": "Before",
             "after_header": "After",
             "diff_header": "Difference",
@@ -518,7 +530,15 @@
             "overstock": "No products in overstock",
             "shortage": "No shortages forecast",
             "all_good": "Everything seems in order!"
-        }
+        },
+        "filter_description": "Filter and analyze items in this category",
+        "articles": "Items",
+        "value_unsold": "Unsold value",
+        "value_overstock": "Overstock value",
+        "value_total": "Total value",
+        "ready_to_order": "Ready to be added to an order",
+        "selection": "Selection",
+        "select_all": "Select all"
     },
     "abc": {
         "title": "ABC Analysis",
@@ -619,7 +639,9 @@
             "numero": "Return No.",
             "fournisseur": "Supplier",
             "montant": "Amount (Excl. Tax)",
-            "status": "Status"
+            "status": "Status",
+            "type": "Reason",
+            "lines": "Lines"
         },
         "types": {
             "perime": "Expired",
@@ -939,6 +961,7 @@
             "destination": "Destination Product",
             "destination_placeholder": "Search destination product...",
             "ratio_label": "Conversion ratio",
+            "ratio_placeholder": "Ex: 20",
             "ratio_help": "Target quantity obtained for 1 source unit",
             "cancel": "Cancel",
             "create": "Create relation"
@@ -951,6 +974,16 @@
             "notes_label": "Notes / Observations",
             "notes_placeholder": "Add an optional note...",
             "confirm_btn": "Confirm transformation"
+        },
+        "preview": {
+            "stock_remaining": "Source stock remaining",
+            "current_stock": "Current stock",
+            "stock_after": "Stock after",
+            "lots_consumed": "Lots to be consumed (FEFO)",
+            "selected": "selected",
+            "available": "available",
+            "remaining": "rem.",
+            "lot_qty_mismatch": "The sum of selected lots ({{selected}}) must equal the quantity to transform ({{total}})."
         },
         "table_history": {
             "date": "Date",
@@ -975,7 +1008,8 @@
         "tabs": {
             "rayons": "Shelves",
             "formes": "Forms",
-            "groupes": "Groups"
+            "groupes": "Groups",
+            "motifs": "Adjustment Reasons"
         },
         "category_manager": {
             "name_label": "{{type}} Name",
@@ -1013,6 +1047,7 @@
             "print_btn": "Start printing",
             "print_no_rayon_title": "Print products without shelf",
             "no_rayon": "Without Shelf",
+            "order_label": "Display order",
             "delete_all_btn": "Delete all",
             "delete_all_confirm_title": "Delete all?",
             "delete_all_confirm_msg": "All {{type}}s ({{count}}) will be moved to trash. You can restore them from the Trash page.",
@@ -1025,6 +1060,19 @@
             "save_all": "Save all ({{count}})",
             "bulk_create_success": "{{count}} {{type}}s created successfully",
             "bulk_create_error": "{{count}} error(s) during creation"
+        },
+        "config_option_manager": {
+            "title": "Adjustment Reasons",
+            "subtitle": "Manage custom reasons for stock movements",
+            "code_label": "Code (Unique)",
+            "code_placeholder": "EX: EXPIRED",
+            "label_label": "Label (Display Name)",
+            "label_placeholder": "Ex: Expired Product",
+            "value_label": "Value (Optional)",
+            "value_placeholder": "Associated technical value...",
+            "active_label": "Active reason",
+            "update_btn": "Update",
+            "save_btn": "Save"
         },
         "smart_organizer": {
             "title": "Smart Organizer",
@@ -1163,7 +1211,13 @@
                 "prix_achat": "Purchase Price"
             },
             "empty": "No pharmacy shortages to report.",
-            "per_month": "/ month"
+            "per_month": "/ month",
+            "filters": {
+                "rayon": "Filter by Shelf",
+                "fournisseur": "Filter by Supplier"
+            },
+            "added_to_order_success": "Product added to order",
+            "added_to_order_error": "Error adding to order"
         },
         "fournisseur": {
             "signaler": "Report Unavailability",
@@ -1184,11 +1238,13 @@
             "empty": "No active supplier shortages.",
             "mark_resolved": "Resolved",
             "mark_resolved_title": "Mark as available again",
+            "resolve": "Resolved",
             "resolve_success": "Product marked as available",
             "resolve_error": "Error during resolution"
         },
         "stats": {
             "title": "Products most frequently out of stock (Top 200)",
+            "subtitle": "Top products most often unavailable",
             "columns": {
                 "rang": "Rank",
                 "produit": "Product",
@@ -1196,6 +1252,10 @@
             },
             "empty": "Empty history.",
             "times": "times"
+        },
+        "actions": {
+            "add_to_order": "Add to order",
+            "signal_shortage": "Report supplier shortage"
         }
     },
     "reappro": {
@@ -1203,6 +1263,7 @@
         "subtitle": "Transfer products from reserve to shelf",
         "print_title": "SHELF REPLENISHMENT NEEDS",
         "print_hint": "List of products to be moved from reserve to shelf.",
+        "search_placeholder": "Search by number or user...",
         "stats": {
             "displayed_products": "{{count}} product(s) displayed",
             "urgencies": "Urgencies",
@@ -1285,6 +1346,47 @@
             "success": "Transfer Successful!",
             "success_desc": "The stocks have been transferred. You can download the confirmation document or view the detailed history.",
             "cancel": "Cancel"
+        }
+    },
+    "cadencier": {
+        "title": "Replenishment Schedule",
+        "subtitle": "Supply planning by rotation and coverage",
+        "search_placeholder": "Search product, CIP...",
+        "type": "Order type",
+        "type_grossiste": "Wholesale Order",
+        "type_divers": "Miscellaneous Order",
+        "coverage": "Target coverage",
+        "rayon": "Shelf",
+        "fournisseur": "Supplier",
+        "only_below_target": "Only products below threshold",
+        "total_products": "Products to order",
+        "units": "suggested units",
+        "total_ht": "Total amount HT",
+        "selection": "Selection",
+        "select_all": "Select all",
+        "products": "products",
+        "generate_grossiste": "Wholesale Order",
+        "generate_divers": "Miscellaneous Order",
+        "list": "Schedule lines",
+        "showing": "{{count}} / {{total}} lines",
+        "product": "Product",
+        "stock": "Stock",
+        "rotation": "Rotation",
+        "target": "Target",
+        "suggested": "Suggested Qty",
+        "unit_price": "Purchase price",
+        "amount": "Amount HT",
+        "urgency": "Urgency",
+        "supplier": "Supplier",
+        "exclusive": "Exclusive",
+        "empty": "No products to display in the schedule",
+        "error_loading": "Error loading schedule",
+        "no_selection": "Please select at least one product",
+        "urgence": {
+            "rupture": "Out of stock",
+            "alerte": "Alert",
+            "surveillance": "Watch",
+            "ok": "OK"
         }
     },
     "sidebar": {

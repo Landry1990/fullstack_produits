@@ -64,13 +64,13 @@ export function useCommandeActions({
         if (!isAutoSave) setExecutingAction(true);
 
         if (!commandeData.fournisseur) {
-            if (!isAutoSave) gooeyToast.error(t('messages.provider_required'));
+            if (!isAutoSave) gooeyToast.error(t('orders:messages.provider_required'));
             if (!isAutoSave) setExecutingAction(false);
             return;
         }
 
         if (viewMode === 'EDIT' && !selectedCommande?.id) {
-            if (!isAutoSave) gooeyToast.error(t('messages.no_selection'));
+            if (!isAutoSave) gooeyToast.error(t('orders:messages.no_selection'));
             if (!isAutoSave) setExecutingAction(false);
             return;
         }
@@ -82,7 +82,7 @@ export function useCommandeActions({
             if (viewMode === 'CREATE') {
                 const newCmd = await commandeService.create(commandeData);
                 commandeId = newCmd.id;
-                if (!isAutoSave) gooeyToast.success(t('messages.create_success', { id: commandeId }));
+                if (!isAutoSave) gooeyToast.success(t('orders:messages.create_success', { id: commandeId }));
 
                 if (isAutoSave) {
                     const createdCmd = await commandeService.getById(commandeId);
@@ -91,12 +91,12 @@ export function useCommandeActions({
                 }
             } else if (viewMode === 'EDIT' && commandeId) {
                 await commandeService.update(commandeId, commandeData);
-                if (!isAutoSave) gooeyToast.success(t('messages.update_success'));
+                if (!isAutoSave) gooeyToast.success(t('orders:messages.update_success'));
             }
 
             if (!commandeId) {
                 if (isAutoSave) return;
-                throw new Error(t('messages.missing_id'));
+                throw new Error(t('orders:messages.missing_id'));
             }
 
             // 2. Gérer les produits via bulk_sync
@@ -136,7 +136,7 @@ export function useCommandeActions({
             }
 
         } catch (err) {
-            gooeyToast.error(getApiErrorDetail(err, t('messages.save_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('orders:messages.save_error')));
         } finally {
             if (!isAutoSave) setExecutingAction(false);
         }
@@ -149,13 +149,13 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             await commandeService.delete(commande.id, sudoCredentials);
-            gooeyToast.success(t('messages.delete_success'));
+            gooeyToast.success(t('orders:messages.delete_success'));
             removeCommandeFromCache(queryClient, commande.id);
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
         } catch (err) {
-            gooeyToast.error(getApiErrorDetail(err, t('messages.delete_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('orders:messages.delete_error')));
             throw err;
         } finally {
             setExecutingAction(false);
@@ -167,7 +167,7 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             const res = await commandeService.cloturer(commande.id, sudoCredentials);
-            gooeyToast.success(res.message || t('messages.close_success'));
+            gooeyToast.success(res.message || t('orders:messages.close_success'));
 
             // Récupérer la commande mise à jour AVANT d'invalider le cache
             // pour éviter toute race condition avec le refetch de la liste
@@ -193,7 +193,7 @@ export function useCommandeActions({
             // Invalider le cache de la liste en dernier (refetch async)
             fetchCommandes();
         } catch (err) {
-            gooeyToast.error(getApiErrorDetail(err, t('messages.close_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('orders:messages.close_error')));
             throw err;
         } finally {
             setExecutingAction(false);
@@ -223,12 +223,12 @@ export function useCommandeActions({
             const newStatus = commande.status === 'ATT' ? 'PREP' : 'ATT';
             await commandeService.update(commande.id, { status: newStatus });
             const statusDisplay = newStatus === 'ATT' ? t('status.pending') : t('status.prep');
-            gooeyToast.success(t('messages.status_update_success', { status: statusDisplay }));
+            gooeyToast.success(t('orders:messages.status_update_success', { status: statusDisplay }));
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
             fetchCommandes();
         } catch (err) {
-            gooeyToast.error(getApiErrorDetail(err, t('messages.status_change_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('orders:messages.status_change_error')));
         } finally {
             setExecutingAction(false);
         }
@@ -239,12 +239,12 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             await commandeService.annulerReception(commande.id, sudoCredentials);
-            gooeyToast.success(t('messages.cancel_reception_success'));
+            gooeyToast.success(t('orders:messages.cancel_reception_success'));
             fetchCommandes();
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
         } catch (err) {
-            gooeyToast.error(getApiErrorDetail(err, t('messages.cancel_reception_error')));
+            gooeyToast.error(getApiErrorDetail(err, t('orders:messages.cancel_reception_error')));
             throw err;
         } finally {
             setExecutingAction(false);
@@ -320,7 +320,7 @@ export function useCommandeActions({
 
             const win = window.open('about:blank', '', 'height=800,width=1000');
             if (!win) {
-                gooeyToast.error(t('messages.popup_blocked'));
+                gooeyToast.error(t('orders:messages.popup_blocked'));
                 return;
             }
 
@@ -557,7 +557,7 @@ export function useCommandeActions({
             `);
 
         } catch {
-            gooeyToast.error(t('messages.print_error'));
+            gooeyToast.error(t('orders:messages.print_error'));
         } finally {
             setExecutingAction(false);
         }
@@ -568,13 +568,13 @@ export function useCommandeActions({
         setExecutingAction(true);
         try {
             await commandeService.bulkDelete(ids, sudoCredentials);
-            gooeyToast.success(t('messages.bulk_delete_success', { count: ids.length }));
+            gooeyToast.success(t('orders:messages.bulk_delete_success', { count: ids.length }));
             removeCommandesFromCache(queryClient, ids);
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
         } catch (err) {
-            gooeyToast.error(t('messages.bulk_delete_error'));
+            gooeyToast.error(t('orders:messages.bulk_delete_error'));
             throw err;
         } finally {
             setExecutingAction(false);

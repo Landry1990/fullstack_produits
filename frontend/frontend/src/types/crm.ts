@@ -28,6 +28,8 @@ export interface Client {
     is_loyalty_member?: boolean
     is_deposit_enabled?: boolean
     pending_discount?: string
+    niu?: string
+    registre_commerce?: string
     message_alerte?: string | null
     blocking_alerte?: boolean
 }

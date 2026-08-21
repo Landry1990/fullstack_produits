@@ -465,14 +465,14 @@ function StatsPanel({ scheduleId }: { scheduleId: number }) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full table-fixed text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800">
-                <th className="text-left py-2 px-3 font-medium text-slate-500 text-xs uppercase">{t('stats.operator')}</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('stats.operator')}</th>
                 {(['MATIN', 'NUIT', 'GARDE', 'REPOS', 'CONGE'] as const).map(st => {
                   const Icon = shiftIcons[st];
                   return (
-                    <th key={st} className="text-center py-2 px-2 font-medium text-slate-500 text-xs">
+                    <th key={st} className="text-center px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <div className="flex items-center justify-center gap-1">
                         <Icon size={12} />
                         {t(SHIFT_STYLES[st].labelKey)}
@@ -480,7 +480,7 @@ function StatsPanel({ scheduleId }: { scheduleId: number }) {
                     </th>
                   );
                 })}
-                <th className="text-center py-2 px-3 font-medium text-slate-500 text-xs uppercase">{t('stats.total_work')}</th>
+                <th className="text-center px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('stats.total_work')}</th>
               </tr>
             </thead>
             <tbody>
@@ -488,7 +488,7 @@ function StatsPanel({ scheduleId }: { scheduleId: number }) {
                 <tr key={s.user_id} className="border-b border-slate-50 dark:border-slate-800/50">
                   <td className="py-2 px-3 font-medium text-slate-700 dark:text-slate-300">{s.full_name}</td>
                   {(['MATIN', 'NUIT', 'GARDE', 'REPOS', 'CONGE'] as const).map(st => (
-                    <td key={st} className={`text-center py-2 px-2 font-semibold ${shiftColors[st]}`}>
+                    <td key={st} className={`text-center py-2 px-3 font-semibold ${shiftColors[st]}`}>
                       {s[st] > 0 ? s[st] : '—'}
                     </td>
                   ))}
@@ -751,10 +751,10 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
         </div>
       ) : (
         <div id="planning-print-area" className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 print:border print:border-black print:bg-white">
-          <table className="w-full text-sm border-collapse">
+          <table className="w-full table-fixed text-sm border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50">
-                <th className="sticky left-0 z-10 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300 min-w-[140px]">
+                <th className="sticky left-0 z-10 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300 min-w-[140px]">
                   {t('planning.operator')}
                 </th>
                 {days.map(day => {
@@ -762,7 +762,7 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
                   return (
                     <th
                       key={day.toISOString()}
-                      className={`px-1 py-2 text-center font-medium min-w-[40px] ${isWeekend ? 'text-red-400' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`px-1 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide min-w-[40px] ${isWeekend ? 'text-red-400' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       <div className="text-[10px] uppercase">{getWeekdayShort(day, locale)}</div>
                       <div className="text-sm">{day.getDate()}</div>
@@ -786,7 +786,7 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
                     return (
                       <td
                         key={dateStr}
-                        className={`px-1 py-1 text-center cursor-${isAdmin ? 'pointer' : 'default'} ${isToday ? 'ring-1 ring-emerald-200 dark:ring-emerald-800' : ''} ${isAdmin && schedule ? 'hover:ring-2 hover:ring-emerald-500/30' : ''}`}
+                        className={`px-1 py-2 text-center cursor-${isAdmin ? 'pointer' : 'default'} ${isToday ? 'ring-1 ring-emerald-200 dark:ring-emerald-800' : ''} ${isAdmin && schedule ? 'hover:ring-2 hover:ring-emerald-500/30' : ''}`}
                         onClick={() => handleCellClick(op.id, dateStr)}
                       >
                         {style && (

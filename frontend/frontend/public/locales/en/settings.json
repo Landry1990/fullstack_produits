@@ -26,5 +26,17 @@
         "logo_upload_error": "Error uploading logo",
         "logo_removed": "Logo removed",
         "logo_remove_error": "Error removing logo"
+    },
+    "shortcuts": {
+        "navigate": "Navigate",
+        "home_end": "Home / End",
+        "page": "Previous / Next page",
+        "quick_select": "Quick select",
+        "cash_in": "Cash in",
+        "view_products": "View products",
+        "coupon": "Apply coupon",
+        "refresh": "Refresh",
+        "help": "Help",
+        "close": "Close"
     }
 }

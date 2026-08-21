@@ -84,7 +84,8 @@
         "paid": "PAYÉ",
         "cancelled": "ANNULÉ",
         "pending": "ATTENTE",
-        "grouped_releve": "Relevé Groupé"
+        "grouped_releve": "Relevé Groupé",
+        "user_who_billed": "Utilisateur ayant saisi la facture"
     },
     "pagination": {
         "showing": "Affichage de",

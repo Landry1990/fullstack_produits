@@ -160,7 +160,8 @@
         },
         "deposit_available": "Available deposit: {{amount}} F",
         "confirm": "Confirm payment",
-        "success": "Payment recorded"
+        "success": "Payment recorded",
+        "amount_input_hint": "Enter amount or click"
     },
     "stats_pending_title": "Pending",
     "stats_pending_desc": "invoice(s) to process",
@@ -448,7 +449,15 @@
         "total_theorique": "Theoretical Total in Register",
         "transactions": "Transactions",
         "security_mode_title": "🔒 Security Mode",
-        "amounts_hidden": "Amounts are hidden for security reasons. See the pharmacist for financial details."
+        "amounts_hidden": "Amounts are hidden for security reasons. See the pharmacist for financial details.",
+        "loading": "Loading...",
+        "no_caisse": "No register",
+        "open": "Open",
+        "available": "Available",
+        "select_post": "Select a station",
+        "initial_amount": "Initial amount",
+        "amount_hint": "Opening amount",
+        "open_btn": "Open register"
     },
     "open_point_vente": {
         "title": "Open a point of sale",
@@ -474,6 +483,12 @@
             "activate": "Reactivate",
             "open": "Open a point of sale"
         }
+    },
+    "rows_per_page": "Rows per page",
+    "actions": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "edit_lot_expiry": "Edit batch / expiry date"
     },
     "common": {
         "unknown": "Unknown",

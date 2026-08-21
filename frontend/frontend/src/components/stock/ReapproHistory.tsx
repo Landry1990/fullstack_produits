@@ -137,7 +137,7 @@ export default function ReapproHistory() {
         <div className="w-full max-w-md">
           <Input
             type="text"
-            placeholder="Rechercher par N° ou utilisateur..."
+            placeholder={t('stock:reappro.search_placeholder')}
             icon={<Search className="size-4" />}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -148,32 +148,32 @@ export default function ReapproHistory() {
       {/* Main Content */}
       <Card variant="default" padding="none" className="rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead>Session</TableHead>
-                <TableHead>Date & Heure</TableHead>
-                <TableHead>Utilisateur</TableHead>
-                <TableHead className="text-center">Produits</TableHead>
-                <TableHead className="text-center">Unités</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Session</TableHead>
+                <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Date & Heure</TableHead>
+                <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Utilisateur</TableHead>
+                <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">Produits</TableHead>
+                <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">Unités</TableHead>
+                <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
+                    <TableCell className="px-3 py-2"><Skeleton className="h-4 w-12" /></TableCell>
+                    <TableCell className="px-3 py-2"><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell className="px-3 py-2"><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell className="px-3 py-2 text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                    <TableCell className="px-3 py-2 text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                    <TableCell className="px-3 py-2 text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : filteredHistory.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-24 text-center">
+                  <TableCell colSpan={6} className="px-3 py-24 text-center">
                     <div className="flex flex-col items-center justify-center text-slate-300">
                       <History className="size-16 mb-4" />
                       <h3 className="text-lg font-medium text-slate-600">
@@ -185,12 +185,12 @@ export default function ReapproHistory() {
               ) : (
                 filteredHistory.map((session) => (
                   <TableRow key={session.id}>
-                    <TableCell>
+                    <TableCell className="px-3 py-2">
                       <Badge variant="outline" size="sm">
                         #{session.id}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-3 py-2">
                       <div className="flex items-center gap-2 text-slate-700">
                         <Calendar className="size-3.5 text-slate-400" />
                         <span className="text-sm font-medium">
@@ -198,7 +198,7 @@ export default function ReapproHistory() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-3 py-2">
                       <div className="flex items-center gap-2">
                         <div className="size-6 bg-slate-100 rounded-full flex items-center justify-center">
                           <User className="size-3 text-slate-500" />
@@ -208,17 +208,17 @@ export default function ReapproHistory() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="px-3 py-2 text-center">
                       <span className="text-sm font-medium text-slate-700">
                         {session.total_products}
                       </span>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="px-3 py-2 text-center">
                       <Badge variant="success" size="sm">
                         {session.total_units}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="px-3 py-2 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
@@ -297,21 +297,21 @@ export default function ReapproHistory() {
             </div>
 
             <Card variant="bordered" padding="none" className="rounded-xl overflow-hidden">
-              <Table>
+              <Table className="table-fixed">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Produit</TableHead>
-                    <TableHead>Lot / Exp</TableHead>
-                    <TableHead className="text-center">Qté</TableHead>
+                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Produit</TableHead>
+                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">Lot / Exp</TableHead>
+                    <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">Qté</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {selectedSession?.adjustments?.map((adj) => (
                     <TableRow key={adj.id}>
-                      <TableCell className="text-sm font-medium text-slate-700">
+                      <TableCell className="px-3 py-2 text-sm font-medium text-slate-700">
                         {adj.produit_name}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-3 py-2">
                         <div className="flex flex-col text-xs">
                           <span className="font-medium text-slate-600">{adj.lot_num}</span>
                           <span className="text-slate-400">
@@ -319,7 +319,7 @@ export default function ReapproHistory() {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="px-3 py-2 text-center">
                         <Badge variant="success" size="sm">
                           +{adj.quantity_change}
                         </Badge>

@@ -34,7 +34,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
             gooeyToast.success(response.data.detail || `Rappel envoyé pour ${productName}`);
         } catch (error: unknown) {
             logger.error('Error sending renewal reminder:', error);
-            const msg = error.response?.data?.detail || "Erreur lors de l'envoi du rappel";
+            const axiosErr = error as { response?: { data?: { detail?: string } } };
+            const msg = axiosErr.response?.data?.detail || "Erreur lors de l'envoi du rappel";
             gooeyToast.error(msg);
         } finally {
             setSendingReminder(null);
@@ -106,22 +107,22 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                             {facture.paiements && facture.paiements.length > 0 && facture.paiements[0].user_details ? (
                                 <>
                                     <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
-                                    <span className="flex items-center gap-1.5 shrink-0" title="Caissier">
+                                    <span className="flex items-center gap-1.5 shrink-0" title={t('sales:details.cashier')}>
                                         <div className="size-3.5 rounded-full bg-emerald-100 flex items-center justify-center">
                                             <User className="size-2.5 text-emerald-600" />
                                         </div>
-                                        <span className="text-slate-500 text-xs">Caissier :</span>
+                                        <span className="text-slate-500 text-xs">{t('sales:details.cashier')} :</span>
                                         <span className="text-slate-600 font-medium">{facture.paiements[0].user_details.full_name || facture.paiements[0].user_details.username}</span>
                                     </span>
                                 </>
                             ) : facture.validated_by_name && (
                                 <>
                                     <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
-                                    <span className="flex items-center gap-1.5 shrink-0" title="Caissier">
+                                    <span className="flex items-center gap-1.5 shrink-0" title={t('sales:details.cashier')}>
                                         <div className="size-3.5 rounded-full bg-emerald-100 flex items-center justify-center">
                                             <User className="size-2.5 text-emerald-600" />
                                         </div>
-                                        <span className="text-slate-500 text-xs">Caissier :</span>
+                                        <span className="text-slate-500 text-xs">{t('sales:details.cashier')} :</span>
                                         <span className="text-slate-600 font-medium">{facture.validated_by_name}</span>
                                     </span>
                                 </>
@@ -129,7 +130,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                             {facture.cancelled_by_name && (
                                 <>
                                     <span className="size-1 bg-gray-300 rounded-full hidden sm:block" />
-                                    <span className="flex items-center gap-1.5 shrink-0" title="Annulé par">
+                                    <span className="flex items-center gap-1.5 shrink-0" title={t('sales:details.cancelled_by')}>
                                         <div className="size-3.5 rounded-full bg-red-50 flex items-center justify-center">
                                             <User className="size-2.5 text-red-600" />
                                         </div>
@@ -141,7 +142,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                         {facture.paiements && facture.paiements.length > 0 && (
                             <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
                                 <CreditCard className="size-3.5" />
-                                <span>Règlements:</span>
+                                <span>{t('sales:details.payments')}</span>
                                 <div className="flex gap-2">
                                     {facture.paiements.map((p) => (
                                         <span key={p.mode_paiement_display} className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 border border-slate-200 text-[10px]">
@@ -254,7 +255,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                                 ? 'bg-slate-100 text-slate-400'
                                                                 : 'border border-emerald-200 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:shadow-sm'
                                                         }`}
-                                                        title="Envoyer un rappel de renouvellement WhatsApp"
+                                                        title={t('sales:details.whatsapp_renewal_reminder')}
                                                     >
                                                         {sendingReminder !== prod.id && <Smartphone className="size-3" />}
                                                         Rappel

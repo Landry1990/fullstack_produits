@@ -26,5 +26,17 @@
         "logo_upload_error": "Erreur lors de l'import du logo",
         "logo_removed": "Logo supprimé",
         "logo_remove_error": "Erreur lors de la suppression du logo"
+    },
+    "shortcuts": {
+        "navigate": "Naviguer",
+        "home_end": "Début / Fin",
+        "page": "Page précédente / suivante",
+        "quick_select": "Sélection rapide",
+        "cash_in": "Encaisser",
+        "view_products": "Voir les produits",
+        "coupon": "Appliquer coupon",
+        "refresh": "Rafraîchir",
+        "help": "Aide",
+        "close": "Fermer"
     }
 }

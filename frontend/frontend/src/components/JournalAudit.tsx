@@ -284,7 +284,7 @@ const JournalAudit: React.FC = () => {
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400 pointer-events-none" />
                     <input
                         type="text"
-                        placeholder="Rechercher..."
+                        placeholder={t('search_placeholder')}
                         className="pl-8 pr-3 py-1.5 rounded-full text-xs font-medium border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 w-48"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
@@ -431,7 +431,7 @@ const JournalAudit: React.FC = () => {
                                                             <button
                                                                 onClick={() => setExpandedLog(isExpanded ? null : log.id)}
                                                                 className={`shrink-0 p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-100 hover:text-slate-600'}`}
-                                                                title="Voir les détails techniques"
+                                                                title={t('view_technical_details')}
                                                             >
                                                                 {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                                                             </button>

@@ -332,33 +332,33 @@ export default function StatistiquesFournisseur() {
 
             {/* Tableau détaillé */}
             <Card className="bg-base-100 shadow-sm border border-base-200">
-                <Table>
+                <Table className="table-fixed">
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-1/3">{t('sales_tab.table.supplier')}</TableHead>
-                            <TableHead className="text-right w-24">{t('sales_tab.table.qty_sold')}</TableHead>
-                            <TableHead className="text-right w-40">{t('sales_tab.table.purchase_cost')}</TableHead>
-                            <TableHead className="text-right w-40">{t('sales_tab.table.ca_ttc')}</TableHead>
-                            <TableHead className="text-right w-40">{t('sales_tab.table.gross_margin')}</TableHead>
-                            <TableHead className="text-right w-32">{t('sales_tab.table.margin_percent')}</TableHead>
+                            <TableHead className="w-[25%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('sales_tab.table.supplier')}</TableHead>
+                            <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('sales_tab.table.qty_sold')}</TableHead>
+                            <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('sales_tab.table.purchase_cost')}</TableHead>
+                            <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('sales_tab.table.ca_ttc')}</TableHead>
+                            <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('sales_tab.table.gross_margin')}</TableHead>
+                            <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('sales_tab.table.margin_percent')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {stats.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-8">
+                                <TableCell colSpan={6} className="px-3 py-8 text-center">
                                     {t('sales_tab.table.no_data')}
                                 </TableCell>
                             </TableRow>
                         ) : (
                             stats.map((stat) => (
                                 <TableRow key={stat.id}>
-                                    <TableCell className="font-medium">{stat.nom}</TableCell>
-                                    <TableCell className="text-right">{stat.quantite_vendue}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(Math.round(Number(stat.cout_achat)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
-                                    <TableCell className="text-right font-bold">{formatCurrency(Math.round(Number(stat.ca_ttc)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
-                                    <TableCell className="text-right text-success">{formatCurrency(Math.round(Number(stat.marge_brute)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
-                                    <TableCell className="text-right text-sm">
+                                    <TableCell className="px-3 py-2 font-medium">{stat.nom}</TableCell>
+                                    <TableCell className="px-3 py-2 text-right">{stat.quantite_vendue}</TableCell>
+                                    <TableCell className="px-3 py-2 text-right">{formatCurrency(Math.round(Number(stat.cout_achat)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                                    <TableCell className="px-3 py-2 text-right font-bold">{formatCurrency(Math.round(Number(stat.ca_ttc)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                                    <TableCell className="px-3 py-2 text-right text-success">{formatCurrency(Math.round(Number(stat.marge_brute)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                                    <TableCell className="px-3 py-2 text-right text-sm">
                                         {Number(stat.ca_ttc) > 0
                                             ? ((Number(stat.marge_brute) / Number(stat.ca_ttc)) * 100).toFixed(1)
                                             : 0}%
@@ -394,20 +394,20 @@ export default function StatistiquesFournisseur() {
           ) : (
             <Card className="overflow-hidden">
               <CardContent className="p-0">
-                <Table>
+                <Table className="table-fixed">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-56">{t('concentration_tab.table.supplier')}</TableHead>
-                      <TableHead className="text-center w-28">{t('performance_tab.score')}</TableHead>
-                      <TableHead>{t('performance_tab.metrics.volume')}</TableHead>
-                      <TableHead>{t('performance_tab.metrics.quality')}</TableHead>
-                      <TableHead>{t('performance_tab.metrics.consistency')}</TableHead>
+                      <TableHead className="w-48 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('concentration_tab.table.supplier')}</TableHead>
+                      <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('performance_tab.score')}</TableHead>
+                      <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('performance_tab.metrics.volume')}</TableHead>
+                      <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('performance_tab.metrics.quality')}</TableHead>
+                      <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('performance_tab.metrics.consistency')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {!supplierAnalysis?.length ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                        <TableCell colSpan={5} className="px-3 py-8 text-center text-slate-500">
                           {t('performance_tab.no_data', { defaultValue: 'Aucune analyse disponible' })}
                         </TableCell>
                       </TableRow>
@@ -418,25 +418,25 @@ export default function StatistiquesFournisseur() {
                             'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400';
                         return (
                           <TableRow key={item.id}>
-                            <TableCell className="font-medium text-slate-900">{item.nom}</TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="px-3 py-2 font-medium text-slate-900">{item.nom}</TableCell>
+                            <TableCell className="px-3 py-2 text-center">
                               <ShadcnBadge className={scoreColor}>
                                 {item.score_global}/100
                               </ShadcnBadge>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="px-3 py-2">
                               <div className="font-semibold text-sm text-slate-700">
                                 {formatCurrency(Math.round(item.details.volume.valeur ?? 0), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
                               </div>
                               <Progress value={item.details.volume.score} className="mt-2 [&>div]:bg-emerald-500" />
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="px-3 py-2">
                               <div className="font-semibold text-sm text-slate-700">
                                 {item.details.qualite.incidents ?? 0} {t('performance_tab.metrics.incidents')}
                               </div>
                               <Progress value={item.details.qualite.score} className={`mt-2 [&>div]:${item.details.qualite.score > 80 ? 'bg-emerald-500' : 'bg-red-500'}`} />
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="px-3 py-2">
                               <div className="font-semibold text-sm text-slate-700">
                                 {item.details.regularite.nb_livraisons ?? 0} {t('performance_tab.metrics.deliveries')}
                               </div>
@@ -471,13 +471,13 @@ export default function StatistiquesFournisseur() {
                  </div>
             ) : (
                 <Card className="bg-base-100 shadow-sm border border-base-200">
-                    <Table>
+                    <Table className="table-fixed">
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-1/3">{t('prices_tab.table.product')}</TableHead>
-                                <TableHead className="text-center w-28">{t('prices_tab.table.max_gap')}</TableHead>
-                                <TableHead className="w-1/2 min-w-[300px]">{t('prices_tab.table.offers')}</TableHead>
-                                <TableHead className="text-right w-40">{t('prices_tab.table.best_price')}</TableHead>
+                                <TableHead className="w-[25%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('prices_tab.table.product')}</TableHead>
+                                <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('prices_tab.table.max_gap')}</TableHead>
+                                <TableHead className="w-[40%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('prices_tab.table.offers')}</TableHead>
+                                <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('prices_tab.table.best_price')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -485,8 +485,8 @@ export default function StatistiquesFournisseur() {
                                 if (prod.ecart_pourcentage <= 0) return rows;
                                 rows.push(
                                     <TableRow key={prod.id}>
-                                        <TableCell className="font-medium max-w-xs truncate" title={prod.produit}>{prod.produit}</TableCell>
-                                        <TableCell className="text-center">
+                                        <TableCell className="px-3 py-2 font-medium max-w-xs truncate" title={prod.produit}>{prod.produit}</TableCell>
+                                        <TableCell className="px-3 py-2 text-center">
                                             <Badge variant={
                                                 prod.ecart_pourcentage > 20 ? 'error' :
                                                 prod.ecart_pourcentage > 5 ? 'warning' : 'ghost'
@@ -494,7 +494,7 @@ export default function StatistiquesFournisseur() {
                                                 {prod.ecart_pourcentage}%
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="align-top">
+                                        <TableCell className="px-3 py-2 align-top">
                                             {prod.offres.map((offre) => (
                                                 <div key={offre.fournisseur} className="flex justify-between text-xs w-full py-0.5">
                                                     <span className="truncate pr-2">{offre.fournisseur}</span>
@@ -504,7 +504,7 @@ export default function StatistiquesFournisseur() {
                                                 </div>
                                             ))}
                                         </TableCell>
-                                        <TableCell className="font-bold text-success text-lg text-right">
+                                        <TableCell className="px-3 py-2 font-bold text-success text-lg text-right">
                                             {formatCurrency(Math.round(prod.meilleur_prix), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}
                                         </TableCell>
                                     </TableRow>
@@ -553,26 +553,26 @@ export default function StatistiquesFournisseur() {
                             </div>
                             
                             <div className="flex-1">
-                                <Table>
+                                <Table className="table-fixed">
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="w-12 text-center">{t('concentration_tab.table.color')}</TableHead>
-                                            <TableHead>{t('concentration_tab.table.supplier')}</TableHead>
-                                            <TableHead className="text-right w-44 pr-8">{t('concentration_tab.table.market_share')}</TableHead>
-                                            <TableHead className="text-right w-48 pl-8">{t('concentration_tab.table.volume')}</TableHead>
-                                            <TableHead className="text-right w-40 pl-8">{t('concentration_tab.table.quantity')}</TableHead>
+                                            <TableHead className="w-12 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('concentration_tab.table.color')}</TableHead>
+                                            <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('concentration_tab.table.supplier')}</TableHead>
+                                            <TableHead className="w-44 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right pr-8">{t('concentration_tab.table.market_share')}</TableHead>
+                                            <TableHead className="w-48 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right pl-8">{t('concentration_tab.table.volume')}</TableHead>
+                                            <TableHead className="w-40 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right pl-8">{t('concentration_tab.table.quantity')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {repartitionAchats?.data.map((entry, index) => (
                                             <TableRow key={entry.id}>
-                                                <TableCell className="text-center">
+                                                <TableCell className="px-3 py-2 text-center">
                                                     <div className="mx-auto size-4 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                                                 </TableCell>
-                                                <TableCell className="font-medium">{entry.nom}</TableCell>
-                                                <TableCell className="text-right pr-8">{entry.pourcentage}%</TableCell>
-                                                <TableCell className="text-right pl-8">{formatCurrency(Math.round(Number(entry.value)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
-                                                <TableCell className="text-right pl-8">{entry.quantite.toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-GB')}</TableCell>
+                                                <TableCell className="px-3 py-2 font-medium">{entry.nom}</TableCell>
+                                                <TableCell className="px-3 py-2 text-right pr-8">{entry.pourcentage}%</TableCell>
+                                                <TableCell className="px-3 py-2 text-right pl-8">{formatCurrency(Math.round(Number(entry.value)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                                                <TableCell className="px-3 py-2 text-right pl-8">{entry.quantite.toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-GB')}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -675,45 +675,45 @@ export default function StatistiquesFournisseur() {
           {/* Tableau */}
           <Card className="shadow-sm border border-slate-200">
             <CardContent className="p-0">
-              <Table>
+              <Table className="table-fixed">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t('payments_tab.table.date')}</TableHead>
-                      <TableHead>{t('payments_tab.table.supplier')}</TableHead>
-                      <TableHead className="text-right">{t('payments_tab.table.amount')}</TableHead>
-                      <TableHead>{t('payments_tab.table.mode')}</TableHead>
-                      <TableHead>{t('payments_tab.table.reference')}</TableHead>
-                      <TableHead>{t('payments_tab.table.linked_invoices')}</TableHead>
-                      <TableHead>{t('payments_tab.table.created_by')}</TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('payments_tab.table.date')}</TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('payments_tab.table.supplier')}</TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('payments_tab.table.amount')}</TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('payments_tab.table.mode')}</TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('payments_tab.table.reference')}</TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('payments_tab.table.linked_invoices')}</TableHead>
+                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('payments_tab.table.created_by')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loadingPaiements ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
+                        <TableCell colSpan={7} className="px-3 py-8 text-center">
                           <Loader2 className="size-6 animate-spin mx-auto" />
                         </TableCell>
                       </TableRow>
                     ) : paiements.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                        <TableCell colSpan={7} className="px-3 py-8 text-center text-slate-500">
                           {t('payments_tab.table.no_data')}
                         </TableCell>
                       </TableRow>
                     ) : (
                       paiements.map((p) => (
                         <TableRow key={p.id} title={p.notes || undefined}>
-                          <TableCell className="whitespace-nowrap text-slate-700">{formatDateDisplay(p.date_paiement)}</TableCell>
-                          <TableCell className="font-medium text-slate-900">{p.fournisseur_name}</TableCell>
-                          <TableCell className="text-right font-bold text-slate-900">{formatCurrency(Math.round(Number(p.montant)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
-                          <TableCell><Badge variant="outline" size="sm">{t(`payments_tab.modes.${p.mode_paiement}`)}</Badge></TableCell>
-                          <TableCell className="text-xs text-slate-600">{p.reference || '-'}</TableCell>
-                          <TableCell className="text-xs text-slate-600 max-w-xs truncate">
+                          <TableCell className="px-3 py-2 whitespace-nowrap text-slate-700">{formatDateDisplay(p.date_paiement)}</TableCell>
+                          <TableCell className="px-3 py-2 font-medium text-slate-900">{p.fournisseur_name}</TableCell>
+                          <TableCell className="px-3 py-2 text-right font-bold text-slate-900">{formatCurrency(Math.round(Number(p.montant)), i18n.language === 'fr' ? 'fr-FR' : 'en-GB', t('common:currency'))}</TableCell>
+                          <TableCell className="px-3 py-2"><Badge variant="outline" size="sm">{t(`payments_tab.modes.${p.mode_paiement}`)}</Badge></TableCell>
+                          <TableCell className="px-3 py-2 text-xs text-slate-600">{p.reference || '-'}</TableCell>
+                          <TableCell className="px-3 py-2 text-xs text-slate-600 max-w-xs truncate">
                             {p.commandes_liees && p.commandes_liees.length > 0
                               ? p.commandes_liees.join(', ')
                               : (p.commande_numero || '-')}
                           </TableCell>
-                          <TableCell className="text-xs text-slate-600">{p.created_by_name || '-'}</TableCell>
+                          <TableCell className="px-3 py-2 text-xs text-slate-600">{p.created_by_name || '-'}</TableCell>
                         </TableRow>
                       ))
                     )}

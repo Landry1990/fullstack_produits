@@ -171,7 +171,7 @@ const StockAnalysis = () => {
                                             {t(`stock:analyse.tabs.${activeTab}`, currentTab.label)}
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Filtrer et analyser les articles de cette catégorie
+                                            {t('stock:analyse.filter_description')}
                                         </CardDescription>
                                     </div>
                                 </div>
@@ -200,7 +200,7 @@ const StockAnalysis = () => {
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
-                                                Articles
+                                                {t('stock:analyse.articles')}
                                             </p>
                                             <p className="text-xl font-bold text-slate-900">{data.total_items}</p>
                                         </div>
@@ -214,9 +214,9 @@ const StockAnalysis = () => {
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
-                                                {activeTab === 'unsold' ? 'Valeur invendus' :
-                                                 activeTab === 'overstock' ? 'Valeur excédents' :
-                                                 'Valeur totale'}
+                                                {activeTab === 'unsold' ? t('stock:analyse.value_unsold') :
+                                                 activeTab === 'overstock' ? t('stock:analyse.value_overstock') :
+                                                 t('stock:analyse.value_total')}
                                             </p>
                                             <p className="text-xl font-bold text-red-600">
                                                 {formatCurrency(Math.round(data.total_value))}
@@ -323,7 +323,7 @@ const StockAnalysis = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold">{t('stock:analyse.shortage.selected')}</p>
-                                        <p className="text-xs text-slate-400">Prêts à être ajoutés à une commande</p>
+                                        <p className="text-xs text-slate-400">{t('stock:analyse.ready_to_order')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
