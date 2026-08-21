@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
+import { calculateLineTotal } from '../utils/finance';
 import { safeStorage } from '../utils/storage';
 import { useConfirm } from './useConfirm';
 import type { Facture, LigneFacture, TotalsData, User, Client, LotAllocation } from '../types';
@@ -369,6 +370,11 @@ export function useFacturationActions({
                     }
                     if (allocations.length === 1) {
                         const alloc = allocations[0]
+                        // Apply lot selling price to prix_unitaire if the lot has one
+                        const lotPrice = (alloc.sellingPrice !== null && alloc.sellingPrice !== undefined && alloc.sellingPrice !== '')
+                            ? String(alloc.sellingPrice)
+                            : null
+                        const newPrixUnitaire = lotPrice ?? l.prix_unitaire
                         return {
                             ...l,
                             lotId: String(alloc.lotId),
@@ -376,6 +382,8 @@ export function useFacturationActions({
                             lotExpiration: alloc.lotExpiration || null,
                             lotSellingPrice: alloc.sellingPrice || null,
                             lotAllocations: allocations,
+                            prix_unitaire: newPrixUnitaire,
+                            total_ligne: calculateLineTotal(l.quantite, newPrixUnitaire, l.remise_produit),
                         }
                     }
                     return {

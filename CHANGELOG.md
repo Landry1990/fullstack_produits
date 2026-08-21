@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-08-21 — Fix prix du lot non appliqué au panier de facturation
+
+### 🐛 Correction
+
+**Problème** : Quand un lot spécifique était sélectionné dans le panier de facturation, le prix du lot
+(ex: 5100 F) n'était pas appliqué — c'était le prix de vente global du produit (ex: 7000 F) qui
+restait affiché et utilisé pour le total.
+
+**Cause** : `handleLotSelect` dans `useFacturationActions.ts` stockait `alloc.sellingPrice` dans
+`lotSellingPrice` mais ne l'appliquait **pas** à `prix_unitaire` ni à `total_ligne`. Contrairement à
+`updateLineLot` dans `useCart.ts` (utilisé par les Avoirs) qui applique bien le prix du lot.
+
+**Fix** : `handleLotSelect` applique maintenant `alloc.sellingPrice` à `prix_unitaire` et recalcule
+`total_ligne` via `calculateLineTotal()` quand un lot avec `selling_price` est sélectionné.
+
+### Fichier modifié
+
+- `src/hooks/useFacturationActions.ts` — import `calculateLineTotal` + mise à jour de
+  `prix_unitaire` et `total_ligne` dans `handleLotSelect` (cas allocation unique)
+
+---
+
 ## 2026-08-21 — Uniformisation de l'espacement des tableaux frontend
 
 ### 📐 Standardisation
