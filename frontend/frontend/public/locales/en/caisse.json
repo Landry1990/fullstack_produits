@@ -161,7 +161,8 @@
         "deposit_available": "Available deposit: {{amount}} F",
         "confirm": "Confirm payment",
         "success": "Payment recorded",
-        "amount_input_hint": "Enter amount or click"
+        "amount_input_hint": "Enter amount then press Enter to choose mode",
+        "mode_navigation_hint": "← → to navigate, Enter to confirm mode"
     },
     "stats_pending_title": "Pending",
     "stats_pending_desc": "invoice(s) to process",

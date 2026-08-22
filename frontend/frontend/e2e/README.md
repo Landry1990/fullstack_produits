@@ -66,6 +66,35 @@ E2E_USERNAME=pharmacien E2E_PASSWORD=secret npm run test:e2e
 | `caisse.spec.ts` | Page caisse, factures en attente, session recap |
 | `cloture.spec.ts` | Historique clôtures, bouton fermer session |
 | `navigation.spec.ts` | Toutes les pages principales se chargent sans erreur |
+| `responsive.spec.ts` | Tests de responsivité sur mobile, tablette, desktop |
+
+## Responsivité
+
+La config Playwright définit 3 viewports :
+- `mobile` : iPhone 12 Pro (390x844)
+- `tablet` : iPad Mini (768x1024)
+- `chromium` : Desktop Chrome (1280x720)
+
+Pour lancer uniquement les tests responsivité :
+
+```bash
+npx playwright test e2e/responsive.spec.ts
+```
+
+Pour un viewport spécifique :
+
+```bash
+npx playwright test e2e/responsive.spec.ts --project=mobile
+npx playwright test e2e/responsive.spec.ts --project=tablet
+```
+
+## Tests unitaires responsivité
+
+Le hook `useBreakpoint` (src/hooks/useBreakpoint.ts) expose `isMobile`, `isTablet`, `isDesktop` et réagit au viewport. Tests unitaires :
+
+```bash
+npx vitest run src/hooks/__tests__/useBreakpoint.test.ts
+```
 
 ## Notes
 
