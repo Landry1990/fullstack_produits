@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useCart } from '../useCart'
 import { useAuth } from '../../context/AuthContext'
 import { safeStorage } from '../../utils/storage'
+import { generateUUID } from '../../utils/uuid'
 
 // 1. Mocks
 vi.mock('../../context/AuthContext', () => ({
@@ -133,5 +134,68 @@ describe('useCart Hook - Persistance Multi-Utilisateur', () => {
             expect.stringContaining('"id":1'),
             'local'
         )
+    })
+
+    it('devrait gerer le multi-lot : 2 allocations creent 2 lignes distinctes avec lineId differents', () => {
+        const userId = 789
+        vi.mocked(useAuth).mockReturnValue({ user: { id: userId } } as unknown)
+
+        const { result } = renderHook(() => useCart())
+
+        const produit = { id: 5, name: 'Cifran 500mg', selling_price: '7000', cost_price: '3000', tva: 0 }
+
+        // Simule le comportement de handleLotSelect multi-lot : une ligne par allocation
+        const lineId1 = generateUUID()
+        const lineId2 = generateUUID()
+        act(() => {
+            result.current.setLignesFacture([
+                {
+                    lineId: lineId1,
+                    produit,
+                    quantite: 3,
+                    prix_unitaire: '5100',
+                    remise_produit: '0',
+                    total_ligne: 15300,
+                    lotId: 'lot-1',
+                    lotText: 'LOT-A',
+                    lotExpiration: '2025-06-01',
+                    lotSellingPrice: '5100',
+                    lotAllocations: [{ lotId: 'lot-1', lotText: 'LOT-A', lotExpiration: '2025-06-01', quantity: 3, sellingPrice: '5100' }],
+                    lotMaxQuantity: 3,
+                } as unknown,
+                {
+                    lineId: lineId2,
+                    produit,
+                    quantite: 2,
+                    prix_unitaire: '7000',
+                    remise_produit: '0',
+                    total_ligne: 14000,
+                    lotId: 'lot-2',
+                    lotText: 'LOT-B',
+                    lotExpiration: '2026-06-01',
+                    lotSellingPrice: '7000',
+                    lotAllocations: [{ lotId: 'lot-2', lotText: 'LOT-B', lotExpiration: '2026-06-01', quantity: 2, sellingPrice: '7000' }],
+                    lotMaxQuantity: 10,
+                } as unknown,
+            ])
+        })
+
+        const lignes = result.current.lignesFacture
+        expect(lignes).toHaveLength(2)
+        // lineId distincts
+        expect(lignes[0].lineId).not.toBe(lignes[1].lineId)
+        expect(lignes[0].lineId).toBe(lineId1)
+        expect(lignes[1].lineId).toBe(lineId2)
+        // Chaque ligne a son propre lotId
+        expect(lignes[0].lotId).toBe('lot-1')
+        expect(lignes[1].lotId).toBe('lot-2')
+        // Quantites et prix unitaires distincts
+        expect(lignes[0].quantite).toBe(3)
+        expect(lignes[1].quantite).toBe(2)
+        expect(lignes[0].prix_unitaire).toBe('5100')
+        expect(lignes[1].prix_unitaire).toBe('7000')
+        // cartStats reflete les 2 lignes
+        expect(result.current.cartStats.totalLines).toBe(2)
+        expect(result.current.cartStats.totalQty).toBe(5)
     })
 })

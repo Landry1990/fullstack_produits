@@ -14,19 +14,19 @@ export interface TableCartRowProps {
   index: number
   selectedIndex: number
   onSelectLine?: (index: number) => void
-  updateQuantite: (produitId: number, quantite: number) => void
-  updatePrix: (produitId: number, prix: string) => void
-  updateRemiseProduit: (produitId: number, remise: string) => void
-  updateTreatmentDuration?: (produitId: number, duration: number) => void
-  removeLigne: (produitId: number) => void
-  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null) => void
+  updateQuantite: (lineId: string, quantite: number) => void
+  updatePrix: (lineId: string, prix: string) => void
+  updateRemiseProduit: (lineId: string, remise: string) => void
+  updateTreatmentDuration?: (lineId: string, duration: number) => void
+  removeLigne: (lineId: string) => void
+  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null, lineId?: string | null) => void
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
   canModifyPrice: boolean
   maxDiscount: number
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number
-  flashId?: number | null
+  flashId?: string | null
 }
 
 export default React.memo(function TableCartRow({
@@ -64,7 +64,7 @@ export default React.memo(function TableCartRow({
       className={`hover:bg-slate-50/50 group border-b border-slate-100 last:border-0 cursor-pointer transition-colors duration-150
         ${index === selectedIndex ? '!bg-emerald-50/70 border-l-4 border-l-emerald-500 shadow-sm' : ''}
         ${isReturn ? 'bg-red-50 text-red-600 font-semibold' : ''}
-        ${flashId === ligne.produit.id ? 'animate-pulse bg-emerald-100' : ''}`}
+        ${flashId === ligne.lineId ? 'animate-pulse bg-emerald-100' : ''}`}
       ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
       onClick={() => onSelectLine?.(index)}
     >
@@ -90,7 +90,7 @@ export default React.memo(function TableCartRow({
                    type="number"
                    className="w-8 bg-transparent text-[10px] font-semibold text-emerald-700 outline-none"
                    value={ligne.treatment_duration_days || ''}
-                   onChange={(e) => updateTreatmentDuration?.(ligne.produit.id, normalizeNumberInput(e.target.value) || 0)}
+                   onChange={(e) => updateTreatmentDuration?.(ligne.lineId, normalizeNumberInput(e.target.value) || 0)}
                    min={1}
                 />
                 <span className="text-[10px] text-emerald-600">{t('facturation:cart.product_status.days_unit')}</span>
@@ -169,7 +169,7 @@ export default React.memo(function TableCartRow({
         <Button
           variant={(ligne.lotId || ligne.lotAllocations?.length) ? 'default' : 'outline'}
           size="sm"
-          onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null)}
+          onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null, ligne.lineId)}
           className={`w-full max-w-[260px] truncate text-xs h-7 ${(ligne.lotId || ligne.lotAllocations?.length) ? 'bg-emerald-600 hover:bg-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
           title={lotTooltip}
         >
@@ -183,7 +183,7 @@ export default React.memo(function TableCartRow({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => removeLigne(ligne.produit.id)}
+          onClick={() => removeLigne(ligne.lineId)}
           className="size-7 text-slate-300 hover:text-red-500 hover:bg-red-50 sm:opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <span className="sr-only">{t('facturation:cart.actions.remove')}</span>

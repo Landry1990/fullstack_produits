@@ -165,4 +165,23 @@ describe('useCaisseKeyboard Hook', () => {
 
     document.body.removeChild(input)
   })
+
+  it('ne devrait pas encaisser avec Enter quand un modal de paiement est ouvert', () => {
+    renderHook(() => useCaisseKeyboard(mockHandlers, { ...mockState, isPaymentModalOpen: true }, mockSetSelectedRowIndex))
+
+    const event = new KeyboardEvent('keydown', { key: 'Enter' })
+    document.dispatchEvent(event)
+
+    // Le raccourci Enter doit etre ignore car un modal est ouvert
+    expect(mockHandlers.onEncaisser).not.toHaveBeenCalled()
+  })
+
+  it('devrait fermer le modal details coupon avec Escape quand isDetailsCouponModalOpen', () => {
+    renderHook(() => useCaisseKeyboard(mockHandlers, { ...mockState, isDetailsCouponModalOpen: true }, mockSetSelectedRowIndex))
+
+    const event = new KeyboardEvent('keydown', { key: 'Escape' })
+    document.dispatchEvent(event)
+
+    expect(mockHandlers.onCloseModal).toHaveBeenCalled()
+  })
 })

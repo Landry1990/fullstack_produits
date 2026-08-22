@@ -208,6 +208,7 @@ describe('Facturation Integration', () => {
 
   it('affiche les produits dans le panier quand useCart renvoie des données', async () => {
     const ligneFacture = {
+      lineId: 'test-line-1',
       produit: { id: 1, name: 'Doliprane', selling_price: '500', stock: 100, is_deleted: false },
       quantite: 2,
       prix_unitaire: '500',
@@ -238,6 +239,7 @@ describe('Facturation Integration', () => {
 
   it.skip('ouvre la modal de paiement au clic sur Encaisser', async () => {
     const ligneFacture = {
+      lineId: 'test-line-2',
       produit: { id: 1, name: 'Doliprane', selling_price: '500', stock: 100, is_deleted: false },
       quantite: 1,
       prix_unitaire: '500',

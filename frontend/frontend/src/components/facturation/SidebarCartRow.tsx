@@ -12,18 +12,18 @@ export interface SidebarCartRowProps {
   index: number
   selectedIndex: number
   onSelectLine?: (index: number) => void
-  updateQuantite: (produitId: number, quantite: number) => void
-  updatePrix: (produitId: number, prix: string) => void
-  updateRemiseProduit: (produitId: number, remise: string) => void
-  removeLigne: (produitId: number) => void
-  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null) => void
+  updateQuantite: (lineId: string, quantite: number) => void
+  updatePrix: (lineId: string, prix: string) => void
+  updateRemiseProduit: (lineId: string, remise: string) => void
+  removeLigne: (lineId: string) => void
+  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null, lineId?: string | null) => void
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
   canModifyPrice: boolean
   maxDiscount: number
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number
-  flashId?: number | null
+  flashId?: string | null
 }
 
 export default React.memo(function SidebarCartRow({
@@ -61,7 +61,7 @@ export default React.memo(function SidebarCartRow({
       className={`group relative flex flex-col p-3 border-b border-slate-100 transition-all duration-200 cursor-pointer
         ${index === selectedIndex ? 'bg-emerald-50 border-l-4 border-l-emerald-500' : 'hover:bg-slate-50'}
         ${isReturn ? 'bg-red-50' : ''}
-        ${flashId === ligne.produit.id ? 'animate-pulse bg-emerald-100' : ''}`}
+        ${flashId === ligne.lineId ? 'animate-pulse bg-emerald-100' : ''}`}
     >
       {/* Ligne Haut: Nom Produit + Total + Action */}
       <div className="flex justify-between items-start gap-2">
@@ -86,7 +86,7 @@ export default React.memo(function SidebarCartRow({
            <Button
              variant="ghost"
              size="icon"
-             onClick={(e) => { e.stopPropagation(); removeLigne(ligne.produit.id); }}
+             onClick={(e) => { e.stopPropagation(); removeLigne(ligne.lineId); }}
              className="size-7 text-slate-300 hover:text-red-500 hover:bg-red-50 lg:opacity-0 lg:group-hover:opacity-100 transition-all"
            >
              <X className="size-4" />
@@ -169,7 +169,7 @@ export default React.memo(function SidebarCartRow({
          <Button
            variant="outline"
            size="sm"
-           onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null); }}
+           onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null, ligne.lineId); }}
            className={`h-9 px-2 text-[11px] font-semibold uppercase transition-colors shrink gap-1.5
              ${(ligne.lotId || ligne.lotAllocations?.length)
                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'

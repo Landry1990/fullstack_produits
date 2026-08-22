@@ -305,3 +305,78 @@ class MiseEnPlaceScheduleTestCase(APITestCase):
 
         # La commande relevé classique est bien dans une tranche RELEVE
         self.assertEqual(len(releve_items), 1)
+
+
+class MiseEnPlaceStatutPaiementTestCase(APITestCase):
+    """Tests du statut_paiement pour les achats de mise en place."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+
+        self.fournisseur = TestDataFactory.create_fournisseur(
+            name='Grossiste Statut',
+            type_reglement='FACTURE',
+            delai_paiement_jours=10,
+        )
+        self.rayon = TestDataFactory.create_rayon(name='Rayon Statut')
+        self.produit = TestDataFactory.create_produit(
+            name='Produit Statut',
+            stock=5,
+            cost_price=100,
+            selling_price=200,
+            rayon=self.rayon,
+            fournisseur=self.fournisseur,
+        )
+
+    def _create_and_close_mise_en_place(self, delai_negocie, paye_a_la_cloture=False):
+        """Helper : cree une commande de mise en place et la cloture via l'API."""
+        commande = TestDataFactory.create_commande(
+            fournisseur=self.fournisseur,
+            status='PREP',
+            is_mise_en_place=True,
+            delai_paiement_negocie_jours=delai_negocie,
+            paye_a_la_cloture=paye_a_la_cloture,
+        )
+        TestDataFactory.create_commande_produit(
+            commande=commande,
+            produit=self.produit,
+            quantity=10,
+            price=200,
+            price_cost=100,
+        )
+        url = reverse('commande-cloturer', kwargs={'pk': commande.pk})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        commande.refresh_from_db()
+        return commande
+
+    def test_echeance_echue_paiement_differe_impaye(self):
+        """Un achat mise en place avec echeance dans le passe est IMPAYE (paiement differe)."""
+        # Delai negocie negatif pour forcer une echeance dans le passe
+        commande = self._create_and_close_mise_en_place(delai_negocie=-5)
+        self.assertIsNotNone(commande.date_echeance)
+        # L'echeance est dans le passe
+        self.assertLess(commande.date_echeance, date.today())
+        # Aucun paiement enregistre : statut IMPAYE
+        self.assertEqual(commande.statut_paiement, 'IMPAYE')
+        self.assertGreater(commande.reste_a_payer, Decimal('0'))
+
+    def test_paiement_comptant_marque_echeance_comme_payee(self):
+        """Un achat au comptant (paye_a_la_cloture) a un statut_paiement PAYE."""
+        commande = self._create_and_close_mise_en_place(
+            delai_negocie=None, paye_a_la_cloture=True
+        )
+        # L'echeance = date de cloture (comptant)
+        self.assertEqual(commande.date_echeance, commande.date_cloture.date())
+        # Un paiement automatique a ete cree : statut PAYE
+        # Note: le paiement auto utilise price_cost, donc on verifie que le paiement couvre total_cost
+        from api.models import PaiementFournisseur
+        auto_paiement = PaiementFournisseur.objects.filter(
+            commandes=commande,
+            notes__startswith=f"Paiement automatique - achat au comptant / mise en place (Commande #{commande.id})"
+        ).first()
+        self.assertIsNotNone(auto_paiement, "Un paiement automatique devrait etre cree")
+        self.assertGreater(auto_paiement.montant, Decimal('0'))
+        # L'echeance est egale a la date de cloture (comptant)
+        self.assertEqual(commande.date_echeance, commande.date_cloture.date())

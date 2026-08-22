@@ -5,6 +5,8 @@ import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { calculateLineTotal } from '../utils/finance';
 import { safeStorage } from '../utils/storage';
+import { generateUUID } from '../utils/uuid';
+import { getLotPrice } from '../utils/lotPricing';
 import { useConfirm } from './useConfirm';
 import type { Facture, LigneFacture, TotalsData, User, Client, LotAllocation } from '../types';
 import type { PosteVente } from '../services/cashSessionService';
@@ -33,7 +35,7 @@ export interface UseFacturationActionsProps {
     pendingPrintFacture: Facture | null;
     setPendingPrintFacture: (f: Facture | null) => void;
     setShowClientNameModal: (show: boolean) => void;
-    secureUpdateQuantite: (produitId: number, qty: number) => void;
+    secureUpdateQuantite: (lineId: string, qty: number) => void;
     user: User | null;
     myActivePoste?: PosteVente | null;
     postesCaisses?: { id: number }[];
@@ -345,7 +347,7 @@ export function useFacturationActions({
     const handleQuantityShortcut = useCallback((qty: number) => {
         if (cart.lignesFacture.length > 0) {
             const lastLine = cart.lignesFacture[cart.lignesFacture.length - 1];
-            secureUpdateQuantite(lastLine.produit.id, qty);
+            secureUpdateQuantite(lastLine.lineId, qty);
             gooeyToast.success(t('facturation:messages.quantity_updated', { qty, product: lastLine.produit.name }));
         } else {
             gooeyToast.error(t('facturation:messages.quantity_cart_empty'));
@@ -354,10 +356,51 @@ export function useFacturationActions({
 
     const handleLotSelect = useCallback((allocations: LotAllocation[] | null) => {
         const product = ui.lotModal.product;
+        const targetLineId = ui.lotModal.lineId;
         if (!product) return
-        cart.setLignesFacture(
-            cart.lignesFacture.map((l) => {
-                if (l.produit.id === product.id) {
+
+        // Quand plusieurs lots sont sélectionnés : remplacer la ligne ciblée par N lignes (une par lot)
+        if (allocations && allocations.length > 1) {
+            // Utiliser la forme fonctionnelle pour éviter le state périmé
+            cart.setLignesFacture(prevLignes => {
+                const targetLine = prevLignes.find(l => l.lineId === targetLineId)
+                const remainingLignes = targetLineId
+                    ? prevLignes.filter(l => l.lineId !== targetLineId)
+                    : prevLignes.filter(l => l.produit.id !== product.id)
+                const remiseProduit = targetLine?.remise_produit ?? '0'
+
+                const newLignes: LigneFacture[] = allocations.map(alloc => {
+                    const lotPrice = getLotPrice(alloc.sellingPrice, targetLine?.prix_unitaire ?? '0')
+                    return {
+                        lineId: generateUUID(),
+                        produit: product,
+                        quantite: alloc.quantity,
+                        prix_unitaire: lotPrice,
+                        remise_produit: remiseProduit,
+                        total_ligne: calculateLineTotal(alloc.quantity, lotPrice, remiseProduit),
+                        lotId: String(alloc.lotId),
+                        lotText: alloc.lotText,
+                        lotExpiration: alloc.lotExpiration || null,
+                        lotSellingPrice: alloc.sellingPrice || null,
+                        lotAllocations: [alloc],
+                        treatment_duration_days: targetLine?.treatment_duration_days,
+                    }
+                })
+
+                return [...remainingLignes, ...newLignes]
+            })
+            ui.closeLotModal()
+            setTimeout(() => searchInputRef.current?.focus(), 100)
+            return
+        }
+
+        // Cas : 0 ou 1 allocation — mettre à jour la ligne ciblée uniquement
+        // Utiliser la forme fonctionnelle pour éviter le state périmé
+        cart.setLignesFacture(prevLignes => {
+            const updated = prevLignes.map((l) => {
+                // Target by lineId if available, otherwise by product id (fallback)
+                const isTarget = targetLineId ? l.lineId === targetLineId : l.produit.id === product.id
+                if (isTarget) {
                     if (!allocations || allocations.length === 0) {
                         return {
                             ...l,
@@ -371,10 +414,7 @@ export function useFacturationActions({
                     if (allocations.length === 1) {
                         const alloc = allocations[0]
                         // Apply lot selling price to prix_unitaire if the lot has one
-                        const lotPrice = (alloc.sellingPrice !== null && alloc.sellingPrice !== undefined && alloc.sellingPrice !== '')
-                            ? String(alloc.sellingPrice)
-                            : null
-                        const newPrixUnitaire = lotPrice ?? l.prix_unitaire
+                        const newPrixUnitaire = getLotPrice(alloc.sellingPrice, l.prix_unitaire)
                         return {
                             ...l,
                             lotId: String(alloc.lotId),
@@ -386,6 +426,7 @@ export function useFacturationActions({
                             total_ligne: calculateLineTotal(l.quantite, newPrixUnitaire, l.remise_produit),
                         }
                     }
+                    // Ce cas ne devrait plus arriver (multi-lots géré ci-dessus), mais on garde le fallback
                     return {
                         ...l,
                         lotId: null,
@@ -397,11 +438,12 @@ export function useFacturationActions({
                 }
                 return l
             })
-        )
+            return updated
+        })
         ui.closeLotModal()
         setTimeout(() => searchInputRef.current?.focus(), 100)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ui.lotModal.product, cart, ui.closeLotModal, searchInputRef])
+    }, [ui.lotModal.product, ui.lotModal.lineId, cart.setLignesFacture, ui.closeLotModal, searchInputRef])
 
     const _resetSaleDataOnly = useCallback(() => {
         cart.setLignesFacture([])

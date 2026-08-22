@@ -15,6 +15,9 @@ from rest_framework.test import APITestCase
 
 from ..models import (
     Caisse,
+    FactureProduit,
+    FactureProduitAllocation,
+    StockLot,
 )
 from .factories import TestDataFactory
 
@@ -219,6 +222,91 @@ class InvoiceValidationTestCase(APITestCase):
             initial_stock,
             "Stock should be restored after cancellation"
         )
+
+    def test_cancel_invoice_after_multi_lot_payment_restores_per_lot(self):
+        """
+        Annulation d'une facture apres paiement multi-lots : on verifie que
+        chaque StockLot.quantity_remaining revient a sa valeur initiale.
+        """
+        # Creer 2 lots avec des quantites differentes
+        lot1 = TestDataFactory.create_stock_lot(
+            produit=self.produit,
+            quantity=40,
+            lot_name='LOT-MULTI-CANCEL-1',
+            date_expiration=timezone.now().date() + timezone.timedelta(days=60),
+        )
+        lot2 = TestDataFactory.create_stock_lot(
+            produit=self.produit,
+            quantity=60,
+            lot_name='LOT-MULTI-CANCEL-2',
+            date_expiration=timezone.now().date() + timezone.timedelta(days=180),
+        )
+
+        lot1_initial = lot1.quantity_remaining
+        lot2_initial = lot2.quantity_remaining
+
+        # Synchroniser le stock du produit depuis les lots
+        self.produit.refresh_from_db()
+
+        # Creer une facture avec 2 lignes, chaque ligne pointant vers un lot specifique
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj,
+            status='BROU'
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture,
+            produit=self.produit,
+            quantity=10,
+            selling_price=self.produit.selling_price,
+            stock_lot=lot1,
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture,
+            produit=self.produit,
+            quantity=5,
+            selling_price=self.produit.selling_price,
+            stock_lot=lot2,
+        )
+
+        # Valider la facture
+        url = reverse('facture-valider', kwargs={'pk': facture.pk})
+        response = self.client.post(url, {'mode_paiement': 'especes'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verifier que les lots ont ete decrements
+        lot1.refresh_from_db()
+        lot2.refresh_from_db()
+        self.assertEqual(lot1.quantity_remaining, lot1_initial - 10,
+                         "Lot1 doit etre decremente de 10 apres validation")
+        self.assertEqual(lot2.quantity_remaining, lot2_initial - 5,
+                         "Lot2 doit etre decremente de 5 apres validation")
+
+        # Verifier que les allocations existent
+        allocations = FactureProduitAllocation.objects.filter(
+            facture_produit__facture=facture
+        )
+        self.assertEqual(allocations.count(), 2,
+                         "2 allocations doivent exister (une par lot)")
+
+        # Annuler la facture
+        url = reverse('facture-annuler', kwargs={'pk': facture.pk})
+        response = self.client.post(url, {'motif': 'Test annulation multi-lots'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verifier que chaque lot est restaure a sa valeur initiale
+        lot1.refresh_from_db()
+        lot2.refresh_from_db()
+        self.assertEqual(lot1.quantity_remaining, lot1_initial,
+                         "Lot1 doit etre restaure a sa valeur initiale apres annulation")
+        self.assertEqual(lot2.quantity_remaining, lot2_initial,
+                         "Lot2 doit etre restaure a sa valeur initiale apres annulation")
+
+        # Les allocations doivent etre supprimees
+        remaining_allocations = FactureProduitAllocation.objects.filter(
+            facture_produit__facture=facture
+        )
+        self.assertEqual(remaining_allocations.count(), 0,
+                         "Toutes les allocations doivent etre supprimees apres annulation")
 
 
 class InvoiceStatusTransitionTests(APITestCase):

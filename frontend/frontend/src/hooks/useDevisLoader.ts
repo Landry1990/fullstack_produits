@@ -3,6 +3,7 @@ import api from '../services/api'
 import { gooeyToast } from 'goey-toast'
 import { useTranslation } from 'react-i18next'
 import { safeStorage } from '../utils/storage'
+import { generateUUID } from '../utils/uuid'
 import type { ProduitModel, Facture, FactureProduit, LigneFacture } from '../types'
 
 interface DevisProduit extends FactureProduit {
@@ -68,6 +69,7 @@ export function useDevisLoader({ clientsHook, cart, ui }: UseDevisLoaderOptions)
                         }
                         const lotId = p.stock_lot ? String(p.stock_lot) : (p.lot || null)
                         return {
+                            lineId: generateUUID(),
                             produit: produitData,
                             quantite: p.quantity,
                             prix_unitaire: p.selling_price,
