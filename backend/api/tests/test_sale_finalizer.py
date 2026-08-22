@@ -328,6 +328,8 @@ class TestSaleFinalizerMultiLotPayload:
             use_lot_management=True,
         )
         # Creer 2 lots
+        from datetime import timedelta
+        today = date.today()
         lot1 = StockLot.objects.create(
             produit=produit,
             lot="LOT-FIN-1",
@@ -336,7 +338,7 @@ class TestSaleFinalizerMultiLotPayload:
             price_cost=Decimal("200"),
             selling_price=Decimal("500"),
             date_reception=datetime(2025, 1, 1),
-            date_expiration=date(2025, 12, 31),
+            date_expiration=today + timedelta(days=30),
         )
         lot2 = StockLot.objects.create(
             produit=produit,
@@ -346,7 +348,7 @@ class TestSaleFinalizerMultiLotPayload:
             price_cost=Decimal("220"),
             selling_price=Decimal("500"),
             date_reception=datetime(2025, 2, 1),
-            date_expiration=date(2026, 6, 30),
+            date_expiration=today + timedelta(days=365),
         )
         produit.refresh_from_db()
 

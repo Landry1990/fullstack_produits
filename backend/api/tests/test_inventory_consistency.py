@@ -71,12 +71,7 @@ class InventoryConsistencyTestCase(TestCase):
         Apres une vente, son annulation, puis un ajustement manuel,
         Produit.stock doit etre egal a la somme des StockLot.quantity_remaining
         et l'historique des mouvements doit etre coherent.
-
-        BUG REVELE: adjust_stock met a jour Produit.stock sans synchroniser les lots.
-        A corriger dans une phase future.
         """
-        import pytest
-        pytest.skip("BUG: adjust_stock ne synchronise pas les StockLot — a corriger")
         # Produit initial: 100 unites, 2 lots
         produit = self.factory.create_produit(stock=100, use_lot_management=True)
         self.factory.create_stock_lot(

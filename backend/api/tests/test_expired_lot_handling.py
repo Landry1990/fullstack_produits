@@ -71,12 +71,7 @@ class ExpiredLotHandlingTestCase(TestCase):
         """
         L'allocation FEFO doit ignorer les lots perimes (date_expiration < today).
         Seul le lot non-perime doit etre consomme lors d'une vente.
-
-        BUG REVELE: l'allocation FEFO dans lot_allocation_service.py et sale_validator.py
-        ne filtre pas les lots perimes. A corriger dans une phase future.
         """
-        import pytest
-        pytest.skip("BUG: FEFO ne filtre pas les lots perimes — a corriger")
         today = timezone.now().date()
         expired_date = today - timedelta(days=30)
         valid_date = today + timedelta(days=365)

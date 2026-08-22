@@ -232,13 +232,7 @@ class StockTransformationTest(TestCase):
     # ------------------------------------------------------------------
     def test_transformation_with_expired_source_lot_blocked(self):
         """Une transformation utilisant un lot source perime
-        (date_expiration < today) doit etre bloquee.
-
-        BUG REVELE: la vue transformer ne filtre pas les lots perimes.
-        A corriger dans une phase future.
-        """
-        import pytest
-        pytest.skip("BUG: transformer ne filtre pas les lots perimes — a corriger")
+        (date_expiration < today) doit etre bloquee."""
         # Creer un produit source avec un lot perime
         expired_date = timezone.now().date() - timezone.timedelta(days=30)
         source_expired = self.factory.create_produit(

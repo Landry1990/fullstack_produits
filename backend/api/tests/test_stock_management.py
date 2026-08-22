@@ -291,13 +291,7 @@ class StockAdjustmentPermissionTestCase(APITestCase):
         """
         Un utilisateur non-superuser sans la permission can_adjust_stock
         ne peut pas ajuster le stock -> 403 Forbidden.
-
-        BUG REVELE: la vue adjust_stock ne verifie pas validate_sudo_mode(can_adjust_stock).
-        Contrairement a transfer_to_shelf qui verifie cette permission, adjust_stock
-        accepte tout utilisateur authentifie. A corriger dans une phase future.
         """
-        import pytest
-        pytest.skip("BUG: adjust_stock ne verifie pas can_adjust_stock — a corriger")
         regular_user = TestDataFactory.create_user(
             username='regular_adjust', password='userpass123',
         )

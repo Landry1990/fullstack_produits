@@ -133,11 +133,11 @@
 - [x] `test_inventory_consistency.py` : **transformation cohérente** ✅ (2 tests, 1 skip)
 - [x] `test_expired_lot_handling.py` : **détection périmés** + **mise au rebut** ✅ (3 tests, 1 skip)
 
-### Bugs révélés (à corriger dans une phase future)
+### Bugs révélés et corrigés (3)
 
-1. **`adjust_stock` ne vérifie pas `can_adjust_stock`** — `api/views/produit_actions/stock.py` n'appelle pas `validate_sudo_mode`. Tout utilisateur authentifié peut ajuster le stock.
-2. **`adjust_stock` ne synchronise pas les `StockLot`** — `Produit.stock` diverge de la somme des `StockLot.quantity_remaining` après un ajustement manuel.
-3. **FEFO et `transformer` ne filtrent pas les lots périmés** — `lot_allocation_service.py` et `transformations.py` allouent/transforment des lots avec `date_expiration < today`.
+1. **`adjust_stock` ne vérifiait pas `can_adjust_stock`** — `api/views/produit_actions/stock.py` n'appelait pas `validate_sudo_mode`. Tout utilisateur authentifié pouvait ajuster le stock. **Corrigé** : ajout de `validate_sudo_mode(request, permission_attr='can_adjust_stock')`.
+2. **`adjust_stock` ne synchronisait pas les `StockLot`** — `Produit.stock` divergeait de la somme des `StockLot.quantity_remaining` après un ajustement manuel. **Corrigé** : distribution du `quantity_change` across les lots existants (FEFO) ou création d'un lot par défaut si aucun n'existe.
+3. **FEFO et `transformer` ne filtraient pas les lots périmés** — `lot_allocation_service.py`, `sale_validator.py` et `transformations.py` allouaient/transforment des lots avec `date_expiration < today`. **Corrigé** : ajout du filtre `Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)` partout.
 
 ---
 
@@ -158,10 +158,11 @@
 | 2 — Commandes | 18 | 10 | 0 | 0 |
 | 3 — Caisse | 8 | 11 | 0 | 0 |
 | 4 — Inventaire | 14 | 14 | 0 | 3 (adjust_stock, FEFO, transformer) |
-| **Total** | **60** | **46** | **3** | **3** |
+| 5 — Fix bugs | 0 | 0 | 3 (adjust_stock perms, sync lots, FEFO filter) | 0 |
+| **Total** | **60** | **46** | **6** | **3** |
 
 **Baseline départ** : 269 tests passent, 5 échouent, 7 skip
-**Baseline finale** : 335 tests passent, 0 échec, 7 skip (frontend) + 163 passent, 5 skip, 0 échec (backend critique)
+**Baseline finale** : 335 tests passent, 0 échec, 7 skip (frontend) + 168 passent, 0 skip, 0 échec (backend critique)
 
 ---
 
