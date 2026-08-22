@@ -87,3 +87,165 @@ class StockInventoryTest(TestCase):
         self.assertTrue(MouvementStock.objects.filter(produit=self.p1, quantite=5).exists())
         self.assertTrue(MouvementStock.objects.filter(produit=self.p2, quantite=-2).exists())
         self.assertTrue(StockAdjustment.objects.filter(produit=self.p1, quantity_change=5).exists())
+
+    # ------------------------------------------------------------------
+    # Inventaire avec ecart positif (quantite physique > stock theorique)
+    # ------------------------------------------------------------------
+    def test_inventory_positive_gap_creates_positive_adjustment_movement(self):
+        """Un inventaire avec quantite physique > stock theorique doit
+        creer un MouvementStock de type AJUSTEMENT avec quantite positive."""
+        # Produit avec stock theorique = 30
+        produit = self.factory.create_produit(
+            name="PosGap Product", stock=30, use_lot_management=True,
+            fournisseur=self.p1.fournisseur,
+        )
+        self.factory.create_stock_lot(produit=produit, quantity=30, lot_name="LOT-POSGAP")
+
+        # 1. Creer l'inventaire
+        res_create = self.client.post(
+            reverse('inventaire-list'),
+            {'description': 'Inv ecart positif', 'inventory_type': 'RAYON'},
+        )
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+        inv_id = res_create.data['id']
+
+        # 2. Pre-populer
+        res_pop = self.client.post(
+            reverse('inventaire-pre-populate', args=[inv_id]),
+            {'rayon_id': produit.rayon.id},
+        )
+        self.assertEqual(res_pop.status_code, status.HTTP_200_OK)
+
+        # 3. Modifier la quantite physique (40 > 30 theorique => ecart +10)
+        ligne = LigneInventaire.objects.get(inventaire_id=inv_id, produit=produit)
+        ligne.quantite_physique = 40
+        ligne.save()
+
+        # 4. Valider
+        res_val = self.client.post(
+            reverse('inventaire-validate', args=[inv_id]),
+            {'sudo_password': 'password'},
+        )
+        self.assertEqual(res_val.status_code, status.HTTP_200_OK)
+
+        # 5. Verifier le MouvementStock AJUSTEMENT avec quantite positive
+        mvt = MouvementStock.objects.filter(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+        ).order_by('-date').first()
+        self.assertIsNotNone(mvt, "Un MouvementStock AJUSTEMENT doit etre cree")
+        self.assertEqual(mvt.quantite, 10, "La quantite du mouvement doit etre +10 (ecart positif)")
+        self.assertGreater(mvt.quantite, 0, "La quantite doit etre positive pour un ecart positif")
+
+        # 6. Verifier que le stock a ete mis a jour
+        produit.refresh_from_db()
+        self.assertEqual(produit.stock, 40)
+
+    # ------------------------------------------------------------------
+    # Inventaire avec ecart negatif (quantite physique < stock theorique)
+    # ------------------------------------------------------------------
+    def test_inventory_negative_gap_creates_negative_adjustment_movement(self):
+        """Un inventaire avec quantite physique < stock theorique doit
+        creer un MouvementStock de type AJUSTEMENT avec quantite negative."""
+        # Produit avec stock theorique = 50
+        produit = self.factory.create_produit(
+            name="NegGap Product", stock=50, use_lot_management=True,
+            fournisseur=self.p1.fournisseur,
+        )
+        self.factory.create_stock_lot(produit=produit, quantity=50, lot_name="LOT-NEGGAP")
+
+        # 1. Creer l'inventaire
+        res_create = self.client.post(
+            reverse('inventaire-list'),
+            {'description': 'Inv ecart negatif', 'inventory_type': 'RAYON'},
+        )
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+        inv_id = res_create.data['id']
+
+        # 2. Pre-populer
+        res_pop = self.client.post(
+            reverse('inventaire-pre-populate', args=[inv_id]),
+            {'rayon_id': produit.rayon.id},
+        )
+        self.assertEqual(res_pop.status_code, status.HTTP_200_OK)
+
+        # 3. Modifier la quantite physique (35 < 50 theorique => ecart -15)
+        ligne = LigneInventaire.objects.get(inventaire_id=inv_id, produit=produit)
+        ligne.quantite_physique = 35
+        ligne.save()
+
+        # 4. Valider
+        res_val = self.client.post(
+            reverse('inventaire-validate', args=[inv_id]),
+            {'sudo_password': 'password'},
+        )
+        self.assertEqual(res_val.status_code, status.HTTP_200_OK)
+
+        # 5. Verifier le MouvementStock AJUSTEMENT avec quantite negative
+        mvt = MouvementStock.objects.filter(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+        ).order_by('-date').first()
+        self.assertIsNotNone(mvt, "Un MouvementStock AJUSTEMENT doit etre cree")
+        self.assertEqual(mvt.quantite, -15, "La quantite du mouvement doit etre -15 (ecart negatif)")
+        self.assertLess(mvt.quantite, 0, "La quantite doit etre negative pour un ecart negatif")
+
+        # 6. Verifier que le stock a ete mis a jour
+        produit.refresh_from_db()
+        self.assertEqual(produit.stock, 35)
+
+    # ------------------------------------------------------------------
+    # Validation d'inventaire sans permission -> 403
+    # ------------------------------------------------------------------
+    def test_inventory_validation_without_permission_returns_403(self):
+        """Un utilisateur non-superuser sans la permission can_adjust_stock
+        ne peut pas valider un inventaire -> 403 Forbidden."""
+        # Creer un utilisateur normal sans permission can_adjust_stock
+        regular_user = self.factory.create_user(
+            username='regular_user_inv', password='userpass123',
+        )
+        # can_adjust_stock est False par defaut sur le Profile
+        self.assertFalse(regular_user.profile.can_adjust_stock)
+        self.assertFalse(regular_user.is_superuser)
+
+        # Authentifier en tant qu'utilisateur normal
+        self.client.force_authenticate(user=regular_user)
+
+        # Creer un produit et un inventaire
+        produit = self.factory.create_produit(
+            name="PermTest Product", stock=20, use_lot_management=False,
+            fournisseur=self.p1.fournisseur,
+        )
+
+        res_create = self.client.post(
+            reverse('inventaire-list'),
+            {'description': 'Inv permission test', 'inventory_type': 'RAYON'},
+        )
+        self.assertEqual(res_create.status_code, status.HTTP_201_CREATED)
+        inv_id = res_create.data['id']
+
+        # Pre-populer
+        res_pop = self.client.post(
+            reverse('inventaire-pre-populate', args=[inv_id]),
+            {'rayon_id': produit.rayon.id},
+        )
+        self.assertEqual(res_pop.status_code, status.HTTP_200_OK)
+
+        # Modifier la quantite physique
+        ligne = LigneInventaire.objects.get(inventaire_id=inv_id, produit=produit)
+        ligne.quantite_physique = 18
+        ligne.save()
+
+        # Tenter de valider SANS sudo_password (utilise request.user directement)
+        res_val = self.client.post(
+            reverse('inventaire-validate', args=[inv_id]),
+            {},
+        )
+        self.assertEqual(
+            res_val.status_code, status.HTTP_403_FORBIDDEN,
+            "La validation sans permission can_adjust_stock doit retourner 403",
+        )
+
+        # Verifier que l'inventaire n'a pas ete valide
+        inv = Inventaire.objects.get(id=inv_id)
+        self.assertEqual(inv.status, Inventaire.Status.EN_COURS)

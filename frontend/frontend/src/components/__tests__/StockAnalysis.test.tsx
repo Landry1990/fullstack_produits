@@ -9,9 +9,12 @@ vi.mock('../stock/StockHealthDashboard', () => ({
 
 vi.mock('../../hooks/useStockAnalysis', () => ({ useStockAnalysis: vi.fn() }));
 
+vi.mock('../../utils/excelExport', () => ({ exportToExcel: vi.fn() }));
+
 import { AuthProvider } from '../../context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useStockAnalysis } from '../../hooks/useStockAnalysis';
+import { exportToExcel } from '../../utils/excelExport';
 
 const mockFournisseurs = [
     { id: 1, name: 'Fournisseur A' },
@@ -151,6 +154,62 @@ describe('StockAnalysis', () => {
             fireEvent.change(select, { target: { value: '1' } });
         });
         expect(mockSetSelectedFournisseur).toHaveBeenCalledWith('1');
+    });
+
+    it('respecte le filtrage des donnees renvoyees par le hook (seuls les items filtres s\'affichent)', async () => {
+        // Simule un filtrage cote backend/hook ne renvoyant qu'un sous-ensemble
+        const filteredData = {
+            ...mockAnalysisData,
+            total_items: 1,
+            total_value: 1000,
+            items: [mockAnalysisData.items[0]],
+        };
+        (useStockAnalysis as unknown).mockReturnValue({ ...defaultHookValue, data: filteredData });
+        renderWithContext(<StockAnalysis />);
+        await waitFor(() => {
+            expect(screen.getByText('Produit A')).toBeInTheDocument();
+        });
+        expect(screen.queryByText('Produit B')).not.toBeInTheDocument();
+    });
+
+    it('affiche les produits tries par valeur de stock descendant (ordre du hook respecte)', async () => {
+        const sortedData = {
+            type: 'unsold',
+            fournisseur: '',
+            total_items: 3,
+            total_value: 7100,
+            items: [
+                { id: 10, name: 'Doliprane', stock: 50, selling_price: 100, value: 5000, cost_price: 80, fournisseur_name: 'F1' },
+                { id: 20, name: 'Ibuprofene', stock: 20, selling_price: 100, value: 2000, cost_price: 70, fournisseur_name: 'F2' },
+                { id: 30, name: 'Aspirine', stock: 5, selling_price: 20, value: 100, cost_price: 10, fournisseur_name: 'F3' },
+            ],
+            current_page: 1,
+            total_pages: 1,
+        };
+        (useStockAnalysis as unknown).mockReturnValue({ ...defaultHookValue, activeTab: 'unsold', data: sortedData });
+        const { container } = renderWithContext(<StockAnalysis />);
+        await waitFor(() => {
+            expect(screen.getByText('Doliprane')).toBeInTheDocument();
+        });
+        const rows = container.querySelectorAll('tbody > tr');
+        expect(rows).toHaveLength(3);
+        expect(rows[0].textContent).toContain('Doliprane');
+        expect(rows[1].textContent).toContain('Ibuprofene');
+        expect(rows[2].textContent).toContain('Aspirine');
+    });
+
+    it('declenche l\'export Excel au clic sur le bouton Excel', async () => {
+        renderWithContext(<StockAnalysis />);
+        await waitFor(() => {
+            expect(screen.getByText('Produit A')).toBeInTheDocument();
+        });
+        const btn = screen.getByRole('button', { name: /Excel/i });
+        await act(async () => {
+            fireEvent.click(btn);
+        });
+        expect(exportToExcel).toHaveBeenCalled();
+        const records = (exportToExcel as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][0] as Record<string, unknown>[];
+        expect(records).toHaveLength(mockAnalysisData.items.length);
     });
 });
 
