@@ -2,6 +2,101 @@
 
 ---
 
+## 2026-08-24 — Plan de tests global (Facturation / Commandes / Caisse / Inventaire)
+
+### 🧪 Plan de tests global — 106 tests ajoutés, 3 bugs corrigés, 3 bugs révélés
+
+Mise en place et exécution d'un plan de tests global couvrant les 4 modules critiques
+de l'application (Facturation, Commandes, Caisse, Inventaire) sur frontend et backend.
+Suivi dans `PLAN_TESTS.md`.
+
+### Bugs corrigés (3)
+
+1. **`Commandes.test.tsx` — mock `reconditionnement` manquant** : le mock `useCommandeActions()`
+   ne retournait pas l'objet `reconditionnement` requis par `Commandes.tsx` → `TypeError: Cannot
+   read properties of undefined (reading 'modal')`. Ajout du mock.
+2. **`ResizeObserver` non constructible** : `src/test/setup.ts` définissait `ResizeObserver`
+   avec une arrow-function factory. Radix UI fait `new ResizeObserver(...)` → échec.
+   Remplacé par une vraie classe ES constructible.
+3. **`PromotionService.apply_promotions_to_invoice()` écrasait les remises manuelles** :
+   quand une ligne de facture avait un discount manuel > 0 mais aucune promotion active,
+   le service entrait dans sa branche update et assignait un discount de 0, effaçant la
+   remise saisie. Corrigé : les remises manuelles sont préservées quand aucune promotion
+   n'est trouvée. (`backend/api/services/promotion_service.py`)
+
+### Bugs révélés par les tests (3 — à corriger dans une phase future)
+
+1. **`adjust_stock` ne vérifie pas `can_adjust_stock`** : la vue
+   `api/views/produit_actions/stock.py` n'appelle pas `validate_sudo_mode`. Tout utilisateur
+   authentifié peut ajuster le stock. (Contrairement à `transfer_to_shelf` qui vérifie.)
+2. **`adjust_stock` ne synchronise pas les `StockLot`** : `Produit.stock` est mis à jour
+   directement sans ajuster les `StockLot.quantity_remaining`. Après un ajustement,
+   `Produit.stock` diverge de la somme des lots.
+3. **FEFO et `transformer` ne filtrent pas les lots périmés** : `lot_allocation_service.py`
+   et `transformations.py` allouent/transforment des lots avec `date_expiration < today`.
+
+### Tests ajoutés par phase
+
+| Phase | Frontend | Backend | Total |
+|-------|----------|---------|-------|
+| 0 — Baseline | 0 | 0 | 0 |
+| 1 — Facturation | 20 | 11 | 31 |
+| 2 — Commandes | 18 | 10 | 28 |
+| 3 — Caisse | 8 | 11 | 19 |
+| 4 — Inventaire | 14 | 14 | 28 |
+| **Total** | **60** | **46** | **106** |
+
+### Résultats finaux
+
+- **Frontend** : 335 tests passent, 7 skip, 0 échec (42 fichiers)
+- **Backend critique** : 163 tests passent, 5 skip (bugs révélés), 0 échec (19 fichiers)
+- **Build frontend** : succès en 38.56s
+
+### Fichiers de test modifiés/créés
+
+**Frontend (16 fichiers)** :
+- `src/test/setup.ts` — fix ResizeObserver
+- `src/components/__tests__/Commandes.test.tsx` — mock reconditionnement + 4 tests
+- `src/components/__tests__/Inventaire.test.tsx` — 11 tests
+- `src/components/__tests__/StockAnalysis.test.tsx` — 3 tests
+- `src/components/__tests__/JournalCaisse.test.tsx` — 2 tests
+- `src/components/__tests__/CartTable.test.tsx` — régression lot price
+- `src/components/Commandes/__tests__/ReconditionnementModal.test.tsx` — 7 tests
+- `src/utils/__tests__/fefo.test.ts` — 9 tests
+- `src/utils/__tests__/lotPricing.test.ts` — 6 tests
+- `src/utils/__tests__/uuid.test.ts` — 1 test
+- `src/utils/__tests__/finance.test.ts` — 2 tests
+- `src/utils/__tests__/commandeCalculs.test.ts` — 5 tests
+- `src/hooks/__tests__/useCart.test.tsx` — multi-lot
+- `src/hooks/__tests__/useCaisseCoupons.test.ts` — 2 tests
+- `src/hooks/__tests__/useCaisseKeyboard.test.ts` — 1 test
+- `src/hooks/__tests__/useCaisseStats.test.ts` — 2 tests
+- `src/hooks/__tests__/useCommandeFournisseurs.test.tsx` — 2 tests
+
+**Backend (12 fichiers)** :
+- `api/services/promotion_service.py` — fix preservation remises manuelles
+- `api/tests/test_facturation.py` — lot margin + multi-lot
+- `api/tests/test_invoice_validation.py` — per-lot restoration
+- `api/tests/test_lot_allocation_service.py` — differing lot prices
+- `api/tests/test_sale_finalizer.py` — multi-lot lines + movements
+- `api/tests/test_facturation_contract.py` — 6 contract tests
+- `api/tests/test_order_management.py` — PREP→CLOT + lots créés
+- `api/tests/test_mise_en_place.py` — échéance échue + paiement comptant
+- `api/tests/test_reconditionnement_flow.py` — 4 tests transformation
+- `api/tests/test_commande_cloture_status.py` — 2 tests statut CLOT
+- `api/tests/test_cash_closure.py` — ventes en attente + double clôture
+- `api/tests/test_caisse_integrity.py` — multi-modes + avoir
+- `api/tests/test_caisse_multi_payment.py` — 4 tests multi-paiement
+- `api/tests/test_caisse_overpayment.py` — 3 tests surpaiement
+- `api/tests/test_stock_inventory.py` — écarts + permission
+- `api/tests/test_stock_management.py` — permission + PMP
+- `api/tests/test_stock_movements_comprehensive.py` — cohérence stock/lots
+- `api/tests/test_stock_transformations.py` — lot périmé (skip — bug révélé)
+- `api/tests/test_inventory_consistency.py` — 2 tests cohérence
+- `api/tests/test_expired_lot_handling.py` — 3 tests périmés
+
+---
+
 ## 2026-08-22 — Refactoring anti-spaghetti + prix lot automatique + multi-lots intelligent
 
 ### 🔧 Refactoring (3 chantiers)

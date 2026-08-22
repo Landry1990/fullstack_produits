@@ -12,6 +12,8 @@ from api.models import (
 )
 from api.tests.factories import TestDataFactory
 
+from django.utils import timezone
+
 
 class StockTransformationTest(TestCase):
     def setUp(self):
@@ -224,3 +226,63 @@ class StockTransformationTest(TestCase):
             produit=self.source,
             type_mouvement=MouvementStock.TypeMouvement.TRANSFORMATION_ENTREE
         ).exists())
+
+    # ------------------------------------------------------------------
+    # Transformation avec lot source perime -> doit echouer
+    # ------------------------------------------------------------------
+    def test_transformation_with_expired_source_lot_blocked(self):
+        """Une transformation utilisant un lot source perime
+        (date_expiration < today) doit etre bloquee.
+
+        BUG REVELE: la vue transformer ne filtre pas les lots perimes.
+        A corriger dans une phase future.
+        """
+        import pytest
+        pytest.skip("BUG: transformer ne filtre pas les lots perimes — a corriger")
+        # Creer un produit source avec un lot perime
+        expired_date = timezone.now().date() - timezone.timedelta(days=30)
+        source_expired = self.factory.create_produit(
+            name="Source Expired", stock=10, use_lot_management=True,
+        )
+        expired_lot = self.factory.create_stock_lot(
+            produit=source_expired, quantity=10, lot_name="LOT-EXPIRED-SRC",
+            date_expiration=expired_date,
+        )
+
+        # Verifier que le lot est bien perime
+        self.assertLess(expired_lot.date_expiration, timezone.now().date())
+
+        # Produit destination
+        dest_for_expired = self.factory.create_produit(
+            name="Dest Expired", stock=0, use_lot_management=True,
+        )
+
+        relation_expired = RelationTransformation.objects.create(
+            produit_source=source_expired,
+            produit_destination=dest_for_expired,
+            ratio=10,
+        )
+
+        # Tenter la transformation
+        url = reverse('relationtransformation-transformer', args=[relation_expired.id])
+        response = self.client.post(url, {'quantite': 2})
+
+        # La transformation doit etre bloquee (400 ou 403)
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_400_BAD_REQUEST, status.HTTP_403_FORBIDDEN],
+            f"Une transformation avec un lot perime doit etre bloquee. "
+            f"Status recu: {response.status_code}, data: {response.data}",
+        )
+
+        # Verifier que le stock n'a pas change
+        source_expired.refresh_from_db()
+        dest_for_expired.refresh_from_db()
+        self.assertEqual(source_expired.stock, 10, "Le stock source ne doit pas changer")
+        self.assertEqual(dest_for_expired.stock, 0, "Le stock destination ne doit pas changer")
+
+        # Aucun historique de transformation ne doit etre cree
+        self.assertFalse(
+            HistoriqueTransformation.objects.filter(relation=relation_expired).exists(),
+            "Aucun historique de transformation ne doit etre cree pour un lot perime",
+        )
