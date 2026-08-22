@@ -249,12 +249,13 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock for ResizeObserver
-window.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Mock for ResizeObserver — must be a real class (Radix UI uses `new ResizeObserver(...)`)
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
 // Mock for requestAnimationFrame (jsdom doesn't execute it automatically)
 window.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {

@@ -310,3 +310,61 @@ class TestLotAllocationService:
 
         assert len(mouvements) == 1
         assert mouvements[0].type_mouvement == MouvementStock.TypeMouvement.RETOUR
+
+    # ── allocate_fifo avec prix differents ─────────────────────────────
+
+    def test_allocate_fifo_different_selling_prices(self):
+        """
+        Allocation FEFO avec 2 lots ayant des selling_price differents.
+        On verifie que chaque allocation porte son propre prix (celui passe
+        en parametre ou celui du FactureProduit) et le cost_price de chaque lot.
+        """
+        from datetime import date
+        produit, lots = self._create_product_with_lots([
+            {
+                "quantity": 10,
+                "quantity_remaining": 10,
+                "date_expiration": date(2025, 12, 31),
+            },
+            {
+                "quantity": 10,
+                "quantity_remaining": 10,
+                "date_expiration": date(2026, 6, 30),
+            },
+        ])
+        # Definir des selling_price differents sur les lots
+        lots[0].selling_price = Decimal("800")
+        lots[0].save(update_fields=["selling_price"])
+        lots[1].selling_price = Decimal("1200")
+        lots[1].save(update_fields=["selling_price"])
+
+        facture, fp = self._create_facture_produit(produit, quantity=12)
+        # Le FactureProduit a selling_price=1000 par defaut
+        # On passe un selling_price explicite a allocate_fifo
+        custom_price = Decimal("950")
+
+        allocations, lots_updated, used_names = LotAllocationService.allocate_fifo(
+            fp, 12, selling_price=custom_price
+        )
+
+        assert len(allocations) == 2
+        # FEFO: lot avec expiration la plus proche en premier
+        assert allocations[0].quantity == 10  # premier lot epuise
+        assert allocations[1].quantity == 2   # second lot partiellement
+
+        # Chaque allocation porte le meme selling_price (celui passe en parametre)
+        for alloc in allocations:
+            assert alloc.selling_price == custom_price, (
+                f"L'allocation {alloc.id} devrait avoir selling_price={custom_price}, "
+                f"got {alloc.selling_price}"
+            )
+
+        # Chaque allocation porte le cost_price de son lot respectif
+        assert allocations[0].cost_price == lots[0].price_cost
+        assert allocations[1].cost_price == lots[1].price_cost
+
+        # Verifier que les lots sont decrements correctement
+        lots[0].refresh_from_db()
+        lots[1].refresh_from_db()
+        assert lots[0].quantity_remaining == 0
+        assert lots[1].quantity_remaining == 8

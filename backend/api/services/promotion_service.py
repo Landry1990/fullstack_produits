@@ -104,6 +104,7 @@ class PromotionService:
     def apply_promotions_to_invoice(facture):
         """
         Parcourt toutes les lignes de la facture et applique les meilleures promotions.
+        Préserve les remises manuelles (discount) si aucune promotion n'est applicable.
         """
         lines = FactureProduit.objects.filter(facture=facture).select_related('produit', 'produit__rayon')
         updated = False
@@ -112,19 +113,19 @@ class PromotionService:
             if not line.produit:
                 continue
 
-            # Skip s'il y a déjà une remise manuelle forcée ? 
-            # -> Pour l'instant on écrase ou on applique si discount == 0 ? 
-            # -> Politique: L'automatique l'emporte, sauf si on ajoute un flag 'manual_override' plus tard.
-            # Pour l'instant, appliquons la promo.
-            
             discount, free_qty, promo_name = PromotionService.calculate_best_promotion(line.produit, line.quantity)
-            
-            # Si on a trouvé une promo ou si on doit nettoyer une ancienne promo
-            if promo_name or line.free_quantity > 0 or line.discount > 0:
+
+            if promo_name:
+                # Une promotion active a été trouvée : l'appliquer (écrase le discount manuel)
                 line.discount = discount
                 line.free_quantity = free_qty
-                # On pourrait stocker le nom de la promo dans 'produit_nom' ou un champ dédié si besoin de tracer
                 line.save()
                 updated = True
+            elif line.free_quantity > 0:
+                # Pas de promo mais il y avait des unités gratuites (promo expirée) : nettoyer
+                line.free_quantity = 0
+                line.save()
+                updated = True
+            # Si pas de promo et pas de free_quantity : ne PAS toucher au discount manuel
         
         return updated

@@ -8,12 +8,12 @@ export interface CartRowProps {
   index: number
   selectedIndex: number
   onSelectLine?: (index: number) => void
-  updateQuantite: (produitId: number, quantite: number) => void
-  updatePrix: (produitId: number, prix: string) => void
-  updateRemiseProduit: (produitId: number, remise: string) => void
-  updateTreatmentDuration?: (produitId: number, duration: number) => void
-  removeLigne: (produitId: number) => void
-  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null) => void
+  updateQuantite: (lineId: string, quantite: number) => void
+  updatePrix: (lineId: string, prix: string) => void
+  updateRemiseProduit: (lineId: string, remise: string) => void
+  updateTreatmentDuration?: (lineId: string, duration: number) => void
+  removeLigne: (lineId: string) => void
+  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null, lineId?: string | null) => void
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
   canModifyPrice: boolean
@@ -21,7 +21,7 @@ export interface CartRowProps {
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number
   isSidebarStyle?: boolean
-  flashId?: number | null
+  flashId?: string | null
 }
 
 const CartRow = React.memo(({

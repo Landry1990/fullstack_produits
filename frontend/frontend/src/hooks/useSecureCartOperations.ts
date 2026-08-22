@@ -6,9 +6,9 @@ import type { LigneFacture } from '../types'
 export interface UseSecureCartOperationsOptions {
     cart: {
         lignesFacture: LigneFacture[]
-        updateQuantite: (produitId: number, qty: number) => void
-        updatePrix: (produitId: number, price: string) => void
-        updateRemiseProduit: (produitId: number, remise: string) => void
+        updateQuantite: (lineId: string, qty: number) => void
+        updatePrix: (lineId: string, price: string) => void
+        updateRemiseProduit: (lineId: string, remise: string) => void
     }
     requireSudo: (
         callback: (validatorId: number, password: string) => Promise<void>,
@@ -30,16 +30,16 @@ export function useSecureCartOperations({
     triggerUiRefresh,
     maxDiscountRate
 }: UseSecureCartOperationsOptions) {
-    const secureUpdateQuantite = useCallback((produitId: number, newQty: number) => {
+    const secureUpdateQuantite = useCallback((lineId: string, newQty: number) => {
         if (newQty < 0) {
             if (activeSudoCreds) {
-                cart.updateQuantite(produitId, newQty)
+                cart.updateQuantite(lineId, newQty)
                 return
             }
-            const currentLine = cart.lignesFacture.find((l) => l.produit.id === produitId)
+            const currentLine = cart.lignesFacture.find((l) => l.lineId === lineId)
             requireSudo(async (validatorId, password) => {
                 setActiveSudoCreds({ validatorId, password })
-                cart.updateQuantite(produitId, newQty)
+                cart.updateQuantite(lineId, newQty)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
                 message: `Confirmer la quantité ${newQty} pour le produit ${currentLine?.produit.name ?? ''} ?`,
@@ -47,22 +47,22 @@ export function useSecureCartOperations({
                 onCancel: triggerUiRefresh
             })
         } else {
-            cart.updateQuantite(produitId, newQty)
+            cart.updateQuantite(lineId, newQty)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.updateQuantite, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
 
-    const secureUpdatePrix = useCallback((produitId: number, newPrice: string) => {
-        const currentLine = cart.lignesFacture.find((l) => l.produit.id === produitId)
+    const secureUpdatePrix = useCallback((lineId: string, newPrice: string) => {
+        const currentLine = cart.lignesFacture.find((l) => l.lineId === lineId)
         if (!currentLine) return
         if (newPrice !== currentLine.prix_unitaire) {
             if (activeSudoCreds) {
-                cart.updatePrix(produitId, newPrice)
+                cart.updatePrix(lineId, newPrice)
                 return
             }
             requireSudo(async (validatorId, password) => {
                 setActiveSudoCreds({ validatorId, password })
-                cart.updatePrix(produitId, newPrice)
+                cart.updatePrix(lineId, newPrice)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
                 message: `Confirmer le changement de prix de ${currentLine.prix_unitaire} à ${newPrice} pour ${currentLine.produit.name} ?`,
@@ -70,22 +70,22 @@ export function useSecureCartOperations({
                 onCancel: triggerUiRefresh
             })
         } else {
-            cart.updatePrix(produitId, newPrice)
+            cart.updatePrix(lineId, newPrice)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.updatePrix, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
 
-    const secureUpdateRemiseProduit = useCallback((produitId: number, newRemise: string) => {
-        const currentLine = cart.lignesFacture.find((l) => l.produit.id === produitId)
+    const secureUpdateRemiseProduit = useCallback((lineId: string, newRemise: string) => {
+        const currentLine = cart.lignesFacture.find((l) => l.lineId === lineId)
         if (!currentLine) return
         if (Number(newRemise) > 0 && newRemise !== currentLine.remise_produit) {
             if (activeSudoCreds) {
-                cart.updateRemiseProduit(produitId, newRemise)
+                cart.updateRemiseProduit(lineId, newRemise)
                 return
             }
             requireSudo(async (validatorId, password) => {
                 setActiveSudoCreds({ validatorId, password })
-                cart.updateRemiseProduit(produitId, newRemise)
+                cart.updateRemiseProduit(lineId, newRemise)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
                 message: `Confirmer une remise de ${newRemise}% sur le produit ${currentLine.produit.name} ?`,
@@ -93,7 +93,7 @@ export function useSecureCartOperations({
                 onCancel: triggerUiRefresh
             })
         } else {
-            cart.updateRemiseProduit(produitId, newRemise)
+            cart.updateRemiseProduit(lineId, newRemise)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.updateRemiseProduit, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])

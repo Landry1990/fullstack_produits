@@ -13,11 +13,17 @@ describe('finance utilities', () => {
             const result = calculateLineTotal(2, 1000, 10);
             expect(result).toBe(1800);
         });
+
+        it('should calculate line total with decimal price and no discount', () => {
+            const result = calculateLineTotal(3, '12.5', 0);
+            expect(result).toBe(37.5);
+        });
     });
 
     describe('calculateCartStats', () => {
         const mockLignes: LigneFacture[] = [
             {
+                lineId: 'test-line-1',
                 produit: { id: 1, name: 'P1', selling_price: '1000', tva: 18 } as unknown,
                 quantite: 1,
                 prix_unitaire: 1000,
@@ -25,6 +31,7 @@ describe('finance utilities', () => {
                 total_ligne: 1000
             } as unknown,
             {
+                lineId: 'test-line-2',
                 produit: { id: 2, name: 'P2', selling_price: '2000', tva: 0 } as unknown,
                 quantite: 2,
                 prix_unitaire: 2000,
@@ -44,6 +51,27 @@ describe('finance utilities', () => {
             expect(stats.totalTTC).toBe(4600);
             expect(Math.round(stats.sousTotal)).toBe(4447);
             expect(Math.round(stats.totalTva)).toBe(153);
+        });
+
+        it('should use lotSellingPrice-based prix_unitaire for cart stats', () => {
+            const lignesWithLotPrice: LigneFacture[] = [
+                {
+                    lineId: 'lot-line-1',
+                    produit: { id: 1, name: 'Cifran', selling_price: '7000', tva: 0, cost_price: '3000' } as unknown,
+                    quantite: 2,
+                    prix_unitaire: '5100',
+                    remise_produit: '0',
+                    total_ligne: 10200,
+                    lotSellingPrice: '5100',
+                    lotId: 'lot-1',
+                } as unknown,
+            ];
+            const stats = calculateCartStats(lignesWithLotPrice);
+            // 2 * 5100 = 10200 TTC, 0% TVA -> HT = 10200
+            expect(stats.totalTTC).toBe(10200);
+            expect(stats.sousTotal).toBe(10200);
+            expect(stats.totalLines).toBe(1);
+            expect(stats.totalQty).toBe(2);
         });
     });
 

@@ -2,6 +2,59 @@
 
 ---
 
+## 2026-08-22 — Refactoring anti-spaghetti + prix lot automatique + multi-lots intelligent
+
+### 🔧 Refactoring (3 chantiers)
+
+Audit de qualité du code facturation (note initiale 4.5/10). Trois refactorings prioritaires
+réalisés pour éliminer le code spaghetti :
+
+**1. Centralisation UUID** — La génération d'identifiants uniques (`lineId`) était dupliquée
+à 4 endroits avec des implémentations inline de `crypto.randomUUID()`. Tout est maintenant
+centralisé via `import { generateUUID } from '../utils/uuid'`.
+- Fichiers : `useCart.ts`, `useFacturationActions.ts`, `useFacturationState.ts`, `useDevisLoader.ts`
+
+**2. Unification FEFO** — Le tri FEFO et l'allocation FEFO étaient implémentés 3 fois
+(`useCart.ts` inline, `LotSelectionModal.tsx` local, `utils/fefo.ts` format différent).
+Deux fonctions unifiées créées dans `utils/fefo.ts` :
+- `sortLotsByFEFO(lots): StockLot[]` — tri FEFO réutilisable
+- `allocateLotsFEFO(lots, quantity): LotAllocation[]` — allocation FEFO réutilisable
+- Fichiers : `utils/fefo.ts`, `LotSelectionModal.tsx`, `useCart.ts`
+
+**3. Découpage de `addProduit`** — La fonction faisait 224 lignes (récupération produit,
+check substitution, fetch lots, tri FEFO, check multi-lot, génération lineId, update state,
+check interaction, check ordonnance, check alerte, focus, check péremption, son/haptic).
+Extraite en fonctions pures :
+- `fetchProductLots(produitId)` — récupère lots + calcule allocations FEFO
+- `computeBasePrice(produit, options)` — calcule prix de base (rétrocession, markup)
+- `getLotPrice(sellingPrice, fallback)` — retourne prix lot ou fallback (utilitaire partagé `utils/lotPricing.ts`)
+- `createLotLine(lineId, produit, lot, maxQty)` — crée une ligne avec lot
+- `createPlainLine(lineId, produit, prix)` — crée une ligne sans lot
+- `addProduit` réduite à ~80 lignes de coordination
+
+### ✨ Améliorations fonctionnelles
+
+- **Prix du lot appliqué automatiquement à l'ajout** — `addProduit` récupère les lots FEFO
+  et applique le prix du lot (ex: 5100 au lieu de 7000) sans action de l'utilisateur
+- **Modal multi-lot intelligent** — le modal de répartition ne s'ouvre que si nécessaire :
+  - À l'ajout : seulement si le premier lot FEFO ne peut pas satisfaire la qty demandée
+  - À l'incrémentation : seulement si la nouvelle qty dépasse le stock du lot actuel
+- **Champ `lotMaxQuantity`** ajouté sur `LigneFacture` pour tracker la qty max du lot
+
+### Fichiers modifiés
+
+- `src/utils/fefo.ts` — ajout `sortLotsByFEFO()` et `allocateLotsFEFO()`
+- `src/utils/lotPricing.ts` — nouvel utilitaire `getLotPrice()`
+- `src/utils/uuid.ts` — désormais utilisé partout (était ignoré)
+- `src/hooks/useCart.ts` — refactoring complet : helpers purs, `addProduit` découpée
+- `src/hooks/useFacturationActions.ts` — `handleLotSelect` utilise `getLotPrice`
+- `src/hooks/useFacturationState.ts` — `generateUUID` importé
+- `src/hooks/useDevisLoader.ts` — `generateUUID` importé
+- `src/components/LotSelectionModal.tsx` — fonctions locales remplacées par `utils/fefo`
+- `src/types/finance.ts` — ajout `lotMaxQuantity` sur `LigneFacture`
+
+---
+
 ## 2026-08-21 — Fix prix du lot non appliqué au panier de facturation
 
 ### 🐛 Correction

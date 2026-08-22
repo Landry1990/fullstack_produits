@@ -1,8 +1,14 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Commandes from '../Commandes'
+import { useCommandesStore } from '../../stores/useCommandesStore'
+
+// Hoisted mock for handleCloturerCommande so we can spy on it in tests
+const { mockHandleCloturerCommande } = vi.hoisted(() => ({
+  mockHandleCloturerCommande: vi.fn(),
+}))
 
 // Mock des libs externes
 vi.mock('react-hot-toast', () => ({
@@ -88,23 +94,52 @@ vi.mock('../Commandes/CommandeList', () => ({
     <div>
       <div>Liste Mockée</div>
       <button onClick={() => onOpenCreateView('LOC')}>Nouvelle Commande</button>
+      <button data-testid="cloturer-btn">Clôturer</button>
     </div>
   )
 }))
 vi.mock('../Commandes/CommandeForm', () => ({ default: () => <div data-testid="commande-form" /> }))
+vi.mock('../Commandes/CommandeDetails', () => ({
+  default: ({ onCloture }: { onCloture?: () => void }) => (
+    <div>
+      <div data-testid="commande-details">Details Mock</div>
+      {onCloture && <button onClick={onCloture} data-testid="cloturer-details-btn">Clôturer</button>}
+    </div>
+  )
+}))
 
 vi.mock('../../hooks/useCommandeActions', () => ({
   useCommandeActions: () => ({
     handleSaveCommande: vi.fn(),
     handleDeleteCommande: vi.fn(),
-    handleCloturerCommande: vi.fn(),
+    handleCloturerCommande: mockHandleCloturerCommande,
     handleMettreEnAttente: vi.fn(),
     handleAnnulerReception: vi.fn(),
     handleImprimerReception: vi.fn(),
+    handleBulkDelete: vi.fn(),
+    executingAction: false,
     isPasswordModalOpen: false,
     setIsPasswordModalOpen: vi.fn(),
     passwordModalConfig: {},
-    handlePasswordConfirmed: vi.fn()
+    handlePasswordConfirmed: vi.fn(),
+    reconditionnement: {
+      modal: { open: false, commandeId: 0, commandeNumero: '', transformations: [] },
+      setModal: vi.fn(),
+      onDone: vi.fn(),
+    },
+  })
+}))
+
+// Mock useCommandeHandlers to wire onCloture directly to handleCloturerCommande
+vi.mock('../../hooks/commandes/useCommandeHandlers', () => ({
+  useCommandeHandlers: () => ({
+    onCloture: mockHandleCloturerCommande,
+    onDelete: vi.fn(),
+    onMettreEnAttente: vi.fn(),
+    onAnnulerReception: vi.fn(),
+    onImprimer: vi.fn(),
+    onBulkDelete: vi.fn(),
+    handleCreateAvoirFromCommande: vi.fn(),
   })
 }))
 
@@ -138,6 +173,13 @@ const renderWithContext = (ui: React.ReactElement) => {
 describe('Commandes Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset store to default LIST view
+    useCommandesStore.setState({
+      viewMode: 'LIST',
+      selectedCommande: null,
+      activeTab: 'LOC',
+      commandeType: 'LOC',
+    })
   })
 
   it('renders correctly and displays command list', () => {
@@ -155,5 +197,68 @@ describe('Commandes Component', () => {
     
     const newBtn = screen.getByRole('button', { name: /Nouvelle Commande/i })
     expect(newBtn).toBeInTheDocument()
+  })
+
+  it('displays "Clôturer" button in the mocked command list', () => {
+    renderWithContext(<Commandes />)
+
+    const cloturerBtn = screen.getByTestId('cloturer-btn')
+    expect(cloturerBtn).toBeInTheDocument()
+    expect(cloturerBtn.textContent).toMatch(/Clôturer/i)
+  })
+
+  it('calls handleCloturerCommande when "Clôturer" is clicked in details view (PREP to CLOT transition)', () => {
+    // Set store to DETAILS view with a PREP commande
+    useCommandesStore.setState({
+      viewMode: 'DETAILS',
+      selectedCommande: {
+        id: 1,
+        numero_facture: 'CMD-001',
+        fournisseur: 1,
+        date: '2025-01-01',
+        status: 'PREP',
+        produits: [],
+      } as never,
+    })
+
+    renderWithContext(<Commandes />)
+
+    // Verify CommandeDetails mock is rendered
+    expect(screen.getByTestId('commande-details')).toBeInTheDocument()
+
+    // Click the "Clôturer" button in the details view
+    const cloturerBtn = screen.getByTestId('cloturer-details-btn')
+    fireEvent.click(cloturerBtn)
+
+    // Verify handleCloturerCommande was called
+    expect(mockHandleCloturerCommande).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not render the reconditionnement modal by default (modal.open = false)', () => {
+    renderWithContext(<Commandes />)
+
+    // The reconditionnement modal should not be rendered when modal.open is false
+    // The modal title contains "Reconditionnement" — verify it is absent
+    expect(screen.queryByText(/Reconditionnement/i)).not.toBeInTheDocument()
+  })
+
+  it('renders CommandeForm when viewMode is EDIT', () => {
+    // Set store to EDIT view
+    useCommandesStore.setState({
+      viewMode: 'EDIT',
+      selectedCommande: {
+        id: 1,
+        numero_facture: 'CMD-001',
+        fournisseur: 1,
+        date: '2025-01-01',
+        status: 'PREP',
+        produits: [],
+      } as never,
+    })
+
+    renderWithContext(<Commandes />)
+
+    // CommandeForm mock renders with data-testid="commande-form"
+    expect(screen.getByTestId('commande-form')).toBeInTheDocument()
   })
 })

@@ -25,6 +25,7 @@ import { useSecureCartOperations } from './useSecureCartOperations'
 import { useDevisLoader } from './useDevisLoader'
 import { useFacturationImport } from './useFacturationImport'
 import { useRecallInvoice } from './useRecallInvoice'
+import { generateUUID } from '../utils/uuid'
 
 export type FacturationState = ReturnType<typeof useFacturationState>
 
@@ -77,6 +78,8 @@ export function useFacturationState() {
     onAlert: (message, title, type, is_blocking, targetId) => ui.pushDisplayAlert({ message, title, type, is_blocking, targetId }),
     onSubstitution: (produit) => setSubstitutionProduct(produit),
     onForceStock: (produit) => setForceStockProduct(produit),
+    onMultiLotDetected: (produit, lineId, quantity) => ui.openLotModal(produit, null, quantity, null, lineId),
+    onQuantityExceedsLot: (produit, lineId, quantity) => ui.openLotModal(produit, null, quantity, null, lineId),
     quantityInputsRef
   })
 
@@ -199,6 +202,7 @@ export function useFacturationState() {
         const lineDiscount = Number(p.discount || 0)
 
         return {
+          lineId: generateUUID(),
           produit: produitData,
           quantite: p.quantity,
           prix_unitaire: p.selling_price,
@@ -585,19 +589,19 @@ export function useFacturationState() {
   // --- Keyboard Navigation ---
   const handleIncrement = useCallback((index: number) => {
     if (sortedLignes[index]) {
-      const pId = sortedLignes[index].produit.id
+      const lId = sortedLignes[index].lineId
       const currentQty = sortedLignes[index].quantite
-      cart.updateQuantite(pId, currentQty + 1)
+      cart.updateQuantite(lId, currentQty + 1)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedLignes, cart.updateQuantite])
 
   const handleDecrement = useCallback((index: number) => {
     if (sortedLignes[index]) {
-      const pId = sortedLignes[index].produit.id
+      const lId = sortedLignes[index].lineId
       const currentQty = sortedLignes[index].quantite
       if (currentQty > 1) {
-        cart.updateQuantite(pId, currentQty - 1)
+        cart.updateQuantite(lId, currentQty - 1)
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -605,7 +609,7 @@ export function useFacturationState() {
 
   const handleDeleteLine = useCallback((index: number) => {
     if (sortedLignes[index]) {
-      cart.removeLigne(sortedLignes[index].produit.id)
+      cart.removeLigne(sortedLignes[index].lineId)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedLignes, cart.removeLigne])

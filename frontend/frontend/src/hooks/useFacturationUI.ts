@@ -29,6 +29,7 @@ export interface FacturationUIState {
         currentLotId: string | null
         quantity: number
         currentAllocations: LotAllocation[] | null
+        lineId: string | null
     }
     confirmModal: {
         isOpen: boolean
@@ -103,12 +104,14 @@ export function useFacturationUI() {
         currentLotId: string | null
         quantity: number
         currentAllocations: LotAllocation[] | null
+        lineId: string | null
     }>({
         isOpen: false,
         product: null,
         currentLotId: null,
         quantity: 0,
-        currentAllocations: null
+        currentAllocations: null,
+        lineId: null
     })
 
     const [confirmModal, setConfirmModal] = useState<{
@@ -192,8 +195,8 @@ export function useFacturationUI() {
         setFacturePourPaiement(null)
     }, [])
 
-    const openLotModal = useCallback((product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null) => {
-        setLotModal({ isOpen: true, product, currentLotId, quantity, currentAllocations })
+    const openLotModal = useCallback((product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null, lineId?: string | null) => {
+        setLotModal({ isOpen: true, product, currentLotId, quantity, currentAllocations, lineId: lineId ?? null })
     }, [])
 
     const closeLotModal = useCallback(() => {

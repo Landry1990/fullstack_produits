@@ -24,6 +24,16 @@ vi.mock('react-hot-toast', () => {
   }
 })
 
+// Mock de goey-toast (utilise par le hook source)
+vi.mock('goey-toast', () => {
+  const mockFn = vi.fn()
+  mockFn.success = vi.fn()
+  mockFn.error = vi.fn()
+  mockFn.info = vi.fn()
+  mockFn.warning = vi.fn()
+  return { gooeyToast: mockFn }
+})
+
 // Mock de react-i18next
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -254,6 +264,43 @@ describe('useCaisseCoupons Hook', () => {
       await act(async () => {
         await result.current.utiliserCouponApresEncaissement(1, 100)
       })
+    })
+  })
+
+  describe('handleAppliquerCouponAFacture - cas avances', () => {
+    it('ne devrait pas appliquer un coupon expire (status EXPIRE)', () => {
+      const couponExpire = {
+        ...mockCoupon,
+        status: 'EXPIRE',
+        status_display: 'Expire'
+      } as unknown as CouponMonnaie
+
+      const { result } = renderHook(() => useCaisseCoupons(defaultProps))
+
+      act(() => {
+        result.current.handleAppliquerCouponAFacture(couponExpire, mockFacture)
+      })
+
+      // Le coupon expire ne doit pas etre applique
+      expect(mockSetCouponsParFacture).not.toHaveBeenCalled()
+    })
+
+    it('devrait appliquer un coupon sur une facture avec remise (stacking promotion)', () => {
+      // Facture avec remise > 0 indiquant des produits en promotion
+      const factureAvecRemise = {
+        ...mockFacture,
+        remise: '1000',
+        total_ttc: '9000'
+      } as unknown as Facture
+
+      const { result } = renderHook(() => useCaisseCoupons(defaultProps))
+
+      act(() => {
+        result.current.handleAppliquerCouponAFacture(mockCoupon, factureAvecRemise)
+      })
+
+      // Le coupon doit etre applique en plus de la promotion (stacking autorise)
+      expect(mockSetCouponsParFacture).toHaveBeenCalledWith(expect.any(Function))
     })
   })
 })

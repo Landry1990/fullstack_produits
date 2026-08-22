@@ -9,10 +9,14 @@ from django.contrib.auth import get_user_model
 from api.models import (
     Facture,
     FactureProduit,
+    FactureProduitAllocation,
+    MouvementStock,
     Ordonnancier,
+    PosteCaisse,
     PosteVente,
     Produit,
     Promis,
+    StockLot,
     Caisse as CaisseModel,
 )
 from api.services.sale_finalizer import SaleFinalizer
@@ -303,3 +307,119 @@ class TestSaleFinalizerFinalizeSale:
         }
         with pytest.raises(ValueError, match="point de caisse"):
             SaleFinalizer.finalize_sale(user, data, centralized=True)
+
+
+@pytest.mark.django_db
+class TestSaleFinalizerMultiLotPayload:
+    """Tests pour la finalisation d'une vente multi-lots."""
+
+    def test_finalize_sale_multi_lot_creates_lignes_and_movements(self):
+        """
+        Payload multi-lots : une entree par lot avec lot_id, quantite, prix_unitaire.
+        On verifie la creation de LigneFacture + MouvementStock SORTIE par lot.
+        """
+        from datetime import datetime, date
+
+        user = User.objects.create_user(username="seller", password="testpass123")
+        produit = Produit.objects.create(
+            name="Doliprane 1000mg",
+            selling_price=Decimal("500"),
+            stock=50,
+            use_lot_management=True,
+        )
+        # Creer 2 lots
+        lot1 = StockLot.objects.create(
+            produit=produit,
+            lot="LOT-FIN-1",
+            quantity_initial=30,
+            quantity_remaining=30,
+            price_cost=Decimal("200"),
+            selling_price=Decimal("500"),
+            date_reception=datetime(2025, 1, 1),
+            date_expiration=date(2025, 12, 31),
+        )
+        lot2 = StockLot.objects.create(
+            produit=produit,
+            lot="LOT-FIN-2",
+            quantity_initial=20,
+            quantity_remaining=20,
+            price_cost=Decimal("220"),
+            selling_price=Decimal("500"),
+            date_reception=datetime(2025, 2, 1),
+            date_expiration=date(2026, 6, 30),
+        )
+        produit.refresh_from_db()
+
+        # Creer un poste de caisse + poste de vente actif
+        poste_caisse = PosteCaisse.objects.create(nom="Caisse Test", code="C-TEST-01")
+        PosteVente.objects.create(
+            vendeur=user,
+            nom="POS Multi-Lot",
+            est_actif=True,
+            mode_pos=False,
+            caisse=poste_caisse,
+        )
+
+        # Payload multi-lots : une entree par lot
+        data = {
+            "client": None,
+            "client_name_override": "Client Multi-Lot",
+            "remise": "0",
+            "produits": [
+                {
+                    "produit": produit.id,
+                    "quantity": 3,
+                    "selling_price": "500",
+                    "discount": "0",
+                    "tva": "0",
+                    "lot_id": lot1.id,
+                },
+                {
+                    "produit": produit.id,
+                    "quantity": 2,
+                    "selling_price": "500",
+                    "discount": "0",
+                    "tva": "0",
+                    "lot_id": lot2.id,
+                },
+            ],
+            "paiements": [{"mode": "especes", "montant": "2500"}],
+            "centralized_cash_register": False,
+        }
+
+        facture = SaleFinalizer.finalize_sale(user, data, centralized=False)
+
+        # Verifier que la facture est creee et validee
+        assert facture is not None
+        assert facture.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]
+
+        # Verifier que 2 LigneFacture sont creees avec stock_lot differents
+        lines = FactureProduit.objects.filter(facture=facture).order_by("id")
+        assert lines.count() == 2, "2 LigneFacture doivent etre creees (une par lot)"
+        assert lines[0].stock_lot_id == lot1.id
+        assert lines[1].stock_lot_id == lot2.id
+        assert lines[0].quantity == 3
+        assert lines[1].quantity == 2
+
+        # Verifier que les allocations sont creees pour chaque lot
+        allocations = FactureProduitAllocation.objects.filter(
+            facture_produit__facture=facture
+        )
+        assert allocations.count() == 2
+        alloc_lot_ids = set(allocations.values_list("stock_lot_id", flat=True))
+        assert alloc_lot_ids == {lot1.id, lot2.id}
+
+        # Verifier que les MouvementStock SORTIE sont crees
+        mouvements = MouvementStock.objects.filter(facture=facture)
+        assert mouvements.count() >= 2, (
+            "Au moins 2 mouvements de stock SORTIE doivent etre crees (un par lot)"
+        )
+        for mvt in mouvements:
+            assert mvt.type_mouvement == MouvementStock.TypeMouvement.SORTIE
+            assert mvt.quantite < 0  # les sorties sont negatives
+
+        # Verifier que les lots ont ete decrements
+        lot1.refresh_from_db()
+        lot2.refresh_from_db()
+        assert lot1.quantity_remaining == 27  # 30 - 3
+        assert lot2.quantity_remaining == 18  # 20 - 2
