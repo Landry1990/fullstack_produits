@@ -252,6 +252,7 @@ export interface LotAllocation {
 }
 
 export interface LigneFacture {
+    lineId: string
     produit: ProduitModel
     quantite: number
     prix_unitaire: string
@@ -265,6 +266,7 @@ export interface LigneFacture {
     lotExpiration?: string | null
     lotSellingPrice?: string | null
     lotAllocations?: LotAllocation[] | null
+    lotMaxQuantity?: number | null
     treatment_duration_days?: number
 }
 

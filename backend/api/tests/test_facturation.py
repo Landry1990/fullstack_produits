@@ -15,8 +15,10 @@ from ..models import (
     Caisse,
     Facture,
     FactureProduit,
+    FactureProduitAllocation,
     MouvementStock,
     PosteVente,
+    StockLot,
 )
 from .factories import TestDataFactory
 
@@ -169,6 +171,113 @@ class FinaliserVenteTests(APITestCase):
         facture = Facture.objects.order_by('-id').first()
         payments = Caisse.objects.filter(facture=facture)
         self.assertTrue(payments.exists(), "At least one payment record should exist")
+
+    def test_finaliser_lot_specific_price_uses_lot_cost_for_margin(self):
+        """
+        Vente avec un lot specifique dont le price_cost differe du produit.cost_price.
+        L'allocation doit utiliser le price_cost du lot (pas le cost_price global du produit)
+        pour le calcul de la marge.
+        """
+        # Creer un lot avec un price_cost different du produit
+        lot = TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=50, lot_name='LOT-MARGIN-001',
+            price_cost=Decimal('150'),  # lot cost != produit cost_price (200)
+        )
+        # Le signal sync_product_stock_on_lot_save met a jour produit.stock
+        self.produit.refresh_from_db()
+
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(
+            centralized_cash_register=True,
+            produits=[{
+                'produit': self.produit.id,
+                'quantity': 3,
+                'selling_price': '500',
+                'discount': '0',
+                'tva': '0',
+                'lot_id': lot.id,
+            }],
+        )
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        facture = Facture.objects.order_by('-id').first()
+        fp = FactureProduit.objects.filter(facture=facture).first()
+        self.assertIsNotNone(fp)
+        self.assertEqual(fp.stock_lot_id, lot.id)
+
+        # L'allocation doit exister avec le cost_price du lot
+        allocation = FactureProduitAllocation.objects.filter(facture_produit=fp).first()
+        self.assertIsNotNone(allocation)
+        self.assertEqual(allocation.cost_price, Decimal('150.00'),
+                         "L'allocation doit utiliser le price_cost du lot, pas le cost_price du produit")
+        self.assertEqual(allocation.selling_price, Decimal('500.00'))
+
+        # La marge doit etre calculee avec le cost_price du lot
+        # pu_ttc = 500, tva = 0 => pu_ht = 500
+        # marge = (500 - 150) * 3 = 1050
+        expected_margin = (Decimal('500') - Decimal('150')) * 3
+        self.assertEqual(allocation.margin, expected_margin)
+
+    def test_finaliser_multi_lot_creates_separate_lignes(self):
+        """
+        Vente multi-lots (2 lots pour le meme produit) : le payload contient
+        une entree par lot avec lot_id. On verifie que 2 LigneFacture sont creees
+        avec des stock_lot differents.
+        """
+        lot1 = TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=30, lot_name='LOT-MULTI-001',
+        )
+        lot2 = TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=20, lot_name='LOT-MULTI-002',
+        )
+        self.produit.refresh_from_db()
+
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(
+            centralized_cash_register=True,
+            produits=[
+                {
+                    'produit': self.produit.id,
+                    'quantity': 3,
+                    'selling_price': '500',
+                    'discount': '0',
+                    'tva': '0',
+                    'lot_id': lot1.id,
+                },
+                {
+                    'produit': self.produit.id,
+                    'quantity': 2,
+                    'selling_price': '500',
+                    'discount': '0',
+                    'tva': '0',
+                    'lot_id': lot2.id,
+                },
+            ],
+        )
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        facture = Facture.objects.order_by('-id').first()
+        lines = FactureProduit.objects.filter(facture=facture).order_by('id')
+        self.assertEqual(lines.count(), 2,
+                         "2 LigneFacture doivent etre creees pour 2 lots differents")
+
+        # Chaque ligne doit pointer vers un lot different
+        self.assertEqual(lines[0].stock_lot_id, lot1.id)
+        self.assertEqual(lines[1].stock_lot_id, lot2.id)
+
+        # Verifier les quantites
+        self.assertEqual(lines[0].quantity, 3)
+        self.assertEqual(lines[1].quantity, 2)
+
+        # Verifier que les allocations sont creees pour chaque lot
+        allocations = FactureProduitAllocation.objects.filter(
+            facture_produit__facture=facture
+        )
+        self.assertEqual(allocations.count(), 2)
+        lot_ids_in_allocations = set(allocations.values_list('stock_lot_id', flat=True))
+        self.assertEqual(lot_ids_in_allocations, {lot1.id, lot2.id})
 
 
 class MarquerPayeeTests(APITestCase):

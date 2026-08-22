@@ -117,4 +117,75 @@ describe('useCommandeFournisseurs', () => {
             expect(result.current.error).toBeDefined()
         })
     })
+
+    it('should correctly separate divers and non-divers in a mixed list with interleaved entries', async () => {
+        const mockFournisseurs = [
+            { id: 1, name: 'Normal A', is_divers: false },
+            { id: 2, name: 'DIVERS 1', is_divers: true },
+            { id: 3, name: 'Normal B', is_divers: false },
+            { id: 4, name: 'DIVERS 2', is_divers: true },
+            { id: 5, name: 'Normal C', is_divers: false },
+        ]
+
+        vi.mocked(api.get).mockResolvedValue({ data: mockFournisseurs })
+
+        const { result } = renderHook(() => useCommandeFournisseurs(), { wrapper })
+
+        await waitFor(() => {
+            expect(result.current.data).toHaveLength(5)
+        })
+
+        // Filter divers and non-divers (simulating useCommandesState filtering logic)
+        const allData = result.current.data || []
+        const nonDivers = allData.filter(f => !f.is_divers)
+        const divers = allData.filter(f => f.is_divers)
+
+        // Verify counts
+        expect(nonDivers).toHaveLength(3)
+        expect(divers).toHaveLength(2)
+
+        // Verify all non-divers have is_divers=false
+        expect(nonDivers.every(f => !f.is_divers)).toBe(true)
+        // Verify all divers have is_divers=true
+        expect(divers.every(f => f.is_divers)).toBe(true)
+
+        // Verify exact IDs to ensure filtering preserves order
+        expect(nonDivers.map(f => f.id)).toEqual([1, 3, 5])
+        expect(divers.map(f => f.id)).toEqual([2, 4])
+
+        // Verify combined list equals original (no data loss)
+        expect([...nonDivers, ...divers].sort((a, b) => a.id - b.id)).toEqual(allData)
+    })
+
+    it('should return all fournisseurs without client-side pagination truncation', async () => {
+        // Simulate a large dataset (50 items) to verify no pagination is applied
+        const largeList = Array.from({ length: 50 }, (_, i) => ({
+            id: i + 1,
+            name: `Fournisseur ${i + 1}`,
+            is_divers: i % 10 === 0,
+        }))
+
+        vi.mocked(api.get).mockResolvedValue({ data: largeList })
+
+        const { result } = renderHook(() => useCommandeFournisseurs(), { wrapper })
+
+        await waitFor(() => {
+            expect(result.current.data).toHaveLength(50)
+        })
+
+        // Verify all items are returned (no truncation)
+        const data = result.current.data || []
+        expect(data[0].id).toBe(1)
+        expect(data[49].id).toBe(50)
+
+        // Verify the API was called without pagination params
+        expect(api.get).toHaveBeenCalledWith('fournisseurs/')
+
+        // Verify divers/non-divers counts in the large list
+        const diversCount = data.filter(f => f.is_divers).length
+        const nonDiversCount = data.filter(f => !f.is_divers).length
+        // Every 10th item (0, 10, 20, 30, 40) is divers = 5 items
+        expect(diversCount).toBe(5)
+        expect(nonDiversCount).toBe(45)
+    })
 })

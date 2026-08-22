@@ -37,5 +37,13 @@ describe('uuid utilities', () => {
             crypto.randomUUID = original;
             expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
         });
+
+        it('should generate 1000 unique UUIDs', () => {
+            const uuids = new Set<string>();
+            for (let i = 0; i < 1000; i++) {
+                uuids.add(generateUUID());
+            }
+            expect(uuids.size).toBe(1000);
+        });
     });
 });

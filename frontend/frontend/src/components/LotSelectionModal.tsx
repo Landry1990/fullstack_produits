@@ -3,7 +3,8 @@ import { Package, RotateCcw } from 'lucide-react'
 import { useStockLots } from '../hooks/useStockLots'
 import { formatPrice } from '../utils/formatters'
 import { formatDate } from '../utils/dateUtils'
-import type { ProduitModel, StockLot, LotAllocation } from '../types'
+import type { ProduitModel, LotAllocation } from '../types'
+import { sortLotsByFEFO, allocateLotsFEFO } from '../utils/fefo'
 import PremiumModal from './common/PremiumModal'
 
 type LotSelectionModalProps = {
@@ -13,38 +14,6 @@ type LotSelectionModalProps = {
   quantity: number
   currentAllocations: LotAllocation[] | null
   onSelectAllocations: (allocations: LotAllocation[] | null) => void
-}
-
-function sortLotsFEFO(lots: StockLot[]): StockLot[] {
-  return lots.slice().sort((a, b) => {
-    const expA = a.date_expiration ? new Date(a.date_expiration).getTime() : Infinity
-    const expB = b.date_expiration ? new Date(b.date_expiration).getTime() : Infinity
-    if (expA !== expB) return expA - expB
-    const recA = a.date_reception ? new Date(a.date_reception).getTime() : 0
-    const recB = b.date_reception ? new Date(b.date_reception).getTime() : 0
-    return recA - recB
-  })
-}
-
-function computeFEFO(lots: StockLot[], quantity: number): LotAllocation[] {
-  const sorted = sortLotsFEFO(lots)
-  const allocations: LotAllocation[] = []
-  let remaining = quantity
-  for (const lot of sorted) {
-    if (remaining <= 0) break
-    const available = lot.quantity_remaining ?? 0
-    if (available <= 0) continue
-    const qty = Math.min(available, remaining)
-    allocations.push({
-      lotId: lot.id,
-      lotText: lot.lot,
-      lotExpiration: lot.date_expiration || null,
-      quantity: qty,
-      sellingPrice: lot.selling_price ?? null,
-    })
-    remaining -= qty
-  }
-  return allocations
 }
 
 export default function LotSelectionModal({
@@ -65,7 +34,7 @@ export default function LotSelectionModal({
     if (currentAllocations) {
       setAllocations(currentAllocations)
     } else if (lots.length > 0 && quantity > 0) {
-      setAllocations(computeFEFO(lots, quantity))
+      setAllocations(allocateLotsFEFO(lots, quantity))
     } else {
       setAllocations([])
     }
@@ -78,12 +47,12 @@ export default function LotSelectionModal({
 
   const handleResetFEFO = () => {
     setIsAuto(true)
-    setAllocations(computeFEFO(lots, quantity))
+    setAllocations(allocateLotsFEFO(lots, quantity))
   }
 
   const handleSwitchAuto = () => {
     setIsAuto(true)
-    setAllocations(computeFEFO(lots, quantity))
+    setAllocations(allocateLotsFEFO(lots, quantity))
   }
 
   const handleQuantityChange = (lotId: string | number, value: string) => {
@@ -111,7 +80,10 @@ export default function LotSelectionModal({
 
   const handleConfirm = () => {
     if (isAuto) {
-      onSelectAllocations(null)
+      // En mode auto, envoyer les allocations FEFO calculées (pas null)
+      // pour que le prix du lot puisse être appliqué au panier
+      const autoAllocs = allocateLotsFEFO(lots, quantity).filter(a => a.quantity > 0)
+      onSelectAllocations(autoAllocs.length > 0 ? autoAllocs : null)
     } else {
       onSelectAllocations(allocations.filter(a => a.quantity > 0))
     }
@@ -170,7 +142,7 @@ export default function LotSelectionModal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {sortLotsFEFO(lots).map(lot => {
+                  {sortLotsByFEFO(lots).map(lot => {
                     const now = new Date()
                     const expire = lot.date_expiration ? new Date(lot.date_expiration) : null
                     let expiryColor = 'text-emerald-600'

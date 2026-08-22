@@ -88,4 +88,48 @@ describe('useCaisseStats Hook', () => {
 
     expect(result.current.totalMontantEnAttente).toBe(10000)
   })
+
+  it('devrait separer les factures par statut (BROU, VAL, PROF non compte)', () => {
+    const facturesMixtes = [
+      { id: 1, total_ttc: 10000, status: 'BROU' } as unknown as Facture,
+      { id: 2, total_ttc: 15000, status: 'VAL' } as unknown as Facture,
+      { id: 3, total_ttc: 5000, status: 'PROF' } as unknown as Facture,
+      { id: 4, total_ttc: 8000, status: 'BROUILLON' } as unknown as Facture,
+      { id: 5, total_ttc: 12000, status: 'VALIDEE' } as unknown as Facture,
+    ]
+
+    const { result } = renderHook(() => useCaisseStats({
+      facturesEnAttente: facturesMixtes,
+      coupons: [],
+      couponsParFacture: {}
+    }))
+
+    // BROU et BROUILLON comptent comme brouillons
+    expect(result.current.facturesByStatus.brouillons).toBe(2)
+    // VAL et VALIDEE comptent comme validees
+    expect(result.current.facturesByStatus.validees).toBe(2)
+    // PROF n'est compte dans aucune categorie
+    expect(result.current.facturesCount).toBe(5)
+    // Le total inclut toutes les factures
+    expect(result.current.totalMontantEnAttente).toBe(50000)
+  })
+
+  it('devrait exclure les ventes annulees du comptage par statut', () => {
+    const facturesAvecAnnulee = [
+      { id: 1, total_ttc: 10000, status: 'BROUILLON' } as unknown as Facture,
+      { id: 2, total_ttc: 15000, status: 'VALIDEE' } as unknown as Facture,
+      { id: 3, total_ttc: 20000, status: 'ANNULEE' } as unknown as Facture,
+    ]
+
+    const { result } = renderHook(() => useCaisseStats({
+      facturesEnAttente: facturesAvecAnnulee,
+      coupons: [],
+      couponsParFacture: {}
+    }))
+
+    // Les ventes annulees ne sont pas comptees dans brouillons ou validees
+    expect(result.current.facturesByStatus.brouillons).toBe(1)
+    expect(result.current.facturesByStatus.validees).toBe(1)
+    expect(result.current.facturesCount).toBe(3)
+  })
 })

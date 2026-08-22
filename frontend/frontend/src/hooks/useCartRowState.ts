@@ -5,9 +5,9 @@ import type { LigneFacture } from '../types'
 
 interface UseCartRowStateParams {
   ligne: LigneFacture
-  updateQuantite: (produitId: number, quantite: number) => void
-  updatePrix: (produitId: number, prix: string) => void
-  updateRemiseProduit: (produitId: number, remise: string) => void
+  updateQuantite: (lineId: string, quantite: number) => void
+  updatePrix: (lineId: string, prix: string) => void
+  updateRemiseProduit: (lineId: string, remise: string) => void
   maxDiscount: number
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number
@@ -41,13 +41,13 @@ export function useCartRowState({
     const current = normalizeNumberInput(localQty) || 0
     const newValue = Math.max(1, current + delta)
     setLocalQty(newValue.toString())
-    updateQuantite(ligne.produit.id, newValue)
+    updateQuantite(ligne.lineId, newValue)
   }
 
   const handleQtySubmit = () => {
     const numValue = normalizeNumberInput(localQty)
     if (!isNaN(numValue) && numValue !== 0) {
-      updateQuantite(ligne.produit.id, numValue)
+      updateQuantite(ligne.lineId, numValue)
     } else if (localQty === '' || localQty === '0') {
       setLocalQty(ligne.quantite.toString())
     }
@@ -55,7 +55,7 @@ export function useCartRowState({
 
   const handlePriceSubmit = () => {
     if (localPrice !== ligne.prix_unitaire) {
-      updatePrix(ligne.produit.id, localPrice)
+      updatePrix(ligne.lineId, localPrice)
     }
   }
 
@@ -64,9 +64,9 @@ export function useCartRowState({
     if (!isNaN(numValue) && numValue > maxDiscount) {
       gooeyToast.error(t('facturation:messages.discount_limit_error', { rate: maxDiscount }))
       setLocalRemise(String(maxDiscount))
-      updateRemiseProduit(ligne.produit.id, String(maxDiscount))
+      updateRemiseProduit(ligne.lineId, String(maxDiscount))
     } else if (localRemise !== ligne.remise_produit) {
-      updateRemiseProduit(ligne.produit.id, localRemise || '0')
+      updateRemiseProduit(ligne.lineId, localRemise || '0')
     }
   }
 

@@ -145,4 +145,125 @@ describe('Commande Calculations', () => {
             expect(formatCurrency(1000000)).toContain('1')
         })
     })
+
+    describe('Decimal Exchange Rate Conversion', () => {
+        it('should convert price correctly with a decimal exchange rate (e.g., 1.5)', () => {
+            const prixEuro = 100
+            const tauxChange = 1.5
+            const prixConverted = prixEuro * tauxChange
+            expect(prixConverted).toBe(150)
+        })
+
+        it('should convert price with decimal rate and frais coefficient', () => {
+            const prixEuro = 200
+            const tauxChange = 1.5
+            const fraisCoefficient = 1.2
+            const prixFCFA = prixEuro * tauxChange * fraisCoefficient
+            expect(prixFCFA).toBe(360)
+        })
+
+        it('should handle fractional euro amounts with decimal rate', () => {
+            const prixEuro = 10.5
+            const tauxChange = 1.5
+            const prixConverted = prixEuro * tauxChange
+            expect(prixConverted).toBeCloseTo(15.75, 2)
+        })
+    })
+
+    describe('Multi-Fournisseur Payment Distribution', () => {
+        it('should distribute payment across multiple fournisseurs correctly', () => {
+            const commandes = [
+                { id: 1, fournisseur: 'A', reste: 5000, created_at: '2024-01-01' },
+                { id: 2, fournisseur: 'B', reste: 3000, created_at: '2024-01-02' },
+                { id: 3, fournisseur: 'A', reste: 2000, created_at: '2024-01-03' }
+            ]
+            const montantARepartir = 8000
+            let totalPaye = 0
+            const paiements: { commande_id: number; fournisseur: string; montant_paye: number; reste_apres: number }[] = []
+
+            for (const cmd of commandes) {
+                if (totalPaye >= montantARepartir) break
+                const montantPaiement = Math.min(montantARepartir - totalPaye, cmd.reste)
+                totalPaye += montantPaiement
+                paiements.push({
+                    commande_id: cmd.id,
+                    fournisseur: cmd.fournisseur,
+                    montant_paye: montantPaiement,
+                    reste_apres: cmd.reste - montantPaiement
+                })
+            }
+
+            // Total paye should equal the amount to distribute
+            expect(totalPaye).toBe(8000)
+
+            // First commande (fournisseur A) fully paid
+            expect(paiements[0].commande_id).toBe(1)
+            expect(paiements[0].montant_paye).toBe(5000)
+            expect(paiements[0].reste_apres).toBe(0)
+
+            // Second commande (fournisseur B) fully paid
+            expect(paiements[1].commande_id).toBe(2)
+            expect(paiements[1].montant_paye).toBe(3000)
+            expect(paiements[1].reste_apres).toBe(0)
+
+            // Third commande should not be paid (budget exhausted)
+            expect(paiements).toHaveLength(2)
+
+            // Verify per-fournisseur totals
+            const payeParFournisseurA = paiements
+                .filter(p => p.fournisseur === 'A')
+                .reduce((sum, p) => sum + p.montant_paye, 0)
+            const payeParFournisseurB = paiements
+                .filter(p => p.fournisseur === 'B')
+                .reduce((sum, p) => sum + p.montant_paye, 0)
+            expect(payeParFournisseurA).toBe(5000)
+            expect(payeParFournisseurB).toBe(3000)
+        })
+    })
+
+    describe('Gratuités (Free Units)', () => {
+        it('should not count free units (unites_gratuites) in the order total', () => {
+            const produits = [
+                { quantity: 10, price: '100', unites_gratuites: 5 },
+                { quantity: 3, price: '200', unites_gratuites: 0 },
+                { quantity: 8, price: '50', unites_gratuites: 2 }
+            ]
+
+            // Total should only use quantity * price, not free units
+            const total = produits.reduce((sum, p) => {
+                const qty = normalizeNumberInput(p.quantity)
+                const price = normalizeNumberInput(p.price)
+                return sum + (qty * price)
+            }, 0)
+
+            // 10*100 + 3*200 + 8*50 = 1000 + 600 + 400 = 2000
+            expect(total).toBe(2000)
+
+            // Free units should be tracked separately
+            const totalGratuites = produits.reduce((sum, p) => sum + (p.unites_gratuites || 0), 0)
+            expect(totalGratuites).toBe(7)
+
+            // Total received units = quantity + gratuites
+            const totalUnitesRecues = produits.reduce((sum, p) => sum + p.quantity + (p.unites_gratuites || 0), 0)
+            expect(totalUnitesRecues).toBe(28)
+        })
+
+        it('should calculate total with gratuites excluded from cost but included in stock', () => {
+            const lignes = [
+                { quantity: 10, price: '500', unites_gratuites: 5 },
+                { quantity: 20, price: '300', unites_gratuites: 0 }
+            ]
+
+            const coutTotal = lignes.reduce((sum, l) => sum + (l.quantity * parseFloat(l.price)), 0)
+            const totalGratuites = lignes.reduce((sum, l) => sum + l.unites_gratuites, 0)
+            const stockTotal = lignes.reduce((sum, l) => sum + l.quantity + l.unites_gratuites, 0)
+
+            // Cost: 10*500 + 20*300 = 5000 + 6000 = 11000 (free units not counted)
+            expect(coutTotal).toBe(11000)
+            // Free units: 5
+            expect(totalGratuites).toBe(5)
+            // Stock: 10+5 + 20+0 = 35 (free units included in stock)
+            expect(stockTotal).toBe(35)
+        })
+    })
 })

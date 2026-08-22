@@ -15,12 +15,12 @@ import CartRow from './CartRow'
 
 interface CartTableProps {
   lignesFacture: LigneFacture[]
-  updateQuantite: (produitId: number, quantite: number) => void
-  updatePrix: (produitId: number, prix: string) => void
-  updateRemiseProduit: (produitId: number, remise: string) => void
-  updateTreatmentDuration?: (produitId: number, duration: number) => void
-  removeLigne: (produitId: number) => void
-  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null) => void
+  updateQuantite: (lineId: string, quantite: number) => void
+  updatePrix: (lineId: string, prix: string) => void
+  updateRemiseProduit: (lineId: string, remise: string) => void
+  updateTreatmentDuration?: (lineId: string, duration: number) => void
+  removeLigne: (lineId: string) => void
+  onOpenLotModal: (product: ProduitModel, currentLotId: string | null, quantity: number, currentAllocations: LotAllocation[] | null, lineId?: string | null) => void
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
   selectedIndex?: number
@@ -46,14 +46,14 @@ const CartTable = React.memo(({
 }: CartTableProps) => {
   const { user } = useAuth()
   const { t } = useTranslation(['facturation', 'common'])
-  const [flashId, setFlashId] = React.useState<number | null>(null)
+  const [flashId, setFlashId] = React.useState<string | null>(null)
   const prevLenRef = React.useRef(lignesFacture.length)
 
   React.useEffect(() => {
     if (lignesFacture.length > prevLenRef.current) {
       const last = lignesFacture[lignesFacture.length - 1]
       if (last) {
-        setFlashId(last.produit.id)
+        setFlashId(last.lineId)
         const id = setTimeout(() => setFlashId(null), 600)
         return () => clearTimeout(id)
       }
@@ -78,7 +78,7 @@ const CartTable = React.memo(({
       <div className="flex flex-col">
         {lignesFacture.map((ligne, index) => (
           <CartRow
-            key={ligne.produit.id}
+            key={ligne.lineId}
             ligne={ligne}
             index={index}
             selectedIndex={selectedIndex}
@@ -120,7 +120,7 @@ const CartTable = React.memo(({
       <TableBody>
         {lignesFacture.map((ligne, index) => (
           <CartRow
-            key={ligne.produit.id}
+            key={ligne.lineId}
             ligne={ligne}
             index={index}
             selectedIndex={selectedIndex}

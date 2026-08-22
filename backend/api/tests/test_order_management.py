@@ -156,3 +156,69 @@ class OrderManagementTestCase(APITestCase):
         
         # PMP Calculation: ((10 * 500) + (10 * 600)) / (10 + 10) = (5000 + 6000) / 20 = 11000 / 20 = 550
         self.assertEqual(self.produit.pmp, Decimal('550.00'))
+
+    def test_transition_prep_to_clot_explicite(self):
+        """Test que la clôture d'une commande PREP passe le statut a CLOT (pas PREP)."""
+        commande = TestDataFactory.create_commande(
+            fournisseur=self.fournisseur,
+            status='PREP',
+        )
+        TestDataFactory.create_commande_produit(
+            commande=commande,
+            produit=self.produit,
+            quantity=20,
+            price=550,
+            price_cost=550,
+        )
+
+        # Avant clôture : statut PREP
+        self.assertEqual(commande.status, 'PREP')
+
+        url = reverse('commande-cloturer', kwargs={'pk': commande.pk})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        commande.refresh_from_db()
+        # Le statut final doit etre CLOT, pas PREP (regression du bug historique)
+        self.assertEqual(commande.status, 'CLOT')
+        self.assertNotEqual(commande.status, 'PREP')
+        self.assertIsNotNone(commande.date_cloture)
+
+    def test_cloture_cree_lots_de_stock_des_produits_recus(self):
+        """Test qu'apres clôture, les lots de stock sont crees a partir des produits recus."""
+        quantity_received = 30
+        purchase_price = 700
+
+        commande = TestDataFactory.create_commande(
+            fournisseur=self.fournisseur,
+            status='PREP',
+        )
+        TestDataFactory.create_commande_produit(
+            commande=commande,
+            produit=self.produit,
+            quantity=quantity_received,
+            price=purchase_price,
+            price_cost=purchase_price,
+        )
+
+        # Avant clôture : aucun lot lie a cette commande
+        lots_before = StockLot.objects.filter(
+            commande_produit__commande=commande
+        ).count()
+        self.assertEqual(lots_before, 0)
+
+        url = reverse('commande-cloturer', kwargs={'pk': commande.pk})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Apres clôture : un lot est cree pour chaque ligne de commande
+        lots_after = StockLot.objects.filter(
+            commande_produit__commande=commande
+        )
+        self.assertEqual(lots_after.count(), 1)
+
+        lot = lots_after.first()
+        self.assertEqual(lot.produit, self.produit)
+        self.assertEqual(lot.quantity_initial, quantity_received)
+        self.assertEqual(lot.price_cost, purchase_price)
+        self.assertIsNotNone(lot.lot)

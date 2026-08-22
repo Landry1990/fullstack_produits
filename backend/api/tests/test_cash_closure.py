@@ -245,3 +245,103 @@ class CashClosureCreationTestCase(APITestCase):
             Decimal('300.00'),
             "Totals should only include transactions from specified date range"
         )
+
+
+class CashClosureEdgeCasesTestCase(APITestCase):
+    """Test suite for cash closure edge cases: pending sales, double closure."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.client_obj = TestDataFactory.create_client()
+        self.produit = TestDataFactory.create_produit(stock=1000)
+
+    def test_cloture_with_pending_unpaid_sales_fails(self):
+        """
+        Test that closing the cash register with only pending (unpaid) sales
+        fails because no completed payment transactions exist.
+        """
+        # Create a validated invoice but with NO payment (pending sale)
+        TestDataFactory.create_facture(
+            client=self.client_obj,
+            status='VAL',
+            total_ttc=Decimal('1000.00')
+        )
+
+        # No Caisse (payment) records exist, so total_ventes == 0
+        url = reverse('caisse-cloturer')
+        today = timezone.now().date()
+        response = self.client.post(url, {
+            'date_debut': f'{today}T00:00:00',
+            'date_fin': f'{today}T23:59:59',
+            'montant_reel': '0.00',
+            'user_id': self.user.id
+        })
+
+        # The closure must be rejected: no movement detected
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            "Closure with only unpaid sales should be rejected (no movements)"
+        )
+        # No ClotureCaisse record should have been created
+        self.assertEqual(
+            ClotureCaisse.objects.filter(user=self.user).count(),
+            0,
+            "No closure record should exist after a failed closure"
+        )
+
+    def test_double_closure_same_day_rejected(self):
+        """
+        Test that a second closure for the same date range (same user) is
+        rejected with HTTP 409 CONFLICT.
+        """
+        # Create a sale with a completed payment
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj,
+            status='VAL',
+            total_ttc=Decimal('1000.00')
+        )
+        TestDataFactory.create_caisse(
+            facture=facture,
+            montant=Decimal('1000.00'),
+            mode_paiement='especes',
+            user=self.user
+        )
+
+        url = reverse('caisse-cloturer')
+        today = timezone.now().date()
+        payload = {
+            'date_debut': f'{today}T00:00:00',
+            'date_fin': f'{today}T23:59:59',
+            'montant_reel': '1000.00',
+            'user_id': self.user.id
+        }
+
+        # First closure: should succeed
+        response1 = self.client.post(url, payload)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            ClotureCaisse.objects.filter(user=self.user).count(),
+            1,
+            "First closure should create exactly one record"
+        )
+
+        # Second closure with the SAME date range: should be rejected
+        response2 = self.client.post(url, payload)
+        self.assertEqual(
+            response2.status_code,
+            status.HTTP_409_CONFLICT,
+            "Double closure for the same period should return 409 CONFLICT"
+        )
+        # The response should mention an existing closure
+        data = response2.json()
+        self.assertIn('existing_cloture_id', data,
+                      "Conflict response should include the existing closure ID")
+        # No additional closure record should have been created
+        self.assertEqual(
+            ClotureCaisse.objects.filter(user=self.user).count(),
+            1,
+            "Second closure must not create an additional record"
+        )

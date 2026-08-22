@@ -25,6 +25,7 @@ const mockProduit: ProduitModel = {
 }
 
 const mockLigneFacture: LigneFacture = {
+  lineId: 'line-1',
   produit: mockProduit,
   quantite: 2,
   prix_unitaire: '750',
@@ -35,6 +36,7 @@ const mockLigneFacture: LigneFacture = {
 
 const mockLigneFactureWithLot: LigneFacture = {
   ...mockLigneFacture,
+  lineId: 'line-2',
   produit: { ...mockProduit, id: 2, name: 'Aspirine 500mg' },
   lotText: 'LOT-001'
 }
@@ -96,7 +98,7 @@ describe('CartTable', () => {
     const inputs = screen.getAllByRole('textbox')
     fireEvent.change(inputs[0], { target: { value: '5' } })
     fireEvent.blur(inputs[0])
-    expect(mockUpdateQuantite).toHaveBeenCalledWith(1, 5)
+    expect(mockUpdateQuantite).toHaveBeenCalledWith('line-1', 5)
   })
 
   it('appelle updatePrix lors du changement de prix', () => {
@@ -108,7 +110,7 @@ describe('CartTable', () => {
     if (prixInput) {
         fireEvent.change(prixInput, { target: { value: '800' } })
         fireEvent.keyDown(prixInput, { key: 'Enter', code: 'Enter' })
-        expect(mockUpdatePrix).toHaveBeenCalledWith(1, '800')
+        expect(mockUpdatePrix).toHaveBeenCalledWith('line-1', '800')
     }
   })
 
@@ -118,7 +120,7 @@ describe('CartTable', () => {
     if (remiseInput) {
         fireEvent.change(remiseInput, { target: { value: '10' } })
         fireEvent.keyDown(remiseInput, { key: 'Enter', code: 'Enter' })
-        expect(mockUpdateRemiseProduit).toHaveBeenCalledWith(1, '10')
+        expect(mockUpdateRemiseProduit).toHaveBeenCalledWith('line-1', '10')
     }
   })
 
@@ -142,6 +144,7 @@ describe('CartTable', () => {
   it('formate correctement la date de péremption', () => {
     const ligneAvecDate: LigneFacture = {
         ...mockLigneFacture,
+        lineId: 'line-3',
         lotExpiration: '2025-12-31T00:00:00Z'
     }
     renderWithContext(<CartTable {...defaultProps} lignesFacture={[ligneAvecDate]} />)
@@ -149,5 +152,30 @@ describe('CartTable', () => {
     // S'il y a plusieurs matches (ex: "Doliprane 1000mg" matchant de façon inattendue), on prend le dernier ou on est plus précis.
     const dateElements = screen.getAllByText(/[\d/]{2,}/)
     expect(dateElements.length).toBeGreaterThan(0)
+  })
+
+  it('affiche le prix du lot (lotSellingPrice) different du selling_price global (regression Cifran 5100 vs 7000)', () => {
+    const ligneLotPrix: LigneFacture = {
+      ...mockLigneFacture,
+      lineId: 'line-lot-price',
+      produit: { ...mockProduit, id: 3, name: 'Cifran 500mg', selling_price: '7000' },
+      prix_unitaire: '5100',
+      lotSellingPrice: '5100',
+      lotId: 'lot-cifran-1',
+      lotText: 'LOT-CIFRAN',
+      total_ligne: 5100
+    }
+    renderWithContext(<CartTable {...defaultProps} lignesFacture={[ligneLotPrix]} />)
+    // Le champ prix doit afficher 5100 (prix du lot) et non 7000 (prix global)
+    const prixInput = screen.getAllByRole('textbox').find(
+      i => (i as HTMLInputElement).value === '5100'
+    ) as HTMLInputElement | undefined
+    expect(prixInput).toBeTruthy()
+    expect(prixInput?.value).toBe('5100')
+    // On verifie aussi que 7000 n'est pas affiche comme prix
+    const prix7000 = screen.getAllByRole('textbox').find(
+      i => (i as HTMLInputElement).value === '7000'
+    )
+    expect(prix7000).toBeUndefined()
   })
 })

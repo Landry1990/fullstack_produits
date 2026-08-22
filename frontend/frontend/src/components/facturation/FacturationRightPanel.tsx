@@ -37,7 +37,7 @@ export default function FacturationRightPanel({ hook }: FacturationRightPanelPro
           updatePrix={hook.secureUpdatePrix}
           updateRemiseProduit={hook.secureUpdateRemiseProduit}
           removeLigne={hook.removeLigne}
-          onOpenLotModal={(product, currentLotId, quantity, currentAllocations) => hook.ui.openLotModal(product, currentLotId || null, quantity, currentAllocations)}
+          onOpenLotModal={(product, currentLotId, quantity, currentAllocations, lineId) => hook.ui.openLotModal(product, currentLotId || null, quantity, currentAllocations, lineId)}
           quantityInputsRef={hook.quantityInputsRef}
           onReturnFocus={() => hook.searchInputRef.current?.focus()}
           selectedIndex={hook.keyboardNav.selectedIndex}
