@@ -82,10 +82,11 @@ class TestLotAllocationService:
 
     def test_allocate_fifo_multiple_lots(self):
         """Allocation FIFO depuis plusieurs lots (FEFO — expiration ascending)."""
-        from datetime import date
+        from datetime import date, timedelta
+        today = date.today()
         produit, lots = self._create_product_with_lots([
-            {"quantity": 5, "quantity_remaining": 5, "date_expiration": date(2025, 12, 31)},
-            {"quantity": 10, "quantity_remaining": 10, "date_expiration": date(2026, 6, 30)},
+            {"quantity": 5, "quantity_remaining": 5, "date_expiration": today + timedelta(days=30)},
+            {"quantity": 10, "quantity_remaining": 10, "date_expiration": today + timedelta(days=365)},
         ])
         facture, fp = self._create_facture_produit(produit, quantity=8)
 
@@ -319,17 +320,18 @@ class TestLotAllocationService:
         On verifie que chaque allocation porte son propre prix (celui passe
         en parametre ou celui du FactureProduit) et le cost_price de chaque lot.
         """
-        from datetime import date
+        from datetime import date, timedelta
+        today = date.today()
         produit, lots = self._create_product_with_lots([
             {
                 "quantity": 10,
                 "quantity_remaining": 10,
-                "date_expiration": date(2025, 12, 31),
+                "date_expiration": today + timedelta(days=30),
             },
             {
                 "quantity": 10,
                 "quantity_remaining": 10,
-                "date_expiration": date(2026, 6, 30),
+                "date_expiration": today + timedelta(days=365),
             },
         ])
         # Definir des selling_price differents sur les lots

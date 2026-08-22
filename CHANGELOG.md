@@ -2,6 +2,77 @@
 
 ---
 
+## 2026-08-22 — Correction des 3 bugs révélés par le plan de tests
+
+### 🔒 Sécurité + Cohérence — 3 bugs corrigés
+
+Les 3 bugs révélés par la Phase 4 du plan de tests ont été corrigés. Les 5 tests
+précédemment skipés passent maintenant.
+
+### Bug 1 — `adjust_stock` ne vérifiait pas `can_adjust_stock`
+
+**Fichier** : `backend/api/views/produit_actions/stock.py`
+
+La vue `adjust_stock` n'appelait pas `validate_sudo_mode`, contrairement à
+`transfer_to_shelf` et `bulk_transfer_to_shelf`. Tout utilisateur authentifié
+pouvait ajuster le stock sans permission.
+
+**Fix** : ajout de `validate_sudo_mode(request, permission_attr='can_adjust_stock')`
+au début de la méthode. Le `MouvementStock` est maintenant tracé avec
+`validation_user` (le user qui a validé l'opération sudo).
+
+### Bug 2 — `adjust_stock` ne synchronisait pas les `StockLot`
+
+**Fichier** : `backend/api/views/produit_actions/stock.py`
+
+Quand aucun lot spécifique n'était fourni (`stock_lot_id` ou `new_lot_number`),
+`Produit.stock` était mis à jour directement sans ajuster les `StockLot`.
+`Produit.stock` divergeait de `Σ StockLot.quantity_remaining`.
+
+**Fix** : quand aucun lot spécifique n'est fourni et que le produit gère les lots
+(`use_lot_management=True`), le `quantity_change` est distribué across les lots
+existants :
+- **Positif** : ajout au lot non-périmé le plus ancien (FEFO). Si aucun lot
+  n'existe, création d'un lot par défaut avec `quantity_remaining = new_quantity`.
+- **Négatif** : déduction des lots en FEFO order.
+- Le signal `sync_product_stock_on_lot_save` recalcule ensuite `Produit.stock`
+  depuis les lots, garantissant la cohérence.
+
+### Bug 3 — FEFO et `transformer` ne filtraient pas les lots périmés
+
+**Fichiers** :
+- `backend/api/services/lot_allocation_service.py`
+- `backend/api/services/sale_validator.py`
+- `backend/api/views/stocks/transformations.py`
+
+L'allocation FEFO et la transformation consommaient des lots avec
+`date_expiration < today`. En pharmacie, les produits périmés ne doivent
+ni être vendus ni être transformés.
+
+**Fix** : ajout du filtre `Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)`
+dans toutes les requêtes d'allocation FEFO :
+- `LotAllocationService.allocate_fifo()` — vente
+- `SaleValidator._allocate_fifo_lots()` — validation vente
+- `RelationTransformationViewSet.transformer()` — transformation (3 endroits)
+- `RelationTransformationViewSet.preview_transformation()` — preview
+
+Les lots sans date d'expiration (`date_expiration=None`) restent valides.
+
+### Tests mis à jour
+
+- 5 tests `pytest.skip()` retirés → tous passent maintenant
+- Dates d'expiration statiques (2025-12-31, 2026-06-30) remplacées par
+  `date.today() + timedelta(days=N)` dans `test_lot_allocation_service.py`
+  et `test_sale_finalizer.py` (les dates étaient devenues périmées)
+
+### Résultats finaux
+
+- **Backend critique** : 168 passent, 0 skip, 0 échec (19 fichiers)
+- **Frontend** : 335 passent, 7 skip, 0 échec (42 fichiers)
+- **Build frontend** : succès
+
+---
+
 ## 2026-08-24 — Plan de tests global (Facturation / Commandes / Caisse / Inventaire)
 
 ### 🧪 Plan de tests global — 106 tests ajoutés, 3 bugs corrigés, 3 bugs révélés
