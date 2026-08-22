@@ -1015,9 +1015,9 @@ export default function Maintenance() {
           )}
 
           {activeRightTab === 'sauvegardes' && (
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
+            <div className="flex flex-col gap-4">
           {/* Backup Section */}
-          <div className="bg-white shadow-xl rounded-2xl border border-indigo-500/20 min-w-[280px] max-w-[320px] flex-shrink-0 snap-start break-words">
+          <div className="bg-white shadow-xl rounded-2xl border border-indigo-500/20 w-full break-words">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Database className="size-5 text-indigo-600" />
@@ -1118,7 +1118,7 @@ export default function Maintenance() {
 
 
           {/* Restoration Section */}
-          <div className="bg-white shadow-xl rounded-2xl border border-red-500/20 min-w-[280px] max-w-[320px] flex-shrink-0 snap-start break-words">
+          <div className="bg-white shadow-xl rounded-2xl border border-red-500/20 w-full break-words">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Upload className="size-5 text-red-600" />
@@ -1166,7 +1166,7 @@ export default function Maintenance() {
 
 
           {/* Source Code Management Section */}
-          <div className="bg-white shadow-xl rounded-2xl border border-slate-400/20 min-w-[280px] max-w-[320px] flex-shrink-0 snap-start break-words">
+          <div className="bg-white shadow-xl rounded-2xl border border-slate-400/20 w-full break-words">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <ShieldAlert className="size-5 text-slate-600" />
@@ -1219,7 +1219,7 @@ export default function Maintenance() {
 
 
           {/* Mise à jour manuelle */}
-          <div className="bg-white shadow-xl rounded-2xl border border-emerald-500/20 min-w-[280px] max-w-[320px] flex-shrink-0 snap-start break-words">
+          <div className="bg-white shadow-xl rounded-2xl border border-emerald-500/20 w-full break-words">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Rocket className="size-5 text-emerald-600" />
