@@ -192,6 +192,11 @@ DATABASES = {
         # Note: Django ne gère pas nativement un pool, mais garde les connexions ouvertes
         # Pour un vrai pool, utiliser pgBouncer ou django-db-pool
         'CONN_HEALTH_CHECKS': True,  # Django 4.1+ : Vérifie la santé des connexions
+
+        # Base de test dédiée — les tests ne touchent jamais la base dev/prod
+        'TEST': {
+            'NAME': 'test_fullstack_db',
+        },
     }
 }
 
