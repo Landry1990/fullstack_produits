@@ -432,14 +432,7 @@ class StockMovementsComprehensiveTestCase(TestCase):
     # ------------------------------------------------------------------
     def test_coherence_stock_lots_apres_ajustement(self):
         """Apres un ajustement manuel, Produit.stock doit etre coherent
-        avec la somme des quantity_remaining des StockLot.
-
-        BUG REVELE: adjust_stock met a jour Produit.stock directement sans
-        synchroniser les StockLot. Produit.stock diverge de la somme des lots.
-        A corriger dans une phase future.
-        """
-        import pytest
-        pytest.skip("BUG: adjust_stock ne synchronise pas les StockLot — a corriger")
+        avec la somme des quantity_remaining des StockLot."""
         from django.db.models import Sum
 
         produit = self.factory.create_produit(stock=60, use_lot_management=True)

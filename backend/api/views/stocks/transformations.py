@@ -2,7 +2,7 @@ import time
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
@@ -59,11 +59,25 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             consumed_lots_info = []
             
             if source.use_lot_management:
-                # Vérification de cohérence
-                total_lots = source.stock_lots.filter(quantity_remaining__gt=0).aggregate(total=Sum('quantity_remaining'))['total'] or 0
+                today = timezone.now().date()
+                valid_lot_filter = Q(quantity_remaining__gt=0) & (
+                    Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)
+                )
 
-                # Si le stock global dit qu'on en a, mais les lots sont vides/insuffisants
+                # Vérification de cohérence (uniquement sur lots non périmés)
+                total_lots = source.stock_lots.filter(valid_lot_filter).aggregate(total=Sum('quantity_remaining'))['total'] or 0
+
+                # Si le stock global dit qu'on en a, mais les lots valides sont vides/insuffisants
                 if total_lots < quantite:
+                    # Vérifier s'il y a des lots périmés pour un message plus précis
+                    expired_total = source.stock_lots.filter(
+                        quantity_remaining__gt=0, date_expiration__lt=today
+                    ).aggregate(total=Sum('quantity_remaining'))['total'] or 0
+                    if expired_total > 0:
+                        return Response(
+                            {'error': f'Stock non périmé insuffisant pour {source.name} (valide: {total_lots}, périmé: {expired_total}, requis: {quantite}). Les lots périmés ne peuvent pas être transformés.'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
                     return Response(
                         {'error': f'Stock en lots insuffisant pour {source.name} (disponible: {total_lots}, requis: {quantite}). Le stock global ({source.stock}) est désynchronisé des lots.'},
                         status=status.HTTP_400_BAD_REQUEST
@@ -71,13 +85,12 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
 
                 # Sélection manuelle des lots possible via request.data.lots
                 selected_lots = request.data.get('lots')
-                
+
                 if selected_lots and isinstance(selected_lots, list):
-                    # Mode sélection manuelle
+                    # Mode sélection manuelle — filtrer les lots périmés
                     lot_ids = [item.get('lot_id') for item in selected_lots if item.get('lot_id')]
                     lots = source.stock_lots.filter(
-                        id__in=lot_ids,
-                        quantity_remaining__gt=0
+                        Q(id__in=lot_ids) & valid_lot_filter
                     ).select_for_update().order_by('date_expiration', 'created_at')
                     
                     lot_map = {lot.id: lot for lot in lots}
@@ -117,7 +130,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                     # Compléter avec FEFO si la sélection manuelle est insuffisante
                     if qty_remaining_to_consume > 0:
                         remaining_lots = source.stock_lots.filter(
-                            quantity_remaining__gt=0
+                            valid_lot_filter
                         ).exclude(
                             id__in=[l['lot'].id for l in consumed_lots_info]
                         ).select_for_update().order_by('date_expiration', 'created_at')
@@ -143,8 +156,8 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                             consumed_lots_info.append({'lot': lot, 'qty': taken})
                             qty_remaining_to_consume -= taken
                 else:
-                    # FEFO Consumption (First Expired, First Out)
-                    lots = source.stock_lots.filter(quantity_remaining__gt=0).select_for_update().order_by('date_expiration', 'created_at')
+                    # FEFO Consumption (First Expired, First Out) — exclure les lots périmés
+                    lots = source.stock_lots.filter(valid_lot_filter).select_for_update().order_by('date_expiration', 'created_at')
                     qty_remaining_to_consume = quantite
                     
                     for lot in lots:
@@ -362,7 +375,12 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
 
         lots_preview = []
         if source.use_lot_management:
-            all_lots = source.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration', 'created_at')
+            today = timezone.now().date()
+            all_lots = source.stock_lots.filter(
+                quantity_remaining__gt=0
+            ).filter(
+                Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)
+            ).order_by('date_expiration', 'created_at')
             qty_remaining_to_consume = quantite
             for lot in all_lots:
                 if qty_remaining_to_consume <= 0:

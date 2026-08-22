@@ -6,8 +6,9 @@ Factorise la logique commune entre SaleValidator, SaleCanceller et SaleModifier.
 """
 import logging
 
-from django.db.models import F, OuterRef, Subquery, Sum, Value
+from django.db.models import F, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 from ..models import (
     FactureProduitAllocation,
@@ -110,10 +111,13 @@ class LotAllocationService:
         produit_id = facture_produit.produit_id
         sp = selling_price or facture_produit.selling_price
 
+        today = timezone.now().date()
         available_lots = list(
             StockLot.objects.filter(
                 produit_id=produit_id,
                 quantity_remaining__gt=0
+            ).filter(
+                Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)
             ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
         )
 

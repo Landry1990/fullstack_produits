@@ -1,5 +1,6 @@
 from django.db import transaction
-from django.db.models import Case, F, IntegerField, Sum, When
+from django.db.models import Case, F, IntegerField, Q, Sum, When
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -176,6 +177,11 @@ class ProduitStockMixin:
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def adjust_stock(self, request, pk=None):
+        # Permission check — same as transfer_to_shelf
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_adjust_stock')
+        if error_res:
+            return error_res
+
         # Lock product (and optional lot) to prevent concurrent manual adjustments.
         produit = Produit.objects.select_for_update().get(pk=self.kwargs['pk'])
 
@@ -213,7 +219,6 @@ class ProduitStockMixin:
             # Créer un nouveau lot
             import datetime as _dt
 
-            from django.utils import timezone
             date_exp = None
             if new_lot_expiration:
                 try:
@@ -263,7 +268,7 @@ class ProduitStockMixin:
         produit.stock_reserve = new_reserve_quantity
         produit.version += 1
         produit.save(update_fields=['stock', 'stock_reserve', 'version'])
-        
+
         if stock_lot:
             if quantity_change != 0:
                 new_lot_qty = stock_lot.quantity_remaining + quantity_change
@@ -277,6 +282,86 @@ class ProduitStockMixin:
                 stock_lot.save(update_fields=['quantity_remaining', 'quantity_reserved', 'quantity_initial'])
             else:
                 stock_lot.save(update_fields=['quantity_remaining', 'quantity_reserved'])
+        elif produit.use_lot_management:
+            # Aucun lot spécifique fourni : distribuer le changement across les lots
+            # existants pour maintenir la cohérence Produit.stock == Σ StockLot.
+            # Le signal sync_product_stock_on_lot_save recalculera produit.stock.
+            today = timezone.now().date()
+
+            # --- Distribution du quantity_change (rayon) ---
+            if quantity_change > 0:
+                # Ajouter au lot le plus ancien non périmé (FEFO)
+                target_lot = (
+                    produit.stock_lots
+                    .filter(Q(date_expiration__gte=today) | Q(date_expiration__isnull=True))
+                    .order_by('date_expiration', 'date_reception')
+                    .first()
+                )
+                if target_lot:
+                    target_lot.quantity_remaining += quantity_change
+                    target_lot.save(update_fields=['quantity_remaining'])
+                else:
+                    # Aucun lot valide : créer un lot par défaut avec le stock total
+                    # (new_quantity, pas quantity_change, car il n'y a pas d'autres lots)
+                    StockLot.objects.create(
+                        produit=produit,
+                        quantity_initial=new_quantity,
+                        quantity_paid=0,
+                        quantity_free=0,
+                        quantity_free_remaining=0,
+                        quantity_remaining=new_quantity,
+                        quantity_reserved=0,
+                        price_cost=produit.pmp or 0,
+                        selling_price=produit.selling_price or 0,
+                        lot=f"ADJ-{produit.id}-{today.strftime('%Y%m%d')}",
+                        date_reception=timezone.now(),
+                    )
+            elif quantity_change < 0:
+                # Déduire des lots en FEFO (non périmés d'abord, puis périmés)
+                lots_to_deduct = list(
+                    produit.stock_lots
+                    .filter(quantity_remaining__gt=0)
+                    .order_by('date_expiration', 'date_reception')
+                    .select_for_update()
+                )
+                remaining = -quantity_change
+                for lot in lots_to_deduct:
+                    if remaining <= 0:
+                        break
+                    taken = min(lot.quantity_remaining, remaining)
+                    lot.quantity_remaining -= taken
+                    lot.save(update_fields=['quantity_remaining'])
+                    remaining -= taken
+
+            # --- Distribution du reserve_change (réserve) ---
+            if reserve_change > 0:
+                target_lot = (
+                    produit.stock_lots
+                    .order_by('date_expiration', 'date_reception')
+                    .first()
+                )
+                if target_lot:
+                    target_lot.quantity_reserved += reserve_change
+                    target_lot.save(update_fields=['quantity_reserved'])
+            elif reserve_change < 0:
+                lots_to_deduct = list(
+                    produit.stock_lots
+                    .filter(quantity_reserved__gt=0)
+                    .order_by('date_expiration', 'date_reception')
+                    .select_for_update()
+                )
+                remaining = -reserve_change
+                for lot in lots_to_deduct:
+                    if remaining <= 0:
+                        break
+                    taken = min(lot.quantity_reserved, remaining)
+                    lot.quantity_reserved -= taken
+                    lot.save(update_fields=['quantity_reserved'])
+                    remaining -= taken
+
+            # Le signal a recalculé produit.stock depuis les lots.
+            # Rafraîchir pour avoir la valeur cohérente.
+            produit.refresh_from_db()
         
         type_mv = MouvementStock.TypeMouvement.AJUSTEMENT
         if quantity_change == -reserve_change and quantity_change != 0:
@@ -285,9 +370,9 @@ class ProduitStockMixin:
         MouvementStock.objects.create(
             produit=produit, type_mouvement=type_mv,
             quantite=quantity_change + reserve_change, stock_apres=produit.total_stock,
-            user=request.user, description=f"Ajustement manuel: {reason_detail or reason_type}. Rayon: {quantity_change:+d}, Réserve: {reserve_change:+d}"
+            user=validation_user, description=f"Ajustement manuel: {reason_detail or reason_type}. Rayon: {quantity_change:+d}, Réserve: {reserve_change:+d}"
         )
-        
+
         log_audit(
             user=request.user, action=AuditLog.Action.STOCK_ADJUST,
             model_name='Produit', object_id=produit.id,

@@ -9,7 +9,7 @@ from decimal import Decimal
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.utils import timezone
 
 from ..models import (
@@ -197,8 +197,11 @@ class SaleValidator:
         ]
         fifo_lots_queue = {}
         if fifo_prods:
+            today = timezone.now().date()
             fifo_lots = StockLot.objects.filter(
                 produit_id__in=fifo_prods, quantity_remaining__gt=0
+            ).filter(
+                Q(date_expiration__gte=today) | Q(date_expiration__isnull=True)
             ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
             for lot in fifo_lots:
                 fifo_lots_queue.setdefault(lot.produit_id, []).append(lot)
