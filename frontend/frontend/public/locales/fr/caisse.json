@@ -156,7 +156,8 @@
         "deposit_available": "Dépôt disponible : {{amount}} F",
         "confirm": "Valider le paiement",
         "success": "Paiement enregistré",
-        "amount_input_hint": "Entrée dans le montant ou clic"
+        "amount_input_hint": "Saisir le montant puis Entrée pour choisir le mode",
+        "mode_navigation_hint": "← → pour naviguer, Entrée pour valider le mode"
     },
     "stats_pending_title": "En Attente",
     "stats_pending_desc": "facture(s) à encaisser",
