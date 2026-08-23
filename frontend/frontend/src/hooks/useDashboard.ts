@@ -55,6 +55,26 @@ interface PromisItem {
     jours_attente: number;
 }
 
+export interface DashboardInitResponse {
+    stats: DashboardStats;
+    revenue_chart: RevenueChartData;
+    hourly_traffic: HourlyTrafficData[];
+    reappro_summary: { product_count: number; total_units_suggested: number };
+}
+
+export const useDashboardInit = () => {
+    return useQuery<DashboardInitResponse>({
+        queryKey: ['dashboard', 'init'],
+        queryFn: async () => {
+            const response = await api.get<DashboardInitResponse>('dashboard/init/');
+            return response.data;
+        },
+        staleTime: 1000 * 60, // 60 secondes
+        refetchInterval: 1000 * 60, // Auto-update every 60 seconds
+        refetchIntervalInBackground: false,
+    });
+};
+
 export const useDashboardStats = () => {
     return useQuery<DashboardStats>({
         queryKey: ['dashboard', 'stats'],
@@ -62,8 +82,8 @@ export const useDashboardStats = () => {
             const response = await api.get<DashboardStats>('dashboard/stats/');
             return response.data;
         },
-        staleTime: 1000 * 15, // 15 secondes
-        refetchInterval: 1000 * 15, // Auto-update every 15 seconds
+        staleTime: 1000 * 15,
+        refetchInterval: 1000 * 15,
         refetchIntervalInBackground: false,
     });
 };
@@ -164,8 +184,8 @@ export const usePromisDisponibles = (enabled: boolean = true) => {
             }
         },
         enabled,
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        refetchInterval: enabled ? 1000 * 60 * 5 : false, // 5 minutes (was 1 min)
+        staleTime: 1000 * 60 * 10, // 10 minutes
+        refetchInterval: enabled ? 1000 * 60 * 10 : false, // 10 minutes
         refetchIntervalInBackground: false,
     });
 };
@@ -254,8 +274,8 @@ export const useManagerStats = () => {
             const response = await api.get<ManagerStats>('dashboard/manager_stats/');
             return response.data;
         },
-        staleTime: 1000 * 60, // 1 minute
-        refetchInterval: 1000 * 60 * 2, // Auto-update every 2 minutes
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
     });
 };
 
@@ -310,8 +330,8 @@ export const useCurrentObjectifs = () => {
             }>('objectifs-commerciaux/courants/');
             return response.data;
         },
-        staleTime: 1000 * 60,
-        refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
+        staleTime: 1000 * 60 * 10, // 10 minutes
+        refetchInterval: 1000 * 60 * 10, // Auto-update every 10 minutes
     });
 };
 
@@ -430,8 +450,8 @@ export const useVendeurStats = (enabled: boolean = true) => {
             return response.data;
         },
         enabled,
-        staleTime: 1000 * 30,
-        refetchInterval: enabled ? 1000 * 30 : false,
+        staleTime: 1000 * 60 * 2, // 2 minutes
+        refetchInterval: enabled ? 1000 * 60 * 2 : false,
         refetchIntervalInBackground: false,
     });
 };
@@ -444,8 +464,8 @@ export const useReapproStats = (enabled: boolean = true) => {
             return response.data;
         },
         enabled,
-        staleTime: 1000 * 60 * 2, // 2 minutes
-        refetchInterval: enabled ? 1000 * 60 * 2 : false,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchInterval: enabled ? 1000 * 60 * 5 : false,
     });
 };
 

@@ -2,6 +2,72 @@
 
 ---
 
+## 2026-08-23 — Suggestions de commande : cache ABC + streaming queryset
+
+### ⚡ Optimisation des suggestions de commande
+
+- Mise en cache 1h du calcul de classification ABC (`get_produits_a_par_marge`).
+- Passage en `iterator(chunk_size=500)` pour `calculer_reapprovisionnement_simple`
+  afin de réduire la consommation mémoire sur les gros catalogues.
+- Conversion de la boucle simple en liste en compréhension pour accélérer
+  le traitement Python.
+- Passage en `iterator(chunk_size=200)` pour `calculer_optimisation_intelligente`
+  qui effectue 5 annotations par produit.
+
+### Fichiers modifiés
+- `backend/api/views/commandes/suggestions.py`
+
+### Vérifications
+- `python -m py_compile backend/api/views/commandes/suggestions.py` : OK
+
+---
+
+## 2026-08-23 — Dashboard : allongement des refetch intervals
+
+### ⏱ Allègement du polling API dashboard
+
+Suite à la consolidation `dashboard/init/`, allongement des délais de
+rafraîchissement automatique des hooks dashboard pour réduire la charge serveur :
+
+- `useDashboardInit` / `useDashboardStats` : 15s → 60s
+- `useVendeurStats` : 30s → 2min
+- `useManagerStats` : 2min (staleTime) / 2min (refetch) → 5min/5min
+- `useReapproStats` : 2min → 5min
+- `usePromisDisponibles` : 5min → 10min
+- `useCurrentObjectifs` : 5min → 10min
+
+### Fichiers modifiés
+- `frontend/frontend/src/hooks/useDashboard.ts`
+
+### Vérifications
+- `npx tsc --noEmit` : OK, 0 erreur
+
+---
+
+## 2026-08-23 — Dashboard : consolidation des requêtes via `dashboard/init/`
+
+### ⚡ Réduction du nombre d'appels API sur le dashboard
+
+Le dashboard effectuait 4 appels API séparés au chargement (`dashboard/stats/`,
+`dashboard/revenue_chart/`, `dashboard/hourly_traffic/`, `produits/reappro_summary/`).
+Un endpoint consolidé `dashboard/init/` existait déjà côté backend mais n'était pas
+utilisé par le frontend.
+
+- Ajout du hook `useDashboardInit` dans `useDashboard.ts` (appelle `dashboard/init/`).
+- Remplacement des 4 hooks séparés par `useDashboardInit` dans `DashboardShadcn.tsx`.
+- Conservation des autres requêtes non consolidées (`low_stock`, `promis`, etc.).
+- `useDashboardStats`, `useRevenueChart`, `useHourlyTraffic`, `useReapproStats` restent
+  exportés (utilisés ailleurs, notamment `Sidebar.tsx` pour `useReapproStats`).
+
+### Fichiers modifiés
+- `frontend/frontend/src/hooks/useDashboard.ts` — `DashboardInitResponse` + `useDashboardInit`
+- `frontend/frontend/src/components/DashboardShadcn.tsx` — utilisation de `useDashboardInit`
+
+### Vérifications
+- `npx tsc --noEmit` : OK, 0 erreur
+
+---
+
 ## 2026-08-23 — Ventes : toggle pour masquer l'en-tête
 
 ### 🪟 Toggle de réduction de l'en-tête sur l'écran Ventes
