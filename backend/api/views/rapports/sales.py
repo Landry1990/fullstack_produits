@@ -341,7 +341,8 @@ class RapportSalesMixin:
             date_fin += timedelta(minutes=1)
 
         qs = FactureProduit.objects.select_related(
-            'produit', 'facture', 'facture__created_by', 'stock_lot'
+            'produit', 'facture', 'facture__created_by',
+            'facture__validated_by', 'facture__remise_validated_by', 'facture__prix_validated_by', 'stock_lot'
         ).filter(
             facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             facture__date__gte=date_debut,
@@ -380,6 +381,18 @@ class RapportSalesMixin:
                 'prix_vente': float(item.selling_price or 0),
                 'montant': float(item.selling_price or 0) * item.quantity,
                 'date_creation': item.facture.date.isoformat() if item.facture.date else None,
+                'validated_by': (
+                    item.facture.validated_by.get_full_name() or item.facture.validated_by.username
+                    if item.facture.validated_by else None
+                ),
+                'remise_validated_by': (
+                    item.facture.remise_validated_by.get_full_name() or item.facture.remise_validated_by.username
+                    if item.facture.remise_validated_by else None
+                ),
+                'prix_validated_by': (
+                    item.facture.prix_validated_by.get_full_name() or item.facture.prix_validated_by.username
+                    if item.facture.prix_validated_by else None
+                ),
             })
 
         return self.paginator.get_paginated_response(results) if page is not None else Response(results)

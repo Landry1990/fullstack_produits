@@ -76,6 +76,7 @@
         "returns": "Peut faire des retours",
         "negative_stock": "Stock Négatif autorisé",
         "modify_price": "Peut modifier le prix",
+        "modify_remise": "Peut appliquer des remises",
         "generate_coupon": "Peut générer des coupons",
         "modify_invoice": "Peut modifier les factures",
         "cancel_invoice": "Annuler Factures",

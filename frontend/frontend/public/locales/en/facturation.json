@@ -205,6 +205,7 @@
     "messages": {
         "discount_limit_error": "Discount limited to {{rate}}% for your profile.",
         "price_modification_forbidden": "You are not authorized to modify the price.",
+        "discount_modification_forbidden": "You are not authorized to apply discounts.",
         "save_success": "Sale registered successfully",
         "save_error": "Error registering sale",
         "scan_added": "Product added: {{name}}",

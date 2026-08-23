@@ -109,6 +109,8 @@ export interface Facture {
     reste_a_payer?: string
     paiements?: Paiement[]
     validated_by_name?: string
+    remise_validated_by_name?: string
+    prix_validated_by_name?: string
     cancelled_by_name?: string
     session_ticket_number?: number
     montant_verse?: string
@@ -356,6 +358,10 @@ export interface SaleCompletionParams {
     tempOrdonnanceData: OrdonnanceData | null;
     validated_by_id?: number | null;
     sudo_password?: string;
+    remise_validated_by_id?: number | null;
+    remise_validated_password?: string;
+    prix_validated_by_id?: number | null;
+    prix_validated_password?: string;
     poste_vente_id?: number | null;
     prescriptionImage?: File | null;
     is_avoir_client?: boolean;

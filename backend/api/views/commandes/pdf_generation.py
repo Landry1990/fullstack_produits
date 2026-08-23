@@ -88,7 +88,7 @@ def generate_reception_pdf(commande):
     Retourne une HttpResponse avec le PDF en pièce jointe.
     """
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="reception_commande_{commande.id}.pdf"'
+    response['Content-Disposition'] = f'inline; filename="reception_commande_{commande.id}.pdf"'
 
     buffer = io.BytesIO()
 

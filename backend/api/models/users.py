@@ -41,6 +41,7 @@ class Profile(models.Model):
 
     # Price & Discount Control
     can_modify_price = models.BooleanField(default=False, verbose_name="Modifier le prix de vente")
+    can_do_remise = models.BooleanField(default=False, verbose_name="Appliquer des remises")
     max_discount_rate = models.DecimalField(
         max_digits=5, 
         decimal_places=2, 

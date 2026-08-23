@@ -35,7 +35,7 @@ class FacturePrintMixin:
         from django.http import HttpResponse
         response = HttpResponse(content_type='application/pdf')
         filename = f"facture_{facture.numero_facture or facture.id}.pdf"
-        response['Content-Disposition'] = build_safe_content_disposition(filename)
+        response['Content-Disposition'] = build_safe_content_disposition(filename, disposition='inline')
         response.write(buffer.getvalue())
         return response
 

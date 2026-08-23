@@ -187,14 +187,14 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   />
                 </TableHead>
               )}
-              <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.ticket')}</TableHead>
-              <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.invoice')}</TableHead>
-              <TableHead className="w-[25%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.client')}</TableHead>
-              <TableHead className="hidden lg:table-cell w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.date')}</TableHead>
-              <TableHead className="hidden xl:table-cell w-16 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.products')}</TableHead>
-              <TableHead className="hidden md:table-cell w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.seller', 'Vendeur')}</TableHead>
-              <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.amount')}</TableHead>
-              <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.actions')}</TableHead>
+              <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.ticket')}</TableHead>
+              <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.invoice')}</TableHead>
+              <TableHead className="w-[20%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.client')}</TableHead>
+              <TableHead className="hidden lg:table-cell w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.date')}</TableHead>
+              <TableHead className="hidden xl:table-cell w-14 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.products')}</TableHead>
+              <TableHead className="hidden md:table-cell w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.seller', 'Vendeur')}</TableHead>
+              <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.amount')}</TableHead>
+              <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

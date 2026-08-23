@@ -116,6 +116,8 @@ class FactureSerializer(serializers.ModelSerializer):
     paiements = CaisseSerializer(many=True, read_only=True)
     created_by_name = serializers.SerializerMethodField()
     validated_by_name = serializers.SerializerMethodField()
+    remise_validated_by_name = serializers.SerializerMethodField()
+    prix_validated_by_name = serializers.SerializerMethodField()
     montant_paye = serializers.SerializerMethodField()
     reste_a_payer = serializers.SerializerMethodField()
     session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
@@ -130,6 +132,8 @@ class FactureSerializer(serializers.ModelSerializer):
             'date', 'date_document', 'status', 'status_display', 'produits',
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'vendeur_name', 'created_by_name', 'validated_by_name',
+            'remise_validated_by', 'remise_validated_by_name',
+            'prix_validated_by', 'prix_validated_by_name',
             'is_remise_auto', 'part_client',
             'created_by', 'validated_by',
             'montant_paye', 'reste_a_payer', 'paiements',
@@ -152,6 +156,16 @@ class FactureSerializer(serializers.ModelSerializer):
     def get_validated_by_name(self, obj):
         if obj.validated_by:
             return obj.validated_by.get_full_name() or obj.validated_by.username
+        return None
+
+    def get_remise_validated_by_name(self, obj):
+        if obj.remise_validated_by:
+            return obj.remise_validated_by.get_full_name() or obj.remise_validated_by.username
+        return None
+
+    def get_prix_validated_by_name(self, obj):
+        if obj.prix_validated_by:
+            return obj.prix_validated_by.get_full_name() or obj.prix_validated_by.username
         return None
 
     def get_client_name(self, obj):

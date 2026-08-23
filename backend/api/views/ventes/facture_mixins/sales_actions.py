@@ -13,6 +13,7 @@ from api.models import (
     Caisse,
     Facture,
     Produit,
+    StockLot,
 )
 from api.services import SalesService
 from api.sudo_utils import validate_sudo_mode
@@ -79,19 +80,40 @@ class FactureSalesMixin:
         """Détermine les permissions Sudo requises pour la vente."""
         is_avoir_client = data.get('is_avoir_client', False)
 
+        product_ids = [p.get('produit') for p in produits_data]
         product_prices = {
             product.id: product.selling_price
-            for product in Produit.objects.filter(id__in=[p.get('produit') for p in produits_data])
+            for product in Produit.objects.filter(id__in=product_ids)
         }
+        # Récupérer les prix de lots valides pour chaque produit.
+        # Lors d'une allocation multi-lot automatique (FEFO), le frontend envoie
+        # le selling_price du lot, qui peut différer du prix global du produit.
+        # Ce n'est PAS une modification manuelle de prix → ne doit pas exiger
+        # la permission can_modify_price.
+        lot_prices_by_product = {}
+        for lot in StockLot.objects.filter(
+            produit_id__in=product_ids,
+            selling_price__isnull=False,
+            selling_price__gt=0,
+        ).values_list('produit_id', 'selling_price'):
+            lot_prices_by_product.setdefault(lot[0], set()).add(lot[1])
+
         requested_quantities = {}
-        requires_price_override = remise_globale > 0
+        requires_discount = remise_globale > 0
+        requires_price_override = False
         for product_data in produits_data:
             product_id = product_data.get('produit')
             quantity = int(product_data.get('quantity', 0))
             requested_quantities[product_id] = requested_quantities.get(product_id, 0) + quantity
             line_price = Decimal(str(product_data.get('selling_price', 0)))
             line_discount = Decimal(str(product_data.get('discount', 0) or 0))
-            if line_price != product_prices.get(product_id) or line_discount > 0:
+            price_matches_product = line_price == product_prices.get(product_id)
+            price_matches_lot = line_price in lot_prices_by_product.get(product_id, set())
+            # Ne déclencher la permission que si le prix ne correspond NI au prix
+            # global du produit NI à un prix de lot valide (vraie modification manuelle).
+            if line_discount > 0:
+                requires_discount = True
+            if not price_matches_product and not price_matches_lot:
                 requires_price_override = True
 
         products = {product.id: product for product in Produit.objects.filter(id__in=requested_quantities)}
@@ -105,6 +127,8 @@ class FactureSalesMixin:
             required_permissions.append('can_cash_out')
         if total_ttc <= 0 and not is_avoir_client:
             required_permissions.append('can_validate_zero_amount')
+        if requires_discount:
+            required_permissions.append('can_do_remise')
         if requires_price_override:
             required_permissions.append('can_modify_price')
         if requires_negative_stock_sale:
@@ -157,6 +181,42 @@ class FactureSalesMixin:
             data, produits_data, temp_sum, remise_globale, total_ttc, centralized, poste_vente_id
         )
 
+        # --- Remise déjà validée séparément (sudo dédié au moment de la saisie) ---
+        # Si le frontend fournit remise_validated_by_id, la remise a déjà été
+        # validée par un autre user (user B) → on ne doit PAS re-vérifier
+        # can_do_remise à la finalisation.
+        remise_validation_user = None
+        remise_validated_by_id = data.get('remise_validated_by_id')
+        if remise_validated_by_id:
+            try:
+                from django.contrib.auth.models import User
+                remise_validation_user = User.objects.get(id=remise_validated_by_id)
+            except User.DoesNotExist:
+                return Response(
+                    {'detail': f"L'utilisateur validateur de remise (id={remise_validated_by_id}) est introuvable."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            # La remise a déjà été validée → retirer can_do_remise
+            required_permissions = [p for p in required_permissions if p != 'can_do_remise']
+
+        # --- Modification de prix déjà validée séparément (sudo dédié au moment de la saisie) ---
+        # Si le frontend fournit prix_validated_by_id, la modification de prix a déjà été
+        # validée par un autre user (user B) → on ne doit PAS re-vérifier
+        # can_modify_price à la finalisation.
+        prix_validation_user = None
+        prix_validated_by_id = data.get('prix_validated_by_id')
+        if prix_validated_by_id:
+            try:
+                from django.contrib.auth.models import User
+                prix_validation_user = User.objects.get(id=prix_validated_by_id)
+            except User.DoesNotExist:
+                return Response(
+                    {'detail': f"L'utilisateur validateur de prix (id={prix_validated_by_id}) est introuvable."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            # La modification de prix a déjà été validée → retirer can_modify_price (idempotent)
+            required_permissions = [p for p in required_permissions if p != 'can_modify_price']
+
         validation_user = user
         if required_permissions:
             try:
@@ -176,21 +236,34 @@ class FactureSalesMixin:
         try:
             if validation_user and 'validation_user' not in data:
                 data['validation_user'] = validation_user
+            if remise_validation_user:
+                data['remise_validation_user'] = remise_validation_user
+            if prix_validation_user:
+                data['prix_validation_user'] = prix_validation_user
 
             facture = SalesService.finalize_sale(user, data, centralized=centralized, image_file=image_file)
 
             total_display = float(facture.total_ttc)
+            audit_details = {
+                'numero_facture': facture.numero_facture,
+                'total_ttc': total_display,
+                'client': str(facture.client) if facture.client else facture.client_name_override,
+            }
+            if remise_validation_user:
+                audit_details['remise_validated_by'] = (
+                    remise_validation_user.get_full_name() or remise_validation_user.username
+                )
+            if prix_validation_user:
+                audit_details['prix_validated_by'] = (
+                    prix_validation_user.get_full_name() or prix_validation_user.username
+                )
             log_audit(
                 user=request.user,
                 action=AuditLog.Action.CREATE,
                 model_name='Facture',
                 object_id=facture.id,
                 description=f"Création et finalisation Facture {facture.numero_facture} (Montant: {total_display:,.0f} F)",
-                details={
-                    'numero_facture': facture.numero_facture,
-                    'total_ttc': total_display,
-                    'client': str(facture.client) if facture.client else facture.client_name_override,
-                },
+                details=audit_details,
                 request=request
             )
 
