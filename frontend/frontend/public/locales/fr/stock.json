@@ -177,6 +177,10 @@
             "info": "ℹ️ Info : Périme dans {{months}} mois ({{days}} jours)",
             "click_to_close": "(Cliquez pour fermer)",
             "click_to_confirm": "(Cliquez pour confirmer)"
+        },
+        "toasts": {
+            "this_month": "{{count}} produit(s) qui perime(ent) ce mois",
+            "months": "{{count}} produit(s) qui perime(ent) dans {{months}} mois"
         }
     },
     "transformations": {

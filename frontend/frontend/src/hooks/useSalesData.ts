@@ -80,11 +80,18 @@ export const useSalesData = () => {
         }
     }, [buildParams, processFacturesData, t]);
 
+    // Ref to current page so fetchFactures doesn't depend on currentPage state.
+    // Without this, fetchFactures is recreated on every page change, which
+    // triggers the search useEffect (that depends on fetchFactures) and resets
+    // to page 1 after 500ms — making pagination impossible.
+    const currentPageRef = useRef(currentPage);
+    currentPageRef.current = currentPage;
+
     // Subsequent fetches (pagination, filter changes): use regular list endpoint
     const fetchFactures = useCallback(async (page = 1) => {
         setLoading(true);
         try {
-            if (page !== currentPage) setCurrentPage(page);
+            if (page !== currentPageRef.current) setCurrentPage(page);
             const params = buildParams(page);
             const data = await venteService.getFactures(params);
             processFacturesData(data);
@@ -95,7 +102,7 @@ export const useSalesData = () => {
         } finally {
             setLoading(false);
         }
-    }, [buildParams, processFacturesData, t, currentPage]);
+    }, [buildParams, processFacturesData, t]);
 
     // Track mount state
     const isInitialMount = useRef(true);

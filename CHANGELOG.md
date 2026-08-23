@@ -2,6 +2,80 @@
 
 ---
 
+## 2026-08-23 — Ventes : toggle pour masquer l'en-tête
+
+### 🪟 Toggle de réduction de l'en-tête sur l'écran Ventes
+
+Sur le même modèle que `Avoirs.tsx` / `Cadencier.tsx` / `Promis.tsx`, ajout d'un
+bouton toggle dans l'en-tête de l'écran Ventes permettant de masquer l'en-tête
+(titre + bouton "Nouvelle vente"), les filtres, les stats par tranche horaire et
+les quick stats, pour n'afficher que le tableau des ventes — utile pour
+maximiser l'espace d'affichage des ventes.
+
+- En-tête réduit : un petit bouton "Afficher" (ChevronDown) reste visible en
+  haut à droite pour ré-afficher l'en-tête.
+- En-tête déployé : bouton "Masquer" (ChevronUp) à côté du bouton "Nouvelle vente".
+- Réutilise les clés i18n existantes `common:show_header` / `common:hide_header`
+  (déjà traduites en fr/en).
+
+### Fichiers modifiés
+- `frontend/frontend/src/components/Ventes.tsx` — état `headerCollapsed`, boutons toggle, encapsulation conditionnelle de l'en-tête/filtres/stats
+
+### Vérifications
+- `npx tsc --noEmit` : OK, 0 erreur
+
+---
+
+## 2026-08-23 — Toast péremption en mois
+
+### 🔔 Toast des produits périmés affiché en mois
+
+Les toasts d'alerte de péremption au chargement de l'application affichent
+maintenant les délais en mois plutôt qu'en jours. Les produits qui périment
+dans moins de 30 jours affichent le message :
+"X produit(s) qui perime(ent) ce mois".
+
+### Fichiers modifiés
+
+**Frontend :**
+- `frontend/frontend/src/components/ExpirationAlertToast.tsx` — regroupement par bucket mensuel, utilisation de i18n
+- `frontend/frontend/public/locales/fr/stock.json` — clés `perimes.toasts.this_month` et `perimes.toasts.months`
+- `frontend/frontend/public/locales/en/stock.json` — traductions anglaises
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK, 0 erreur
+
+---
+
+## 2026-08-23 — Bon de réception : impression via PDF backend (fix Ubuntu/Firefox)
+
+### Problème
+Sur Ubuntu/Firefox, le bon de réception généré après clôture d'une commande
+apparaissait vide car l'ancien flux utilisait une fenêtre popup HTML locale
+avec `window.print()`, incompatible avec certains navigateurs/configurations.
+
+### Solution
+- Le bouton "Imprimer reçu" utilise maintenant le **PDF généré côté backend**
+  (`/api/commandes/{id}/imprimer_reception/`).
+- Le PDF est ouvert dans un nouvel onglet via un blob URL : plus fiable sur
+  Ubuntu/Firefox et cohérent avec les autres documents PDF de l'application.
+- `generate_reception_pdf` et `generate_labels_pdf` utilisent désormais
+  `build_safe_content_disposition(disposition='inline')` comme les autres
+  endpoints PDF (sécurisation + compatibilité aperçu).
+
+### Fichiers modifiés
+- `backend/api/views/commandes/pdf_generation.py`
+- `frontend/frontend/src/hooks/useCommandeActions.ts`
+- `frontend/frontend/src/services/commandeService.ts` (déjà prêt)
+- `frontend/frontend/src/hooks/useCommandes.ts` (déjà prêt)
+
+### Vérifications
+- **py_compile backend** : OK
+- **tsc --noEmit frontend** : OK
+
+---
+
 ## 2026-08-23 — Traçabilité modification prix + rapports ventes avec validateurs
 
 ### 🔐 Sudo séparé pour la modification de prix
