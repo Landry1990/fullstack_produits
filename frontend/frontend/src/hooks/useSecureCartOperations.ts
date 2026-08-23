@@ -14,8 +14,12 @@ export interface UseSecureCartOperationsOptions {
         callback: (validatorId: number, password: string) => Promise<void>,
         options: { title: string; message: string; permission?: string; onCancel?: () => void }
     ) => void
-    setActiveSudoCreds: (creds: { validatorId: number; password: string } | null) => void
-    activeSudoCreds: { validatorId: number; password: string } | null
+    // Creds pour les remises (et retours quantité négative)
+    setRemiseSudoCreds: (creds: { validatorId: number; password: string } | null) => void
+    remiseSudoCreds: { validatorId: number; password: string } | null
+    // Creds pour les modifications de prix
+    setPrixSudoCreds: (creds: { validatorId: number; password: string } | null) => void
+    prixSudoCreds: { validatorId: number; password: string } | null
     t: TFunction
     triggerUiRefresh: () => void
     maxDiscountRate: number
@@ -24,21 +28,23 @@ export interface UseSecureCartOperationsOptions {
 export function useSecureCartOperations({
     cart,
     requireSudo,
-    setActiveSudoCreds,
-    activeSudoCreds,
+    setRemiseSudoCreds,
+    remiseSudoCreds,
+    setPrixSudoCreds,
+    prixSudoCreds,
     t,
     triggerUiRefresh,
     maxDiscountRate
 }: UseSecureCartOperationsOptions) {
     const secureUpdateQuantite = useCallback((lineId: string, newQty: number) => {
         if (newQty < 0) {
-            if (activeSudoCreds) {
+            if (remiseSudoCreds) {
                 cart.updateQuantite(lineId, newQty)
                 return
             }
             const currentLine = cart.lignesFacture.find((l) => l.lineId === lineId)
             requireSudo(async (validatorId, password) => {
-                setActiveSudoCreds({ validatorId, password })
+                setRemiseSudoCreds({ validatorId, password })
                 cart.updateQuantite(lineId, newQty)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
@@ -50,18 +56,18 @@ export function useSecureCartOperations({
             cart.updateQuantite(lineId, newQty)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cart.updateQuantite, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
+    }, [cart.updateQuantite, cart.lignesFacture, requireSudo, setRemiseSudoCreds, remiseSudoCreds, t, triggerUiRefresh])
 
     const secureUpdatePrix = useCallback((lineId: string, newPrice: string) => {
         const currentLine = cart.lignesFacture.find((l) => l.lineId === lineId)
         if (!currentLine) return
         if (newPrice !== currentLine.prix_unitaire) {
-            if (activeSudoCreds) {
+            if (prixSudoCreds) {
                 cart.updatePrix(lineId, newPrice)
                 return
             }
             requireSudo(async (validatorId, password) => {
-                setActiveSudoCreds({ validatorId, password })
+                setPrixSudoCreds({ validatorId, password })
                 cart.updatePrix(lineId, newPrice)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
@@ -73,30 +79,30 @@ export function useSecureCartOperations({
             cart.updatePrix(lineId, newPrice)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cart.updatePrix, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
+    }, [cart.updatePrix, cart.lignesFacture, requireSudo, setPrixSudoCreds, prixSudoCreds, t, triggerUiRefresh])
 
     const secureUpdateRemiseProduit = useCallback((lineId: string, newRemise: string) => {
         const currentLine = cart.lignesFacture.find((l) => l.lineId === lineId)
         if (!currentLine) return
         if (Number(newRemise) > 0 && newRemise !== currentLine.remise_produit) {
-            if (activeSudoCreds) {
+            if (remiseSudoCreds) {
                 cart.updateRemiseProduit(lineId, newRemise)
                 return
             }
             requireSudo(async (validatorId, password) => {
-                setActiveSudoCreds({ validatorId, password })
+                setRemiseSudoCreds({ validatorId, password })
                 cart.updateRemiseProduit(lineId, newRemise)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
                 message: `Confirmer une remise de ${newRemise}% sur le produit ${currentLine.produit.name} ?`,
-                permission: 'can_modify_price',
+                permission: 'can_do_remise',
                 onCancel: triggerUiRefresh
             })
         } else {
             cart.updateRemiseProduit(lineId, newRemise)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cart.updateRemiseProduit, cart.lignesFacture, requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh])
+    }, [cart.updateRemiseProduit, cart.lignesFacture, requireSudo, setRemiseSudoCreds, remiseSudoCreds, t, triggerUiRefresh])
 
     const secureSetRemiseGlobale = useCallback((
         newValue: string,
@@ -113,7 +119,7 @@ export function useSecureCartOperations({
         const tauxEffectif = mode === 'taux' ? num : (totalTTC > 0 ? (num / totalTTC) * 100 : 0)
         const exceedsMax = maxDiscountRate > 0 && tauxEffectif > maxDiscountRate
 
-        if (activeSudoCreds) {
+        if (remiseSudoCreds) {
             if (exceedsMax) {
                 const cappedValue = mode === 'taux'
                     ? String(maxDiscountRate)
@@ -136,26 +142,26 @@ export function useSecureCartOperations({
                 : String(Math.round(totalTTC * maxDiscountRate / 100))
             setRemiseGlobale('0')
             requireSudo(async (validatorId, password) => {
-                setActiveSudoCreds({ validatorId, password })
+                setRemiseSudoCreds({ validatorId, password })
                 setRemiseGlobale(cappedValue)
             }, {
                 title: t('facturation:payment.sudo_mode.validate_by'),
                 message: `Autoriser une remise globale de ${cappedValue}${mode === 'taux' ? '%' : ' F'} (plafond maximum) ?`,
-                permission: 'can_modify_price',
+                permission: 'can_do_remise',
                 onCancel: () => { setRemiseGlobale('0'); triggerUiRefresh() }
             })
             return
         }
         requireSudo(async (validatorId, password) => {
-            setActiveSudoCreds({ validatorId, password })
+            setRemiseSudoCreds({ validatorId, password })
             setRemiseGlobale(newValue)
         }, {
             title: t('facturation:payment.sudo_mode.validate_by'),
             message: `Autoriser une remise globale de ${newValue}${mode === 'taux' ? '%' : ' F'} ?`,
-            permission: 'can_modify_price',
+            permission: 'can_do_remise',
             onCancel: () => { setRemiseGlobale('0'); triggerUiRefresh() }
         })
-    }, [requireSudo, setActiveSudoCreds, activeSudoCreds, t, triggerUiRefresh, maxDiscountRate])
+    }, [requireSudo, setRemiseSudoCreds, remiseSudoCreds, t, triggerUiRefresh, maxDiscountRate])
 
     return {
         secureUpdateQuantite,

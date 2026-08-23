@@ -103,6 +103,8 @@ class FactureListSerializer(serializers.ModelSerializer):
     client_name = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
     validated_by_name = serializers.SerializerMethodField()
+    remise_validated_by_name = serializers.SerializerMethodField()
+    prix_validated_by_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -115,7 +117,7 @@ class FactureListSerializer(serializers.ModelSerializer):
         model = Facture
         fields = [
             'id', 'numero_facture', 'client', 'client_name', 'created_by_name',
-            'validated_by_name', 'ayant_droit_details',
+            'validated_by_name', 'remise_validated_by_name', 'prix_validated_by_name', 'ayant_droit_details',
             'date', 'status', 'status_display', 'total_ht', 'total_ttc',
             'remise', 'montant_regle', 'montant_en_compte', 'poste_caisse',
             'ticket_session', 'session_ticket_number'
@@ -147,6 +149,18 @@ class FactureListSerializer(serializers.ModelSerializer):
         if obj.validated_by:
             full_name = f"{obj.validated_by.first_name} {obj.validated_by.last_name}".strip()
             return full_name or obj.validated_by.username
+        return ''
+
+    def get_remise_validated_by_name(self, obj):
+        if obj.remise_validated_by:
+            full_name = f"{obj.remise_validated_by.first_name} {obj.remise_validated_by.last_name}".strip()
+            return full_name or obj.remise_validated_by.username
+        return ''
+
+    def get_prix_validated_by_name(self, obj):
+        if obj.prix_validated_by:
+            full_name = f"{obj.prix_validated_by.first_name} {obj.prix_validated_by.last_name}".strip()
+            return full_name or obj.prix_validated_by.username
         return ''
 
 class FactureDetailSerializer(FactureSerializer):

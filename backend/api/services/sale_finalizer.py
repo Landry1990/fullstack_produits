@@ -52,6 +52,8 @@ class SaleFinalizer:
         ordonnance_data = data.get('ordonnance')
         coupon_numero = data.get('coupon_numero')
         validation_user = data.get('validation_user') or user
+        remise_validation_user = data.get('remise_validation_user')
+        prix_validation_user = data.get('prix_validation_user')
 
         if not isinstance(produits_data, list) or not produits_data:
             raise ValueError("La liste des produits ne peut pas être vide.")
@@ -83,7 +85,8 @@ class SaleFinalizer:
         if existing_id:
             facture = SaleFinalizer._update_existing_facture(
                 existing_id, client_id, client_name_override, ayant_droit_id,
-                remise_montant, validation_user, poste_vente, poste_caisse_id, centralized
+                remise_montant, validation_user, poste_vente, poste_caisse_id, centralized,
+                remise_validation_user, prix_validation_user
             )
         else:
             facture = Facture.objects.create(
@@ -94,6 +97,8 @@ class SaleFinalizer:
                 status=Facture.Status.BROUILLON,
                 created_by=validation_user,
                 validated_by=validation_user,
+                remise_validated_by=remise_validation_user,
+                prix_validated_by=prix_validation_user,
                 poste_caisse_id=poste_caisse_id,
                 poste_vente=poste_vente,
                 ticket_session=get_next_ticket_session() if centralized else None
@@ -229,7 +234,8 @@ class SaleFinalizer:
 
     @staticmethod
     def _update_existing_facture(existing_id, client_id, client_name_override, ayant_droit_id,
-                                  remise_montant, validation_user, poste_vente, poste_caisse_id, centralized):
+                                  remise_montant, validation_user, poste_vente, poste_caisse_id, centralized,
+                                  remise_validation_user=None, prix_validation_user=None):
         """Met à jour une facture existante (mode re-validation)."""
         try:
             facture = Facture.objects.get(id=existing_id)
@@ -240,6 +246,8 @@ class SaleFinalizer:
             facture.remise = remise_montant
             facture.created_by = validation_user
             facture.validated_by = validation_user
+            facture.remise_validated_by = remise_validation_user
+            facture.prix_validated_by = prix_validation_user
             if poste_vente:
                 facture.poste_vente = poste_vente
             if poste_caisse_id:

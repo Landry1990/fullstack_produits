@@ -464,7 +464,7 @@ class RapportFinanceMixin:
             Facture.objects
             .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                     date__gte=date_debut, date__lte=date_fin)
-            .select_related('client', 'validated_by')
+            .select_related('client', 'validated_by', 'remise_validated_by', 'prix_validated_by')
             .prefetch_related('produits')
         )
         results = []
@@ -491,6 +491,14 @@ class RapportFinanceMixin:
                 'vendeur': (
                     f.validated_by.get_full_name() or f.validated_by.username
                     if f.validated_by else 'N/A'
+                ),
+                'remise_validated_by': (
+                    f.remise_validated_by.get_full_name() or f.remise_validated_by.username
+                    if f.remise_validated_by else None
+                ),
+                'prix_validated_by': (
+                    f.prix_validated_by.get_full_name() or f.prix_validated_by.username
+                    if f.prix_validated_by else None
                 ),
             })
         results.sort(key=lambda x: -x['total_remise'])

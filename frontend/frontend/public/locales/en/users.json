@@ -76,6 +76,7 @@
         "returns": "Can perform returns",
         "negative_stock": "Negative stock authorized",
         "modify_price": "Can modify price",
+        "modify_remise": "Can apply discounts",
         "generate_coupon": "Can generate coupons",
         "modify_invoice": "Can modify invoices",
         "cancel_invoice": "Cancel Invoices",

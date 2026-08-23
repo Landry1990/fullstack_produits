@@ -2,6 +2,218 @@
 
 ---
 
+## 2026-08-23 — Traçabilité modification prix + rapports ventes avec validateurs
+
+### 🔐 Sudo séparé pour la modification de prix
+
+Sur le même modèle que `remise_validated_by`, ajout de `prix_validated_by` pour
+tracer qui a autorisé la modification du prix de vente (distinct de la remise
+et de la validation finale).
+
+Trois sudos maintenant séparés à la facturation :
+- **`remiseSudoCreds`** (user B) : valide les remises (produit + globale)
+- **`prixSudoCreds`** (user C) : valide les modifications de prix
+- **`activeSudoCreds`** (user A) : valide la vente finale (caisse centrale, etc.)
+
+Le backend retire `can_modify_price` des permissions requises à la finalisation
+si `remise_validated_by_id` OU `prix_validated_by_id` est fourni.
+
+### 📊 Rapports ventes : colonnes validateurs
+
+Les rapports et tableaux de ventes affichent maintenant :
+- **"Validé par"** — qui a validé la vente (`validated_by_name`)
+- **"Remise autorisée par"** — qui a autorisé la remise (`remise_validated_by_name`)
+- **"Prix modifié par"** — qui a autorisé la modification de prix (`prix_validated_by_name`)
+
+### Fichiers modifiés
+
+**Backend :**
+- `backend/api/models/billing.py` — champ `prix_validated_by` sur `Facture`
+- `backend/api/migrations/0236_prix_validated_by.py` — migration
+- `backend/api/serializers/billing.py` — `prix_validated_by_name`
+- `backend/api/serializers_optimized.py` — `prix_validated_by_name` dans `FactureListSerializer`
+- `backend/api/views/ventes/facture_mixins/sales_actions.py` — retrait
+  `can_modify_price` si `prix_validated_by_id` fourni, audit enrichi
+- `backend/api/services/sale_finalizer.py` — stockage `prix_validated_by`
+- `backend/api/views/rapports/sales.py` — `prix_validated_by` dans `ventes_operateur_lots`
+- `backend/api/views/rapports/finance.py` — `prix_validated_by` dans `rapport_remises_details`
+
+**Frontend :**
+- `frontend/frontend/src/types/finance.ts` — `prix_validated_by_name`,
+  `prix_validated_by_id`, `prix_validated_password`
+- `frontend/frontend/src/hooks/useSecureCartOperations.ts` — interface avec
+  deux paires de creds (`remiseSudoCreds` + `prixSudoCreds`)
+- `frontend/frontend/src/hooks/useFacturationState.ts` — état `prixSudoCreds`,
+  reset, payload
+- `frontend/frontend/src/hooks/useSaleCompletion.ts` — payload `prix_validated_by_id`
+- `frontend/frontend/src/components/sales/SalesTable.tsx` — 3 colonnes
+  (Validé par, Remise autorisée par, Prix modifié par)
+- `frontend/frontend/public/locales/fr|en/sales.json` + `reports.json` — traductions
+
+### Vérifications
+
+- **py_compile backend** : OK sur les 8 fichiers
+- **tsc --noEmit frontend** : OK, 0 erreur
+
+---
+
+## 2026-08-23 — Sudo séparé remise/vente + traçabilité validateur de remise
+
+### 🔐 Séparation des validations sudo (remise vs vente finale)
+
+Avant, un seul sudo (`activeSudoCreds`) était utilisé pour la remise ET la
+validation finale de la vente. Si un user B validait la remise, ses credentials
+étaient réutilisées pour la vente finale — et le backend re-vérifiait
+`can_modify_price` à la finalisation, ce qui pouvait échouer si le validateur
+n'avait pas les autres permissions (ex: `can_cash_out`).
+
+Maintenant, deux sudos séparés :
+- **`remiseSudoCreds`** (user B) : valide la remise / modification de prix
+  pendant l'édition du panier
+- **`activeSudoCreds`** (user A) : valide la vente finale (caisse centrale, etc.)
+
+Le backend ne re-vérifie plus `can_modify_price` à la finalisation si la remise
+a déjà été validée (`remise_validated_by_id` fourni dans le payload).
+
+### 📝 Traçabilité du validateur de remise
+
+Nouveau champ `remise_validated_by` sur le modèle `Facture` pour tracer qui a
+validé la remise (user B), distinct de `validated_by` (validateur de la vente).
+L'audit log inclut maintenant `remise_validated_by` dans les details.
+
+### Fichiers modifiés
+
+**Backend :**
+- `backend/api/models/billing.py` — ajout champ `remise_validated_by` sur `Facture`
+- `backend/api/migrations/0235_remise_validated_by.py` — migration manuelle
+- `backend/api/serializers/billing.py` — `remise_validated_by` + `remise_validated_by_name`
+- `backend/api/views/ventes/facture_mixins/sales_actions.py` — retrait de
+  `can_modify_price` des permissions requises si `remise_validated_by_id` fourni,
+  récupération du validateur de remise, audit enrichi
+- `backend/api/services/sale_finalizer.py` — stockage de `remise_validated_by`
+  sur la facture (create + update)
+
+**Frontend :**
+- `frontend/frontend/src/types/finance.ts` — champs `remise_validated_by_id`
+  et `remise_validated_password` dans `SaleCompletionParams`
+- `frontend/frontend/src/hooks/useFacturationState.ts` — nouvel état
+  `remiseSudoCreds`, passage à `useSecureCartOperations`, reset, payload
+- `frontend/frontend/src/hooks/useSaleCompletion.ts` — payload inclut
+  `remise_validated_by_id` et `remise_validated_password` à la racine
+
+### Rétrocompatibilité
+
+Si `remise_validated_by_id` n'est pas fourni (vieux frontend), le comportement
+reste inchangé : `can_modify_price` est vérifié via `validate_sudo_mode` comme
+avant.
+
+### Vérifications
+
+- **py_compile backend** : OK sur les 5 fichiers modifiés
+- **tsc --noEmit frontend** : OK, 0 erreur
+- **Build frontend** : succès en 22.67s
+
+---
+
+## 2026-08-23 — Correction de 4 bugs remontés par les clients
+
+### 🐛 4 bugs corrigés (retours clients production)
+
+#### Bug 1 — Statut commande non mis à jour après clôture
+
+**Fichier** : `frontend/frontend/src/hooks/useCommandeActions.ts`
+
+Après la clôture d'une commande, le badge de statut (colonne "US TITLE") ne se
+mettait pas à jour immédiatement dans la liste. Il fallait recharger la page.
+
+**Cause** : `handleCloturerCommande` appelait `setViewMode('DETAILS')` (qui
+démonte la liste) avant `fetchCommandes()` (invalidation asynchrone). Au retour
+vers la liste, `placeholderData: (previousData) => previousData` affichait les
+anciennes données, et le `staleTime` de 2 min empêchait un refetch immédiat.
+
+**Fix** : ajout d'un helper `updateCommandeInCache()` qui met à jour
+immédiatement le cache React Query (`setQueriesData`) avec la commande
+récupérée via `getById`, avant le changement de vue. La liste reflète le
+nouveau statut instantanément sans attendre de refetch réseau.
+
+#### Bug 2 — Aperçu PDF vierge sur Ubuntu (Firefox)
+
+**Fichiers** :
+- `frontend/frontend/nginx.conf`
+- `backend/api/security_utils.py`
+- `backend/api/views/ventes/facture_mixins/print_actions.py`
+- `backend/api/views/ventes/creances.py`
+- `backend/api/views/rapports/pdf_builders.py`
+- `backend/api/views/commandes/promis.py`
+- `backend/api/views/commandes/pdf_generation.py`
+
+L'aperçu PDF de tous les documents (factures, reçus, tickets, étiquettes,
+rapports) était vierge sur Ubuntu/Firefox, mais fonctionnait sur Windows/Chrome.
+
+**Cause** : deux problèmes combinés :
+1. **CSP nginx** : `object-src 'none'` bloquait le rendu des blob URLs par le
+   visualiseur PDF intégré de Firefox. Chrome est plus permissif.
+2. **Content-Disposition: attachment** : forçait le téléchargement au lieu de
+   l'affichage inline, ce que Firefox gère mal avec les blob URLs.
+
+**Fix** :
+- CSP : `object-src 'none'` → `object-src 'self' blob:` dans `nginx.conf`
+- `build_safe_content_disposition()` : ajout d'un paramètre `disposition`
+  (défaut `attachment`, peut être `inline`)
+- Tous les endpoints PDF d'aperçu passés en `disposition='inline'`
+  (factures, reçus, relevés, tickets promis, étiquettes, réceptions, rapports)
+- L'export Excel reste en `attachment` (téléchargement normal)
+
+#### Bug 3 — Barre de défilement horizontale sur le tableau des ventes (caisse centrale)
+
+**Fichier** : `frontend/frontend/src/components/caisse/FacturesTable.tsx`
+
+Le tableau des ventes à la caisse centrale affichait une barre de défilement
+horizontale même sur un très grand écran.
+
+**Cause** : la colonne Actions (`w-24` = 96px) était trop étroite pour contenir
+les 4 boutons (Modifier, Annuler, Coupon, Encaisser + texte), forçant le
+débordement. Les autres colonnes avaient aussi des largeurs fixes généreuses.
+
+**Fix** : rééquilibrage des largeurs de colonnes :
+- Actions : `w-24` → `w-36` (+48px, pour accommoder les 4 boutons)
+- Ticket : `w-24` → `w-20` (-16px)
+- Invoice : `w-28` → `w-24` (-16px)
+- Client : `w-[25%]` → `w-[20%]` (-5% relatif)
+- Date : `w-28` → `w-24` (-16px)
+- Products : `w-16` → `w-14` (-8px)
+- Seller : `w-28` → `w-24` (-16px)
+
+#### Bug 4 — Permission `can_modify_price` demandée à tort lors de l'allocation multi-lot
+
+**Fichier** : `backend/api/views/ventes/facture_mixins/sales_actions.py`
+
+À la validation d'une vente avec allocation multi-lot automatique (FEFO), le
+système demandait la permission `can_modify_price` alors qu'il n'y avait eu
+aucune modification manuelle de prix — c'était juste l'application du prix
+enregistré du lot.
+
+**Cause** : `_compute_required_permissions` comparait le prix envoyé par le
+frontend avec le prix **global** du produit (`Produit.selling_price`). Or, lors
+d'une allocation multi-lot, le frontend envoie le `selling_price` du lot, qui
+peut différer du prix global. La condition `line_price != product_prices.get(...)`
+était donc vraie à tort.
+
+**Fix** : la méthode récupère maintenant les `selling_price` de tous les
+`StockLot` valides pour les produits concernés. La permission n'est déclenchée
+que si le prix ne correspond **ni** au prix global du produit **ni** à un prix
+de lot valide. Une vraie modification manuelle (prix arbitraire) déclenche
+toujours la permission.
+
+### Vérifications
+
+- **Build frontend** : succès en 23s
+- **Syntaxe backend** : `py_compile` OK sur les 7 fichiers modifiés
+- **Tests** : non réexécutés ce cycle (bugs de logique/UI, pas de régressions
+  attendues sur les tests existants)
+
+---
+
 ## 2026-08-22 — Correction des 3 bugs révélés par le plan de tests
 
 ### 🔒 Sécurité + Cohérence — 3 bugs corrigés

@@ -45,6 +45,21 @@ function removeCommandesFromCache(queryClient: QueryClient, idsToRemove: number[
     });
 }
 
+// Met à jour une commande dans toutes les queries ['commandes', ...] du cache.
+// Utilisé après une action (clôture, annulation, etc.) pour que la liste
+// reflète immédiatement le nouveau statut sans attendre un refetch réseau.
+function updateCommandeInCache(queryClient: QueryClient, updated: Commande) {
+    queryClient.setQueriesData({ queryKey: ['commandes'] }, (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        const data = old as PaginatedResponse<Commande>;
+        if (!data || !data.results) return old;
+        return {
+            ...data,
+            results: data.results.map((c: Commande) => (c.id === updated.id ? updated : c)),
+        };
+    });
+}
+
 export function useCommandeActions({
     fetchCommandes,
     setSelectedCommande,
@@ -173,6 +188,9 @@ export function useCommandeActions({
             // pour éviter toute race condition avec le refetch de la liste
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
+            // Mettre à jour le cache de la liste immédiatement pour que le
+            // statut (badge "US TITLE") se rafraîchisse sans attendre un refetch.
+            updateCommandeInCache(queryClient, updated);
             setViewMode('DETAILS');
 
             // Après clôture réussie, vérifier si des produits peuvent être reconditionnés

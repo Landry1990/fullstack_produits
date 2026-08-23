@@ -287,6 +287,6 @@ def build_rapport_pdf(data: dict, title_text: str, filename: str) -> HttpRespons
     doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = build_safe_content_disposition(filename)
+    response['Content-Disposition'] = build_safe_content_disposition(filename, disposition='inline')
     response.write(buffer.getvalue())
     return response

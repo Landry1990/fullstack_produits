@@ -195,6 +195,18 @@ class Facture(models.Model):
         help_text="Utilisateur qui a validé la facture"
     )
 
+    remise_validated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='remises_validated',
+        help_text="Utilisateur qui a validé la remise (si différent du validateur de la vente)"
+    )
+
+    prix_validated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='prix_validated',
+        help_text="Utilisateur qui a autorisé la modification de prix (si différent du validateur de la vente)"
+    )
+
     cancelled_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='factures_cancelled',

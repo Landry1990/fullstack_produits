@@ -101,7 +101,7 @@ def validate_safe_path(base_path: Path, user_path: str) -> Path:
     return resolved_path
 
 
-def build_safe_content_disposition(filename: str) -> str:
+def build_safe_content_disposition(filename: str, disposition: str = 'attachment') -> str:
     """
     Build a safe Content-Disposition header value.
     
@@ -110,11 +110,17 @@ def build_safe_content_disposition(filename: str) -> str:
     
     Args:
         filename: The raw filename
+        disposition: Either 'attachment' (default, forces download) or
+                     'inline' (browser displays in-page when possible)
     
     Returns:
         Safe Content-Disposition header value
     """
     from urllib.parse import quote
+
+    # Validate disposition parameter
+    if disposition not in ('attachment', 'inline'):
+        disposition = 'attachment'
     
     # Sanitize the filename first
     safe_filename = sanitize_filename(filename)
@@ -122,8 +128,8 @@ def build_safe_content_disposition(filename: str) -> str:
     # For ASCII filenames, use simple format
     try:
         safe_filename.encode('ascii')
-        return f'attachment; filename="{safe_filename}"'
+        return f'{disposition}; filename="{safe_filename}"'
     except UnicodeEncodeError:
         # For non-ASCII, use RFC 5987 encoding
         encoded = quote(safe_filename, safe='')
-        return f"attachment; filename*=UTF-8''{encoded}"
+        return f"{disposition}; filename*=UTF-8''{encoded}"

@@ -261,8 +261,9 @@ export default function AnalyseABC() {
       t('stock:abc.table.category', { defaultValue: 'Catégorie' })
     ]
 
-    // Lignes de données
-    const rows = produitsFiltrés.map(p => [
+    // Lignes de données — toutes les classes A, B et C d'un coup
+    const tousLesProduits = data.produits
+    const rows = tousLesProduits.map(p => [
       p.nom,
       p.cip,
       p.rayon,
@@ -282,7 +283,7 @@ export default function AnalyseABC() {
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(tsv)
-        gooeyToast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
+        gooeyToast.success(t('stock:abc.messages.copy_success', { count: tousLesProduits.length }))
       } else {
         const textarea = document.createElement('textarea')
         textarea.value = tsv
@@ -293,7 +294,7 @@ export default function AnalyseABC() {
         const ok = document.execCommand('copy')
         document.body.removeChild(textarea)
         if (ok) {
-          gooeyToast.success(t('stock:abc.messages.copy_success', { count: produitsFiltrés.length }))
+          gooeyToast.success(t('stock:abc.messages.copy_success', { count: tousLesProduits.length }))
         } else {
           throw new Error('execCommand copy failed')
         }
@@ -349,7 +350,7 @@ export default function AnalyseABC() {
           rayons={rayons}
           fournisseurs={fournisseurs}
           onCopy={copyToClipboard}
-          copyDisabled={!data || produitsFiltrés.length === 0}
+          copyDisabled={!data || data.produits.length === 0}
         />
       </div>
 

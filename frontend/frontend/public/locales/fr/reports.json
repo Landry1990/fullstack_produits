@@ -343,7 +343,10 @@
         "PRODUIT": "Produit",
         "QUANTITE": "Qté",
         "MT_VENTE": "Montant Vente",
-        "MT_ACHAT": "Montant Achat"
+        "MT_ACHAT": "Montant Achat",
+        "validated_by": "Validé par",
+        "remise_validated_by": "Remise autorisée par",
+        "prix_validated_by": "Prix modifié par"
     },
     "preset_saved": "Configuration enregistrée !",
     "preset_loaded": "Chargement de : {{name}}",

@@ -23,6 +23,7 @@ export interface TableCartRowProps {
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
   canModifyPrice: boolean
+  canDoRemise: boolean
   maxDiscount: number
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number
@@ -43,6 +44,7 @@ export default React.memo(function TableCartRow({
   quantityInputsRef,
   onReturnFocus,
   canModifyPrice,
+  canDoRemise,
   maxDiscount,
   t,
   refreshTrigger,
@@ -153,7 +155,9 @@ export default React.memo(function TableCartRow({
               onReturnFocus()
             }
           }}
-          className="w-full text-right font-medium text-sm h-8 min-h-[32px] sm:min-h-0 text-amber-600 placeholder-amber-300"
+          className={`w-full text-right font-medium text-sm h-8 min-h-[32px] sm:min-h-0 ${!canDoRemise ? 'text-slate-400 cursor-not-allowed' : 'text-amber-600 placeholder-amber-300'}`}
+          disabled={!canDoRemise}
+          title={!canDoRemise ? t('facturation:messages.discount_modification_forbidden') : ''}
           placeholder="%"
         />
       </TableCell>

@@ -394,7 +394,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         
         response = HttpResponse(content_type='application/pdf')
         filename = f"recu_{paiement.id}_{facture.numero_facture or facture.id}.pdf"
-        response['Content-Disposition'] = build_safe_content_disposition(filename)
+        response['Content-Disposition'] = build_safe_content_disposition(filename, disposition='inline')
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
@@ -778,7 +778,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
             response = HttpResponse(content_type='application/pdf')
             filename = f"recapitulatif_reglement_{releve.reference}.pdf"
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['Content-Disposition'] = build_safe_content_disposition(filename, disposition='inline')
 
             buffer = io.BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)

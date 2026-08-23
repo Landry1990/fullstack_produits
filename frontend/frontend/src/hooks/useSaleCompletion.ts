@@ -302,6 +302,10 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                     validated_by_id: params.validated_by_id,
                     sudo_password: params.sudo_password
                 },
+                remise_validated_by_id: params.remise_validated_by_id,
+                remise_validated_password: params.remise_validated_password,
+                prix_validated_by_id: params.prix_validated_by_id,
+                prix_validated_password: params.prix_validated_password,
                 type: params.isRetrocession ? 'RETRO' : 'STD',
                 centralized_cash_register: params.centralizedCashRegister,
                 poste_vente_id: params.poste_vente_id,
