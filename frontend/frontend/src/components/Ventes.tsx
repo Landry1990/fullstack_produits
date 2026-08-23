@@ -15,7 +15,7 @@ import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
 import { TrancheHoraireStats } from './sales/TrancheHoraireStats';
 import Pagination from './ui/Pagination';
-import { Receipt, Plus } from 'lucide-react';
+import { Receipt, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from './shadcn/button';
 
@@ -49,6 +49,7 @@ const Ventes: React.FC = () => {
 
     const [showQuickStats, setShowQuickStats] = React.useState(false);
     const [trancheStats, setTrancheStats] = React.useState<unknown>(null);
+    const [headerCollapsed, setHeaderCollapsed] = React.useState(false);
 
     // Handle incoming redirect from Omnisearch
     useEffect(() => {
@@ -67,57 +68,86 @@ const Ventes: React.FC = () => {
         <div className="h-full flex flex-col bg-slate-50 font-sans p-4 sm:p-6 gap-4 sm:gap-6">
 
             {/* ── HEADER ── */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                        <div className="bg-emerald-100 text-emerald-600 rounded-xl p-2.5 shrink-0">
-                            <Receipt className="size-6" />
+            {!headerCollapsed && (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="bg-emerald-100 text-emerald-600 rounded-xl p-2.5 shrink-0">
+                                <Receipt className="size-6" />
+                            </div>
+                            <div className="min-w-0">
+                                <h1 className="text-xl font-bold text-slate-900 tracking-tight truncate">
+                                    {t('title')}
+                                </h1>
+                                <p className="text-sm text-slate-500">
+                                    {t('subtitle')}
+                                </p>
+                            </div>
                         </div>
-                        <div className="min-w-0">
-                            <h1 className="text-xl font-bold text-slate-900 tracking-tight truncate">
-                                {t('title')}
-                            </h1>
-                            <p className="text-sm text-slate-500">
-                                {t('subtitle')}
-                            </p>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Link to="/app/facturation">
+                                <Button className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20">
+                                    <Plus className="size-4" />
+                                    <span className="hidden sm:inline">Nouvelle vente</span>
+                                    <span className="sm:hidden">Vente</span>
+                                </Button>
+                            </Link>
+                            <button
+                                onClick={() => setHeaderCollapsed(true)}
+                                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 transition-colors px-2 py-1 rounded hover:bg-emerald-50"
+                                title={t('common:hide_header', 'Masquer')}
+                            >
+                                <ChevronUp className="size-3.5" />
+                                <span className="hidden sm:inline">{t('common:hide_header', 'Masquer')}</span>
+                            </button>
                         </div>
                     </div>
-                    <Link to="/app/facturation">
-                        <Button className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20">
-                            <Plus className="size-4" />
-                            <span className="hidden sm:inline">Nouvelle vente</span>
-                            <span className="sm:hidden">Vente</span>
-                        </Button>
-                    </Link>
                 </div>
-            </div>
+            )}
 
-                <SalesFilters
-                    filters={filters}
-                    onDeleteDrafts={handleDeleteBrouillons}
-                    onRefresh={() => { refresh(); }}
-                    users={users}
-                />
+            {headerCollapsed && (
+                <div className="flex justify-end">
+                    <button
+                        onClick={() => setHeaderCollapsed(false)}
+                        className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 transition-colors px-2 py-1 rounded hover:bg-emerald-50"
+                        title={t('common:show_header', 'Afficher')}
+                    >
+                        <ChevronDown className="size-3.5" />
+                        <span className="hidden sm:inline">{t('common:show_header', 'Afficher')}</span>
+                    </button>
+                </div>
+            )}
 
-                <TrancheHoraireStats
-                    startDate={filters.startDate}
-                    endDate={filters.endDate}
-                    onVerify={(data) => {
-                        setTrancheStats({
-                            ...stats,
-                            total_ttc: data.total_ttc,
-                            total_regle: data.total_regle,
-                            total_en_compte: data.total_en_compte,
-                        });
-                        setShowQuickStats(true);
-                    }}
-                />
+                {!headerCollapsed && (
+                    <>
+                        <SalesFilters
+                            filters={filters}
+                            onDeleteDrafts={handleDeleteBrouillons}
+                            onRefresh={() => { refresh(); }}
+                            users={users}
+                        />
 
-                {showQuickStats && (
-                    <SalesQuickStats
-                        stats={trancheStats || stats}
-                        onClose={() => setShowQuickStats(false)}
-                    />
+                        <TrancheHoraireStats
+                            startDate={filters.startDate}
+                            endDate={filters.endDate}
+                            onVerify={(data) => {
+                                setTrancheStats({
+                                    ...stats,
+                                    total_ttc: data.total_ttc,
+                                    total_regle: data.total_regle,
+                                    total_en_compte: data.total_en_compte,
+                                });
+                                setShowQuickStats(true);
+                            }}
+                        />
+
+                        {showQuickStats && (
+                            <SalesQuickStats
+                                stats={trancheStats || stats}
+                                onClose={() => setShowQuickStats(false)}
+                            />
+                        )}
+                    </>
                 )}
 
                 {/* Main Content: Table */}
