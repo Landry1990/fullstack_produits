@@ -1,6 +1,24 @@
 import { useEffect, useRef } from 'react';
 import { gooeyToast } from 'goey-toast';
+import { useTranslation } from 'react-i18next';
 import { useExpirationAlerts, type ExpirationAlert } from '../hooks/useExpirationAlerts';
+
+const LEVEL_PRIORITY: Record<string, number> = {
+  critical: 3,
+  warning: 2,
+  notice: 1,
+  info: 0,
+};
+
+function getHighestLevel(items: ExpirationAlert[]): ExpirationAlert['level'] {
+  let highest: ExpirationAlert['level'] = 'info';
+  for (const item of items) {
+    if (LEVEL_PRIORITY[item.level] > LEVEL_PRIORITY[highest]) {
+      highest = item.level;
+    }
+  }
+  return highest;
+}
 
 /**
  * Composant qui affiche automatiquement les toasts d'alerte péremption
@@ -10,6 +28,7 @@ import { useExpirationAlerts, type ExpirationAlert } from '../hooks/useExpiratio
  */
 export function ExpirationAlertToasts() {
   const hasShownRef = useRef(false);
+  const { t } = useTranslation('stock');
 
   const { data, isSuccess } = useExpirationAlerts({
     days: 30,
@@ -26,7 +45,7 @@ export function ExpirationAlertToasts() {
       };
     }
 
-    const { alerts, stats } = data;
+    const { alerts } = data;
 
     if (alerts.length === 0) {
       hasShownRef.current = true;
@@ -35,70 +54,55 @@ export function ExpirationAlertToasts() {
       };
     }
 
-    // Grouper par niveau
-    const critical = alerts.filter((a: ExpirationAlert) => a.level === 'critical');
-    const warning = alerts.filter((a: ExpirationAlert) => a.level === 'warning');
-    const others = alerts.filter((a: ExpirationAlert) => a.level === 'notice' || a.level === 'info');
-
-    // Toast critique - persistant avec son
-    if (critical.length > 0) {
-      gooeyToast.error('🚨 Alerte péremption critique', {
-        description: `${critical.length} produit(s) expirent dans ≤ 7 jours`,
-        duration: Infinity,
-      });
-
-      // Son d'alerte (optionnel)
-      try {
-        const audio = new Audio('/sounds/alert-critical.mp3');
-        audio.volume = 0.4;
-        audio.play().catch(() => {});
-      } catch {
-        // Ignorer les erreurs audio
-      }
+    // Grouper par bucket mensuel (30 jours) pour afficher les alertes en mois
+    const buckets = new Map<number, ExpirationAlert[]>();
+    for (const alert of alerts) {
+      const monthBucket = Math.floor(alert.days_until / 30);
+      const existing = buckets.get(monthBucket) || [];
+      existing.push(alert);
+      buckets.set(monthBucket, existing);
     }
 
-    // Toast warning (10s)
-    if (warning.length > 0) {
-      timers.push(
-        setTimeout(() => {
-          gooeyToast.warning('⚠️ Péremption imminente', {
-            description: `${warning.length} produit(s) expirent dans 8-14 jours`,
-            duration: 10000,
-          });
-        }, critical.length > 0 ? 500 : 0)
-      );
-    }
+    const sortedBuckets = Array.from(buckets.entries()).sort(([a], [b]) => a - b);
 
-    // Toast info (5s)
-    if (others.length > 0 && (critical.length > 0 || warning.length > 0)) {
-      timers.push(
-        setTimeout(() => {
-          gooeyToast.success(
-            `📦 ${others.length} autre(s) produit(s) en surveillance péremption`,
-            {
-              duration: 5000,
-            }
-          );
-        }, (critical.length > 0 ? 500 : 0) + (warning.length > 0 ? 500 : 0))
-      );
-    }
+    sortedBuckets.forEach(([monthBucket, items], index) => {
+      const level = getHighestLevel(items);
+      const count = items.length;
+      const message =
+        monthBucket === 0
+          ? t('perimes.toasts.this_month', { count })
+          : t('perimes.toasts.months', { count, months: monthBucket });
 
-    // Toast récapitulatif si beaucoup d'alertes sans critiques
-    if (critical.length === 0 && warning.length === 0 && others.length > 5) {
-      gooeyToast.info(
-        `📦 ${stats.total_alerts} produits en péremption imminente (valeur: ${stats.total_valeur.toFixed(2)} F)`,
-        {
-          duration: 8000,
+      const showToast = () => {
+        if (level === 'critical') {
+          gooeyToast.error(message, { duration: Infinity });
+          try {
+            const audio = new Audio('/sounds/alert-critical.mp3');
+            audio.volume = 0.4;
+            audio.play().catch(() => {});
+          } catch {
+            // Ignorer les erreurs audio
+          }
+        } else if (level === 'warning') {
+          gooeyToast.warning(message, { duration: 10000 });
+        } else {
+          gooeyToast.info(message, { duration: 5000 });
         }
-      );
-    }
+      };
+
+      if (index === 0) {
+        showToast();
+      } else {
+        timers.push(setTimeout(showToast, index * 500));
+      }
+    });
 
     hasShownRef.current = true;
 
     return () => {
       timers.forEach(clearTimeout);
     };
-  }, [isSuccess, data]);
+  }, [isSuccess, data, t]);
 
   // Ce composant ne rend rien visuellement
   return null;

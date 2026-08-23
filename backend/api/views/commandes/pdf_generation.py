@@ -7,6 +7,8 @@ import logging
 from datetime import datetime
 
 from django.http import HttpResponse
+
+from api.security_utils import build_safe_content_disposition
 from reportlab.graphics.barcode import code128
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -87,8 +89,9 @@ def generate_reception_pdf(commande):
 
     Retourne une HttpResponse avec le PDF en pièce jointe.
     """
+    filename = f'reception_commande_{commande.id}.pdf'
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="reception_commande_{commande.id}.pdf"'
+    response['Content-Disposition'] = build_safe_content_disposition(filename, disposition='inline')
 
     buffer = io.BytesIO()
 
@@ -412,5 +415,5 @@ def generate_labels_pdf(commande, label_format='40x20'):
 
     buffer.seek(0)
     response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="etiquettes_commande_{commande.id}.pdf"'
+    response['Content-Disposition'] = build_safe_content_disposition(f'etiquettes_commande_{commande.id}.pdf', disposition='inline')
     return response

@@ -931,6 +931,10 @@
             "info": "ℹ️ Info: Expires in {{months}} months ({{days}} days)",
             "click_to_close": "(Click to close)",
             "click_to_confirm": "(Click to confirm)"
+        },
+        "toasts": {
+            "this_month": "{{count}} product(s) expiring this month",
+            "months": "{{count}} product(s) expiring in {{months}} month(s)"
         }
     },
     "transformations": {
