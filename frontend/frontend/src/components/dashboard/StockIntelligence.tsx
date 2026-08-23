@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
   Archive, 
-  Medal, 
   ArrowRight,
   Package,
   CalendarDays,
@@ -494,41 +493,6 @@ export default function StockIntelligence({
           </div>
         </div>
 
-        {/* Top Products Today - Swapped to last position */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
-          <div className="p-6 flex flex-col h-full">
-            <div className="flex items-center gap-3 mb-6 shrink-0">
-              <div className="p-2 bg-amber-50 text-amber-500 rounded-lg">
-                <Medal className="size-5" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-slate-800 tracking-tight uppercase">{t('charts.top_products')}</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('charts.today_bestsellers')}</p>
-              </div>
-            </div>
-            <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
-              {stats?.top_products && stats.top_products.length > 0 ? (
-                stats.top_products.map((p, i) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-100 border border-slate-100 hover:border-amber-200 transition-all group">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs font-bold text-amber-500 bg-amber-50 size-6 flex items-center justify-center rounded-lg border border-amber-100">{i + 1}</span>
-                      <span className="text-xs font-bold text-slate-700 truncate">{p.name}</span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[10px] font-bold text-slate-700">{t('alerts.units_suffix', { count: p.qty })}</span>
-                      <span className="text-[9px] font-bold text-blue-600">{formatCurrencyLocal(p.revenue)}</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-slate-300 text-center h-full">
-                  <ShoppingBag className="size-12 mb-2" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">{t('charts.no_sales')}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
     </div>
   );
 }
