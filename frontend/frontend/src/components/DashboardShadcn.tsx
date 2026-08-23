@@ -12,12 +12,9 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import {
-  useDashboardStats,
+  useDashboardInit,
   useDashboardHeavyStats,
-  useRevenueChart,
-  useHourlyTraffic,
   useExpiringLots,
-  useReapproStats,
   useLowStock,
   usePromisDisponibles,
   useUgStats,
@@ -44,7 +41,6 @@ import { cn } from '../lib/utils';
 import PerformanceOverview from './dashboard/PerformanceOverview';
 import StockIntelligence from './dashboard/StockIntelligence';
 import FinancialSummary from './dashboard/FinancialSummary';
-import ExpirationAlertsWidget from './dashboard/ExpirationAlertsWidget';
 import DashboardVendeur from './dashboard/DashboardVendeur';
 
 export default function DashboardShadcn() {
@@ -59,16 +55,18 @@ export default function DashboardShadcn() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useDashboardStats();
+  const { data: initData, isLoading: initLoading, error: initError, refetch: refetchInit } = useDashboardInit();
   const { data: heavyStats } = useDashboardHeavyStats();
-  const { data: revenueChart, isLoading: chartLoading, refetch: refetchChart } = useRevenueChart();
-  const { data: hourlyTraffic } = useHourlyTraffic();
+
+  const stats = initData?.stats;
+  const revenueChart = initData?.revenue_chart;
+  const hourlyTraffic = initData?.hourly_traffic;
+  const reapproStats = initData?.reappro_summary;
 
   const isStockTab = activeTab === 'stock';
   const { data: lowStockItems = [], refetch: refetchLowStock } = useLowStock(isStockTab);
   const { data: promisDisponibles = [] } = usePromisDisponibles(isStockTab);
   const { data: expiringLots = [], refetch: refetchExpiring } = useExpiringLots(expirationMonths, isStockTab);
-  const { data: reapproStats } = useReapproStats(true);
 
   const { data: supplierDebts } = useSupplierDebts(true);
 
@@ -90,13 +88,12 @@ export default function DashboardShadcn() {
     dormant_stock: heavyStats?.dormant_stock ?? stats.dormant_stock,
   } : stats;
 
-  const loading = statsLoading || chartLoading;
-  const error = statsError ? t('messages.error_loading') : null;
+  const loading = initLoading;
+  const error = initError ? t('messages.error_loading') : null;
 
   const handleRefreshAll = async () => {
     await Promise.all([
-      refetchStats(),
-      refetchChart(),
+      refetchInit(),
       refetchLowStock(),
       refetchExpiring(),
     ]);
@@ -341,7 +338,6 @@ export default function DashboardShadcn() {
         )}
         {!isVendeur && activeTab === 'stock' && (
           <div className="space-y-6">
-            <ExpirationAlertsWidget />
             <StockIntelligence
               stats={mergedStats}
               lowStockItems={lowStockItems}

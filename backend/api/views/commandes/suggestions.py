@@ -14,7 +14,13 @@ def get_produits_a_par_marge(periode=90, fournisseur_id=None):
     """
     Classifie les produits selon la méthode ABC sur la marge générée.
     Retourne l'ensemble des IDs des produits de classe A (top ~80% de la marge cumulée).
+    Mis en cache 1h car ce calcul est coûteux et peu changeant.
     """
+    cache_key = f"produits_abc_a:{periode}:{fournisseur_id or 'all'}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     from decimal import Decimal
 
     from django.db.models import F, Q, Sum
@@ -45,11 +51,13 @@ def get_produits_a_par_marge(periode=90, fournisseur_id=None):
     # Garder les produits avec une marge positive
     marges = [(v['produit_id'], float(v['marge_totale'] or 0)) for v in ventes if (v['marge_totale'] or 0) > 0]
     if not marges:
+        cache.set(cache_key, set(), 3600)
         return set()
 
     marges.sort(key=lambda x: x[1], reverse=True)
     total_marge = sum(m for _, m in marges)
     if total_marge <= 0:
+        cache.set(cache_key, set(), 3600)
         return set()
 
     seuil_abc = total_marge * 0.80
@@ -61,6 +69,7 @@ def get_produits_a_par_marge(periode=90, fournisseur_id=None):
         if cumul >= seuil_abc:
             break
 
+    cache.set(cache_key, produits_a, 3600)
     return produits_a
 
 
@@ -193,53 +202,43 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
             last_supplier_price=Subquery(last_price_subquery)
         )
     
-    suggestions = []
-    
-    for produit in produits:
-        # Récupérer l'annotation calculée
-        ventes = produit.ventes_periode or 0
-        
-        stock_actuel = produit.stock or 0
-        
-        # Réassort simple = on commande exactement ce qu'on a vendu
-        qte_a_commander = int(ventes)
-        
-        # Calculer le montant HT
-        # Prioriser le prix du fournisseur spécifique si disponible
-        prix_achat = float(getattr(produit, 'last_supplier_price', None) or produit.cost_price or 0)
-        montant_ht = prix_achat * qte_a_commander
-        
-        # Calculer la raison
-        raison = f"Vendu: {int(ventes)} unités sur {periode}j"
+    suggestions = [
+        {
+            'produit_id': produit.id,
+            'produit_nom': produit.name,
+            'produit_ref': produit.cip1 or '',
+            'fournisseur_id': fournisseur_obj.id if fournisseur_obj else (produit.fournisseur.id if produit.fournisseur else None),
+            'fournisseur_nom': fournisseur_obj.name if fournisseur_obj else (produit.fournisseur.name if produit.fournisseur else 'N/A'),
+            'stock_actuel': int(produit.stock or 0),
+            'ventes_periode': int(produit.ventes_periode or 0),
+            'quantite_suggeree': int(produit.ventes_periode or 0),
+            'prix_achat': float(getattr(produit, 'last_supplier_price', None) or produit.cost_price or 0),
+            'prix_vente': float(produit.selling_price or 0),
+            'tva': str(produit.tva or '0'),
+            'taux_marge': str(produit.taux_marge or '1.3'),
+            'rotation': 'N/A',
+            'tendance': 'N/A',
+            'urgence': 'urgent' if (produit.stock or 0) <= 0 else 'normal',
+            'couverture_jours': int(((produit.stock or 0) / (produit.ventes_periode or 1)) * periode) if (produit.ventes_periode or 0) > 0 else 999,
+            'is_supplier_exclusive': produit.is_supplier_exclusive,
+            'exclusive_fournisseur_nom': produit.fournisseur.name if (produit.is_supplier_exclusive and produit.fournisseur) else None,
+        }
+        for produit in produits.iterator(chunk_size=500)
+        if (produit.ventes_periode or 0) > 0
+    ]
+
+    # Enrichir raison/montant HT post-boucle pour lisibilité
+    for item in suggestions:
+        ventes = item['ventes_periode']
+        stock_actuel = item['stock_actuel']
+        qte = item['quantite_suggeree']
+        item['montant_ht'] = item['prix_achat'] * qte
+        raison = f"Vendu: {ventes} unités sur {periode}j"
         if stock_actuel <= 0:
             raison += " (RUPTURE)"
         elif stock_actuel < ventes:
-            raison += f" | Stock restant: {int(stock_actuel)}"
-        
-        # Ne garder que les produits avec des ventes ET quantité > 0
-        if ventes > 0 and qte_a_commander > 0:
-            suggestions.append({
-                'produit_id': produit.id,
-                'produit_nom': produit.name,
-                'produit_ref': produit.cip1 or '',
-                'fournisseur_id': fournisseur_obj.id if fournisseur_obj else (produit.fournisseur.id if produit.fournisseur else None),
-                'fournisseur_nom': fournisseur_obj.name if fournisseur_obj else (produit.fournisseur.name if produit.fournisseur else 'N/A'),
-                'stock_actuel': int(stock_actuel),
-                'ventes_periode': int(ventes),
-                'quantite_suggeree': qte_a_commander,
-                'prix_achat': prix_achat,
-                'montant_ht': montant_ht,
-                'prix_vente': float(produit.selling_price or 0),
-                'tva': str(produit.tva or '0'),
-                'taux_marge': str(produit.taux_marge or '1.3'),
-                'rotation': 'N/A',
-                'tendance': 'N/A',
-                'urgence': 'urgent' if stock_actuel <= 0 else 'normal',
-                'couverture_jours': int((stock_actuel / ventes) * periode) if ventes > 0 else 999,
-                'is_supplier_exclusive': produit.is_supplier_exclusive,
-                'exclusive_fournisseur_nom': produit.fournisseur.name if (produit.is_supplier_exclusive and produit.fournisseur) else None,
-                'raison': raison
-            })
+            raison += f" | Stock restant: {stock_actuel}"
+        item['raison'] = raison
     
     # Trier par ventes élevées (priorité selon demande utilisateur)
     suggestions.sort(key=lambda x: -x['ventes_periode'])
@@ -319,7 +318,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     date_4s = timezone.now() - timedelta(days=28)
     date_8s = timezone.now() - timedelta(days=56)
 
-    # Annoter puis limiter pour éviter les timeouts
+    # Annoter puis limiter pour éviter les timeouts (intelligent est 5x plus lourd)
     produits = produits_qs.select_related('fournisseur').annotate(
         ventes_total_annotation=Sum('factureproduit__quantity', filter=Q(
             factureproduit__facture__date__gte=date_debut,
@@ -359,7 +358,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     
     suggestions = []
     
-    for produit in produits:
+    for produit in produits.iterator(chunk_size=200):
         # ── 1. Données brutes ──
         ventes_total = produit.ventes_total_annotation or 0
         ventes_90j = produit.ventes_90j_annotation or 0
