@@ -19,7 +19,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             'allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role',
             'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande',
-            'can_modify_price', 'max_discount_rate', 'can_cancel_invoice', 'can_modify_invoice',
+            'can_modify_price', 'can_do_remise', 'max_discount_rate', 'can_cancel_invoice', 'can_modify_invoice',
             'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs', 'can_validate_zero_amount', 'can_validate_sales', 'can_view_cash_sessions',
             'is_terminal_account'
         ]
@@ -97,6 +97,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_validate_sales = profile_data.get('can_validate_sales', False)
             profile.can_view_cash_sessions = profile_data.get('can_view_cash_sessions', False)
             profile.is_terminal_account = profile_data.get('is_terminal_account', False)
+            profile.can_do_remise = profile_data.get('can_do_remise', False)
             profile.role = profile_data.get('role', 'VENDEUR')
             profile.save()
 
@@ -140,6 +141,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_manage_perimes = profile_data.get('can_manage_perimes', profile.can_manage_perimes)
             profile.can_manage_avoirs = profile_data.get('can_manage_avoirs', profile.can_manage_avoirs)
             profile.can_modify_price = profile_data.get('can_modify_price', profile.can_modify_price)
+            profile.can_do_remise = profile_data.get('can_do_remise', profile.can_do_remise)
             profile.can_validate_zero_amount = profile_data.get('can_validate_zero_amount', profile.can_validate_zero_amount)
             profile.can_validate_sales = profile_data.get('can_validate_sales', profile.can_validate_sales)
             profile.can_view_cash_sessions = profile_data.get('can_view_cash_sessions', profile.can_view_cash_sessions)

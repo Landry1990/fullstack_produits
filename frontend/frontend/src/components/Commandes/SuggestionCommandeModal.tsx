@@ -214,7 +214,7 @@ export default function SuggestionCommandeModal({
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent
-        className="max-w-4xl w-full p-0 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl shadow-emerald-900/10 bg-white"
+        className="max-w-5xl w-[95vw] p-0 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl shadow-emerald-900/10 bg-white"
         aria-labelledby="suggestion-modal-title"
         aria-describedby="suggestion-modal-desc"
       >
@@ -282,20 +282,20 @@ export default function SuggestionCommandeModal({
                       type="button"
                       onClick={() => setSuggestionParams(prev => ({ ...prev, mode: m.key }))}
                       className={cn(
-                        'relative flex flex-col gap-2 p-4 rounded-xl border-2 text-left transition-all cursor-pointer h-auto items-stretch shadow-none',
+                        'relative flex flex-col gap-2 p-4 rounded-xl border-2 text-left transition-all cursor-pointer h-auto items-stretch shadow-none min-w-0 overflow-hidden',
                         suggestionParams.mode === m.key
                           ? 'border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-100'
                           : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/40'
                       )}
                     >
                       <div className={cn(
-                        'size-9 rounded-lg flex items-center justify-center transition-colors',
+                        'size-9 rounded-lg flex items-center justify-center transition-colors shrink-0',
                         suggestionParams.mode === m.key ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'
                       )}>
                         {m.icon}
                       </div>
-                      <span className="font-semibold text-sm text-slate-800">{m.title}</span>
-                      <p className="text-xs text-slate-500 leading-relaxed">{m.desc}</p>
+                      <span className="font-semibold text-sm text-slate-800 break-words whitespace-normal w-full">{m.title}</span>
+                      <p className="text-xs text-slate-500 leading-relaxed break-words whitespace-normal w-full">{m.desc}</p>
                       {suggestionParams.mode === m.key && (
                         <span className="absolute top-3 right-3 size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
                       )}

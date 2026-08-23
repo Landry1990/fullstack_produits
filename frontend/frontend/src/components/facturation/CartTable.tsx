@@ -62,6 +62,7 @@ const CartTable = React.memo(({
   }, [lignesFacture])
 
   const canModifyPrice = user?.is_superuser || user?.profile?.can_modify_price
+  const canDoRemise = user?.is_superuser || user?.profile?.can_do_remise
   const maxDiscount = user?.is_superuser ? 100 : (normalizeNumberInput(user?.profile?.max_discount_rate || 0))
 
   if (lignesFacture.length === 0) {
@@ -92,6 +93,7 @@ const CartTable = React.memo(({
             quantityInputsRef={quantityInputsRef}
             onReturnFocus={onReturnFocus}
             canModifyPrice={!!canModifyPrice}
+            canDoRemise={!!canDoRemise}
             maxDiscount={maxDiscount}
             t={t}
             refreshTrigger={refreshTrigger}
@@ -134,6 +136,7 @@ const CartTable = React.memo(({
             quantityInputsRef={quantityInputsRef}
             onReturnFocus={onReturnFocus}
             canModifyPrice={!!canModifyPrice}
+            canDoRemise={!!canDoRemise}
             maxDiscount={maxDiscount}
             t={t}
             refreshTrigger={refreshTrigger}

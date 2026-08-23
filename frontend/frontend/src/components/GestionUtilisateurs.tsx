@@ -40,6 +40,7 @@ interface User {
     can_validate_zero_amount?: boolean;
     can_validate_sales?: boolean;
     can_modify_price?: boolean;
+    can_do_remise?: boolean;
     can_modify_invoice?: boolean;
     can_view_cash_sessions?: boolean;
     max_discount_rate?: string | number;
@@ -208,6 +209,7 @@ export default function GestionUtilisateurs() {
     can_validate_zero_amount: false,
     can_validate_sales: false,
     can_modify_price: false,
+    can_do_remise: false,
     can_modify_invoice: false,
     can_view_cash_sessions: false,
     max_discount_rate: 0,
@@ -260,6 +262,7 @@ export default function GestionUtilisateurs() {
       can_validate_zero_amount: sourceUser.profile?.can_validate_zero_amount || false,
       can_validate_sales: sourceUser.profile?.can_validate_sales || false,
       can_modify_price: sourceUser.profile?.can_modify_price || false,
+      can_do_remise: sourceUser.profile?.can_do_remise || false,
       can_modify_invoice: sourceUser.profile?.can_modify_invoice || false,
       can_view_cash_sessions: sourceUser.profile?.can_view_cash_sessions || false,
       max_discount_rate: Number(sourceUser.profile?.max_discount_rate || 0),
@@ -289,6 +292,7 @@ export default function GestionUtilisateurs() {
       updates.can_validate_zero_amount = true;
       updates.can_validate_sales = true;
       updates.can_modify_price = true;
+      updates.can_do_remise = true;
       updates.can_modify_invoice = true;
       updates.can_view_cash_sessions = true;
       updates.max_discount_rate = 100;
@@ -325,6 +329,7 @@ export default function GestionUtilisateurs() {
       updates.can_validate_zero_amount = false;
       updates.can_validate_sales = false;
       updates.can_modify_price = false;
+      updates.can_do_remise = false;
       updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
       if (!preserveMenus) updates.allowed_menus = ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'];
@@ -346,6 +351,7 @@ export default function GestionUtilisateurs() {
       updates.can_validate_zero_amount = false;
       updates.can_validate_sales = false;
       updates.can_modify_price = false;
+      updates.can_do_remise = false;
       updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
       if (!preserveMenus) updates.allowed_menus = ['compta', 'compta_dashboard', 'compta_grand_livre', 'compta_balance', 'compta_resultat', 'compta_charges', 'compta_plan'];
@@ -388,6 +394,7 @@ export default function GestionUtilisateurs() {
         can_validate_zero_amount: user.profile?.can_validate_zero_amount || false,
         can_validate_sales: user.profile?.can_validate_sales || false,
         can_modify_price: user.profile?.can_modify_price || false,
+        can_do_remise: user.profile?.can_do_remise || false,
         can_modify_invoice: user.profile?.can_modify_invoice || false,
         can_view_cash_sessions: user.profile?.can_view_cash_sessions || false,
         max_discount_rate: Number(user.profile?.max_discount_rate || 0),
@@ -420,6 +427,7 @@ export default function GestionUtilisateurs() {
         can_validate_zero_amount: false,
         can_validate_sales: false,
         can_modify_price: false,
+        can_do_remise: false,
         can_modify_invoice: false,
         can_view_cash_sessions: false,
         max_discount_rate: 0,
@@ -542,6 +550,7 @@ export default function GestionUtilisateurs() {
           can_validate_zero_amount: formData.can_validate_zero_amount,
           can_validate_sales: formData.can_validate_sales,
           can_modify_price: formData.can_modify_price,
+          can_do_remise: formData.can_do_remise,
           can_modify_invoice: formData.can_modify_invoice,
           can_view_cash_sessions: formData.can_view_cash_sessions,
           max_discount_rate: formData.max_discount_rate
@@ -945,11 +954,18 @@ export default function GestionUtilisateurs() {
                           label={t('permissions.negative_stock')} 
                           className="p-2 bg-white rounded-lg border border-slate-200 text-amber-600 font-bold"
                         />
-                        <Checkbox 
+                        <Checkbox
                           size="xs"
-                          checked={formData.can_modify_price} 
-                          onChange={checked => setFormData({...formData, can_modify_price: checked})} 
-                          label={t('permissions.modify_price')} 
+                          checked={formData.can_modify_price}
+                          onChange={checked => setFormData({...formData, can_modify_price: checked})}
+                          label={t('permissions.modify_price')}
+                          className="p-2 bg-white rounded-lg border border-slate-200"
+                        />
+                        <Checkbox
+                          size="xs"
+                          checked={formData.can_do_remise}
+                          onChange={checked => setFormData({...formData, can_do_remise: checked})}
+                          label={t('permissions.modify_remise')}
                           className="p-2 bg-white rounded-lg border border-slate-200"
                         />
                         <Checkbox 

@@ -341,7 +341,10 @@
         "PRODUIT": "Product",
         "QUANTITE": "Qty",
         "MT_VENTE": "Sale Amount",
-        "MT_ACHAT": "Purchase Amount"
+        "MT_ACHAT": "Purchase Amount",
+        "validated_by": "Validated by",
+        "remise_validated_by": "Discount authorized by",
+        "prix_validated_by": "Price modified by"
     },
     "preset_saved": "Configuration saved!",
     "preset_loaded": "Loading: {{name}}",

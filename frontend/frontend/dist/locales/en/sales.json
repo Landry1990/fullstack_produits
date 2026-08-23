@@ -62,6 +62,7 @@
         "proforma": "Quote",
         "load_to_facturation": "Load to billing",
         "validated_by": "Validated by",
+        "remise_validated_by": "Discount authorized by",
         "cancelled_by": "Cancelled by"
     },
     "table": {
@@ -77,6 +78,9 @@
         "amount_settled": "Settled",
         "amount_on_account": "On account",
         "operator": "Operator",
+        "validated_by": "Validated by",
+        "remise_validated_by": "Discount authorized by",
+        "prix_validated_by": "Price modified by",
         "actions": "Actions"
     },
     "fields": {

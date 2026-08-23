@@ -444,7 +444,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         ticket_height = 200 * mm 
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="ticket_promis_groupe_{first_promis.id}.pdf"'
+        response['Content-Disposition'] = f'inline; filename="ticket_promis_groupe_{first_promis.id}.pdf"'
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=(ticket_width, ticket_height),

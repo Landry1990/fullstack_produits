@@ -20,6 +20,7 @@ export interface SidebarCartRowProps {
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
   canModifyPrice: boolean
+  canDoRemise: boolean
   maxDiscount: number
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number
@@ -39,6 +40,7 @@ export default React.memo(function SidebarCartRow({
   quantityInputsRef,
   onReturnFocus,
   canModifyPrice,
+  canDoRemise,
   maxDiscount,
   t,
   refreshTrigger,
@@ -158,9 +160,10 @@ export default React.memo(function SidebarCartRow({
                      onReturnFocus()
                    }
                  }}
-                 className="w-full bg-transparent text-left font-semibold text-amber-600 focus:text-amber-700 focus:outline-none placeholder-amber-300"
+                 disabled={!canDoRemise}
+                 className={`w-full bg-transparent text-left font-semibold focus:outline-none placeholder-amber-300 ${!canDoRemise ? 'text-slate-400 cursor-not-allowed' : 'text-amber-600 focus:text-amber-700'}`}
                  placeholder={t('facturation:cart_extra.rem_placeholder')}
-                 title={t('facturation:cart.discount_amount')}
+                 title={!canDoRemise ? t('facturation:messages.discount_modification_forbidden') : t('facturation:cart.discount_amount')}
               />
            </div>
          </div>

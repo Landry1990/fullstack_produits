@@ -62,6 +62,7 @@
         "proforma": "Devis",
         "load_to_facturation": "Charger en facturation",
         "validated_by": "Validé par",
+        "remise_validated_by": "Remise autorisée par",
         "cancelled_by": "Annulé par"
     },
     "table": {
@@ -77,6 +78,9 @@
         "amount_settled": "Réglé",
         "amount_on_account": "En compte",
         "operator": "Opérateur",
+        "validated_by": "Validé par",
+        "remise_validated_by": "Remise autorisée par",
+        "prix_validated_by": "Prix modifié par",
         "actions": "Actions"
     },
     "fields": {

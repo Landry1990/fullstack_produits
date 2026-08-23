@@ -206,6 +206,7 @@
     "messages": {
         "discount_limit_error": "Remise limitée à {{rate}}% pour votre profil.",
         "price_modification_forbidden": "Vous n'avez pas l'autorisation de modifier le prix.",
+        "discount_modification_forbidden": "Vous n'avez pas l'autorisation d'appliquer des remises.",
         "save_success": "Vente enregistrée avec succès",
         "save_error": "Erreur lors de l'enregistrement de la vente",
         "scan_added": "Produit ajouté: {{name}}",

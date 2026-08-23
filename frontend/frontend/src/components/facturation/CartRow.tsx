@@ -17,6 +17,7 @@ export interface CartRowProps {
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
   canModifyPrice: boolean
+  canDoRemise: boolean
   maxDiscount: number
   t: (key: string, options?: unknown) => string
   refreshTrigger?: number

@@ -217,6 +217,7 @@ if p_created or profile.role != 'PHARMACIEN':
     profile.can_manage_avoirs = True
     profile.can_validate_zero_amount = True
     profile.can_modify_price = True
+    profile.can_do_remise = True
     profile.max_discount_rate = 100
     profile.save()
     print('✓ Profile admin configuré (PHARMACIEN, tous droits)')

@@ -68,6 +68,8 @@ export function useFacturationState() {
   // --- Sudo ---
   const { sudoState, requireSudo, closeSudo } = useSudo()
   const [activeSudoCreds, setActiveSudoCreds] = useState<{ validatorId: number, password: string } | null>(null)
+  const [remiseSudoCreds, setRemiseSudoCreds] = useState<{ validatorId: number, password: string } | null>(null)
+  const [prixSudoCreds, setPrixSudoCreds] = useState<{ validatorId: number, password: string } | null>(null)
 
   // --- UI Hook ---
   const ui = useFacturationUI()
@@ -88,8 +90,10 @@ export function useFacturationState() {
   const { secureUpdateQuantite, secureUpdatePrix, secureUpdateRemiseProduit, secureSetRemiseGlobale } = useSecureCartOperations({
     cart,
     requireSudo,
-    setActiveSudoCreds,
-    activeSudoCreds,
+    setRemiseSudoCreds,
+    remiseSudoCreds,
+    setPrixSudoCreds,
+    prixSudoCreds,
     t,
     triggerUiRefresh,
     maxDiscountRate
@@ -347,12 +351,16 @@ export function useFacturationState() {
 
         actions._resetSaleDataOnly()
         setActiveSudoCreds(null)
+        setRemiseSudoCreds(null)
+        setPrixSudoCreds(null)
         ui.closePaymentModal()
       }
     },
     onReset: () => {
       actions._resetSaleDataOnly()
       setActiveSudoCreds(null)
+      setRemiseSudoCreds(null)
+      setPrixSudoCreds(null)
     },
     onError: (msg: string) => setError(msg)
   })
@@ -429,6 +437,10 @@ export function useFacturationState() {
       tempOrdonnanceData: ui.tempOrdonnanceData,
       validated_by_id: effectiveSudo?.validatorId || null,
       sudo_password: effectiveSudo?.password || undefined,
+      remise_validated_by_id: remiseSudoCreds?.validatorId || null,
+      remise_validated_password: remiseSudoCreds?.password || undefined,
+      prix_validated_by_id: prixSudoCreds?.validatorId || null,
+      prix_validated_password: prixSudoCreds?.password || undefined,
       modificationInvoiceStatus: ui.modificationInvoiceStatus || undefined,
       poste_vente_id: posteVenteId,
       prescriptionImage: ui.prescriptionImage,
