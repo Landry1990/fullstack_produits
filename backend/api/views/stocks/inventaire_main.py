@@ -19,6 +19,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ...idempotency import idempotent_action
 from ...models import (
     Inventaire,
     LigneInventaire,
@@ -217,6 +218,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
+    @idempotent_action
     def validate(self, request, pk=None):
         """
         Validation de l'inventaire avec support des lots.

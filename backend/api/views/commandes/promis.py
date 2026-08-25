@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ...idempotency import idempotent_action
 from ...models import MouvementStock, Produit, Promis
 from ...pagination import StandardResultsSetPagination
 from ...search_mixins import MultiTermSearchMixin
@@ -90,6 +91,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         self._reserve_stock_for_promis(promis)
         return promis
 
+    @idempotent_action
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

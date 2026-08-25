@@ -16,6 +16,10 @@ def creer_postes_vente_et_migrer_factures(apps, schema_editor):
 
     for caisse in PosteCaisse.objects.all():
         date_ouv = getattr(caisse, 'date_ouverture', None) or now
+        # Évite les doublons si la migration est ré-exécutée
+        existing = PosteVente.objects.filter(caisse=caisse).first()
+        if existing:
+            continue
         # Crée un poste de vente actif si la caisse était ouverte
         if getattr(caisse, 'est_ouvert', False):
             poste = PosteVente.objects.create(

@@ -122,6 +122,11 @@ step "4. Clonage du projet Zenith Pharma"
 if [ -d "$ZENITH_DIR/.git" ]; then
     warn "Dossier $ZENITH_DIR existe déjà — mise à jour..."
     cd "$ZENITH_DIR"
+    # Sauvegarder les modifications locales éventuelles avant le reset
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+        warn "Modifications locales détectées — création d'un stash de sécurité..."
+        git stash push -m "auto-stash before install update $(date +%Y%m%d_%H%M%S)" || true
+    fi
     git fetch origin
     git reset --hard "origin/$BRANCH"
 else

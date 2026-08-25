@@ -288,9 +288,10 @@ function DashboardTab({ resultat, actions, t }: DashboardTabProps) {
                     <p className="text-white/80 text-sm">{t('dashboard.ready_subtitle')}</p>
                 </div>
 
-                <button 
+                <button
                     onClick={() => actions.initializeHistory.mutate()}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={actions.initializeHistory.isPending}
                 >
                     <RefreshCcw className={`size-4 ${actions.initializeHistory.isPending ? 'animate-spin' : ''}`} />
                     {actions.initializeHistory.isPending ? t('dashboard.init_loading') : t('dashboard.init_button')}

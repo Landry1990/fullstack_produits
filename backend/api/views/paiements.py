@@ -1,9 +1,11 @@
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from ..idempotency import idempotent_action
 from ..models import PaiementFournisseur
 from ..pagination import StandardResultsSetPagination
 from ..serializers import PaiementFournisseurSerializer
@@ -30,6 +32,11 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
         if date_fin:
             queryset = queryset.filter(date_paiement__lte=date_fin)
         return queryset
+
+    @idempotent_action
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

@@ -182,7 +182,9 @@ DATABASES = {
             # Timeouts pour éviter les deadlocks (en millisecondes)
             # statement_timeout: annule les requêtes qui prennent trop de temps
             # lock_timeout: annule si l'attente de verrou est trop longue
-            'options': '-c client_encoding=UTF8 -c statement_timeout=30000 -c lock_timeout=5000 -c TimeZone=Africa/Douala',
+            # Pendant les migrations, utiliser DB_STATEMENT_TIMEOUT et DB_LOCK_TIMEOUT
+            # pour augmenter les timeouts (ex: 300000ms / 30000ms)
+            'options': f'-c client_encoding=UTF8 -c statement_timeout={os.getenv("DB_STATEMENT_TIMEOUT", "30000")} -c lock_timeout={os.getenv("DB_LOCK_TIMEOUT", "5000")} -c TimeZone=Africa/Douala',
             
             # Connection pooling côté client (optionnel, pour pgBouncer)
             # 'server_side_binding': False,  # Décommenter si vous utilisez pgBouncer

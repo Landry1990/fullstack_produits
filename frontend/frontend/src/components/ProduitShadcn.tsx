@@ -668,6 +668,7 @@ export default function ProduitShadcn() {
         isOpen={isAdjustOpen} onClose={() => setIsAdjustOpen(false)}
         selectedProduit={selectedProduit} form={adjustForm} setForm={setAdjustForm}
         onSubmit={handleStockAdjustmentSubmit}
+        isSubmitting={adjustStockMutation.isPending}
       />
       <PasswordConfirmModal
         isOpen={isPasswordOpen}

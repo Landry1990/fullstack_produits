@@ -27,6 +27,7 @@ interface StockAdjustmentModalProps {
   selectedProduit: ProduitModel | null;
   form: AdjustFormType;
   setForm: (form: (prev: AdjustFormType) => AdjustFormType) => void;
+  isSubmitting?: boolean;
 }
 
 export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
@@ -35,7 +36,8 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   onSubmit,
   selectedProduit,
   form,
-  setForm
+  setForm,
+  isSubmitting = false
 }) => {
   const { t } = useTranslation(['products', 'common']);
   const [dynamicReasons, setDynamicReasons] = useState<{ value: string; label: string }[]>([]);
@@ -268,8 +270,8 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             <Button type="button" variant="outline" onClick={onClose}>
               {t('common:actions.cancel')}
             </Button>
-            <Button type="submit" variant="primary" disabled={!form.new_quantity}>
-              {t('common:actions.confirm')}
+            <Button type="submit" variant="primary" disabled={!form.new_quantity || isSubmitting}>
+              {isSubmitting ? t('common:actions.processing', { defaultValue: 'Traitement…' }) : t('common:actions.confirm')}
             </Button>
           </DialogFooter>
         </form>

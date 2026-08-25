@@ -29,13 +29,18 @@ if (-not $backendPrevious -and -not $frontendPrevious) {
     exit 1
 }
 
+# Découverte du backup DB (avant la confirmation pour être disponible en mode -Force)
+$lastBackup = $null
+if ($IncludeDB) {
+    $lastBackup = Get-ChildItem "backups\*.sql" -ErrorAction SilentlyIgnore | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+}
+
 # Confirmation
 if (-not $Force) {
     Write-Host "Cette action va:"
     if ($backendPrevious) { Write-Host "  • Restaurer BACKEND  → image 'previous'" -ForegroundColor White }
     if ($frontendPrevious) { Write-Host "  • Restaurer FRONTEND → image 'previous'" -ForegroundColor White }
     if ($IncludeDB) {
-        $lastBackup = Get-ChildItem "backups\*.sql" -ErrorAction SilentlyIgnore | Sort-Object LastWriteTime -Descending | Select-Object -First 1
         if ($lastBackup) {
             Write-Host "  • Restaurer DATABASE → $($lastBackup.Name)" -ForegroundColor White
         } else {
@@ -80,17 +85,28 @@ if ($IncludeDB -and $lastBackup) {
     Write-Host "🗄️  Restauration DATABASE..." -ForegroundColor Yellow
     Write-Host "   Backup: $($lastBackup.FullName)" -ForegroundColor White
 
-    # Arreter le backend pendant le restore
-    docker-compose -f docker-compose.prod.yml stop backend 2>$null | Out-Null
+    # Vérification d'intégrité : le backup doit être non vide
+    $backupSize = (Get-Item $lastBackup.FullName).Length
+    if ($backupSize -lt 100) {
+        Write-Host "   ❌ Backup corrompu ou vide ($backupSize octets). Rollback DB annulé." -ForegroundColor Red
+    } else {
+        # Arreter le backend pendant le restore
+        docker-compose -f docker-compose.prod.yml stop backend 2>$null | Out-Null
 
-    # Restore
-    docker exec -i fullstack_produits-db-1 psql -U ${env:DB_USER:-fullstack_user} -d ${env:DB_NAME:-fullstack_db} -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>$null | Out-Null
-    Get-Content $lastBackup.FullName | docker exec -i fullstack_produits-db-1 psql -U ${env:DB_USER:-fullstack_user} -d ${env:DB_NAME:-fullstack_db} 2>$null | Out-Null
+        # Backup de sécurité avant le DROP
+        $safetyBackup = "backups\safety_before_rollback_$(Get-Date -Format 'yyyyMMdd_HHmmss').sql"
+        Write-Host "   💾 Backup de sécurité: $safetyBackup" -ForegroundColor Gray
+        docker exec fullstack_produits-db-1 pg_dump -U ${env:DB_USER:-fullstack_user} -d ${env:DB_NAME:-fullstack_db} 2>$null | Out-File -FilePath $safetyBackup -Encoding utf8
 
-    Write-Host "   ✅ Database restauree" -ForegroundColor Green
+        # Restore
+        docker exec -i fullstack_produits-db-1 psql -U ${env:DB_USER:-fullstack_user} -d ${env:DB_NAME:-fullstack_db} -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>$null | Out-Null
+        Get-Content $lastBackup.FullName | docker exec -i fullstack_produits-db-1 psql -U ${env:DB_USER:-fullstack_user} -d ${env:DB_NAME:-fullstack_db} 2>$null | Out-Null
 
-    # Redemarrer backend
-    docker-compose -f docker-compose.prod.yml up -d backend | Out-Null
+        Write-Host "   ✅ Database restaurée" -ForegroundColor Green
+
+        # Redemarrer backend
+        docker-compose -f docker-compose.prod.yml up -d backend | Out-Null
+    }
 }
 
 # 5. Healthcheck
