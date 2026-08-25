@@ -38,11 +38,13 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     }
   }, [isMidnightTheme])
 
-  // Auto-collapse on small screens (< 1280px)
+  // Auto-collapse on small desktop screens (1024px-1280px)
+  // Sur mobile (< 1024px), ne pas collapser — la sidebar s'affiche en overlay
+  // et doit montrer les labels complets + sous-menus cliquables
   useEffect(() => {
     const checkScreenWidth = () => {
-      const isSmall = window.innerWidth < 1280
-      if (isSmall) {
+      const isSmallDesktop = window.innerWidth >= 1024 && window.innerWidth < 1280
+      if (isSmallDesktop) {
         setIsCollapsed(true)
       }
     }
