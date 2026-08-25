@@ -1,4 +1,5 @@
 import api from './api';
+import { generateUUID } from '../utils/uuid';
 import type { ReapproSessionData } from '../utils/print/reapproSessionPdfDraft';
 import type {
     ProduitModel,
@@ -152,7 +153,9 @@ const produitService = {
         await api.delete(`produits/${id}/`);
     },
 
-    adjustStock: async (id: number, quantity?: number, reason?: string, newReserveQuantity?: number, stockLotId?: number, newLotNumber?: string, newLotExpiration?: string): Promise<ProduitModel> => {
+    adjustStock: async (id: number, quantity?: number, reason?: string, newReserveQuantity?: number, stockLotId?: number, newLotNumber?: string, newLotExpiration?: string, idempotencyKey?: string): Promise<ProduitModel> => {
+        const key = idempotencyKey || generateUUID();
+        const headers = { 'Idempotency-Key': key };
         const response = await api.post<ProduitModel>(`produits/${id}/adjust_stock/`, {
             new_quantity: quantity,
             new_reserve_quantity: newReserveQuantity,
@@ -160,7 +163,7 @@ const produitService = {
             stock_lot_id: stockLotId,
             new_lot_number: newLotNumber,
             new_lot_expiration: newLotExpiration
-        });
+        }, { headers });
         return response.data;
     },
 

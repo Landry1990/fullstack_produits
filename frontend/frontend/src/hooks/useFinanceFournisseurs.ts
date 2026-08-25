@@ -12,6 +12,7 @@ export function useFinanceFournisseurs() {
     const [paiements, setPaiements] = useState<PaiementFournisseur[]>([]);
     const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const invalidateDashboard = useInvalidateSupplierDashboard();
 
     const fetchFournisseurs = useCallback(async () => {
@@ -38,6 +39,7 @@ export function useFinanceFournisseurs() {
     }, [t]);
 
     const createPaiement = async (data: Partial<PaiementFournisseur>) => {
+        setSubmitting(true);
         try {
             const result = await financeService.createPaiement(data);
             gooeyToast.success(t('suppliers:messages.payment_saved'));
@@ -51,6 +53,8 @@ export function useFinanceFournisseurs() {
             const msg = err.response?.data?.detail || t('suppliers:messages.payment_save_error');
             gooeyToast.error(msg);
             throw error;
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -71,6 +75,7 @@ export function useFinanceFournisseurs() {
         paiements,
         fournisseurs,
         loading,
+        submitting,
         fetchFournisseurs,
         fetchPaiements,
         createPaiement,

@@ -109,6 +109,10 @@ REMOTE_COMMIT=$(git rev-parse "origin/$BRANCH")
 
 if [ "$LOCAL_COMMIT" = "$REMOTE_COMMIT" ]; then
     log "Déjà à jour (commit ${LOCAL_COMMIT:0:8}) — rien à faire"
+    # Même sans mise à jour, on nettoie les WAL et vieux logs
+    if [ -x "$APP_DIR/cleanup-wal.sh" ]; then
+        "$APP_DIR/cleanup-wal.sh" 2>>"$LOG_FILE" || true
+    fi
     exit 0
 fi
 
@@ -153,7 +157,12 @@ available_kb=$(df -P /var/lib/docker 2>/dev/null | awk 'NR==2 {print $4}' || df 
 available_gb=$((available_kb / 1024 / 1024))
 if [ "$available_gb" -lt "$MIN_DISK_GB" ]; then
     warn "Espace disque faible (${available_gb}GB < ${MIN_DISK_GB}GB requis) — nettoyage Docker..."
-    docker system prune -a -f --volumes 2>>"$LOG_FILE" || true
+    # ⚠️ Sécurité : on utilise `docker image prune -f` (uniquement les images dangling)
+    # et NON `docker system prune -a -f --volumes` qui supprimerait :
+    #   - toutes les images orphelines d'autres projets (-a)
+    #   - les volumes non utilisés (--volumes) → perte de données d'autres projets
+    #   - risque de perte de données si interrompu pendant le prune
+    docker image prune -f 2>>"$LOG_FILE" || true
     # Re-vérifier après nettoyage
     available_kb=$(df -P /var/lib/docker 2>/dev/null | awk 'NR==2 {print $4}' || df -P / 2>/dev/null | awk 'NR==2 {print $4}')
     available_gb=$((available_kb / 1024 / 1024))
@@ -224,4 +233,10 @@ docker run --rm -d \
 ok "Helper container lancé — le recreate va se faire en arrière-plan"
 ok "Mise à jour terminée avec succès — version ${REMOTE_COMMIT:0:8}"
 log "=== Fin de la mise à jour ==="
+
+# Nettoyage WAL + vieux logs après mise à jour
+if [ -x "$APP_DIR/cleanup-wal.sh" ]; then
+    "$APP_DIR/cleanup-wal.sh" 2>>"$LOG_FILE" || true
+fi
+
 exit 0

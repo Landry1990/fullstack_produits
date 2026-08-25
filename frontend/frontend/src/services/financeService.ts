@@ -1,4 +1,5 @@
 import api from './api';
+import { generateUUID } from '../utils/uuid';
 import type { PaiementFournisseur } from '../types';
 import type {
     CAEvolutionData, MargesEvolutionData, PredictionsData, KPIsData,
@@ -137,8 +138,10 @@ const financeService = {
         return [...first.results, ...rest.flatMap((r) => r.results)];
     },
 
-    createPaiement: async (data: Partial<PaiementFournisseur>): Promise<PaiementFournisseur> => {
-        const response = await api.post<PaiementFournisseur>('paiements-fournisseurs/', data);
+    createPaiement: async (data: Partial<PaiementFournisseur>, idempotencyKey?: string): Promise<PaiementFournisseur> => {
+        const key = idempotencyKey || generateUUID();
+        const headers = { 'Idempotency-Key': key };
+        const response = await api.post<PaiementFournisseur>('paiements-fournisseurs/', data, { headers });
         return response.data;
     },
 

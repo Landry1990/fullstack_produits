@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
+from ...idempotency import idempotent_action
 from ...models import Avoir, LigneAvoir, MouvementStock, Produit, StockLot
 from ...pagination import StandardResultsSetPagination
 from ...serializers import AvoirSerializer, LigneAvoirSerializer
@@ -108,6 +109,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=True, methods=['post'])
+    @idempotent_action
     def decharger_stock(self, request, pk=None):
         """
         Décharge le stock des produits de l'avoir (retrait physique du stock).
@@ -237,6 +239,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
+    @idempotent_action
     def annuler_dechargement(self, request, pk=None):
         """
         Annule le déchargement du stock d'un avoir (re-mise en stock).

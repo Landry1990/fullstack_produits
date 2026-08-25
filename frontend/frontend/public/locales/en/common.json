@@ -69,7 +69,8 @@
         "delete": "Delete",
         "refresh": "Refresh",
         "search": "Search",
-        "close": "Close"
+        "close": "Close",
+        "processing": "Processing…"
     },
     "telegram": {
         "send_success": "Report sent to Telegram!",
@@ -458,7 +459,7 @@
     "french": "French",
     "english": "English",
     "account": "Account",
-    "messages": "Messages",
+    "messages_label": "Messages",
     "light_mode": "Light Mode",
     "dark_mode": "Dark Mode",
     "update_license": "Update License",

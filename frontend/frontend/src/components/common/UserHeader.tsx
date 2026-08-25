@@ -175,7 +175,7 @@ export default function UserHeader() {
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-emerald-50 hover:text-emerald-600 transition-colors text-left"
                   >
                     <MessageSquare size={18} />
-                    <span className="flex-1">{t('common:messages')}</span>
+                    <span className="flex-1">{t('common:messages_label')}</span>
                     {unreadCount > 0 && <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">{unreadCount}</span>}
                   </button>
 

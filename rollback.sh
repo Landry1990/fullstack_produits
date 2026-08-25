@@ -48,13 +48,18 @@ if [[ -z "$backend_previous" && -z "$frontend_previous" ]]; then
     exit 1
 fi
 
+# Découverte du backup DB (avant la confirmation pour être disponible en mode --force)
+last_backup=""
+if [[ "$INCLUDE_DB" == "true" ]]; then
+    last_backup=$(ls -t "$SCRIPT_DIR/backups"/*.sql 2>/dev/null | head -1 || true)
+fi
+
 # Confirmation
 if [[ "$FORCE" != "true" ]]; then
     echo "Cette action va :"
     [[ -n "$backend_previous" ]]  && echo -e "  ${WHITE}• Restaurer BACKEND  → image 'previous'${NC}"
     [[ -n "$frontend_previous" ]] && echo -e "  ${WHITE}• Restaurer FRONTEND → image 'previous'${NC}"
     if [[ "$INCLUDE_DB" == "true" ]]; then
-        last_backup=$(ls -t "$SCRIPT_DIR/backups"/*.sql 2>/dev/null | head -1 || true)
         if [[ -n "$last_backup" ]]; then
             echo -e "  ${WHITE}• Restaurer DATABASE → $(basename "$last_backup")${NC}"
         else
@@ -98,16 +103,28 @@ if [[ "$INCLUDE_DB" == "true" && -n "$last_backup" ]]; then
     warn "🗄️  Restauration DATABASE..."
     warn "   Backup: $last_backup"
 
-    docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" stop backend 2>/dev/null || true
+    # Vérification d'intégrité : le backup doit être non vide
+    backup_size=$(wc -c < "$last_backup" 2>/dev/null || echo 0)
+    if [[ "$backup_size" -lt 100 ]]; then
+        err "   ❌ Backup corrompu ou vide ($backup_size octets). Rollback DB annulé."
+    else
+        docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" stop backend 2>/dev/null || true
 
-    DB_USER="${DB_USER:-fullstack_user}"
-    DB_NAME="${DB_NAME:-fullstack_db}"
+        DB_USER="${DB_USER:-fullstack_user}"
+        DB_NAME="${DB_NAME:-fullstack_db}"
 
-    docker exec -i fullstack_produits-db-1 psql -U "$DB_USER" -d "$DB_NAME" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
-    cat "$last_backup" | docker exec -i fullstack_produits-db-1 psql -U "$DB_USER" -d "$DB_NAME" 2>/dev/null || true
+        # Backup de sécurité avant le DROP
+        safety_backup="$SCRIPT_DIR/backups/safety_before_rollback_$(date +%Y%m%d_%H%M%S).sql"
+        warn "   💾 Backup de sécurité: $(basename "$safety_backup")"
+        docker exec fullstack_produits-db-1 pg_dump -U "$DB_USER" -d "$DB_NAME" > "$safety_backup" 2>/dev/null || true
 
-    log "   ✅ Database restauree"
-    docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d backend >/dev/null 2>&1
+        # Restore
+        docker exec -i fullstack_produits-db-1 psql -U "$DB_USER" -d "$DB_NAME" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" 2>/dev/null || true
+        cat "$last_backup" | docker exec -i fullstack_produits-db-1 psql -U "$DB_USER" -d "$DB_NAME" 2>/dev/null || true
+
+        log "   ✅ Database restaurée"
+        docker compose -f "$SCRIPT_DIR/docker-compose.prod.yml" up -d backend >/dev/null 2>&1
+    fi
 fi
 
 # 5. Healthcheck
