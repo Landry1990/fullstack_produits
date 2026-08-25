@@ -2,6 +2,111 @@
 
 ---
 
+## 2026-08-25 — Tailscale Funnel : mise en service chez le premier client
+
+### 🌐 Accès externe sécurisé via Tailscale Funnel
+
+L'application est désormais accessible depuis internet via Tailscale Funnel,
+sans ouvrir de ports sur le pare-feu du client ni configurer un reverse proxy.
+
+**Architecture :**
+```
+Internet (HTTPS) → Tailscale Funnel (conteneur Docker) → http://frontend:80
+```
+
+**URL d'accès :** `https://pharmacie-test.taila455c9.ts.net`
+
+### Étapes de configuration réalisées
+
+| Étape | Détail |
+|-------|--------|
+| Compte Tailscale créé | `taila455c9.ts.net` |
+| Auth key générée | Réutilisable, non-éphémère, expiration 90 jours |
+| ACL Funnel activé | `nodeAttrs` avec `attr: ["funnel"]` dans Access Controls |
+| HTTPS Certificates activé | Console Tailscale → DNS → HTTPS Certificates → Enable |
+| `.env` configuré | `TAILSCALE_AUTHKEY` + `TAILSCALE_HOSTNAME=pharmacie-test` |
+| Conteneur démarré | `docker compose -f docker-compose.prod.yml up -d tailscale` |
+| Certificat HTTPS obtenu | ACME automatique via Tailscale (`got cert`) |
+| Proxy Funnel actif | `http://frontend:80` proxy HTTPS sur port 443 |
+
+### Points clés
+
+- **Aucun port ouvert** sur le pare-feu du client — tout passe par Tailscale
+- **HTTPS automatique** — certificat renouvelé par Tailscale via ACME
+- **Persistance** — le volume `tailscale_data` conserve l'état d'auth entre redémarrages
+- **Pour les prochains clients** : il suffit de changer `TAILSCALE_HOSTNAME` dans le `.env`
+  et de démarrer le conteneur (la même auth key réutilisable fonctionne)
+
+### Fichiers existants (déjà en place avant cette session)
+
+- `docker-compose.prod.yml` — service `tailscale` (ligne 181)
+- `tailscale/tailscale-serve.json` — config Funnel (proxy vers `frontend:80`)
+- `tailscale/README-TAILSCALE.md` — documentation complète
+- `.env.example` — variables documentées
+
+---
+
+## 2026-08-25 — Fix ProduitFormModal : boucle infinie sur checkboxes (React error #185)
+
+### 🐛 Bug : "Maximum update depth exceeded" en cochant "Ordonnance requise"
+
+3 checkboxes dans `ProduitFormModal.tsx` avaient un double-handler :
+- `onClick` sur le `div` parent (inversait la valeur)
+- `onCheckedChange` sur le `Checkbox` (inversait encore la valeur)
+
+Résultat : la valeur s'inversait deux fois par clic → boucle infinie de re-renders
+→ **React error #185**.
+
+### Fix
+
+Ajout de `onClick={(e) => e.stopPropagation()}` sur les 3 `Checkbox` affectées :
+
+| Checkbox | Ligne | Statut |
+|----------|-------|--------|
+| `use_lot_management` | 465 | Corrigé |
+| `requires_prescription` | 472 | Corrigé (celle qui plantait) |
+| `is_chronic` | 529 | Corrigé (bug latent) |
+
+### Fichier modifié
+- `frontend/frontend/src/components/ProduitFormModal.tsx`
+
+### Validation
+- `tsc --noEmit` : OK
+- Build Vite : OK
+- Déployé en dev
+
+---
+
+## 2026-08-25 — install.sh : fix Portainer (setup token + permissions + timeout)
+
+### 🛡 Portainer — 3 problèmes récurrents chez les clients corrigés
+
+Lors de l'installation chez les clients, 3 erreurs revenaient systématiquement :
+
+1. **Setup Token obligatoire** : Portainer demandait un jeton à récupérer dans
+   les logs Docker (`docker logs portainer | grep setup_token=`), avec un délai
+   de 5 minutes seulement → le pharmacien n'avait pas le temps.
+   **Fix** : ajout du flag `--no-setup-token` au `docker run`.
+
+2. **`permission denied while trying to connect to the docker API at
+   unix:///var/run/docker.sock`** : l'utilisateur n'était pas dans le groupe
+   `docker` au moment où Portainer démarrait.
+   **Fix** : après `usermod -aG docker`, le script applique immédiatement les
+   droits via `exec newgrp docker "$0" "$@"` (relance le script avec les bons
+   droits, sans redémarrage).
+
+3. **Admin password timeout trop court** : seulement 5 minutes pour créer le
+   compte administrateur Portainer → insuffisant.
+   **Fix** : ajout du flag `--admin-password-timeout 3600` (1 heure).
+
+### Fichier modifié
+- `install.sh` — section Docker (ligne 110) + section Portainer (ligne 345)
+
+### Validation
+- `bash -n install.sh` : OK
+
+---
+
 ## 2026-08-25 — Prod : sécurité des migrations (timeouts adaptatifs + index concurrents)
 
 ### 🛡 Timeouts adaptatifs pendant les migrations

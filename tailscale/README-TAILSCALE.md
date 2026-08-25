@@ -165,6 +165,19 @@ https://fullstack-app.ma-pharmacie.ts.net
 → Vérifier que `TAILSCALE_AUTHKEY` est bien défini dans `.env`
 → La clé auth est peut-être expirée → en regénérer une
 
+### `WARN: The "TAILSCALE_AUTHKEY" variable is not set`
+→ Le `.env` n'est pas chargé par Docker Compose. Causes fréquentes :
+  1. **La ligne est commentée** (`#TAILSCALE_AUTHKEY=...`) → retirer le `#`
+  2. **Tu n'es pas dans le bon dossier** → `cd /opt/zenith-pharma` avant de lancer
+  3. **Caractères invisibles Windows (CRLF)** → `sed -i 's/\r$//' .env`
+→ Vérifier avec : `grep TAILSCALE .env` (sans `#` devant)
+→ Forcer le chemin : `docker compose --env-file .env -f docker-compose.prod.yml up -d tailscale`
+
+### Tailscale demande une URL d'authentification au lieu d'utiliser la clé
+→ `TS_AUTHKEY` arrive vide dans le conteneur
+→ Vérifier : `docker compose -f docker-compose.prod.yml config | grep TS_AUTHKEY`
+→ Si vide, voir la section ci-dessus ("variable is not set")
+
 ### Erreur `/dev/net/tun: no such file or directory`
 → Linux : vérifier que le module TUN est chargé : `sudo modprobe tun`
 → Windows/Docker Desktop : ce device n'existe pas, utiliser `TS_USERSPACE=true` dans `.env`

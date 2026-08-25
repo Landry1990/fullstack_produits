@@ -109,6 +109,12 @@ else
     sudo apt-get update -qq
     run_with_spinner "Installation des paquets Docker" sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     sudo usermod -aG docker "$USER"
+    # Appliquer immédiatement les droits du groupe docker sans redémarrage
+    # (newgrp dans un subshell pour ne pas bloquer le script)
+    if ! docker ps >/dev/null 2>&1; then
+        warn "Application des droits docker — relance du script avec newgrp..."
+        exec newgrp docker "$0" "$@"
+    fi
     ok "Docker installé"
 fi
 
@@ -342,14 +348,19 @@ if sudo docker ps --format '{{.Names}}' | grep -q '^portainer$'; then
     ok "Portainer déjà installé"
 else
     sudo docker volume create portainer_data 2>/dev/null || true
+    # --no-setup-token : évite de devoir récupérer un jeton dans les logs
+    # --admin-password-timeout 3600 : 1h pour configurer le compte admin (au lieu de 5 min)
     sudo docker run -d \
         --name portainer \
         -p 9001:9000 \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v portainer_data:/data \
         --restart always \
-        portainer/portainer-ce:latest 2>/dev/null || warn "Portainer non installé"
+        portainer/portainer-ce:latest \
+        --no-setup-token \
+        --admin-password-timeout 3600 2>/dev/null || warn "Portainer non installé"
     ok "Portainer démarré sur http://localhost:9001"
+    gray "   ⏱️  Vous avez 1 heure pour créer le compte administrateur"
 fi
 
 # ── 13. Résumé ────────────────────────────────────────

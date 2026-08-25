@@ -462,14 +462,14 @@ export default function ProduitFormModal({
           {/* Section: Options */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="flex items-center gap-3 p-2.5 rounded-lg border bg-white border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => setForm((p) => ({ ...p, use_lot_management: !p.use_lot_management }))}>
-              <Checkbox checked={form.use_lot_management} onCheckedChange={(checked) => setForm((p) => ({ ...p, use_lot_management: !!checked }))} />
+              <Checkbox checked={form.use_lot_management} onCheckedChange={(checked) => setForm((p) => ({ ...p, use_lot_management: !!checked }))} onClick={(e) => e.stopPropagation()} />
               <div>
                 <span className="text-sm font-medium text-slate-800">{t('products:form.lot_management')}</span>
                 <p className="text-[10px] text-slate-400">{t('products:form.lot_management_desc')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-2.5 rounded-lg border bg-blue-50 border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer" onClick={() => setForm(p => ({ ...p, requires_prescription: !p.requires_prescription }))}>
-              <Checkbox checked={form.requires_prescription} onCheckedChange={(checked) => setForm(p => ({ ...p, requires_prescription: !!checked }))} />
+              <Checkbox checked={form.requires_prescription} onCheckedChange={(checked) => setForm(p => ({ ...p, requires_prescription: !!checked }))} onClick={(e) => e.stopPropagation()} />
               <div>
                 <span className="text-sm font-medium text-slate-800">{t('products:form.requires_prescription')}</span>
                 <p className="text-[10px] text-slate-400">{t('products:form.prescription_desc')}</p>
@@ -526,7 +526,7 @@ export default function ProduitFormModal({
           <div className={`p-3 rounded-lg border transition-all cursor-pointer ${form.is_chronic ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-slate-200 hover:bg-slate-100'}`} onClick={() => setForm((p) => ({ ...p, is_chronic: !p.is_chronic }))}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <Checkbox checked={form.is_chronic} onCheckedChange={(checked) => setForm((p) => ({ ...p, is_chronic: !!checked }))} />
+                <Checkbox checked={form.is_chronic} onCheckedChange={(checked) => setForm((p) => ({ ...p, is_chronic: !!checked }))} onClick={(e) => e.stopPropagation()} />
                 <div>
                   <span className="text-sm font-medium text-slate-800">{t('products:form.chronic_pathology')}</span>
                   <p className="text-xs text-slate-500">{t('products:form.chronic_desc')}</p>
