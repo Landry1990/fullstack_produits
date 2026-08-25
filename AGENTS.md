@@ -92,6 +92,21 @@ Agent de contrôle (foreground, après 1+2+3) :
 - **UI : toute nouvelle fenêtre, modal ou composant graphique doit être créé avec shadcn/ui**
   (la migration depuis DaisyUI est en cours — ne pas introduire de nouveaux composants DaisyUI).
 
+### Migrations Django en production
+
+- **Timeouts adaptatifs** : `docker-compose.prod.yml` utilise `DB_STATEMENT_TIMEOUT=300000`
+  (5 min) et `DB_LOCK_TIMEOUT=30000` (30 s) pendant `migrate`, via `settings.py`.
+  En fonctionnement normal : `statement_timeout=30000` (30 s) et `lock_timeout=5000` (5 s).
+- **CREATE INDEX CONCURRENTLY** : pour tout index sur une table qui peut avoir beaucoup de
+  lignes en prod (`Facture`, `FactureProduit`, `StockLot`, `MouvementStock`), utiliser
+  `RunSQL` avec `CREATE INDEX CONCURRENTLY IF NOT EXISTS` au lieu de `migrations.AddIndex`.
+  Cela nécessite `atomic = False` sur la migration.
+- **AddField avec default=** : sur une table >1000 lignes, préférer un `RunSQL` avec
+  `ALTER TABLE ... ADD COLUMN ... DEFAULT ...` (PostgreSQL 11+ optimise cela sans
+  full table rewrite si la valeur par défaut est constante).
+- **RunPython sur gros datasets** : utiliser `iterator(chunk_size=500)` pour éviter
+  de charger toutes les lignes en mémoire.
+
 ## Commandes utiles
 
 - Frontend : `cd frontend/frontend && npm run dev|build|lint|test`

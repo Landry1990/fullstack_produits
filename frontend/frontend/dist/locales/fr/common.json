@@ -68,7 +68,8 @@
         "confirm": "Confirmer",
         "search": "Chercher",
         "close": "Fermer",
-        "refresh": "Actualiser"
+        "refresh": "Actualiser",
+        "processing": "Traitement…"
     },
     "telegram": {
         "send_success": "Rapport envoyé sur Telegram !",
@@ -472,7 +473,7 @@
     "french": "Français",
     "english": "English",
     "account": "Compte",
-    "messages": "Messages",
+    "messages_label": "Messages",
     "light_mode": "Mode Clair",
     "dark_mode": "Mode Sombre",
     "update_license": "Mettre à jour la licence",

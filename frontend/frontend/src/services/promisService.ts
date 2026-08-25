@@ -1,4 +1,5 @@
 import api from './api';
+import { generateUUID } from '../utils/uuid';
 import type { Promis } from '../types';
 
 const promisService = {
@@ -7,8 +8,10 @@ const promisService = {
         return Array.isArray(response.data) ? response.data : (response.data.results || []);
     },
 
-    create: async (data: Partial<Promis>): Promise<Promis> => {
-        const response = await api.post<Promis>('promis/', data);
+    create: async (data: Partial<Promis>, idempotencyKey?: string): Promise<Promis> => {
+        const key = idempotencyKey || generateUUID();
+        const headers = { 'Idempotency-Key': key };
+        const response = await api.post<Promis>('promis/', data, { headers });
         return response.data;
     },
 

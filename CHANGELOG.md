@@ -2,6 +2,320 @@
 
 ---
 
+## 2026-08-25 — Prod : sécurité des migrations (timeouts adaptatifs + index concurrents)
+
+### 🛡 Timeouts adaptatifs pendant les migrations
+
+En fonctionnement normal, `statement_timeout=30s` et `lock_timeout=5s` protègent
+contre les requêtes infinies. Mais pendant une migration, un `CREATE INDEX` sur
+8 000+ produits peut prendre +30s → la migration est annulée → l'app ne démarre pas.
+
+**Fix** : `settings.py` lit maintenant `DB_STATEMENT_TIMEOUT` et `DB_LOCK_TIMEOUT`
+(env vars). `docker-compose.prod.yml` lance `migrate` avec :
+- `DB_STATEMENT_TIMEOUT=300000` (5 min)
+- `DB_LOCK_TIMEOUT=30000` (30 s)
+
+Après `migrate`, Uvicorn démarre avec les timeouts normaux (30s/5s).
+
+### 🛡 Migration 0231 — CREATE INDEX CONCURRENTLY
+
+Les 2 index composites sur `Facture` (`poste_caisse + status + date`,
+`created_by + date`) utilisaient `migrations.AddIndex` qui fait un `CREATE INDEX`
+bloquant. En prod avec plusieurs milliers de factures, cela aurait verrouillé
+les écritures pendant la création.
+
+**Fix** :
+- `atomic = False` ajouté (requis par PostgreSQL pour `CONCURRENTLY`)
+- `AddIndex` → `RunSQL` avec `CREATE INDEX CONCURRENTLY IF NOT EXISTS`
+- `reverse_sql` utilise `DROP INDEX IF EXISTS`
+
+### 📝 AGENTS.md — règles de migration documentées
+
+Ajout d'une section "Migrations Django en production" dans `AGENTS.md` :
+- Timeouts adaptatifs
+- `CREATE INDEX CONCURRENTLY` pour les tables volumineuses
+- `AddField` avec `default=` sur tables >1000 lignes
+- `iterator(chunk_size=500)` pour `RunPython` sur gros datasets
+
+### Fichiers modifiés
+- `backend/backend/settings.py` — timeouts via env vars `DB_STATEMENT_TIMEOUT` / `DB_LOCK_TIMEOUT`
+- `docker-compose.prod.yml` — `DB_STATEMENT_TIMEOUT=300000 DB_LOCK_TIMEOUT=30000` pendant `migrate`
+- `backend/api/migrations/0231_p2_db_indexes.py` — `atomic=False` + `CREATE INDEX CONCURRENTLY`
+- `AGENTS.md` — section "Migrations Django en production"
+
+### Validation
+- `py_compile` sur `settings.py` et `0231_p2_db_indexes.py` : OK
+- `docker compose -f docker-compose.prod.yml config --quiet` : OK
+
+---
+
+## 2026-08-25 — Prod : rotation WAL archives + nettoyage logs
+
+### 🛡 Nettoyage automatique des WAL archives PostgreSQL
+
+PostgreSQL tourne avec `archive_mode=on` pour permettre un recovery en cas de
+crash. Les WAL (16 MB chacun) s'accumulent dans le volume `wal_archive` **sans
+jamais être nettoyés**. En quelques semaines, le disque peut se remplir →
+Postgres refuse les écritures → l'app plante sans message clair.
+
+**Fix** : nouveau script `cleanup-wal.sh` qui supprime :
+- Les WAL archives de plus de **3 jours** (suffisant pour un recovery)
+- Les logs applicatifs de plus de **7 jours**
+- Les backups de sécurité `safety_before_rollback_*.sql` de plus de 3 jours
+
+Le script est appelé automatiquement par `nightly-update.sh` chaque nuit à 2h,
+**même quand il n'y a pas de mise à jour** (branche déjà à jour).
+
+### Fichiers modifiés
+- `cleanup-wal.sh` — **nouveau** script de nettoyage WAL + logs + backups sécurité
+- `nightly-update.sh` — appel `cleanup-wal.sh` avant les deux points de sortie
+  (branche à jour ET après mise à jour)
+
+### Validation
+- `bash -n cleanup-wal.sh` : OK
+- `bash -n nightly-update.sh` : OK
+
+### Note
+Les backups réguliers (`backup-db.sh`) avaient **déjà** une rétention de 7 jours
+(lignes 130-148). Seuls les WAL archives et les backups de sécurité manquaient
+de nettoyage.
+
+---
+
+## 2026-08-25 — Prod : rotation des logs Docker
+
+### 🛡 Rotation des logs sur tous les containers prod
+
+Par défaut, Docker stocke les logs dans un fichier JSON qui grandit indéfiniment.
+En production, un backend qui tourne 24h/24 peut générer **plusieurs GB de logs**
+en quelques mois, jusqu'à saturer le disque → Postgres refuse les écritures →
+l'app plante sans message clair.
+
+**Fix** : ajout de `logging` sur les 6 containers du `docker-compose.prod.yml` :
+
+| Container | max-size | max-file | Total max |
+|-----------|----------|----------|-----------|
+| db | 10m | 3 | 30 MB |
+| backend | 10m | 3 | 30 MB |
+| frontend | 10m | 3 | 30 MB |
+| redis | 10m | 3 | 30 MB |
+| tailscale | 5m | 2 | 10 MB |
+| portainer | 5m | 2 | 10 MB |
+
+**Total maximum** : 140 MB de logs au lieu de plusieurs GB.
+
+### Fichier modifié
+- `docker-compose.prod.yml` — bloc `logging` ajouté sur les 6 services
+
+### Validation
+- `docker compose -f docker-compose.prod.yml config --quiet` : OK
+
+---
+
+## 2026-08-25 — Idempotence Phase 3 : endpoints secondaires + scripts + migrations
+
+### 🔒 API — `@idempotent_action` sur 4 endpoints supplémentaires
+
+Extension de la protection anti-doublon (cache Redis, TTL 24h) :
+
+- **`POST /api/caisse/`** (création paiement) : `@idempotent_action` sur `create`
+- **`POST /api/inventaires/{id}/validate/`** : `@idempotent_action` après `@transaction.atomic`
+- **`POST /api/avoirs/{id}/decharger_stock/`** : `@idempotent_action`
+- **`POST /api/avoirs/{id}/annuler_dechargement/`** : `@idempotent_action`
+
+Ces endpoints avaient déjà des vérifications d'état (`if avoir.stock_decharge`,
+`if inventaire.status == ...`) qui empêchaient les doubles exécutions côté
+logique métier, mais le décorateur ajoute une couche supplémentaire : en cas de
+double-clic avec header `Idempotency-Key`, la 2e requête retourne immédiatement
+le résultat en cache sans réexécuter la transaction.
+
+### 🖱 Frontend — boutons désactivés pendant les mutations (2 composants)
+
+Audit des composants consommant `useProduits`, `useCommandes`, `useAccounting`.
+La grande majorité étaient déjà protégés. Deux boutons manquaient la protection :
+
+- **`Produit.tsx`** (ligne 421) : bouton "recalcul rotation" → ajout
+  `disabled={recalculateRotationMutation.isPending}` + spinner animé.
+- **`Comptabilite.tsx`** (ligne 291) : bouton "initialiser historique" → ajout
+  `disabled={actions.initializeHistory.isPending}` + spinner animé.
+
+Note : les hooks `useSaveCommande`, `useDeleteCommande`, `useClotureCommande` etc.
+sont du dead code (non utilisés par les composants — ceux-ci utilisent
+`useCommandeActions` qui gère son propre état `executingAction`/`saving`).
+
+### 🛡 Script `nightly-update.sh` — docker prune sécurisé
+
+`docker system prune -a -f --volumes` → `docker image prune -f`.
+
+L'ancienne commande supprimait **toutes** les images orphelines d'autres projets
+(`-a`) et les volumes non utilisés (`--volumes`), risquant de perdre des données
+d'autres projets sur le serveur. La nouvelle ne supprime que les images
+dangling (non taggées/inutilisées), ce qui est sûr.
+
+### 🛠 Migrations — `IF NOT EXISTS` sur CREATE TABLE/INDEX
+
+Deux migrations contenaient du `RunSQL` créant `api_lettrage_lignes` + 2 index
+sans `IF NOT EXISTS`, faisant échouer la ré-exécution avec
+"relation already exists" :
+
+- **`0180_fournisseur_is_divers_alter_commande_type_and_more.py`** (lignes 52-59)
+- **`0001_initial_squashed_0195_add_taux_change_actif_to_settings.py`** (ligne 4042)
+
+Ajout de `IF NOT EXISTS` sur `CREATE TABLE` et `CREATE INDEX`. Le `reverse_sql`
+utilisait déjà `DROP TABLE IF EXISTS` (inchangé).
+
+### Fichiers modifiés
+
+**Backend :**
+- `backend/api/views/ventes/caisse.py` — import + `@idempotent_action` sur `create`
+- `backend/api/views/stocks/inventaire_main.py` — import + `@idempotent_action` sur `validate`
+- `backend/api/views/commandes/avoirs.py` — import + `@idempotent_action` sur `decharger_stock` + `annuler_dechargement`
+- `backend/api/migrations/0180_fournisseur_is_divers_alter_commande_type_and_more.py` — `IF NOT EXISTS`
+- `backend/api/migrations/0001_initial_squashed_0195_add_taux_change_actif_to_settings.py` — `IF NOT EXISTS`
+
+**Frontend :**
+- `frontend/frontend/src/components/Produit.tsx` — bouton recalcul rotation désactivé pendant mutation
+- `frontend/frontend/src/components/compta/Comptabilite.tsx` — bouton initialiser historique désactivé pendant mutation
+
+**Scripts :**
+- `nightly-update.sh` — `docker system prune -a --volumes` → `docker image prune -f`
+
+### Vérifications
+- `py_compile` sur les 5 fichiers Python backend : OK
+- `npx tsc --noEmit` frontend : OK, 0 erreur
+
+---
+
+## 2026-08-25 — Idempotence Phase 2 : frontend Idempotency-Key + fix traductions
+
+### 🔒 Frontend — envoi de l'header `Idempotency-Key`
+
+Les 3 endpoints protégés en Phase 1 reçoivent maintenant l'header
+`Idempotency-Key` (UUID v4 généré côté frontend) :
+
+- **`adjustStock`** (`produitService.ts`) : header envoyé + paramètre
+  `idempotencyKey` optionnel ajouté à `useAdjustStock`.
+- **`promisService.create`** : header envoyé sur la création de promis.
+- **`financeService.createPaiement`** : header envoyé sur le paiement fournisseur.
+
+### 🖱 Protection UI — bouton désactivé pendant la mutation
+
+- **`StockAdjustmentModal`** : nouvelle prop `isSubmitting` → bouton "Confirmer"
+  désactivé + texte "Traitement…" pendant la mutation.
+- **`ProduitShadcn.tsx`** : passage de `adjustStockMutation.isPending` au modal.
+- **`useFinanceFournisseurs`** : nouvel état `submitting` exposé (le bouton de
+  paiement était déjà protégé par `isSubmitting` local dans `FinanceFournisseurModal`).
+
+### 🐛 Fix — clé de traduction dupliquée `common:messages`
+
+`common.json` (fr + en) contenait deux fois la clé `"messages"` :
+- Ligne 110 : `"messages": { ... }` (objet avec `created`, `updated`, `saved`, etc.)
+- Ligne 476 : `"messages": "Messages"` (libellé du menu)
+
+`JSON.parse` gardait seulement la dernière → l'objet entier était écrasé par la
+chaîne `"Messages"`. Tous les `t('common:messages.created')`, `t('common:messages.updated')`,
+`t('common:messages.login_invalid')`, etc. retournaient la clé brute au lieu de la
+traduction.
+
+**Fix** : renommé la chaîne en `"messages_label"` + mis à jour `UserHeader.tsx`.
+
+### Fichiers modifiés
+
+**Frontend services :**
+- `frontend/frontend/src/services/produitService.ts` — import `generateUUID` + header `Idempotency-Key` sur `adjustStock`
+- `frontend/frontend/src/services/promisService.ts` — import `generateUUID` + header sur `create`
+- `frontend/frontend/src/services/financeService.ts` — import `generateUUID` + header sur `createPaiement`
+
+**Frontend hooks :**
+- `frontend/frontend/src/hooks/useProduits.ts` — `useAdjustStock` accepte `idempotencyKey`
+- `frontend/frontend/src/hooks/useFinanceFournisseurs.ts` — état `submitting` exposé
+
+**Frontend composants :**
+- `frontend/frontend/src/components/products/modals/StockAdjustmentModal.tsx` — prop `isSubmitting` + bouton désactivé
+- `frontend/frontend/src/components/ProduitShadcn.tsx` — passage `isPending` au modal
+
+**Traductions :**
+- `frontend/frontend/public/locales/fr/common.json` — `"messages"` → `"messages_label"` (ligne 476) + clé `actions.processing`
+- `frontend/frontend/public/locales/en/common.json` — même fix + clé `actions.processing`
+- `frontend/frontend/src/components/common/UserHeader.tsx` — `t('common:messages')` → `t('common:messages_label')`
+
+### Vérifications
+- `npx tsc --noEmit` : OK, 0 erreur
+- `npm run build` : succès en 28.38s
+
+---
+
+## 2026-08-25 — Idempotence Phase 1 : endpoints critiques + scripts + migration
+
+### 🔒 Idempotence des endpoints API critiques
+
+Ajout du décorateur `@idempotent_action` (cache Redis, TTL 24h) sur 3 endpoints
+qui pouvaient créer des doublons en cas de double-clic ou retry réseau :
+
+- **`POST /api/produits/{id}/adjust_stock/`** : double ajustement de stock →
+  désormais protégé. Le frontend enverra l'header `Idempotency-Key`.
+- **`POST /api/promis/`** : double réservation de stock → désormais protégé.
+- **`POST /api/paiements-fournisseur/`** : double paiement fournisseur →
+  désormais protégé + `@transaction.atomic` ajouté sur `create`.
+
+Le décorateur existait déjà (`backend/api/idempotency.py`) et était utilisé sur
+`factures/finaliser/` et `commandes/{id}/cloturer/`. Il est maintenant étendu
+aux 3 endpoints ci-dessus.
+
+### 🛠 Migration 0217 — idempotence PosteVente
+
+La migration `0217_alter_postecaisse_options_and_more.py` créait des
+`PosteVente` sans vérifier s'ils existaient déjà. En cas de ré-exécution
+(migration fakerollback + re-apply), des doublons étaient créés et les
+factures étaient ré-attachées au nouveau poste, laissant l'ancien orphelin.
+
+**Fix** : ajout d'un `PosteVente.objects.filter(caisse=caisse).first()` + `continue`
+avant chaque création.
+
+### 🛡 Scripts rollback — vérification d'intégrité avant DROP SCHEMA
+
+`rollback.ps1` et `rollback.sh` exécutaient `DROP SCHEMA public CASCADE` **avant**
+de vérifier que le backup était valide. Si le backup était corrompu, la base
+était perdue sans recours.
+
+**Fix** :
+- Découverte du backup déplacée **avant** la confirmation (accessible en mode `--force`)
+- Vérification que le backup fait au moins 100 octets
+- **Backup de sécurité** automatique (`safety_before_rollback_*.sql`) avant le DROP
+- Si le backup est corrompu/vide → rollback DB annulé, base préservée
+
+### 🛡 Script `install.sh` — stash avant `git reset --hard`
+
+`install.sh` faisait `git reset --hard` silencieusement sur une installation
+existante, perdant toute modification locale non commitée.
+
+**Fix** : détection de modifications locales (`git diff`) + `git stash` automatique
+avant le reset, avec message d'avertissement.
+
+### Fichiers modifiés
+
+**Backend :**
+- `backend/api/views/produit_actions/stock.py` — import + `@idempotent_action` sur `adjust_stock`
+- `backend/api/views/commandes/promis.py` — import + `@idempotent_action` sur `create`
+- `backend/api/views/paiements.py` — import + override `create` avec `@idempotent_action` + `@transaction.atomic`
+- `backend/api/migrations/0217_alter_postecaisse_options_and_more.py` — vérif existence PosteVente
+
+**Scripts :**
+- `rollback.ps1` — découverte backup avant confirmation + vérif intégrité + backup sécurité
+- `rollback.sh` — mêmes corrections
+- `install.sh` — stash automatique avant `git reset --hard`
+
+### Vérifications
+- `py_compile` sur les 4 fichiers Python modifiés : OK
+- Import paths vérifiés (relatifs `..idempotency` / `...idempotency`) : conformes à l'existant
+
+### Note
+Le frontend devra envoyer l'header `Idempotency-Key` sur ces 3 endpoints
+(Phase 2 à venir). Sans la clé, le comportement reste inchangé (exécution normale
+sans déduplication).
+
+---
+
 ## 2026-08-23 — Suggestions de commande : cache ABC + streaming queryset
 
 ### ⚡ Optimisation des suggestions de commande

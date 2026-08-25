@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ...audit_helpers import log_audit
+from ...idempotency import idempotent_action
 from ...models import (
     AuditLog,
     Avoir,
@@ -176,6 +177,7 @@ class ProduitStockMixin:
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
+    @idempotent_action
     def adjust_stock(self, request, pk=None):
         # Permission check — same as transfer_to_shelf
         validation_user, error_res = validate_sudo_mode(request, permission_attr='can_adjust_stock')

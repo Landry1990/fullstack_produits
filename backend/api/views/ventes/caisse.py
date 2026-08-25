@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ...centralized_configs import BaseViewSetConfig
+from ...idempotency import idempotent_action
 from ...models import Caisse, ClotureCaisse
 from ...serializers import (
     CaisseSerializer,
@@ -66,6 +67,7 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
         return queryset
 
 
+    @idempotent_action
     def create(self, request, *args, **kwargs):
         try:
             montant = Decimal(str(request.data.get('montant', 0)))
