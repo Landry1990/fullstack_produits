@@ -87,6 +87,17 @@ export default function Sidebar() {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const { data: reapproStats } = useReapproStats();
+
+  // Sur mobile (< lg = 1024px), la sidebar s'affiche en overlay → toujours en mode étendu
+  // Le mode collapsé (icônes seules) est une feature desktop uniquement
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  const effectiveCollapsed = isMobile ? false : isCollapsed;
   
   const allMenuItems = [
     { path: '/app', label: t('dashboard'), key: 'dashboard', category: 'accueil', icon: (
@@ -417,7 +428,7 @@ export default function Sidebar() {
     if (hasSubmenus) {
       return (
         <li key={item.key}>
-          {isCollapsed ? (
+          {effectiveCollapsed ? (
             <div className="relative group w-full">
               <div
                 className={cn(
@@ -519,10 +530,10 @@ export default function Sidebar() {
           end={item.path === '/app'}
           onClick={closeSidebar}
           onMouseEnter={() => item.path && handleRoutePrefetch(item.path)}
-          title={isCollapsed ? item.label : undefined}
+          title={effectiveCollapsed ? item.label : undefined}
           className={({ isActive }) => cn(
             "flex items-center rounded-xl transition-all duration-200",
-            isCollapsed
+            effectiveCollapsed
               ? 'justify-center w-full h-10'
               : 'gap-3 px-3 py-2.5',
             isActive
@@ -530,8 +541,8 @@ export default function Sidebar() {
               : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-4 border-l-transparent'
           )}
         >
-          <span className={cn("shrink-0", isCollapsed ? 'size-5' : 'size-5')}>{item.icon}</span>
-          {!isCollapsed && <span className="text-sm font-medium tracking-tight truncate">{item.label}</span>}
+          <span className={cn("shrink-0", effectiveCollapsed ? 'size-5' : 'size-5')}>{item.icon}</span>
+          {!effectiveCollapsed && <span className="text-sm font-medium tracking-tight truncate">{item.label}</span>}
         </NavLink>
       </li>
     );
@@ -560,7 +571,7 @@ export default function Sidebar() {
         className={cn(
           "flex flex-col fixed lg:sticky top-0 z-50 transition-all duration-300 ease-in-out",
           "bg-slate-900 border-r border-slate-800",
-          isCollapsed ? 'w-[70px]' : 'w-[min(280px,85vw)] lg:w-[260px]',
+          effectiveCollapsed ? 'w-[70px]' : 'w-[min(280px,85vw)] lg:w-[260px]',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
         style={{ height: '100dvh', minHeight: '100dvh' }}
@@ -568,12 +579,12 @@ export default function Sidebar() {
         {/* ── HEADER ── */}
         <div className={cn(
           "flex items-center gap-3 px-4 py-4 border-b border-white/10",
-          isCollapsed && 'justify-center px-3'
+          effectiveCollapsed && 'justify-center px-3'
         )}>
           <div className="shrink-0">
-            <ZenithLogo variant={1} size={isCollapsed ? 26 : 32} />
+            <ZenithLogo variant={1} size={effectiveCollapsed ? 26 : 32} />
           </div>
-          {!isCollapsed && (
+          {!effectiveCollapsed && (
             <div className="min-w-0 flex-1">
               <h1 className="text-sm font-black text-white tracking-widest uppercase leading-none truncate">
                 {licence?.pharmacie_nom || 'Zenith'}
@@ -595,15 +606,15 @@ export default function Sidebar() {
           <button
             onClick={toggleCollapse}
             className="hidden lg:flex shrink-0 size-7 rounded-lg bg-white/10 hover:bg-white/20 text-white/50 hover:text-white items-center justify-center transition-all"
-            title={isCollapsed ? 'Déplier' : 'Replier'}
+            title={effectiveCollapsed ? 'Déplier' : 'Replier'}
           >
-            {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+            {effectiveCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
           </button>
         </div>
 
         {/* ── NAV ── */}
         <nav className="flex-1 overflow-y-auto py-2 custom-scrollbar">
-          {isCollapsed ? (
+          {effectiveCollapsed ? (
             <ul className="flex flex-col gap-1 px-2">
               {menuItems.map((item) => renderMenuItem(item))}
             </ul>
