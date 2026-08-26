@@ -103,6 +103,9 @@ export default function ProduitFormModal({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // État local pour le coef — permet la saisie directe sans recalcul en temps réel
+  // qui écraserait la valeur en cours de frappe
+  const [coefInput, setCoefInput] = useState('');
 
   const costPrice = normalizeNumberInput(form.cost_price);
   const sellingPriceTTC = normalizeNumberInput(form.selling_price);
@@ -128,9 +131,15 @@ export default function ProduitFormModal({
   }
 
   // Recalcul bidirectionnel : coef ↔ selling_price (TTC)
-  // Quand l'utilisateur change le coef → selling_price_TTC = cost_price × coef × (1 + tva/100)
+  // Quand l'utilisateur saisit le coef → on stocke la valeur brute pendant la frappe
+  // Le recalcul du selling_price se fait au blur (perte de focus) pour ne pas écraser la saisie
   const handleCoefChange = (value: string) => {
-    const coef = normalizeNumberInput(value);
+    setCoefInput(value);
+  };
+
+  // Au blur : recalculer le selling_price à partir du coef saisi
+  const handleCoefBlur = () => {
+    const coef = normalizeNumberInput(coefInput);
     const cp = normalizeNumberInput(form.cost_price);
     const tva = parseFloat(form.tva) || 0;
     if (cp > 0 && coef > 0) {
@@ -138,6 +147,7 @@ export default function ProduitFormModal({
       const sellingTTC = sellingHT * (1 + tva / 100);
       setForm(p => ({ ...p, selling_price: Math.round(sellingTTC).toString() }));
     }
+    setCoefInput('');
   };
 
   // Quand l'utilisateur change le cost_price → selling_price TTC se recalcule si coef déjà défini
@@ -419,8 +429,9 @@ export default function ProduitFormModal({
                 <Input
                   type="number"
                   className={`${inputBase} font-bold ${coefMultiplicateur < 1 ? 'text-red-600' : 'text-indigo-600'}`}
-                  value={costPrice > 0 ? coefMultiplicateur.toFixed(3) : ''}
+                  value={coefInput !== '' ? coefInput : (costPrice > 0 ? coefMultiplicateur.toFixed(3) : '')}
                   onChange={(e) => handleCoefChange(e.target.value)}
+                  onBlur={handleCoefBlur}
                   step="0.01"
                   min="0"
                   placeholder="1.30"
