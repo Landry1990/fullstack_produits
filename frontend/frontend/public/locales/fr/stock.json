@@ -536,6 +536,8 @@
             "title_new": "Nouvel Inventaire",
             "title_edit": "Inventaire #{{id}}",
             "validated": "VALIDÉE",
+            "duplicate_lot_confirm": "Ce produit est déjà saisi{{lot}} avec une quantité de {{currentQty}}.\n\nVoulez-vous ajuster la quantité de la ligne existante ?",
+            "duplicate_lots_message": "Lot(s) déjà saisi(s) : {{lots}}. Ajustez la quantité sur la ligne existante.",
             "tab_data": "📝 Saisie / Liste",
             "tab_entry": "Saisie",
             "tab_analysis": "Analyse",
