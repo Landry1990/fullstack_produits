@@ -182,6 +182,7 @@ export const useProductSearch = (
         const now = Date.now();
 
         // 1. Existing lots
+        const duplicateLots: string[] = [];
         availableLots.forEach(lot => {
             const qtyStr = lotQuantities[lot.id.toString()];
             if (qtyStr !== undefined) {
@@ -193,7 +194,10 @@ export const useProductSearch = (
                     l.stock_lot === lot.id
                 );
 
-                if (!exists) {
+                if (exists) {
+                    // Lot déjà saisi — signaler le doublon
+                    duplicateLots.push(lot.lot || `#${lot.id}`);
+                } else {
                     let stockTh = lot.quantity_remaining;
                     if (inventoryType === 'RESERVE') stockTh = lot.quantity_reserved || 0;
                     else if (inventoryType === 'GLOBAL') stockTh = (lot.quantity_remaining || 0) + (lot.quantity_reserved || 0);
@@ -219,6 +223,12 @@ export const useProductSearch = (
             }
         });
 
+        if (duplicateLots.length > 0) {
+            gooeyToast.error(t('stock:inventaire.detail.duplicate_lots_message', {
+                lots: duplicateLots.join(', ')
+            }));
+        }
+
         if (linesToAdd.length > 0) {
             setLignes(prev => [...linesToAdd, ...prev]);
         }
@@ -239,18 +249,29 @@ export const useProductSearch = (
     ) => {
         if (!activeInventaireId) return;
 
-        // Optimistic UI checks: verify if line already exists
-        const existsLocally = lignes.some(l =>
+        // Vérifier si ce produit + lot existe déjà dans les lignes
+        const existingLine = lignes.find(l =>
             (getProduitId(l.produit) === product.id) &&
             (stockLotId ? l.stock_lot === stockLotId : !l.stock_lot)
         );
 
-        if (existsLocally) {
-            gooeyToast.error(t('inventaire.detail.already_added'));
-            setSearchQuery('');
-            setSearchResults([]);
-            setSelectedItemIndex(-1);
-            focusInput();
+        if (existingLine) {
+            // Ce produit + lot est déjà saisi — proposer d'ajuster la quantité
+            const lotLabel = lotNum ? ` (Lot: ${lotNum})` : '';
+            const currentQty = existingLine.quantite_physique;
+            const confirmMsg = t('stock:inventaire.detail.duplicate_lot_confirm', {
+                product: product.name,
+                lot: lotLabel,
+                currentQty
+            });
+            if (window.confirm(confirmMsg)) {
+                // L'utilisateur veut ajuster — on focus le champ quantité de la ligne existante
+                focusFirstQty(existingLine.id);
+                setSearchQuery('');
+                setSearchResults([]);
+                setSelectedItemIndex(-1);
+                focusInput();
+            }
             return;
         }
 
