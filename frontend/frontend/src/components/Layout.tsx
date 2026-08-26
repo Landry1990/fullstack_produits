@@ -73,11 +73,11 @@ function LayoutContent() {
         <main className={`flex-1 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
           {!isZenithMode && (
             <div className="sticky top-0 z-40 flex items-center justify-between bg-base-200/80 backdrop-blur-md border-b border-base-300/50 px-2 py-1">
-              {/* Badge jours restants licence — masqué si > 30 jours */}
-              {daysRemaining !== null && daysRemaining <= 30 && (
+              {/* Badge jours restants licence — toujours visible */}
+              {daysRemaining !== null && (
                 <Badge
                   variant={daysRemaining <= 7 ? 'destructive' : daysRemaining <= 30 ? 'default' : 'secondary'}
-                  className="text-[10px] shrink-0 gap-1"
+                  className={`text-[10px] shrink-0 gap-1 ${daysRemaining > 30 ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' : ''}`}
                 >
                   <Clock className="size-3" />
                   {t('dashboard:licence_days_remaining', { count: daysRemaining })}
