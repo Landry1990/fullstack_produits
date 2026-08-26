@@ -177,6 +177,11 @@ def _process_bulk_line(
 
     target_lot = None
 
+    # Si le produit gère par lot, un lot doit obligatoirement être spécifié
+    # (par ID ou par numéro) — sinon on risque de fusionner des lots différents
+    if produit.use_lot_management and not data.get('stock_lot') and not data.get('lot_numero'):
+        raise ValueError(f"Le produit {produit.name} gère par lot — veuillez spécifier un lot.")
+
     # 1. Par ID de lot
     if data.get('stock_lot'):
         target_lot = lots_map.get(data['stock_lot'])

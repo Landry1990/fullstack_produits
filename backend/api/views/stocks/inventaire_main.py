@@ -308,11 +308,23 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                         data['quantite_physique'] = data.get('quantite_comptee', produit.stock)
                 
                 # --- UPSERT / MERGE LOGIC ---
+                # Vérifier si le produit gère par lot
+                produit_obj = Produit.objects.get(id=data['produit'])
+                stock_lot_id = data.get('stock_lot')
+
+                # Si le produit gère par lot, un lot doit obligatoirement être spécifié
+                # Sinon on risque de fusionner des lignes qui représentent des lots différents
+                if produit_obj.use_lot_management and not stock_lot_id:
+                    return Response(
+                        {'error': 'Ce produit gère par lot — veuillez spécifier un lot avant de l\'ajouter à l\'inventaire.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
                 # Chercher si une ligne existe déjà pour cet inventaire, produit et lot
                 existing_ligne = LigneInventaire.objects.filter(
                     inventaire=inventaire,
                     produit_id=data.get('produit'),
-                    stock_lot_id=data.get('stock_lot')
+                    stock_lot_id=stock_lot_id
                 ).first()
 
                 if existing_ligne:
