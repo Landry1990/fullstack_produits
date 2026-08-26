@@ -177,16 +177,20 @@ export function useCommandeActions({
     const handleCloturerCommande = async (commande: Commande, sudoCredentials?: SudoCredentials) => {
         if (executingAction) return;
         setExecutingAction(true);
+
+        // Mise à jour optimistique : passer immédiatement le statut à CLOTUREE
+        // dans l'UI et dans le cache pour que le badge change sans attendre
+        const optimisticCommande = { ...commande, status: 'CLOTUREE', status_display: 'Clôturée' };
+        setSelectedCommande(optimisticCommande);
+        updateCommandeInCache(queryClient, optimisticCommande);
+
         try {
             const res = await commandeService.cloturer(commande.id, sudoCredentials);
             gooeyToast.success(res.message || t('orders:messages.close_success'));
 
-            // Récupérer la commande mise à jour AVANT d'invalider le cache
-            // pour éviter toute race condition avec le refetch de la liste
+            // Récupérer la commande mise à jour (avec toutes les données fraîches)
             const updated = await commandeService.getById(commande.id);
             setSelectedCommande(updated);
-            // Mettre à jour le cache de la liste immédiatement pour que le
-            // statut (badge "US TITLE") se rafraîchisse sans attendre un refetch.
             updateCommandeInCache(queryClient, updated);
             setViewMode('DETAILS');
 
@@ -208,6 +212,9 @@ export function useCommandeActions({
             // Invalider le cache de la liste en dernier (refetch async)
             fetchCommandes();
         } catch (err) {
+            // Rollback : restaurer le statut original en cas d'échec
+            setSelectedCommande(commande);
+            updateCommandeInCache(queryClient, commande);
             gooeyToast.error(getApiErrorDetail(err, t('orders:messages.close_error')));
             throw err;
         } finally {
