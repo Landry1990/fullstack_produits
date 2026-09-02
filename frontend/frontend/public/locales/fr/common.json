@@ -127,6 +127,7 @@
         "load_error": "Erreur lors du chargement",
         "error_saving": "Erreur lors de la sauvegarde",
         "success_save": "Enregistré avec succès",
+        "datamatrix_detected": "Scan DataMatrix détecté : {{cip}}",
         "error_deleting": "Erreur lors de la suppression",
         "success_delete": "Supprimé avec succès",
         "error_update": "Erreur lors de la mise à jour",

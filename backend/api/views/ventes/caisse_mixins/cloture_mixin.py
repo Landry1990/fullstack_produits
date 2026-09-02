@@ -33,6 +33,11 @@ class CaisseClotureMixin:
         except (ValueError, TypeError, InvalidOperation):
             return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Billetage (détail des coupures comptées) — optionnel
+        billetage = request.data.get('billetage')
+        if billetage is not None and not isinstance(billetage, dict):
+            billetage = None
+
         date_debut = request.data.get('date_debut')
         date_fin = request.data.get('date_fin')
         user_id = request.data.get('user_id')
@@ -227,7 +232,8 @@ class CaisseClotureMixin:
             total_ventes=total_ventes, total_entrees=total_entrees, total_sorties=total_sorties,
             details_paiement=details, date_debut=start_date, date_fin=end_date,
             user=target_user, cloture_par=request.user if request.user.is_authenticated else None,
-            poste_caisse_id=poste_caisse_id
+            poste_caisse_id=poste_caisse_id,
+            billetage=billetage if billetage is not None else {}
         )
 
         # Fermer le poste de vente s'il est encore actif
@@ -258,6 +264,7 @@ class CaisseClotureMixin:
             'date_debut': start_date.isoformat() if start_date else None,
             'date_fin': end_date.isoformat() if end_date else None,
             'details': details,
+            'billetage': cloture.billetage or {},
             'user': target_user.get_full_name() or target_user.username,
             'mouvements_manuels': [
                 {'type': m.type, 'montant': float(m.montant), 'motif': m.motif}

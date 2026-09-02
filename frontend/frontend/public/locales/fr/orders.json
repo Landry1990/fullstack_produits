@@ -198,11 +198,15 @@
             "invoice_number": "N° Facture",
             "items": "Items",
             "view_details": "Voir Détails",
-            "empty": "Aucune commande pour le moment"
+            "empty": "Aucune commande pour le moment",
+            "ht": "HT",
+            "tva": "TVA",
+            "ttc": "TTC"
         },
         "selection": {
             "merge": "Fusionner"
         },
+        "selected_count": "{{count}} sélectionnée(s)",
         "pagination": {
             "showing": "Affichage de {{count}} sur {{total}} commandes"
         },
@@ -241,7 +245,8 @@
             "margin": "marge",
             "coeff": "coeff",
             "precompte": "précompte"
-        }
+        },
+        "correct_lot_expiry": "Corriger lot / date péremption"
     },
     "form": {
         "back_to_list": "Retour à la liste",
@@ -285,7 +290,10 @@
         "saving": "Sauvegarde...",
         "save_btn": "Enregistrer la Commande",
         "enable_datamatrix_scan": "Activer le scan Data Matrix",
-        "disable_datamatrix_scan": "Désactiver le scan Data Matrix"
+        "disable_datamatrix_scan": "Désactiver le scan Data Matrix",
+        "rate_short": "Taux",
+        "coeff_short": "Coeff",
+        "coeff_label": "COEFF"
     },
     "product_table": {
         "title": "Produits ({{count}})",
@@ -307,6 +315,7 @@
         "total_tva": "TVA",
         "total_ttc": "Total TTC",
         "selected_count": "{{count}} produit(s) sélectionné(s)",
+        "selected_short": "sél.",
         "delete_btn": "Retirer",
         "transfer_btn": "Transférer",
         "empty_state": "La commande est vide. Utilisez la barre de recherche pour ajouter des produits.",
@@ -547,7 +556,8 @@
         "results_unit": "articles",
         "step_config": "Paramètres",
         "step_results": "Résultats",
-        "mode_label": "Mode d'analyse"
+        "mode_label": "Mode d'analyse",
+        "ref_prefix": "REF:"
     },
     "data_matrix_scanner": {
         "active": "Scan Data Matrix actif — pointez la douchette sur un code",

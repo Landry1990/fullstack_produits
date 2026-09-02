@@ -1,4 +1,5 @@
 import api, { PaginatedResponse } from './api';
+import { productCacheService } from './productCache';
 
 // Types
 export interface StockLot {
@@ -117,16 +118,26 @@ class InventaireService {
 
 class ProduitService {
     /**
-     * Rechercher un produit par code CIP
+     * Rechercher un produit par code CIP (en ligne puis cache)
      */
     async getByCip(cip: string): Promise<Produit | null> {
+        // Essayer le cache d'abord (instantané et offline)
+        const cached = await productCacheService.getByCip(cip);
+        if (cached) {
+            return cached as Produit;
+        }
+
         try {
             const response = await api.get<Produit>(`/api/produits/by-cip/${cip}/`);
             return response.data;
         } catch (error: unknown) {
-            const axiosError = error as { response?: { status?: number } };
+            const axiosError = error as { response?: { status?: number }; message?: string };
             if (axiosError.response?.status === 404) {
                 return null;
+            }
+            // Hors ligne et absent du cache
+            if (!axiosError.response) {
+                throw new Error('OFFLINE_NOT_CACHED');
             }
             throw error;
         }
@@ -140,6 +151,31 @@ class ProduitService {
             `/api/produits/?search=${encodeURIComponent(query)}`
         );
         return Array.isArray(response.data) ? response.data : response.data.results;
+    }
+
+    /**
+     * Télécharger le catalogue complet par pages (max 500/page)
+     */
+    async downloadCatalog(): Promise<Produit[]> {
+        const all: Produit[] = [];
+        let page = 1;
+        const pageSize = 500;
+
+        while (true) {
+            const response = await api.get<PaginatedResponse<Produit>>(
+                `/api/produits/?page_size=${pageSize}&page=${page}`
+            );
+            const results = response.data.results || [];
+            all.push(...results);
+
+            if (!response.data.next || results.length < pageSize) {
+                break;
+            }
+            page++;
+        }
+
+        await productCacheService.saveAll(all);
+        return all;
     }
 }
 

@@ -125,6 +125,7 @@
         "error_loading": "Error loading",
         "error_saving": "Error saving",
         "success_save": "Saved successfully",
+        "datamatrix_detected": "DataMatrix scan detected: {{cip}}",
         "error_deleting": "Error deleting",
         "success_delete": "Deleted successfully",
         "error_update": "Error updating",

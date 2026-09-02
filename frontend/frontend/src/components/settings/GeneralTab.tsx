@@ -1,4 +1,4 @@
-import { Info, MapPin, CreditCard, ChevronRight, Settings } from 'lucide-react'
+import { Info, MapPin, CreditCard, ChevronRight, Settings, Banknote } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../shadcn/input'
 import { Checkbox } from '../shadcn/checkbox'
@@ -233,6 +233,36 @@ export function GeneralTab({ formData, handleChange, t, logo, logoInputRef, hand
                 placeholder={t('placeholders.currency')}
               />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section: Caisse */}
+      <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
+        <div className="p-0">
+          <div className="px-8 py-5 border-b border-slate-200 bg-slate-50/50">
+            <h2 className="font-bold text-xl flex items-center gap-3">
+              <div className="p-2 bg-indigo-50 rounded-lg">
+                <Banknote className="h-5 w-5 text-indigo-600" />
+              </div>
+              {t('sections.cash_register', { defaultValue: 'Caisse' })}
+            </h2>
+          </div>
+          <div className="p-8 space-y-6">
+            <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-all">
+              <Checkbox
+                checked={formData.billetage_obligatoire !== false}
+                onCheckedChange={(checked) => handleChange('billetage_obligatoire', checked)}
+              />
+              <div className="flex-1">
+                <span className="text-sm font-bold text-slate-800 block">
+                  {t('labels.billetage_obligatoire', { defaultValue: 'Billetage obligatoire à la clôture' })}
+                </span>
+                <span className="text-xs text-slate-400 block mt-0.5">
+                  {t('hints.billetage_obligatoire', { defaultValue: 'Force la caissière à compter ses coupures (billets, pièces, mobile money) via un assistant à la clôture de caisse' })}
+                </span>
+              </div>
+            </label>
           </div>
         </div>
       </div>

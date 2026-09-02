@@ -2,6 +2,540 @@
 
 ---
 
+## 2026-09-01 — Intégrité caisse : annulation/modification après clôture et avoirs clients
+
+### 🔒 Protection des factures en période clôturée
+
+- `backend/api/services/sale_integrity.py` — détection d'une période de caisse clôturée couvrant la facture (bornes complètes, partielles ou ouvertes).
+- `backend/api/services/sale_canceller.py` — annulation refusée pour les factures `VALIDEE`/`PAYEE` dans une période clôturée, avec orientation vers un avoir client.
+- `backend/api/services/sale_modifier.py` — modification refusée avant restauration du stock si une clôture couvre la facture.
+- `backend/api/tests/test_caisse_integrity.py` — tests API sur les refus d'annulation/modification après clôture et l'annulation autorisée sans clôture.
+
+### ✨ Notes de crédit client (AvoirClient)
+
+- `backend/api/models/client_credit.py` et migration `0240` — modèles `AvoirClient` / `LigneAvoirClient`, statuts, motifs et numérotation `AVC-YYYYMM-XXXX`.
+- `backend/api/serializers/client_credit.py` — écriture/lecture imbriquée des lignes.
+- `backend/api/views/ventes/client_credit.py` — `AvoirClientViewSet`, permission Sudo `can_create_client_credit`, préremplissage depuis facture, validation atomique avec réintégration stock/lots, remboursement espèces (`MouvementCaisse` SORTIE) ou crédit client (`DepotClient`).
+- `backend/api/migrations/0241_profile_can_create_client_credit.py` — permission dédiée sur le profil utilisateur.
+- Enregistrement des modèles/serializers/vues et de la route `avoirs-clients`.
+- `backend/api/tests/test_client_credit.py` — couverture création, validation, remboursement espèces et impact stock.
+
+### 🖥️ Frontend : gestion des avoirs clients
+
+- `frontend/frontend/src/types/clientCredit.ts` et `types/index.ts` — types `ClientCredit` et associés.
+- `frontend/frontend/src/services/clientCreditService.ts` — appels API.
+- `frontend/frontend/src/hooks/useClientCredits.ts` — React Query (liste, détail, création, mise à jour, suppression, validation, préremplissage).
+- `frontend/frontend/src/components/avoirs-client/ClientCreditsList.tsx` — liste des avoirs avec statut et validation.
+- `frontend/frontend/src/components/avoirs-client/ClientCreditForm.tsx` — formulaire de création depuis une facture.
+- `frontend/frontend/public/locales/fr/avoirs_client.json` et `en/avoirs_client.json` — traductions fr/en.
+
+**Validation :**
+- `python -m py_compile` des fichiers Python modifiés : OK
+- `npm run build` et `npx tsc --noEmit` : à vérifier en environnement de build.
+
+---
+
+## 2026-09-01 — Livre de Caisse (export Excel)
+
+### ✨ Nouveau rapport : Livre de Caisse exportable Excel
+
+Ajout d'un export "Livre de Caisse" dans le Centre de Rapports. Le livre de
+caisse est un récapitulatif journalier des mouvements de caisse regroupés par
+rubrique (mode de paiement), sur un intervalle arbitraire (jusqu'à l'année).
+
+**Backend :**
+- `backend/api/views/rapports/finance.py` — nouvel endpoint
+  `GET /api/rapports/livre_caisse_excel/` avec paramètres `date_debut`,
+  `date_fin` (requis) et `poste_caisse_id` (optionnel).
+- Ajout de `MouvementCaisse` à l'import `from api.models import (...)`.
+- Sources : paiements `Caisse` (statut=completee, tous modes de paiement
+  incluant recouvrement) + `MouvementCaisse` (entrées/sorties manuelles).
+- Regroupement par jour (`TruncDate`) puis par rubrique (mode_paiement pour
+  les ventes, type ENTREE/SORTIE pour les mouvements manuels).
+- Fichier Excel à 2 feuilles :
+  1. **Livre de Caisse** — une ligne par jour, colonnes par rubrique
+     (Espèces, Chèque, Carte, Virement, OM, MoMo, Coupon, En compte, Dépôt,
+     Recouvrement, Entrées manuelles, Sorties manuelles, Solde jour) +
+     ligne TOTAL GÉNÉRAL.
+  2. **Détail par jour** — récapitulatif compact (Total ventes, entrées,
+     sorties, solde net par jour) + **grand total par rubrique** (Espèces,
+     Chèque, Carte, Virement, OM, MoMo, Coupon, En compte, Dépôt,
+     Recouvrement, Entrées manuelles, Sorties manuelles) + TOTAL GÉNÉRAL.
+- En-tête pharmacie via `_write_pharma_header`, largeurs auto via
+  `_apply_auto_width` (mêmes helpers que les autres exports Excel).
+- `totaux_rubrique` agrégé dans `backend/api/views/rapports/finance.py`
+
+**Frontend :**
+- `frontend/frontend/src/hooks/reports/queries.ts` — nouvelle entrée
+  `livre_caisse` (resultType 'raw', params date_debut/date_fin/poste_caisse_id).
+- `frontend/frontend/src/hooks/useCentreRapports.ts` — handler de
+  téléchargement blob Excel pour `livre_caisse` (même pattern que
+  `balance_stock` et `export_sage`).
+
+**Traductions :**
+- `frontend/frontend/public/locales/fr/reports.json` — clés
+  `queries.livre_caisse.name` ("Livre de Caisse") et `.description`.
+- `frontend/frontend/public/locales/en/reports.json` — clés
+  `queries.livre_caisse.name` ("Cash Book") et `.description`.
+
+**Validation :**
+- `python -m py_compile finance.py` : OK
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK (4718 modules, warnings non bloquants)
+- Déployé en dev (frontend + backend via `deploy.ps1 -Target all`)
+
+---
+
+## 2026-09-01 — PDA Inventaire : catalogue offline
+
+### 📱 Cache produit pour scan hors connexion
+
+Le PDA inventaire peut désormais scanner des produits sans connexion internet,
+à condition d'avoir téléchargé le catalogue au préalable.
+
+**Nouveau :**
+
+- `pda-inventaire/src/services/productCache.ts` — cache local des produits dans
+  `AsyncStorage` avec recherche par `cip1/cip2/cip3`.
+- Téléchargement du catalogue complet paginé (500 produits/page) via
+  `/api/produits/?page_size=500` jusqu'à épuisement des pages.
+
+**Modifications :**
+
+- `pda-inventaire/src/services/inventaire.ts` — `produitService.getByCip` tente
+  d'abord le cache local, puis l'API. En cas d'erreur réseau avec un produit
+  absent du cache, une erreur `OFFLINE_NOT_CACHED` est levée pour guider
+  l'utilisateur.
+- `pda-inventaire/src/services/inventaire.ts` — `produitService.downloadCatalog`
+  télécharge toutes les pages et persiste dans le cache.
+- `pda-inventaire/src/screens/HomeScreen.tsx` — barre "Catalogue offline" avec
+  le nombre de produits en cache et un bouton "Télécharger".
+- `pda-inventaire/src/components/scanner/useScannerController.ts` — message
+  explicite si un produit scanné n'est pas dans le catalogue offline.
+
+**Validation :**
+- `npx tsc --noEmit` dans `pda-inventaire/` : OK
+
+---
+
+## 2026-09-01 — Stabilité PDA Inventaire (sync, doublons, audio)
+
+### 🔧 PDA Inventaire : corrections de stabilité après refonte
+
+**Corrections apportées :**
+
+- `pda-inventaire/src/hooks/useOfflineSync.ts` — la synchronisation ne marque
+  plus toutes les lignes comme synchronisées en cas d'échec partiel. Si le
+  backend n'importe pas toutes les lignes, les lignes restent en file offline
+  pour un retry ultérieur, évitant la perte de données.
+- `pda-inventaire/src/hooks/useOfflineSync.ts` — `saveOffline` agrège désormais
+  les scans du même produit + même lot : scanner deux fois le même CIP incrémente
+  la quantité au lieu de créer un doublon.
+- `pda-inventaire/src/components/scanner/useScannerController.ts` — les IDs
+  des lignes offline sont générés à partir d'un hash du `tempId` complet,
+  évitant les collisions de clés React si deux scans arrivent à la même
+  milliseconde.
+- `pda-inventaire/src/components/scanner/useScannerController.ts` — le son de
+  feedback est encodé en base64 sans `btoa` (non disponible dans React Native
+  natif), remplaçant l'ancien `btoa` qui empêchait le son sur appareil physique.
+- `pda-inventaire/src/services/localStorage.ts` — remplacement de `substr`
+  déprécié par `substring`.
+
+**Validation :**
+- `npx tsc --noEmit` dans `pda-inventaire/` : OK
+
+---
+
+## 2026-09-01 — Fix scan CIP simple fermait la commande
+
+### 🩹 Scan simple : la douchette fermait/sauvegardait la commande au lieu d'ajouter le produit
+
+Quand on scannait un CIP simple (non DataMatrix) avec la douchette dans le
+formulaire de commande, l'Entrée finale du scanner soumettait le formulaire
+(`onSubmit={handleSaveCommande}`) → toast "Veuillez ajouter au moins un produit"
+à chaque scan.
+
+**Cause racine :** Le formulaire avait `onSubmit={handleSaveCommande}` et le
+bouton "Enregistrer" était `type="submit"`. L'Entrée de la douchette dans
+n'importe quel champ du formulaire déclenchait la soumission, qui affichait le
+toast d'erreur si la commande était vide (le produit n'étant pas encore ajouté
+au moment de l'Entrée, à cause du debounce de recherche).
+
+**Correction (définitive) :**
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx` — le formulaire
+  `onSubmit` ne fait plus que `e.preventDefault()` (bloque la soumission par
+  Entrée sans sauvegarder). Le bouton "Enregistrer" est passé de `type="submit"`
+  à `type="button"` avec `onClick={handleSaveCommande}`. La sauvegarde ne se
+  déclenche maintenant que par un clic explicite sur le bouton.
+- `frontend/frontend/src/hooks/useCommandesState.tsx` — `onSave` ne prend plus
+  de `FormEvent` (n'a plus besoin de `e.preventDefault()`).
+- `frontend/frontend/src/hooks/useSearchNavigation.ts` — `e.preventDefault()`
+  sur Entrée dans le champ de recherche (sécurité supplémentaire).
+
+**Validation :**
+- `npm run build` : OK
+
+---
+
+## 2026-09-01 — Refactorisation de ScannerScreen (PDA inventaire)
+
+### 🔧 Refactor : extraction des composants du scanner
+
+L'écran `ScannerScreen.tsx` (1 308 lignes) a été refactorisé pour améliorer
+la maintenabilité sans altérer la logique métier. Tous les comportements
+existants sont conservés (scan laser/keyboard wedge, modes CONT et +1, gestion
+des lots, synchronisation offline, édition des lignes, export CSV, retour).
+
+**Composants créés dans `pda-inventaire/src/components/scanner/` :**
+
+- `ScannerInput.tsx` — champ de scan visible avec auto-submit intelligent
+  (50 ms de stabilité ou timeout max 800 ms) et soumission manuelle.
+- `ScanModeToggles.tsx` — sélecteur explicite des modes Scan continu / +1 rapide /
+  Manuel, désormais mutuellement exclusifs.
+- `RecentScans.tsx` — liste des 10 derniers scans avec édition au tap,
+  suppression au long-press et bouton × (uniquement sur les lignes offline).
+- `ProductCard.tsx` — carte produit scannée : stock, lots existants,
+  saisie d'un nouveau lot / sans lot et actions Annuler/Sauvegarder.
+- `EditLineModal.tsx` — modal d'édition d'une ligne avec boutons +/- et
+  Annuler/Enregistrer.
+- `SyncBanner.tsx` — bandeau de synchronisation offline.
+- `Header.tsx` — en-tête du scanner avec statut online/offline, toggles de
+  mode, export CSV et compteur de lignes.
+
+**Fichiers modifiés :**
+
+- `pda-inventaire/src/screens/ScannerScreen.tsx` — refactorisé en écran
+  de présentation de 190 lignes (objectif < 400 lignes atteint).
+- `pda-inventaire/src/components/scanner/useScannerController.ts` — nouveau
+  hook local regroupant la logique métier, les états et les handlers du scanner.
+
+**Détails de conservation du comportement :**
+
+- Le champ de scan reste visible, garde son propre `ref` et déclenche la
+  recherche sur Entrée/Rechercher ou sur le timeout intelligent.
+- Les modes CONT et +1 rapide sont mutuellement exclusifs ; le mode Manuel
+  désactive les deux.
+- La clé des lignes de la liste utilise `tempId` pour les lignes offline,
+  sinon `id`.
+- La suppression au long-press / bouton × ne concerne que les lignes
+  offline ; une alerte informe l'utilisateur pour les lignes synchronisées.
+- `DisplayLigne` expose désormais `tempId` pour faciliter la suppression et
+  la mise à jour des lignes offline.
+
+**Validation :**
+
+- `npx tsc --noEmit` dans `pda-inventaire/` : OK
+
+---
+
+## 2026-09-01 — Traduction des chaînes non traduites dans les Commandes
+
+### 🌐 i18n : clés non traduites dans le module Commandes
+
+Audit des composants du dossier `components/Commandes/` : plusieurs chaînes
+hardcodées en français ont été externalisées via `t()` avec traductions fr + en.
+
+**Fichiers modifiés :**
+
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx` — boutons
+  "Enregistrer" / "Annuler" / "Corriger lot / date péremption" → `t('common:save')`,
+  `t('common:cancel')`, `t('orders:details.correct_lot_expiry')`.
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx` — libellés
+  "Taux" / "Coeff" / "COEFF" (commande directe) → `t('orders:form.rate_short')`,
+  `t('orders:form.coeff_short')`, `t('orders:form.coeff_label')`.
+- `frontend/frontend/src/components/Commandes/CommandeList.tsx` — en-têtes de
+  colonnes HT/TVA/TTC et ligne de totaux sélectionnés ("X sélectionnée(s)") →
+  `t('orders:list.table.ht|tva|ttc')` et `t('orders:list.selected_count')`.
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx` —
+  placeholder "Lot" → `t('orders:product_table.headers.lot')`.
+- `frontend/frontend/src/components/Commandes/CommandeProductToolbar.tsx` —
+  "sél." → `t('orders:product_table.selected_short')`.
+- `frontend/frontend/src/components/Commandes/ReconditionnementModal.tsx` —
+  fallback d'erreur "Erreur" → `t('common:error')`.
+- `frontend/frontend/src/components/Commandes/SuggestionCommandeModal.tsx` —
+  préfixe "REF:" → `t('orders:suggestion_modal.ref_prefix')`.
+
+**Fichiers de traduction :**
+
+- `frontend/frontend/public/locales/fr/orders.json` — nouvelles clés :
+  `details.correct_lot_expiry`, `form.rate_short`, `form.coeff_short`,
+  `form.coeff_label`, `list.table.ht|tva|ttc`, `list.selected_count`,
+  `product_table.selected_short`, `suggestion_modal.ref_prefix`.
+- `frontend/frontend/public/locales/en/orders.json` — mêmes clés en anglais.
+
+**Validation :**
+- `npm run build` : OK
+
+---
+
+## 2026-09-01 — Fix scan 2D DataMatrix dans les commandes
+
+### 🩹 Scan 2D : la recherche échouait à chaque fois
+
+Le scan 2D dans les commandes fournisseurs retournait systématiquement
+"non trouvé" à cause de plusieurs problèmes en cascade.
+
+**Corrections apportées :**
+
+- `frontend/frontend/src/utils/parseDataMatrix.ts` — la regex `^\d{16}$` testait une chaîne de 14 caractères, empêchant l'extraction du CIP. Corrigée en `^\d{14}$`.
+- `frontend/frontend/src/components/Commandes/DataMatrixScanBar.tsx` — `MIN_SCAN_LENGTH` passé de `18` à `7` pour accepter les CIP13 et CIP7.
+- `frontend/frontend/src/hooks/useDataMatrixScanner.ts` —
+  - remplacement du parser `parseDataMatrix` par `parseGS1Datamatrix` (plus robuste)
+  - fallback sur CIP13 et CIP7 brut
+  - utilisation des champs `produit_cip` et `produit_ref` si le produit est un ID
+  - support de `produit` sous forme de `number` en utilisant `produit_cip`/`produit_ref`
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx` — scan DataMatrix activé par défaut en création/édition. Champ de recherche intelligent : DataMatrix → recherche dans la commande (remplit lot/date), code simple → recherche dans la base produits
+- `frontend/frontend/src/hooks/useProductSearch.ts` — détection et parsing d'un DataMatrix scanné dans le champ de recherche produit : extrait le CIP, affiche un toast "Scan DataMatrix : {{cip}}", et lance la recherche
+- `frontend/frontend/src/hooks/useProductSearchIndex.ts` — normalisation CIP identique au scanner (majuscule, suppression espaces/tirets/points).
+- `backend/api/views/stocks/stock_lots.py` — endpoint `by_datamatrix` :
+  - normalisation du CIP et du lot
+  - recherche sur `cip1`, `cip2`, `cip3` avec `__iexact`
+  - fallback sans zéros non significatifs
+  - lot passé optionnel : retourne le lot le plus récent en stock
+
+**Validation :**
+- `python -m py_compile backend/api/views/stocks/stock_lots.py` : OK
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK
+- Déployé en dev
+
+---
+
+## 2026-09-01 — Atomicité des opérations critiques (audit + corrections)
+
+### 🛡️ Audit et ajout de transactions atomiques
+
+Un audit a été mené sur les opérations de mutation backend (ventes, caisse, stock,
+produits, commandes, fournisseurs, comptabilité, clients, mouvements). Les méthodes
+identifiées comme critiques et non atomiques ont été protégées avec `@transaction.atomic`
+ou `with transaction.atomic():` afin d'éviter les états partiels en production.
+
+**Opérations ventes / caisse :**
+- `CaisseViewSet.create` (`ventes/caisse.py`)
+- `PosteVenteViewSet.activer`, `ouvrir`, `fermer`, `forcer_fermeture` (`ventes/caisse_poste.py`)
+- `FactureBulkMixin.bulk_cancel` (`ventes/facture_mixins/bulk_actions.py`)
+- `FactureSalesMixin.marquer_payee` (`ventes/facture_mixins/sales_actions.py`)
+- `FacturePrintMixin.send_whatsapp` (`ventes/facture_mixins/print_actions.py`)
+- `FactureProduitViewSet.envoi_rappel_renouvellement` (`ventes/facture_produits.py`)
+- `CreanceViewSet.vider` (`ventes/creances.py`)
+- `MouvementCaisseViewSet.perform_create`, `perform_update`, `destroy` (`ventes/mouvements.py`)
+
+**Opérations stock / produits :**
+- `LigneInventaireViewSet.create` (`stocks/inventaire_main.py`)
+- `ProduitViewSet.perform_update`, `perform_destroy` (`produits.py`)
+- `ProduitStatusMixin.toggle_active`, `toggle_public` (`produit_actions/status_ops.py`)
+- `ProduitBulkMixin.bulk_toggle_public` (`produit_actions/bulk_ops.py`)
+- `RuptureFournisseurViewSet.resoudre` (`stocks/ruptures.py`)
+
+**Opérations commandes / fournisseurs :**
+- `CommandeProduitViewSet.perform_create` (`commandes/commande_produits.py`)
+- `LigneAvoirViewSet.perform_update` (`commandes/avoirs.py`)
+- `CommandeViewSet.perform_destroy` (`commandes/commandes.py`)
+- `FournisseurViewSet.destroy` (`fournisseurs.py`)
+- `OrderScheduleViewSet.trigger_now` (`commandes/schedules.py`)
+
+**Opérations comptabilité / clients / promis / paiements :**
+- `EcritureComptableViewSet.initialiser_historique`, `creer_lettrage` (`comptabilite.py`)
+- `CompteComptableViewSet`, `JournalComptableViewSet`, `ExerciceComptableViewSet`, `EcritureComptableViewSet` : `perform_create`, `perform_update`, `perform_destroy` (`comptabilite.py`)
+- `ClientViewSet.perform_create`, `perform_update`, `perform_destroy` (`clients.py`)
+- `PromisViewSet.perform_destroy` (`commandes/promis.py`)
+- `PaiementFournisseurViewSet.perform_update`, `perform_destroy` (`paiements.py`)
+
+**Validation :**
+- `python -m compileall backend/api/views` : OK
+
+---
+
+## 2026-08-31 — Toast "serveur injoignable" moins paranoïaque
+
+### 🧯 Moins de faux positifs sur le toast réseau
+
+Le message "Impossible de joindre le serveur" apparaissait trop souvent
+(timeout, micro-coupures, requêtes annulées) alors que le réseau était
+présent. Il ne s'affiche désormais que si le navigateur signale vraiment
+être hors ligne (`!navigator.onLine`).
+
+**Fichier :**
+- `frontend/frontend/src/services/api.ts` — condition `!navigator.onLine` ajoutée avant l'affichage du toast `server_unreachable`
+
+### Validation
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK
+- Déployé en dev
+
+---
+
+## 2026-08-30 — Billetage de caisse + fix journal caisse (caisse antérieure)
+
+### 💵 Billetage de caisse : comptage des coupures + conservation + paramétrage
+
+Mise en place d'un système complet de billetage (comptage des coupures) à la
+clôture de caisse, avec conservation du détail pour consultation ultérieure
+et paramétrage par le pharmacien.
+
+**Fonctionnement :**
+- À la clôture, la caissière compte ses coupures via un sous-modal dédié
+  (billets 10 000/5 000/2 000/1 000/500, pièces 500/200/100/50/25,
+  Orange Money + MTN MoMo séparés)
+- Le total calculé remplit le champ "Montant Réel"
+- Le détail du billetage est **stocké** sur la clôture (champ JSON `billetage`)
+- Consultable dans l'historique des clôtures (section repliable "Billetage")
+- **Paramétrable** dans Informations Pharmacie > Caisse :
+  - Billetage obligatoire (défaut) : champ read-only, ouvre le modal au clic
+  - Billetage optionnel : champ editable, saisie libre possible, bouton
+    billetage toujours disponible
+
+**Backend :**
+- `backend/api/models/settings.py` — champ `billetage_obligatoire` (BooleanField, default true) sur `PharmacySettings`
+- `backend/api/models/billing.py` — champ `billetage` (JSONField) sur `ClotureCaisse`
+- `backend/api/migrations/0238_billetage_caisse.py` — **nouvelle** migration
+- `backend/api/views/ventes/caisse_mixins/cloture_mixin.py` — lecture de `billetage` dans le payload + stockage
+
+**Frontend :**
+- `frontend/frontend/src/components/caisse/CashBreakdownModal.tsx` — export du type `CashBreakdown`, `onConfirm` renvoie le breakdown complet
+- `frontend/frontend/src/components/caisse/JournalCaisseClosingModal.tsx` — champ conditionnel (obligatoire/optionnel), envoi du breakdown via `setBilletage`
+- `frontend/frontend/src/hooks/caisse/useJournalCaisseClosing.ts` — state `billetage` + inclusion dans le payload `POST caisse/cloturer/`
+- `frontend/frontend/src/hooks/useJournalCaisse.ts` — exposition de `setBilletage`
+- `frontend/frontend/src/components/settings/GeneralTab.tsx` — section "Caisse" avec toggle billetage obligatoire
+- `frontend/frontend/src/components/HistoriqueClotures.tsx` — section repliable "Billetage" dans le modal de détails
+- `frontend/frontend/src/context/PharmacySettingsContext.tsx` — champ `billetage_obligatoire` dans le type + `DEFAULT_SETTINGS`
+- `frontend/frontend/src/types/pharmacy.ts` — champ `billetage_obligatoire` dans le type
+
+**Traductions :**
+- `frontend/frontend/public/locales/fr/caisse.json` — clés `journal.closing.breakdown.*`
+- `frontend/frontend/public/locales/en/caisse.json` — idem en anglais
+- `frontend/frontend/public/locales/fr/pharmacy_settings.json` — clés `labels.billetage_obligatoire` + `hints.billetage_obligatoire`
+- `frontend/frontend/public/locales/en/pharmacy_settings.json` — idem en anglais
+
+### 🐛 Journal de caisse : sélection caissier écrasait les dates antérieures
+
+Quand on sélectionnait un caissier, la détection de shift (`handleUserShiftDetection`)
+remplaçait systématiquement les dates sélectionnées par aujourd'hui (shift détecté
+ou 0h→23h59). Impossible de consulter une caisse antérieure : les dates étaient
+toujours remises à aujourd'hui.
+
+**Fix :**
+- La détection de shift n'est lancée que si la date de début sélectionnée
+  correspond à aujourd'hui
+- Si l'utilisateur a choisi une date antérieure, on conserve sa plage et on
+  ne fait que reset le shift détecté (pas de blocage de clôture)
+- Le fetch est déclenché normalement par l'effet existant `[dateDebut, dateFin, selectedUser]`
+
+**Fichier :**
+- `frontend/frontend/src/hooks/useJournalCaisse.ts` — effet `selectedUser` conditionnel
+
+### Validation
+- `npx tsc --noEmit` : OK, 0 erreur
+- `npm run build` : succès en 22.14s
+- `py_compile` backend : OK sur les 4 fichiers modifiés
+
+---
+
+## 2026-08-26 — Rafraîchissement produits après clôture commande
+
+### 🔄 Stock produits : rechargement immédiat après clôture
+
+Après clôture d'une commande, le stock des produits dans la liste des produits mettait du temps à s'actualiser. Le cache React Query était invalidé mais pas rechargé immédiatement.
+
+**Fix :**
+- Remplacement de `invalidateQueries` par `refetchQueries({ type: 'all' })` après clôture
+- Le cache `products` est rechargé en arrière-plan dès la clôture terminée
+- La liste des produits affiche les stocks à jour sans action manuelle
+
+**Fichier :**
+- `frontend/frontend/src/hooks/commandes/useCommandeHandlers.ts`
+
+---
+
+## 2026-08-26 — Bon de réception : impression HTML frontend
+
+### 📄 Bon de réception : retour à l'impression HTML côté frontend
+
+L'impression du bon de réception passait par un PDF généré côté backend (ReportLab) avec un style basique et des données codées en dur. L'ancien rendu HTML/CSS frontend était plus pro et plus fidèle à l'identité du document.
+
+**Changement :**
+- Génération HTML du bon de réception côté frontend via `buildReceptionPrintHtml`
+- Style professionnel avec en-tête pharmacie, encadré "Bon de Réception", tableau des produits avec lots/DLUM, récapitulatif et totaux encadrés
+- Ouverture d'une fenêtre d'impression standard (`window.print`) comme pour les factures
+- Appel du service backend `imprimer_reception` supprimé, remplacé par une impression purement frontend
+
+**Fichiers :**
+- `frontend/frontend/src/utils/print/printHelpers.ts`
+- `frontend/frontend/src/hooks/useCommandeActions.ts`
+
+---
+
+## 2026-08-26 — UX mobile, coef produit, doublons inventaire, clôture commande, badge licence
+
+### 📱 Sidebar mobile : sous-menus accessibles au tap
+
+La sidebar se mettait en mode collapsé (icônes seules) sur écran < 1280px, y compris sur mobile tactile. Les sous-menus s'affichaient au hover — impossible sur téléphone.
+
+**Fix :**
+- Auto-collapse restreint au desktop (1024-1280px)
+- Sur mobile (< 1024px), la sidebar s'affiche en overlay étendu avec labels + sous-menus cliquables
+- Bouton "Replier/Déplier" masqué sur mobile
+
+**Fichiers :**
+- `frontend/frontend/src/context/SidebarContext.tsx`
+- `frontend/frontend/src/components/Sidebar.tsx`
+
+### 🏷️ Coefficient produit : saisie directe au clavier
+
+Le champ coefficient dans le modal de modification produit ne permettait pas la saisie directe — il fallait cliquer sur les flèches du spinner. Le recalcul en temps réel écrasait la valeur en cours de frappe.
+
+**Fix :**
+- État local `coefInput` pendant la saisie
+- Recalcul du prix de vente au blur (perte de focus)
+- Aucun blocage sur la valeur (peut aller en dessous de 1.34)
+
+**Fichiers :**
+- `frontend/frontend/src/components/ProduitFormModal.tsx`
+
+### 📋 Inventaire : contrôle des doublons produit + lot
+
+L'ajout d'un produit déjà saisi avec le même lot ne déclenchait aucun message côté frontend. Le backend avait une logique de merge mais ne vérifiait pas si le produit gère par lot.
+
+**Fix :**
+- Frontend : message de confirmation proposant d'ajuster la quantité de la ligne existante
+- Frontend : toast d'erreur pour les lots déjà saisis dans le modal multi-lots
+- Backend : rejet si un produit gère par lot mais qu'aucun lot n'est spécifié
+- Traductions fr/en ajoutées
+
+**Fichiers :**
+- `frontend/frontend/src/hooks/inventaire/useProductSearch.ts`
+- `backend/api/views/stocks/inventaire_main.py`
+- `backend/api/views/stocks/inventaire/bulk.py`
+- `frontend/frontend/public/locales/fr/stock.json`
+- `frontend/frontend/public/locales/en/stock.json`
+
+### ✅ Clôture commande : statut mis à jour immédiatement
+
+Le badge de statut restait à "PREP" pendant toute la durée de la clôture backend (lots, stock, PMP, promis, mouvements). L'utilisateur n'avait aucun feedback visuel.
+
+**Fix :**
+- Mise à jour optimistique : statut → "Clôturée" immédiatement
+- Rollback automatique vers "PREP" en cas d'erreur
+- Données complètes rechargées après confirmation backend
+
+**Fichiers :**
+- `frontend/frontend/src/hooks/useCommandeActions.ts`
+
+### 📛 Badge licence : visible en permanence
+
+Le badge "jours restants" ne s'affichait que quand il restait 30 jours ou moins. Le pharmacien ne savait pas où il en était avant que ce soit presque trop tard.
+
+**Fix :**
+- Badge toujours visible (header + dashboard)
+- Code couleur progressif : vert (>30j), bleu (≤30j), rouge (≤7j)
+- Licences à vie : pas de badge (inchangé)
+
+**Fichiers :**
+- `frontend/frontend/src/components/Layout.tsx`
+- `frontend/frontend/src/components/DashboardShadcn.tsx`
+
+---
+
 ## 2026-08-25 — Tailscale Funnel : mise en service chez le premier client
 
 ### 🌐 Accès externe sécurisé via Tailscale Funnel

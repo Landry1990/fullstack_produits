@@ -39,7 +39,7 @@ class ExportService {
             const fileUri = FS.documentDirectory + fileName;
 
             await FS.writeAsStringAsync(fileUri, csvContent, {
-                encoding: FS.EncodingType?.UTF8 || 'utf8',
+                encoding: FS.EncodingType.UTF8,
             });
 
             // 4. Partager le fichier

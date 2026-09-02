@@ -534,7 +534,7 @@ export default function SuggestionCommandeModal({
                                   <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-600 animate-pulse">{t('orders:suggestion_modal.rupture_badge')}</span>
                                 )}
                               </div>
-                              <span className="text-[11px] text-slate-400 font-mono">REF: {item.produit_ref}</span>
+                              <span className="text-[11px] text-slate-400 font-mono">{t('orders:suggestion_modal.ref_prefix')} {item.produit_ref}</span>
                             </div>
                           </TableCell>
                           <TableCell className="px-3 py-2.5 text-center">

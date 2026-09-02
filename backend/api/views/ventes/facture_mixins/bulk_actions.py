@@ -103,6 +103,7 @@ class FactureBulkMixin:
         }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
+    @transaction.atomic
     def bulk_cancel(self, request):
         """
         Annule plusieurs factures en lot avec réintégration automatique du stock.

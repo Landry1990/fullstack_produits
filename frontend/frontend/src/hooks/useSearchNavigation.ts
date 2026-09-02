@@ -26,6 +26,12 @@ export function useSearchNavigation<T>(
     }, [searchResults]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        // Toujours empêcher la soumission du formulaire sur Entrée dans le champ de recherche,
+        // même sans résultats (sinon une douchette qui scanne un CIP + Entrée soumet le formulaire).
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
+
         if (searchResults.length === 0) return;
 
         if (e.key === 'ArrowDown' || e.key === 'Down') {
@@ -51,7 +57,6 @@ export function useSearchNavigation<T>(
                 return newIndex;
             });
         } else if (e.key === 'Enter') {
-            e.preventDefault();
             if (selectedIndex >= 0 && selectedIndex < searchResults.length) {
                 onSelect(searchResults[selectedIndex]);
                 if (resetOnSelect) {

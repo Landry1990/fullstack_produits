@@ -33,7 +33,7 @@ export default function Omnisearch() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-5xl p-0 overflow-hidden border-slate-200">
+      <DialogContent className="max-w-5xl p-0 overflow-hidden border-slate-200 font-sans">
         <DialogTitle className="sr-only">{t('omnisearch.title', 'Recherche globale')}</DialogTitle>
         <Command
           label={t('common:command_palette')}

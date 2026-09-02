@@ -36,6 +36,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   '/app/stock-analysis': () => import('./StockAnalysis'),
   '/app/historique-clotures': () => import('./HistoriqueClotures'),
   '/app/historique-ventes': () => import('./HistoriqueVentes'),
+  '/app/avoirs-clients': () => import('./avoirs-client/ClientCreditsPage'),
   '/app/recap-client': () => import('./RecapClient'),
   '/app/historique-achats': () => import('./HistoriqueAchats'),
   '/app/telegram-history': () => import('./TelegramHistory'),
@@ -116,6 +117,7 @@ export default function Sidebar() {
       submenus: [
         { path: '/app/ventes', label: t('ventes.consultation'), key: 'ventes_consultation' },
         { path: '/app/historique-ventes', label: t('ventes.historique'), key: 'ventes_historique' },
+        { path: '/app/avoirs-clients', label: t('ventes.avoirs_clients'), key: 'ventes_avoirs_clients' },
         { path: '/app/recap-client', label: t('ventes.recap_client'), key: 'ventes_consultation' },
         { path: '/app/journal-caisse', label: t('ventes.journal'), key: 'ventes_journal' },
         { path: '/app/historique-clotures', label: t('ventes.clotures'), key: 'ventes_clotures' },

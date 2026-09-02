@@ -1,9 +1,13 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useDebounce } from 'use-debounce'
+import { gooeyToast } from 'goey-toast'
+import i18n from '../i18n'
 import api from '../services/api'
 import { useQuery } from '@tanstack/react-query'
 import type { ProduitModel, PaginatedResponse } from '../types'
 import { useProductSearchIndex } from './useProductSearchIndex'
+import { normalizeCip } from './useProductSearchIndex'
+import { parseGS1Datamatrix, isDatamatrix } from '../utils/gs1Parser'
 
 interface UseProductSearchOptions {
     minSearchLength?: number
@@ -25,6 +29,8 @@ interface UseProductSearchReturn {
     refetch: () => void
     /** True if the last search was detected as a barcode scan */
     wasBarcodeScanned: boolean
+    /** True if the last search was a DataMatrix 2D scan */
+    wasDatamatrixScanned: boolean
 }
 
 /**
@@ -50,6 +56,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
 
     const [searchQuery, setSearchQuery] = useState('')
     const [wasBarcodeScanned, setWasBarcodeScanned] = useState(false)
+    const [wasDatamatrixScanned, setWasDatamatrixScanned] = useState(false)
 
     // Index de recherche en mémoire — précharge tous les produits une fois
     const { search: searchInIndex, isReady: indexReady, isLoading: indexLoading } = useProductSearchIndex()
@@ -89,12 +96,41 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
 
     // Enhanced setSearchQuery that detects barcode scans
     const handleSetSearchQuery = useCallback((query: string) => {
-        const looksLikeBarcode = detectBarcodeInput(query)
-        setWasBarcodeScanned(looksLikeBarcode)
-        setSearchQuery(query)
+        let cleanedQuery = query
+
+        // Si c'est un DataMatrix, extraire le CIP pour la recherche
+        if (isDatamatrix(query)) {
+            const parsed = parseGS1Datamatrix(query)
+            if (parsed.cip) {
+                cleanedQuery = normalizeCip(parsed.cip)
+            }
+        }
+
+        const looksLikeBarcode = detectBarcodeInput(cleanedQuery)
+        setWasDatamatrixScanned(isDatamatrix(query))
+        setWasBarcodeScanned(looksLikeBarcode || cleanedQuery !== query)
+        setSearchQuery(cleanedQuery)
     }, [detectBarcodeInput])
 
-    // Recherche locale dans l'index en mémoire (instantanée, < 1ms)
+    // Reset datamatrix flag when search changes
+    useEffect(() => {
+        if (!debouncedSearch) {
+            setWasDatamatrixScanned(false)
+            setWasBarcodeScanned(false)
+        }
+    }, [debouncedSearch])
+
+    // Notify user when a DataMatrix scan is detected
+    const lastNotifiedCip = useRef<string | null>(null)
+    useEffect(() => {
+        if (wasDatamatrixScanned && debouncedSearch && debouncedSearch.length >= 7 && lastNotifiedCip.current !== debouncedSearch) {
+            lastNotifiedCip.current = debouncedSearch
+            gooeyToast.info(
+                i18n.t('common:messages.datamatrix_detected', { cip: debouncedSearch, defaultValue: `Scan DataMatrix : ${debouncedSearch}` }),
+                { duration: 1500, id: 'datamatrix-scan' }
+            )
+        }
+    }, [wasDatamatrixScanned, debouncedSearch])
     const localResults = useMemo(() => {
         if (!indexReady || !debouncedSearch || debouncedSearch.length < minSearchLength) {
             return null // null = pas de recherche locale, fallback vers API
@@ -143,9 +179,9 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
             if (isNumericSearch) {
                 // Verify exact CIP match
                 const cipMatch =
-                    product.cip1 === debouncedSearch ||
-                    product.cip2 === debouncedSearch ||
-                    product.cip3 === debouncedSearch
+                    normalizeCip(product.cip1) === debouncedSearch ||
+                    normalizeCip(product.cip2) === debouncedSearch ||
+                    normalizeCip(product.cip3) === debouncedSearch
 
                 if (cipMatch) {
                     hasHandledBarcode.current = debouncedSearch;
@@ -170,7 +206,8 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         searchQuery,
         setSearchQuery: handleSetSearchQuery,
         refetch,
-        wasBarcodeScanned
+        wasBarcodeScanned,
+        wasDatamatrixScanned
     }
 }
 

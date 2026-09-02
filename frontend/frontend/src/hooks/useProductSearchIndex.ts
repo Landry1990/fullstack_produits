@@ -39,6 +39,15 @@ export function normalize(s: string | null | undefined): string {
     .trim()
 }
 
+/** Normalise un CIP : majuscule, sans espaces, sans tirets, sans points */
+export function normalizeCip(s: string | null | undefined): string {
+  if (!s) return ''
+  return s
+    .toUpperCase()
+    .trim()
+    .replace(/[\s\-.]/g, '')
+}
+
 /** Construit l'index de recherche à partir d'une liste de produits */
 export function buildIndex(products: ProduitModel[]): SearchIndexEntry[] {
   return products.map(p => {
@@ -47,9 +56,9 @@ export function buildIndex(products: ProduitModel[]): SearchIndexEntry[] {
       product: p,
       nameNorm,
       nameCompact: nameNorm.replace(/[^a-z0-9]/g, ''),
-      cip1: normalize(p.cip1),
-      cip2: normalize(p.cip2),
-      cip3: normalize(p.cip3),
+      cip1: normalizeCip(p.cip1),
+      cip2: normalizeCip(p.cip2),
+      cip3: normalizeCip(p.cip3),
       nameTokens: nameNorm.split(/\s+/).filter(t => t.length >= 2),
     }
   })
@@ -58,9 +67,10 @@ export function buildIndex(products: ProduitModel[]): SearchIndexEntry[] {
 /** Recherche dans l'index en mémoire */
 export function searchInIndex(index: SearchIndexEntry[], query: string, limit: number = 50): ProduitModel[] {
   const q = normalize(query)
-  if (!q) return []
+  const qCip = normalizeCip(query)
+  if (!q && !qCip) return []
 
-  const isNumeric = /^\d+$/.test(q)
+  const isNumeric = /^\d+$/.test(qCip)
   const results: { product: ProduitModel; score: number }[] = []
 
   // Séparer la partie texte et la partie numérique de la requête
@@ -73,12 +83,12 @@ export function searchInIndex(index: SearchIndexEntry[], query: string, limit: n
 
     // --- Recherche par CIP (priorité maximale) ---
     if (isNumeric) {
-      if (entry.cip1 === q) score = 100
-      else if (entry.cip2 === q) score = 99
-      else if (entry.cip3 === q) score = 98
-      else if (entry.cip1.startsWith(q)) score = 90
-      else if (entry.cip2.startsWith(q)) score = 89
-      else if (entry.cip3.startsWith(q)) score = 88
+      if (entry.cip1 === qCip) score = 100
+      else if (entry.cip2 === qCip) score = 99
+      else if (entry.cip3 === qCip) score = 98
+      else if (entry.cip1.startsWith(qCip)) score = 90
+      else if (entry.cip2.startsWith(qCip)) score = 89
+      else if (entry.cip3.startsWith(qCip)) score = 88
     }
 
     // --- Recherche par nom (uniquement si pas de match CIP global) ---
@@ -109,12 +119,13 @@ export function searchInIndex(index: SearchIndexEntry[], query: string, limit: n
 
         for (let i = 0; i < qTokens.length; i++) {
           const qt = qTokens[i]
-          const isNum = /^\d+$/.test(qt)
+          const qtCip = normalizeCip(qt)
+          const isNum = /^\d+$/.test(qtCip)
           let termMatched = false
           let termScore = 0
 
           // CIP match pour termes numériques
-          if (isNum && (entry.cip1.startsWith(qt) || entry.cip2.startsWith(qt) || entry.cip3.startsWith(qt))) {
+          if (isNum && (entry.cip1.startsWith(qtCip) || entry.cip2.startsWith(qtCip) || entry.cip3.startsWith(qtCip))) {
             termMatched = true
             termScore = 95
           }

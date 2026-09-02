@@ -125,6 +125,10 @@ class PharmacySettings(models.Model):
         default=False,
         help_text="Masquer les montants dans le rapport de clôture de caisse (mode sécurité)"
     )
+    billetage_obligatoire = models.BooleanField(
+        default=True,
+        help_text="Forcer le billetage (comptage des coupures) à la clôture de caisse"
+    )
     
     # --- Paramètres Impression & Affichage ---
     ticket_paper_width = models.IntegerField(

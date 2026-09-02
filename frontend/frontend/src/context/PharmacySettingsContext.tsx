@@ -60,6 +60,7 @@ export interface PharmacySettings {
   report_send_telegram?: boolean;
   // Sécurité Caisse
   hide_cash_totals?: boolean;
+  billetage_obligatoire?: boolean;
   // Modes de paiement
   disabled_payment_modes?: string[];
   custom_payment_modes?: { value: string; label: string }[];
@@ -99,6 +100,7 @@ const DEFAULT_SETTINGS: PharmacySettings = {
   locale: 'fr-FR',
   auto_logout_timeout: 15,
   hide_cash_totals: false,
+  billetage_obligatoire: true,
   availability_weight: 60,
   rotation_weight: 40,
   whatsapp_enabled: false,

@@ -78,6 +78,8 @@ export interface StockMovement {
     commande_numero?: string;
     avoir?: number | null;
     avoir_numero?: string;
+    avoir_client?: number | null;
+    avoir_client_numero?: string;
 }
 
 // Sub-resources requiring product ID

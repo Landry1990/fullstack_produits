@@ -1,10 +1,12 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
-from api.models import Caisse, Facture, MouvementCaisse
+from api.models import Caisse, ClotureCaisse, Facture, MouvementCaisse
 
 
 class CaisseIntegrityTest(TestCase):
@@ -222,3 +224,67 @@ class CaisseMultiModeIntegrityTest(TestCase):
             total_coupons, -300.00,
             f"Le total_coupons doit etre -300 (avoir), got {total_coupons}"
         )
+
+
+class FactureClotureIntegrityTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(
+            username='admin_cloture', password='password', email='admin_cloture@test.com'
+        )
+        self.client_api = APIClient()
+        self.client_api.force_authenticate(user=self.user)
+
+    def _create_paid_invoice(self, invoice_date):
+        facture = Facture.objects.create(
+            total_ttc=Decimal('1000.00'),
+            status=Facture.Status.PAYEE,
+            created_by=self.user,
+        )
+        Facture.objects.filter(pk=facture.pk).update(date=invoice_date)
+        facture.refresh_from_db()
+        return facture
+
+    def _close_period_around(self, invoice_date):
+        return ClotureCaisse.objects.create(
+            montant_reel=Decimal('1000.00'),
+            montant_theorique=Decimal('1000.00'),
+            date_debut=invoice_date - timedelta(hours=1),
+            date_fin=invoice_date + timedelta(hours=1),
+            user=self.user,
+            cloture_par=self.user,
+        )
+
+    def test_annulation_refusee_apres_cloture(self):
+        yesterday = timezone.now() - timedelta(days=1)
+        facture = self._create_paid_invoice(yesterday)
+        self._close_period_around(yesterday)
+
+        response = self.client_api.post(f'/api/factures/{facture.id}/annuler/', {}, format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data['detail'],
+            "Impossible d'annuler cette facture : la période de caisse est déjà clôturée. Utilisez un avoir client.",
+        )
+
+    def test_modification_refusee_apres_cloture(self):
+        yesterday = timezone.now() - timedelta(days=1)
+        facture = self._create_paid_invoice(yesterday)
+        self._close_period_around(yesterday)
+
+        response = self.client_api.post(f'/api/factures/{facture.id}/modifier/', {}, format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data['detail'],
+            "Impossible de modifier cette facture : la période de caisse est déjà clôturée. Utilisez un avoir client.",
+        )
+
+    def test_annulation_autorisee_avant_cloture(self):
+        facture = self._create_paid_invoice(timezone.now())
+
+        response = self.client_api.post(f'/api/factures/{facture.id}/annuler/', {}, format='json')
+
+        self.assertEqual(response.status_code, 200)
+        facture.refresh_from_db()
+        self.assertEqual(facture.status, Facture.Status.ANNULEE)

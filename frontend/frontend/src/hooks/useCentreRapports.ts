@@ -300,6 +300,21 @@ export function useCentreRapports() {
                 return;
             }
 
+            if (selectedQuery.id === 'livre_caisse' && !urlOverride) {
+                const response = await api.get(endpoint, {
+                    params: mergedParams,
+                    responseType: 'blob'
+                });
+
+                const filename = `Livre_Caisse_${params.date_debut}_${params.date_fin}.xlsx`;
+                downloadBlob(response.data, filename);
+
+                gooeyToast.success(t('results.export_success', { filename }));
+                setResults({ status: 'success', filename });
+                setLoading(false);
+                return;
+            }
+
             const response = urlOverride
                 ? await api.get(urlOverride)
                 : await api.get(endpoint, { params: mergedParams });

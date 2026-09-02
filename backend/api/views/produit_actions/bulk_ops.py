@@ -79,6 +79,7 @@ class ProduitBulkMixin:
         return Response(serializer.data)
 
     @action(detail=False, methods=['post'])
+    @transaction.atomic
     def bulk_toggle_public(self, request):
         ids = request.data.get('ids', [])
         target_status = request.data.get('target_status')
@@ -155,7 +156,7 @@ class ProduitBulkMixin:
             
             with transaction.atomic():
                 produits.update(is_active=False)
-                
+
                 # Optional: suffix name for Corbeille
                 for p in produits:
                     suffix = " (Produit Supprimé)"
@@ -163,16 +164,16 @@ class ProduitBulkMixin:
                         p.name = f"{p.name}{suffix}"
                         p.save(update_fields=['name'])
 
-            log_audit(
-                user=request.user,
-                action=AuditLog.Action.DELETE,
-                model_name='Produit',
-                object_id='BULK',
-                description=f"Suppression groupée (mise en corbeille) de {count} produits",
-                details={'ids': ids},
-                request=request
-            )
-            
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.DELETE,
+                    model_name='Produit',
+                    object_id='BULK',
+                    description=f"Suppression groupée (mise en corbeille) de {count} produits",
+                    details={'ids': ids},
+                    request=request
+                )
+
             SearchCache.invalidate_all_products()
             
             return Response({

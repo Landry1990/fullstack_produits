@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from rest_framework import filters, status, viewsets
@@ -87,6 +88,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'], url_path='activer')
+    @transaction.atomic
     def activer(self, request, pk=None):
         """Active un point de vente (mode POS) pour l'utilisateur courant.
         Aucune caisse physique n'est assignée — le POS envoie les ventes
@@ -130,6 +132,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         return Response(data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def ouvrir(self, request, pk=None):
         """Ouvre un poste de vente sur une caisse physique."""
         caisse = PosteCaisse.objects.filter(pk=pk).first()
@@ -179,6 +182,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         return Response(data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def fermer(self, request, pk=None):
         """Ferme un poste de vente."""
         poste = self.get_object()
@@ -360,6 +364,7 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=True, methods=['post'], url_path='forcer-fermeture')
+    @transaction.atomic
     def forcer_fermeture(self, request, pk=None):
         """Force la fermeture d'un poste de vente bloqué."""
         poste = self.get_object()
