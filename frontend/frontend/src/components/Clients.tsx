@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import {
   UserPlus, Users, Settings, Trash2, Eye, EyeOff, Search, Phone, MapPin, Mail,
-  User, ShoppingBag, ShieldCheck, Edit, Activity, CreditCard, ArrowLeft
+  User, ShoppingBag, ShieldCheck, Edit, Activity, CreditCard, ArrowLeft, Gift
 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
@@ -584,7 +584,14 @@ export default function Clients() {
                      <div className="p-5 grid grid-cols-2 gap-3">
                         {selectedClient.client_type === 'PARTICULIER' && (
                            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex flex-col gap-1 relative">
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600/70">{t('clients:history.loyalty')}</span>
+                              <div className="flex items-center justify-between">
+                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600/70">{t('clients:history.loyalty')}</span>
+                                 {selectedClient.is_loyalty_member ? (
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">{t('clients:loyalty.member_active')}</span>
+                                 ) : (
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{t('clients:loyalty.member_inactive')}</span>
+                                 )}
+                              </div>
                               <div className="flex justify-between items-end">
                                  <div className="text-lg font-bold text-amber-600">
                                     {selectedClient.points_fidelite ?? 0} {t('clients:units.pts')}
@@ -606,6 +613,20 @@ export default function Clients() {
                                   <div className="size-2 bg-emerald-500 rounded-full animate-ping"></div>
                                 </div>
                               )}
+                              {Number(selectedClient.pending_discount || 0) > 0 && (
+                                <div className="mt-1 pt-1 border-t border-amber-200/50 flex items-center gap-1">
+                                   <Gift className="size-3 text-purple-500" />
+                                   <span className="text-[10px] font-semibold text-purple-600">
+                                      {t('clients:loyalty.pending_discount', { discount: Number(selectedClient.pending_discount).toFixed(2) })}
+                                   </span>
+                                </div>
+                              )}
+                              <button
+                                className="mt-1 text-[10px] font-semibold text-amber-600/80 hover:text-amber-700 underline-offset-2 hover:underline text-left"
+                                onClick={() => navigate('/app/fidelite', { state: { selectedClientId: selectedClient.id, selectedClientName: selectedClient.name } })}
+                              >
+                                {t('clients:loyalty.view_history')} →
+                              </button>
                            </div>
                         )}
                         {selectedClient.client_type === 'PARTICULIER' && (

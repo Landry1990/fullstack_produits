@@ -315,6 +315,38 @@ class Client(models.Model):
         ]
 
 
+class LoyaltyHistory(models.Model):
+    """Historique des transactions de points de fidélité par client."""
+    TYPE_GAIN = 'GAIN'
+    TYPE_UTILISATION = 'UTILISATION'
+    TYPE_REMISE_AUTO = 'REMISE_AUTO'
+    TYPE_AJUSTEMENT = 'AJUSTEMENT'
+    TYPE_CHOICES = [
+        (TYPE_GAIN, 'Gain (vente)'),
+        (TYPE_UTILISATION, 'Utilisation (vente)'),
+        (TYPE_REMISE_AUTO, 'Remise automatique'),
+        (TYPE_AJUSTEMENT, 'Ajustement manuel'),
+    ]
+
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='loyalty_history')
+    facture = models.ForeignKey('Facture', on_delete=models.SET_NULL, null=True, blank=True, related_name='loyalty_history')
+    type_transaction = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    points = models.IntegerField(help_text="Points gagnés (positif) ou utilisés (négatif)")
+    solde_apres = models.IntegerField(default=0, help_text="Solde de points après la transaction")
+    montant = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Valeur monétaire (FCFA) si applicable")
+    created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, default='')
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Historique fidélité"
+        verbose_name_plural = "Historiques fidélité"
+
+    def __str__(self):
+        return f"{self.client.name} - {self.type_transaction} - {self.points} pts"
+
+
 class AyantDroit(models.Model):
     """Model representing a beneficiary for a professional client."""
     id = models.AutoField(primary_key=True)

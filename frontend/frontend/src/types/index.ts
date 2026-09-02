@@ -11,3 +11,5 @@ export * from './audit';
 export * from './Promotion';
 export * from './labels';
 export * from './clientCredit';
+export * from './loyalty';
+export * from './challenges';

@@ -91,8 +91,13 @@
         "auto_reward": "Automatic Reward",
         "threshold": "Threshold (Points)",
         "threshold_hint": "0 = Disabled",
+        "threshold_amount": "That's {{amount}} FCFA of purchases",
         "discount": "Discount (%)",
-        "discount_hint": "E.g.: 5.00 for 5%"
+        "discount_hint": "E.g.: 5.00 for 5%",
+        "member_active": "Member",
+        "member_inactive": "Non-member",
+        "pending_discount": "Pending discount: {{discount}}%",
+        "view_history": "View history"
     },
     "messages": {
         "create_success": "Customer created successfully",

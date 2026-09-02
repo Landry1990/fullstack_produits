@@ -1,0 +1,44 @@
+{
+    "title": "Programme de Fidélité",
+    "subtitle": "Suivez les points de fidélité de vos clients et configurez le programme.",
+    "config": "Configuration",
+    "stats": {
+        "amount_per_point": "Montant par point",
+        "amount_per_point_hint": "FCFA dépensés pour gagner 1 point",
+        "point_value": "Valeur du point",
+        "point_value_hint": "Valeur en FCFA d'un point",
+        "auto_reward_threshold": "Seuil de récompense",
+        "auto_reward_threshold_hint": "Points pour déclencher la remise auto",
+        "auto_reward_percent": "Remise auto",
+        "auto_reward_percent_hint": "Pourcentage de remise",
+        "total_members": "Membres inscrits",
+        "total_points": "Points en circulation"
+    },
+    "filters": {
+        "client": "Client",
+        "client_placeholder": "Tous les clients",
+        "type": "Type",
+        "type_placeholder": "Tous les types",
+        "search": "Rechercher"
+    },
+    "types": {
+        "GAIN": "Gain",
+        "UTILISATION": "Utilisation",
+        "REMISE_AUTO": "Remise auto",
+        "AJUSTEMENT": "Ajustement"
+    },
+    "table": {
+        "date": "Date",
+        "client": "Client",
+        "type": "Type",
+        "points": "Points",
+        "balance_after": "Solde après",
+        "amount": "Montant",
+        "invoice": "Facture",
+        "notes": "Notes",
+        "operator": "Opérateur"
+    },
+    "empty": "Aucune transaction de fidélité trouvée.",
+    "loading": "Chargement...",
+    "no_client": "Aucun client"
+}

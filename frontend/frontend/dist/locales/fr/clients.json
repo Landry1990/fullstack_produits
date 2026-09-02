@@ -96,8 +96,13 @@
         "auto_reward": "Récompense Automatique",
         "threshold": "Seuil (Points)",
         "threshold_hint": "0 = Désactivé",
+        "threshold_amount": "Soit {{amount}} FCFA d'achat",
         "discount": "Remise (%)",
-        "discount_hint": "Ex: 5.00 pour 5%"
+        "discount_hint": "Ex: 5.00 pour 5%",
+        "member_active": "Membre",
+        "member_inactive": "Non membre",
+        "pending_discount": "Remise en attente : {{discount}}%",
+        "view_history": "Voir l'historique"
     },
     "messages": {
         "create_success": "Client créé avec succès",
