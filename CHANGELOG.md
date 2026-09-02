@@ -2,6 +2,58 @@
 
 ---
 
+## 2026-09-02 — Gestion de la fidélité : historique des points + page dédiée
+
+### ✨ Nouveau modèle `LoyaltyHistory`
+
+- `backend/api/models/clients.py` — nouveau modèle `LoyaltyHistory` traçant chaque transaction de points (gain, utilisation, remise auto, ajustement manuel) avec solde après, montant, facture liée, opérateur et notes.
+- `backend/api/migrations/0244_loyalty_history.py` et `0245_alter_loyaltyhistory_id.py` — création de la table.
+- `backend/api/models/__init__.py` — export du nouveau modèle.
+
+### 🔧 Backend : endpoints et hooks
+
+- `backend/api/serializers/loyalty.py` — `LoyaltyHistorySerializer` (client_name, facture_numero, type_display, created_by_name) et `LoyaltySettingSerializer`.
+- `backend/api/views/loyalty.py` — `LoyaltyHistoryViewSet` (lecture seule, filtres client/type_transaction/facture, tri par date).
+- `backend/api/urls.py` — route `loyalty-history`.
+- `backend/api/services/sale_validator.py` — `_handle_loyalty` crée désormais des entrées `LoyaltyHistory` (GAIN, UTILISATION, REMISE_AUTO) à chaque validation de vente, avec `created_by` = utilisateur validateur.
+- `backend/api/serializers/billing.py` — `FactureSerializer` expose désormais `points_fidelite_gagnes`, `points_fidelite_utilises`, `montant_fidelite`.
+
+### 🖥️ Frontend : page Fidélité dédiée
+
+- `frontend/frontend/src/types/loyalty.ts` — types `LoyaltyHistoryEntry`, `LoyaltySettings`.
+- `frontend/frontend/src/services/loyaltyService.ts` — appels API (historique, config).
+- `frontend/frontend/src/hooks/useLoyalty.ts` — hooks React Query (historique, config, clients).
+- `frontend/frontend/src/components/loyalty/LoyaltyPage.tsx` — page complète avec :
+  - 4 cartes statistiques (montant/point, valeur point, seuil, remise auto)
+  - Bouton Configuration → ouvre `LoyaltyConfigModal`
+  - Filtres client + type de transaction
+  - Tableau d'historique avec badges colorés par type (GAIN=vert, UTILISATION=bleu, REMISE_AUTO=violet, AJUSTEMENT=ambre)
+  - Pagination
+  - Pré-sélection du client via `location.state.selectedClientId` (depuis Clients.tsx)
+- `frontend/frontend/src/routes.tsx` — route `/app/fidelite`.
+- `frontend/frontend/src/components/Sidebar.tsx` — entrée menu sous Clients.
+- `frontend/frontend/src/i18n.ts` — namespace `loyalty` ajouté.
+- `frontend/frontend/public/locales/fr/loyalty.json` et `en/loyalty.json` — traductions complètes.
+- `frontend/frontend/public/locales/fr/sidebar.json` et `en/sidebar.json` — clé `fidelite`.
+
+### 🖥️ Frontend : amélioration de l'affichage fidélité dans Clients.tsx
+
+- `frontend/frontend/src/components/Clients.tsx` — la carte fidélité affiche désormais :
+  - Badge `Membre` / `Non membre` (`is_loyalty_member`)
+  - Remise en attente (`pending_discount`) si > 0, avec icône cadeau
+  - Lien "Voir l'historique →" qui navigue vers `/app/fidelite` avec le client pré-sélectionné
+- `frontend/frontend/public/locales/fr/clients.json` et `en/clients.json` — clés `loyalty.member_active`, `member_inactive`, `pending_discount`, `view_history`.
+
+### ✅ Validation
+
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK
+- Migration DB appliquée : `0244_loyalty_history` + `0245_alter_loyaltyhistory_id` : OK
+- `LoyaltyHistory._meta.verbose_name` : "Historique fidélité" ✓
+- Déploiement frontend + backend : OK
+
+---
+
 ## 2026-09-01 — Intégrité caisse : annulation/modification après clôture et avoirs clients
 
 ### 🔒 Protection des factures en période clôturée

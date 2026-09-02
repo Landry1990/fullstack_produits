@@ -1,0 +1,44 @@
+{
+    "title": "Loyalty Program",
+    "subtitle": "Track customer loyalty points and configure the program.",
+    "config": "Configuration",
+    "stats": {
+        "amount_per_point": "Amount per point",
+        "amount_per_point_hint": "FCFA spent to earn 1 point",
+        "point_value": "Point value",
+        "point_value_hint": "FCFA value of a point",
+        "auto_reward_threshold": "Reward threshold",
+        "auto_reward_threshold_hint": "Points to trigger auto reward",
+        "auto_reward_percent": "Auto discount",
+        "auto_reward_percent_hint": "Discount percentage",
+        "total_members": "Registered members",
+        "total_points": "Points in circulation"
+    },
+    "filters": {
+        "client": "Customer",
+        "client_placeholder": "All customers",
+        "type": "Type",
+        "type_placeholder": "All types",
+        "search": "Search"
+    },
+    "types": {
+        "GAIN": "Gain",
+        "UTILISATION": "Usage",
+        "REMISE_AUTO": "Auto reward",
+        "AJUSTEMENT": "Adjustment"
+    },
+    "table": {
+        "date": "Date",
+        "client": "Customer",
+        "type": "Type",
+        "points": "Points",
+        "balance_after": "Balance after",
+        "amount": "Amount",
+        "invoice": "Invoice",
+        "notes": "Notes",
+        "operator": "Operator"
+    },
+    "empty": "No loyalty transactions found.",
+    "loading": "Loading...",
+    "no_client": "No customer"
+}

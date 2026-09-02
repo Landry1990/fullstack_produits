@@ -37,6 +37,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   '/app/historique-clotures': () => import('./HistoriqueClotures'),
   '/app/historique-ventes': () => import('./HistoriqueVentes'),
   '/app/avoirs-clients': () => import('./avoirs-client/ClientCreditsPage'),
+  '/app/fidelite': () => import('./loyalty/LoyaltyPage'),
   '/app/recap-client': () => import('./RecapClient'),
   '/app/historique-achats': () => import('./HistoriqueAchats'),
   '/app/telegram-history': () => import('./TelegramHistory'),
@@ -174,6 +175,7 @@ export default function Sidebar() {
       ),
       submenus: [
         { path: '/app/clients', label: t('clients_consultation', 'Consultation'), key: 'clients_consultation' },
+        { path: '/app/fidelite', label: t('fidelite', 'Fidélité'), key: 'clients' },
         { path: '/app/outils/imc', label: t('clients_imc', 'Calculateur IMC'), key: 'clients_imc' },
       ]
     },

@@ -17,6 +17,7 @@ from ..models import (
     Facture,
     FactureProduit,
     FactureProduitAllocation,
+    LoyaltyHistory,
     LoyaltySetting,
     Produit,
     Promis,
@@ -88,7 +89,7 @@ class SaleValidator:
         LotAllocationService.create_stock_movements(items, facture, validation_user, prefix="Vente")
 
         # 7. Loyalty management
-        SaleValidator._handle_loyalty(facture, data)
+        SaleValidator._handle_loyalty(facture, data, validation_user)
 
         # 8. Final updates
         facture.status = Facture.Status.VALIDEE
@@ -343,7 +344,7 @@ class SaleValidator:
         return False
 
     @staticmethod
-    def _handle_loyalty(facture, data):
+    def _handle_loyalty(facture, data, validation_user=None):
         """Gère les points de fidélité pour les clients non-professionnels."""
         if not facture.client:
             return
@@ -361,6 +362,7 @@ class SaleValidator:
         client = facture.client
         client._skip_audit = True
         save_client = False
+        history_entries = []
 
         if str(data.get('use_pending_discount', False)).lower() == 'true' and client.pending_discount > 0:
             client.pending_discount = 0
@@ -372,20 +374,50 @@ class SaleValidator:
             facture.points_fidelite_utilises = points_to_use
             facture.montant_fidelite = points_to_use * loyalty_conf.point_value
             save_client = True
+            history_entries.append(LoyaltyHistory(
+                client=client,
+                facture=facture,
+                type_transaction=LoyaltyHistory.TYPE_UTILISATION,
+                points=-points_to_use,
+                solde_apres=client.points_fidelite,
+                montant=facture.montant_fidelite,
+                created_by=validation_user,
+            ))
 
         if facture.total_ttc > 0 and loyalty_conf.amount_per_point > 0:
             points_gagnes = int(facture.total_ttc // loyalty_conf.amount_per_point)
             facture.points_fidelite_gagnes = points_gagnes
             client.points_fidelite += points_gagnes
             save_client = True
+            if points_gagnes > 0:
+                history_entries.append(LoyaltyHistory(
+                    client=client,
+                    facture=facture,
+                    type_transaction=LoyaltyHistory.TYPE_GAIN,
+                    points=points_gagnes,
+                    solde_apres=client.points_fidelite,
+                    created_by=validation_user,
+                ))
 
         if loyalty_conf.auto_reward_threshold > 0 and client.points_fidelite >= loyalty_conf.auto_reward_threshold:
             client.points_fidelite -= loyalty_conf.auto_reward_threshold
             client.pending_discount = max(client.pending_discount, loyalty_conf.auto_reward_percent)
             save_client = True
+            history_entries.append(LoyaltyHistory(
+                client=client,
+                facture=facture,
+                type_transaction=LoyaltyHistory.TYPE_REMISE_AUTO,
+                points=-loyalty_conf.auto_reward_threshold,
+                solde_apres=client.points_fidelite,
+                notes=f"Remise automatique de {loyalty_conf.auto_reward_percent}%",
+                created_by=validation_user,
+            ))
 
         if save_client:
             client.save()
+
+        if history_entries:
+            LoyaltyHistory.objects.bulk_create(history_entries)
 
     @staticmethod
     def _handle_professional_debt(facture, validation_user):

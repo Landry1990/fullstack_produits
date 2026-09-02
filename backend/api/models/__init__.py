@@ -31,8 +31,9 @@ from .billing import (
 )
 
 # Clients
+from .challenges import Challenge
 from .client_credit import AvoirClient, LigneAvoirClient
-from .clients import AyantDroit, Client, Fournisseur
+from .clients import AyantDroit, Client, Fournisseur, LoyaltyHistory
 
 # Communication
 from .communication import (
@@ -130,6 +131,7 @@ __all__ = [
     'Caisse',
     'Client',
     'ClotureCaisse',
+    'Challenge',
     # Orders
     'Commande',
     'CommandeProduit',
@@ -171,6 +173,8 @@ __all__ = [
     'LotSequence',
     # Settings
     'LoyaltySetting',
+    # Clients - Loyalty
+    'LoyaltyHistory',
     'MedicamentReference',
     'MessageTemplate',
     'MouvementCaisse',
