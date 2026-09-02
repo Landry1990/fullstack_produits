@@ -105,6 +105,7 @@ const ImportDCIPage = lazyWithRetry(() => import('./components/ImportDCIPage'));
 const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilite'));
 const SystemAdmin = lazyWithRetry(() => import('./components/SystemAdmin'));
 const PlanningOperateurs = lazyWithRetry(() => import('./components/PlanningOperateurs'));
+const LoyaltyPage = lazyWithRetry(() => import('./components/loyalty/LoyaltyPage'));
 
 // ── Helper to reduce boilerplate ──
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -173,6 +174,7 @@ export const router = createBrowserRouter([
           // ── Tiers ──
           { path: 'fournisseurs', ...perm('fournisseurs', Fournisseurs) },
           { path: 'clients', ...perm('clients', Clients) },
+          { path: 'fidelite', ...perm('clients', LoyaltyPage) },
           { path: 'outils/imc', ...perm('clients', BMICalculator) },
           { path: 'creances', ...perm('creances', Creances) },
           { path: 'statistiques-fournisseurs', ...perm('statistiques_fournisseurs', StatistiquesFournisseur) },

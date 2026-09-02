@@ -54,7 +54,8 @@ i18n
             'clinical',
             'system_admin',
             'planning',
-            'recap'
+            'recap',
+            'loyalty'
         ],
         defaultNS: 'common',
         interpolation: {

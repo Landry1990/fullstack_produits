@@ -78,6 +78,7 @@ MENU_HIERARCHY = [
             {'key': 'statistiques_mensuels', 'labelKey': 'sidebar:statistiques.mensuel'},
             {'key': 'statistiques_finances', 'labelKey': 'sidebar:statistiques.finances'},
             {'key': 'statistiques_vendeurs', 'labelKey': 'sidebar:statistiques.classement_vendeurs'},
+            {'key': 'statistiques_challenges', 'labelKey': 'sidebar:statistiques.challenges'},
             {'key': 'statistiques_temporelle', 'labelKey': 'sidebar:statistiques.analyse_temporelle'},
             {'key': 'statistiques_guide', 'labelKey': 'sidebar:statistiques.guide'},
         ],

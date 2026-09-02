@@ -133,6 +133,7 @@ from .views import (
     generer_suggestions_commande,
 )
 from .views.auth import verify_password, menu_hierarchy
+from .views.challenges import ChallengeViewSet
 from .views.backup_views import (
     BackupListView,
     CreateBackupView,
@@ -167,6 +168,7 @@ from .views.formes import FormeViewSet
 from .views.groupes import GroupeViewSet
 from .views.interactions import DrugInteractionViewSet
 from .views.licence import LicenceNotificationsView, LicenceStatusView
+from .views.loyalty import LoyaltyHistoryViewSet
 from .views.margin_views import MarginViewSet
 from .views.meds_reference import MedicamentReferenceViewSet
 from .views.objectifs import ObjectifViewSet
@@ -224,6 +226,7 @@ router.register(r'historique-achats', HistoriqueAchatsViewSet, basename='histori
 router.register(r'ordonnancier', OrdonnancierViewSet, basename='ordonnancier')
 router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
 router.register(r'loyalty-settings', LoyaltySettingViewSet, basename='loyaltysetting')
+router.register(r'loyalty-history', LoyaltyHistoryViewSet, basename='loyalty-history')
 router.register(r'formes', FormeViewSet, basename='forme')
 router.register(r'groupes', GroupeViewSet, basename='groupe')
 router.register(r'substances', SubstanceViewSet, basename='substance')
@@ -259,6 +262,7 @@ router.register(r'cadencier', CadencierViewSet, basename='cadencier')
 router.register(r'med-ref', MedicamentReferenceViewSet, basename='medreference')
 router.register(r'dci-admin', DCIAdminViewSet, basename='dci-admin')
 router.register(r'interactions', DrugInteractionViewSet, basename='interaction')
+router.register(r'challenges', ChallengeViewSet, basename='challenge')
 
 # Comptabilité
 router.register(r'compta/comptes', CompteComptableViewSet, basename='compta-compte')

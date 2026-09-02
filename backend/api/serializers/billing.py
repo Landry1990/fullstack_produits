@@ -140,7 +140,8 @@ class FactureSerializer(serializers.ModelSerializer):
             'montant_paye', 'reste_a_payer', 'paiements',
             'session_ticket_number',
             'montant_verse', 'montant_rendu',
-            'poste_caisse', 'avoirs_clients'
+            'poste_caisse', 'avoirs_clients',
+            'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
         ]
 
     def get_vendeur_name(self, obj):

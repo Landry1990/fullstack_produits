@@ -21,7 +21,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande',
             'can_modify_price', 'can_do_remise', 'max_discount_rate', 'can_cancel_invoice', 'can_modify_invoice',
             'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs', 'can_validate_zero_amount', 'can_validate_sales', 'can_view_cash_sessions',
-            'is_terminal_account'
+            'is_terminal_account', 'can_manage_challenges'
         ]
 
 

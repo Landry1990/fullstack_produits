@@ -80,6 +80,7 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name', 'email', 'phone', 'address']
+    filterset_fields = ['client_type']
     
     # Serializers optimisés
     list_serializer_class = ClientListSerializer
