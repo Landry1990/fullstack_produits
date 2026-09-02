@@ -22,6 +22,7 @@ from ..models import (
     Promis,
 )
 from .lot_allocation_service import LotAllocationService
+from .sale_integrity import is_invoice_period_closed
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,9 @@ class SaleCanceller:
             return False, "Cette facture est déjà annulée."
 
         was_validated = facture.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]
+
+        if was_validated and is_invoice_period_closed(facture):
+            return False, "Impossible d'annuler cette facture : la période de caisse est déjà clôturée. Utilisez un avoir client."
 
         if was_validated:
             # 1. Restore lot allocations

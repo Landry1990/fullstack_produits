@@ -1,6 +1,7 @@
 import csv
 from datetime import timedelta
 
+from django.db import transaction
 from django.db.models import Count
 from django.http import HttpResponse
 from django.utils import timezone
@@ -28,6 +29,7 @@ class RuptureFournisseurViewSet(viewsets.ModelViewSet):
         serializer.save(utilisateur=self.request.user)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def resoudre(self, request, pk=None):
         rupture = self.get_object()
         if rupture.est_resolu:

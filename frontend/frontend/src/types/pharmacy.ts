@@ -31,4 +31,5 @@ export interface PharmacySettings {
     pharmacist_whatsapp_number?: string
     auto_logout_timeout?: number
     hide_cash_totals?: boolean
+    billetage_obligatoire?: boolean
 }

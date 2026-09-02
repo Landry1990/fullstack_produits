@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
-import { parseDataMatrix, normalizeDateExpiration } from '../utils/parseDataMatrix';
+import { parseGS1Datamatrix } from '../utils/gs1Parser';
+import { normalizeDateExpiration } from '../utils/parseDataMatrix';
 import type { CommandeProduit } from '../types/procurement';
-import type { ProduitModel } from '../types/catalog';
 
 export type ScanResult =
     | { status: 'filled'; index: number; cip: string; lot: string; date: string }
@@ -24,13 +24,23 @@ function normalizeCip(cip: string | null | undefined): string {
     return cip.trim().replace(/[\s\-.]/g, '').toUpperCase();
 }
 
-function getProductCip(produit: number | ProduitModel | null | undefined): string[] {
-    if (!produit || typeof produit === 'number') return [];
-    return [
-        normalizeCip((produit as ProduitModel).cip1),
-        normalizeCip((produit as ProduitModel).cip2),
-        normalizeCip((produit as ProduitModel).cip3),
-    ].filter(Boolean);
+function getProductCip(cp: CommandeProduit): string[] {
+    const cips: string[] = [];
+    const produit = cp.produit;
+
+    if (typeof produit === 'number') {
+        // Si on n'a que l'ID, on se rabat sur les champs dénormalisés de CommandeProduit
+        cips.push(normalizeCip(cp.produit_cip));
+        cips.push(normalizeCip(cp.produit_ref));
+    } else if (produit) {
+        cips.push(normalizeCip(produit.cip1));
+        cips.push(normalizeCip(produit.cip2));
+        cips.push(normalizeCip(produit.cip3));
+        cips.push(normalizeCip(cp.produit_cip));
+        cips.push(normalizeCip(cp.produit_ref));
+    }
+
+    return cips.filter(Boolean);
 }
 
 export function useDataMatrixScanner({
@@ -50,16 +60,21 @@ export function useDataMatrixScanner({
                 return r;
             }
 
-            const parsed = parseDataMatrix(rawScan);
+            const parsed = parseGS1Datamatrix(rawScan);
 
             // Si le parsing n'a rien donné (chaîne inconnue), tenter un fallback :
             // certaines douchettes envoient juste le CIP13 brut (13 chiffres)
             let cip = parsed.cip;
             const lot = parsed.lot;
-            const dateExpiration = parsed.dateExpiration;
+            const dateExpiration = parsed.expiration ? normalizeDateExpiration(parsed.expiration) : null;
 
-            if (!cip && /^\d{13}$/.test(rawScan.trim())) {
-                cip = rawScan.trim();
+            if (!cip) {
+                const raw = rawScan.trim();
+                if (/^\d{13}$/.test(raw)) {
+                    cip = raw;
+                } else if (/^\d{7}$/.test(raw)) {
+                    cip = raw;
+                }
             }
 
             if (!cip) {
@@ -74,7 +89,7 @@ export function useDataMatrixScanner({
 
             // Chercher la ligne correspondante dans la commande
             const matchIndex = commandeProduits.findIndex((cp) => {
-                const cips = getProductCip(cp.produit);
+                const cips = getProductCip(cp);
                 return cips.some(
                     (c) =>
                         c === normalizedScannedCip ||
@@ -105,7 +120,7 @@ export function useDataMatrixScanner({
 
             // Remplir lot et date
             const finalLot = lot ?? '';
-            const finalDate = dateExpiration ?? normalizeDateExpiration(parsed.rawDate) ?? '';
+            const finalDate = dateExpiration ?? '';
 
             if (finalLot) {
                 updateCommandeProduitField(matchIndex, 'lot', finalLot);

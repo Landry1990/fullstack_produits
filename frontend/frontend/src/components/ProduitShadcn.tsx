@@ -20,6 +20,7 @@ import {
   useProduitLots, useProduitStats, useProduitAchats, useProduitHistory,
   useAdjustStock
 } from '../hooks/useProduits'
+import type { StockMovement } from '../hooks/useProduits'
 import { useTVA } from '../hooks/useTVA'
 
 import { useQueryClient } from '@tanstack/react-query'
@@ -275,7 +276,7 @@ export default function ProduitShadcn() {
     } finally { setTransferLoading(false) }
   }
 
-  const handleMovementClick = async (item: { facture?: number | null; commande?: number | null; avoir?: number | null; type?: string }) => {
+  const handleMovementClick = async (item: StockMovement) => {
     if (item.facture) {
       setSelectedFacture(null)
       setLoadingFacture(true)
@@ -292,8 +293,13 @@ export default function ProduitShadcn() {
     } else if (item.commande) {
       navigate('/app/commandes', { state: { openDetailsId: item.commande } })
     } else if (item.avoir) {
-      setSelectedAvoirId(item.avoir)
-      setShowAvoirModal(true)
+      const numero = item.avoir_client_numero || item.avoir_numero || String(item.avoir)
+      try {
+        await navigator.clipboard.writeText(numero)
+        gooeyToast.success(t('products:messages.avoir_copied', { numero, defaultValue: `Avoir client ${numero} copié dans le presse-papiers` }))
+      } catch {
+        gooeyToast.success(t('products:messages.avoir_number', { numero, defaultValue: `Avoir client : ${numero}` }))
+      }
     }
   }
 

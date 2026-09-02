@@ -145,7 +145,7 @@ export function useCommandeHandlers(params: UseCommandeHandlersParams) {
                         replace: true,
                         state: { viewState: { mode: 'DETAILS', commandeId: selectedCommande.id } }
                     });
-                    queryClient.invalidateQueries({ queryKey: ['products'] });
+                    queryClient.refetchQueries({ queryKey: ['products'], type: 'all' });
                 },
                 {
                     permission: 'can_close_commande',

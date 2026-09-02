@@ -1,6 +1,7 @@
 import logging
 from decimal import Decimal, InvalidOperation
 
+from django.db import transaction
 from django.db.models import Count, Sum
 from django.db.models.functions import Abs
 from django.utils import timezone
@@ -68,6 +69,7 @@ class CaisseViewSet(CaisseReportingMixin, CaisseClotureMixin, BaseViewSetConfig,
 
 
     @idempotent_action
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         try:
             montant = Decimal(str(request.data.get('montant', 0)))

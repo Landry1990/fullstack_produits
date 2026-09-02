@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type FormEvent, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { gooeyToast } from 'goey-toast';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -118,13 +118,22 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   const setCommandeProduits = useCommandesStore((s) => s.setCommandeProduits);
   const commandeSortBy = useCommandesStore((s) => s.commandeSortBy);
 
+  // Ref pour briser la dépendance circulaire : useProductSearch a besoin de selectProduct (onBarcodeMatch)
+  // mais selectProduct vient de useCommandeProductLines qui a besoin de produitsList (de useProductSearch)
+  const selectProductRef = useRef<(product: ProduitModel) => Promise<void>>(async () => {});
+
   const {
     produits: produitsList,
     loading: searchLoading,
     searchQuery: searchProduitQuery,
     setSearchQuery: setSearchProduitQuery,
     refetch: _refetchProduits
-  } = useProductSearch({ minSearchLength: 2, debounceMs: 400, pageSize: 100 })
+  } = useProductSearch({
+    minSearchLength: 2,
+    debounceMs: 400,
+    pageSize: 100,
+    onBarcodeMatch: (product) => selectProductRef.current(product),
+  })
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
@@ -161,6 +170,9 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
     produitsList,
     t,
   });
+
+  // Connecter le ref maintenant que selectProduct est défini
+  selectProductRef.current = selectProduct;
 
   const {
     openCreateView,
@@ -247,8 +259,7 @@ export function useCommandesState(forcedType?: 'LOC' | 'DIR' | 'DIV') {
   // This caused 'messages.no_selection' after an autosave because the newly created command
   // was not yet in the 'commandes' page array, forcing selectedCommande to null while in EDIT mode.
 
-  const onSave = (e: FormEvent) => {
-      e.preventDefault();
+  const onSave = () => {
       if (commandeProduits.length === 0) {
           gooeyToast.error(t('orders:messages.add_at_least_one'));
           return;

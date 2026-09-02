@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import (
     CharField,
     Count,
@@ -206,10 +207,12 @@ class ProduitViewSet(
              
         return queryset
 
+    @transaction.atomic
     def perform_update(self, serializer):
         super().perform_update(serializer)
         SearchCache.invalidate_all_products()
 
+    @transaction.atomic
     def perform_destroy(self, instance):
         from django.utils import timezone
         instance.is_active = False

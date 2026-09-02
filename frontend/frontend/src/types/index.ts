@@ -10,3 +10,4 @@ export * from './common';
 export * from './audit';
 export * from './Promotion';
 export * from './labels';
+export * from './clientCredit';

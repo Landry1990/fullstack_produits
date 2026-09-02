@@ -1,0 +1,100 @@
+{
+  "list": {
+    "title": "Customer Credits",
+    "description": "Manage credit notes, returns and customer refunds.",
+    "new_credit": "New credit note",
+    "no_client": "Walk-in",
+    "no_results": "No customer credit found.",
+    "validate": "Validate",
+    "view": "View",
+    "export": "Export Excel",
+    "columns": {
+      "number": "Number",
+      "date": "Date",
+      "client": "Customer",
+      "invoice": "Original invoice",
+      "amount": "Amount",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "showing": "{{start}}-{{end}} of {{total}}",
+      "prev": "Previous",
+      "next": "Next",
+      "page": "Page {{page}} / {{total}}"
+    }
+  },
+  "form": {
+    "invoice_origin": "Original invoice",
+    "invoice_search_placeholder": "Search invoice by number...",
+    "selected_invoice": "Selected invoice",
+    "client": "Customer",
+    "refund_method": "Refund method",
+    "type_motif": "Reason",
+    "notes": "Notes",
+    "notes_placeholder": "Reason or observation...",
+    "lines_title": "Credit lines",
+    "add_line": "Add line",
+    "no_lines": "No lines. Add at least one product.",
+    "product": "Product",
+    "product_placeholder": "Search a product...",
+    "no_products": "No product found.",
+    "quantity": "Qty",
+    "unit_price": "Unit price",
+    "discount": "Discount",
+    "vat": "VAT",
+    "total": "Total",
+    "create": "Create credit note",
+    "lot": "Lot",
+    "expires": "Expires",
+    "lot_from_invoice": "Lot from original invoice",
+    "lot_required": "This product requires a lot. Load an original invoice to pre-fill the lot."
+  },
+  "refund_methods": {
+    "cash": "Cash (cash out)",
+    "credit": "Customer credit"
+  },
+  "motifs": {
+    "erreur": "Error",
+    "retour": "Return",
+    "remise": "Discount",
+    "autre": "Other"
+  },
+  "detail": {
+    "title": "Customer credit {{numero}}",
+    "subtitle": "Credit details",
+    "date": "Date",
+    "client": "Customer",
+    "invoice": "Original invoice",
+    "status": "Status",
+    "motif": "Reason",
+    "amount": "Total amount",
+    "notes": "Notes",
+    "lines": "Lines",
+    "product": "Product",
+    "quantity": "Qty",
+    "unit_price": "Unit price",
+    "total": "Total"
+  },
+  "statuts": {
+    "brouillon": "Draft",
+    "validee": "Validated",
+    "annulee": "Cancelled"
+  },
+  "messages": {
+    "confirm_credit_refund": "The customer will receive an account credit. Confirm?",
+    "invoice_load_error": "Unable to load invoice information.",
+    "no_lines": "The credit note must contain at least one line.",
+    "credit_requires_client": "A customer is required for a credit refund.",
+    "created": "Customer credit created.",
+    "create_error": "Error creating customer credit.",
+    "updated": "Customer credit updated.",
+    "update_error": "Error updating customer credit.",
+    "deleted": "Customer credit deleted.",
+    "delete_error": "Error deleting customer credit.",
+    "validated": "Customer credit validated.",
+    "validate_error": "Error validating customer credit.",
+    "export_success": "Excel export downloaded.",
+    "export_error": "Error exporting to Excel."
+  }
+}

@@ -112,6 +112,7 @@ class FactureListSerializer(serializers.ModelSerializer):
     montant_en_compte = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     ayant_droit_details = serializers.SerializerMethodField()
     session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
+    avoirs_clients = serializers.SerializerMethodField()
     
     class Meta:
         model = Facture
@@ -120,7 +121,7 @@ class FactureListSerializer(serializers.ModelSerializer):
             'validated_by_name', 'remise_validated_by_name', 'prix_validated_by_name', 'ayant_droit_details',
             'date', 'status', 'status_display', 'total_ht', 'total_ttc',
             'remise', 'montant_regle', 'montant_en_compte', 'poste_caisse',
-            'ticket_session', 'session_ticket_number'
+            'ticket_session', 'session_ticket_number', 'avoirs_clients'
         ]
 
     def get_ayant_droit_details(self, obj):
@@ -162,6 +163,12 @@ class FactureListSerializer(serializers.ModelSerializer):
             full_name = f"{obj.prix_validated_by.first_name} {obj.prix_validated_by.last_name}".strip()
             return full_name or obj.prix_validated_by.username
         return ''
+
+    def get_avoirs_clients(self, obj):
+        return list(
+            obj.avoirs_clients.filter(statut='VALIDEE')
+            .values_list('numero', flat=True)
+        )
 
 class FactureDetailSerializer(FactureSerializer):
     """

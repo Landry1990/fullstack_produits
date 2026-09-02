@@ -87,5 +87,13 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
                 'reference': item['reference'] or '-',
                 'total_montant': item['total_montant']
             })
-            
+
         return Response(data)
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        instance.delete()

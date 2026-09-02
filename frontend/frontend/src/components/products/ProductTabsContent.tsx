@@ -503,6 +503,11 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                                                 {item.commande_numero}
                                             </span>
                                         )}
+                                        {item.avoir_client_numero && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 text-xs font-mono font-bold text-slate-500 bg-slate-100 ml-auto">
+                                                {item.avoir_client_numero}
+                                            </span>
+                                        )}
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-sm font-bold text-slate-400 py-2 px-3 truncate">{item.user || item.user_nom || '-'}</TableCell>

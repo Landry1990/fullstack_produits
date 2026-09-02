@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScanLine, X, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import type { ScanResult } from '../../hooks/useDataMatrixScanner';
+import { isDatamatrix } from '../../utils/gs1Parser';
 
 type FeedbackState =
     | { type: 'idle' }
@@ -10,7 +11,7 @@ type FeedbackState =
     | { type: 'error'; message: string };
 
 const SCAN_TIMEOUT_MS = 80;
-const MIN_SCAN_LENGTH = 18;
+const MIN_SCAN_LENGTH = 7;
 
 const FEEDBACK_COLORS: Record<FeedbackState['type'], string> = {
     idle: 'bg-slate-800/90 border-slate-600',
@@ -29,6 +30,7 @@ const FEEDBACK_ICONS = {
 interface DataMatrixScanBarProps {
     onScan: (raw: string) => ScanResult;
     searchInputRef?: React.RefObject<HTMLInputElement>;
+    /** Appelé pour vider le champ de recherche après un scan DataMatrix détecté dans le champ */
     onClearSearchInput?: () => void;
     active?: boolean;
 }
@@ -59,6 +61,9 @@ export default function DataMatrixScanBar({
         bufferRef.current = '';
 
         if (!raw || raw.length < 6) return;
+
+        // Ne traiter que les DataMatrix — les CIP simples sont laissés au champ de recherche
+        if (!isDatamatrix(raw)) return;
 
         const result = onScan(raw);
 
@@ -108,7 +113,8 @@ export default function DataMatrixScanBar({
                     clearTimeout(timerRef.current);
                     timerRef.current = null;
                 }
-                if (bufferRef.current.length >= MIN_SCAN_LENGTH) {
+                if (bufferRef.current.length >= MIN_SCAN_LENGTH && isDatamatrix(bufferRef.current)) {
+                    // DataMatrix détecté → intercepter et traiter
                     e.preventDefault();
                     e.stopPropagation();
                     if (isInInput) {
@@ -116,6 +122,7 @@ export default function DataMatrixScanBar({
                     }
                     handleBuffer();
                 } else {
+                    // CIP simple ou saisie manuelle → laisser le champ gérer
                     bufferRef.current = '';
                 }
                 return;
@@ -126,12 +133,14 @@ export default function DataMatrixScanBar({
 
                 if (timerRef.current) clearTimeout(timerRef.current);
                 timerRef.current = setTimeout(() => {
-                    if (bufferRef.current.length >= MIN_SCAN_LENGTH) {
+                    if (bufferRef.current.length >= MIN_SCAN_LENGTH && isDatamatrix(bufferRef.current)) {
+                        // DataMatrix détecté → intercepter et vider le champ
                         if (isInInput) {
                             onClearSearchInput?.();
                         }
                         handleBuffer();
                     } else {
+                        // Pas un DataMatrix → laisser le champ de recherche gérer
                         bufferRef.current = '';
                     }
                 }, SCAN_TIMEOUT_MS);

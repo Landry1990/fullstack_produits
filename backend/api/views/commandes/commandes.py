@@ -1,6 +1,7 @@
 import logging
 
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Count, DecimalField, F, OuterRef, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -180,11 +181,12 @@ class CommandeViewSet(
              from rest_framework.exceptions import ValidationError
              raise ValidationError("Impossible de supprimer : Des lots de cette commande ont déjà été vendus ou utilisés.")
         
-        instance.is_active = False
-        instance.deleted_by = self.request.user
-        instance.deleted_at = timezone.now()
-        instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
-        self._invalidate_cache()
+        with transaction.atomic():
+            instance.is_active = False
+            instance.deleted_by = self.request.user
+            instance.deleted_at = timezone.now()
+            instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
+            self._invalidate_cache()
 
 
 

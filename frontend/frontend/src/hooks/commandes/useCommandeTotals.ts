@@ -26,10 +26,11 @@ export function useCommandeTotals(
         let totalBuyTTC = 0;
         let totalSellHT = 0;
 
-        // On prend soit la liste éditable, soit les produits de la commande sélectionnée
-        const productsToCalc = (commandeProduits.length > 0)
-            ? commandeProduits
-            : (selectedCommande?.produits || []);
+        // On utilise toujours la liste éditable (source de vérité).
+        // En édition, commandeProduits est initialisé depuis selectedCommande.produits,
+        // donc la fallback est inutile — et elle empêche les totaux de se remettre à 0
+        // quand l'utilisateur supprime tous les produits.
+        const productsToCalc = commandeProduits;
 
         productsToCalc.forEach(item => {
             const qty = normalizeNumberInput(String(item.quantity || 0));
@@ -67,5 +68,5 @@ export function useCommandeTotals(
             globalMargin: globalMargin.toFixed(2),
             globalMarginPercent: globalMarginPercent.toFixed(2)
         };
-    }, [commandeProduits, selectedCommande]);
+    }, [commandeProduits]);
 }

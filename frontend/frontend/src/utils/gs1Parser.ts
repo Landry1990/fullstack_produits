@@ -21,6 +21,27 @@ export interface GS1ParseResult {
     serial: string | null;
 }
 
+/**
+ * Détecte si une chaîne brute provenant d'un scanner est un DataMatrix GS1.
+ * Renvoie false pour les CIP simples (CIP7, CIP13, EAN13).
+ *
+ * Critères :
+ *   - Préfixe AIM DataMatrix : ]d2, ]d1, ]C1, ]e
+ *   - Séparateur GS (\x1d) présent
+ *   - AI 01 (GTIN-14) au début, suivi d'au moins 14 chiffres
+ *   - Longueur minimale de 16 caractères
+ */
+export function isDatamatrix(raw: string): boolean {
+    if (!raw || raw.length < 16) return false;
+    return (
+        raw.startsWith(']d') ||
+        raw.startsWith(']C1') ||
+        raw.startsWith(']e') ||
+        raw.includes('\x1d') ||
+        /^01\d{14}/.test(raw)
+    );
+}
+
 // Caractère FNC1 souvent encodé comme \u001d (GS) dans les scanners HID
 const GS = '\u001d';
 

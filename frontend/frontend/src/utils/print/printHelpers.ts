@@ -2,6 +2,7 @@ import i18next from 'i18next';
 import DOMPurify from 'dompurify';
 import { formatDateTime } from '../dateUtils';
 import { formatNumber } from '../formatters';
+import type { Commande, CommandeProduit } from '../../types';
 
 /**
  * Utilitaires d'assistance pour l'impression
@@ -218,4 +219,213 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
   </script>
 </body>
 </html>`
+}
+
+function _computeReceptionTotals(produits: CommandeProduit[]) {
+  let totalHT = 0;
+  let totalTVA = 0;
+  let totalLignes = 0;
+  let totalUnites = 0;
+  let totalGratuites = 0;
+
+  for (const p of produits) {
+    const qty = p.quantity || 0;
+    const free = p.unites_gratuites || 0;
+    const totalQty = qty + free;
+    const priceCost = parseFloat(String(p.price_cost || p.price || 0));
+    const tva = parseFloat(String(p.tva || 0));
+    const lineHT = priceCost * totalQty;
+    const lineTVA = lineHT * (tva / 100);
+
+    totalHT += lineHT;
+    totalTVA += lineTVA;
+    totalLignes += 1;
+    totalUnites += totalQty;
+    totalGratuites += free;
+  }
+
+  return { totalHT, totalTVA, totalLignes, totalUnites, totalGratuites };
+}
+
+/**
+ * Génère le document HTML complet pour l'impression d'un bon de réception.
+ */
+export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?: string; address?: string; tel?: string; niu?: string; rc?: string }, mode: 'normal' | 'inkless' = 'inkless'): string {
+  const produits = (commande.produits || []) as CommandeProduit[];
+  const { totalHT, totalTVA, totalLignes, totalUnites, totalGratuites } = _computeReceptionTotals(produits);
+  const isInkless = mode === 'inkless';
+  const primaryColor = isInkless ? '#334155' : '#0f172a';
+  const lightColor = isInkless ? '#94a3b8' : '#64748b';
+  const borderColor = isInkless ? '#cbd5e1' : '#0f172a';
+  const headerBorder = isInkless ? '1px dashed #94a3b8' : '2px solid #0f172a';
+  const tableHeaderBg = isInkless ? 'transparent' : '#f1f5f9';
+  const tableBorder = isInkless ? '1px dashed #cbd5e1' : '2px solid #0f172a';
+  const rowBorder = isInkless ? '1px dotted #cbd5e1' : '1px solid #e2e8f0';
+  const totalsBorder = isInkless ? '1px dashed #94a3b8' : '2px solid #0f172a';
+  const totalsBorderTop = isInkless ? '1px dashed #94a3b8' : '1px solid #0f172a';
+  const totalTTC = totalHT + totalTVA;
+
+  const companyName = escHtml(companyInfo.name || '');
+  const companyAddress = escHtml(companyInfo.address || '');
+  const companyTel = escHtml(companyInfo.tel || '');
+  const companyNiu = escHtml(companyInfo.niu || '');
+  const companyRc = escHtml(companyInfo.rc || '');
+
+  const fournisseurName = escHtml(commande.fournisseur_nom || 'N/A');
+  const ref = escHtml(commande.numero_facture || `CMD-${commande.id}`);
+  const dateEmission = commande.date ? formatDateFr(commande.date) : '';
+  const dateImpression = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const saisiePar = escHtml(commande.created_by_name || 'N/A');
+  const cloturePar = escHtml(commande.closed_by_name || 'System Administrator');
+
+  const rowsHtml = produits.map((p) => {
+    const nom = escHtml(p.produit_nom || (typeof p.produit === 'object' ? p.produit.name : `Produit #${p.produit}`) || '');
+    const lot = escHtml(p.lot || '');
+    const exp = p.date_expiration ? new Date(p.date_expiration).toLocaleDateString('fr-FR', { month: '2-digit', year: 'numeric' }).replace('/', '/') : '';
+    const cip = escHtml(p.produit_cip || (typeof p.produit === 'object' ? p.produit.cip1 : '') || '');
+    const qty = p.quantity || 0;
+    const free = p.unites_gratuites || 0;
+    const stockAvant = (p.produit_stock || 0) - (qty + free);
+    const stockApres = p.produit_stock || 0;
+    const paHT = parseFloat(String(p.price_cost || p.price || 0));
+    const totalLine = paHT * (qty + free);
+    const tvaPct = parseFloat(String(p.tva || 0));
+
+    return `
+      <tr>
+        <td>
+          <div class="product-name">${nom}</div>
+          ${lot ? `<div class="product-lot">LOT: ${lot}${exp ? `&nbsp;&nbsp;|&nbsp;&nbsp;EXP: ${exp}` : ''}</div>` : ''}
+        </td>
+        <td class="text-center">${cip}</td>
+        <td class="text-center">${stockAvant > 0 ? stockAvant : 0}</td>
+        <td class="text-center">${qty}</td>
+        <td class="text-center">${free}</td>
+        <td class="text-center">${stockApres}</td>
+        <td class="text-right">${formatMoney(paHT)}${tvaPct > 0 ? ` <span class="tva">(${tvaPct.toFixed(2)}%)</span>` : ''}</td>
+        <td class="text-right">${formatMoney(totalLine)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>Bon de Réception N°${commande.id}</title>
+  <base href="${window.location.origin}/">
+  <style>
+    @page { size: A4; margin: 12mm 10mm 15mm 10mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; color: ${primaryColor}; background: #fff; line-height: 1.4; }
+    .page { width: 100%; max-width: 180mm; margin: 0 auto; }
+    
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: ${headerBorder}; padding-bottom: 10px; margin-bottom: 16px; }
+    .company-info .name { font-size: 16pt; font-weight: 700; color: ${primaryColor}; text-transform: uppercase; }
+    .company-info .meta { font-size: 9pt; color: ${lightColor}; margin-top: 4px; }
+    .doc-type { border: ${totalsBorder}; padding: 8px 20px; font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+    .doc-ref { text-align: right; font-size: 9pt; color: ${lightColor}; margin-top: 6px; }
+    
+    .info-grid { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
+    .info-box { flex: 1; }
+    .info-box h3 { font-size: 8pt; text-transform: uppercase; color: ${lightColor}; margin-bottom: 4px; letter-spacing: 0.5px; }
+    .info-box .value { font-size: 11pt; font-weight: 600; color: ${primaryColor}; }
+    .info-box .sub { font-size: 9pt; color: ${lightColor}; margin-top: 2px; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 9pt; }
+    th { background: ${tableHeaderBg}; color: ${primaryColor}; font-weight: 600; text-transform: uppercase; font-size: 8pt; padding: 8px 6px; border-top: ${tableBorder}; border-bottom: ${tableBorder}; text-align: left; }
+    td { padding: 8px 6px; border-bottom: ${rowBorder}; vertical-align: top; }
+    .product-name { font-weight: 500; color: ${primaryColor}; }
+    .product-lot { font-size: 8pt; color: ${lightColor}; margin-top: 2px; }
+    .tva { font-size: 7pt; color: ${lightColor}; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    
+    .summary { margin-top: 12px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .summary-left { font-size: 9pt; color: ${lightColor}; }
+    .summary-left span { display: inline-block; margin-right: 16px; }
+    .totals-box { border: ${totalsBorder}; padding: 12px 16px; min-width: 160px; }
+    .totals-box .row { display: flex; justify-content: space-between; font-size: 9pt; margin-bottom: 4px; }
+    .totals-box .row.total { font-size: 13pt; font-weight: 700; margin-top: 8px; padding-top: 8px; border-top: ${totalsBorderTop}; }
+    
+    .footer-note { margin-top: 20px; font-size: 8pt; color: ${lightColor}; font-style: italic; border-top: ${rowBorder}; padding-top: 8px; }
+    .print-footer { margin-top: 30px; text-align: center; font-size: 7pt; color: ${lightColor}; }
+    
+    @media print {
+      html, body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div class="company-info">
+        <div class="name">${companyName}</div>
+        <div class="meta">${companyAddress}${companyAddress ? '<br/>' : ''}Tél: ${companyTel}${companyTel ? '' : ''}${companyNiu || companyRc ? '<br/>' : ''}${companyNiu ? `NIU: ${companyNiu}` : ''}${companyNiu && companyRc ? ' | ' : ''}${companyRc ? `RC: ${companyRc}` : ''}</div>
+      </div>
+      <div style="text-align: right;">
+        <div class="doc-type">Bon de Réception</div>
+        <div class="doc-ref">RÉF: ${ref}</div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box">
+        <h3>Fournisseur</h3>
+        <div class="value">${fournisseurName}</div>
+      </div>
+      <div class="info-box" style="text-align: right;">
+        <h3>Détails de Réception</h3>
+        <div class="sub"><b>Date d'émission:</b> ${dateEmission}</div>
+        <div class="sub"><b>Imprimé le:</b> ${dateImpression}</div>
+        <div class="sub"><b>Saisie par:</b> ${saisiePar}</div>
+        <div class="sub"><b>Clôturée par:</b> ${cloturePar}</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Produit / Désignation</th>
+          <th class="text-center">CIP / Code</th>
+          <th class="text-center">stAnt</th>
+          <th class="text-center">Qté</th>
+          <th class="text-center">U.G</th>
+          <th class="text-center">Stock</th>
+          <th class="text-right">PA HT</th>
+          <th class="text-right">Total HT</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+
+    <div class="summary">
+      <div class="summary-left">
+        <span><b>Lignes:</b> ${totalLignes}</span>
+        <span><b>Unités:</b> ${totalUnites}</span>
+        <span><b>Gratuites:</b> ${totalGratuites}</span>
+      </div>
+      <div class="totals-box">
+        <div class="row"><span>TOTAL HT:</span><span>${formatMoney(totalHT)} F</span></div>
+        <div class="row"><span>TOTAL TVA:</span><span>${formatMoney(totalTVA)} F</span></div>
+        <div class="row total"><span>Total TTC Réception</span><span>${formatMoney(totalTTC)} FCFA</span></div>
+      </div>
+    </div>
+
+    <div class="footer-note">Ce document atteste la réception physique des articles mentionnés dans les stocks de l'établissement.</div>
+    <div class="print-footer">Logiciel de Gestion Antigravity POS - Document Interne</div>
+  </div>
+  <script>
+    window.onload = () => {
+      if (document.fonts) {
+        document.fonts.ready.then(() => setTimeout(() => { window.print(); }, 500));
+      } else {
+        setTimeout(() => { window.print(); }, 1000);
+      }
+    };
+  </script>
+</body>
+</html>`;
 }

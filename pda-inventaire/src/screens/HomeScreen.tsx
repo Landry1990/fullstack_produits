@@ -12,6 +12,8 @@ import {
   Modal,
 } from 'react-native';
 import { inventaireService } from '../services/inventaire';
+import { produitService } from '../services/inventaire';
+import { productCacheService } from '../services/productCache';
 import type { Inventaire } from '../services/inventaire';
 import { authService } from '../services/auth';
 import type { User } from '../services/auth';
@@ -30,6 +32,8 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   const [inventaires, setInventaires] = useState<Inventaire[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogCount, setCatalogCount] = useState<number | null>(null);
   const [user, setUser] = useState<User | null>(null);
   
   // Filtre: Mes inventaires vs Tous
@@ -59,7 +63,27 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
 
   useEffect(() => {
     loadData();
+    loadCatalogCount();
   }, []);
+
+  const loadCatalogCount = async () => {
+    const count = await productCacheService.getCount();
+    setCatalogCount(count);
+  };
+
+  const handleDownloadCatalog = async () => {
+    setCatalogLoading(true);
+    try {
+      const produits = await produitService.downloadCatalog();
+      setCatalogCount(produits.length);
+      Alert.alert('Catalogue téléchargé', `${produits.length} produit(s) mis en cache. Le scan est maintenant utilisable hors ligne.`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Impossible de télécharger le catalogue';
+      Alert.alert('Erreur', message);
+    } finally {
+      setCatalogLoading(false);
+    }
+  };
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -155,6 +179,27 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
         </View>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>⏻</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Catalogue offline */}
+      <View style={styles.catalogBar}>
+        <View style={styles.catalogInfo}>
+          <Text style={styles.catalogLabel}>Catalogue offline</Text>
+          <Text style={styles.catalogCount}>
+            {catalogLoading ? 'Téléchargement...' : catalogCount !== null ? `${catalogCount} produit(s)` : 'Non chargé'}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.catalogBtn, catalogLoading && styles.btnDisabled]}
+          onPress={handleDownloadCatalog}
+          disabled={catalogLoading}
+        >
+          {catalogLoading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.catalogBtnText}>Télécharger</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -453,5 +498,43 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: '#fff',
+  },
+  catalogBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1a1a2e',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2d2d44',
+  },
+  catalogInfo: {
+    flex: 1,
+  },
+  catalogLabel: {
+    color: '#888',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  catalogCount: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  catalogBtn: {
+    backgroundColor: '#4f46e5',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  catalogBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

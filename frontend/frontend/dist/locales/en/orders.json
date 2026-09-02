@@ -198,11 +198,15 @@
             "invoice_number": "Invoice No.",
             "items": "Items",
             "view_details": "View Details",
-            "empty": "No orders found for now"
+            "empty": "No orders found for now",
+            "ht": "HT",
+            "tva": "VAT",
+            "ttc": "TTC"
         },
         "selection": {
             "merge": "Merge"
         },
+        "selected_count": "{{count}} selected",
         "pagination": {
             "showing": "Showing {{count}} of {{total}} orders"
         },
@@ -241,7 +245,8 @@
             "margin": "margin",
             "coeff": "coeff",
             "precompte": "withholding"
-        }
+        },
+        "correct_lot_expiry": "Correct lot / expiry date"
     },
     "form": {
         "back_to_list": "Back to list",
@@ -285,7 +290,10 @@
         "saving": "Saving...",
         "save_btn": "Save Order",
         "enable_datamatrix_scan": "Enable Data Matrix scan",
-        "disable_datamatrix_scan": "Disable Data Matrix scan"
+        "disable_datamatrix_scan": "Disable Data Matrix scan",
+        "rate_short": "Rate",
+        "coeff_short": "Coeff",
+        "coeff_label": "COEFF"
     },
     "product_table": {
         "title": "Products ({{count}})",
@@ -307,6 +315,7 @@
         "total_tva": "VAT",
         "total_ttc": "Total TTC",
         "selected_count": "{{count}} product(s) selected",
+        "selected_short": "sel.",
         "delete_btn": "Remove",
         "transfer_btn": "Transfer",
         "empty_state": "The order is empty. Use the search bar to add products.",
@@ -546,7 +555,8 @@
         "results_unit": "items",
         "step_config": "Settings",
         "step_results": "Results",
-        "mode_label": "Analysis mode"
+        "mode_label": "Analysis mode",
+        "ref_prefix": "REF:"
     },
     "data_matrix_scanner": {
         "active": "Data Matrix scan active — point the scanner at a code",

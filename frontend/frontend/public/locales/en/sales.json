@@ -17,6 +17,7 @@
     },
     "no_sales_found": "No sales found",
     "try_different_filters": "Try changing filters",
+    "avoir_client_indicator": "This sale has {{count}} customer credit(s): {{avoirs}}",
     "modals": {
         "print_invoice": "Print Invoice"
     },

@@ -189,7 +189,21 @@ export function useJournalCaisse() {
 
   useEffect(() => {
     if (selectedUser) {
-      handleUserShiftDetection(selectedUser);
+      // Ne détecter le shift que si on est sur aujourd'hui.
+      // Si l'utilisateur a choisi une date antérieure, on garde sa plage
+      // et on ne remplace pas les dates par le shift/aujourd'hui.
+      const todayStart = getServerDate();
+      todayStart.setHours(0, 0, 0, 0);
+      const isToday = dateDebut && dateDebut.getTime() === todayStart.getTime();
+
+      if (isToday) {
+        handleUserShiftDetection(selectedUser);
+      } else {
+        // Date antérieure : conserver les dates de l'utilisateur,
+        // juste reset le shift détecté (pas de blocage clôture).
+        resetShift();
+        // Le fetch sera déclenché par l'effect [dateDebut, dateFin, selectedUser].
+      }
     } else {
       // Retour à "toutes les caissières" - réinitialiser complètement
       resetShift();
@@ -365,6 +379,7 @@ export function useJournalCaisse() {
     computedTheorique,
     openClosingModal,
     handleCloseCaisse,
+    setBilletage,
   } = useJournalCaisseClosing({
     serverTotals: serverTotals as ClosingTotalsSource | null,
     totauxParMode: totauxParMode as ClosingTotalsSource,
@@ -439,6 +454,7 @@ export function useJournalCaisse() {
     toggleReleve,
     openClosingModal,
     handleCloseCaisse,
+    setBilletage,
     handleImprimerCloture,
     setTodayDateRange,
 

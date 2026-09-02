@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import F, Q, Sum
 from django.utils import timezone
 from rest_framework import permissions, viewsets
@@ -27,15 +28,51 @@ class CompteComptableViewSet(viewsets.ModelViewSet):
     serializer_class = CompteComptableSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @transaction.atomic
+    def perform_create(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        instance.delete()
+
 class JournalComptableViewSet(viewsets.ModelViewSet):
     queryset = JournalComptable.objects.all()
     serializer_class = JournalComptableSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @transaction.atomic
+    def perform_create(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        instance.delete()
+
 class ExerciceComptableViewSet(viewsets.ModelViewSet):
     queryset = ExerciceComptable.objects.all()
     serializer_class = ExerciceComptableSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        instance.delete()
 
 from ..filters import EcritureComptableFilter
 
@@ -296,6 +333,7 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         return Response(response_data)
 
     @action(detail=False, methods=['post'])
+    @transaction.atomic
     def initialiser_historique(self, request):
         """
         Action pour générer les écritures manquantes pour les factures et paiements passés.
@@ -411,6 +449,7 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
         return Response(response_data)
 
     @action(detail=False, methods=['post'], url_path='creer_lettrage')
+    @transaction.atomic
     def creer_lettrage(self, request):
         """
         Créer un lettrage entre plusieurs lignes d'écriture.
@@ -465,3 +504,15 @@ class EcritureComptableViewSet(viewsets.ModelViewSet):
             'montant_total': lettrage.montant_total,
             'lignes_count': len(ligne_ids)
         })
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        instance.delete()

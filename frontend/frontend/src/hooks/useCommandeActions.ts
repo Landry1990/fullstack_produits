@@ -7,6 +7,8 @@ import { getApiErrorDetail } from '../utils/errorHandling';
 import type { Commande, CommandeProduit, User, PaginatedResponse } from '../types';
 import commandeService, { type SudoCredentials, type TransformationDisponible } from '../services/commandeService';
 import { logger } from '../utils/logger';
+import { buildReceptionPrintHtml, writePrintDocument } from '../utils/print/printHelpers';
+import { useLicence } from '../context/LicenceContext';
 interface UseCommandeActionsProps {
     fetchCommandes: () => Promise<void>;
     setSelectedCommande: (commande: Commande | null) => void;
@@ -155,6 +157,7 @@ export function useCommandeActions({
     }
 
     const queryClient = useQueryClient();
+    const { licence } = useLicence();
 
     const handleDeleteCommande = async (commande: Commande, sudoCredentials?: SudoCredentials) => {
         if (executingAction) return;
@@ -277,21 +280,28 @@ export function useCommandeActions({
         if (executingAction) return;
         setExecutingAction(true);
 
+        // Ouvrir le popup AVANT l'await pour conserver le contexte du clic utilisateur
+        const printWindow = window.open('about:blank', '_blank');
+        if (!printWindow) {
+            setExecutingAction(false);
+            gooeyToast.error(t('orders:messages.popup_blocked'));
+            return;
+        }
+
         try {
-            const blob = await commandeService.imprimerReception(commande.id);
-            const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+            const companyInfo = {
+                name: licence?.pharmacie_nom,
+                address: licence?.pharmacien_nom ? `Pharmacien: ${licence.pharmacien_nom}` : undefined,
+                tel: 'N/A',
+                niu: 'N/A',
+                rc: 'N/A',
+            };
 
-            const printWindow = window.open(url, '_blank', 'noopener,noreferrer');
-            if (!printWindow) {
-                window.URL.revokeObjectURL(url);
-                gooeyToast.error(t('orders:messages.popup_blocked'));
-                return;
-            }
-
-            // Libérer l'URL blob après un délai (le navigateur a eu le temps de l'afficher)
-            setTimeout(() => window.URL.revokeObjectURL(url), 30000);
-            gooeyToast.success(t('orders:messages.print_ready'));
+            const html = buildReceptionPrintHtml(commande, companyInfo);
+            writePrintDocument(printWindow, html);
+            printWindow.focus?.();
         } catch (err) {
+            printWindow.close();
             logger.error('Erreur impression bon de réception:', err);
             gooeyToast.error(getApiErrorDetail(err, t('orders:messages.print_error')));
         } finally {

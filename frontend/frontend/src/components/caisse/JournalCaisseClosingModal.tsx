@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Printer, Plus, Trash2, User as UserIcon } from 'lucide-react';
+import { Printer, Plus, Trash2, User as UserIcon, Banknote } from 'lucide-react';
 import { normalizeNumberInput } from '../../utils/formatters';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import { Button } from '../shadcn/button';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import { getPaymentModeLabel } from '../../config/paymentModes';
+import { CashBreakdownModal, type CashBreakdown } from './CashBreakdownModal';
+import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 
 interface Props {
   state: ReturnType<typeof useJournalCaisse>;
@@ -18,8 +20,11 @@ export default function JournalCaisseClosingModal({ state }: Props) {
     t, isClosingModalOpen, closingTotals, actualAmount, setActualAmount,
     handleCloseCaisse, loading, handleImprimerCloture, setIsClosingModalOpen,
     formatCurrencyLocal, manualMovements, setManualMovements, fondDeCaisse,
-    selectedUser, users, detectedShift
+    selectedUser, users, detectedShift, setBilletage
   } = state;
+
+  const { settings } = usePharmacySettings();
+  const billetageObligatoire = settings.billetage_obligatoire ?? true;
 
   const { user } = useAuth();
   // Priorité : caissier sélectionné dans le filtre → sinon user connecté
@@ -31,6 +36,8 @@ export default function JournalCaisseClosingModal({ state }: Props) {
   const [newMotif, setNewMotif] = useState('');
   const [newMontant, setNewMontant] = useState('');
   const [newType, setNewType] = useState<'ENTREE' | 'SORTIE'>('SORTIE');
+  const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
+  const [breakdown, setBreakdown] = useState<CashBreakdown | null>(null);
 
   const getModeLabel = (mode: string) => getPaymentModeLabel(mode, t);
 
@@ -251,17 +258,52 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                 <label className="block py-1">
                   <span className="text-xs font-black text-slate-500 uppercase">{t('closing.real_amount')}</span>
                 </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    placeholder="0"
-                    className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
-                    value={actualAmount}
-                    onChange={(e) => setActualAmount(e.target.value)}
-                    autoFocus
-                  />
-                  <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300">{t('common:currency')}</span>
+                <div className="relative flex gap-2">
+                  {billetageObligatoire ? (
+                    <div
+                      className="relative flex-1 cursor-text"
+                      onClick={() => setIsBreakdownOpen(true)}
+                      onFocus={() => setIsBreakdownOpen(true)}
+                      tabIndex={0}
+                      role="button"
+                    >
+                      <input
+                        type="text"
+                        readOnly
+                        placeholder={t('closing.breakdown_placeholder', { defaultValue: 'Touchez pour billetter' })}
+                        className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all cursor-pointer"
+                        value={actualAmount}
+                        onFocus={() => setIsBreakdownOpen(true)}
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300 pointer-events-none">{t('common:currency')}</span>
+                    </div>
+                  ) : (
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        placeholder={t('closing.real_amount_placeholder', { defaultValue: 'Saisissez le montant réel' })}
+                        className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
+                        value={actualAmount}
+                        onChange={(e) => { setActualAmount(e.target.value); setBreakdown(null); setBilletage(null); }}
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300 pointer-events-none">{t('common:currency')}</span>
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 px-3 border-emerald-300 text-emerald-700 hover:bg-emerald-50 shrink-0"
+                    onClick={() => setIsBreakdownOpen(true)}
+                    title={t('closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
+                  >
+                    <Banknote className="size-5" />
+                  </Button>
                 </div>
+                {!billetageObligatoire && (
+                  <p className="mt-1 text-[10px] text-slate-400 font-bold">
+                    {t('closing.breakdown_optional_hint', { defaultValue: 'Billetage optionnel — cliquez l\'icône pour détailler vos coupures' })}
+                  </p>
+                )}
                 {computed && computed.gap !== null && (
                   <div className="mt-3 flex items-center justify-between p-3 bg-slate-100 rounded-lg">
                     <span className="text-xs font-bold text-slate-600 uppercase">{t('closing.cash_gap')}</span>
@@ -302,6 +344,14 @@ export default function JournalCaisseClosingModal({ state }: Props) {
           </div>
         </div>
       </div>
+
+      {/* === SOUS-MODAL DE BILLETAGE === */}
+      <CashBreakdownModal
+        isOpen={isBreakdownOpen}
+        onClose={() => setIsBreakdownOpen(false)}
+        onConfirm={(bd) => { setActualAmount(String(bd.total)); setBreakdown(bd); setBilletage(bd as unknown as Record<string, unknown>); }}
+        formatCurrency={formatCurrencyLocal}
+      />
     </dialog>
   );
 }

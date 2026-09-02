@@ -73,6 +73,7 @@ def health_check(request):
 from .ordonnancier_view import OrdonnancierViewSet
 from .views import (
     AuditLogViewSet,
+    AvoirClientViewSet,
     AvoirViewSet,
     AyantDroitViewSet,
     CadencierViewSet,
@@ -211,6 +212,7 @@ router.register(r'mouvements-caisse', MouvementCaisseViewSet, basename='mouvemen
 router.register(r'inventaires', InventaireViewSet, basename='inventaire')
 router.register(r'lignes-inventaire', LigneInventaireViewSet, basename='ligneinventaire')
 router.register(r'avoirs', AvoirViewSet, basename='avoir')
+router.register(r'avoirs-clients', AvoirClientViewSet, basename='avoirclient')
 router.register(r'ligne-avoirs', LigneAvoirViewSet, basename='ligneavoir')
 router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
 router.register(r'relations-transformation', RelationTransformationViewSet, basename='relationtransformation')

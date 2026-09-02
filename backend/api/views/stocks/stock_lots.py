@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import F, Q, Sum
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
@@ -209,27 +209,48 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
     def by_datamatrix(self, request):
         """
         Retrouve un lot de stock à partir du scan datamatrix GS1.
-        Paramètres : cip (CIP13 ou CIP7) + lot (numéro de lot)
+        Paramètres : cip (CIP13, CIP7, EAN, GTIN...) + lot (optionnel)
         Retourne les infos du lot + du produit pour injection directe dans le panier.
         """
-        cip = request.query_params.get('cip', '').strip()
-        lot_numero = request.query_params.get('lot', '').strip()
+        import re
 
-        if not cip or not lot_numero:
+        def _normalize_cip(raw):
+            if not raw:
+                return ''
+            s = str(raw).strip().upper()
+            # Retirer préfixes AIM et séparateurs GS1
+            s = re.sub(r'^\\]?[A-Z][0-9]', '', s)
+            s = re.sub(r'[\\s\\-.]', '', s)
+            s = s.replace('\x1d', '').replace('\x1e', '')
+            return s
+
+        def _normalize_lot(raw):
+            if not raw:
+                return ''
+            return str(raw).strip().upper().replace('\x1d', '').replace('\x1e', '')
+
+        cip = _normalize_cip(request.query_params.get('cip', ''))
+        lot_numero = _normalize_lot(request.query_params.get('lot', ''))
+
+        if not cip:
             return Response(
-                {'detail': 'Paramètres cip et lot requis.'},
+                {'detail': 'Paramètre cip requis.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Chercher le produit par CIP13 ou CIP7
-        produit = None
-        if len(cip) == 13:
-            produit = Produit.objects.filter(cip1=cip, is_active=True).first()
-        if not produit and len(cip) == 7:
-            produit = Produit.objects.filter(cip2=cip, is_active=True).first()
-        # Fallback : essai sur cip1 quelle que soit la longueur
-        if not produit:
-            produit = Produit.objects.filter(cip1=cip, is_active=True).first()
+        # Chercher le produit sur les 3 CIP (insensible à la casse)
+        produit = Produit.objects.filter(
+            Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip),
+            is_active=True
+        ).first()
+
+        # Fallback sans zéros non significatifs en tête
+        if not produit and cip.startswith('0'):
+            cip_no_zeros = cip.lstrip('0')
+            produit = Produit.objects.filter(
+                Q(cip1__iexact=cip_no_zeros) | Q(cip2__iexact=cip_no_zeros) | Q(cip3__iexact=cip_no_zeros),
+                is_active=True
+            ).first()
 
         if not produit:
             return Response(
@@ -237,15 +258,19 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Chercher le lot exact sur ce produit
-        lot = StockLot.objects.filter(
-            produit=produit,
-            lot=lot_numero,
-        ).order_by('-date_reception').first()
+        # Chercher le lot sur ce produit
+        qs = StockLot.objects.filter(produit=produit)
+        if lot_numero:
+            qs = qs.filter(lot__iexact=lot_numero)
+
+        # Lot le plus récent avec du stock, sinon le plus récent reçu
+        lot = qs.filter(quantity_remaining__gt=0).order_by('-date_reception').first()
+        if not lot:
+            lot = qs.order_by('-date_reception').first()
 
         if not lot:
             return Response(
-                {'detail': f'Lot « {lot_numero} » introuvable pour ce produit.'},
+                {'detail': f'Lot introuvable pour ce produit.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 

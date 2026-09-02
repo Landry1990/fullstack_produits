@@ -69,6 +69,7 @@ const JournalCaisse = lazyWithRetry(() => import('./components/JournalCaisse'));
 const Perimes = lazyWithRetry(() => import('./components/Perimes'));
 const Creances = lazyWithRetry(() => import('./components/Creances'));
 const Avoirs = lazyWithRetry(() => import('./components/Avoirs'));
+const ClientCredits = lazyWithRetry(() => import('./components/avoirs-client/ClientCreditsPage'));
 const RapportMensuel = lazyWithRetry(() => import('./components/RapportMensuel'));
 const Transformations = lazyWithRetry(() => import('./components/Transformations'));
 const ReapproRayon = lazyWithRetry(() => import('./components/stock/ReapproRayon'));
@@ -163,6 +164,7 @@ export const router = createBrowserRouter([
           { path: 'caisse-centralisee', ...perm('caisse', CaisseCentralisee) },
           { path: 'promotions', ...perm('ventes_promotions', PromotionList) },
           { path: 'historique-ventes', ...perm('ventes_historique', HistoriqueVentes) },
+          { path: 'avoirs-clients', ...perm('ventes_avoirs_clients', ClientCredits) },
           { path: 'recap-client', ...perm('ventes_consultation', RecapClient) },
           { path: 'ordonnancier', ...perm('ventes_ordonnancier', OrdonnancierPage) },
           { path: 'journal-caisse', ...perm('ventes_journal', JournalCaisse) },
