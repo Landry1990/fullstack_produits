@@ -257,7 +257,7 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
               Produits ({produitsDetails.length})
             </h4>
             <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
-              {produitsDetails.map((p: ProduitDetail) => (
+              {produitsDetails.slice(0, 5).map((p: ProduitDetail) => (
                 <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
@@ -271,6 +271,11 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
                   </div>
                 </div>
               ))}
+              {produitsDetails.length > 5 && (
+                <div className="px-4 py-2 text-center text-[10px] text-slate-500 font-bold italic">
+                  ...et {produitsDetails.length - 5} article(s) supplémentaire(s)
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -319,25 +324,9 @@ function CommandePreview({ data, t }: { data?: Commande; t: TFunction }) {
         </div>
 
         {produitsDetails && produitsDetails.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
-              Articles ({produitsDetails.length})
-            </h4>
-            <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
-              {produitsDetails.map((p: ProduitDetail) => (
-                <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{Number(p.prix).toLocaleString()} F / unité</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-amber-50 text-amber-500 rounded flex items-center gap-1">
-                      <span className="text-xs font-black">{p.quantite}</span>
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-200 text-center space-y-1">
+            <p className="text-sm font-bold text-amber-600">{produitsDetails.length} article(s)</p>
+            <p className="text-[10px] text-slate-500 font-medium italic">Cliquez ou appuyez sur Entrée pour ouvrir le détail</p>
           </div>
         )}
       </div>

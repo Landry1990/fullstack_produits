@@ -500,13 +500,13 @@ export default function CommandeList({
                     </TableHead>
 
                     <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
-                      HT
+                      {t('orders:list.table.ht')}
                     </TableHead>
                     <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
-                      TVA
+                      {t('orders:list.table.tva')}
                     </TableHead>
                     <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
-                      TTC
+                      {t('orders:list.table.ttc')}
                     </TableHead>
                     <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('status')}>
                       <div className="flex items-center gap-2 justify-center">
@@ -655,10 +655,10 @@ export default function CommandeList({
           const totalTtc = selected.reduce((sum, c) => sum + Number(c.total_ttc || c.total), 0);
           return (
             <div className="flex items-center justify-end gap-4 text-sm border-t border-slate-100 pt-2">
-              <span className="font-semibold text-slate-500">{selectedOrderIds.size} sélectionnée{selectedOrderIds.size > 1 ? 's' : ''}</span>
-              <span className="text-slate-400">HT <span className="font-semibold text-slate-700">{formatCurrency(Number(totalHt.toFixed(2)))}</span></span>
-              <span className="text-slate-400">TVA <span className="font-semibold text-slate-700">{formatCurrency(Number(totalTva.toFixed(2)))}</span></span>
-              <span className="text-emerald-600 font-bold">TTC <span className="font-bold">{formatCurrency(Number(totalTtc.toFixed(2)))}</span></span>
+              <span className="font-semibold text-slate-500">{t('orders:list.selected_count', { count: selectedOrderIds.size })}</span>
+              <span className="text-slate-400">{t('orders:list.table.ht')} <span className="font-semibold text-slate-700">{formatCurrency(Number(totalHt.toFixed(2)))}</span></span>
+              <span className="text-slate-400">{t('orders:list.table.tva')} <span className="font-semibold text-slate-700">{formatCurrency(Number(totalTva.toFixed(2)))}</span></span>
+              <span className="text-emerald-600 font-bold">{t('orders:list.table.ttc')} <span className="font-bold">{formatCurrency(Number(totalTtc.toFixed(2)))}</span></span>
             </div>
           );
         })()}

@@ -1,5 +1,6 @@
 import logging
 
+from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -40,6 +41,7 @@ class FacturePrintMixin:
         return response
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def send_whatsapp(self, request, pk=None):
         """
         Envoie la facture par WhatsApp.

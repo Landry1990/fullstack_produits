@@ -134,6 +134,10 @@
         "export_sage": {
             "name": "Export Comptable Sage i7",
             "description": "Génère un fichier CSV compatible avec Sage 100/i7 (Journaux VT, CA, BQ)"
+        },
+        "livre_caisse": {
+            "name": "Livre de Caisse",
+            "description": "Récapitulatif journalier des mouvements de caisse par rubrique (Excel)"
         }
     },
     "stock_valuation": {

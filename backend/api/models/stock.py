@@ -291,6 +291,11 @@ class MouvementStock(models.Model):
         related_name='mouvements_stock',
         help_text="Inventaire associé au mouvement (pour les ajustements)"
     )
+    avoir_client = models.ForeignKey(
+        'AvoirClient', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='mouvements_stock',
+        help_text="Avoir client associé au mouvement (pour les retours clients)"
+    )
     type_mouvement = models.CharField(max_length=30, choices=TypeMouvement.choices)
     quantite = models.IntegerField(help_text="Quantité mouvementée (positive ou négative)")
     stock_apres = models.IntegerField(null=True, blank=True, help_text="Stock après mouvement (snapshot)")

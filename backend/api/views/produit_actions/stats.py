@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ...models import CommandeProduit, FactureProduit, Produit
+from ...models import CommandeProduit, FactureProduit, LigneAvoirClient, Produit
 
 
 class ProduitStatsMixin:
@@ -25,6 +25,15 @@ class ProduitStatsMixin:
             mois=TruncMonth('facture__date')
         ).values('mois').annotate(
             qte_v=Sum('quantity')
+        ).order_by('-mois')
+        
+        avoirs = LigneAvoirClient.objects.filter(
+            produit=produit,
+            avoir_client__statut='VALIDEE'
+        ).annotate(
+            mois=TruncMonth('avoir_client__date')
+        ).values('mois').annotate(
+            qte_av=Sum('quantity')
         ).order_by('-mois')
         
         commandes = CommandeProduit.objects.filter(
@@ -45,7 +54,14 @@ class ProduitStatsMixin:
                 key = v['mois'].strftime('%Y-%m')
                 if key not in stats_by_month:
                     stats_by_month[key] = {'year': v['mois'].year, 'month': v['mois'].month, 'qte_v': 0, 'qte_c': 0, 'nb_c': 0}
-                stats_by_month[key]['qte_v'] = v['qte_v'] or 0
+                stats_by_month[key]['qte_v'] = (v['qte_v'] or 0)
+        
+        for av in avoirs:
+            if av['mois']:
+                key = av['mois'].strftime('%Y-%m')
+                if key not in stats_by_month:
+                    stats_by_month[key] = {'year': av['mois'].year, 'month': av['mois'].month, 'qte_v': 0, 'qte_c': 0, 'nb_c': 0}
+                stats_by_month[key]['qte_v'] -= (av['qte_av'] or 0)
         
         for c in commandes:
             if c['mois']:
@@ -104,7 +120,17 @@ class ProduitStatsMixin:
                 total=Sum('quantity')
             )
             
+            avoirs_par_produit = LigneAvoirClient.objects.filter(
+                avoir_client__statut='VALIDEE'
+            ).values('produit_id').annotate(
+                total=Sum('quantity')
+            )
+            
             sold_dict = {item['produit_id']: (item['total'] or 0) for item in ventes_par_produit}
+            avoirs_dict = {item['produit_id']: (item['total'] or 0) for item in avoirs_par_produit}
+            
+            for key, qte in avoirs_dict.items():
+                sold_dict[key] = sold_dict.get(key, 0) - qte
             
             produits = Produit.objects.all()
             produits_to_update = []
@@ -135,35 +161,76 @@ class ProduitStatsMixin:
             periode = int(request.query_params.get('periode', 6))
         except ValueError:
             periode = 6
-            
+
         rayon_id = request.query_params.get('rayon_id')
         fournisseur_id = request.query_params.get('fournisseur_id')
-        
+
         date_debut = timezone.now() - relativedelta(months=periode)
-        
+
         produit_filter = Q(
             facture__status__in=['VAL', 'PAY'],
             facture__date__gte=date_debut
         )
-        
+
         if rayon_id:
             produit_filter &= Q(produit__rayon_id=rayon_id)
         if fournisseur_id:
             produit_filter &= Q(produit__fournisseur_id=fournisseur_id)
-        
+
         ventes_par_produit = FactureProduit.objects.filter(
             produit_filter
         ).values(
-            'produit', 'produit__name', 'produit__stock', 'produit__cip1', 
+            'produit', 'produit__name', 'produit__stock', 'produit__cip1',
             'produit__selling_price', 'produit__cost_price', 'produit__pmp', 'produit__rayon__name', 'produit__fournisseur__name'
         ).annotate(
-            chiffre_affaires=Coalesce(Sum(F('quantity') * F('selling_price')), Decimal(0)),
-            quantite_vendue=Coalesce(Sum('quantity'), 0)
-        ).order_by('-chiffre_affaires')
-        
-        ca_total = sum(item['chiffre_affaires'] for item in ventes_par_produit)
-        
-        if ca_total == 0:
+            chiffre_affaires_brut=Coalesce(Sum(F('quantity') * F('selling_price')), Decimal(0)),
+            quantite_vendue_brute=Coalesce(Sum('quantity'), 0)
+        )
+
+        avoirs_filter = Q(
+            avoir_client__statut='VALIDEE',
+            avoir_client__date__gte=date_debut
+        )
+        if rayon_id:
+            avoirs_filter &= Q(produit__rayon_id=rayon_id)
+        if fournisseur_id:
+            avoirs_filter &= Q(produit__fournisseur_id=fournisseur_id)
+
+        avoirs_par_produit = LigneAvoirClient.objects.filter(
+            avoirs_filter
+        ).values('produit').annotate(
+            ca_av=Coalesce(Sum(F('quantity') * F('prix_unitaire')), Decimal(0)),
+            qte_av=Coalesce(Sum('quantity'), 0)
+        )
+
+        avoirs_dict = {
+            a['produit']: {'ca_av': a['ca_av'] or Decimal(0), 'qte_av': a['qte_av'] or 0}
+            for a in avoirs_par_produit
+        }
+
+        merged = []
+        for v in ventes_par_produit:
+            pid = v['produit']
+            avoir = avoirs_dict.pop(pid, {'ca_av': Decimal(0), 'qte_av': 0})
+            ca_net = (v['chiffre_affaires_brut'] or Decimal(0)) - avoir['ca_av']
+            qte_net = (v['quantite_vendue_brute'] or 0) - avoir['qte_av']
+            merged.append({
+                'produit': pid,
+                'produit__name': v['produit__name'],
+                'produit__stock': v['produit__stock'],
+                'produit__cip1': v['produit__cip1'],
+                'produit__selling_price': v['produit__selling_price'],
+                'produit__cost_price': v['produit__cost_price'],
+                'produit__pmp': v['produit__pmp'],
+                'produit__rayon__name': v['produit__rayon__name'],
+                'produit__fournisseur__name': v['produit__fournisseur__name'],
+                'chiffre_affaires': ca_net,
+                'quantite_vendue': qte_net,
+            })
+
+        ca_total = sum(item['chiffre_affaires'] for item in merged if item['chiffre_affaires'] > 0)
+
+        if ca_total <= 0:
             return Response({
                 'periode_mois': periode,
                 'date_debut': date_debut.date().isoformat(),
@@ -173,31 +240,37 @@ class ProduitStatsMixin:
                 'nb_produits_c': 0,
                 'produits': []
             })
-        
+
+        merged.sort(key=lambda x: x['chiffre_affaires'], reverse=True)
+
         seuil_a = Decimal('0.80')
         seuil_b = Decimal('0.95')
-        
+
         ca_cumule = Decimal(0)
         produits_classes = []
-        
+
         stats = {'A': 0, 'B': 0, 'C': 0}
         ca_par_categorie = {'A': Decimal(0), 'B': Decimal(0), 'C': Decimal(0)}
-        
-        for item in ventes_par_produit:
+
+        for item in merged:
             ca_produit = item['chiffre_affaires']
-            ca_cumule += ca_produit
-            pourcentage_cumule = ca_cumule / ca_total
-            pourcentage_ca = (ca_produit / ca_total * 100).quantize(Decimal('0.01'))
-            
-            if pourcentage_cumule <= seuil_a:
-                categorie = 'A'
-            elif pourcentage_cumule <= seuil_b:
-                categorie = 'B'
+            if ca_produit > 0:
+                ca_cumule += ca_produit
+                pourcentage_cumule = ca_cumule / ca_total
+                pourcentage_ca = (ca_produit / ca_total * 100).quantize(Decimal('0.01'))
+
+                if pourcentage_cumule <= seuil_a:
+                    categorie = 'A'
+                elif pourcentage_cumule <= seuil_b:
+                    categorie = 'B'
+                else:
+                    categorie = 'C'
             else:
+                pourcentage_ca = Decimal('0.00')
                 categorie = 'C'
-            
+
             stats[categorie] += 1
-            ca_par_categorie[categorie] += ca_produit
+            ca_par_categorie[categorie] += ca_produit if ca_produit > 0 else Decimal(0)
 
             cout_unitaire = item['produit__pmp'] or item['produit__cost_price'] or Decimal(0)
             marge_produit = ca_produit - (Decimal(item['quantite_vendue']) * cout_unitaire)
@@ -219,25 +292,25 @@ class ProduitStatsMixin:
                 'categorie': categorie,
                 'en_rupture': (item['produit__stock'] or 0) <= 0
             })
-        
+
         produits_avec_ventes = [p['id'] for p in produits_classes]
         produits_sans_ventes_filter = ~Q(id__in=produits_avec_ventes)
         if rayon_id:
             produits_sans_ventes_filter &= Q(rayon_id=rayon_id)
         if fournisseur_id:
             produits_sans_ventes_filter &= Q(fournisseur_id=fournisseur_id)
-        
+
         nb_produits_sans_ventes = Produit.objects.filter(produits_sans_ventes_filter).count()
         stats['C'] += nb_produits_sans_ventes
-        
+
         include_no_sales = request.query_params.get('include_no_sales', 'false').lower() == 'true'
         limite_c = int(request.query_params.get('limite_c', 100))
-        
+
         if include_no_sales:
             produits_sans_ventes = Produit.objects.filter(
                 produits_sans_ventes_filter
             ).values('id', 'name', 'cip1', 'stock', 'selling_price', 'rayon__name', 'fournisseur__name')[:limite_c]
-            
+
             for p in produits_sans_ventes:
                 produits_classes.append({
                     'id': p['id'],
@@ -255,13 +328,13 @@ class ProduitStatsMixin:
                     'categorie': 'C',
                     'en_rupture': p['stock'] <= 0
                 })
-        
+
         categorie_filter = request.query_params.get('categorie')
         if categorie_filter and categorie_filter in ['A', 'B', 'C']:
             produits_classes = [p for p in produits_classes if p['categorie'] == categorie_filter]
-        
+
         produits_a_en_rupture = [p for p in produits_classes if p['categorie'] == 'A' and p['en_rupture']]
-        
+
         return Response({
             'periode_mois': periode,
             'date_debut': date_debut.date().isoformat(),

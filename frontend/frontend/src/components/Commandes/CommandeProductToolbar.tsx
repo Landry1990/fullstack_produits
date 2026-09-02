@@ -73,7 +73,7 @@ export function CommandeProductToolbar({
             <div className="flex items-center gap-3">
                 {selectedRowsSize > 0 && (
                     <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3 ml-1">
-                        <span className="text-[10px] text-slate-500 font-bold">{selectedRowsSize} sél.</span>
+                        <span className="text-[10px] text-slate-500 font-bold">{selectedRowsSize} {t('orders:product_table.selected_short')}</span>
                         <Button type="button" variant="destructive" size="sm" className="h-6 px-2 text-[10px]" onClick={onDeleteSelected}>
                             {t('orders:product_table.delete_btn')}
                         </Button>

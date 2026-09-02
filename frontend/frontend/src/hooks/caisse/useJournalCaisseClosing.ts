@@ -86,6 +86,7 @@ export function useJournalCaisseClosing({
   const [fondDeCaisse, setFondDeCaisse] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [billetage, setBilletage] = useState<Record<string, unknown> | null>(null);
 
   const computedTheorique = useMemo(() => {
     if (!closingTotals) return null;
@@ -122,6 +123,7 @@ export function useJournalCaisseClosing({
     setClosingTotals(modalTotals);
     setActualAmount('');
     setManualMovements([]);
+    setBilletage(null);
     setFondDeCaisse(
       ((currentTotals.details as Record<string, Record<string, unknown>> | undefined)?.__meta__?.fond_de_caisse as number) || 0
     );
@@ -139,7 +141,8 @@ export function useJournalCaisseClosing({
         date_debut: dateDebut ? toApiDateTime(dateDebut) : null,
         date_fin: dateFin ? toApiDateEnd(dateFin) : null,
         user_id: selectedUser,
-        mouvements_manuels: manualMovements.map(m => ({ motif: m.motif, montant: m.montant, type: m.type }))
+        mouvements_manuels: manualMovements.map(m => ({ motif: m.motif, montant: m.montant, type: m.type })),
+        billetage: billetage || {}
       });
 
       gooeyToast.success(t('messages.close_success'));
@@ -162,7 +165,7 @@ export function useJournalCaisseClosing({
     } finally {
       setLoading(false);
     }
-  }, [actualAmount, computedTheorique, dateDebut, dateFin, selectedUser, manualMovements, fetchData, onPrint, t]);
+  }, [actualAmount, computedTheorique, dateDebut, dateFin, selectedUser, manualMovements, billetage, fetchData, onPrint, t]);
 
   return {
     isClosingModalOpen,
@@ -178,6 +181,7 @@ export function useJournalCaisseClosing({
     computedTheorique,
     openClosingModal,
     handleCloseCaisse,
+    setBilletage,
     closingLoading: loading,
     closingError: error,
   };

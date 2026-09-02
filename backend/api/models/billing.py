@@ -571,6 +571,10 @@ class ClotureCaisse(models.Model):
         default=dict, blank=True, 
         help_text="Détails par mode de paiement"
     )
+    billetage = models.JSONField(
+        default=dict, blank=True,
+        help_text="Détail du billetage (coupures comptées) à la clôture"
+    )
     
     date_debut = models.DateTimeField(null=True, blank=True, help_text="Début de la période de clôture")
     date_fin = models.DateTimeField(null=True, blank=True, help_text="Fin de la période de clôture")

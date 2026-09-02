@@ -139,7 +139,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
             quantite_source: item.quantite,
             quantite_destination: 0,
             ok: false,
-            error: getApiErrorDetail(err, 'Erreur'),
+            error: getApiErrorDetail(err, t('common:error')),
           } as LineResult;
         }
       }),

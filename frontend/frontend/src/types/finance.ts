@@ -121,6 +121,7 @@ export interface Facture {
     poste_caisse?: number | PosteCaisse
     poste_vente?: number | PosteVente
     is_avoir_client?: boolean
+    avoirs_clients?: string[]
 }
 
 export interface PaymentDetails {

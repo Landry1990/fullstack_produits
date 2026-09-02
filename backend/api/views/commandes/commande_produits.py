@@ -38,11 +38,12 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         selling_price = serializer.validated_data.pop('selling_price', None)
-        commande_produit = serializer.save()
-        if selling_price is not None:
-            produit = commande_produit.produit
-            produit.selling_price = selling_price
-            produit.save(update_fields=['selling_price'])
+        with transaction.atomic():
+            commande_produit = serializer.save()
+            if selling_price is not None:
+                produit = commande_produit.produit
+                produit.selling_price = selling_price
+                produit.save(update_fields=['selling_price'])
 
     def _check_commande_not_closed(self, instance):
         """Lève une erreur si la commande associée est clôturée."""

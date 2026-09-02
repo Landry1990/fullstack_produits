@@ -30,6 +30,7 @@ class Profile(models.Model):
     can_cancel_promis = models.BooleanField(default=False, verbose_name="Annuler des promis")
     can_manage_perimes = models.BooleanField(default=False, verbose_name="Gérer les produits périmés")
     can_manage_avoirs = models.BooleanField(default=False, verbose_name="Gérer les avoirs fournisseurs")
+    can_create_client_credit = models.BooleanField(default=False, verbose_name="Créer des avoirs clients")
     can_validate_zero_amount = models.BooleanField(default=False, verbose_name="Valider des ventes à montant nul ou négatif")
     can_validate_sales = models.BooleanField(default=False, verbose_name="Valider les ventes")
     can_view_cash_sessions = models.BooleanField(default=False, verbose_name="Voir l'historique des sessions de caisse")

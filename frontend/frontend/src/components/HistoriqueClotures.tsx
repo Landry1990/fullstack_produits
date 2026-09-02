@@ -42,6 +42,14 @@ interface DetailsMeta {
   total_ca_divers?: number
 }
 
+interface BilletageData {
+  billets?: Record<string, number>
+  pieces?: Record<string, number>
+  orange_money?: number
+  mtn_momo?: number
+  total?: number
+}
+
 interface ClotureCaisse {
   id: number
   date: string
@@ -60,6 +68,7 @@ interface ClotureCaisse {
   cloture_par_name?: string
   username: string
   observation: string | null
+  billetage?: BilletageData | null
 }
 
 interface SessionCaisse {
@@ -137,6 +146,7 @@ export default function HistoriqueClotures() {
 
   // Sélection
   const [selectedCloture, setSelectedCloture] = useState<ClotureCaisse | null>(null)
+  const [showBilletage, setShowBilletage] = useState(false)
 
   // Metric month/year (default to now)
   const [metricMonth, setMetricMonth] = useState<string>(() => format(new Date(), 'MM'))
@@ -1140,6 +1150,76 @@ export default function HistoriqueClotures() {
                       </div>
                     )] : [])}
                   </div>
+                </div>
+              )}
+
+              {/* Billetage (coupures comptées) */}
+              {selectedCloture.billetage && Object.keys(selectedCloture.billetage).length > 0 && (
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowBilletage(s => !s)}
+                    className="w-full px-4 py-2 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between hover:bg-slate-100 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Banknote className="size-4" />
+                      {t('modal.billetage_title', { defaultValue: 'Billetage (coupures comptées)' })}
+                    </span>
+                    <span className="text-slate-400">{showBilletage ? '▲' : '▼'}</span>
+                  </button>
+                  {showBilletage && (
+                    <div className="p-4 space-y-3">
+                      {/* Billets */}
+                      {selectedCloture.billetage.billets && Object.entries(selectedCloture.billetage.billets).filter(([, q]) => q > 0).length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">{t('modal.billetage_billets', { defaultValue: 'Billets' })}</div>
+                          {Object.entries(selectedCloture.billetage.billets).filter(([, q]) => q > 0).map(([valeur, qte]) => (
+                            <div key={valeur} className="flex justify-between text-xs py-0.5">
+                              <span>{qte} × {formatMoney(parseInt(valeur))}</span>
+                              <span className="font-bold">{formatMoney(qte * parseInt(valeur))}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Pièces */}
+                      {selectedCloture.billetage.pieces && Object.entries(selectedCloture.billetage.pieces).filter(([, q]) => q > 0).length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">{t('modal.billetage_pieces', { defaultValue: 'Pièces' })}</div>
+                          {Object.entries(selectedCloture.billetage.pieces).filter(([, q]) => q > 0).map(([valeur, qte]) => (
+                            <div key={valeur} className="flex justify-between text-xs py-0.5">
+                              <span>{qte} × {formatMoney(parseInt(valeur))}</span>
+                              <span className="font-bold">{formatMoney(qte * parseInt(valeur))}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Mobile Money */}
+                      {((selectedCloture.billetage.orange_money ?? 0) > 0 || (selectedCloture.billetage.mtn_momo ?? 0) > 0) && (
+                        <div>
+                          <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">{t('modal.billetage_mobile_money', { defaultValue: 'Mobile Money' })}</div>
+                          {(selectedCloture.billetage.orange_money ?? 0) > 0 && (
+                            <div className="flex justify-between text-xs py-0.5">
+                              <span>Orange Money</span>
+                              <span className="font-bold">{formatMoney(selectedCloture.billetage.orange_money ?? 0)}</span>
+                            </div>
+                          )}
+                          {(selectedCloture.billetage.mtn_momo ?? 0) > 0 && (
+                            <div className="flex justify-between text-xs py-0.5">
+                              <span>MTN MoMo</span>
+                              <span className="font-bold">{formatMoney(selectedCloture.billetage.mtn_momo ?? 0)}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {/* Total */}
+                      {(selectedCloture.billetage.total ?? 0) > 0 && (
+                        <div className="flex justify-between text-sm font-black pt-2 border-t border-slate-200">
+                          <span>{t('modal.billetage_total', { defaultValue: 'Total billetage' })}</span>
+                          <span>{formatMoney(selectedCloture.billetage.total ?? 0)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

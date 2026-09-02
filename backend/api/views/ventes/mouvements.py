@@ -1,5 +1,6 @@
 import logging
 
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -42,6 +43,7 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
             
         return queryset
     
+    @transaction.atomic
     def perform_create(self, serializer):
         """Automatically set the user to the currently authenticated user and audit."""
         mouvement = serializer.save(user=self.request.user)
@@ -61,6 +63,7 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
             request=self.request
         )
 
+    @transaction.atomic
     def perform_update(self, serializer):
         mouvement = serializer.instance
         old_montant = mouvement.montant
@@ -80,6 +83,7 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
             request=self.request
         )
 
+    @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         mvmt_id = instance.id

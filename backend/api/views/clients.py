@@ -114,6 +114,15 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
             'message': f'Le client est maintenant {"actif" if client.is_active else "inactif"}.'
         })
 
+    @transaction.atomic
+    def perform_create(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        serializer.save()
+
+    @transaction.atomic
     def perform_destroy(self, instance):
         import logging
 

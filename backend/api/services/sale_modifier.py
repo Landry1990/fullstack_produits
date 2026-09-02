@@ -23,6 +23,7 @@ from ..models import (
 )
 from .lot_allocation_service import LotAllocationService
 from .promotion_service import PromotionService
+from .sale_integrity import is_invoice_period_closed
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,9 @@ class SaleModifier:
         """
         if facture.status not in [Facture.Status.VALIDEE, Facture.Status.PAYEE]:
             raise ValueError("Seules les factures validées ou payées peuvent être modifiées.")
+
+        if is_invoice_period_closed(facture):
+            raise ValueError("Impossible de modifier cette facture : la période de caisse est déjà clôturée. Utilisez un avoir client.")
 
         val_date = getattr(facture, 'date', None)
         if val_date and hasattr(val_date, 'date') and val_date.date() < timezone.now().date():

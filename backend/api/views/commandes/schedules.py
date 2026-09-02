@@ -1,5 +1,6 @@
 import logging
 
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -31,6 +32,7 @@ class OrderScheduleViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=['post'], url_path='trigger-now')
+    @transaction.atomic
     def trigger_now(self, request, pk=None):
         """Force l'exécution immédiate d'un planning, sans attendre l'heure prévue."""
         schedule = self.get_object()

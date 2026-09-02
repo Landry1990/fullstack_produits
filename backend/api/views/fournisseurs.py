@@ -60,19 +60,20 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         if error_response:
             return error_response
         instance = self.get_object()
-        instance.is_active = False
-        instance.deleted_by = validation_user
-        instance.deleted_at = timezone.now()
-        instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
-        log_audit(
-            user=validation_user,
-            action=AuditLog.Action.DELETE,
-            model_name='Fournisseur',
-            object_id=instance.id,
-            description=f"Suppression fournisseur: {instance.name}",
-            details={'name': instance.name},
-            request=request
-        )
+        with transaction.atomic():
+            instance.is_active = False
+            instance.deleted_by = validation_user
+            instance.deleted_at = timezone.now()
+            instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
+            log_audit(
+                user=validation_user,
+                action=AuditLog.Action.DELETE,
+                model_name='Fournisseur',
+                object_id=instance.id,
+                description=f"Suppression fournisseur: {instance.name}",
+                details={'name': instance.name},
+                request=request
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get'])

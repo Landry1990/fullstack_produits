@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import action
@@ -12,6 +13,7 @@ class ProduitStatusMixin:
     """Mixin pour les changements de statut et les vues simplifiées."""
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def toggle_active(self, request, pk=None):
         produit = self.get_object()
         produit.is_active = not produit.is_active
@@ -33,6 +35,7 @@ class ProduitStatusMixin:
         })
         
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def toggle_public(self, request, pk=None):
         produit = self.get_object()
         produit.is_public = not produit.is_public

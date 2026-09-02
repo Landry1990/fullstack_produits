@@ -152,7 +152,7 @@ api.interceptors.response.use(
             }
         }
 
-        if (isNetworkError(error) && !hasShownOfflineToast) {
+        if (isNetworkError(error) && !hasShownOfflineToast && !navigator.onLine) {
             hasShownOfflineToast = true;
             gooeyToast.error(t('messages.server_unreachable', 'Impossible de joindre le serveur. Vérifiez la connexion.'), {
                 id: 'network-error',

@@ -1,4 +1,4 @@
-import React, { type FormEvent, type RefObject, useState, useCallback, lazy, Suspense } from 'react';
+import React, { type RefObject, useState, useCallback, lazy, Suspense } from 'react';
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
@@ -50,7 +50,7 @@ export interface CommandeFormProps {
     
     // Actions
     handleBackToList: () => void;
-    handleSaveCommande: (e: FormEvent<HTMLFormElement>) => void;
+    handleSaveCommande: () => void;
     
     // CSV / Tools
     handleCsvExport: (wholesaler: 'PRINCIPAL' | 'SECONDAIRE_CIP3') => void;
@@ -181,7 +181,7 @@ export default function CommandeForm({
 }: CommandeFormProps) {
     const { t } = useTranslation(['orders', 'common']);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-    const [datamatrixEnabled, setDatamatrixEnabled] = useState(false);
+    const [datamatrixEnabled, setDatamatrixEnabled] = useState(true);
 
     const handleNotFound = useCallback(() => {
         searchInputRef.current?.focus();
@@ -192,6 +192,13 @@ export default function CommandeForm({
         updateCommandeProduitField: updateCommandeProduitField as (index: number, field: 'lot' | 'date_expiration', value: string) => void,
         onNotFound: handleNotFound,
     });
+
+    // Le champ de recherche ne fait que la recherche normale.
+    // Les DataMatrix sont interceptés par DataMatrixScanBar (buffer global keydown)
+    // qui appelle processScan directement et vide le champ via onClearSearchInput.
+    const smartSetSearchQuery = useCallback((query: string) => {
+        setSearchProduitQuery(query);
+    }, [setSearchProduitQuery]);
 
     return (
         <div className="flex flex-col h-full overflow-hidden bg-slate-50">
@@ -241,7 +248,7 @@ export default function CommandeForm({
 
           <form
             className="flex-1 flex flex-col min-h-0 p-4 overflow-hidden"
-            onSubmit={handleSaveCommande}
+            onSubmit={(e) => e.preventDefault()}
           >
 
             {/* Section supérieure compacte — tout sur une ligne */}
@@ -327,11 +334,11 @@ export default function CommandeForm({
                   {commandeType === 'DIR' && (
                     <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-semibold text-blue-600 uppercase">Taux</span>
+                        <span className="text-[10px] font-semibold text-blue-600 uppercase">{t('orders:form.rate_short')}</span>
                         <Input type="number" step="0.001" className="w-20 h-7 text-sm px-2" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-semibold text-blue-600 uppercase">Coeff</span>
+                        <span className="text-[10px] font-semibold text-blue-600 uppercase">{t('orders:form.coeff_short')}</span>
                         <Input type="number" step="0.01" className="w-14 h-7 text-sm px-2" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} />
                       </div>
                     </div>
@@ -341,7 +348,7 @@ export default function CommandeForm({
                   <div className="flex-[2] min-w-[240px]">
                     <ProductSearch
                       searchQuery={searchProduitQuery}
-                      setSearchQuery={setSearchProduitQuery}
+                      setSearchQuery={smartSetSearchQuery}
                       results={filteredProduits as unknown as SearchResult[]}
                       loading={searchLoading}
                       modes={['products']}
@@ -461,7 +468,7 @@ export default function CommandeForm({
 
                     {/* COEFF */}
                     <div className="hidden lg:flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">COEFF</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:form.coeff_label')}</span>
                         <div className="flex items-baseline gap-1">
                             <span className={cn("text-sm font-bold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>x{orderTotals?.globalMargin || '1.00'}</span>
                             <span className={cn("text-[10px] font-semibold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-500' : 'text-amber-500')}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
@@ -501,10 +508,11 @@ export default function CommandeForm({
                   </Button>
                 )}
                 <Button
-                  type="submit"
+                  type="button"
                   size="sm"
                   className="gap-2 bg-emerald-600 hover:bg-emerald-700"
                   disabled={saving || !newCommandeFournisseurId}
+                  onClick={handleSaveCommande}
                 >
                   {!saving && <Save className="size-4" />}
                   {saving ? t('orders:form.saving') : t('orders:form.save_btn')}

@@ -880,6 +880,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': f'Erreur PDF: {e!s}'}, status=500)
 
     @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
+    @transaction.atomic
     def vider(self, request):
         facture_id = request.data.get('facture')
         if not facture_id:

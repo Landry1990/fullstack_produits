@@ -1,5 +1,6 @@
 import logging
 
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -23,6 +24,7 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def envoi_rappel_renouvellement(self, request, pk=None):
         """
         Déclenche l'envoi d'un rappel de renouvellement WhatsApp.

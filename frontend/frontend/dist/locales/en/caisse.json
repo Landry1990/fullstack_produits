@@ -287,7 +287,23 @@
             "add": "Add",
             "manual_movements": "Manual movements ({{count}})",
             "theoretical_amount": "Theoretical amount",
-            "theoretical_formula": "Cash sales + Recoveries + Entries - Exits + Fund"
+            "theoretical_formula": "Cash sales + Recoveries + Entries - Exits + Fund",
+            "breakdown_placeholder": "Tap to count cash",
+            "breakdown_open": "Open cash breakdown",
+            "breakdown": {
+                "title": "Cash Breakdown",
+                "subtitle": "Count your notes and coins, the total goes back to the field",
+                "bills": "Banknotes",
+                "coins": "Coins",
+                "mobile_money": "Mobile Money",
+                "orange_money": "Orange Money",
+                "mtn_momo": "MTN MoMo",
+                "cash_subtotal": "Cash",
+                "mobile_subtotal": "Mobile Money",
+                "grand_total": "Total to report",
+                "reset": "Reset",
+                "confirm": "Report total"
+            }
         },
         "movement_modal": {
             "title_out": "New Expense (Exit)",

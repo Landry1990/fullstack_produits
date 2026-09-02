@@ -282,7 +282,23 @@
             "add": "Ajouter",
             "manual_movements": "Mouvements ajoutés ({{count}})",
             "theoretical_amount": "Montant théorique",
-            "theoretical_formula": "Ventes espèces + Recouv. + Entrées - Sorties + Fond"
+            "theoretical_formula": "Ventes espèces + Recouv. + Entrées - Sorties + Fond",
+            "breakdown_placeholder": "Touchez pour billetter",
+            "breakdown_open": "Ouvrir le billetage",
+            "breakdown": {
+                "title": "Billetage de caisse",
+                "subtitle": "Comptez vos coupures, le total reviendra dans le champ",
+                "bills": "Billets",
+                "coins": "Pièces",
+                "mobile_money": "Mobile Money",
+                "orange_money": "Orange Money",
+                "mtn_momo": "MTN MoMo",
+                "cash_subtotal": "Espèces",
+                "mobile_subtotal": "Mobile Money",
+                "grand_total": "Total à reporter",
+                "reset": "Réinitialiser",
+                "confirm": "Reporter le total"
+            }
         },
         "movement_modal": {
             "title_out": "Nouvelle Dépense (Sortie)",

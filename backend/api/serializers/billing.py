@@ -121,6 +121,7 @@ class FactureSerializer(serializers.ModelSerializer):
     montant_paye = serializers.SerializerMethodField()
     reste_a_payer = serializers.SerializerMethodField()
     session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
+    avoirs_clients = serializers.SerializerMethodField()
 
     class Meta:
         model = Facture
@@ -139,7 +140,7 @@ class FactureSerializer(serializers.ModelSerializer):
             'montant_paye', 'reste_a_payer', 'paiements',
             'session_ticket_number',
             'montant_verse', 'montant_rendu',
-            'poste_caisse'
+            'poste_caisse', 'avoirs_clients'
         ]
 
     def get_vendeur_name(self, obj):
@@ -238,6 +239,12 @@ class FactureSerializer(serializers.ModelSerializer):
             return has_promo
         # Single aggregate query instead of loading all lines
         return obj.produits.filter(free_quantity__gt=0).exists()
+
+    def get_avoirs_clients(self, obj):
+        return list(
+            obj.avoirs_clients.filter(statut='VALIDEE')
+            .values_list('numero', flat=True)
+        )
 
 
 class FacturePrintSerializer(serializers.ModelSerializer):

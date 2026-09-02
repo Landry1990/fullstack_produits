@@ -435,6 +435,7 @@ class FactureSalesMixin:
             return Response({'detail': "Une erreur est survenue lors de la modification."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def marquer_payee(self, request, pk=None):
         """
         Marque une facture comme payée.

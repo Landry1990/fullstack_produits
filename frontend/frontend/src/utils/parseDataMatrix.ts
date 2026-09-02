@@ -99,7 +99,7 @@ export function parseDataMatrix(raw: string): ParsedDataMatrix {
         const remaining = data.slice(pos);
 
         // AI 01 : GTIN (14 chiffres fixes)
-        if (remaining.startsWith('01') && /^\d{16}$/.test(remaining.slice(2, 16).padEnd(14, 'X'))) {
+        if (remaining.startsWith('01') && remaining.length >= 16) {
             const gtin14 = remaining.slice(2, 16);
             if (/^\d{14}$/.test(gtin14)) {
                 // Extraire CIP13 : supprimer premier chiffre (indicateur packaging) et checkdigit ?

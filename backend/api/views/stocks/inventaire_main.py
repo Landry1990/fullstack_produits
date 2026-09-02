@@ -588,6 +588,7 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['inventaire']
     
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         """
         Gestion de la création de ligne d'inventaire.

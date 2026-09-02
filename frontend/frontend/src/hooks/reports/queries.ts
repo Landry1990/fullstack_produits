@@ -206,6 +206,18 @@ export const QUERIES: QueryDefinition[] = [
         resultType: 'raw'
     },
     {
+        id: 'livre_caisse',
+        name: 'Livre de Caisse',
+        description: 'Récapitulatif journalier des mouvements de caisse par rubrique (Excel)',
+        endpoint: '/api/rapports/livre_caisse_excel/',
+        params: [
+            { key: 'date_debut', label: 'Date début', type: 'date', required: true, default: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] },
+            { key: 'date_fin', label: 'Date fin', type: 'date', required: true, default: new Date().toISOString().split('T')[0] },
+            { key: 'poste_caisse_id', label: 'Poste de caisse', type: 'text', required: false }
+        ],
+        resultType: 'raw'
+    },
+    {
         id: 'recap_valeur_stock',
         name: 'Récapitulatif Valeur Stock',
         description: 'Valeur totale HT, TVA, TTC et répartition détaillée par taux',

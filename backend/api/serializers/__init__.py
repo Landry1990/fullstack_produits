@@ -31,6 +31,7 @@ from .billing import (
 )
 
 # Clients & Tiers
+from .client_credit import AvoirClientSerializer, LigneAvoirClientSerializer
 from .clients import (
     AyantDroitSerializer,
     ClientSerializer,
@@ -133,6 +134,7 @@ from .users import (
 __all__ = [
     # Audit
     'AuditLogSerializer',
+    'AvoirClientSerializer',
     'AvoirSerializer',
     'AyantDroitSerializer',
     'CaisseSerializer',
@@ -168,6 +170,7 @@ __all__ = [
     'JournalComptableSerializer',
     'LeaveRequestSerializer',
     'LigneAvoirSerializer',
+    'LigneAvoirClientSerializer',
     'LigneEcritureSerializer',
     # Inventory
     'LigneInventaireSerializer',

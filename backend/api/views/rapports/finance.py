@@ -22,6 +22,7 @@ from api.models import (
     Facture,
     FactureProduit,
     FactureProduitAllocation,
+    MouvementCaisse,
     Produit,
     StockLot,
 )
@@ -556,6 +557,320 @@ class RapportFinanceMixin:
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = 'attachment; filename="Remises.xlsx"'
+        wb.save(response)
+        return response
+
+    @action(detail=False, methods=['get'], url_path='livre_caisse_excel')
+    def livre_caisse_excel(self, request):
+        """Export Excel du livre de caisse sur une période."""
+        from api.models import PharmacySettings
+
+        db_str = request.query_params.get('date_debut')
+        df_str = request.query_params.get('date_fin')
+        if not db_str or not df_str:
+            return Response({'detail': 'date_debut et date_fin requis'}, status=400)
+        date_debut = parse_api_datetime(db_str)
+        date_fin   = parse_api_datetime(df_str, end_of_day=True)
+        if date_debut is None or date_fin is None:
+            return Response({'detail': 'Format de date invalide'}, status=400)
+
+        poste_caisse_id = request.query_params.get('poste_caisse_id')
+
+        modes = ['especes', 'cheque', 'carte', 'virement', 'om', 'momo',
+                 'coupon', 'en_compte', 'depot', 'recouvrement']
+
+        # ── Paiements Caisse (ventes + recouvrement) ──
+        from api.views.rapports.tz_utils import local_trunc_date
+        paiements_qs = (
+            Caisse.objects
+            .filter(statut='completee',
+                    date_paiement__gte=date_debut, date_paiement__lte=date_fin)
+        )
+        if poste_caisse_id:
+            paiements_qs = paiements_qs.filter(facture__poste_caisse_id=poste_caisse_id)
+
+        paiements = (
+            paiements_qs
+            .annotate(jour=local_trunc_date('date_paiement'))
+            .values('jour', 'mode_paiement')
+            .annotate(total=Coalesce(Sum('montant'), Decimal('0.00')))
+            .order_by('jour')
+        )
+        paiements_map: dict = {}
+        for row in paiements:
+            day = row['jour']
+            mode = row['mode_paiement']
+            paiements_map.setdefault(day, {})[mode] = float(row['total'])
+
+        # ── MouvementsCaisse (entrées/sorties manuelles) ──
+        mvt_qs = (
+            MouvementCaisse.objects
+            .filter(date__gte=date_debut, date__lte=date_fin)
+        )
+        if poste_caisse_id:
+            mvt_qs = mvt_qs.filter(poste_caisse_id=poste_caisse_id)
+
+        mouvements = (
+            mvt_qs
+            .annotate(jour=local_trunc_date('date'))
+            .values('jour', 'type')
+            .annotate(total=Coalesce(Sum('montant'), Decimal('0.00')))
+            .order_by('jour')
+        )
+        mvt_map: dict = {}
+        for row in mouvements:
+            day = row['jour']
+            typ = row['type']
+            mvt_map.setdefault(day, {})[typ] = float(row['total'])
+
+        # ── Liste des jours de la période ──
+        all_days = sorted(set(paiements_map.keys()) | set(mvt_map.keys()))
+
+        db_label = date_debut.strftime('%d/%m/%Y')
+        df_label = date_fin.strftime('%d/%m/%Y')
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        assert ws is not None
+        ws.title = "Livre de Caisse"
+        _write_pharma_header(
+            ws, PharmacySettings,
+            f"Livre de Caisse — Période du {db_label} au {df_label}",
+        )
+        ws.append([f"Période : {db_label} au {df_label}"])
+        ws.append([])
+
+        headers = ["Date", "Espèces", "Chèque", "Carte", "Virement",
+                   "Orange Money", "Mobile Money", "Coupon", "En compte",
+                   "Dépôt", "Recouvrement", "Entrées manuelles",
+                   "Sorties manuelles", "Solde jour"]
+        ws.append(headers)
+        for cell in ws[ws.max_row]:
+            cell.font = Font(bold=True)
+
+        totaux = {m: 0.0 for m in modes}
+        total_entrees = 0.0
+        total_sorties = 0.0
+        total_solde = 0.0
+
+        for day in all_days:
+            day_paiements = paiements_map.get(day, {})
+            day_mvt = mvt_map.get(day, {})
+            valeurs = [day_paiements.get(m, 0.0) for m in modes]
+            entrees = day_mvt.get('ENTREE', 0.0)
+            sorties = day_mvt.get('SORTIE', 0.0)
+            solde = sum(valeurs) + entrees - sorties
+            ws.append([
+                day.strftime('%d/%m/%Y'),
+                *valeurs,
+                entrees,
+                sorties,
+                solde,
+            ])
+            for i, m in enumerate(modes):
+                totaux[m] += valeurs[i]
+            total_entrees += entrees
+            total_sorties += sorties
+            total_solde += solde
+
+        ws.append([
+            "TOTAL GÉNÉRAL",
+            *[totaux[m] for m in modes],
+            total_entrees,
+            total_sorties,
+            total_solde,
+        ])
+        for cell in ws[ws.max_row]:
+            cell.font = Font(bold=True)
+
+        _apply_auto_width(ws)
+
+        # ── Feuille 2 : Détail des opérations (journal complet) ──
+        ws2 = wb.create_sheet("Détail des opérations")
+        _write_pharma_header(
+            ws2, PharmacySettings,
+            f"Détail des opérations — Période du {db_label} au {df_label}",
+        )
+        ws2.append([f"Période : {db_label} au {df_label}"])
+        ws2.append([])
+        ws2.append([
+            "Date", "Heure", "N° Facture / Réf.", "Caissier",
+            "Type opération", "Rubrique / Mode", "Motif / Description",
+            "Sens", "Montant",
+        ])
+        for cell in ws2[ws2.max_row]:
+            cell.font = Font(bold=True)
+
+        # Construire une liste chronologique unifiée des opérations
+        operations: list = []
+
+        # Paiements Caisse (ventes)
+        for p in paiements_qs.select_related('user', 'facture').order_by('date_paiement'):
+            user_name = ""
+            if p.user:
+                user_name = p.user.get_full_name() or p.user.username
+            num_fact = ""
+            if p.facture_id:
+                num_fact = p.facture.numero_facture or f"#{p.facture_id}"
+            ref = p.reference or ""
+            label_ref = num_fact if num_fact else (ref or f"#{p.id}")
+            operations.append({
+                'dt': p.date_paiement,
+                'ref': label_ref,
+                'user': user_name,
+                'type_op': 'Vente',
+                'rubrique': p.mode_paiement or '',
+                'motif': ref,
+                'sens': 'Crédit',
+                'montant': float(p.montant),
+            })
+
+        # MouvementsCaisse (entrées/sorties manuelles)
+        for m in mvt_qs.select_related('user').order_by('date'):
+            user_name = ""
+            if m.user:
+                user_name = m.user.get_full_name() or m.user.username
+            operations.append({
+                'dt': m.date,
+                'ref': f"MVT-{m.id}",
+                'user': user_name,
+                'type_op': 'Entrée manuelle' if m.type == 'ENTREE' else 'Sortie manuelle',
+                'rubrique': m.type or '',
+                'motif': m.motif or '',
+                'sens': 'Crédit' if m.type == 'ENTREE' else 'Débit',
+                'montant': float(m.montant),
+            })
+
+        # Trier chronologiquement
+        operations.sort(key=lambda o: o['dt'])
+
+        # Totaux par rubrique (mode_paiement pour les ventes, ENTREE/SORTIE pour les mvt)
+        totaux_rubrique: dict = {}
+        total_credit = 0.0
+        total_debit = 0.0
+        current_day = None
+        day_credit = 0.0
+        day_debit = 0.0
+        for op in operations:
+            op_day = op['dt'].date()
+            # Sous-total du jour précédent quand on change de jour
+            if current_day is not None and op_day != current_day:
+                ws2.append([
+                    f"Sous-total {current_day.strftime('%d/%m/%Y')}", "", "", "", "", "",
+                    "Crédit", "", day_credit,
+                ])
+                for cell in ws2[ws2.max_row]:
+                    cell.font = Font(bold=True, italic=True)
+                ws2.append([
+                    "", "", "", "", "", "",
+                    "Débit", "", day_debit,
+                ])
+                for cell in ws2[ws2.max_row]:
+                    cell.font = Font(bold=True, italic=True)
+                ws2.append([
+                    "", "", "", "", "", "",
+                    "Solde jour", "", day_credit - day_debit,
+                ])
+                for cell in ws2[ws2.max_row]:
+                    cell.font = Font(bold=True, italic=True)
+                ws2.append([])
+                day_credit = 0.0
+                day_debit = 0.0
+            current_day = op_day
+            ws2.append([
+                op['dt'].strftime('%d/%m/%Y'),
+                op['dt'].strftime('%H:%M:%S'),
+                op['ref'],
+                op['user'],
+                op['type_op'],
+                op['rubrique'],
+                op['motif'],
+                op['sens'],
+                op['montant'],
+            ])
+            totaux_rubrique[op['rubrique']] = totaux_rubrique.get(op['rubrique'], 0.0) + op['montant']
+            if op['sens'] == 'Crédit':
+                total_credit += op['montant']
+                day_credit += op['montant']
+            else:
+                total_debit += op['montant']
+                day_debit += op['montant']
+
+        # Sous-total du dernier jour
+        if current_day is not None:
+            ws2.append([
+                f"Sous-total {current_day.strftime('%d/%m/%Y')}", "", "", "", "", "",
+                "Crédit", "", day_credit,
+            ])
+            for cell in ws2[ws2.max_row]:
+                cell.font = Font(bold=True, italic=True)
+            ws2.append([
+                "", "", "", "", "", "",
+                "Débit", "", day_debit,
+            ])
+            for cell in ws2[ws2.max_row]:
+                cell.font = Font(bold=True, italic=True)
+            ws2.append([
+                "", "", "", "", "", "",
+                "Solde jour", "", day_credit - day_debit,
+            ])
+            for cell in ws2[ws2.max_row]:
+                cell.font = Font(bold=True, italic=True)
+            ws2.append([])
+
+        # ── Grand total par rubrique ──
+        rubrique_labels = {
+            'especes': 'Espèces', 'cheque': 'Chèque', 'carte': 'Carte',
+            'virement': 'Virement', 'om': 'Orange Money', 'momo': 'Mobile Money',
+            'coupon': 'Coupon', 'en_compte': 'En compte', 'depot': 'Dépôt',
+            'recouvrement': 'Recouvrement', 'ENTREE': 'Entrées manuelles',
+            'SORTIE': 'Sorties manuelles',
+        }
+        # Ordre canonique des rubriques
+        ordre_rubriques = ['especes', 'cheque', 'carte', 'virement', 'om', 'momo',
+                           'coupon', 'en_compte', 'depot', 'recouvrement',
+                           'ENTREE', 'SORTIE']
+        ws2.append(["GRAND TOTAL", "", "", "", "", "", "", "", ""])
+        for cell in ws2[ws2.max_row]:
+            cell.font = Font(bold=True)
+        for rub in ordre_rubriques:
+            if rub in totaux_rubrique:
+                ws2.append([
+                    "", "", "", "", "", rubrique_labels.get(rub, rub), "", "", totaux_rubrique[rub],
+                ])
+                for cell in ws2[ws2.max_row]:
+                    cell.font = Font(bold=True)
+        # Toute autre rubrique non prévue
+        for rub, montant in totaux_rubrique.items():
+            if rub not in ordre_rubriques:
+                ws2.append([
+                    "", "", "", "", "", rubrique_labels.get(rub, rub), "", "", montant,
+                ])
+                for cell in ws2[ws2.max_row]:
+                    cell.font = Font(bold=True)
+        ws2.append([
+            "", "", "", "", "", "TOTAL CRÉDIT", "", "", total_credit,
+        ])
+        for cell in ws2[ws2.max_row]:
+            cell.font = Font(bold=True)
+        ws2.append([
+            "", "", "", "", "", "TOTAL DÉBIT", "", "", total_debit,
+        ])
+        for cell in ws2[ws2.max_row]:
+            cell.font = Font(bold=True)
+        ws2.append([
+            "", "", "", "", "", "SOLDE NET", "", "", total_credit - total_debit,
+        ])
+        for cell in ws2[ws2.max_row]:
+            cell.font = Font(bold=True)
+
+        _apply_auto_width(ws2)
+
+        filename = f"Livre_Caisse_{db_str}_{df_str}.xlsx"
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         wb.save(response)
         return response
 

@@ -31,6 +31,7 @@ from .billing import (
 )
 
 # Clients
+from .client_credit import AvoirClient, LigneAvoirClient
 from .clients import AyantDroit, Client, Fournisseur
 
 # Communication
@@ -124,6 +125,7 @@ __all__ = [
     'ActivityLog',
     'AuditLog',
     'Avoir',
+    'AvoirClient',
     'AyantDroit',
     'Caisse',
     'Client',
@@ -162,6 +164,7 @@ __all__ = [
     # Licence
     'Licence',
     'LigneAvoir',
+    'LigneAvoirClient',
     'LigneEcriture',
     'LigneInventaire',
     'LigneOrdonnancier',

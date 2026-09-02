@@ -10,6 +10,7 @@ from ...idempotency import idempotent_action
 from ...models import (
     AuditLog,
     Avoir,
+    AvoirClient,
     Commande,
     FactureProduit,
     MouvementStock,
@@ -28,8 +29,8 @@ class ProduitStockMixin:
     def history(self, request, pk=None):
         produit = self.get_object()
         
-        mouvements = MouvementStock.objects.filter(produit=produit).select_related('user').values(
-            'date', 'type_mouvement', 'quantite', 'stock_apres', 'description', 'user__username', 'id', 'facture', 'commande'
+        mouvements = MouvementStock.objects.filter(produit=produit).select_related('user', 'avoir_client').values(
+            'date', 'type_mouvement', 'quantite', 'stock_apres', 'description', 'user__username', 'id', 'facture', 'commande', 'avoir_client', 'avoir_client__numero'
         )
         
         import re
@@ -72,7 +73,14 @@ class ProduitStockMixin:
                 'facture': m['facture'],
                 'commande': commande_id
             }
-            if m['type_mouvement'] in (MouvementStock.TypeMouvement.AVOIR, MouvementStock.TypeMouvement.RETOUR):
+            if m['avoir_client']:
+                avoir_numero = m['avoir_client__numero']
+                item['avoir_client'] = m['avoir_client']
+                item['avoir_client_numero'] = avoir_numero
+                item['avoir'] = m['avoir_client']
+                item['avoir_numero'] = avoir_numero
+                item['libelle'] = f"Avoir client {avoir_numero}"
+            elif m['type_mouvement'] in (MouvementStock.TypeMouvement.AVOIR, MouvementStock.TypeMouvement.RETOUR):
                 avoir_numero = extract_avoir_numero(m['description'])
                 if avoir_numero:
                     item['avoir'] = avoir_map.get(avoir_numero)

@@ -63,6 +63,7 @@ from .system_admin import SystemAdminViewSet
 from .temporal_analysis import TemporalAnalysisViewSet
 from .users import CustomAuthToken, TeamViewSet, UserDailySessionViewSet, UserViewSet
 from .ventes import (
+    AvoirClientViewSet,
     CaisseViewSet,
     ClotureCaisseViewSet,
     CreanceViewSet,
@@ -77,6 +78,7 @@ from .ventes import (
 # Expose all for import from api.views
 __all__ = [
     'AuditLogViewSet',
+    'AvoirClientViewSet',
     'AvoirViewSet',
     'AyantDroitViewSet',
     'CadencierViewSet',

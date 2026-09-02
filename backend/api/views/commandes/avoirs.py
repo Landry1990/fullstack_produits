@@ -359,19 +359,20 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
 
     def perform_update(self, serializer):
-        ligne = serializer.save()
-        avoir = ligne.avoir
-        if avoir.status == 'BROUILLON' and avoir.produits.exists():
-            all_closed = not avoir.produits.filter(est_cloture=False).exists()
-            if all_closed:
-                avoir.status = 'VALIDEE'
-                avoir.validated_by = self.request.user
-                avoir.save(update_fields=['status', 'validated_by'])
-                log_audit(
-                    user=self.request.user,
-                    action='AUTO_VALIDATE',
-                    model_name='Avoir',
-                    object_id=avoir.numero,
-                    description=f"Validation automatique Avoir {avoir.numero} (toutes lignes clôturées)",
-                    request=self.request
-                )
+        with transaction.atomic():
+            ligne = serializer.save()
+            avoir = ligne.avoir
+            if avoir.status == 'BROUILLON' and avoir.produits.exists():
+                all_closed = not avoir.produits.filter(est_cloture=False).exists()
+                if all_closed:
+                    avoir.status = 'VALIDEE'
+                    avoir.validated_by = self.request.user
+                    avoir.save(update_fields=['status', 'validated_by'])
+                    log_audit(
+                        user=self.request.user,
+                        action='AUTO_VALIDATE',
+                        model_name='Avoir',
+                        object_id=avoir.numero,
+                        description=f"Validation automatique Avoir {avoir.numero} (toutes lignes clôturées)",
+                        request=self.request
+                    )

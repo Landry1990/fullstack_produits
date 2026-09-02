@@ -313,7 +313,7 @@ export function CommandeProductRow({
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 7 : 6))}
                         onFocus={handleSelectAll}
                         className={`h-8 px-2 text-xs font-medium w-full focus:bg-white ${!fieldsConfig[6].editable ? 'bg-slate-100 cursor-not-allowed' : ''}`}
-                        placeholder="Lot"
+                        placeholder={t('orders:product_table.headers.lot')}
                         autoFocus={focusedField?.row === index && focusedField?.field === 6}
                         readOnly={!fieldsConfig[6].editable}
                         tabIndex={!fieldsConfig[6].editable ? -1 : 0}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Printer, Trash2, RotateCcw, User, Calendar, Receipt, Clock, Copy, FileDigit, Truck, FileEdit } from 'lucide-react';
+import { Eye, Printer, Trash2, RotateCcw, User, Calendar, Receipt, Clock, Copy, FileDigit, Truck, FileEdit, AlertTriangle } from 'lucide-react';
 import type { Facture } from '../../types';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate, formatTime } from '../../utils/dateUtils';
@@ -238,6 +238,14 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                 <div className="flex flex-col">
                                     <span className="font-bold text-slate-700 flex items-center gap-2">
                                         #{facture.numero_facture || facture.id}
+                                        {facture.avoirs_clients && facture.avoirs_clients.length > 0 && (
+                                            <span
+                                                className="inline-flex items-center justify-center size-5 rounded-full bg-red-100 text-red-600"
+                                                title={t('sales:avoir_client_indicator', { defaultValue: 'Cette vente a un avoir client', count: facture.avoirs_clients.length, avoirs: facture.avoirs_clients.join(', ') })}
+                                            >
+                                                <AlertTriangle className="size-3" />
+                                            </span>
+                                        )}
                                     </span>
                                     <span className="text-xs text-slate-500 flex flex-nowrap items-center gap-x-3 gap-y-1 mt-0.5 whitespace-nowrap">
                                         <span className="flex items-center gap-1.5 shrink-0">

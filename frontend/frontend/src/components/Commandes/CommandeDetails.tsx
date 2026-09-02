@@ -576,15 +576,15 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                           <TableCell className="px-2 py-2 text-center" onClick={e => e.stopPropagation()}>
                             {editingLotId === p.id ? (
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm" className="h-6 px-1 text-emerald-600 hover:text-emerald-800" onClick={() => saveLotEdit(p.id)} disabled={savingLot} title="Enregistrer">
+                                <Button variant="ghost" size="sm" className="h-6 px-1 text-emerald-600 hover:text-emerald-800" onClick={() => saveLotEdit(p.id)} disabled={savingLot} title={t('common:save')}>
                                   <Check className="size-3.5" />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-400 hover:text-slate-600" onClick={cancelLotEdit} disabled={savingLot} title="Annuler">
+                                <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-400 hover:text-slate-600" onClick={cancelLotEdit} disabled={savingLot} title={t('common:cancel')}>
                                   <X className="size-3.5" />
                                 </Button>
                               </div>
                             ) : (
-                              <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-300 hover:text-blue-500" onClick={() => startLotEdit(p)} title="Corriger lot / date péremption">
+                              <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-300 hover:text-blue-500" onClick={() => startLotEdit(p)} title={t('orders:details.correct_lot_expiry')}>
                                 <Pencil className="size-3" />
                               </Button>
                             )}

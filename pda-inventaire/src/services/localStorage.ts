@@ -28,7 +28,7 @@ class LocalStorageService {
         lotExpiration?: string
     ): Promise<OfflineLigne> {
         const ligne: OfflineLigne = {
-            tempId: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            tempId: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
             inventaireId: inventaire.id,
             produitId: produit.id,
             produitNom: produit.name,

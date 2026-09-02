@@ -17,6 +17,7 @@
     },
     "no_sales_found": "Aucune vente trouvée",
     "try_different_filters": "Essayez de modifier les filtres",
+    "avoir_client_indicator": "Cette vente a {{count}} avoir(s) client : {{avoirs}}",
     "modals": {
         "print_invoice": "Imprimer Facture"
     },
