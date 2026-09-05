@@ -15,18 +15,18 @@ import {
   Eye,
 } from 'lucide-react';
 import api from '../../services/api';
-import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatDate, formatDateTime, formatDateShort, formatDateLong, getLocalDateString } from '../../utils/dateUtils';
 import { gooeyToast } from 'goey-toast';
 import Commandes from '../Commandes';
 import { useCommandesStore } from '../../stores/useCommandesStore';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { LocalizedDateInput } from '../LocalizedDateInput';
 import { Card } from '../ui/Card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '../ui/Table';
+} from '../shadcn/table';
 import { Skeleton } from '../ui/Skeleton';
 import { logger } from '../../utils/logger'
 
@@ -92,8 +92,8 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
   const [page, setPage] = useState(1);
   const pageSize = 50;
   const [dateRange, setDateRange] = useState(() => ({
-    debut: format(new Date(), 'yyyy-MM-dd'),
-    fin: format(new Date(), 'yyyy-MM-dd')
+    debut: getLocalDateString(),
+    fin: getLocalDateString()
   }));
   const [stockData, setStockData] = useState<StockDiversResponse | null>(null);
   const [stockLoading, setStockLoading] = useState(false);
@@ -252,12 +252,12 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
             <Card className="lg:col-span-2 p-6 flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
                 <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                <Input type="date" value={dateRange.debut} onChange={(e) => setDateRange({ ...dateRange, debut: e.target.value })} className="h-9" />
+                <LocalizedDateInput value={dateRange.debut} onChange={(e) => setDateRange({ ...dateRange, debut: e.target.value })} className="h-9" />
               </div>
               <span className="text-muted-foreground font-medium text-sm">{t('divers.to_date')}</span>
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
                 <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                <Input type="date" value={dateRange.fin} onChange={(e) => setDateRange({ ...dateRange, fin: e.target.value })} className="h-9" />
+                <LocalizedDateInput value={dateRange.fin} onChange={(e) => setDateRange({ ...dateRange, fin: e.target.value })} className="h-9" />
               </div>
               <Button onClick={handleFilter} variant="outline" className="gap-2 ml-auto border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800">
                 <Filter className="h-4 w-4" />
@@ -269,7 +269,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
               <h2 className="text-3xl font-bold mt-1">{totalCA.toLocaleString()} {t('divers.currency')}</h2>
               <div className="mt-3 flex items-center text-emerald-100 text-xs">
                 <CalendarDays className="h-3 w-3 mr-1" />
-                {format(new Date(dateRange.debut), 'dd/MM/yy')} → {format(new Date(dateRange.fin), 'dd/MM/yy')}
+                {formatDateShort(dateRange.debut)} → {formatDateShort(dateRange.fin)}
               </div>
             </Card>
           </div>
@@ -285,7 +285,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                 ) : (
                   <>
                     <ClipboardList className="h-4 w-4 text-emerald-600" />
-                    {t('divers.detail_of')} {selectedDate ? format(parseISO(selectedDate), 'dd/MM/yyyy', { locale: fr }) : ''}
+                    {t('divers.detail_of')} {selectedDate ? formatDate(selectedDate) : ''}
                   </>
                 )}
               </h3>
@@ -327,7 +327,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                           onClick={() => handleViewDetail(day.date)}
                         >
                           <TableCell className="font-medium">
-                            {format(parseISO(day.date), 'EEEE dd/MM/yyyy', { locale: fr })}
+                            {formatDateLong(day.date)}
                           </TableCell>
                           <TableCell className="text-right">{day.nb_produits}</TableCell>
                           <TableCell className="text-right">{day.total_quantity}</TableCell>
@@ -370,7 +370,7 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                     ) : (
                       ventes.map((v) => (
                         <TableRow key={v.id}>
-                          <TableCell className="text-muted-foreground">{v.date ? format(parseISO(v.date), 'dd/MM/yyyy HH:mm', { locale: fr }) : 'N/A'}</TableCell>
+                          <TableCell className="text-muted-foreground">{v.date ? formatDateTime(v.date) : 'N/A'}</TableCell>
                           <TableCell className="font-medium text-emerald-600">{v.facture_numero}</TableCell>
                           <TableCell>{v.produit_name}</TableCell>
                           <TableCell className="font-mono text-xs text-slate-600">{v.lot}</TableCell>

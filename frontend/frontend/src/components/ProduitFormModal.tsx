@@ -9,10 +9,11 @@ import {
 } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
 import { normalizeNumberInput } from '../utils/formatters';
-import { getLocale } from '../utils/dateUtils';
+
 import { productSchema } from '../schemas/productSchema';
 import { Button } from './ui/Button';
 import { Input } from './shadcn/input';
+import { LocalizedDateInput } from './LocalizedDateInput';
 import { Select } from './ui/Select';
 import { Checkbox } from './shadcn/checkbox';
 
@@ -466,7 +467,7 @@ export default function ProduitFormModal({
             </div>
             <div className="mt-3">
               <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.expiration_date')}</label>
-              <Input type="date" lang={getLocale()} className={`${inputBase} md:w-1/4`} value={form.expire_date} onChange={(e) => setForm((p) => ({ ...p, expire_date: e.target.value }))} />
+              <LocalizedDateInput  className={`${inputBase} md:w-1/4`} value={form.expire_date} onChange={(e) => setForm((p) => ({ ...p, expire_date: e.target.value }))} />
             </div>
           </div>
 

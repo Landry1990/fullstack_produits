@@ -98,6 +98,13 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
     const handleConfirmPrintClientName = async (clientNameInput: string) => {
         if (!pendingPrintFacture) return;
 
+        // Ouvrir la fenêtre AVANT l'appel async pour éviter le blocage popup
+        const printWindow = window.open('about:blank', 'PrintInvoice',
+            'width=1000,height=800,resizable=yes,scrollbars=yes');
+        if (!printWindow) {
+            gooeyToast.error(t('common:popup_blocked'));
+        }
+
         try {
             await api.patch(`factures/${pendingPrintFacture.id}/`,
                 { client_name_override: clientNameInput }
@@ -117,13 +124,20 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             }
 
             // Lancer impression
-            printInvoicePDF(pendingPrintFacture.id, clientNameInput, undefined, t);
+            if (printWindow) {
+                const params = new URLSearchParams();
+                if (clientNameInput) params.append('client_name', clientNameInput);
+                const qs = params.toString();
+                printWindow.location.href = `/app/print-invoice/${pendingPrintFacture.id}${qs ? `?${qs}` : ''}`;
+            }
 
         } catch (error) {
             logger.error('Erreur sauvegarde nom client:', error);
             gooeyToast.error(t('messages.save_error'));
             // Fallback print
-            printInvoicePDF(pendingPrintFacture.id, clientNameInput);
+            if (printWindow) {
+                printWindow.location.href = `/app/print-invoice/${pendingPrintFacture.id}?client_name=${encodeURIComponent(clientNameInput)}`;
+            }
         } finally {
             setShowClientNameModal(false);
             setPendingPrintFacture(null);

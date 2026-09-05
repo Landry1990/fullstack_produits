@@ -62,7 +62,7 @@ export interface Commande {
     fournisseur_nom?: string
     numero_facture: string | null
     date: string
-    status: string
+    status: 'PREP' | 'ATT' | 'CLOT'
     status_display: string
     total: string
     total_ht?: string

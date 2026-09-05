@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getLocale } from '../../utils/dateUtils';
+
 import { useTranslation } from 'react-i18next';
 import type { Promotion, PromotionPackItem } from '../../types/Promotion';
 import type { ProduitModel } from '../../types';
@@ -14,6 +14,7 @@ import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { cn } from '../../lib/utils';
 import { logger } from '../../utils/logger'
+import { LocalizedDateInput } from '../LocalizedDateInput';
 
 interface PromotionFormProps {
     onClose: () => void;
@@ -235,13 +236,13 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                         <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2 text-emerald-600">
                                             <Calendar size={14} /> {t('promotions:form.start_date')}
                                         </label>
-                                        <input type="date" lang={getLocale()} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={startDate} onChange={e => setStartDate(e.target.value)} required />
+                                        <LocalizedDateInput  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={startDate} onChange={e => setStartDate(e.target.value)} required />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2 text-red-500">
                                             <Calendar size={14} /> {t('promotions:form.end_date')}
                                         </label>
-                                        <input type="date" lang={getLocale()} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                                        <LocalizedDateInput  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={endDate} onChange={e => setEndDate(e.target.value)} />
                                     </div>
                                 </div>
                             </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, RotateCcw, Calendar, Filter } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { LocalizedDateInput } from '../LocalizedDateInput';
 
 interface AjustementsFiltersProps {
     searchQuery: string;
@@ -60,8 +61,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                         <Calendar className="size-3" /> {t('ajustements.filters.date_start')}
                     </label>
-                    <input
-                        type="date"
+                    <LocalizedDateInput
                         value={dateStart}
                         onChange={(e) => onDateStartChange(e.target.value)}
                         className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-mono text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
@@ -72,8 +72,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                         <Calendar className="size-3" /> {t('ajustements.filters.date_end')}
                     </label>
-                    <input
-                        type="date"
+                    <LocalizedDateInput
                         value={dateEnd}
                         onChange={(e) => onDateEndChange(e.target.value)}
                         className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-mono text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"

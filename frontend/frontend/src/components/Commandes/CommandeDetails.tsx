@@ -10,6 +10,7 @@ import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { Checkbox } from '../shadcn/checkbox';
 import { Input } from '../shadcn/input';
+import { LocalizedDateInput } from '../LocalizedDateInput';
 import {
   Table,
   TableBody,
@@ -563,8 +564,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                         </TableCell>
                         <TableCell className="px-3 py-2 text-xs text-slate-400" onClick={e => e.stopPropagation()}>
                           {editingLotId === p.id ? (
-                            <Input
-                              type="date"
+                            <LocalizedDateInput
                               className="w-32 text-xs h-7"
                               value={editLotValues.date_expiration}
                               onChange={e => setEditLotValues(v => ({ ...v, date_expiration: e.target.value }))}

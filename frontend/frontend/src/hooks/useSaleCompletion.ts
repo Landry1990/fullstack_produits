@@ -156,12 +156,28 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
         setLoading(true);
         setError(null);
 
+        // Ouvrir la fenêtre d'impression AVANT les appels async pour éviter le blocage popup
+        // Le navigateur bloque window.open() s'il n'est pas dans le contexte direct d'un clic
+        // Pour le flux normal (non centralisé), l'impression A4 est gérée par handlePaymentClick
+        // via pendingPrintWindowRef — on n'ouvre pas de fenêtre ici.
+        // Pour la caisse centralisée, on ouvre la fenêtre ici car il n'y a pas de callback ticket.
+        let printWindow: Window | null = null
+        if (params.isFactureA4 && params.centralizedCashRegister) {
+            try {
+                printWindow = window.open('about:blank', '_blank')
+            } catch { /* ignore */ }
+            if (!printWindow) {
+                gooeyToast.error(t('common:popup_blocked'))
+            }
+        }
+
         try {
             // 1. Validations de base
             const validationError = validateSaleData(params);
             if (validationError) {
                 setError(validationError);
                 onError?.(validationError);
+                if (printWindow) printWindow.close()
                 return { success: false, error: validationError };
             }
 
@@ -358,10 +374,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                     || params.manualClientName
                     || 'Client de passage';
 
-                if (params.isFactureA4) {
-                    const w = window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
-                    if (!w) gooeyToast.error(t('common:popup_blocked'));
-                }
+                // L'impression A4 pour le flux normal est gérée par le callback onSuccess
+                // (qui utilise pendingPrintWindowRef ouvert par handlePaymentClick)
 
                 const ticketCaisse: TicketCaisse = {
                     id: finalFacture.id,
@@ -398,9 +412,8 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 return result;
             } else {
                 // Envoi à la caisse centralisée — générer la facture A4 si demandé
-                if (params.isFactureA4) {
-                    const w = window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
-                    if (!w) gooeyToast.error(t('common:popup_blocked'));
+                if (params.isFactureA4 && printWindow) {
+                    printWindow.location.href = `/app/print-invoice/${finalFacture.id}`;
                 }
                 gooeyToast.success(t('messages.sent_to_caisse', { id: finalFacture.numero_facture || finalFacture.id }));
                 const result: SaleCompletionResult = { success: true, facture: finalFacture };
@@ -419,6 +432,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
                 duration: 5000,
                 style: { background: '#ef4444', color: '#fff' }
             });
+            if (printWindow) printWindow.close()
             return { success: false, error: errorMessage };
         } finally {
             setLoading(false);
@@ -447,6 +461,15 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
     }): Promise<SaleCompletionResult> => {
         setLoading(true);
         setError(null);
+
+        // Ouvrir la fenêtre d'impression AVANT les appels async pour éviter le blocage popup
+        let printWindow: Window | null = null
+        try {
+            printWindow = window.open('about:blank', '_blank')
+        } catch { /* ignore */ }
+        if (!printWindow) {
+            gooeyToast.error(t('common:popup_blocked'))
+        }
 
         try {
             const { facture, paiements, montantPaye, modePaiement, reference } = params;
@@ -559,8 +582,9 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             }
 
             // 6. Impression Facture A4
-            const printWin = window.open(`/app/print-invoice/${updatedFacture.id}`, '_blank');
-            if (!printWin) gooeyToast.error(t('common:popup_blocked'));
+            if (printWindow) {
+                printWindow.location.href = `/app/print-invoice/${updatedFacture.id}`;
+            }
 
             // 7. Ticket UI
             // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
@@ -594,6 +618,7 @@ function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompl
             const errorMessage = extractErrorMessage(err);
             setError(errorMessage);
             onError?.(errorMessage);
+            if (printWindow) printWindow.close()
             return { success: false, error: errorMessage };
         } finally {
             setLoading(false);

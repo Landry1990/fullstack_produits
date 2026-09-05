@@ -9,7 +9,7 @@ import {
 import { Button } from '../../shadcn/button';
 import {
     Table, TableHeader, TableBody, TableRow, TableHead, TableCell
-} from '../../ui/Table';
+} from '../../shadcn/table';
 
 interface LotModalProps {
     isOpen: boolean;

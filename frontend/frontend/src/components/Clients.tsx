@@ -18,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/Table';
+} from './shadcn/table';
 import { cn } from '../lib/utils';
 
 import type { Client, AyantDroit } from '../types';

@@ -3,7 +3,42 @@
   "subtitle": "Server supervision, Docker containers and automatic backups monitoring.",
   "tabs": {
     "health": "Server Health",
-    "backups": "Backups"
+    "backups": "Backups",
+    "cash": "Cash Registers"
+  },
+  "backup": {
+    "browse": {
+      "title": "Choose a folder",
+      "go": "Go",
+      "loading": "Loading...",
+      "empty": "Empty directory",
+      "load_error": "Unable to load directory",
+      "browse": "Browse",
+      "select": "Select",
+      "cancel": "Cancel"
+    }
+  },
+  "cash": {
+    "force_close": {
+      "title": "Manual cash register closing",
+      "subtitle": "Force close a cash register or sales point that stayed open.",
+      "refresh": "Refresh",
+      "load_error": "Unable to load active cash registers",
+      "no_active": "No open cash register",
+      "name": "Register / Point",
+      "seller": "Seller",
+      "opened_at": "Opened at",
+      "actions": "Actions",
+      "pos_mode": "POS mode (no physical register)",
+      "close": "Force close",
+      "success": "Cash register closed successfully",
+      "error": "Error while closing",
+      "confirm_title": "Force close?",
+      "confirm_desc": "You are about to manually close {{name}}.",
+      "confirm_warning": "Warning: ongoing sales on this point will be detached. This action is irreversible.",
+      "confirm": "Confirm closing",
+      "cancel": "Cancel"
+    }
   },
   "refresh": "Refresh",
   "loading": "Loading...",

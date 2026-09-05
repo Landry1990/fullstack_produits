@@ -3,6 +3,7 @@ import { Search, Calendar, Filter, User, Trash2, RefreshCw, ArrowUpDown } from '
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { logger } from '../../utils/logger';
+import { LocalizedDateInput } from '../LocalizedDateInput';
 import type { User as UserModel } from '../../types';
 
 interface InventaireFiltersProps {
@@ -70,15 +71,13 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                 {/* Date Range */}
                 <div className="flex items-center gap-2 bg-white p-1.5 rounded-md border border-slate-200 px-3">
                     <Calendar className="h-5 w-5 text-slate-400" />
-                    <input
-                        type="date"
+                    <LocalizedDateInput
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
                         className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-slate-700"
                     />
                     <span className="text-slate-300">-</span>
-                    <input
-                        type="date"
+                    <LocalizedDateInput
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
                         className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-slate-700"

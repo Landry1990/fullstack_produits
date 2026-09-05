@@ -181,9 +181,9 @@ export function useCommandeActions({
         if (executingAction) return;
         setExecutingAction(true);
 
-        // Mise à jour optimistique : passer immédiatement le statut à CLOTUREE
+        // Mise à jour optimistique : passer immédiatement le statut à CLOT
         // dans l'UI et dans le cache pour que le badge change sans attendre
-        const optimisticCommande = { ...commande, status: 'CLOTUREE', status_display: 'Clôturée' };
+        const optimisticCommande = { ...commande, status: 'CLOT', status_display: 'Clôturée' };
         setSelectedCommande(optimisticCommande);
         updateCommandeInCache(queryClient, optimisticCommande);
 

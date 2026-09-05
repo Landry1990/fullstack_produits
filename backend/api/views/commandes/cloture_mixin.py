@@ -48,12 +48,6 @@ class CommandeClotureMixin:
         Clôture une commande avec Optimistic Locking (sans select_for_update).
         Met à jour le stock et calcule le PMP avec vérification de versions.
         """
-        import time
-
-        from django.db import transaction
-
-        from ...optimistic_locking import ConcurrentModificationError
-        
         max_retries = 3
         expected_versions = {}
         

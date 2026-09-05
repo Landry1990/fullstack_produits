@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import {
   RefreshCw, Play, HardDrive, Clock, CheckCircle2, XCircle,
   AlertTriangle, Upload, RotateCcw, Database, Archive, Zap,
+  FolderOpen,
 } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import type { BackupListData, BackupSettings, WalStatus } from './types';
+import { Button } from '../shadcn/button';
+import { BackupPathBrowser } from './BackupPathBrowser';
 
 interface BackupsTabProps {
   backupList: BackupListData | null;
@@ -84,6 +88,20 @@ export function BackupsTab({
   t,
   i18n,
 }: BackupsTabProps) {
+  const [browserOpen, setBrowserOpen] = useState(false);
+  const [browserField, setBrowserField] = useState<keyof BackupSettings | null>(null);
+
+  const openBrowser = (field: keyof BackupSettings) => {
+    setBrowserField(field);
+    setBrowserOpen(true);
+  };
+
+  const handleSelectPath = (path: string) => {
+    if (browserField && backupSettings) {
+      setBackupSettings({ ...backupSettings, [browserField]: path });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -210,13 +228,25 @@ export function BackupsTab({
             {/* Chemin secondaire */}
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">{t('secondary_path')}</label>
-              <input
-                type="text"
-                placeholder={t('secondary_path_placeholder')}
-                value={backupSettings.secondary_backup_path}
-                onChange={(e) => setBackupSettings({ ...backupSettings, secondary_backup_path: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder={t('secondary_path_placeholder')}
+                  value={backupSettings.secondary_backup_path}
+                  onChange={(e) => setBackupSettings({ ...backupSettings, secondary_backup_path: e.target.value })}
+                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openBrowser('secondary_backup_path')}
+                  className="gap-2"
+                >
+                  <FolderOpen className="size-4" />
+                  {t('backup.browse.browse')}
+                </Button>
+              </div>
             </div>
 
             {/* Destinations externes (USB, disque dur, réseau) */}
@@ -226,33 +256,51 @@ export function BackupsTab({
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_1')}</label>
-                  <input
-                    type="text"
-                    placeholder={t('external_destination_1_placeholder')}
-                    value={backupSettings.external_backup_path_1}
-                    onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_1: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder={t('external_destination_1_placeholder')}
+                      value={backupSettings.external_backup_path_1}
+                      onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_1: e.target.value })}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                    <Button type="button" size="sm" variant="outline" onClick={() => openBrowser('external_backup_path_1')} className="gap-2">
+                      <FolderOpen className="size-4" />
+                      {t('backup.browse.browse')}
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_2')}</label>
-                  <input
-                    type="text"
-                    placeholder={t('external_destination_2_placeholder')}
-                    value={backupSettings.external_backup_path_2}
-                    onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_2: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder={t('external_destination_2_placeholder')}
+                      value={backupSettings.external_backup_path_2}
+                      onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_2: e.target.value })}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                    <Button type="button" size="sm" variant="outline" onClick={() => openBrowser('external_backup_path_2')} className="gap-2">
+                      <FolderOpen className="size-4" />
+                      {t('backup.browse.browse')}
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_3')}</label>
-                  <input
-                    type="text"
-                    placeholder={t('external_destination_3_placeholder')}
-                    value={backupSettings.external_backup_path_3}
-                    onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_3: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder={t('external_destination_3_placeholder')}
+                      value={backupSettings.external_backup_path_3}
+                      onChange={(e) => setBackupSettings({ ...backupSettings, external_backup_path_3: e.target.value })}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                    <Button type="button" size="sm" variant="outline" onClick={() => openBrowser('external_backup_path_3')} className="gap-2">
+                      <FolderOpen className="size-4" />
+                      {t('backup.browse.browse')}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -730,6 +778,13 @@ export function BackupsTab({
           <p className="text-xs text-gray-400 mt-2" dangerouslySetInnerHTML={{ __html: t('scheduling.logs') }} />
         </div>
       </div>
+
+      <BackupPathBrowser
+        open={browserOpen}
+        onOpenChange={setBrowserOpen}
+        onSelect={handleSelectPath}
+        t={t}
+      />
     </div>
   );
 }

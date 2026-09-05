@@ -13,6 +13,7 @@ import type { Inventaire } from '../../../types';
 import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
 import { useProductSearch } from '../../../hooks/inventaire/useProductSearch';
 import { useInventairePDF } from '../../../hooks/inventaire/useInventairePDF';
+import { LocalizedDateInput } from '../../LocalizedDateInput';
 
 import { InventaireProductSearch } from './InventaireProductSearch';
 import { InventaireAnalysisTab } from './InventaireAnalysisTab';
@@ -85,6 +86,8 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     const handlePrintEtat = async () => {
         if (!activeInventaire) return;
         setPrinting(true);
+        // Ouvrir la fenêtre AVANT les appels async pour éviter le blocage popup
+        const printWindow = window.open('about:blank', '_blank');
         try {
             // Ensure any pending quantity edits and newly-added (local-only) lines
             // are persisted before generating the PDF, otherwise they would be
@@ -94,9 +97,14 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
             const ok = await syncLocalOnlyLines();
             if (!ok) {
                 gooeyToast.error(t('inventaire.detail.save_error'));
+                if (printWindow) printWindow.close();
                 return;
             }
-            generateEtatPDF(activeInventaire, printGroupBy);
+            if (printWindow) {
+                printWindow.location.href = `/app/printing/${activeInventaire.id}?type=INVENTAIRE_TAKE&group_by=${printGroupBy}`;
+            } else {
+                generateEtatPDF(activeInventaire, printGroupBy);
+            }
         } finally {
             setPrinting(false);
         }
@@ -299,8 +307,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
             <div className="p-6 bg-slate-50/50 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">{t('inventaire.detail.date')}</label>
-                    <input
-                        type="date"
+                    <LocalizedDateInput
                         className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all disabled:bg-slate-50 disabled:text-slate-400 text-slate-700"
                         value={dateInventaire}
                         onChange={e => setDateInventaire(e.target.value)}

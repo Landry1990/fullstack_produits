@@ -46,7 +46,7 @@ export const toApiDateEnd = (date: Date): string => {
  */
 export const getLocale = () => {
     const lng = i18n.language;
-    if (lng === 'en') return 'en-US'; // mm/dd/yyyy (US style as requested by user)
+    if (lng && lng.startsWith('en')) return 'en-US'; // mm/dd/yyyy (US style as requested by user)
     return 'fr-FR'; // dd/mm/yyyy
 };
 
@@ -115,7 +115,16 @@ const DATETIME_OPTIONS: Intl.DateTimeFormatOptions = {
 export function formatDate(date: string | Date | null | undefined): string {
     if (!date) return '-';
     try {
-        const d = typeof date === 'string' ? new Date(date) : date;
+        let d: Date;
+        if (date instanceof Date) {
+            d = date;
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            // Parse YYYY-MM-DD as local (no UTC shift)
+            const [year, month, day] = date.split('-').map(Number);
+            d = new Date(year, month - 1, day);
+        } else {
+            d = new Date(date);
+        }
         if (isNaN(d.getTime())) return '-';
         return d.toLocaleDateString(getLocale(), DATE_OPTIONS);
     } catch {
@@ -129,7 +138,16 @@ export function formatDate(date: string | Date | null | undefined): string {
 export function formatDateTime(date: string | Date | null | undefined): string {
     if (!date) return '-';
     try {
-        const d = typeof date === 'string' ? new Date(date) : date;
+        let d: Date;
+        if (date instanceof Date) {
+            d = date;
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            // Parse YYYY-MM-DD as local midnight (no UTC shift)
+            const [year, month, day] = date.split('-').map(Number);
+            d = new Date(year, month - 1, day);
+        } else {
+            d = new Date(date);
+        }
         if (isNaN(d.getTime())) return '-';
         return d.toLocaleString(getLocale(), DATETIME_OPTIONS);
     } catch {
@@ -140,7 +158,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 /**
  * Formate une date en format long locale
  */
-function _formatDateLong(date: string | Date | null | undefined): string {
+export function formatDateLong(date: string | Date | null | undefined): string {
     if (!date) return '-';
     try {
         const d = typeof date === 'string' ? new Date(date) : date;

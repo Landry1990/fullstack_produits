@@ -55,7 +55,8 @@ i18n
             'system_admin',
             'planning',
             'recap',
-            'loyalty'
+            'loyalty',
+            'challenges'
         ],
         defaultNS: 'common',
         interpolation: {
@@ -76,7 +77,7 @@ i18n
     });
 
 const syncHtmlLang = (lng: string) => {
-    const locale = lng === 'en' ? 'en-US' : 'fr-FR';
+    const locale = lng && lng.startsWith('en') ? 'en-US' : 'fr-FR';
     document.documentElement.lang = locale;
 };
 

@@ -17,7 +17,7 @@ import { Checkbox } from '../shadcn/checkbox';
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription
 } from '../shadcn/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../shadcn/table';
 import { logger } from '../../utils/logger'
 
 interface CadencierItem {

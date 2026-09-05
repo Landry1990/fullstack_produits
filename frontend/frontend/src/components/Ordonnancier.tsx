@@ -9,6 +9,7 @@ import { Badge } from './shadcn/badge';
 import { cn } from '../lib/utils';
 import { FileText, RefreshCw, CalendarDays, Pill, User, Stethoscope, ClipboardList, FileDown, ShieldAlert } from 'lucide-react';
 import { logger } from '../utils/logger'
+import { LocalizedDateInput } from './LocalizedDateInput';
 
 const OrdonnancierPage: React.FC = () => {
     const { t } = useTranslation(['prescriptions', 'common']);
@@ -151,8 +152,7 @@ const OrdonnancierPage: React.FC = () => {
                         <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('filters.date_start')}</label>
                         <div className="relative">
                             <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                            <input
-                                type="date"
+                            <LocalizedDateInput
                                 className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                 value={dateDebut}
                                 onChange={e => setDateDebut(e.target.value)}
@@ -163,8 +163,7 @@ const OrdonnancierPage: React.FC = () => {
                         <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('filters.date_end')}</label>
                         <div className="relative">
                             <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                            <input
-                                type="date"
+                            <LocalizedDateInput
                                 className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                 value={dateFin}
                                 onChange={e => setDateFin(e.target.value)}

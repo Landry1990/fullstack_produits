@@ -16,6 +16,23 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
 
+# Racines autorisées pour l'explorateur de chemins de sauvegarde
+_ALLOWED_BROWSE_ROOTS = ('/', '/mnt', '/media', '/opt', '/backups', '/opt/zenith-pharma')
+
+
+def _is_path_allowed(target: Path) -> bool:
+    """Vérifie que le chemin demandé est sous une racine autorisée."""
+    try:
+        resolved = target.resolve()
+    except (OSError, RuntimeError):
+        return False
+    for root in _ALLOWED_BROWSE_ROOTS:
+        root_path = Path(root).resolve()
+        if resolved == root_path or root_path in resolved.parents:
+            return True
+    return False
+
+
 def _get_backup_dir() -> Path:
     return Path(settings.BASE_DIR).parent / 'backups'
 
@@ -779,3 +796,62 @@ class SystemAdminViewSet(ViewSet):
                 'success': False,
                 'message': f'Erreur: {e!s}',
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def browse(self, request):
+        """Explore un répertoire du serveur pour choisir un chemin de sauvegarde.
+
+        Restreint aux racines autorisées (/mnt, /media, /opt, /backups).
+        """
+        path = request.query_params.get('path', '/')
+        target = Path(path)
+
+        if not _is_path_allowed(target):
+            return Response(
+                {'detail': f'Chemin non autorisé: {path}'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if not target.exists():
+            return Response(
+                {'detail': f'Chemin introuvable: {path}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if not target.is_dir():
+            return Response(
+                {'detail': f'Ce chemin n\'est pas un répertoire: {path}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            entries = []
+            for child in sorted(target.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
+                try:
+                    if child.is_dir():
+                        entries.append({
+                            'name': child.name,
+                            'path': str(child),
+                            'type': 'directory',
+                        })
+                    else:
+                        entries.append({
+                            'name': child.name,
+                            'path': str(child),
+                            'type': 'file',
+                            'size_mb': round(child.stat().st_size / (1024 * 1024), 2),
+                        })
+                except (OSError, PermissionError):
+                    continue
+
+            parent = str(target.parent) if str(target) != '/' else None
+            return Response({
+                'path': str(target),
+                'parent': parent,
+                'entries': entries,
+            })
+        except (OSError, PermissionError) as e:
+            return Response(
+                {'detail': f'Impossible de lire le répertoire: {e!s}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

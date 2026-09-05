@@ -37,6 +37,12 @@ class OrderScheduleViewSet(viewsets.ModelViewSet):
         """Force l'exécution immédiate d'un planning, sans attendre l'heure prévue."""
         schedule = self.get_object()
 
+        if not schedule.is_active:
+            return Response(
+                {'detail': 'Ce planning est inactif et ne peut pas être déclenché.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
             suggestions, total_ht = run_suggestions_for_schedule(schedule)
         except Exception as e:

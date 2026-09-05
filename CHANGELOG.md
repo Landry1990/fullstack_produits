@@ -2,6 +2,515 @@
 
 ---
 
+## 2026-09-05 — Période d'essai 30 jours au premier démarrage
+
+### ✨ Nouveautés backend
+
+- `backend/api/utils_licence.py` :
+  - Ajout d'une période d'essai de 30 jours quand aucune licence n'est installée
+  - Payload trial : `pharmacie_nom = "PHARMACIE TEST"`, `pharmacien_nom = "DR TEST"`, `plan = "TRIAL"`
+  - Fichier de suivi `trial_start.txt` dans `/opt/zenith-pharma/` (prod) ou dossier parent de `BASE_DIR` (dev)
+  - Création automatique d'un superuser `admin/admin` si aucun utilisateur n'existe
+  - Après 30 jours, l'app bloque si aucune licence n'est activée
+  - Dès qu'une licence est activée ou un backup restauré, le trial n'a plus d'effet
+
+### Cas d'usage
+
+- Disque dur crash → réinstallation sur nouvelle machine
+- Au premier démarrage, l'app fonctionne pendant 30 jours
+- L'utilisateur peut se connecter (admin/admin), restaurer un backup
+- Le backup contient la licence → l'app reste activée
+- Plus besoin d'appeler le support pour restaurer
+
+---
+
+## 2026-09-05 — Explorateur de chemins de sauvegarde
+
+### ✨ Nouveautés backend
+
+- `backend/api/views/system_admin.py` : ajout de l'action `browse`
+  - Endpoint `GET /system-admin/browse/?path=/mnt`
+  - Restreint aux racines autorisées : `/`, `/mnt`, `/media`, `/opt`, `/backups`, `/opt/zenith-pharma`
+  - Liste répertoires et fichiers du serveur
+  - Réservé aux superadmins (`IsAdminUser`)
+
+### ✨ Nouveautés frontend
+
+- Création de `frontend/frontend/src/components/systemadmin/BackupPathBrowser.tsx`
+  - Modal d'exploration de dossiers serveur
+  - Navigation dossier par dossier
+  - Racines rapides : `/`, `/mnt`, `/media`, `/opt`, `/backups`
+  - Saisie manuelle d'un chemin
+  - Bouton "Sélectionner" pour remplir le champ ciblé
+- `frontend/frontend/src/components/systemadmin/BackupsTab.tsx` :
+  - Bouton "Parcourir" ajouté à côté de :
+    - Chemin de sauvegarde secondaire
+    - Destinations externes 1, 2, 3
+- Traductions `fr/en` dans `system_admin.json` : `backup.browse.*`
+
+### ✅ Vérifications
+
+- `npx tsc --noEmit` : 0 erreur
+- `npm run build` : succès
+- Déploiement frontend + backend : succès
+
+---
+
+## 2026-09-05 — Refactorisation : nettoyage `getLocale` et migration `Table`
+
+### ♻️ Nettoyage `getLocale`
+
+- Suppression des `lang={getLocale()}` redondants sur `<LocalizedDateInput>` et nettoyage des imports dans 8 fichiers :
+  - `SalesFilters.tsx`
+  - `Promotions/PromotionForm.tsx`
+  - `ProduitFormModal.tsx`
+  - `StockUGReportShadcn.tsx`
+  - `UserSessionsShadcn.tsx`
+  - `RapportMensuel.tsx`
+  - `StatistiquesFournisseur.tsx`
+  - `PointageReleveModal.tsx`
+- Remplacement d'un `toLocaleDateString(getLocale(), ...)` par `formatDateLong()` dans `PointageReleveModal.tsx`
+
+### ♻️ Migration `Table`
+
+- Remplacement des imports `.../ui/Table` par `.../shadcn/table` dans 25 fichiers :
+  - `frontend/frontend/src/components/stock/StockAnalysisTable.tsx` (l. 15)
+  - `frontend/frontend/src/components/stock/ReapproHistory.tsx` (l. 32)
+  - `frontend/frontend/src/components/stock/Cadencier.tsx` (l. 20)
+  - `frontend/frontend/src/components/promis/PromisTable.tsx` (l. 19)
+  - `frontend/frontend/src/components/avoirs/AvoirsTable.tsx` (l. 16)
+  - `frontend/frontend/src/components/settings/TVAComponents.tsx` (l. 13)
+  - `frontend/frontend/src/components/avoirs/AvoirsForm.tsx` (l. 19)
+  - `frontend/frontend/src/components/products/modals/AvoirDetailsModal.tsx` (l. 18)
+  - `frontend/frontend/src/components/dashboard/reports/ReportResults.tsx` (l. 18)
+  - `frontend/frontend/src/components/FinanceFournisseurModal.tsx` (l. 29)
+  - `frontend/frontend/src/components/avoirs/modals/AvoirsLotModal.tsx` (l. 12)
+  - `frontend/frontend/src/components/EcheancierFournisseursModal.tsx` (l. 24)
+
+### ✅ Vérifications
+
+- Aucun import inutilisé supprimé (optionnel, non demandé explicitement)
+
+---
+
+## 2026-09-04 — Fermeture manuelle des caisses (admin)
+
+### 🔧 Corrections backend
+
+- `backend/api/views/ventes/caisse_poste.py` :
+  - L'action `forcer-fermeture` nécessite désormais `is_superuser` ou `is_staff`
+  - Retourne HTTP 403 avec message si l'utilisateur n'est pas administrateur
+  - Gestion de `date_ouverture` vide : évite `ValueError` lors du calcul des encaissements, ferme le poste malgré une date manquante
+
+### ✨ Nouveautés frontend
+
+- Création du composant `frontend/frontend/src/components/caisse/CashForceClosePanel.tsx` :
+  - Liste les postes de vente / caisses actuellement ouverts
+  - Bouton "Forcer la fermeture" par poste avec confirmation
+  - Appel du service `cashSessionService.forcerFermeturePosteVente()`
+- Ajout d'un onglet "Caisses" dans `frontend/frontend/src/components/SystemAdmin.tsx` :
+  - Intégration de `CashForceClosePanel`
+  - Utilisation de `Store` (icône caisse)
+- Mise à jour de `frontend/frontend/src/components/systemadmin/types.ts` :
+  - `TabId` étendu avec `'caisse'`
+- Traductions `frontend/frontend/public/locales/fr/system_admin.json` et `.../en/system_admin.json` :
+  - `tabs.cash`, `cash.force_close.*`
+
+### ✅ Vérifications
+
+- `npx tsc --noEmit` : 0 erreur
+- `npm run build` : succès
+- Déploiement frontend + backend : succès
+
+---
+
+## 2026-09-04 — Localisation des champs `<input type="date">` (i18n)
+
+### 🔧 Corrections frontend
+
+- Création du composant `frontend/frontend/src/components/LocalizedDateInput.tsx` :
+  - Encapsule `<input type="date">` natif
+  - Force `lang={i18n.language}` et un `key` dépendant de la langue pour que le navigateur re-formate l'affichage quand la langue change
+- `frontend/frontend/src/components/TeamReportsPage.tsx` — `lang` et `key` ajoutés directement aux 2 inputs date (Rapport d'Équipes)
+- Remplacement de 48 `<input type="date">` natifs par `<LocalizedDateInput>` dans 26 composants/filtres/modaux :
+  - `GestionDivers`, `UserSessionsShadcn`, `HistoriqueVentes`, `StockUGReportShadcn`, `HistoriqueAchats`
+  - `ChallengeFormModal`, `ProductTabsContent`, `CommandeDetails`, `ProduitFormModal`, `Comptabilite`
+  - `StockAdjustmentModal`, `Maintenance`, `PlanningOperateurs`, `StatistiquesFournisseur`, `Ordonnancier`
+  - `InventaireAudit`, `RapportMensuel`, `InventaireEditor`, `Perimes`, `InventaireFilters`
+  - `AjustementsFilters`, `CreancesFilters`, `OrdonnanceModal`, `PromotionForm`, `PointageReleveModal`, `SalesFilters`
+
+### ✅ Vérifications
+
+- `npx tsc --noEmit` : 0 erreur
+- `npm run build` : succès
+- Déploiement frontend : succès
+
+---
+
+## 2026-09-04 — i18n : formatage des dates selon la langue (frontend)
+
+### 🔧 Corrections frontend
+
+- `frontend/frontend/src/components/Promotions/PromotionList.tsx` — remplacement de `date-fns/format` par `formatDate(promo.start_date)` / `formatDate(promo.end_date)` depuis `../../utils/dateUtils` ; suppression de l'import `format` de `date-fns`
+- `frontend/frontend/src/components/UserSessionsShadcn.tsx` — remplacement de `date-fns/format` par `../utils/dateUtils` :
+  - heure des sessions : `formatTime(session.first_login)` / `formatTime(session.last_logout)`
+  - date affichée : `formatDateLong(session.date)`
+  - filtres journaliers : `getLocalDateString(getServerDate())`
+  - mois / année du récap : `getMonth() + 1` / `getFullYear()`
+  - suppression des imports `date-fns`, `date-fns/locale/fr` et de la variable `i18n` inutilisée
+- `frontend/frontend/src/components/divers/GestionDivers.tsx` — remplacement de `date-fns/format` et `parseISO` par `../../utils/dateUtils` :
+  - plage de dates : `getLocalDateString()`
+  - période affichée : `formatDateShort(dateRange.debut)` / `formatDateShort(dateRange.fin)`
+  - date sélectionnée : `formatDate(selectedDate)`
+  - jour affiché : `formatDateLong(day.date)`
+  - date/heure vente : `formatDateTime(v.date)`
+  - suppression des imports `date-fns`, `parseISO` et `date-fns/locale/fr`
+- `frontend/frontend/src/utils/print/promisPdfDraft.ts` — remplacement de `date-fns/format` par `../dateUtils` :
+  - date/heure du ticket : `formatDateTime(new Date())`
+  - nom de fichier : `getLocalDateString(now).replace(/-/g, '')` + heure brute
+  - suppression de l'import `format` de `date-fns`
+
+---
+
+## 2026-09-04 — i18n : formatage des dates selon la langue (frontend)
+
+### 🔧 Corrections frontend
+
+- `frontend/frontend/src/components/TelegramHistory.tsx` — remplacement de `date-fns/format` par `formatDateTime(log.created_at)` depuis `../utils/dateUtils` ; suppression des imports `date-fns` et `date-fns/locale/fr`
+- `frontend/frontend/src/components/common/MessagingModal.tsx` — dates des messages internes : `formatDateTime(m.created_at)` depuis `../../utils/dateUtils` ; suppression des imports inutiles
+- `frontend/frontend/src/components/StockUGReportShadcn.tsx` — remplacement de `date-fns/format` par `dateUtils` :
+  - nom de fichier CSV : `getLocalDateString().replace(/-/g, '')`
+  - modèle d'impression : `formatDate(new Date())`
+  - date de réception : `formatDateTime(detail.date_reception)`
+  - suppression de l'import `format` de `date-fns`
+
+---
+
+## 2026-09-04 — i18n : formatage des dates dans les historiques (frontend)
+
+### 🔧 Corrections frontend
+
+- `frontend/frontend/src/components/HistoriqueAchats.tsx` — remplacement de `date-fns/format` par `../utils/dateUtils` :
+  - export Excel : `formatDate(row.date)`
+  - nom de fichier : `getLocalDateString()`
+  - affichage tableau : `formatDateLong(summaryRow.date)`
+  - suppression des imports inutiles `date-fns` et `date-fns/locale`
+- `frontend/frontend/src/components/HistoriqueClotures.tsx` — suppression de l’import `format` de `date-fns` :
+  - `metricMonth` / `metricYear` initialisés via `getMonth() + 1` / `getFullYear()`
+- `frontend/frontend/src/components/avoirs-client/ClientCreditsList.tsx` — remplacement de `date-fns/format` par `formatDate(credit.date)` depuis `../../utils/dateUtils`
+
+---
+
+## 2026-09-04 — Consolidation module Commandes : audit et corrections
+
+### 🔧 Corrections backend
+
+- `backend/api/views/commandes/bulk_actions_mixin.py` — **import `timezone` incorrect** (`from datetime import timezone` → `from django.utils import timezone`) : `timezone.now()` aurait levé `AttributeError` en production
+- `backend/api/views/commandes/bulk_actions_mixin.py` — **`bulk_delete` ne filtrait pas `is_active=True`** : ajout du filtre pour éviter de re-supprimer des commandes déjà supprimées
+- `backend/api/views/commandes/schedules.py` — **`trigger_now` pouvait exécuter un planning inactif** : ajout d'une vérification `schedule.is_active` avant exécution
+- `backend/api/views/commandes/cloture_mixin.py` — **imports dupliqués** (`time`, `transaction`, `ConcurrentModificationError` déjà importés en haut du fichier) : nettoyage
+- `backend/api/serializers/orders.py` — **validation `end_date` inexistante** dans `OrderScheduleSerializer.validate` : suppression de la validation obsolète (le champ `end_date` n'existe pas dans le modèle)
+
+### 🔧 Corrections frontend
+
+- `frontend/frontend/src/services/commandeService.ts` — **4 méthodes mortes/incompatibles supprimées** :
+  - `toggleStatus` : endpoint backend inexistant
+  - `transfer` : endpoint backend inexistant (le modal utilise un flux manuel)
+  - `getSuggestions` : endpoint incorrect (le modal utilise `generer-suggestions/` directement)
+  - `merge` : payload incompatible (`source_ids` vs `source_commande_id`)
+  - Interface `SuggestionFilters` supprimée (plus utilisée)
+- `frontend/frontend/src/hooks/useCommandeActions.ts` — **statut optimiste `CLOTUREE` → `CLOT`** : alignement avec les `TextChoices` du backend (`PREP`, `ATT`, `CLOT`)
+- `frontend/frontend/src/types/procurement.ts` — **`Commande.status` typé en union stricte** (`'PREP' | 'ATT' | 'CLOT'`) au lieu de `string`
+
+### 🌐 Traductions
+
+- `frontend/frontend/public/locales/fr/orders.json` et `en/orders.json` — **~22 clés manquantes ajoutées** :
+  - `status.att`, `status.clot`
+  - `import_btn`, `new_product_btn` (racine)
+  - `quick_create.edit_title`
+  - `messages.quick_product_updated`, `messages.merge_same_status`, `messages.merge_impossible`, `messages.merge_success_detailed`, `messages.lot_or_product_not_found`, `messages.transfer_select_products`
+  - Section `reconditionnement` complète (11 clés)
+  - `messages.products_added_from_cadencier` ajouté en anglais (existait déjà en français)
+
+### ✅ Vérifications
+
+- `npx tsc --noEmit` : 0 erreur TypeScript
+- `npm run build` : succès
+- `python manage.py test api.tests.test_order_management api.tests.test_commande_cloture_status api.tests.test_mise_en_place` : **21 tests OK**
+- Déploiement frontend + backend : succès
+
+---
+
+## 2026-09-04 — Consolidation : audit et corrections de cohérence
+
+### 🔧 Corrections critiques
+
+- `backend/api/views/dashboard/core.py` — **stock_value calculé depuis StockLot au lieu de Produit** :
+  - Le dashboard calculait la valeur du stock depuis `StockLot.quantity_remaining * pmp`, qui retournait 0 quand aucun lot n'existait
+  - Corrigé pour utiliser `Produit.stock * Produit.pmp` (cohérent avec `finance_stats.py` et `statistiques.py`)
+  - Ajout du filtre `is_active=True` sur le queryset `Produit`
+- `backend/api/views/users.py` — **CA tronqué par `IntegerField`** dans le rapport d'équipes :
+  - Remplacé `output_field=IntegerField()` par `DecimalField(max_digits=12, decimal_places=2)` pour `ca_total` et `ca` par vendeur
+  - Conversion en `float()` au lieu de `int()` pour préserver les centimes
+
+### 🔒 Corrections majeures
+
+- **Filtre `is_active=True` manquant** sur les factures (factures supprimées comptabilisées) :
+  - `backend/api/views/challenges.py` — action `classement`
+  - `backend/api/views/dashboard/challenges.py` — `challenges_summary`
+  - `backend/api/views/users.py` — action `rapport` du `TeamViewSet`
+
+### 🧹 Corrections mineures
+
+- `backend/api/views/challenges.py` — import `Q` supprimé (inutilisé)
+- `backend/api/tests/test_stock_loophole.py` — `can_validate_sales = True` ajouté au profil du user de test + re-fetch du user pour éviter un profile stal dans `force_authenticate`
+- `frontend/frontend/src/types/challenges.ts` — `ChallengeClassementEntry.points` rendu optionnel (`points?: number`)
+- `frontend/frontend/src/components/TeamReportsPage.tsx` — import `Package` supprimé, variable `rankColors` supprimée, `dateDebut` corrigé pour utiliser `getLocalDateString()` au lieu de `toISOString()` (évite décalage UTC)
+- `frontend/frontend/src/services/challengesService.ts` — cast `as Challenge` supprimé (inutile)
+
+### ✅ Vérifications
+
+- `npx tsc --noEmit` : 0 erreur TypeScript
+- `npm run build` : succès
+- `python manage.py test api.tests` : **281 tests OK, 0 échec, 3 skipped**
+- Déploiement frontend + backend : succès
+
+---
+
+## 2026-09-03 — Rapport d'Équipes + Suivi des challenges dans le dashboard manager + tests automatisés
+
+### 👥 Rapport d'Équipes (performance commerciale par équipe)
+
+#### Backend
+
+- `backend/api/views/users.py` — action `rapport` sur le `TeamViewSet` :
+  - Endpoint `GET /api/teams/rapport/?date_debut=...&date_fin=...`
+  - Pour chaque équipe : CA total, nb ventes, nb boîtes, détail par vendeur
+  - Classement des équipes par CA descendant
+  - Filtre par période (défaut : mois courant)
+  - Réutilise le modèle `Team` existant (équipes de planning) — pas de nouveau modèle
+  - Permission `IsAuthenticated` (comme list/retrieve)
+
+#### Frontend
+
+- `frontend/frontend/src/components/TeamReportsPage.tsx` — nouvelle page :
+  - Filtres de période (date début/fin)
+  - Cartes Top 3 (or/argent/bronze) avec CA, ventes, boîtes
+  - Tableau détaillé par équipe (cliquable pour expand)
+  - Détail par vendeur dans chaque équipe (CA, ventes, boîtes)
+  - État vide si aucune équipe configurée
+- `frontend/frontend/src/routes.tsx` — route `/app/rapport-equipes`
+- `frontend/frontend/src/components/Sidebar.tsx` — entrée menu "Rapport Équipes"
+- `frontend/frontend/src/hooks/useDashboard.ts` — hook `useTeamReport`
+
+#### i18n
+
+- `frontend/frontend/public/locales/fr/en/sidebar.json` — clé `teams_report_sidebar`
+- `frontend/frontend/public/locales/fr/en/dashboard.json` — 18 clés `manager_dashboard.teams_report_*`
+
+### 🏆 Widget "Challenges en cours" dans le dashboard manager
+
+### 🏆 Widget "Challenges en cours" dans le dashboard manager
+
+#### Backend
+
+- `backend/api/views/dashboard/challenges.py` — nouveau mixin `DashboardChallengesMixin` :
+  - Endpoint `GET /api/dashboard/challenges_summary/`
+  - Retourne les challenges en cours (`is_active=True`, `statut=ENC`, dates couvrant aujourd'hui)
+  - Pour chaque challenge : nom, type, mode, dates, jours restants, progression globale vs objectif, top 3 du classement
+  - Réutilise les helpers de classement du `ChallengeViewSet` (CA, BOITES, POINTS, individuel/équipes)
+  - Limité aux 5 challenges les plus récents
+- `backend/api/views/dashboard/__init__.py` — ajout du mixin à `DashboardViewSet`
+
+#### Frontend
+
+- `frontend/frontend/src/components/dashboard/ChallengesSummary.tsx` — nouveau widget :
+  - Cartes par challenge avec icône selon le type (CA=emerald, BOITES=blue, POINTS=amber)
+  - Barre de progression globale vs objectif
+  - Mini-tableau Top 3 (rang, participant, valeur)
+  - État vide avec CTA vers `/app/challenges`
+  - Lien "Voir tous les challenges"
+- `frontend/frontend/src/components/DashboardManagerShadcn.tsx` — intégration du widget entre les alertes/objectifs et les exports
+- `frontend/frontend/src/hooks/useDashboard.ts` — hook `useChallengesSummary` (refresh 3 min)
+
+#### i18n
+
+- `frontend/frontend/public/locales/fr/dashboard.json` — 14 clés `manager_dashboard.challenges_*`
+- `frontend/frontend/public/locales/en/dashboard.json` — traductions symétriques
+
+### 🧪 Tests automatisés des challenges
+
+- `backend/api/tests/test_challenges.py` — 11 tests couvrant :
+  - Création CA+équipes, POINTS+tiers, BOITES individuel
+  - Update équipes (add/update/remove), update tiers (sync par mois_max)
+  - Classement CA individuel, BOITES+objectif, équipes agrégées, POINTS+auto-péremption
+  - Rétrocompatibilité des anciens challenges
+  - Endpoint prévisualisation péremption
+- `backend/api/migrations/0250_facture_facture_poste_status_idx_and_more.py` — migration rendue no-op (index dupliqués déjà créés par 0239/0242)
+
+### 📝 Documentation
+
+- `AGENTS.md` — section "Tests backend (Docker)" avec commande exacte et avertissement sur les migrations dupliquées
+
+---
+
+## 2026-09-02 — Diversification des challenges + Chasse au Trésor Anti-Péremption
+
+### ✨ Diversification des challenges (types, objectifs, équipes)
+
+#### Backend
+
+- `backend/api/models/challenges.py` — extensions du modèle `Challenge` :
+  - `type_objectif` (CA / BOITES / POINTS) — métrique principale du challenge
+  - `objectif_valeur` (DecimalField nullable) — objectif chiffré facultatif (ex: 50 boîtes, 500000 FCFA)
+  - `mode` (INDIVIDUEL / EQUIPES) — participation par vendeur ou par équipes
+  - `source_produits` (MANUEL / AUTO_PEREMPTION) — source de la liste des produits
+  - `peremption_mois` (IntegerField nullable) — seuil en mois pour l'auto-péremption
+- `backend/api/models/challenges.py` — nouveaux modèles :
+  - `ChallengeEquipe` : équipes par challenge (nom + membres M2M, unique_together challenge+nom)
+  - `ChallengePointTier` : barème de points par niveau d'urgence (mois_max + points, unique_together challenge+mois_max)
+- `backend/api/migrations/0248_challenge_type_objectif_mode_equipes.py` — migration équipes + types
+- `backend/api/migrations/0249_challenge_source_peremption_points.py` — migration source_produits + peremption_mois + POINTS + ChallengePointTier
+- `backend/api/serializers/challenges.py` — `ChallengeEquipeSerializer`, `ChallengePointTierSerializer`, gestion nested `equipes_data` + `point_tiers_data` (create/update)
+- `backend/api/views/challenges.py` — refonte action `classement` :
+  - Mode INDIVIDUEL : agrégation par vendeur
+  - Mode EQUIPES : agrégation par équipe (somme des ventes des membres)
+  - Type POINTS + AUTO_PEREMPTION : auto-peuplement dynamique des produits proches péremption via `StockLot.date_expiration`, calcul des points via `FactureProduitAllocation` (premier tier qui matche × quantité)
+  - Objectif : progression + atteint/non atteint si `objectif_valeur` défini
+  - Réponse unique `classement` (plus de `classement_ca`/`classement_boites` séparés)
+- `backend/api/views/challenges.py` — nouvelle action `produits_peremption` (prévisualisation des produits proches péremption, param `mois`)
+- `backend/api/models/__init__.py` — export `ChallengeEquipe`, `ChallengePointTier`
+
+#### Frontend
+
+- `frontend/frontend/src/types/challenges.ts` — types `ChallengeTypeObjectif` (CA/BOITES/POINTS), `ChallengeMode`, `ChallengeSourceProduits`, `ChallengeEquipe`, `ChallengePointTier`, `ChallengeClassementEntry` (entity_id/entity_name/entity_type/points/objectif/progression/atteint), `ChallengeProduitPeremption`
+- `frontend/frontend/src/components/challenges/ChallengeFormModal.tsx` — refonte complète :
+  - Sélecteur type d'objectif (CA / Boîtes / Points)
+  - Champ objectif chiffré facultatif
+  - Sélecteur mode (Individuel / Équipes)
+  - Gestion des équipes (nom + membres, ajout/suppression)
+  - Sélecteur source des produits (Manuel / Auto péremption)
+  - Champ seuil péremption en mois (si auto)
+  - Éditeur de barème de points (tiers mois_max + points, ajout/suppression)
+  - Section produits masquée si source=AUTO_PEREMPTION
+- `frontend/frontend/src/components/challenges/ChallengeClassement.tsx` — refonte :
+  - Table unique (plus d'onglets CA/Boîtes)
+  - Colonne Points (si type=POINTS)
+  - Barre de progression vs objectif + icône atteint/non atteint
+  - Icône équipe si mode=EQUIPES
+  - Résumé enrichi (type, mode, source)
+- `frontend/frontend/src/components/challenges/ChallengesPage.tsx` — table enrichie :
+  - Colonne Type (type_objectif + objectif + mode)
+  - Colonne Participants gère le mode équipes (compte équipes)
+  - Boutons primaires harmonisés en emerald (cohérence avec le reste de l'app)
+
+#### i18n
+
+- `frontend/frontend/public/locales/fr/challenges.json` et `en/challenges.json` — 50+ nouvelles clés :
+  - Types d'objectif (CA, Boîtes, Points)
+  - Mode (Individuel, Équipes)
+  - Équipes (nom, membres, ajout, suppression, count)
+  - Source des produits (Manuel, Auto péremption)
+  - Péremption (seuil en mois, hint)
+  - Barème de points (tiers, mois_max, points, ajout, suppression)
+  - Classement (objectif, progression, atteint, entity equipe/vendeur, points)
+  - Erreurs de validation (equipe_nom_required, equipe_min, point_tiers_required, peremption_mois_required)
+
+### 🎨 Harmonisation UI : boutons Challenges → emerald
+
+- `ChallengesPage.tsx` + `ChallengeFormModal.tsx` — les boutons primaires `bg-amber-600` sont passés en `bg-emerald-600` pour respecter la cohérence des 33 autres boutons primaires de l'app. Les accents ambre (icône Trophy, badges produits, médailles) restent en ambre car ce sont des éléments thématiques décoratifs.
+
+### ✅ Validation
+
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK
+- Migration DB : `0248` + `0249` : OK
+- Endpoint `GET /api/challenges/produits_peremption/?mois=6` → 200 (11 produits trouvés)
+- Endpoint `POST /api/challenges/` avec type=POINTS, source=AUTO_PEREMPTION, point_tiers_data → 201 (tiers créés)
+- Endpoint `GET /api/challenges/{id}/classement/` → 200 (produits_count auto-calculé, point_tiers retournés)
+- Rétrocompatibilité : anciens challenges (CA/BOITES, MANUEL, INDIVIDUEL) → fonctionnement inchangé
+
+---
+
+## 2026-09-02 — Challenges commerciaux : défis vendeurs sur produits ciblés
+
+### ✨ Nouveau modèle `Challenge`
+
+- `backend/api/models/challenges.py` — modèle `Challenge` (nom, description, date_debut, date_fin, statut BROU/ENC/CLO/ANN, all_users, participants M2M, produits M2M, created_by, is_ongoing).
+- `backend/api/migrations/0246_challenges.py` et `0247_alter_challenge_id.py` — création de la table + ajout de `can_manage_challenges` sur `Profile`.
+- `backend/api/models/__init__.py` — export du nouveau modèle.
+
+### 🔧 Backend : endpoints et classement
+
+- `backend/api/serializers/challenges.py` — `ChallengeSerializer` (created_by_name, statut_display, participants_count, produits_count, is_ongoing).
+- `backend/api/views/challenges.py` — `ChallengeViewSet` (CRUD complet) + action `classement` :
+  - Filtre les `Facture` valides sur la période du challenge
+  - Filtre les `FactureProduit` par produits ciblés
+  - Agrège par vendeur : nombre de boîtes, CA, nombre de ventes
+  - Retourne deux classements : par CA et par boîtes
+- `backend/api/urls.py` — route `challenges`.
+- `backend/api/menu_hierarchy.py` — clé `statistiques_challenges`.
+- `backend/api/models/users.py` — permission `can_manage_challenges` sur `Profile`.
+- `backend/api/serializers/users.py` — exposition de la permission.
+
+### 🖥️ Frontend : page Challenges avec CRUD complet
+
+- `frontend/frontend/src/types/challenges.ts` — types `Challenge`, `ChallengeClassement`, etc.
+- `frontend/frontend/src/services/challengesService.ts` — service CRUD (list, get, create, update, patch, delete, classement).
+- `frontend/frontend/src/hooks/useChallenges.ts` — hooks React Query (liste, détail, classement, save, delete, recherche produits, users).
+- `frontend/frontend/src/components/challenges/ChallengeFormModal.tsx` — modal shadcn de création/édition (nom, description, dates, statut, participants, produits multi-select avec recherche).
+- `frontend/frontend/src/components/challenges/ChallengeClassement.tsx` — classement avec onglets (Par CA / Par Boîtes), top 3 or/argent/bronze.
+- `frontend/frontend/src/components/challenges/ChallengesPage.tsx` — page principale (liste, filtres, pagination, actions : voir classement, éditer, supprimer).
+- `frontend/frontend/src/routes.tsx` — route `/app/challenges`.
+- `frontend/frontend/src/components/Sidebar.tsx` — entrée menu sous Statistiques.
+- `frontend/frontend/src/i18n.ts` — namespace `challenges`.
+- `frontend/frontend/public/locales/fr/challenges.json` et `en/challenges.json` — traductions complètes.
+- `frontend/frontend/public/locales/fr/sidebar.json` et `en/sidebar.json` — clé `statistiques.challenges`.
+
+### ✅ Validation
+
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK
+- Migration DB : `0246_challenges` + `0247_alter_challenge_id` : OK
+- Déploiement frontend + backend : OK
+
+### 🧪 Tests automatisés (session nocturne)
+
+- **Backend** : 7/7 tests OK (`test_caisse_integrity` + `test_client_credit`)
+  - Annulation avant/après clôture caisse : OK
+  - Modification refusée après clôture : OK
+  - Encaissements multi-modes consolidés : OK
+  - Avoir client avec restauration stock et remboursement : OK
+- **Endpoints API** (smoke test) :
+  - `GET /api/challenges/` → 200
+  - `POST /api/challenges/` → 201
+  - `GET /api/challenges/{id}/classement/` → 200
+  - `PUT /api/challenges/{id}/` → 200
+  - `DELETE /api/challenges/{id}/` → 204
+  - `GET /api/loyalty-history/` → 200
+  - `ProfileSerializer.can_manage_challenges` exposé : OK
+- **Frontend** : `tsc --noEmit` OK, 327/345 tests passent (11 échecs pré-existants dans Dashboard/JournalCaisse, non liés à nos changements)
+- **Traductions** : fr/en complètes et symétriques pour `challenges.json` + `sidebar.json`
+
+### 🔧 Fix : migration 0242 redondante
+
+- `backend/api/migrations/0242_facture_facture_poste_status_idx_and_more.py` — la migration créait des index déjà créés par la migration 0239 (en `CONCURRENTLY IF NOT EXISTS`). Rendue no-op pour éviter l'erreur `DuplicateTable: relation "facture_poste_status_idx" already exists` lors de la création de la base de test.
+
+### 🧪 Fix : 11 tests frontend pré-existants corrigés
+
+- `frontend/frontend/src/components/__tests__/Dashboard.test.tsx` — le composant `DashboardShadcn` a été refactoré pour utiliser `useDashboardInit` (qui regroupe stats + revenue_chart + hourly_traffic + reappro_summary) au lieu de `useDashboardStats`. Le mock du test ne l'exposait pas, causant 10 échecs. Ajout de `useDashboardInit` au mock et mise à jour des overrides individuels (loading, error, VENDEUR, regression).
+- `frontend/frontend/src/components/__tests__/JournalCaisse.test.tsx` — le test cherchait `getByPlaceholderText('0')` pour le modal de clôture, mais le placeholder est maintenant traduit (`Saisissez le montant réel`). De plus, `billetage_obligatoire` default à `true`, ce qui rendait un input read-only au lieu du champ de saisie. Correction : mock `billetage_obligatoire: false` + recherche par regex `/montant r[eé]el|real amount/i`.
+
+### ✅ Validation finale
+
+- **Frontend** : 338/338 tests passent (7 skipped, 0 échec)
+- **Backend** : 7/7 tests OK
+- `npx tsc --noEmit` : OK
+- `npm run build` : OK
+- Déploiement frontend + backend : OK
+
+---
+
 ## 2026-09-02 — Gestion de la fidélité : historique des points + page dédiée
 
 ### ✨ Nouveau modèle `LoyaltyHistory`

@@ -16,7 +16,7 @@ import {
 } from '../shadcn/dropdown-menu';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '../ui/Table';
+} from '../shadcn/table';
 import { cn } from '../../lib/utils';
 
 interface BulkActionsMenuProps {

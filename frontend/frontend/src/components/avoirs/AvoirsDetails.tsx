@@ -7,7 +7,7 @@ import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../shadcn/card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shadcn/table';
 import { isDraftStatus, getStatusStyle, getStatusLabel } from './utils';
 
 interface AvoirsDetailsProps {

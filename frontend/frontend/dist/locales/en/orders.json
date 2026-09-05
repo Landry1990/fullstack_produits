@@ -79,8 +79,12 @@
     "status": {
         "prep": "Prep.",
         "pending": "Pending",
-        "closed": "Closed"
+        "closed": "Closed",
+        "att": "Pending",
+        "clot": "Closed"
     },
+    "import_btn": "Import",
+    "new_product_btn": "New product",
     "scheduling": {
         "cancel": "Cancel",
         "save_service": "Save Service",
@@ -454,10 +458,18 @@
         "missing_id": "Missing order ID",
         "quick_product_created": "Product \"{{name}}\" created and added",
         "lot_update_success": "Batch / date updated",
-        "lot_update_error": "Update error"
+        "lot_update_error": "Update error",
+        "quick_product_updated": "Product updated successfully",
+        "merge_same_status": "Orders must have the same status to be merged",
+        "merge_impossible": "Merge impossible",
+        "merge_success_detailed": "Merge successful: {{count}} products transferred",
+        "lot_or_product_not_found": "Lot or product not found",
+        "transfer_select_products": "Please select products to transfer",
+        "products_added_from_cadencier": "{{count}} products added from schedule"
     },
     "quick_create": {
         "title": "Quick Product Creation",
+        "edit_title": "Edit product",
         "name_placeholder": "Product name...",
         "submit": "Create product"
     },
@@ -613,6 +625,19 @@
     "price_tva": "VAT",
     "price_purchase_ttc": "PURCHASE PRICE TTC",
     "price_selling_ttc": "SELLING PRICE TTC",
-    "margin": "MARGIN"
+    "margin": "MARGIN",
+    "reconditionnement": {
+        "title": "Repackaging",
+        "subtitle": "Select transformations to apply",
+        "results": "Results",
+        "errors": "Errors",
+        "no_transformations": "No transformations available",
+        "received": "Received",
+        "ratio": "Ratio",
+        "selected_count": "{{count}} selected",
+        "units": "units",
+        "skip": "Skip",
+        "confirm": "Confirm"
+    }
 }
 

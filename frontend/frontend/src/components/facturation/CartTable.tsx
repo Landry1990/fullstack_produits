@@ -9,7 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/Table'
+} from '../shadcn/table'
 import { ShoppingCart } from 'lucide-react'
 import CartRow from './CartRow'
 

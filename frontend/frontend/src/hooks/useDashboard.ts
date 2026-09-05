@@ -279,6 +279,91 @@ export const useManagerStats = () => {
     });
 };
 
+/* ─── Challenges summary for manager dashboard ─── */
+export interface ChallengeSummaryItem {
+    id: number;
+    nom: string;
+    type_objectif: 'CA' | 'BOITES' | 'POINTS';
+    type_objectif_display: string;
+    mode: 'INDIVIDUEL' | 'EQUIPES';
+    mode_display: string;
+    date_debut: string;
+    date_fin: string;
+    jours_restants: number;
+    objectif_valeur: number | null;
+    source_produits: 'MANUEL' | 'AUTO_PEREMPTION';
+    produits_count: number;
+    equipes_count: number;
+    participants_count: number;
+    progression_globale: number;
+    top3: Array<{
+        rang: number;
+        entity_name: string;
+        entity_type: string;
+        valeur: number;
+        points: number;
+    }>;
+}
+
+export const useChallengesSummary = () => {
+    return useQuery<ChallengeSummaryItem[]>({
+        queryKey: ['dashboard', 'challengesSummary'],
+        queryFn: async () => {
+            const response = await api.get<ChallengeSummaryItem[]>('dashboard/challenges_summary/');
+            return response.data;
+        },
+        staleTime: 1000 * 60 * 3, // 3 minutes
+        refetchInterval: 1000 * 60 * 3,
+    });
+};
+
+/* ─── Team reports ─── */
+export interface TeamReportMember {
+    id: number;
+    username: string;
+    full_name: string;
+    ca: number;
+    nb_ventes: number;
+    nb_boites: number;
+}
+
+export interface TeamReportEquipe {
+    id: number;
+    nom: string;
+    membres_count: number;
+    ca_total: number;
+    nb_ventes: number;
+    nb_boites: number;
+    membres: TeamReportMember[];
+}
+
+export interface TeamReportData {
+    date_debut: string;
+    date_fin: string;
+    equipes: TeamReportEquipe[];
+    classement: Array<{
+        rang: number;
+        equipe_id: number;
+        nom: string;
+        ca_total: number;
+        nb_ventes: number;
+        nb_boites: number;
+    }>;
+}
+
+export const useTeamReport = (dateDebut: string, dateFin: string) => {
+    return useQuery<TeamReportData>({
+        queryKey: ['teams', 'report', dateDebut, dateFin],
+        queryFn: async () => {
+            const response = await api.get<TeamReportData>('teams/rapport/', {
+                params: { date_debut: dateDebut, date_fin: dateFin },
+            });
+            return response.data;
+        },
+        staleTime: 1000 * 60 * 5,
+    });
+};
+
 export interface FrequentStockoutItem {
     id: number;
     name: string;

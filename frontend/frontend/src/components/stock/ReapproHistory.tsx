@@ -29,7 +29,7 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from '../ui/Table';
+} from '../shadcn/table';
 import { logger } from '../../utils/logger'
 import {
   Dialog,
