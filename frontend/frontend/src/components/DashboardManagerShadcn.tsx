@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useManagerDashboard, type EditingObjectif } from '../hooks/useManagerDashboard';
 import type { ObjectifCommercial } from '../hooks/useDashboard';
 import { ObjectivesSettings } from './dashboard/ObjectivesSettings';
+import { ChallengesSummary } from './dashboard/ChallengesSummary';
 
 import { Button } from './shadcn/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './shadcn/card';
@@ -504,6 +505,8 @@ export default function DashboardManagerShadcn() {
             onRefresh={actions.refetchStats}
           />
         </div>
+
+        <ChallengesSummary />
 
         <ReportsShadcn onExport={actions.handleExport} exporting={exporting} />
       </div>

@@ -320,7 +320,28 @@ export function useCart({ onRequirePrescription, onAlert, onSubstitution, onForc
         if (currentLigne && currentLigne.lotId && currentLigne.lotMaxQuantity != null
             && finalQuantite > currentLigne.lotMaxQuantity
             && onQuantityExceedsLot) {
-            // Ouvrir le modal pour répartir la quantité sur plusieurs lots
+            const totalStock = currentLigne.produit.stock ?? 0
+            // Si la quantité dépasse le stock TOTAL (tous lots confondus),
+            // on met à jour la quantité quand même — le modal promis au checkout
+            // s'occupera de la différence. On n'ouvre pas le lot modal car il
+            // ne pourrait pas allouer la quantité demandée.
+            if (finalQuantite > totalStock) {
+                setLignesFacture(prevLignes => prevLignes.map(ligne =>
+                    ligne.lineId === lineId
+                        ? {
+                            ...ligne,
+                            quantite: finalQuantite,
+                            total_ligne: calculateLineTotal(finalQuantite, ligne.prix_unitaire, ligne.remise_produit),
+                            isPromis: undefined,
+                            promisQuantity: undefined,
+                            promisPhone: undefined
+                        }
+                        : ligne
+                ))
+                return
+            }
+            // La quantité dépasse le lot actuel mais reste dans le stock total
+            // → ouvrir le modal pour répartir sur plusieurs lots
             setTimeout(() => onQuantityExceedsLot(currentLigne.produit, lineId, finalQuantite), 0)
             return // Ne pas mettre à jour la qty ici — le modal s'en chargera
         }

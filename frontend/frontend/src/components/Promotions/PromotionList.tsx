@@ -3,7 +3,7 @@ import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType } from '../../types/Promotion';
-import { format } from 'date-fns';
+import { formatDate } from '../../utils/dateUtils';
 import PromotionForm from './PromotionForm';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
@@ -146,8 +146,8 @@ const PromotionList: React.FC = () => {
                                 <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-500">
                                     <div className="flex items-center gap-1.5">
                                       <CalendarDays className="size-3.5 text-slate-400" />
-                                      {format(new Date(promo.start_date), t('common:date_format_short', 'dd/MM/yyyy'))}
-                                      {promo.end_date ? ` - ${format(new Date(promo.end_date), t('common:date_format_short', 'dd/MM/yyyy'))}` : ` ${t('promotions:list.period.indefinite')}`}
+                                      {formatDate(promo.start_date)}
+                                      {promo.end_date ? ` - ${formatDate(promo.end_date)}` : ` ${t('promotions:list.period.indefinite')}`}
                                     </div>
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap">

@@ -4,9 +4,9 @@ Extrait de commandes.py: ajouter_produit_auto, ajouter_produits_bulk,
 bulk_delete, merge.
 """
 import logging
-from datetime import timezone
 
 from django.db import transaction
+from django.utils import timezone
 from django.db.models import F
 from rest_framework import status
 from rest_framework.decorators import action
@@ -204,7 +204,7 @@ class CommandeBulkActionsMixin:
         
         logger.info(f"Bulk delete requested for IDs: {ids}")
         
-        commandes = Commande.objects.filter(id__in=ids)
+        commandes = Commande.objects.filter(id__in=ids, is_active=True)
         total_found = commandes.count()
         deletable = commandes.exclude(status=Commande.Status.CLOTUREE)
         total_deletable = deletable.count()

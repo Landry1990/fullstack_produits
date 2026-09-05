@@ -4,7 +4,8 @@ import json
 import logging
 import os
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import jwt
 from django.conf import settings
@@ -13,6 +14,121 @@ from django.utils import timezone
 from api.models.licence import Licence
 
 logger = logging.getLogger(__name__)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Période d'essai (30 jours) au premier démarrage sans licence
+# Permet de restaurer un backup et de configurer l'app avant activation
+# ─────────────────────────────────────────────────────────────────────────────
+TRIAL_DAYS = 30
+
+
+def _get_trial_file() -> Path:
+    """Retourne le chemin du fichier de suivi de la période d'essai.
+
+    Utilise /opt/zenith-pharma/ (persistant en prod) ou fallback sur le dossier parent de BASE_DIR.
+    """
+    # En prod : /opt/zenith-pharma est monté en volume (persistant)
+    prod_path = Path('/opt/zenith-pharma/trial_start.txt')
+    if prod_path.parent.exists() and os.access(prod_path.parent, os.W_OK):
+        return prod_path
+    # En dev : le dossier parent de BASE_DIR est monté en volume
+    return Path(settings.BASE_DIR).parent / 'trial_start.txt'
+
+
+def _get_or_create_trial():
+    """Gère la période d'essai au premier démarrage (aucune licence en base).
+
+    Compte les jours d'utilisation distincts (anti-manipulation d'horloge).
+    Stocke le compteur dans DEUX sources (fichier + Redis) pour empêcher la
+    réinitialisation par suppression d'une seule source.
+
+    Retourne: {'est_valide': bool, 'message': str, 'payload': dict|None}
+    """
+    from django.core.cache import cache as _cache
+
+    trial_file = _get_trial_file()
+    redis_key = 'trial_used_days'
+    today = datetime.utcnow().strftime('%Y-%m-%d')
+
+    # ── Source 1 : fichier local ──
+    file_data = None
+    if trial_file.exists():
+        try:
+            file_data = json.loads(trial_file.read_text())
+            if 'used_days' not in file_data or not isinstance(file_data['used_days'], list):
+                file_data = None
+        except Exception:
+            file_data = None
+
+    # ── Source 2 : Redis ──
+    redis_data = None
+    try:
+        cached = _cache.get(redis_key)
+        if cached and isinstance(cached, dict) and 'used_days' in cached:
+            redis_data = cached
+    except Exception:
+        pass
+
+    # ── Fusion : prendre l'union des jours utilisés ──
+    file_days = set(file_data.get('used_days', [])) if file_data else set()
+    redis_days = set(redis_data.get('used_days', [])) if redis_data else set()
+    merged_days = sorted(file_days | redis_days)
+
+    # Si aucune source n'a de données → premier démarrage
+    is_first_start = not file_data and not redis_data
+
+    if is_first_start:
+        merged_days = [today]
+        try:
+            from django.contrib.auth.models import User
+            if not User.objects.exists():
+                User.objects.create_superuser('admin', password='admin')
+                logger.info("[LICENCE] Superuser par défaut créé (admin/admin) — période d'essai")
+        except Exception as e:
+            logger.warning(f"[LICENCE] Impossible de créer le superuser par défaut: {e!s}")
+        logger.info("[LICENCE] Période d'essai démarrée (premier démarrage)")
+
+    # Ajouter le jour courant
+    if today not in merged_days:
+        merged_days.append(today)
+
+    # Sauvegarder dans les deux sources
+    save_data = {'start_date': merged_days[0], 'used_days': merged_days}
+    try:
+        trial_file.write_text(json.dumps(save_data))
+    except Exception as e:
+        logger.warning(f"[LICENCE] Impossible d'écrire le fichier trial: {e!s}")
+    try:
+        _cache.set(redis_key, save_data, timeout=None)  # Pas d'expiration
+    except Exception as e:
+        logger.warning(f"[LICENCE] Impossible d'écrire dans Redis trial: {e!s}")
+
+    days_used = len(merged_days)
+    days_remaining = TRIAL_DAYS - days_used
+
+    if days_remaining <= 0:
+        return {
+            'est_valide': False,
+            'message': f'Période d\'essai expirée ({TRIAL_DAYS} jours d\'utilisation écoulés). Activez votre licence.',
+            'payload': None,
+        }
+
+    payload = {
+        'pharmacie_nom': 'PHARMACIE TEST',
+        'pharmacien_nom': 'DR TEST',
+        'plan': 'TRIAL',
+        'exp': int((datetime.utcnow() + timedelta(days=days_remaining + 1)).timestamp()),
+        'hardware_id': 'ANY',
+        'is_trial': True,
+        'days_remaining': days_remaining,
+        'days_used': days_used,
+    }
+
+    return {
+        'est_valide': True,
+        'message': f'Période d\'essai : {days_remaining} jour(s) restant(s) ({days_used}/{TRIAL_DAYS} utilisés)',
+        'payload': payload,
+    }
 
 
 def _sign_cache_value(value: dict) -> str:
@@ -138,7 +254,19 @@ def valider_licence_systeme():
 
     licence_obj = Licence.objects.last()
     if not licence_obj:
-        return False, "Aucune licence installée.", None
+        # Aucune licence en base — activer la période d'essai (30 jours)
+        trial = _get_or_create_trial()
+        if trial['est_valide']:
+            # Mettre en cache le résultat trial (signé HMAC)
+            result_dict = {
+                'est_valide': True,
+                'message': trial['message'],
+                'payload': trial['payload'],
+            }
+            result_dict['_sig'] = _sign_cache_value(result_dict)
+            cache.set(cache_key, result_dict, timeout=3600)
+            return True, trial['message'], trial['payload']
+        return False, trial['message'], None
         
     try:
         # 1. Décryptage (Vérifie la signature uniquement — pas l'expiration 'exp')

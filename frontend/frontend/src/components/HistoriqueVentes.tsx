@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
-import { format } from 'date-fns';
-import type { Locale } from 'date-fns';
+import { formatDate, getLocalDateString, formatDateLong } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
@@ -10,6 +9,7 @@ import { formatCurrency } from '../utils/formatters';
 import { Button } from './shadcn/button';
 import { Badge } from './shadcn/badge';
 import { logger } from '../utils/logger'
+import { LocalizedDateInput } from './LocalizedDateInput';
 import {
   FileSpreadsheet,
   CalendarDays,
@@ -124,7 +124,10 @@ const HistoriqueVentes = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Historique_Ventes_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+      const now = new Date();
+      const dateStr = getLocalDateString(now);
+      const timeStr = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+      link.setAttribute('download', `Historique_Ventes_${dateStr}_${timeStr}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -185,8 +188,7 @@ const HistoriqueVentes = () => {
             </label>
             <div className="relative">
               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-              <input
-                type="date"
+              <LocalizedDateInput
                 className="w-full h-10 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 value={dateDebut}
                 onChange={(e) => { setDateDebut(e.target.value); setCurrentPage(1); }}
@@ -199,8 +201,7 @@ const HistoriqueVentes = () => {
             </label>
             <div className="relative">
               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-              <input
-                type="date"
+              <LocalizedDateInput
                 className="w-full h-10 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 value={dateFin}
                 onChange={(e) => { setDateFin(e.target.value); setCurrentPage(1); }}
@@ -252,8 +253,8 @@ const HistoriqueVentes = () => {
                     <tr key={row.date} className="hover:bg-slate-50 transition-colors">
                       <td className="font-semibold text-slate-700 whitespace-nowrap py-2 px-3">
                         <div className="flex flex-col">
-                          <span className="text-sm">{format(new Date(row.date), 'dd/MM/yyyy')}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">{format(new Date(row.date), 'EEEE', { locale: (window as unknown as { dateLocale?: Locale }).dateLocale })}</span>
+                          <span className="text-sm">{formatDate(row.date)}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">{formatDateLong(row.date)}</span>
                         </div>
                       </td>
                       <td className="text-right py-2 px-3">

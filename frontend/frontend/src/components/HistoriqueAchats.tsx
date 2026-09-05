@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatDate, formatDateLong, getLocalDateString } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight, FileDown, Printer } from 'lucide-react';
@@ -9,6 +8,7 @@ import { formatCurrency } from '../utils/formatters';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
 import { logger } from '../utils/logger'
+import { LocalizedDateInput } from './LocalizedDateInput';
 
 interface DailyPurchase {
   date: string;
@@ -48,7 +48,7 @@ const handlePrint = () => {
 };
 
 const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
-  const { t, i18n } = useTranslation('orders');
+  const { t } = useTranslation('orders');
   const { user } = useAuth();
   const { settings: pharmacySettings } = usePharmacySettings();
   const [data, setData] = useState<PurchaseRow[]>([]);
@@ -158,7 +158,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         let dataToExport: Record<string, string | number>[] = [];
         if (activeTab === 'summary') {
             dataToExport = (exportData as DailyPurchase[]).map((row) => ({
-                [t('history.columns.date')]: format(new Date(row.date), 'dd/MM/yyyy'),
+                [t('history.columns.date')]: formatDate(row.date),
                 [t('history.columns.nb_orders')]: row.nb_commandes,
                 [t('history.columns.total_purchase')]: normalizeNumber(row.total_achat)
             }));
@@ -172,7 +172,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             }));
         }
 
-        const filename = `historique_achats_${activeTab}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+        const filename = `historique_achats_${activeTab}_${getLocalDateString()}.xlsx`;
         exportToExcel(dataToExport, pharmacySettings, {
             sheetName: activeTab === 'summary' ? t('tabs.purchase_summary') : t('tabs.purchase_details'),
             filename,
@@ -247,8 +247,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <div className="relative w-full">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                  <input
-                    type="date"
+                  <LocalizedDateInput
                     className="w-full h-9 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     value={dateDebut}
                     onChange={(e) => setDateDebut(e.target.value)}
@@ -256,8 +255,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 </div>
                 <div className="relative w-full">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                  <input
-                    type="date"
+                  <LocalizedDateInput
                     className="w-full h-9 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     value={dateFin}
                     onChange={(e) => setDateFin(e.target.value)}
@@ -396,7 +394,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                             <div className="flex items-center gap-3">
                               <div className={`size-1.5 rounded-full ${i === 0 ? 'bg-blue-500' : 'bg-slate-200'}`} />
                               <span className="text-sm font-bold text-slate-600">
-                                {summaryRow.date ? format(new Date(summaryRow.date), 'dd MMMM yyyy', { locale: i18n.language.startsWith('fr') ? fr : undefined }) : '---'}
+                                {summaryRow.date ? formatDateLong(summaryRow.date) : '---'}
                               </span>
                             </div>
                           </td>

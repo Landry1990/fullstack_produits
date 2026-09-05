@@ -1,4 +1,4 @@
-export type TabId = 'sante' | 'sauvegardes' | 'mise_a_jour';
+export type TabId = 'sante' | 'sauvegardes' | 'mise_a_jour' | 'caisse';
 
 export interface DockerContainer {
   name: string;

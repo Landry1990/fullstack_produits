@@ -1,3 +1,21 @@
+export type ChallengeTypeObjectif = 'CA' | 'BOITES' | 'POINTS';
+export type ChallengeMode = 'INDIVIDUEL' | 'EQUIPES';
+export type ChallengeSourceProduits = 'MANUEL' | 'AUTO_PEREMPTION';
+
+export interface ChallengeEquipe {
+    id: number;
+    nom: string;
+    membres: number[];
+    membres_count: number;
+    membres_names: string[];
+}
+
+export interface ChallengePointTier {
+    id: number;
+    mois_max: number;
+    points: number;
+}
+
 export interface Challenge {
     id: number;
     nom: string;
@@ -10,10 +28,22 @@ export interface Challenge {
     all_users: boolean;
     participants: number[];
     produits: number[];
+    type_objectif: ChallengeTypeObjectif;
+    type_objectif_display: string;
+    objectif_valeur: number | null;
+    mode: ChallengeMode;
+    mode_display: string;
+    source_produits: ChallengeSourceProduits;
+    source_produits_display: string;
+    peremption_mois: number | null;
+    equipes: ChallengeEquipe[];
+    point_tiers: ChallengePointTier[];
+    point_tiers_count: number;
     created_by: number | null;
     created_by_name: string;
     participants_count: number;
     produits_count: number;
+    equipes_count: number;
     is_ongoing: boolean;
     created_at: string;
     updated_at: string;
@@ -21,11 +51,16 @@ export interface Challenge {
 
 export interface ChallengeClassementEntry {
     rang: number;
-    user_id: number;
-    username: string;
+    entity_id: number;
+    entity_name: string;
+    entity_type: 'INDIVIDUEL' | 'EQUIPE';
     nb_boites: number;
     ca: number;
     nb_ventes: number;
+    points?: number;
+    objectif: number | null;
+    progression: number | null;
+    atteint: boolean | null;
 }
 
 export interface ChallengeClassement {
@@ -35,11 +70,23 @@ export interface ChallengeClassement {
         date_debut: string;
         date_fin: string;
         statut: string;
-        all_users: boolean;
+        type_objectif: ChallengeTypeObjectif;
+        objectif_valeur: number | null;
+        mode: ChallengeMode;
+        source_produits: ChallengeSourceProduits;
+        peremption_mois: number | null;
         produits_count: number;
+        point_tiers?: ChallengePointTier[];
     };
-    classement_ca: ChallengeClassementEntry[];
-    classement_boites: ChallengeClassementEntry[];
+    classement: ChallengeClassementEntry[];
+}
+
+export interface ChallengeProduitPeremption {
+    produit_id: number;
+    produit_nom: string;
+    date_expiration: string;
+    quantity_remaining: number;
+    jours_until: number;
 }
 
 export interface ChallengeListParams {

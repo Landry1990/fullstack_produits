@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { format } from 'date-fns';
+import { formatDateTime, getLocalDateString } from '../dateUtils';
 import type { PharmacySettings } from '../../hooks/usePharmacySettings';
 import type { ProduitModel } from '../../types';
 
@@ -85,7 +85,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
             currentY += 4;
         }
 
-        doc.text(`Date: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 5, currentY);
+        doc.text(`Date: ${formatDateTime(new Date())}`, 5, currentY);
         currentY += 4;
         if (data.facture_id) {
             doc.text(`Ref Transaction: #${data.facture_id}`, 5, currentY);
@@ -163,5 +163,7 @@ export const generatePromisTicketDraft = (data: PromisTicketData) => {
 
     drawTicketCopy('EXEMPLAIRE CLIENT');
 
-    doc.save(`ticket_promis_${format(new Date(), 'yyyyMMddHHmm')}.pdf`);
+    const now = new Date();
+    const ts = getLocalDateString(now).replace(/-/g, '') + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+    doc.save(`ticket_promis_${ts}.pdf`);
 };

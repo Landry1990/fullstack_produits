@@ -15,7 +15,7 @@ import { ChevronLeft, ChevronRight, Inbox, Eye, Download, AlertTriangle } from '
 import { Button } from '../../shadcn/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../shadcn/card';
 import { Badge } from '../../shadcn/badge';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../ui/Table';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../shadcn/table';
 
 // Constante de module pour éviter la recréation à chaque render
 const EMPTY_PARAMS: Record<string, unknown> = {};

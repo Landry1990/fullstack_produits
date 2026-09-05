@@ -366,14 +366,23 @@ class PosteVenteViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='forcer-fermeture')
     @transaction.atomic
     def forcer_fermeture(self, request, pk=None):
-        """Force la fermeture d'un poste de vente bloqué."""
+        """Force la fermeture d'un poste de vente bloqué (admin uniquement)."""
+        if not (request.user.is_superuser or request.user.is_staff):
+            return Response(
+                {"detail": "Action réservée aux administrateurs."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         poste = self.get_object()
 
         if poste.est_actif:
-            montant_encaisse = Caisse.objects.filter(
-                facture__poste_vente=poste,
-                date_paiement__gte=poste.date_ouverture
-            ).aggregate(total=Sum('montant'))['total'] or Decimal(0)
+            if poste.date_ouverture:
+                montant_encaisse = Caisse.objects.filter(
+                    facture__poste_vente=poste,
+                    date_paiement__gte=poste.date_ouverture
+                ).aggregate(total=Sum('montant'))['total'] or Decimal(0)
+            else:
+                montant_encaisse = Decimal(0)
             poste.est_actif = False
             poste.date_fermeture = timezone.now()
             poste.montant_total_encaisse = montant_encaisse

@@ -13,7 +13,7 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('../../hooks/usePharmacySettings', () => ({
   usePharmacySettings: () => ({ 
-    settings: { pharmacy_name: 'Test Pharma' },
+    settings: { pharmacy_name: 'Test Pharma', billetage_obligatoire: false },
     loading: false
   })
 }));
@@ -25,7 +25,7 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('../../hooks/usePharmacySettings', () => ({
   usePharmacySettings: () => ({ 
-    settings: { pharmacy_name: 'Test Pharma' },
+    settings: { pharmacy_name: 'Test Pharma', billetage_obligatoire: false },
     loading: false
   })
 }));
@@ -154,12 +154,13 @@ describe('JournalCaisse Component', () => {
     fireEvent.click(closeBtn);
 
     // Attendre que le modal de cloture apparaisse (input du montant reel)
+    // Le placeholder est maintenant traduit avec defaultValue "Saisissez le montant réel"
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('0')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/montant r[eé]el|real amount/i)).toBeInTheDocument();
     });
 
     // Saisir un montant reel different du theorique (50000)
-    const realAmountInput = screen.getByPlaceholderText('0');
+    const realAmountInput = screen.getByPlaceholderText(/montant r[eé]el|real amount/i);
     fireEvent.change(realAmountInput, { target: { value: '48000' } });
 
     // Verifier que l'ecart de caisse est affiche

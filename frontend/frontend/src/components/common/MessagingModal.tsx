@@ -7,8 +7,7 @@ import type { InternalMessage, MessageTemplate } from '../../services/communicat
 import userService from '../../services/userService';
 import type { SimpleUser } from '../../services/userService';
 import PremiumModal from './PremiumModal';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatDateTime } from '../../utils/dateUtils';
 import { gooeyToast } from 'goey-toast';
 import { logger } from '../../utils/logger'
 
@@ -364,7 +363,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                         </div>
                         <span className="text-[10px] text-slate-400 flex items-center gap-1 shrink-0">
                           <Clock size={10} />
-                          {format(new Date(m.created_at), 'dd/MM HH:mm', { locale: fr })}
+                          {formatDateTime(m.created_at)}
                         </span>
                       </div>
                       <p className="text-sm text-slate-600 whitespace-pre-wrap">{m.content}</p>
@@ -417,7 +416,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                               <span className="inline-flex items-center gap-0.5 text-slate-400" title={t('unread')}><Check size={12} /></span>;
                           })()}
                           <span className="mx-0.5 text-slate-300">•</span>
-                          {format(new Date(m.created_at), 'dd/MM HH:mm', { locale: fr })}
+                          {formatDateTime(m.created_at)}
                         </span>
                       </div>
                       <p className="text-sm text-slate-500">{m.content}</p>
@@ -463,7 +462,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                         </div>
                         <span className="text-[10px] text-slate-400 flex items-center gap-1 shrink-0">
                           <Clock size={10} />
-                          {format(new Date(m.created_at), 'dd/MM HH:mm', { locale: fr })}
+                          {formatDateTime(m.created_at)}
                         </span>
                       </div>
                       <p className="text-sm text-slate-500 whitespace-pre-wrap">{m.content}</p>
@@ -522,7 +521,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
                         </div>
                         <span className="text-[10px] text-slate-400 flex items-center gap-1 shrink-0">
                           <Clock size={10} />
-                          {format(new Date(m.created_at), 'dd/MM HH:mm', { locale: fr })}
+                          {formatDateTime(m.created_at)}
                         </span>
                       </div>
                       <p className="text-sm text-slate-500 whitespace-pre-wrap">{m.content}</p>

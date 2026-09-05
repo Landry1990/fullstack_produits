@@ -180,15 +180,21 @@ export function usePromisData(): UsePromisDataReturn {
     };
 
     const handlePrintTicket = async (id: number) => {
+        // Ouvrir la fenêtre AVANT l'appel async pour éviter le blocage popup
+        const printWindow = window.open('about:blank', '_blank');
+        if (!printWindow) {
+            gooeyToast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
+            return;
+        }
         try {
             const blob = await promisService.imprimerTicket(id);
             const url = window.URL.createObjectURL(blob);
-            const w = window.open(url, '_blank');
-            if (!w) gooeyToast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
+            printWindow.location.href = url;
             setTimeout(() => window.URL.revokeObjectURL(url), 10000);
         } catch (err) {
             logger.error('Erreur impression ticket:', err);
             gooeyToast.error(t('stock:promis.messages.print_ticket_error', 'Erreur lors de l\'impression'));
+            printWindow.close();
         }
     };
 

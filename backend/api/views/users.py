@@ -30,7 +30,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from ..audit_helpers import log_audit
 from ..centralized_configs import BaseViewSetConfig, StandardResultsSetPagination
-from ..models import AuditLog, Team, UserDailySession
+from ..models import AuditLog, Facture, FactureProduit, Team, UserDailySession
 from ..serializers import ProfileSerializer as UserProfileSerializer
 from ..serializers import TeamSerializer, UserSerializer
 
@@ -553,6 +553,153 @@ class TeamViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        if self.action in {'list', 'retrieve'}:
+        if self.action in {'list', 'retrieve', 'rapport'}:
             return [IsAuthenticated()]
         return [IsAdminUser()]
+
+    @action(detail=False, methods=['get'], url_path='rapport')
+    def rapport(self, request):
+        """Génère un rapport de performance par équipe sur une période donnée.
+
+        Paramètres query:
+            date_debut (YYYY-MM-DD) — défaut: premier jour du mois courant
+            date_fin   (YYYY-MM-DD) — défaut: aujourd'hui
+        """
+        from datetime import date, timedelta
+        from django.db.models import Count, IntegerField, Sum, DecimalField
+        from django.db.models.functions import Coalesce
+
+        today = timezone.now().date()
+        date_debut_str = request.query_params.get('date_debut')
+        date_fin_str = request.query_params.get('date_fin')
+
+        try:
+            date_debut = (
+                date.fromisoformat(date_debut_str)
+                if date_debut_str
+                else today.replace(day=1)
+            )
+            date_fin = date.fromisoformat(date_fin_str) if date_fin_str else today
+        except ValueError:
+            return Response(
+                {'detail': 'Format de date invalide. Attendu: YYYY-MM-DD.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if date_debut > date_fin:
+            return Response(
+                {'detail': 'date_debut ne peut pas être postérieure à date_fin.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        statuts_valides = [Facture.Status.VALIDEE, Facture.Status.PAYEE]
+
+        equipes_data = []
+        equipes = Team.objects.prefetch_related('members').order_by('ordering', 'name')
+
+        for equipe in equipes:
+            membres = list(equipe.members.all())
+            membre_ids = [m.id for m in membres]
+
+            if not membre_ids:
+                equipes_data.append({
+                    'id': equipe.id,
+                    'nom': equipe.name,
+                    'membres_count': 0,
+                    'ca_total': 0,
+                    'nb_ventes': 0,
+                    'nb_boites': 0,
+                    'membres': [],
+                })
+                continue
+
+            factures_membres = Facture.objects.filter(
+                created_by_id__in=membre_ids,
+                status__in=statuts_valides,
+                is_active=True,
+                date__date__gte=date_debut,
+                date__date__lte=date_fin,
+            )
+
+            # Agrégations au niveau de l'équipe
+            agg = factures_membres.aggregate(
+                ca_total=Coalesce(Sum('total_ttc'), 0, output_field=DecimalField(max_digits=12, decimal_places=2)),
+                nb_ventes=Count('id'),
+            )
+            ca_total = float(agg['ca_total'] or 0)
+            nb_ventes = agg['nb_ventes']
+
+            # Nombre de boîtes : somme des quantités des FactureProduit liés
+            facture_ids = list(factures_membres.values_list('id', flat=True))
+            nb_boites = 0
+            if facture_ids:
+                boites_agg = FactureProduit.objects.filter(
+                    facture_id__in=facture_ids
+                ).aggregate(
+                    total=Coalesce(Sum('quantity'), 0, output_field=IntegerField())
+                )
+                nb_boites = int(boites_agg['total'] or 0)
+
+            # Détail par vendeur
+            membres_detail = []
+            for membre in membres:
+                factures_membre = factures_membres.filter(created_by_id=membre.id)
+                m_agg = factures_membre.aggregate(
+                    ca=Coalesce(Sum('total_ttc'), 0, output_field=DecimalField(max_digits=12, decimal_places=2)),
+                    nb_ventes=Count('id'),
+                )
+                m_ca = float(m_agg['ca'] or 0)
+                m_nb_ventes = m_agg['nb_ventes']
+
+                m_facture_ids = list(factures_membre.values_list('id', flat=True))
+                m_nb_boites = 0
+                if m_facture_ids:
+                    m_boites_agg = FactureProduit.objects.filter(
+                        facture_id__in=m_facture_ids
+                    ).aggregate(
+                        total=Coalesce(Sum('quantity'), 0, output_field=IntegerField())
+                    )
+                    m_nb_boites = int(m_boites_agg['total'] or 0)
+
+                membres_detail.append({
+                    'id': membre.id,
+                    'username': membre.username,
+                    'full_name': membre.get_full_name() or membre.username,
+                    'ca': m_ca,
+                    'nb_ventes': m_nb_ventes,
+                    'nb_boites': m_nb_boites,
+                })
+
+            # Trier les membres par CA descendant
+            membres_detail.sort(key=lambda x: x['ca'], reverse=True)
+
+            equipes_data.append({
+                'id': equipe.id,
+                'nom': equipe.name,
+                'membres_count': len(membres),
+                'ca_total': ca_total,
+                'nb_ventes': nb_ventes,
+                'nb_boites': nb_boites,
+                'membres': membres_detail,
+            })
+
+        # Classement par CA total descendant
+        classement = sorted(equipes_data, key=lambda x: x['ca_total'], reverse=True)
+        classement = [
+            {
+                'rang': idx + 1,
+                'equipe_id': e['id'],
+                'nom': e['nom'],
+                'ca_total': e['ca_total'],
+                'nb_ventes': e['nb_ventes'],
+                'nb_boites': e['nb_boites'],
+            }
+            for idx, e in enumerate(classement)
+        ]
+
+        return Response({
+            'date_debut': date_debut.isoformat(),
+            'date_fin': date_fin.isoformat(),
+            'equipes': equipes_data,
+            'classement': classement,
+        })

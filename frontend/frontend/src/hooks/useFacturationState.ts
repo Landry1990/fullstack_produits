@@ -39,6 +39,7 @@ export function useFacturationState() {
   // --- Core local state ---
   const [loading, setLoading] = useState(false)
   const saleInProgressRef = useRef(false)
+  const pendingPrintWindowRef = useRef<Window | null>(null)
   const [isRetrocession, setIsRetrocession] = useState(false)
   const [isFactureA4, setIsFactureA4] = useState(false)
   const [sortBy, setSortBy] = useState<'chrono' | 'stock' | 'name' | 'qty'>('chrono')
@@ -303,14 +304,25 @@ export function useFacturationState() {
               !clientName || clientName.includes('passage') || clientName.includes('divers')
             )
             if (isGenericClient) {
+              // Fermer la fenêtre pré-ouverte — le ClientNameModal s'occupera de l'impression
+              if (pendingPrintWindowRef.current) {
+                pendingPrintWindowRef.current.close()
+                pendingPrintWindowRef.current = null
+              }
               setPendingPrintFacture(result.facture)
               setShowClientNameModal(true)
             } else {
               const nameToUse = result.facture.client_name_override || result.facture.client_name
               let url = `/app/print-invoice/${result.facture.id}`
               if (nameToUse) url += `?client_name=${encodeURIComponent(nameToUse)}`
-              const w = window.open(url, '_blank')
-              if (!w) gooeyToast.error(t('common:popup_blocked'))
+              // Utiliser la fenêtre pré-ouverte
+              if (pendingPrintWindowRef.current) {
+                pendingPrintWindowRef.current.location.href = url
+                pendingPrintWindowRef.current = null
+              } else {
+                const w = window.open(url, '_blank')
+                if (!w) gooeyToast.error(t('common:popup_blocked'))
+              }
             }
             setIsFactureA4(false)
           } else {
@@ -472,6 +484,17 @@ export function useFacturationState() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handlePaymentClick = async () => {
     setLoading(true)
+    // Pré-ouvrir la fenêtre d'impression A4 si demandé (avant les await)
+    // pour éviter le blocage popup par le navigateur
+    pendingPrintWindowRef.current = null
+    if (isFactureA4) {
+      try {
+        pendingPrintWindowRef.current = window.open('about:blank', '_blank')
+      } catch { /* ignore */ }
+      if (!pendingPrintWindowRef.current) {
+        gooeyToast.error(t('common:popup_blocked'))
+      }
+    }
     let freshLignes = cart.lignesFacture
     try {
       const productIds = cart.lignesFacture.map((l: LigneFacture) => l.produit.id)
@@ -501,6 +524,12 @@ export function useFacturationState() {
     const problematicLines = freshLignes.filter((l: LigneFacture) => !l.isPromis && l.quantite > (l.produit.stock ?? 0))
 
     if (problematicLines.length > 0) {
+      // Fermer la fenêtre pré-ouverte — le flux de résolution de stock
+      // peut annuler la vente ou modifier les quantités
+      if (pendingPrintWindowRef.current) {
+        pendingPrintWindowRef.current.close()
+        pendingPrintWindowRef.current = null
+      }
       const items = problematicLines.map((l: LigneFacture) => ({ product: l.produit, quantity: l.quantite, stock: l.produit.stock ?? 0 }))
       ui.setStockResolutionItems(items)
 

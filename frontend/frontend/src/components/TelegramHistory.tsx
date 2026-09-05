@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatDateTime } from '../utils/dateUtils';
 import { Search, RefreshCcw, CheckCircle2, XCircle, Clock, FileText, User, Hash, Loader2 } from 'lucide-react';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
@@ -156,7 +155,7 @@ const TelegramHistory: React.FC = () => {
                                     <td>
                                         <div className="flex flex-col gap-1">
                                             <span className="font-bold text-sm">
-                                                {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                                                {formatDateTime(log.created_at)}
                                             </span>
                                             <span className="text-xs flex items-center gap-1 text-base-content/60">
                                                 <User className="size-3" /> {log.sent_by_name || 'Système'}

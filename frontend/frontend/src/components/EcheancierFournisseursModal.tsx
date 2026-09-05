@@ -21,7 +21,7 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from './ui/Table';
+} from './shadcn/table';
 import SkeletonTable from './ui/SkeletonTable';
 import {
   Search,

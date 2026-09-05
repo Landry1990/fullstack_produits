@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from './shadcn/tabs';
 import { Badge } from './shadcn/badge';
 import { Button } from './shadcn/button';
 import { Input } from './shadcn/input';
+import { LocalizedDateInput } from './LocalizedDateInput';
 import { Select } from './shadcn/select';
 import { Textarea } from './shadcn/textarea';
 import { Checkbox } from './shadcn/checkbox';
@@ -934,11 +935,11 @@ function LeavesTab({ isAdmin }: { isAdmin: boolean }) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.start_date')}</label>
-                <Input type="date" value={formData.start_date} onChange={e => setFormData(prev => ({ ...prev, start_date: e.target.value }))} />
+                <LocalizedDateInput value={formData.start_date} onChange={e => setFormData(prev => ({ ...prev, start_date: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.end_date')}</label>
-                <Input type="date" value={formData.end_date} onChange={e => setFormData(prev => ({ ...prev, end_date: e.target.value }))} />
+                <LocalizedDateInput value={formData.end_date} onChange={e => setFormData(prev => ({ ...prev, end_date: e.target.value }))} />
               </div>
             </div>
             <div>

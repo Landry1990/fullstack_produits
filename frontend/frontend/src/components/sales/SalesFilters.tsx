@@ -2,7 +2,8 @@ import React from 'react';
 import { Search, Calendar, Filter, User, Trash2, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useUsers } from '../../hooks/useUsers';
-import { getLocale } from '../../utils/dateUtils';
+
+import { LocalizedDateInput } from '../LocalizedDateInput';
 
 interface SalesFiltersProps {
     filters: {
@@ -57,17 +58,15 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                 {/* Date Range */}
                 <div className={`flex items-center gap-2 bg-base-100 p-1.5 rounded-lg border px-3 transition-all ${searchTerm ? 'border-amber-300 opacity-40 pointer-events-none' : 'border-base-300'}`}>
                     <Calendar className="h-5 w-5 text-base-content/60" />
-                    <input
-                        type="date"
-                        lang={getLocale()}
+                    <LocalizedDateInput
+                        
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
                         className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
                     />
                     <span className="text-base-content/50">-</span>
-                    <input
-                        type="date"
-                        lang={getLocale()}
+                    <LocalizedDateInput
+                        
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
                         className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"

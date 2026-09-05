@@ -271,9 +271,3 @@ class OrderScheduleSerializer(serializers.ModelSerializer):
         if value < date.today():
             raise serializers.ValidationError("La date de début ne peut pas être dans le passé.")
         return value
-
-    def validate(self, data):
-        """Valider que la date de fin est après la date de début."""
-        if data.get('end_date') and data.get('start_date') and data['end_date'] < data['start_date']:
-            raise serializers.ValidationError("La date de fin doit être après la date de début.")
-        return data

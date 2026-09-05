@@ -13,7 +13,7 @@ import { Badge } from '../shadcn/badge';
 import { Checkbox } from '../shadcn/checkbox';
 import {
     Table, TableHeader, TableBody, TableRow, TableHead, TableCell
-} from '../ui/Table';
+} from '../shadcn/table';
 import {
     DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
     DropdownMenuLabel, DropdownMenuItem

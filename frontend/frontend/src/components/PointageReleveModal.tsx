@@ -6,7 +6,8 @@ import PremiumModal from './common/PremiumModal';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
 import { formatCurrency } from '../utils/formatters';
-import { getLocale } from '../utils/dateUtils';
+import { getLocale, formatDateLong } from '../utils/dateUtils';
+import { LocalizedDateInput } from './LocalizedDateInput';
 
 interface FactureReleve {
   id: number;
@@ -226,11 +227,11 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
               <>
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.start_label')}</label>
-                  <input type="date" lang={getLocale()} className="input input-sm input-bordered" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+                  <LocalizedDateInput  className="input input-sm input-bordered" value={customStart} onChange={e => setCustomStart(e.target.value)} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.end_label')}</label>
-                  <input type="date" lang={getLocale()} className="input input-sm input-bordered" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+                  <LocalizedDateInput  className="input input-sm input-bordered" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
                 </div>
               </>
             )}
@@ -323,7 +324,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                           </td>
                           <td>
                             <div className={`font-medium ${isPointed ? 'text-success' : 'text-base-content/80'}`}>
-                              {new Date(f.date_cloture).toLocaleDateString(getLocale(), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                              {formatDateLong(new Date(f.date_cloture))}
                             </div>
                           </td>
                           <td>

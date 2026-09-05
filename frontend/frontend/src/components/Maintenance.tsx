@@ -13,6 +13,7 @@ import { getLocale } from '../utils/dateUtils';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import { Button } from './shadcn/button';
 import { Input } from './shadcn/input';
+import { LocalizedDateInput } from './LocalizedDateInput';
 import { Checkbox } from './shadcn/checkbox';
 import { Badge } from './shadcn/badge';
 import {
@@ -22,7 +23,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/Table';
+} from './shadcn/table';
 import { logger } from '../utils/logger'
 import {
   Dialog,
@@ -789,9 +790,7 @@ export default function Maintenance() {
               </h2>
               <div className="mb-2">
                 <label className="block"><span className="text-xs text-slate-600">{t('date_from')}</span></label>
-                <Input
-                  type="date"
-                  lang={getLocale()}
+                <LocalizedDateInput
                   className="h-9 text-sm"
                   value={dateFrom}
                   onChange={e => { setDateFrom(e.target.value); setPreview(null); setPurgeResults(null); }}
@@ -799,9 +798,7 @@ export default function Maintenance() {
               </div>
               <div>
                 <label className="block"><span className="text-xs text-slate-600">{t('date_to')}</span></label>
-                <Input
-                  type="date"
-                  lang={getLocale()}
+                <LocalizedDateInput
                   className="h-9 text-sm"
                   value={dateTo}
                   onChange={e => { setDateTo(e.target.value); setPreview(null); setPurgeResults(null); }}

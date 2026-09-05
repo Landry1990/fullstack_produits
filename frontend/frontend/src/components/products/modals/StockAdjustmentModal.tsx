@@ -8,6 +8,7 @@ import {
 } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
+import { LocalizedDateInput } from '../../LocalizedDateInput';
 import { Select } from '../../ui/Select';
 import { logger } from '../../../utils/logger'
 
@@ -177,8 +178,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                     required
                     size="md"
                   />
-                  <Input
-                    type="date"
+                  <LocalizedDateInput
                     label={t('products:adjustment.expiry_date')}
                     value={form.new_lot_expiration || ''}
                     onChange={(e) => setForm((prev) => ({ ...prev, new_lot_expiration: e.target.value }))}

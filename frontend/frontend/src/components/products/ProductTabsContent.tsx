@@ -12,9 +12,10 @@ import { gooeyToast } from 'goey-toast';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Input } from '../shadcn/input';
+import { LocalizedDateInput } from '../LocalizedDateInput';
 import { Select } from '../ui/Select';
 import { Card, CardContent } from '../shadcn/card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shadcn/table';
 import { Loader2, Check, X, Pencil, Download } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
@@ -287,8 +288,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                             </TableCell>
                             <TableCell className="py-2 px-3">
                                 {isEditing ? (
-                                    <Input
-                                        type="date"
+                                    <LocalizedDateInput
                                         className="w-36 text-xs h-8"
                                         value={editValues.date_expiration}
                                         onChange={e => setEditValues(v => ({ ...v, date_expiration: e.target.value }))}

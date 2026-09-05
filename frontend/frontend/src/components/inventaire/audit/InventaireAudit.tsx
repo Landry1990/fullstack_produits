@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useRecharts } from '../../../hooks/useRecharts';
 import { useInventaireAudit } from '../../../hooks/inventaire/useInventaireAudit';
+import { LocalizedDateInput } from '../../LocalizedDateInput';
 
 interface InventaireAuditProps {
     onBack: () => void;
@@ -161,15 +162,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                     <div className="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
                         <div className="flex items-center gap-2 px-2">
                             <Calendar className="h-4 w-4 text-slate-400" />
-                            <input
-                                type="date"
+                            <LocalizedDateInput
                                 className="h-8 bg-transparent text-sm text-slate-700 outline-none"
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
                             />
                             <span className="text-slate-300">→</span>
-                            <input
-                                type="date"
+                            <LocalizedDateInput
                                 className="h-8 bg-transparent text-sm text-slate-700 outline-none"
                                 value={endDate}
                                 onChange={e => setEndDate(e.target.value)}

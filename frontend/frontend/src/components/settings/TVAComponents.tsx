@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/Table'
+} from '../shadcn/table'
 import type { SettingsTabProps } from './types'
 
 type TFunc = SettingsTabProps['t']

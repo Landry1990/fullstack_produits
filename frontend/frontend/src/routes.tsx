@@ -106,6 +106,8 @@ const Comptabilite = lazyWithRetry(() => import('./components/compta/Comptabilit
 const SystemAdmin = lazyWithRetry(() => import('./components/SystemAdmin'));
 const PlanningOperateurs = lazyWithRetry(() => import('./components/PlanningOperateurs'));
 const LoyaltyPage = lazyWithRetry(() => import('./components/loyalty/LoyaltyPage'));
+const ChallengesPage = lazyWithRetry(() => import('./components/challenges/ChallengesPage'));
+const TeamReportsPage = lazyWithRetry(() => import('./components/TeamReportsPage'));
 
 // ── Helper to reduce boilerplate ──
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -209,6 +211,7 @@ export const router = createBrowserRouter([
           { path: 'analyse-marges-produit', ...perm('statistiques_finances', AnalyseMargesProduit) },
           { path: 'module-financier', ...perm('statistiques_finances', ModuleFinancier) },
           { path: 'classement-vendeurs', ...perm('statistiques_vendeurs', ClassementVendeurs) },
+          { path: 'challenges', ...perm('statistiques_challenges', ChallengesPage) },
           { path: 'analyse-temporelle', ...perm('statistiques_temporelle', AnalyseTemporelle) },
           { path: 'guide-financier', ...perm('statistiques_guide', GuideFinancier) },
           { path: 'compta/dashboard', ...perm('compta_dashboard', Comptabilite, { defaultTab: 'dashboard' }) },
@@ -231,6 +234,7 @@ export const router = createBrowserRouter([
           // ── Admin only ──
           { path: 'utilisateurs', ...admin(GestionUtilisateurs) },
           { path: 'planning-operateurs', ...perm('utilisateurs', PlanningOperateurs) },
+          { path: 'rapport-equipes', ...perm('manager_sidebar', TeamReportsPage) },
           { path: 'user-sessions', ...admin(UserSessions) },
           { path: 'journal-audit', ...admin(JournalAudit) },
           { path: 'import-dci', ...admin(ImportDCIPage) },

@@ -1,6 +1,7 @@
 {
     "dashboard": "Dashboard",
     "manager_sidebar": "Manager Dashboard",
+    "teams_report_sidebar": "Team Report",
     "ventes": {
         "title": "Sales",
         "consultation": "Consultation",
@@ -95,6 +96,7 @@
         "mensuel": "Monthly Report",
         "finances": "Financial Module",
         "classement_vendeurs": "Seller Ranking",
+        "challenges": "Challenges",
         "analyse_temporelle": "Time Analysis",
         "guide": "Financial Guide 📖"
     },
