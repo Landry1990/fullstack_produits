@@ -1,5 +1,6 @@
 from rest_framework.permissions import IsAuthenticated
 
+from .challenges import DashboardChallengesMixin
 from .clients import DashboardClientsMixin
 from .core import DashboardCoreMixin
 from .fournisseurs import DashboardFournisseursMixin
@@ -10,6 +11,7 @@ class DashboardViewSet(
     DashboardCoreMixin,
     DashboardClientsMixin,
     DashboardFournisseursMixin,
+    DashboardChallengesMixin,
 ):
     """
     ViewSet for Dashboard statistics and charts.

@@ -31,6 +31,7 @@ import { Badge } from './shadcn/badge'
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs'
 import { Checkbox } from './shadcn/checkbox'
 import { Input } from './shadcn/input'
+import { LocalizedDateInput } from './LocalizedDateInput'
 import {
   Table,
   TableBody,
@@ -38,7 +39,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/Table'
+} from './shadcn/table'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -720,8 +721,7 @@ export default function Perimes() {
                 <div className="flex flex-wrap gap-2 lg:gap-4 items-center">
                     <div className="flex flex-col gap-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase pl-1">{t('common:from')}</span>
-                        <Input
-                            type="date"
+                        <LocalizedDateInput
                             className="h-9 w-auto"
                             value={dateDebut}
                             onChange={(e) => setDateDebut(e.target.value)}
@@ -729,8 +729,7 @@ export default function Perimes() {
                     </div>
                     <div className="flex flex-col gap-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase pl-1">{t('common:to')}</span>
-                        <Input
-                            type="date"
+                        <LocalizedDateInput
                             className="h-9 w-auto"
                             value={dateFin}
                             onChange={(e) => setDateFin(e.target.value)}

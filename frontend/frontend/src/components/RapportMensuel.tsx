@@ -2,11 +2,12 @@ import { useState, useCallback } from 'react';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../utils/formatters';
-import { formatDate, getLocale } from '../utils/dateUtils';
+import { formatDate } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 import { usePharmacySettings } from '../context/PharmacySettingsContext';
 import { generateMonthlyReportPdfDraft } from '../utils/print/reportPdfDraft';
 import { logger } from '../utils/logger'
+import { LocalizedDateInput } from './LocalizedDateInput';
 
 interface RapportData {
   mois: string;
@@ -344,9 +345,8 @@ export default function RapportMensuel() {
               <div className="flex items-end gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">{t('filters.date_start')}</label>
-                  <input 
-                    type="date"
-                    lang={getLocale()}
+                  <LocalizedDateInput 
+                    
                     className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all w-44" 
                     value={dateDebut}
                     onChange={(e) => { setDateDebut(e.target.value); setActivePreset('custom'); }}
@@ -355,9 +355,8 @@ export default function RapportMensuel() {
                 <div className="flex items-center pb-2 text-slate-300 font-bold">→</div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">{t('filters.date_end')}</label>
-                  <input 
-                    type="date"
-                    lang={getLocale()}
+                  <LocalizedDateInput 
+                    
                     className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all w-44" 
                     value={dateFin}
                     min={dateDebut}

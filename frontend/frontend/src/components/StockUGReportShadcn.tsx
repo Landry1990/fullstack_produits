@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PackageOpen, Calendar, Download, RefreshCw, Banknote, Printer, Search, Eye, X } from 'lucide-react';
 import api from '../services/api';
-import { format } from 'date-fns';
+import { formatDate, formatDateTime, getLocalDateString } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast, GoeyToaster } from 'goey-toast';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 import { writePrintDocument, escHtml } from '../utils/print/printHelpers';
-import { getLocale } from '../utils/dateUtils';
 
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
+import { LocalizedDateInput } from './LocalizedDateInput';
 import { Skeleton } from './ui/Skeleton';
 import {
   Table,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/Table';
+} from './shadcn/table';
 import {
   Dialog,
   DialogContent,
@@ -99,7 +99,7 @@ export default function StockUGReportShadcn() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `rapport_ug_${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.setAttribute("download", `rapport_ug_${getLocalDateString().replace(/-/g, '')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -112,7 +112,7 @@ export default function StockUGReportShadcn() {
       writePrintDocument(win, `
         <html>
           <head>
-            <title>${escHtml(t('stock:rapport_ug.print_template.title'))} - ${format(new Date(), 'dd/MM/yyyy')}</title>
+            <title>${escHtml(t('stock:rapport_ug.print_template.title'))} - ${formatDate(new Date())}</title>
             <style>
               body { font-family: sans-serif; padding: 20px; color: #334155; }
               h1 { text-align: center; font-size: 24px; color: #1e293b; margin-bottom: 5px; }
@@ -133,7 +133,7 @@ export default function StockUGReportShadcn() {
           </head>
           <body>
             <h1>${t('stock:rapport_ug.title')}</h1>
-            <div class="subtitle">${t('stock:rapport_ug.print_template.situation', { date: format(new Date(), 'dd/MM/yyyy') })}</div>
+            <div class="subtitle">${t('stock:rapport_ug.print_template.situation', { date: formatDate(new Date()) })}</div>
 
             <div class="kpi-grid">
               <div class="kpi-card">
@@ -335,9 +335,8 @@ export default function StockUGReportShadcn() {
 
               <div className="flex items-center gap-2 bg-base-100 px-3 py-1.5 rounded-xl border border-base-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm">
                 <Calendar className="size-4 text-base-content/40" />
-                <Input
-                  type="date"
-                  lang={getLocale()}
+                <LocalizedDateInput
+                  
                   className="bg-transparent border-none outline-none text-sm text-base-content/90 w-full shadow-none focus-visible:ring-0 h-6 px-0"
                   value={dateDebut}
                   onChange={e => setDateDebut(e.target.value)}
@@ -346,9 +345,8 @@ export default function StockUGReportShadcn() {
               <span className="text-base-content/40 font-medium whitespace-nowrap">{t('stock:rapport_ug.filters.to')}</span>
               <div className="flex items-center gap-2 bg-base-100 px-3 py-1.5 rounded-xl border border-base-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm">
                 <Calendar className="size-4 text-base-content/40" />
-                <Input
-                  type="date"
-                  lang={getLocale()}
+                <LocalizedDateInput
+                  
                   className="bg-transparent border-none outline-none text-sm text-base-content/90 w-full shadow-none focus-visible:ring-0 h-6 px-0"
                   value={dateFin}
                   onChange={e => setDateFin(e.target.value)}
@@ -494,7 +492,7 @@ export default function StockUGReportShadcn() {
                         <TableCell className="font-medium text-base-content/90 whitespace-nowrap">{detail.produit_nom}</TableCell>
                         <TableCell className="text-base-content/60 font-mono text-xs">{detail.lot_numero}</TableCell>
                         <TableCell className="text-base-content/80 whitespace-nowrap">
-                          {detail.date_reception ? format(new Date(detail.date_reception), 'dd/MM/yyyy HH:mm') : t('common:not_available')}
+                          {detail.date_reception ? formatDateTime(detail.date_reception) : t('common:not_available')}
                         </TableCell>
                         <TableCell className="text-base-content/60 font-mono text-xs">{detail.commande_numero}</TableCell>
                         <TableCell className="text-base-content/60 font-mono text-xs whitespace-nowrap">{detail.facture_numero}</TableCell>

@@ -81,13 +81,16 @@ export const useCreanceActions = ({
     }, [selectedIds.length]);
 
     const handlePrintDirectReceipt = useCallback(async (creanceId: number, paiementId?: number) => {
+        // Ouvrir la fenêtre AVANT l'appel async pour éviter le blocage popup
+        const printWindow = window.open('about:blank', '_blank');
         let blobUrl: string | undefined;
         try {
             const blob = await creanceService.imprimerRecu(creanceId, paiementId);
             blobUrl = window.URL.createObjectURL(blob);
-            const printWindow = window.open(blobUrl, '_blank');
 
-            if (!printWindow) {
+            if (printWindow) {
+                printWindow.location.href = blobUrl;
+            } else {
                 const link = document.createElement('a');
                 link.href = blobUrl;
                 link.setAttribute('download', `recu_paiement_${creanceId}_${paiementId || 'all'}.pdf`);
@@ -101,6 +104,7 @@ export const useCreanceActions = ({
             logger.error('Erreur lors de l\'impression du reçu:', err);
             const error = err as { response?: { data?: { detail?: string } } };
             gooeyToast.error(error.response?.data?.detail || t('creances:toasts.error_print_receipt'));
+            if (printWindow) printWindow.close();
         } finally {
             if (blobUrl) window.URL.revokeObjectURL(blobUrl);
         }
@@ -110,13 +114,16 @@ export const useCreanceActions = ({
     const handlePrintBulkReceipt = useCallback(async (releveId: number) => {
         if (!releveId) return;
 
+        // Ouvrir la fenêtre AVANT l'appel async pour éviter le blocage popup
+        const printWindow = window.open('about:blank', '_blank');
         let url: string | undefined;
         try {
             const blob = await creanceService.imprimerRelevePaiement(releveId);
             url = window.URL.createObjectURL(blob);
-            const printWindow = window.open(url, '_blank');
 
-            if (!printWindow) {
+            if (printWindow) {
+                printWindow.location.href = url;
+            } else {
                 const link = document.createElement('a');
                 link.href = url;
                 link.setAttribute('download', `recapitulatif_reglement_${releveId}.pdf`);
@@ -130,6 +137,7 @@ export const useCreanceActions = ({
             logger.error('Erreur lors de l\'impression du relevé:', err);
             const error = err as { response?: { data?: { detail?: string } } };
             gooeyToast.error(error.response?.data?.detail || t('creances:toasts.error_print_statement'));
+            if (printWindow) printWindow.close();
         } finally {
             if (url) window.URL.revokeObjectURL(url);
         }

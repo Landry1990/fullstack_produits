@@ -13,7 +13,11 @@ class StockLoopholeTestCase(APITestCase):
         self.user = TestDataFactory.create_user(username='vendeur_test')
         self.profile, _ = Profile.objects.get_or_create(user=self.user)
         self.profile.can_sell_negative_stock = False
+        self.profile.can_validate_sales = True
         self.profile.save()
+        # Re-fetch user to ensure profile is fresh
+        self.user = type(self.user).objects.get(pk=self.user.pk)
+        self.client.force_authenticate(user=self.user)
         
         self.client.force_authenticate(user=self.user)
         
@@ -47,7 +51,7 @@ class StockLoopholeTestCase(APITestCase):
         # Attempt to validate
         url = reverse('facture-valider', kwargs={'pk': facture.pk})
         response = self.client.post(url, {'mode_paiement': 'especes'})
-        
+
         # Should FAIL with 400 Bad Request
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('Stock insuffisant', response.data['detail'])

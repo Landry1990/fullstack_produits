@@ -120,42 +120,22 @@ class DashboardCoreMixin(viewsets.ViewSet):
             # 2. Combined Product Metrics (Stock Value & Critical Stock)
             # Critical stock criteria: stock <= stock_min OR stock <= 0 OR stock < 15 days of rotation
             # rotation_moyenne is monthly, so daily is /30. 15 days = (rotation/30)*15 = rotation/2
-            product_stats = Produit.objects.aggregate(
+            product_stats = Produit.objects.filter(is_active=True).aggregate(
                 stock_value=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal(0)),
                 stock_count=Count(Case(When(stock__gt=0, then=Value(1)))),
                 stock_critique=Count(Case(When(
                     Q(is_active=True) & (
-                        Q(stock__lte=F('stock_minimum')) | 
+                        Q(stock__lte=F('stock_minimum')) |
                         Q(stock__lte=0) |
                         (Q(rotation_moyenne__gt=1) & Q(stock__lt=F('rotation_moyenne') / 2.0))
                     ),
                     then=Value(1)
                 )))
             )
-            # Stock value from lots (aligned with Excel export)
-            # Fallback pmp → cost_price (comme l'Excel: p.pmp or p.cost_price or 0)
-            from ...models import StockLot
-            effective_pmp = Case(
-                When(produit__pmp__gt=0, then=F('produit__pmp')),
-                default=F('produit__cost_price'),
-                output_field=DecimalField(),
-            )
-            lot_stock_value = StockLot.objects.filter(
-                produit__is_active=True,
-            ).aggregate(
-                total=Coalesce(
-                    Sum(
-                        ExpressionWrapper(
-                            F('quantity_remaining') * effective_pmp,
-                            output_field=DecimalField()
-                        )
-                    ),
-                    Decimal(0)
-                )
-            )
             stock_critique = product_stats['stock_critique']
-            # Utiliser la valeur calculée depuis les lots (cohérent avec l'export Excel)
-            stock_agg = {'total': lot_stock_value['total'], 'count': product_stats['stock_count']}
+            # Utiliser la valeur calculée depuis Produit.stock * Produit.pmp
+            # (cohérent avec finance_stats.py et statistiques.py)
+            stock_agg = {'total': product_stats['stock_value'], 'count': product_stats['stock_count']}
     
             # 3. Receivables (Créances) — Resté séparé car nécessite une sous-requête complexe sur Caisse
             from django.db.models import Subquery

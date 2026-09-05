@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import api from '../services/api';
 import { Badge } from './ui/Badge';
 import { formatCurrency } from '../utils/formatters';
-import { getLocale, formatDate as formatDateDisplay } from '../utils/dateUtils';
+import { formatDate as formatDateDisplay } from '../utils/dateUtils';
 import { useRecharts } from '../hooks/useRecharts';
 import {
   useAnalyseFournisseurs,
@@ -17,8 +17,9 @@ import { Card, CardContent, CardTitle } from './shadcn/card';
 import { Progress } from './shadcn/progress';
 import { Badge as ShadcnBadge } from './shadcn/badge';
 import { Input } from './ui/Input';
+import { LocalizedDateInput } from './LocalizedDateInput';
 import { Select } from './ui/Select';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/Table';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './shadcn/table';
 import { logger } from '../utils/logger'
 import financeService from '../services/financeService';
 import fournisseurService from '../services/fournisseurService';
@@ -223,9 +224,8 @@ export default function StatistiquesFournisseur() {
             <div className="flex flex-col sm:flex-row sm:items-end gap-2 bg-base-100 p-2 sm:p-3 rounded-lg shadow-sm border border-base-200 w-full md:w-auto">
             <div className="flex flex-col gap-1 w-full sm:w-40">
                 <label className="flex flex-col py-1"><span className="text-sm font-medium text-xs">{t('filters.from')}</span></label>
-                <input 
-                type="date"
-                lang={getLocale()}
+                <LocalizedDateInput 
+                
                 className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                 value={dateDebut}
                 onChange={(e) => setDateDebut(e.target.value)}
@@ -233,9 +233,8 @@ export default function StatistiquesFournisseur() {
             </div>
             <div className="flex flex-col gap-1 w-full sm:w-40">
                 <label className="flex flex-col py-1"><span className="text-sm font-medium text-xs">{t('filters.to')}</span></label>
-                <input 
-                type="date"
-                lang={getLocale()}
+                <LocalizedDateInput 
+                
                 className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                 value={dateFin}
                 onChange={(e) => setDateFin(e.target.value)}
@@ -616,19 +615,17 @@ export default function StatistiquesFournisseur() {
                   <option value="AVOIR">{t('payments_tab.modes.AVOIR')}</option>
                   <option value="AUTRE">{t('payments_tab.modes.AUTRE')}</option>
                 </Select>
-                <Input
+                <LocalizedDateInput
                   label={t('payments_tab.filters.from')}
-                  type="date"
                   size="sm"
-                  lang={getLocale()}
+                  
                   value={paiementDateDebut}
                   onChange={(e) => { setPaiementDateDebut(e.target.value); setPaiementPage(1); }}
                 />
-                <Input
+                <LocalizedDateInput
                   label={t('payments_tab.filters.to')}
-                  type="date"
                   size="sm"
-                  lang={getLocale()}
+                  
                   value={paiementDateFin}
                   onChange={(e) => { setPaiementDateFin(e.target.value); setPaiementPage(1); }}
                 />

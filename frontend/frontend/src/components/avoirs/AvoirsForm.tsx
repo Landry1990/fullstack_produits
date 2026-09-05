@@ -16,7 +16,7 @@ import { Textarea } from '../ui/Textarea';
 import { Label } from '../ui/Label';
 import {
     Table, TableHeader, TableBody, TableRow, TableHead, TableCell
-} from '../ui/Table';
+} from '../shadcn/table';
 
 interface AvoirsFormProps {
     data: UseAvoirsDataReturn;

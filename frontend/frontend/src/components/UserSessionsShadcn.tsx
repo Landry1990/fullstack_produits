@@ -2,15 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatTime, formatDateLong, getLocalDateString } from '../utils/dateUtils';
 import { LogOut, Monitor, Users, Clock, CalendarDays, Search, Loader2 } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
-import { getLocale } from '../utils/dateUtils';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './shadcn/card';
 import { Button } from './shadcn/button';
 import { Input } from './shadcn/input';
+import { LocalizedDateInput } from './LocalizedDateInput';
 import { Badge } from './shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 
@@ -24,7 +23,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/Table';
+} from './shadcn/table';
 
 interface UserSession {
   id: number;
@@ -49,13 +48,9 @@ interface RecapStats {
   avg_duration_display: string;
 }
 
-const formatTime = (dateStr: string | null) => {
-  if (!dateStr) return '---';
-  return format(new Date(dateStr), 'HH:mm:ss');
-};
 
 const UserSessionsShadcn: React.FC = () => {
-  const { t, i18n } = useTranslation(['users', 'common']);
+  const { t } = useTranslation(['users', 'common']);
   const { user, getServerDate } = useAuth();
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [recapData, setRecapData] = useState<RecapStats[]>([]);
@@ -64,14 +59,20 @@ const UserSessionsShadcn: React.FC = () => {
   const [disconnectingId, setDisconnectingId] = useState<number | null>(null);
 
   // Daily filters
-  const [startDate, setStartDate] = useState(() => format(getServerDate(), 'yyyy-MM-dd'));
-  const endDateRef = useRef(format(getServerDate(), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(() => getLocalDateString(getServerDate()));
+  const endDateRef = useRef(getLocalDateString(getServerDate()));
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [operators, setOperators] = useState<{ id: number; username: string }[]>([]);
 
   // Monthly recap filters
-  const [recapMonth, setRecapMonth] = useState<string>(() => format(getServerDate(), 'MM'));
-  const [recapYear, setRecapYear] = useState<string>(() => format(getServerDate(), 'yyyy'));
+  const [recapMonth, setRecapMonth] = useState<string>(() => {
+    const d = new Date(getServerDate());
+    return String(d.getMonth() + 1).padStart(2, '0');
+  });
+  const [recapYear, setRecapYear] = useState<string>(() => {
+    const d = new Date(getServerDate());
+    return String(d.getFullYear());
+  });
 
   useEffect(() => {
     fetchOperators();
@@ -155,12 +156,6 @@ const UserSessionsShadcn: React.FC = () => {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    return format(new Date(dateStr), 'dd MMMM yyyy', {
-      locale: i18n.language === 'en' ? undefined : fr,
-    });
-  };
-
   const getMonthName = (monthValue: string) => {
     const months = [
       'january', 'february', 'march', 'april', 'may', 'june',
@@ -199,10 +194,9 @@ const UserSessionsShadcn: React.FC = () => {
             <form onSubmit={handleFilter} className="flex flex-wrap items-end gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="session-date">{t('sessions.date')}</Label>
-                <Input
+                <LocalizedDateInput
                   id="session-date"
-                  type="date"
-                  lang={getLocale()}
+                  
                   className="w-full md:w-44"
                   value={startDate}
                   onChange={(e) => {
@@ -330,7 +324,7 @@ const UserSessionsShadcn: React.FC = () => {
                       <TableCell className="text-base-content/70 font-medium text-sm">
                         <div className="flex items-center gap-1.5">
                           <CalendarDays className="size-3.5 text-base-content/40" />
-                          {formatDate(session.date)}
+                          {formatDateLong(session.date)}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -361,7 +355,7 @@ const UserSessionsShadcn: React.FC = () => {
                             <Badge variant="default">{t('sessions.closed')}</Badge>
                           ) : (
                             <>
-                              {format(getServerDate(), 'yyyy-MM-dd') === session.date ? (
+                              {getLocalDateString(getServerDate()) === session.date ? (
                                 <Badge variant="default" className="animate-pulse">
                                   {t('sessions.ongoing')}
                                 </Badge>

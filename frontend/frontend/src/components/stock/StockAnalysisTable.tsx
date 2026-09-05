@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/Table';
+} from '../shadcn/table';
 
 interface StockAnalysisTableProps {
     items: StockAnalysisItem[];

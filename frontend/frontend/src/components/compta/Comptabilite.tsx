@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import Pagination from '../ui/Pagination';
+import { LocalizedDateInput } from '../LocalizedDateInput';
 
 const amountFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 const formatFCFA = (amount: number) => amountFormatter.format(amount) + ' F';
@@ -123,15 +124,13 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
 
                     {/* Date Range Picker */}
                     <div className="flex items-center gap-2 bg-slate-50 rounded-xl border border-slate-200 px-3 py-2">
-                        <input 
-                            type="date" 
+                        <LocalizedDateInput 
                             className="bg-transparent border-none focus:ring-0 text-sm p-1 w-32 text-slate-700"
                             value={dateRange.start}
                             onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
                         />
                         <div className="w-px h-4 bg-slate-300"></div>
-                        <input 
-                            type="date" 
+                        <LocalizedDateInput 
                             className="bg-transparent border-none focus:ring-0 text-sm p-1 w-32 text-slate-700"
                             value={dateRange.end}
                             onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
@@ -1066,8 +1065,7 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                             </div>
                             <div className="col-span-2 md:col-span-1">
                                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges.date')}</label>
-                                <input 
-                                    type="date"
+                                <LocalizedDateInput 
                                     className="h-10 w-full px-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                                     value={formData.date}
                                     onChange={(e) => setFormData({...formData, date: e.target.value})}

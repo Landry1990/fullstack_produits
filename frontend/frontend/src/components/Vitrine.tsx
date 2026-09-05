@@ -32,7 +32,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/Table';
+} from './shadcn/table';
 
 interface Product {
   id: number;

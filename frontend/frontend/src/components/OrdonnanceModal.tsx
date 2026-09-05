@@ -6,6 +6,7 @@ import PremiumModal from './common/PremiumModal';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
 import { logger } from '../utils/logger'
+import { LocalizedDateInput } from './LocalizedDateInput';
 
 // LigneFacture type for cart items (simplified for compatibility)
 interface LigneFacture {
@@ -161,8 +162,7 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
 
            <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('modal.prescription_date')}</label>
-            <input 
-              type="date" 
+            <LocalizedDateInput 
               className="w-full h-12 rounded-xl border border-base-300 bg-base-100 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
               value={formData.date_prescription}
               onChange={e => setFormData({...formData, date_prescription: e.target.value})}

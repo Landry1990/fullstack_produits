@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, RotateCcw, Printer, History, Users, Calendar, FileSpreadsheet, ChevronDown, FileText, List } from 'lucide-react';
 import type { Client } from '../../types';
+import { LocalizedDateInput } from '../LocalizedDateInput';
 
 interface CreancesFiltersProps {
     clients: Client[];
@@ -90,8 +91,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                             <Calendar className="size-3.5" /> {t('creances:filters.start_date')}
                         </label>
-                        <input
-                            type="date"
+                        <LocalizedDateInput
                             value={dateDebut}
                             onChange={(e) => onDateDebutChange(e.target.value)}
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-mono text-xs font-bold text-slate-700"
@@ -102,8 +102,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                             <Calendar className="size-3.5" /> {t('creances:filters.end_date')}
                         </label>
-                        <input
-                            type="date"
+                        <LocalizedDateInput
                             value={dateFin}
                             onChange={(e) => onDateFinChange(e.target.value)}
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-mono text-xs font-bold text-slate-700"

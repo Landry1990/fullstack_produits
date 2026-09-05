@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/Table'
+} from '../shadcn/table'
 
 interface FacturesTableProps {
   sortedFactures: Facture[]

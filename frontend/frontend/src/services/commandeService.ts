@@ -22,12 +22,6 @@ export interface CommandeProduitPayload {
     date_expiration?: string | null;
 }
 
-export interface SuggestionFilters {
-    fournisseur_id?: number;
-    rayon_id?: number;
-    days?: number;
-}
-
 export interface CommandeFilters {
     page?: number;
     page_size?: number;
@@ -79,11 +73,6 @@ const commandeService = {
         return response.data;
     },
 
-    toggleStatus: async (id: number): Promise<Commande> => {
-        const response = await api.post<Commande>(`commandes/${id}/toggle_status/`);
-        return response.data;
-    },
-
     annulerReception: async (id: number, sudoData: SudoCredentials = {}): Promise<{ details?: string }> => {
         const response = await api.post<{ details?: string }>(`commandes/${id}/annuler_reception/`, sudoData);
         return response.data;
@@ -103,21 +92,6 @@ const commandeService = {
 
     imprimerReception: async (id: number): Promise<Blob> => {
         const response = await api.get(`commandes/${id}/imprimer_reception/`, { responseType: 'blob' });
-        return response.data;
-    },
-
-    merge: async (targetId: number, sourceIds: number[]): Promise<Commande> => {
-        const response = await api.post<Commande>(`commandes/${targetId}/merge/`, { source_ids: sourceIds });
-        return response.data;
-    },
-
-    transfer: async (id: number, newFournisseurId: number): Promise<Commande> => {
-        const response = await api.post<Commande>(`commandes/${id}/transfer/`, { new_fournisseur_id: newFournisseurId });
-        return response.data;
-    },
-
-    getSuggestions: async (filters: SuggestionFilters = {}): Promise<Commande[]> => {
-        const response = await api.get<Commande[]>('commandes/suggestions/', { params: filters });
         return response.data;
     },
 

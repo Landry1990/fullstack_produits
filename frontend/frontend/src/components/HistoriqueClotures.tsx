@@ -7,7 +7,7 @@ import DatePicker, { registerLocale } from 'react-datepicker'
 import { generateClotureTemplate } from '../utils/print/printTemplates'
 import { writePrintDocument } from '../utils/print/printHelpers'
 import BestCashierMetric from './BestCashierMetric'
-import { format } from 'date-fns'
+
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters'
 import { useTranslation } from 'react-i18next'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
@@ -149,8 +149,8 @@ export default function HistoriqueClotures() {
   const [showBilletage, setShowBilletage] = useState(false)
 
   // Metric month/year (default to now)
-  const [metricMonth, setMetricMonth] = useState<string>(() => format(new Date(), 'MM'))
-  const [metricYear, setMetricYear] = useState<string>(() => format(new Date(), 'yyyy'))
+  const [metricMonth, setMetricMonth] = useState<string>(() => { const now = new Date(); return String(now.getMonth() + 1).padStart(2, '0') })
+  const [metricYear, setMetricYear] = useState<string>(() => { const now = new Date(); return String(now.getFullYear()) })
   const [showMetric, setShowMetric] = useState(false)
 
 

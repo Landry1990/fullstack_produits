@@ -113,6 +113,26 @@ Agent de contrôle (foreground, après 1+2+3) :
 - Backend : `cd backend && python manage.py <cmd>` (env virtuel `my_env01/`)
 - Docker (dev) : `docker compose up` (nécessite Docker Desktop lancé)
 
+### Tests backend (Docker)
+
+```powershell
+# Tests complets d'un module
+docker exec fullstack_produits-backend-1 python manage.py test api.tests.test_<module> -v 2 --noinput
+
+# Exemple : tests des challenges
+docker exec fullstack_produits-backend-1 python manage.py test api.tests.test_challenges -v 2 --noinput
+
+# Tous les tests
+docker exec fullstack_produits-backend-1 python manage.py test api.tests -v 1 --noinput
+```
+
+⚠️ `--noinput` est obligatoire car la test DB existe déjà et Django demande confirmation
+de destruction. Sans `--noinput`, le test échoue avec `EOFError`.
+
+⚠️ Si une migration auto-générée crée un index en double (ex: `0250_facture_facture_poste_status_idx`),
+la rendre no-op (`operations = []`) — les index existent déjà dans les migrations squashed
+précédentes. Ne jamais supprimer la migration, juste la vider.
+
 ## Déploiement
 
 ### En développement (local, Docker Desktop)

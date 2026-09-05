@@ -3,7 +3,42 @@
   "subtitle": "Supervision du serveur, des conteneurs Docker et des sauvegardes automatiques.",
   "tabs": {
     "health": "Santé Serveur",
-    "backups": "Sauvegardes"
+    "backups": "Sauvegardes",
+    "cash": "Caisses"
+  },
+  "backup": {
+    "browse": {
+      "title": "Choisir un dossier",
+      "go": "Aller",
+      "loading": "Chargement...",
+      "empty": "Répertoire vide",
+      "load_error": "Impossible de charger le répertoire",
+      "browse": "Parcourir",
+      "select": "Sélectionner",
+      "cancel": "Annuler"
+    }
+  },
+  "cash": {
+    "force_close": {
+      "title": "Fermeture manuelle des caisses",
+      "subtitle": "Force la fermeture d'une caisse ou d'un point de vente resté ouvert.",
+      "refresh": "Actualiser",
+      "load_error": "Impossible de charger les caisses actives",
+      "no_active": "Aucune caisse ouverte",
+      "name": "Caisse / Poste",
+      "seller": "Vendeur",
+      "opened_at": "Ouvert le",
+      "actions": "Actions",
+      "pos_mode": "Mode POS (sans caisse physique)",
+      "close": "Forcer la fermeture",
+      "success": "Caisse fermée avec succès",
+      "error": "Erreur lors de la fermeture",
+      "confirm_title": "Forcer la fermeture ?",
+      "confirm_desc": "Vous allez fermer manuellement {{name}}.",
+      "confirm_warning": "Attention : les ventes en cours sur ce poste seront dissociées. Cette action est irréversible.",
+      "confirm": "Confirmer la fermeture",
+      "cancel": "Annuler"
+    }
   },
   "refresh": "Actualiser",
   "loading": "Chargement...",

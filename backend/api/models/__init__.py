@@ -31,7 +31,7 @@ from .billing import (
 )
 
 # Clients
-from .challenges import Challenge
+from .challenges import Challenge, ChallengeEquipe, ChallengePointTier
 from .client_credit import AvoirClient, LigneAvoirClient
 from .clients import AyantDroit, Client, Fournisseur, LoyaltyHistory
 
@@ -132,6 +132,8 @@ __all__ = [
     'Client',
     'ClotureCaisse',
     'Challenge',
+    'ChallengeEquipe',
+    'ChallengePointTier',
     # Orders
     'Commande',
     'CommandeProduit',

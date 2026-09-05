@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { gooeyToast } from 'goey-toast';
-import { Server, HardDrive, DownloadCloud } from 'lucide-react';
+import { Server, HardDrive, DownloadCloud, Store } from 'lucide-react';
+import CashForceClosePanel from './caisse/CashForceClosePanel';
 import type {
   TabId, SystemStatus, BackupListData, WalStatus, BackupSettings, UpdateStatus,
 } from './systemadmin/types';
@@ -436,6 +437,7 @@ export default function SystemAdmin() {
     { id: 'sante', label: t('tabs.health'), icon: <Server className="w-4 h-4" /> },
     { id: 'sauvegardes', label: t('tabs.backups'), icon: <HardDrive className="w-4 h-4" /> },
     { id: 'mise_a_jour', label: t('tabs.update'), icon: <DownloadCloud className="w-4 h-4" /> },
+    { id: 'caisse', label: t('tabs.cash'), icon: <Store className="w-4 h-4" /> },
   ];
 
   return (
@@ -532,6 +534,13 @@ export default function SystemAdmin() {
             t={t}
             i18n={i18n}
           />
+        )}
+
+        {/* ── ONGLET FERMETURE DE CAISSE ── */}
+        {activeTab === 'caisse' && (
+          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+            <CashForceClosePanel t={t} />
+          </div>
         )}
 
         {/* ── ONGLET MISE À JOUR ── */}

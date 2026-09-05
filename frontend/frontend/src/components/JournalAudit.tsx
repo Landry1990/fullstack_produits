@@ -1,8 +1,8 @@
 ﻿import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
-import { format, isToday, isYesterday, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { isToday, isYesterday, parseISO } from 'date-fns';
+import { getLocalDateString, formatTime, formatDateLong } from '../utils/dateUtils';
 import { useAuditLogs, useAuditStats, useUsers } from '../hooks/useAudit';
 import { formatNumber } from '../utils/formatters';
 import type { AuditLog } from '../types/audit';
@@ -116,7 +116,7 @@ function groupByDay(logs: AuditLog[]) {
   const map = new Map<string, AuditLog[]>();
   logs.forEach(log => {
     const d = parseISO(log.timestamp);
-    const key = format(d, 'yyyy-MM-dd');
+    const key = getLocalDateString(d);
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(log);
   });
@@ -125,7 +125,7 @@ function groupByDay(logs: AuditLog[]) {
     let label = '';
     if (isToday(d)) label = "Aujourd'hui";
     else if (isYesterday(d)) label = 'Hier';
-    else label = format(d, 'EEEE d MMMM yyyy', { locale: fr });
+    else label = formatDateLong(d);
     groups.push({ label, dateKey: key, logs: dayLogs });
   });
   return groups;
@@ -396,7 +396,7 @@ const JournalAudit: React.FC = () => {
                                                                 )}
                                                                 <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
                                                                     <Clock className="size-2.5" />
-                                                                    {format(parseISO(log.timestamp), 'HH:mm:ss')}
+                                                                    {formatTime(log.timestamp)}
                                                                 </span>
                                                             </div>
 

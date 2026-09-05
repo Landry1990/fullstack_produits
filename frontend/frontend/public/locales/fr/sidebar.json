@@ -1,6 +1,7 @@
 {
     "dashboard": "Tableau de bord",
     "manager_sidebar": "Tableau de Bord Manager",
+    "teams_report_sidebar": "Rapport Équipes",
     "ventes": {
         "title": "Ventes",
         "consultation": "Consultation",
@@ -105,6 +106,7 @@
         "mensuel": "Rapport Mensuel",
         "finances": "Module Financier",
         "classement_vendeurs": "Classement Vendeurs",
+        "challenges": "Challenges",
         "analyse_temporelle": "Analyse Temporelle",
         "guide": "Guide Financier 📖"
     },

@@ -79,8 +79,12 @@
     "status": {
         "prep": "Prép.",
         "pending": "En attente",
-        "closed": "Clôturée"
+        "closed": "Clôturée",
+        "att": "En attente",
+        "clot": "Clôturée"
     },
+    "import_btn": "Importer",
+    "new_product_btn": "Nouveau produit",
     "scheduling": {
         "cancel": "Annuler",
         "save_service": "Enregistrer le service",
@@ -455,10 +459,17 @@
         "missing_id": "ID de commande manquant",
         "quick_product_created": "Produit \"{{name}}\" créé et ajouté",
         "lot_update_success": "Lot / date mis à jour",
-        "lot_update_error": "Erreur lors de la mise à jour"
+        "lot_update_error": "Erreur lors de la mise à jour",
+        "quick_product_updated": "Produit modifié avec succès",
+        "merge_same_status": "Les commandes doivent avoir le même statut pour être fusionnées",
+        "merge_impossible": "Fusion impossible",
+        "merge_success_detailed": "Fusion réussie : {{count}} produits transférés",
+        "lot_or_product_not_found": "Lot ou produit introuvable",
+        "transfer_select_products": "Veuillez sélectionner des produits à transférer"
     },
     "quick_create": {
         "title": "Création rapide de produit",
+        "edit_title": "Modifier le produit",
         "name_placeholder": "Nom du produit...",
         "submit": "Créer le produit"
     },
@@ -614,6 +625,19 @@
     "price_tva": "TVA A",
     "price_purchase_ttc": "PRIX A TTC",
     "price_selling_ttc": "PRIX V TTC",
-    "margin": "MARGE"
+    "margin": "MARGE",
+    "reconditionnement": {
+        "title": "Reconditionnement",
+        "subtitle": "Sélectionnez les transformations à appliquer",
+        "results": "Résultats",
+        "errors": "Erreurs",
+        "no_transformations": "Aucune transformation disponible",
+        "received": "Reçu",
+        "ratio": "Ratio",
+        "selected_count": "{{count}} sélectionnés",
+        "units": "unités",
+        "skip": "Passer",
+        "confirm": "Confirmer"
+    }
 }
 

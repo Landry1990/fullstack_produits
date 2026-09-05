@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { formatDate } from '../../utils/dateUtils';
 import { Check, ChevronLeft, ChevronRight, Download, Eye, FileText, Loader2, Plus, RotateCcw } from 'lucide-react';
 import type { ClientCredit } from '../../types';
 import { Button } from '../shadcn/button';
@@ -155,16 +155,16 @@ export const ClientCreditsList: React.FC<ClientCreditsListProps> = ({
 
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col w-full flex-1 min-h-0">
                 <div className="overflow-x-auto w-full">
-                    <Table className="w-full min-w-[900px]">
+                    <Table className="w-full table-fixed text-sm">
                         <TableHeader>
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                <TableHead className="w-[15%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.number')}</TableHead>
-                                <TableHead className="w-[10%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.date')}</TableHead>
-                                <TableHead className="w-[20%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.client')}</TableHead>
-                                <TableHead className="w-[16%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.invoice')}</TableHead>
-                                <TableHead className="w-[12%] px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.amount')}</TableHead>
-                                <TableHead className="w-[13%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.status')}</TableHead>
-                                <TableHead className="w-[14%] px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.actions')}</TableHead>
+                                <TableHead className="w-32 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.number')}</TableHead>
+                                <TableHead className="w-28 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.date')}</TableHead>
+                                <TableHead className="w-44 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.client')}</TableHead>
+                                <TableHead className="w-32 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.invoice')}</TableHead>
+                                <TableHead className="w-40 px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.amount')}</TableHead>
+                                <TableHead className="w-32 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.status')}</TableHead>
+                                <TableHead className="w-28 px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -192,22 +192,22 @@ export const ClientCreditsList: React.FC<ClientCreditsListProps> = ({
                                 credits.map((credit) => (
                                     <TableRow key={credit.id} className="hover:bg-slate-50/70 transition-colors border-b border-slate-100 last:border-0">
                                         <TableCell className="px-4 py-3">
-                                            <span className="font-mono font-semibold text-sm text-slate-700">{credit.numero}</span>
+                                            <span className="font-mono font-semibold text-sm text-slate-700 truncate block">{credit.numero}</span>
                                         </TableCell>
-                                        <TableCell className="px-4 py-3 text-sm text-slate-600">
-                                            {credit.date ? format(new Date(credit.date), t('common:date_format_short', { defaultValue: 'dd/MM/yyyy' })) : '—'}
+                                        <TableCell className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                                            {credit.date ? formatDate(credit.date) : '—'}
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-slate-700">
-                                            {credit.client_name || t('list.no_client')}
+                                            <span className="truncate block" title={credit.client_name || ''}>{credit.client_name || t('list.no_client')}</span>
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-slate-600">
                                             {credit.facture_numero ? (
-                                                <span className="font-mono text-xs">{credit.facture_numero}</span>
+                                                <span className="font-mono text-xs truncate block">{credit.facture_numero}</span>
                                             ) : (
                                                 '—'
                                             )}
                                         </TableCell>
-                                        <TableCell className="px-4 py-3 text-right text-sm font-semibold text-slate-700">
+                                        <TableCell className="pl-4 pr-8 py-3 text-right text-sm font-semibold text-slate-700 whitespace-nowrap">
                                             {formatCurrency(credit.montant_total)}
                                         </TableCell>
                                         <TableCell className="px-4 py-3">{getStatusBadge(credit.statut)}</TableCell>
