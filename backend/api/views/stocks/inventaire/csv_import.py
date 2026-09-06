@@ -5,6 +5,7 @@ import csv
 import io as csv_io
 from typing import Any
 
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -152,11 +153,9 @@ def _process_csv_row(
     except ValueError:
         raise ValueError(f"Quantité invalide '{quantite_str}'.")
 
-    produit = (
-        Produit.objects.filter(cip1=cip).first()
-        or Produit.objects.filter(cip2=cip).first()
-        or Produit.objects.filter(cip3=cip).first()
-    )
+    produit = Produit.objects.filter(
+        Q(cip1=cip) | Q(cip2=cip) | Q(cip3=cip) | Q(cip4=cip)
+    ).first()
 
     if not produit:
         raise ValueError(f"Produit '{cip}' introuvable.")

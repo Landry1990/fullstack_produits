@@ -1,11 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import { TicketTemplate } from '../printing/TicketTemplate'
+import { buildTicketPrintHtml } from '../../utils/print/printHelpers'
+import { gooeyToast } from 'goey-toast'
+import type { TicketCaisse, PharmacySettings } from '../../types'
 
 interface TicketPreviewModalProps {
   isOpen: boolean
   onClose: () => void
-  ticket: unknown
-  settings: unknown
+  ticket: TicketCaisse | null
+  settings: PharmacySettings | null
   onSendWhatsApp?: () => void
 }
 
@@ -18,7 +21,7 @@ export default function TicketPreviewModal({
 }: TicketPreviewModalProps) {
   const { t } = useTranslation(['facturation', 'common'])
 
-  if (!isOpen || !ticket) return null
+  if (!isOpen || !ticket || !settings) return null
 
   const handlePrint = () => {
     const ticketElement = document.getElementById('ticket-preview');
@@ -31,97 +34,17 @@ export default function TicketPreviewModal({
       .map(node => node.outerHTML)
       .join('\n');
 
-    // Get the current theme from the parent document
-    
-    const win = window.open('about:blank', '', 'height=800,width=600');
-    if (win) {
-      win.document.write(`<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <title>${t('facturation:common.receipt')}</title>
-  <base href="${window.location.origin}/">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  ${styleTags}
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    @media print {
-      @page { 
-        size: ${ticketWidth}mm auto; 
-        margin: 0; 
-      }
-      html, body { 
-        width: ${ticketWidth}mm !important;
-        margin: 0 !important; 
-        padding: 0 !important; 
-        background: white !important;
-        color: black !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
+    const printWindow = window.open('', '_blank', '')
+    if (!printWindow) {
+      gooeyToast.error(t('common:popup_blocked'))
+      return
     }
-    html, body {
-      width: ${ticketWidth}mm;
-      max-width: ${ticketWidth}mm;
-      margin: 0 auto;
-      padding: 0;
-      background: white !important;
-      color: black !important;
-      font-family: 'Inter', 'Poppins', sans-serif;
-      overflow: hidden;
-    }
-    #print-root {
-      width: ${ticketWidth}mm;
-      max-width: ${ticketWidth}mm;
-      overflow: hidden;
-    }
-    /* Force ticket styles to ensure print fidelity */
-    #ticket-preview {
-      width: ${ticketWidth}mm !important;
-      max-width: ${ticketWidth}mm !important;
-      min-width: 0 !important;
-      margin: 0 !important;
-      padding: 2mm !important;
-      background: white !important;
-      color: black !important;
-      box-shadow: none !important;
-      outline: none !important;
-      overflow: hidden;
-      word-break: break-word;
-      overflow-wrap: break-word;
-    }
-    #ticket-preview * {
-      color: black !important;
-    }
-    #ticket-preview table { table-layout: fixed; width: 100% !important; }
-    #ticket-preview td, #ticket-preview th { overflow: hidden; text-overflow: ellipsis; }
-  </style>
-</head>
-<body>
-  <div id="print-root">
-    ${ticketElement.outerHTML}
-  </div>
-  <script>
-    window.onload = () => {
-        const doPrint = () => {
-            window.print();
-            window.close();
-        };
-        if (document.fonts) {
-            document.fonts.ready.then(() => {
-                setTimeout(doPrint, 500);
-            });
-        } else {
-            setTimeout(doPrint, 1500);
-        }
-    };
-  </script>
-</body>
-</html>`);
-      win.document.close();
-      win.focus();
-    }
+
+    const html = buildTicketPrintHtml(ticketWidth, ticketElement.outerHTML, styleTags)
+    printWindow.document.open()
+    printWindow.document.write(html)
+    printWindow.document.close()
+    printWindow.focus()
   }
 
   return (

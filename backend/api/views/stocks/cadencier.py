@@ -39,7 +39,8 @@ class CadencierViewSet(viewsets.ViewSet):
                 Q(name__icontains=search) |
                 Q(cip1__icontains=search) |
                 Q(cip2__icontains=search) |
-                Q(cip3__icontains=search)
+                Q(cip3__icontains=search) |
+                Q(cip4__icontains=search)
             )
 
         if rayon_id:

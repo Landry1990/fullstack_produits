@@ -2,6 +2,7 @@ import i18next from 'i18next';
 import DOMPurify from 'dompurify';
 import { formatDateTime } from '../dateUtils';
 import { formatNumber } from '../formatters';
+import { logger } from '../logger';
 import type { Commande, CommandeProduit } from '../../types';
 
 /**
@@ -125,6 +126,61 @@ export function getModeLabel(mode: string): string {
     en_compte: 'En Compte'
   };
   return fallbacks[mode] || mode?.toUpperCase() || 'N/A';
+}
+
+/**
+ * Imprime un ticket de caisse dans une iframe invisible.
+ * Évite le blocage des popups par le navigateur (window.open).
+ */
+export function printTicketInIframe(ticketWidth: number, content: string, styleTags: string, onError?: () => void): void {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.visibility = 'hidden';
+    iframe.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(iframe);
+
+    try {
+        const html = buildTicketPrintHtml(ticketWidth, content, styleTags);
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!doc) {
+            throw new Error('Impossible d\'accéder au document de l\'iframe');
+        }
+
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        // Déclencher l'impression une fois le contenu chargé
+        const attemptPrint = () => {
+            const win = iframe.contentWindow;
+            if (win) {
+                win.focus();
+                win.print();
+            }
+        };
+
+        if (doc.readyState === 'complete') {
+            setTimeout(attemptPrint, 500);
+        } else {
+            const onLoad = () => {
+                setTimeout(attemptPrint, 500);
+                doc.removeEventListener('readystatechange', onLoad);
+            };
+            doc.addEventListener('readystatechange', onLoad);
+        }
+
+        // Nettoyer l'iframe après un délai
+        setTimeout(() => {
+            iframe.parentNode?.removeChild(iframe);
+        }, 30000);
+    } catch (err) {
+        logger.error('Erreur impression iframe:', err);
+        iframe.parentNode?.removeChild(iframe);
+        onError?.();
+    }
 }
 
 /**

@@ -45,6 +45,7 @@ export interface ProduitModel {
     cip1?: string | null
     cip2?: string | null
     cip3?: string | null
+    cip4?: string | null
     expire_date?: string | null
     stock_alert?: number | null
     stock_minimum?: number | null

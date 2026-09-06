@@ -214,7 +214,7 @@ def generate_labels_pdf(commande, label_format='40x20'):
         invoice_ref = commande.numero_facture if commande.numero_facture else ""
 
         # Déterminer quel CIP utiliser pour le code-barres
-        barcode_value = produit.cip1 or produit.cip2 or produit.cip3 or str(produit.id).zfill(8)
+        barcode_value = produit.cip1 or produit.cip2 or produit.cip3 or produit.cip4 or str(produit.id).zfill(8)
 
         # Utiliser le prix de vente au moment de la commande (item.selling_price)
         # Si non disponible, utiliser le prix actuel du produit

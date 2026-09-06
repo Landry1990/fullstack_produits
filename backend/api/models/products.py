@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from django.contrib.auth.models import User
 from django.contrib.postgres.indexes import GinIndex  # Recherche textuelle performante
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 if TYPE_CHECKING:
@@ -174,6 +175,7 @@ class Produit(models.Model):
     cip1 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
     cip2 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
     cip3 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
+    cip4 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     expire_date = models.DateField(blank=True, null=True)
@@ -319,6 +321,21 @@ class Produit(models.Model):
             from django.core.exceptions import ValidationError
             raise ValidationError("Un produit ne peut être exclusif sans fournisseur attribué.")
 
+        # cip4 : unicité globale sur les 4 champs CIP sans casser les doublons
+        # historiques entre cip1/cip2/cip3 (32 doublons croisés existants).
+        from django.core.exceptions import ValidationError
+        cip4_val = (self.cip4 or '').strip()
+        if cip4_val:
+            if Produit.objects.exclude(pk=self.pk).filter(
+                Q(cip1=cip4_val) | Q(cip2=cip4_val) | Q(cip3=cip4_val) | Q(cip4=cip4_val)
+            ).exists():
+                raise ValidationError("Ce code CIP est déjà utilisé sur un autre produit.")
+        # Empêche cip1/cip2/cip3 de réutiliser une valeur déjà prise en cip4.
+        for cip_field in ('cip1', 'cip2', 'cip3'):
+            cip_val = (getattr(self, cip_field) or '').strip()
+            if cip_val and Produit.objects.exclude(pk=self.pk).filter(cip4=cip_val).exists():
+                raise ValidationError("Ce code CIP est déjà utilisé dans le champ CIP4 d'un autre produit.")
+
         # Calcul automatique des marges — centralisé via MarginService
         if self.cost_price and self.selling_price:
             try:
@@ -365,4 +382,5 @@ class Produit(models.Model):
             GinIndex(fields=['cip1'], name='produit_cip1_trgm_idx', opclasses=['gin_trgm_ops']),
             GinIndex(fields=['cip2'], name='produit_cip2_trgm_idx', opclasses=['gin_trgm_ops']),
             GinIndex(fields=['cip3'], name='produit_cip3_trgm_idx', opclasses=['gin_trgm_ops']),
+            GinIndex(fields=['cip4'], name='produit_cip4_trgm_idx', opclasses=['gin_trgm_ops']),
         ]

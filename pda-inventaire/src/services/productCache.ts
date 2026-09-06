@@ -10,6 +10,7 @@ export interface CachedProduct {
     cip1: string | null;
     cip2: string | null;
     cip3: string | null;
+    cip4: string | null;
     stock: number;
     selling_price: number;
     cost_price?: number;
@@ -54,7 +55,8 @@ class ProductCacheService {
         return all.find(p =>
             (p.cip1 && p.cip1 === needle) ||
             (p.cip2 && p.cip2 === needle) ||
-            (p.cip3 && p.cip3 === needle)
+            (p.cip3 && p.cip3 === needle) ||
+            (p.cip4 && p.cip4 === needle)
         ) || null;
     }
 
