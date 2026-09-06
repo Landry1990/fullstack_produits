@@ -71,14 +71,14 @@ class ProduitStatusMixin:
         # Recherche insensible à la casse sur les 3 champs CIP
         # On essaie d'abord les produits actifs
         produit = Produit.objects.filter(
-            Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip),
+            Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip) | Q(cip4__iexact=cip),
             is_active=True
         ).first()
         
         # Si non trouvé, on cherche parmi les inactifs
         if not produit:
             produit = Produit.objects.filter(
-                Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip)
+                Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip) | Q(cip4__iexact=cip)
             ).first()
 
         if produit:

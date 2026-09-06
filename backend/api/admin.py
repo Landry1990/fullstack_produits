@@ -32,7 +32,7 @@ class CommandeAdmin(admin.ModelAdmin):
 class ProduitAdmin(admin.ModelAdmin):
     list_display = ('name', 'rayon', 'fournisseur', 'stock', 'selling_price')
     list_filter = ('rayon', 'fournisseur')
-    search_fields = ('name', 'description', 'cip1', 'cip2', 'cip3')
+    search_fields = ('name', 'description', 'cip1', 'cip2', 'cip3', 'cip4')
 
 
 class ProfileInline(admin.StackedInline):

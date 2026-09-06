@@ -15,7 +15,7 @@ UPPERCASE_EXCLUDE_FIELDS = frozenset({
     'shift_type', 'leave_type', 'status', 'role',
     'team_mode', 'default_shift',
     'mode_paiement', 'currency', 'locale', 'timezone',
-    'cip1', 'cip2', 'cip3', 'cip',
+    'cip1', 'cip2', 'cip3', 'cip4', 'cip',
     'barcode', 'qr_code',
     'phone', 'telephone', 'mobile', 'whatsapp',
     'numero_facture', 'numero_avoir', 'numero_commande',

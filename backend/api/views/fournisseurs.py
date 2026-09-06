@@ -136,7 +136,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                 result.append({
                     'produit_id': produit.id,
                     'produit_nom': produit.name,
-                    'cip': produit.cip1 or produit.cip2 or produit.cip3 or '-',
+                    'cip': produit.cip1 or produit.cip2 or produit.cip3 or produit.cip4 or '-',
                     'dernier_prix_achat': float(dernier_prix),
                     'derniere_commande': item['derniere_commande'],
                     'prix_vente': float(selling_price),

@@ -181,7 +181,8 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
                 const cipMatch =
                     normalizeCip(product.cip1) === debouncedSearch ||
                     normalizeCip(product.cip2) === debouncedSearch ||
-                    normalizeCip(product.cip3) === debouncedSearch
+                    normalizeCip(product.cip3) === debouncedSearch ||
+                    normalizeCip(product.cip4) === debouncedSearch
 
                 if (cipMatch) {
                     hasHandledBarcode.current = debouncedSearch;

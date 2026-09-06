@@ -70,9 +70,9 @@ class ProduitBulkMixin:
 
         q = Q()
         for cip in normalized_cips:
-            q |= Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip)
+            q |= Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip) | Q(cip4__iexact=cip)
         for cip in numeric_cips:
-            q |= Q(cip1=cip) | Q(cip2=cip) | Q(cip3=cip)
+            q |= Q(cip1=cip) | Q(cip2=cip) | Q(cip3=cip) | Q(cip4=cip)
 
         produits = self.get_queryset().filter(q)
         serializer = ProduitListSerializer(produits, many=True, context={'request': request})

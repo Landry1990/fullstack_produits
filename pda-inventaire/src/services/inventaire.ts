@@ -15,6 +15,7 @@ export interface Produit {
     cip1: string | null;
     cip2: string | null;
     cip3: string | null;
+    cip4: string | null;
     stock: number;
     selling_price: number;
     cost_price?: number; // Correspond à purchase_price
