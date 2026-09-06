@@ -16,6 +16,7 @@ import {
     resolveProductInfo,
     resolveCip,
     resolveStock,
+    resolveRotation,
 } from './productTableUtils';
 
 interface CommandeProductRowProps {
@@ -75,6 +76,7 @@ export function CommandeProductRow({
 
     const cip = resolveCip(p, produitsList);
     const currentStock = resolveStock(p);
+    const rotation = resolveRotation(p);
     // dirty state handled by parent
 
     const _price = Number(p.price || 0);
@@ -153,6 +155,13 @@ export function CommandeProductRow({
                 <TableCell className="text-center py-0.5 bg-amber-50/20">
                     <span className={`text-xs font-bold px-1 rounded ${currentStock <= 0 ? 'text-red-600 bg-red-50' : 'text-amber-600'}`}>
                         {currentStock}
+                    </span>
+                </TableCell>
+
+                {/* Rotation moyenne / mois */}
+                <TableCell className="text-center py-0.5 bg-blue-50/20">
+                    <span className={`text-xs font-bold px-1 rounded ${rotation > 0 ? 'text-blue-600' : 'text-slate-400'}`}>
+                        {rotation > 0 ? rotation.toFixed(0) : '-'}
                     </span>
                 </TableCell>
 

@@ -283,6 +283,7 @@ function _computeReceptionTotals(produits: CommandeProduit[]) {
   let totalLignes = 0;
   let totalUnites = 0;
   let totalGratuites = 0;
+  let totalMarge = 0;
 
   for (const p of produits) {
     const qty = p.quantity || 0;
@@ -290,6 +291,7 @@ function _computeReceptionTotals(produits: CommandeProduit[]) {
     const totalQty = qty + free;
     const priceCost = parseFloat(String(p.price_cost || p.price || 0));
     const tva = parseFloat(String(p.tva || 0));
+    const sellingPrice = parseFloat(String(p.selling_price || 0));
     const lineHT = priceCost * totalQty;
     const lineTVA = lineHT * (tva / 100);
 
@@ -298,9 +300,12 @@ function _computeReceptionTotals(produits: CommandeProduit[]) {
     totalLignes += 1;
     totalUnites += totalQty;
     totalGratuites += free;
+    // Marge = (prix de vente HT - prix d'achat) * quantité payée
+    const sellingHT = sellingPrice / (1 + tva / 100);
+    totalMarge += (sellingHT - priceCost) * qty;
   }
 
-  return { totalHT, totalTVA, totalLignes, totalUnites, totalGratuites };
+  return { totalHT, totalTVA, totalLignes, totalUnites, totalGratuites, totalMarge };
 }
 
 /**
@@ -308,7 +313,7 @@ function _computeReceptionTotals(produits: CommandeProduit[]) {
  */
 export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?: string; address?: string; tel?: string; niu?: string; rc?: string }, mode: 'normal' | 'inkless' = 'inkless'): string {
   const produits = (commande.produits || []) as CommandeProduit[];
-  const { totalHT, totalTVA, totalLignes, totalUnites, totalGratuites } = _computeReceptionTotals(produits);
+  const { totalHT, totalTVA, totalLignes, totalUnites, totalGratuites, totalMarge } = _computeReceptionTotals(produits);
   const isInkless = mode === 'inkless';
   const primaryColor = isInkless ? '#334155' : '#0f172a';
   const lightColor = isInkless ? '#94a3b8' : '#64748b';
@@ -466,7 +471,8 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
       <div class="totals-box">
         <div class="row"><span>TOTAL HT:</span><span>${formatMoney(totalHT)} F</span></div>
         <div class="row"><span>TOTAL TVA:</span><span>${formatMoney(totalTVA)} F</span></div>
-        <div class="row total"><span>Total TTC Réception</span><span>${formatMoney(totalTTC)} FCFA</span></div>
+        <div class="row total"><span>Total TTC</span><span>${formatMoney(totalTTC)} FCFA</span></div>
+        <div class="row" style="margin-top: 8px; padding-top: 8px; border-top: ${totalsBorderTop}; color: ${isInkless ? '#16a34a' : '#15803d'};"><span>Marge obtenue:</span><span>${formatMoney(totalMarge)} F</span></div>
       </div>
     </div>
 

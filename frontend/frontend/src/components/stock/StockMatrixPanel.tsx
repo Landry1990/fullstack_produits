@@ -206,12 +206,12 @@ interface MatrixStats {
 
 const MatrixGrid: React.FC<{ data: StockHealthData; stats: MatrixStats }> = ({ data: _data, stats }) => {
     const { t } = useTranslation('stock');
-    const quadrants: { key: Quadrant; count: number; value?: number; valueLabel?: string }[] = [
+    const quadrants = useMemo<{ key: Quadrant; count: number; value?: number; valueLabel?: string }[]>(() => [
         { key: 'MOTEUR', count: 0 },
         { key: 'HEMORRAGIE', count: stats.hemorragieCount, value: stats.manqueAGagner7j, valueLabel: t('matrix.grid.value_labels.missed_sales') },
         { key: 'SOMNIFERE', count: stats.somifreCount, value: stats.tresorerieBloqueé, valueLabel: t('matrix.grid.value_labels.blocked_cash') },
         { key: 'NEUTRE', count: 0 },
-    ];
+    ], [stats, t]);
 
     return (
         <div className="bg-white rounded-2xl border border-slate-200 p-3">
@@ -265,7 +265,7 @@ const MatrixGrid: React.FC<{ data: StockHealthData; stats: MatrixStats }> = ({ d
 
 const TopPenaltiesTable: React.FC<{ products: MatrixProduct[] }> = ({ products }) => {
     const { t } = useTranslation('stock');
-    const sorted = products.slice().sort((a, b) => a.impact_pts - b.impact_pts).slice(0, 5);
+    const sorted = useMemo(() => products.slice().sort((a, b) => a.impact_pts - b.impact_pts).slice(0, 5), [products]);
 
     if (sorted.length === 0) {
         return (
@@ -285,11 +285,11 @@ const TopPenaltiesTable: React.FC<{ products: MatrixProduct[] }> = ({ products }
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-slate-100">
-                            <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.designation')}</th>
-                            <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.type')}</th>
-                            <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.days')}</th>
-                            <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.value')}</th>
-                            <th className="text-right px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.impact')}</th>
+                            <th scope="col" className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.designation')}</th>
+                            <th scope="col" className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.type')}</th>
+                            <th scope="col" className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.days')}</th>
+                            <th scope="col" className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.value')}</th>
+                            <th scope="col" className="text-right px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t('matrix.penalties.headers.impact')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -309,7 +309,7 @@ const TopPenaltiesTable: React.FC<{ products: MatrixProduct[] }> = ({ products }
                                         </span>
                                     </td>
                                     <td className="px-4 py-3.5 text-right text-sm text-slate-600">
-                                        {p.days_since_sale === 0 ? <span className="text-red-500 font-semibold">{t('matrix.penalties.rupture')}</span> : `${p.days_since_sale}j`}
+                                        {p.days_since_sale === 0 ? <span className="text-red-500 font-semibold">{t('matrix.penalties.rupture')}</span> : `${p.days_since_sale}${t('matrix.penalties.days_short')}`}
                                     </td>
                                     <td className="px-4 py-3.5 text-right text-sm text-slate-700">
                                         {p.stock_value > 0 ? formatCurrency(p.stock_value) : '—'}

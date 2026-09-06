@@ -5,11 +5,13 @@ import {
   ArrowRight,
   Package,
   CalendarDays,
-  TrendingUp
+  TrendingUp,
+  ChevronDown
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import type { TFunction } from 'i18next';
+import { formatDate } from '../../utils/dateUtils';
 
 interface StockStats {
   low_stock?: { value?: number };
@@ -61,12 +63,12 @@ interface OverstockItem {
   value?: number | null;
 }
 
-const formatExpiryDuration = (days: number) => {
+const formatExpiryDuration = (days: number, t: TFunction) => {
   const months = Math.floor(days / 30);
   const remainingDays = days % 30;
-  if (months === 0) return `${remainingDays}j`;
-  if (remainingDays === 0) return `${months}mois`;
-  return `${months}mois ${remainingDays}j`;
+  if (months === 0) return t('alerts.expiry_days_only', { days: remainingDays, defaultValue: `${remainingDays}j` });
+  if (remainingDays === 0) return t('alerts.expiry_months_only', { months, defaultValue: `${months}mois` });
+  return t('alerts.expiry_duration', { months, days: remainingDays, defaultValue: `${months}mois ${remainingDays}j` });
 };
 
 interface StockIntelligenceProps {
@@ -146,17 +148,21 @@ export default function StockIntelligence({
             </div>
 
             <div className="mb-4 shrink-0">
-              <select
-                className="w-full rounded-lg border border-slate-200 bg-white h-8 text-[10px] font-bold uppercase tracking-widest text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none"
-                value={expirationMonths}
-                onChange={(e) => setExpirationMonths(Number(e.target.value))}
-              >
-                <option value={1}>{t('manager_dashboard.expiry_periods.month_1')}</option>
-                <option value={2}>{t('manager_dashboard.expiry_periods.months_2')}</option>
-                <option value={3}>{t('manager_dashboard.expiry_periods.months_3')}</option>
-                <option value={6}>{t('manager_dashboard.expiry_periods.months_6')}</option>
-                <option value={12}>{t('manager_dashboard.expiry_periods.year_1')}</option>
-              </select>
+              <div className="relative">
+                <select
+                  aria-label={t('alerts.expiry_select_label')}
+                  className="w-full rounded-lg border border-slate-200 bg-white h-8 text-[10px] font-bold uppercase tracking-widest text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pr-8"
+                  value={expirationMonths}
+                  onChange={(e) => setExpirationMonths(Number(e.target.value))}
+                >
+                  <option value={1}>{t('manager_dashboard.expiry_periods.month_1')}</option>
+                  <option value={2}>{t('manager_dashboard.expiry_periods.months_2')}</option>
+                  <option value={3}>{t('manager_dashboard.expiry_periods.months_3')}</option>
+                  <option value={6}>{t('manager_dashboard.expiry_periods.months_6')}</option>
+                  <option value={12}>{t('manager_dashboard.expiry_periods.year_1')}</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
+              </div>
             </div>
 
             <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
@@ -193,14 +199,14 @@ export default function StockIntelligence({
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('alerts.lot_label', { lot: lot.lot || t('alerts.na') })}</span>
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                               {lot.date_expiration
-                                ? t('alerts.exp_label', { date: (() => { const d = new Date(lot.date_expiration); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; })() })
+                                ? t('alerts.exp_label', { date: formatDate(lot.date_expiration) })
                                 : t('alerts.exp_label', { date: t('alerts.na') })}
                             </span>
                           </div>
                         </div>
                       </div>
                       <div className="bg-white/50 text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest ml-3 shrink-0 whitespace-nowrap border border-current text-slate-500">
-                        {daysUntilExpiry <= 0 ? t('alerts.expired') : formatExpiryDuration(daysUntilExpiry)}
+                        {daysUntilExpiry <= 0 ? t('alerts.expired') : formatExpiryDuration(daysUntilExpiry, t)}
                       </div>
                     </div>
                   );

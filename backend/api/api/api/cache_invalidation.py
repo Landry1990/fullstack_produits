@@ -1,0 +1,81 @@
+"""
+Cache Invalidation System for Product Stock Updates
+
+This module uses Django signals to automatically invalidate the product cache
+whenever stock levels change through:
+- Order reception (Commande clôturée)
+- Sales (Facture validée/payée)
+- Manual stock adjustments
+- Product modifications
+"""
+
+import logging
+
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
+
+from .cache_utils import SearchCache
+from .dashboard_cache import DashboardCache
+from .models import Commande, Facture, Produit, StockAdjustment
+
+logger = logging.getLogger('api.cache')
+
+def invalidate_produit_cache():
+    """
+    Invalidate all product-related cache entries including search results and lists.
+    """
+    try:
+        SearchCache.invalidate_all_products()
+        logger.info("Product cache (lists and searches) invalidated successfully")
+    except Exception as e:
+        logger.error(f"Failed to invalidate product cache: {e}")
+
+
+@receiver(post_save, sender=Commande)
+def invalidate_cache_on_commande_save(sender, instance, created, **kwargs):
+    """
+    Invalidate product cache when an order is closed (stock entry).
+    
+    Only triggers on status change to CLOTUREE to avoid unnecessary invalidations.
+    """
+    if instance.status == Commande.Status.CLOTUREE:
+        invalidate_produit_cache()
+        DashboardCache.invalidate_on_stock_change()
+        logger.debug(f"Cache invalidated after order {instance.id} closure")
+
+
+@receiver(post_save, sender=Facture)
+def invalidate_cache_on_facture_save(sender, instance, created, **kwargs):
+    """
+    Invalidate product cache when an invoice is validated or paid (stock exit).
+    
+    Triggers on VALIDEE and PAYEE statuses to ensure stock decreases are reflected.
+    """
+    if instance.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]:
+        invalidate_produit_cache()
+        DashboardCache.invalidate_on_sale()
+        logger.debug(f"Cache invalidated after invoice {instance.id} validation/payment")
+
+
+@receiver(post_save, sender=StockAdjustment)
+def invalidate_cache_on_adjustment(sender, instance, created, **kwargs):
+    """
+    Invalidate product cache after a manual stock adjustment.
+    
+    Ensures manual corrections are immediately visible in the product list.
+    """
+    invalidate_produit_cache()
+    DashboardCache.invalidate_on_stock_change()
+    logger.debug(f"Cache invalidated after stock adjustment for product {instance.produit_id}")
+
+
+@receiver(post_save, sender=Produit)
+@receiver(post_delete, sender=Produit)
+def invalidate_cache_on_produit_change(sender, instance, **kwargs):
+    """
+    Invalidate product cache when a product is created, modified, or deleted.
+    
+    Ensures product data changes are immediately reflected in lists and searches.
+    """
+    invalidate_produit_cache()
+    logger.debug(f"Cache invalidated after product {instance.id} change")

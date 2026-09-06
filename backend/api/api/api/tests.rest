@@ -1,0 +1,181 @@
+# Variables pour réutiliser facilement l'URL de base et le type de contenu.
+@baseUrl = http://127.0.0.1:8000/api
+@contentType = application/json
+
+###
+# ==================================================
+# RAYONS API (/rayons/)
+# ==================================================
+
+### GET: Lister tous les rayons
+# @name listRayons
+GET {{baseUrl}}/rayons/
+
+### POST: Créer un nouveau rayon
+# @name createRayon
+POST {{baseUrl}}/rayons/
+Content-Type: {{contentType}}
+
+{
+    "name": "Produits Frais"
+}
+
+# Capture the ID of the newly created rayon to use in other requests.
+# The `| 1` provides a default value if the createRayon request hasn't been run.
+@createdRayonId = {{createRayon.response.body.$.id}}
+
+# Capture the ID of the newly created rayon to use in other requests.
+# The `| 1` provides a default value if the createRayon request hasn't been run.
+@rayonId = {{createdRayonId | 1}}
+
+###
+# Pour les requêtes suivantes, remplacez '1' par l'ID d'un rayon existant.
+@rayonId = {{createdRayonId | 1}}
+
+### GET: Récupérer un rayon spécifique
+GET {{baseUrl}}/rayons/{{rayonId}}/
+
+### PUT: Mettre à jour un rayon
+PUT {{baseUrl}}/rayons/{{rayonId}}/
+Content-Type: {{contentType}}
+
+{
+    "name": "Produits Frais & Bio"
+}
+
+### DELETE: Supprimer un rayon
+DELETE {{baseUrl}}/rayons/{{rayonId}}/
+
+
+###
+# ==================================================
+# FOURNISSEURS API (/fournisseurs/)
+# ==================================================
+
+### GET: Lister tous les fournisseurs
+# @name listFournisseurs
+GET {{baseUrl}}/fournisseurs/
+
+### POST: Créer un nouveau fournisseur
+# @name createFournisseur
+POST {{baseUrl}}/fournisseurs/
+Content-Type: {{contentType}}
+
+{
+    "name": "Le Fournisseur Local",
+    "address": "123 rue du Commerce",
+# Capture the ID of the newly created fournisseur to use in other requests.
+@createdFournisseurId = {{createFournisseur.response.body.$.id}}
+
+    "phone": "0123456789",
+    "email": "contact@fournisseur-local.com"
+@fournisseurId = {{createdFournisseurId | 1}}
+
+# Capture the ID of the newly created fournisseur to use in other requests.
+@createdFournisseurId = {{createFournisseur.response.body.$.id}}
+
+###
+# Pour les requêtes suivantes, remplacez '1' par l'ID d'un fournisseur existant.
+@fournisseurId = {{createdFournisseurId | 1}}
+
+### GET: Récupérer un fournisseur spécifique
+GET {{baseUrl}}/fournisseurs/{{fournisseurId}}/
+
+
+###
+# ==================================================
+# PRODUITS API (/produits/)
+# ==================================================
+
+### GET: Lister tous les produits
+# @name listProduits
+GET {{baseUrl}}/produits/
+
+# Note: Exécutez d'abord les requêtes 'createRayon' et 'createFournisseur'.
+# Les variables @createdRayonId et @createdFournisseurId seront automatiquement utilisées.
+GET {{baseUrl}}/produits/?rayon_name=frais
+
+### GET: Filtrer les produits par prix minimum
+GET {{baseUrl}}/produits/?min_price=5.00
+
+### POST: Créer un nouveau produit
+# Note: Exécutez d'abord les requêtes 'createRayon' et 'createFournisseur'.
+# Les variables @createdRayonId et @createdFournisseurId seront automatiquement utilisées.
+# @name createProduit
+POST {{baseUrl}}/produits/
+Content-Type: {{contentType}}
+    "rayon": {{createdRayonId | 1}},
+    "fournisseur": {{createdFournisseurId | 1}}
+    "name": "Tomates Bio",
+    "description": "Barquette de 500g de tomates cerises bio.",
+# Capture the ID of the newly created produit.
+@createdProduitId = {{createProduit.response.body.$.id}}
+
+    "price": 3.50,
+    "stock": 200,
+@produitId = {{createdProduitId | 1}}
+    "selling_price": 3.50,
+    "rayon": {{createdRayonId | 1}},
+    "fournisseur": {{createdFournisseurId | 1}}
+}
+
+# Capture the ID of the newly created produit.
+@createdProduitId = {{createProduit.response.body.$.id}}
+
+###
+# Pour les requêtes suivantes, remplacez '1' par l'ID d'un produit existant.
+@produitId = {{createdProduitId | 1}}
+
+### GET: Récupérer un produit spécifique
+GET {{baseUrl}}/produits/{{produitId}}/
+
+
+    "fournisseur": {{createdFournisseurId | 1}},
+# ==================================================
+# COMMANDES API (/commandes/)
+# ==================================================
+# Capture the ID of the newly created commande.
+@createdCommandeId = {{createCommande.response.body.$.id}}
+
+
+### POST: Créer une nouvelle commande
+@commandeId = {{createdCommandeId | 1}}
+POST {{baseUrl}}/commandes/
+Content-Type: {{contentType}}
+
+{
+    "fournisseur": {{createdFournisseurId | 1}}
+}
+
+# Capture the ID of the newly created commande.
+@createdCommandeId = {{createCommande.response.body.$.id}}
+
+###
+# Pour les requêtes suivantes, remplacez '1' par l'ID d'une commande existante.
+@commandeId = {{createdCommandeId | 1}}
+
+### GET: Lister toutes les commandes
+# @name listCommandes
+GET {{baseUrl}}/commandes/
+
+### GET: Récupérer une commande spécifique (avec ses produits imbriqués)
+    "commande": {{createdCommandeId | 1}},
+    "produit_id": {{createdProduitId | 1}},
+
+###
+# ==================================================
+# COMMANDEPRODUITS API (/commande-produits/)
+# ==================================================
+
+### POST: Ajouter un produit à une commande
+# @name addProduitToCommande
+POST {{baseUrl}}/commande-produits/
+Content-Type: {{contentType}}
+
+{
+    "commande": {{createdCommandeId | 1}},
+    "produit_id": {{createdProduitId | 1}},
+    "quantity": 20,
+    "price": 3.50,
+    "price_cost": 1.50
+}
