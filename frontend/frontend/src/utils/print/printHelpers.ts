@@ -471,7 +471,7 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
       <div class="totals-box">
         <div class="row"><span>TOTAL HT:</span><span>${formatMoney(totalHT)} F</span></div>
         <div class="row"><span>TOTAL TVA:</span><span>${formatMoney(totalTVA)} F</span></div>
-        <div class="row total"><span>Total TTC</span><span>${formatMoney(totalTTC)} FCFA</span></div>
+        <div class="row total"><span>Total TTC :</span><span>&nbsp;${formatMoney(totalTTC)} F</span></div>
         <div class="row" style="margin-top: 8px; padding-top: 8px; border-top: ${totalsBorderTop}; color: ${isInkless ? '#16a34a' : '#15803d'};"><span>Marge obtenue:</span><span>${formatMoney(totalMarge)} F</span></div>
       </div>
     </div>
