@@ -12,6 +12,17 @@
         "script_hint": "À exécuter en tant qu'administrateur (PowerShell)"
     },
     "all": "Tous",
+    "lock": {
+        "document": "ce document",
+        "connecting": "Connexion au verrou…",
+        "owned": "Vous éditez {{document}}. Les autres postes sont en lecture seule.",
+        "held_by": "{{document}} est en cours d'édition par <0>{{holder}}</0>. Vous êtes en lecture seule.",
+        "available": "{{document}} est disponible pour édition.",
+        "unknown_holder": "un autre utilisateur",
+        "release": "Libérer le verrou",
+        "acquire": "Prendre le verrou",
+        "retry": "Réessayer"
+    },
     "loading": "Chargement...",
     "today": "Aujourd'hui",
     "dashboard": "Tableau de bord",

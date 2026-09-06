@@ -11,6 +11,17 @@
         "copied": "Script copied!",
         "script_hint": "Run as administrator (PowerShell)"
     },
+    "lock": {
+        "document": "this document",
+        "connecting": "Connecting to lock…",
+        "owned": "You are editing {{document}}. Other stations are in read-only mode.",
+        "held_by": "{{document}} is currently being edited by <0>{{holder}}</0>. You are in read-only mode.",
+        "available": "{{document}} is available for editing.",
+        "unknown_holder": "another user",
+        "release": "Release lock",
+        "acquire": "Take lock",
+        "retry": "Retry"
+    },
     "loading": "Loading...",
     "today": "Today",
     "dashboard": "Dashboard",

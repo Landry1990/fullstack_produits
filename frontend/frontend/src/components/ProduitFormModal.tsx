@@ -53,7 +53,7 @@ export default function ProduitFormModal({
   const { tvaList, loading: loadingTVA } = useTVA();
 
   const [form, setForm] = useState<ProduitForm>({
-    name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '',
+    name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
     expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
     rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
     forme: '', groupe: '',
@@ -86,7 +86,7 @@ export default function ProduitFormModal({
         ? Math.round(htPrice * (1 + initialTva / 100)).toString()
         : initialData?.selling_price ?? '';
       setForm({
-        name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '',
+        name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
         expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
         rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
         forme: '', groupe: '',
@@ -223,6 +223,7 @@ export default function ProduitFormModal({
         cip1: form.cip1.trim() || null,
         cip2: form.cip2.trim() || null,
         cip3: form.cip3.trim() || null,
+        cip4: form.cip4.trim() || null,
         expire_date: form.expire_date.trim() || null,
         stock_alert: form.stock_alert ? parseInt(form.stock_alert, 10) : 0,
         stock_minimum: form.stock_minimum ? parseInt(form.stock_minimum, 10) : 0,
@@ -329,7 +330,7 @@ export default function ProduitFormModal({
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cip1')}</label>
                 <Input className={`${inputBase} font-mono`} value={form.cip1} onChange={(e) => setForm((p) => ({ ...p, cip1: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cip2')}</label>
                   <Input className={`${inputSm} font-mono`} value={form.cip2} onChange={(e) => setForm((p) => ({ ...p, cip2: e.target.value }))} />
@@ -337,6 +338,10 @@ export default function ProduitFormModal({
                 <div>
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cip3')}</label>
                   <Input className={`${inputSm} font-mono`} value={form.cip3} onChange={(e) => setForm((p) => ({ ...p, cip3: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cip4')}</label>
+                  <Input className={`${inputSm} font-mono`} value={form.cip4} onChange={(e) => setForm((p) => ({ ...p, cip4: e.target.value }))} />
                 </div>
               </div>
             </div>

@@ -109,6 +109,7 @@ export interface ProduitForm {
     cip1: string
     cip2: string
     cip3: string
+    cip4: string
     expire_date: string
     stock_alert: string
     stock_minimum: string

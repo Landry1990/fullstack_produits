@@ -17,6 +17,7 @@
         "cip1": "CIP1",
         "cip2": "CIP2",
         "cip3": "CIP3",
+        "cip4": "CIP4",
         "provider": "Fournisseur",
         "alert": "Alerte",
         "min": "Min",
@@ -361,6 +362,7 @@
     "cip1_placeholder": "Code CIP 1",
     "cip2_placeholder": "CIP 2",
     "cip3_placeholder": "CIP 3",
+    "cip4_placeholder": "CIP 4",
     "smart_organizer": {
         "example_name": "Ex: AMIFER",
         "example_name_to": "Ex: DAFLON",

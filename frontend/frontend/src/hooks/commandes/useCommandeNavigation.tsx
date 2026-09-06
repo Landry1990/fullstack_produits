@@ -79,6 +79,7 @@ export function useCommandeNavigation({
       const fetchAndShow = async () => {
         try {
           const data = await commandeService.getById(Number(openDetailsId));
+          setCommandeProduits(data.produits || []);
           setSelectedCommande(data);
           setViewMode('DETAILS');
         } catch (err) {
@@ -105,6 +106,7 @@ export function useCommandeNavigation({
         if (viewState.mode === 'EDIT') {
           await openEditView(data);
         } else {
+          setCommandeProduits(data.produits || []);
           setSelectedCommande(data);
           setViewMode('DETAILS');
         }
@@ -334,6 +336,7 @@ export function useCommandeNavigation({
   async function handleViewDetails(commande: Commande) {
     try {
       const data = await commandeService.getById(commande.id);
+      setCommandeProduits(data.produits || []);
       setSelectedCommande(data);
       setViewMode('DETAILS');
       navigate(location.pathname, { replace: true, state: { viewState: { mode: 'DETAILS', commandeId: commande.id } } });

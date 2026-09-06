@@ -83,7 +83,7 @@ function handleRoutePrefetch(path: string) {
 
 
 export default function Sidebar() {
-  const { t } = useTranslation(['sidebar', 'common']);
+  const { t, i18n } = useTranslation(['sidebar', 'common']);
   const { user } = useAuth();
   const { licence } = useLicence();
   const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse } = useSidebar();
@@ -102,7 +102,7 @@ export default function Sidebar() {
   }, []);
   const effectiveCollapsed = isMobile ? false : isCollapsed;
   
-  const allMenuItems = [
+  const allMenuItems = useMemo(() => [
     { path: '/app', label: t('dashboard'), key: 'dashboard', category: 'accueil', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
     )},
@@ -225,7 +225,7 @@ export default function Sidebar() {
         { path: '/app/classement-vendeurs', label: t('statistiques.classement_vendeurs', 'Classement Vendeurs'), key: 'statistiques_vendeurs' },
         { path: '/app/challenges', label: t('statistiques.challenges', 'Challenges'), key: 'statistiques_challenges' },
         { path: '/app/analyse-temporelle', label: t('statistiques.analyse_temporelle', 'Analyse Temporelle'), key: 'statistiques_temporelle' },
-        { path: '/app/guide-financier', label: t('statistiques.guide', 'Guide Financier 📖'), key: 'statistiques_guide' }
+        { path: '/app/guide-financier', label: t('statistiques.guide', 'Guide Financier'), key: 'statistiques_guide' }
       ]
     },
     { 
@@ -331,7 +331,7 @@ export default function Sidebar() {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
       )
     }
-  ];
+  ], [t, i18n.language]);
 
   // Logic to calculate menuItems based on authentication
   const menuItems = useMemo(() => allMenuItems.flatMap(item => {

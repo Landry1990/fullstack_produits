@@ -50,12 +50,12 @@ export function useFacturationClients() {
     // Load clients
     const fetchClients = useCallback(async (signal?: AbortSignal) => {
         const query = debouncedSearch.trim()
-        if (query.length === 1) {
+        if (query.length > 0 && query.length < 2) {
             return
         }
         setLoading(true)
         try {
-            const filters = query ? { search: query, page_size: 25 } : {}
+            const filters = query ? { search: query, page_size: 50 } : { page_size: 50 }
             const data = await clientService.getAll(filters, false, signal) as unknown as Client[] | { results?: Client[] }
             const clientsData = Array.isArray(data) ? data : (data.results || [])
             const loadedClients = clientsData || []
@@ -200,10 +200,14 @@ export function useFacturationClients() {
     // Filtered clients
     const filteredClients = useMemo(() => {
         const query = clientSearch.trim().toLowerCase()
-        if (!query || clients.length === 0) {
-            return clients.slice().sort((a, b) => a.name.localeCompare(b.name)).slice(0, 10)
+        // Dedup par ID au cas où clients contient des doublons
+        const uniqueClients = Array.from(
+            clients.reduce((map, c) => { if (!map.has(c.id)) map.set(c.id, c); return map }, new Map<number, Client>()).values()
+        )
+        if (!query || uniqueClients.length === 0) {
+            return uniqueClients.slice().sort((a, b) => a.name.localeCompare(b.name)).slice(0, 15)
         }
-        const scored = clients.reduce<{ client: Client; score: number }[]>((acc, client) => {
+        const scored = uniqueClients.reduce<{ client: Client; score: number }[]>((acc, client) => {
             const name = client.name.toLowerCase()
             const phone = (client.phone || '').toLowerCase()
             let score = 0
@@ -216,7 +220,7 @@ export function useFacturationClients() {
             return acc
         }, [])
         scored.sort((a, b) => b.score - a.score || a.client.name.localeCompare(b.client.name))
-        return scored.map(item => item.client).slice(0, 10)
+        return scored.map(item => item.client).slice(0, 15)
     }, [clients, clientSearch])
 
     const handleCreateClient = async (e: React.FormEvent) => {
@@ -233,6 +237,8 @@ export function useFacturationClients() {
 
             const payload: Partial<Client> = {
                 ...validation.data,
+                // Force PARTICULIER en facturation — les PRO se créent dans le menu Clients
+                client_type: 'PARTICULIER',
                 address: validation.data.address ?? undefined,
                 phone: validation.data.phone ?? undefined,
                 email: validation.data.email ?? undefined,
@@ -287,7 +293,7 @@ export function useFacturationClients() {
             const clientExists = clients.some(c => c.id === clientId)
             if (!clientExists) {
                 const client = await clientService.getById(clientId)
-                setClients(prev => [...prev, client].slice().sort((a, b) => a.name.localeCompare(b.name)))
+                setClients(prev => prev.some(c => c.id === clientId) ? prev : [...prev, client].slice().sort((a, b) => a.name.localeCompare(b.name)))
             }
 
             setSelectedClient(clientId)

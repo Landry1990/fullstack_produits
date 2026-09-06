@@ -9,6 +9,7 @@ function makeProduct(name: string, overrides: Partial<ProduitModel> = {}): Produ
     cip1: null,
     cip2: null,
     cip3: null,
+    cip4: null,
     stock: 0,
     cost_price: '0',
     selling_price: '0',

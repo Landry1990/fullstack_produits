@@ -115,7 +115,7 @@ export default function ClientSection({
     | { type: 'ayant_droit'; data: AyantDroit }
 
   const mixedItems: MixedItem[] = useMemo(() => {
-    const clientsPart = filteredClients.slice(0, 5).map(c => ({ type: 'client' as const, data: c }))
+    const clientsPart = filteredClients.slice(0, 10).map(c => ({ type: 'client' as const, data: c }))
     const ayantsPart = ayantDroitSearchResults.slice(0, 5).map(ad => ({ type: 'ayant_droit' as const, data: ad }))
     return [...clientsPart, ...ayantsPart]
   }, [filteredClients, ayantDroitSearchResults])

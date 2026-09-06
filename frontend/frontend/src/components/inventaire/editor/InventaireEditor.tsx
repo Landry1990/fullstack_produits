@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDocumentLock } from '../../../hooks/useDocumentLock';
 import { LockBanner } from '../../common/LockBanner';
 import { useTranslation } from 'react-i18next';
@@ -123,7 +123,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
           
           {/* Verrou pessimiste */}
           {activeInventaire && activeInventaire.status !== 'VALIDEE' && (
-            <LockBanner lock={lock} documentLabel="inventaire" />
+            <LockBanner lock={lock} documentLabel={t('inventaire.detail.lock_document_label', { id: activeInventaire?.id })} />
           )}
 
           {/* Header Card */}

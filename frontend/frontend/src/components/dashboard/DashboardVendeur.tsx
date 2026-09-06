@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
     Trophy, TrendingUp, ShoppingCart,
     Target, Clock, Star, BarChart2, Zap,
-    RefreshCw, Loader2
+    RefreshCw, Loader2, Award
 } from 'lucide-react';
 import { useRecharts } from '../../hooks/useRecharts';
 import { useVendeurStats } from '../../hooks/useDashboard';
@@ -12,12 +12,12 @@ import { fr, enUS } from 'date-fns/locale';
 
 function RangBadge({ rang, total }: { rang: number | null; total: number }) {
     if (rang === null) return <span className="text-slate-400 text-xs font-bold">—</span>;
-    const medal = rang === 1 ? '🥇' : rang === 2 ? '🥈' : rang === 3 ? '🥉' : null;
+    const Icon = rang === 1 ? Trophy : rang === 2 ? Award : rang === 3 ? Star : null;
     return (
         <div className="flex items-center gap-1.5">
-            {medal && <span className="text-xl">{medal}</span>}
+            {Icon && <Icon className="size-6 text-amber-600" />}
             <div>
-                <span className={`text-2xl font-black ${rang <= 3 ? 'text-amber-500' : 'text-slate-700'}`}>
+                <span className={`text-2xl font-black ${rang <= 3 ? 'text-amber-700' : 'text-slate-700'}`}>
                     #{rang}
                 </span>
                 <span className="text-xs text-slate-400 font-medium ml-1">/ {total}</span>
@@ -89,6 +89,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                     onClick={() => refetch()}
                     className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                     title={t('vendeur.refresh')}
+                    aria-label={t('vendeur.refresh')}
                 >
                     <RefreshCw className="size-4" />
                 </button>
