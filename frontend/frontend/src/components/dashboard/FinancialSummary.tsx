@@ -55,10 +55,10 @@ export default function FinancialSummary({
                 <table className="w-full text-sm border-separate border-spacing-0">
                   <thead>
                     <tr>
-                      <th className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 pl-4 rounded-l-xl">{t('ug.provider')}</th>
-                      <th className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2">{t('ug.acquired')}</th>
-                      <th className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2">{t('ug.sold')}</th>
-                      <th className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2 pr-4 rounded-r-xl">{t('ug.remaining')}</th>
+                      <th scope="col" className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 pl-4 rounded-l-xl">{t('ug.provider')}</th>
+                      <th scope="col" className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2">{t('ug.acquired')}</th>
+                      <th scope="col" className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2">{t('ug.sold')}</th>
+                      <th scope="col" className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-2 pr-4 rounded-r-xl">{t('ug.remaining')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-base-200">
@@ -131,11 +131,11 @@ export default function FinancialSummary({
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 pl-4 rounded-l-xl text-left">{t('debts.supplier')}</th>
-                      <th className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 text-left">{t('debts.invoice')}</th>
-                      <th className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 text-right">{t('debts.amount_due')}</th>
-                      <th className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 text-center">{t('debts.due_date')}</th>
-                      <th className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 pr-4 rounded-r-xl text-center">{t('debts.status')}</th>
+                      <th scope="col" className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 pl-4 rounded-l-xl text-left">{t('debts.supplier')}</th>
+                      <th scope="col" className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 text-left">{t('debts.invoice')}</th>
+                      <th scope="col" className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 text-right">{t('debts.amount_due')}</th>
+                      <th scope="col" className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 text-center">{t('debts.due_date')}</th>
+                      <th scope="col" className="bg-base-200 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-2 pr-4 rounded-r-xl text-center">{t('debts.status')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-base-200">
@@ -144,7 +144,7 @@ export default function FinancialSummary({
                       const isAujourdhui = e.status === "AUJOURD'HUI";
                       return (
                         <tr key={e.numero_facture} className={`transition-all group ${
-                          isRetard ? 'hover:bg-error/10/50' : isAujourdhui ? 'hover:bg-warning/10/50' : 'hover:bg-base-200'
+                          isRetard ? 'hover:bg-error/10' : isAujourdhui ? 'hover:bg-warning/10' : 'hover:bg-base-200'
                         }`}>
                           <td className="py-2 pl-4 font-bold text-sm text-base-content">{e.fournisseur_nom}</td>
                           <td className="py-2 text-xs font-mono text-base-content/60">{e.numero_facture}</td>

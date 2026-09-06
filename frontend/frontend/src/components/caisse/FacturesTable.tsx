@@ -132,6 +132,9 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedFactures, previewFacture?.id])
 
+  const totalPages = useMemo(() => Math.ceil(sortedFactures.length / pageSize), [sortedFactures.length, pageSize])
+  const pagedFactures = useMemo(() => sortedFactures.slice((page - 1) * pageSize, page * pageSize), [sortedFactures, page, pageSize])
+
   if (loading && sortedFactures.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -139,9 +142,6 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       </div>
     )
   }
-
-  const totalPages = useMemo(() => Math.ceil(sortedFactures.length / pageSize), [sortedFactures.length, pageSize])
-  const pagedFactures = useMemo(() => sortedFactures.slice((page - 1) * pageSize, page * pageSize), [sortedFactures, page, pageSize])
 
   if (sortedFactures.length === 0) {
     return (

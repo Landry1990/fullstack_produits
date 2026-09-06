@@ -1,5 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Search } from 'lucide-react';
+import { Checkbox } from '../shadcn/checkbox';
 
 interface ProductFiltersProps {
   searchQuery: string;
@@ -54,30 +56,25 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
             className="w-full bg-base-200 border border-base-300 focus:border-primary rounded-lg text-sm pl-10 h-10 px-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            autoFocus
           />
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50" />
         </div>
         <div className="flex items-center gap-4 mt-3 px-1">
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-primary checkbox-sm rounded border-base-300"
+          <label htmlFor="filter-in-stock" className="flex items-center gap-2 cursor-pointer group">
+            <Checkbox
+              id="filter-in-stock"
               checked={showInStockOnly}
-              onChange={(e) => setShowInStockOnly(e.target.checked)}
+              onCheckedChange={(checked) => setShowInStockOnly(Boolean(checked))}
             />
             <span className="text-xs font-medium text-base-content/70 group-hover:text-primary transition-colors">
               {t('products:filters.in_stock_only')}
             </span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer group ml-2">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm rounded border-base-300"
+          <label htmlFor="filter-inactive" className="flex items-center gap-2 cursor-pointer group ml-2">
+            <Checkbox
+              id="filter-inactive"
               checked={showInactive}
-              onChange={(e) => setShowInactive(e.target.checked)}
+              onCheckedChange={(checked) => setShowInactive(Boolean(checked))}
             />
             <span className="text-xs font-medium text-base-content/70 group-hover:text-base-content transition-colors">
               {t('products:filters.show_inactive')}

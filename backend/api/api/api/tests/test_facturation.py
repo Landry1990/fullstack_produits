@@ -1,0 +1,783 @@
+"""
+Tests for the Facturation (billing) module.
+Covers: finaliser, destroy, bulk_delete, marquer_payee, stats_jour,
+        historique ventes, and model calculate_totals.
+"""
+from decimal import Decimal
+
+from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from ..models import (
+    Caisse,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+    MouvementStock,
+    PosteVente,
+    StockLot,
+)
+from .factories import TestDataFactory
+
+
+class FinaliserVenteTests(APITestCase):
+    """Tests for the 'finaliser' action — atomic sale completion."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.rayon = TestDataFactory.create_rayon(name='Médicaments')
+        self.fournisseur = TestDataFactory.create_fournisseur(name='Distrib Pharma')
+        self.produit = TestDataFactory.create_produit(
+            name='Doliprane 1000mg', stock=50,
+            cost_price=200, selling_price=500,
+            rayon=self.rayon, fournisseur=self.fournisseur
+        )
+        self.client_obj = TestDataFactory.create_client(name='Patient Dupont')
+        # finalize_sale requires an active cashier session
+        self.session = TestDataFactory.create_session_caisse(user=self.user)
+
+    def _finaliser_payload(self, **overrides):
+        """Helper to build a valid finaliser payload."""
+        payload = {
+            'client': self.client_obj.id,
+            'produits': [{
+                'produit': self.produit.id,
+                'quantity': 3,
+                'selling_price': '500',
+                'discount': '0',
+                'tva': '0',
+            }],
+            'paiements': [{'mode': 'especes', 'montant': '1500'}],
+            'remise': '0',
+            'type': 'STD',
+            'centralized_cash_register': True,
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_finaliser_creates_invoice_and_products(self):
+        """A successful finaliser call creates a facture with its products."""
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload()
+        response = self.client.post(url, payload, format='json')
+        print("RESPONSE DATA:", response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Facture was created
+        facture = Facture.objects.order_by('-id').first()
+        self.assertIsNotNone(facture)
+
+        # Products attached
+        lines = FactureProduit.objects.filter(facture=facture)
+        self.assertEqual(lines.count(), 1)
+        self.assertEqual(lines.first().quantity, 3)
+
+    def test_finaliser_centralized_validates(self):
+        """
+        With centralized_cash_register=True, finaliser validates the invoice
+        immediately and generates a FAC-XXXXXX number. Stock is decremented but
+        payment is recorded later at the central caisse.
+        """
+        # Create a stock lot for FIFO allocation
+        TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=50, lot_name='LOT-CENT-001'
+        )
+        self.produit.stock = 50
+        self.produit.save()
+
+        url = reverse('facture-finaliser')
+        initial_stock = self.produit.stock
+        payload = self._finaliser_payload(centralized_cash_register=True)
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        facture = Facture.objects.order_by('-id').first()
+        # Facture is validated immediately with a FAC-XXXXXX number
+        self.assertEqual(facture.status, Facture.Status.VALIDEE)
+        self.assertTrue(facture.numero_facture.startswith('FAC-'))
+
+        # Stock is decremented in centralized mode
+        self.produit.refresh_from_db()
+        self.assertEqual(self.produit.stock, initial_stock - 3)
+
+        # No payment should be recorded at the point of sale
+        self.assertEqual(Caisse.objects.filter(facture=facture).count(), 0)
+
+    def test_finaliser_non_centralized_validates(self):
+        """
+        With centralized_cash_register=False, finaliser validates the invoice,
+        decrements stock, and creates payment records.
+        """
+        # Create a stock lot for FIFO allocation
+        TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=50, lot_name='LOT-FIN-001'
+        )
+        self.produit.stock = 50
+        self.produit.save()
+
+        url = reverse('facture-finaliser')
+        initial_stock = self.produit.stock
+        payload = self._finaliser_payload(centralized_cash_register=False)
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        facture = Facture.objects.order_by('-id').first()
+        # Should be VALIDEE or PAYEE (payment triggers signal)
+        self.assertIn(facture.status, [Facture.Status.VALIDEE, Facture.Status.PAYEE])
+
+        # Stock decremented
+        self.produit.refresh_from_db()
+        self.assertLess(self.produit.stock, initial_stock)
+
+    def test_finaliser_empty_products_rejected(self):
+        """Finaliser with no products returns 400."""
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(produits=[])
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('produits', response.data.get('detail', '').lower())
+
+    def test_finaliser_with_discount(self):
+        """Finaliser applies the global discount correctly."""
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(remise='200')
+        response = self.client.post(url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        facture = Facture.objects.order_by('-id').first()
+        self.assertEqual(facture.remise, Decimal(200))
+        # TTC = 3 * 500 - 200 = 1300
+        self.assertEqual(facture.total_ttc, Decimal('1300.00'))
+
+    def test_finaliser_creates_payment_in_non_centralized(self):
+        """In non-centralized mode, finaliser creates payment entries in Caisse."""
+        TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=50, lot_name='LOT-PAY-001'
+        )
+        self.produit.stock = 50
+        self.produit.save()
+
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(centralized_cash_register=False)
+        self.client.post(url, payload, format='json')
+
+        facture = Facture.objects.order_by('-id').first()
+        payments = Caisse.objects.filter(facture=facture)
+        self.assertTrue(payments.exists(), "At least one payment record should exist")
+
+    def test_finaliser_lot_specific_price_uses_lot_cost_for_margin(self):
+        """
+        Vente avec un lot specifique dont le price_cost differe du produit.cost_price.
+        L'allocation doit utiliser le price_cost du lot (pas le cost_price global du produit)
+        pour le calcul de la marge.
+        """
+        # Creer un lot avec un price_cost different du produit
+        lot = TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=50, lot_name='LOT-MARGIN-001',
+            price_cost=Decimal('150'),  # lot cost != produit cost_price (200)
+        )
+        # Le signal sync_product_stock_on_lot_save met a jour produit.stock
+        self.produit.refresh_from_db()
+
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(
+            centralized_cash_register=True,
+            produits=[{
+                'produit': self.produit.id,
+                'quantity': 3,
+                'selling_price': '500',
+                'discount': '0',
+                'tva': '0',
+                'lot_id': lot.id,
+            }],
+        )
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        facture = Facture.objects.order_by('-id').first()
+        fp = FactureProduit.objects.filter(facture=facture).first()
+        self.assertIsNotNone(fp)
+        self.assertEqual(fp.stock_lot_id, lot.id)
+
+        # L'allocation doit exister avec le cost_price du lot
+        allocation = FactureProduitAllocation.objects.filter(facture_produit=fp).first()
+        self.assertIsNotNone(allocation)
+        self.assertEqual(allocation.cost_price, Decimal('150.00'),
+                         "L'allocation doit utiliser le price_cost du lot, pas le cost_price du produit")
+        self.assertEqual(allocation.selling_price, Decimal('500.00'))
+
+        # La marge doit etre calculee avec le cost_price du lot
+        # pu_ttc = 500, tva = 0 => pu_ht = 500
+        # marge = (500 - 150) * 3 = 1050
+        expected_margin = (Decimal('500') - Decimal('150')) * 3
+        self.assertEqual(allocation.margin, expected_margin)
+
+    def test_finaliser_multi_lot_creates_separate_lignes(self):
+        """
+        Vente multi-lots (2 lots pour le meme produit) : le payload contient
+        une entree par lot avec lot_id. On verifie que 2 LigneFacture sont creees
+        avec des stock_lot differents.
+        """
+        lot1 = TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=30, lot_name='LOT-MULTI-001',
+        )
+        lot2 = TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=20, lot_name='LOT-MULTI-002',
+        )
+        self.produit.refresh_from_db()
+
+        url = reverse('facture-finaliser')
+        payload = self._finaliser_payload(
+            centralized_cash_register=True,
+            produits=[
+                {
+                    'produit': self.produit.id,
+                    'quantity': 3,
+                    'selling_price': '500',
+                    'discount': '0',
+                    'tva': '0',
+                    'lot_id': lot1.id,
+                },
+                {
+                    'produit': self.produit.id,
+                    'quantity': 2,
+                    'selling_price': '500',
+                    'discount': '0',
+                    'tva': '0',
+                    'lot_id': lot2.id,
+                },
+            ],
+        )
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        facture = Facture.objects.order_by('-id').first()
+        lines = FactureProduit.objects.filter(facture=facture).order_by('id')
+        self.assertEqual(lines.count(), 2,
+                         "2 LigneFacture doivent etre creees pour 2 lots differents")
+
+        # Chaque ligne doit pointer vers un lot different
+        self.assertEqual(lines[0].stock_lot_id, lot1.id)
+        self.assertEqual(lines[1].stock_lot_id, lot2.id)
+
+        # Verifier les quantites
+        self.assertEqual(lines[0].quantity, 3)
+        self.assertEqual(lines[1].quantity, 2)
+
+        # Verifier que les allocations sont creees pour chaque lot
+        allocations = FactureProduitAllocation.objects.filter(
+            facture_produit__facture=facture
+        )
+        self.assertEqual(allocations.count(), 2)
+        lot_ids_in_allocations = set(allocations.values_list('stock_lot_id', flat=True))
+        self.assertEqual(lot_ids_in_allocations, {lot1.id, lot2.id})
+
+
+class MarquerPayeeTests(APITestCase):
+    """Tests for the 'marquer_payee' action."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.client_obj = TestDataFactory.create_client()
+
+    def test_marquer_payee_valid(self):
+        """Marking a validated invoice as paid succeeds."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL', total_ttc=Decimal(1000)
+        )
+        url = reverse('facture-marquer-payee', kwargs={'pk': facture.pk})
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        facture.refresh_from_db()
+        self.assertEqual(facture.status, Facture.Status.PAYEE)
+
+    def test_marquer_payee_brouillon_rejected(self):
+        """Marking a brouillon invoice as paid is rejected."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='BROU'
+        )
+        url = reverse('facture-marquer-payee', kwargs={'pk': facture.pk})
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        facture.refresh_from_db()
+        self.assertEqual(facture.status, Facture.Status.BROUILLON)
+
+    def test_marquer_payee_already_paid_rejected(self):
+        """Marking an already paid invoice returns 400."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='PAY'
+        )
+        url = reverse('facture-marquer-payee', kwargs={'pk': facture.pk})
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class DestroyFactureTests(APITestCase):
+    """Tests for deleting individual invoices."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.client_obj = TestDataFactory.create_client()
+
+    def test_destroy_brouillon_succeeds(self):
+        """Deleting a draft invoice succeeds."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='BROU'
+        )
+        url = reverse('facture-detail', kwargs={'pk': facture.pk})
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        facture.refresh_from_db()
+        self.assertFalse(facture.is_active)
+
+
+class BulkDeleteTests(APITestCase):
+    """Tests for the 'bulk_delete' action."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.client_obj = TestDataFactory.create_client()
+
+    def test_bulk_delete_brouillons(self):
+        """Bulk deleting draft invoices works."""
+        f1 = TestDataFactory.create_facture(client=self.client_obj, status='BROU')
+        f2 = TestDataFactory.create_facture(client=self.client_obj, status='BROU')
+        f3 = TestDataFactory.create_facture(client=self.client_obj, status='BROU')
+
+        url = reverse('facture-bulk-delete')
+        response = self.client.post(url, {'ids': [f1.id, f2.id, f3.id]}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['detail'], '3 facture(s) mise(s) en corbeille.')
+        self.assertEqual(Facture.objects.filter(id__in=[f1.id, f2.id, f3.id], is_active=False).count(), 3)
+
+    def test_bulk_delete_skips_validated(self):
+        """Bulk delete refuses to delete validated invoices."""
+        f_val = TestDataFactory.create_facture(client=self.client_obj, status='VAL')
+        f_brou = TestDataFactory.create_facture(client=self.client_obj, status='BROU')
+
+        url = reverse('facture-bulk-delete')
+        response = self.client.post(url, {'ids': [f_val.id, f_brou.id]}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Only brouillon deleted (soft delete)
+        f_val.refresh_from_db()
+        f_brou.refresh_from_db()
+        self.assertTrue(f_val.is_active)
+        self.assertFalse(f_brou.is_active)
+
+    def test_bulk_delete_no_ids(self):
+        """Bulk delete with empty ID list returns 400."""
+        url = reverse('facture-bulk-delete')
+        response = self.client.post(url, {'ids': []}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class StatsJourTests(APITestCase):
+    """Tests for the 'stats_jour' action."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.rayon = TestDataFactory.create_rayon(name='Rayon Stats')
+        self.fournisseur = TestDataFactory.create_fournisseur(
+            name='Fournisseur Stats',
+            email='stats-fournisseur@test.com',
+            phone='0100000001'
+        )
+
+    def test_stats_jour_empty(self):
+        """stats_jour with no sales returns null top_vendeur and top_produit."""
+        url = reverse('facture-stats-jour')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data['top_vendeur'])
+        self.assertIsNone(response.data['top_produit'])
+
+    def test_stats_jour_with_sales(self):
+        """stats_jour returns top seller and top product from today's sales."""
+        client_stats = TestDataFactory.create_client(
+            name='Client Stats', email='clientstats@test.com', phone='0600000001'
+        )
+        produit1 = TestDataFactory.create_produit(
+            name='Amoxicilline', stock=200,
+            cost_price=100, selling_price=300,
+            rayon=self.rayon, fournisseur=self.fournisseur
+        )
+        produit2 = TestDataFactory.create_produit(
+            name='Ibuprofène', stock=100,
+            cost_price=50, selling_price=150,
+            rayon=self.rayon, fournisseur=self.fournisseur
+        )
+
+        # Create validated invoice with products
+        facture = TestDataFactory.create_facture(
+            client=client_stats, status='VAL',
+            total_ttc=Decimal('1200.00'), created_by=self.user
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=produit1, quantity=3, selling_price=Decimal(300)
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=produit2, quantity=1, selling_price=Decimal(150)
+        )
+        
+        # Add a payment so the invoice is included in stats
+        TestDataFactory.create_caisse(
+            facture=facture, montant=Decimal('1350.00'), mode_paiement='especes',
+            user=self.user
+        )
+
+        url = reverse('facture-stats-jour')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(response.data['top_vendeur'])
+        self.assertIsNotNone(response.data['top_produit'])
+        # Top produit should be Amoxicilline (qty=3 > qty=1)
+        self.assertEqual(response.data['top_produit']['name'], 'Amoxicilline')
+        self.assertEqual(response.data['top_produit']['quantity'], 3)
+
+
+class HistoriqueVentesTests(APITestCase):
+    """Tests for HistoriqueVentesViewSet."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.rayon = TestDataFactory.create_rayon(name='Rayon Hist')
+        self.fournisseur = TestDataFactory.create_fournisseur(
+            name='Fournisseur Hist',
+            email='hist-fournisseur@test.com',
+            phone='0100000002'
+        )
+        self.client_obj = TestDataFactory.create_client(
+            name='Client Hist', email='clienthist@test.com', phone='0600000002'
+        )
+
+    def test_historique_list(self):
+        """List returns aggregated daily data for validated invoices."""
+        TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL',
+            total_ttc=Decimal(5000), total_ht=Decimal(4200),
+            total_tva=Decimal(800)
+        )
+
+        url = reverse('historiqueventes-list')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # HistoriqueVentesViewSet.list returns a dict {count, results, totals}
+        self.assertIn('results', response.data)
+        self.assertGreaterEqual(len(response.data['results']), 1)
+
+        day_data = response.data['results'][0]
+        self.assertIn('nb_ventes', day_data)
+        self.assertIn('ca_ttc', day_data)
+
+    def test_ventes_par_tranche_with_dates(self):
+        """ventes_par_tranche returns product-level data for a given range."""
+        produit = TestDataFactory.create_produit(
+            name='Paracétamol', stock=100,
+            cost_price=30, selling_price=80,
+            rayon=self.rayon, fournisseur=self.fournisseur
+        )
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL'
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=produit, quantity=5, selling_price=Decimal(80)
+        )
+
+        now = timezone.now()
+        debut = (now - timezone.timedelta(hours=2)).isoformat()
+        fin = (now + timezone.timedelta(hours=1)).isoformat()
+
+        url = reverse('historiqueventes-ventes-par-tranche')
+        response = self.client.get(url, {'date_debut': debut, 'date_fin': fin})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Should have at least the product row + TOTAL row
+        self.assertGreaterEqual(len(response.data), 2)
+
+        # Last row should be TOTAL
+        total_row = response.data[-1]
+        self.assertEqual(total_row['nom'], 'TOTAL')
+
+
+class CalculateTotalsTests(TestCase):
+    """Tests for the Facture.calculate_totals model method."""
+
+    def setUp(self):
+        self.client_obj = TestDataFactory.create_client(
+            name='Client Calc', email='clientcalc@test.com', phone='0600000003'
+        )
+        self.produit = TestDataFactory.create_produit(
+            name='Produit Calc', selling_price=1000, cost_price=500
+        )
+
+    def test_totals_simple(self):
+        """calculate_totals with a single line, no TVA, no discount."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='BROU'
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=self.produit,
+            quantity=3, selling_price=Decimal(1000)
+        )
+
+        facture.refresh_from_db()
+        self.assertEqual(facture.total_ttc, Decimal('3000.00'))
+
+    def test_totals_with_global_discount(self):
+        """calculate_totals subtracts the global discount (remise)."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='BROU', remise=Decimal(500)
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=self.produit,
+            quantity=2, selling_price=Decimal(1000)
+        )
+
+        facture.refresh_from_db()
+        # 2 * 1000 - 500 = 1500
+        self.assertEqual(facture.total_ttc, Decimal('1500.00'))
+
+    def test_totals_with_line_discount(self):
+        """calculate_totals accounts for per-line discount on units."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='BROU'
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=self.produit,
+            quantity=5, selling_price=Decimal(1000),
+            discount=Decimal(100)  # 100 F off each unit
+        )
+
+        facture.refresh_from_db()
+        # 5 * (1000 - 100) = 4500
+        self.assertEqual(facture.total_ttc, Decimal('4500.00'))
+
+    def test_totals_with_tva(self):
+        """calculate_totals properly separates HT/TVA/TTC."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='BROU'
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=self.produit,
+            quantity=1, selling_price=Decimal('1192.50'),
+            tva=Decimal('19.25')
+        )
+
+        facture.refresh_from_db()
+        # TTC = 1192.50 rounded to 1193, HT = 1000, TVA = 1193 - 1000 = 193
+        self.assertEqual(facture.total_ttc, Decimal('1193.00'))
+        self.assertEqual(facture.total_ht, Decimal('1000.00'))
+        self.assertEqual(facture.total_tva, Decimal('193.00'))
+
+    def test_part_client_with_coverage(self):
+        """calculate_totals sets part_client based on taux_couverture."""
+        insured_client = TestDataFactory.create_client(
+            name='Client Assuré', taux_couverture=Decimal(80),
+            email='assure@test.com', phone='0600000004'
+        )
+        facture = TestDataFactory.create_facture(
+            client=insured_client, status='BROU'
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=self.produit,
+            quantity=1, selling_price=Decimal(1000)
+        )
+
+        facture.refresh_from_db()
+        # Client pays 20% of 1000 = 200
+        self.assertEqual(facture.part_client, Decimal('200.00'))
+
+
+class AnnulationTests(APITestCase):
+    """Tests for the 'annuler' action edge cases."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.client_obj = TestDataFactory.create_client(
+            name='Client Annul', email='annul@test.com', phone='0600000005'
+        )
+        self.rayon = TestDataFactory.create_rayon(name='Rayon Annul')
+        self.fournisseur = TestDataFactory.create_fournisseur(
+            name='Fournisseur Annul',
+            email='annul-fournisseur@test.com',
+            phone='0100000003'
+        )
+        self.produit = TestDataFactory.create_produit(
+            name='Amoxicilline', stock=80,
+            cost_price=100, selling_price=250,
+            rayon=self.rayon, fournisseur=self.fournisseur
+        )
+
+    def test_annuler_already_cancelled(self):
+        """Cancelling an already cancelled invoice returns 400."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='ANN'
+        )
+        url = reverse('facture-annuler', kwargs={'pk': facture.pk})
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_annuler_creates_mouvement_stock(self):
+        """Cancelling a validated invoice creates stock return movements."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='BROU'
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=self.produit,
+            quantity=5, selling_price=Decimal(250)
+        )
+
+        # Validate first
+        val_url = reverse('facture-valider', kwargs={'pk': facture.pk})
+        self.client.post(val_url, {'mode_paiement': 'especes'})
+
+        initial_movements = MouvementStock.objects.count()
+
+        # Cancel
+        ann_url = reverse('facture-annuler', kwargs={'pk': facture.pk})
+        response = self.client.post(ann_url, {'motif': 'Erreur de saisie'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Stock return movement should be created
+        new_movements = MouvementStock.objects.count() - initial_movements
+        self.assertGreaterEqual(new_movements, 1)
+
+    def test_annuler_restores_lot_quantities(self):
+        """Cancelling restores FIFO lot remaining quantities."""
+        lot = TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=80, lot_name='LOT-ANN-TEST'
+        )
+        self.produit.stock = 80
+        self.produit.save()
+
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='BROU'
+        )
+        TestDataFactory.create_facture_produit(
+            facture=facture, produit=self.produit,
+            quantity=15, selling_price=Decimal(250)
+        )
+
+        # Validate
+        val_url = reverse('facture-valider', kwargs={'pk': facture.pk})
+        self.client.post(val_url, {'mode_paiement': 'especes'})
+
+        lot.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 65)
+
+        # Cancel
+        ann_url = reverse('facture-annuler', kwargs={'pk': facture.pk})
+        self.client.post(ann_url)
+
+        lot.refresh_from_db()
+        self.assertEqual(lot.quantity_remaining, 80, "Lot should be fully restored")
+
+
+class CaisseCappingTests(APITestCase):
+    """Tests for the backend safeguard capping payment amounts."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.client_obj = TestDataFactory.create_client(name='Patient Test')
+        # CaisseViewSet.create requires an active sales point for the user
+        PosteVente.objects.create(vendeur=self.user, est_actif=True)
+
+    def test_caisse_payment_capped_to_invoice_total(self):
+        """CaisseViewSet.perform_create caps the amount to the invoice total."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL', total_ttc=Decimal(1000)
+        )
+        url = reverse('caisse-list')
+        payload = {
+            'facture': facture.id,
+            'mode_paiement': 'especes',
+            'montant': '1500', # Excessive amount
+            'statut': 'completee'
+        }
+        response = self.client.post(url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        # Check that the amount was capped to 1000
+        payment = Caisse.objects.get(id=response.data['id'])
+        self.assertEqual(payment.montant, Decimal('1000.00'))
+
+    def test_caisse_payment_capped_to_part_patient(self):
+        """CaisseViewSet.perform_create caps the amount to the part_client for insured clients."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL', total_ttc=Decimal(1000),
+            part_client=Decimal(200)
+        )
+        # Record the insurance part as 'en_compte'
+        Caisse.objects.create(
+            facture=facture, mode_paiement='en_compte', montant=Decimal(800),
+            statut='completee', user=self.user
+        )
+        
+        url = reverse('caisse-list')
+        payload = {
+            'facture': facture.id,
+            'mode_paiement': 'especes',
+            'montant': '500', # Excessive amount (more than 200)
+            'statut': 'completee'
+        }
+        response = self.client.post(url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        # Check that the amount was capped to 200
+        payment = Caisse.objects.get(id=response.data['id'])
+        self.assertEqual(payment.montant, Decimal('200.00'))
+
+    def test_caisse_payment_partial_capped(self):
+        """Subsequent payments are also capped to the remaining balance."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL', total_ttc=Decimal(1000)
+        )
+        # First payment of 600
+        Caisse.objects.create(
+            facture=facture, mode_paiement='especes', montant=Decimal(600),
+            statut='completee', user=self.user
+        )
+        
+        url = reverse('caisse-list')
+        payload = {
+            'facture': facture.id,
+            'mode_paiement': 'carte',
+            'montant': '700', # Excessive amount (more than 400 remaining)
+            'statut': 'completee'
+        }
+        response = self.client.post(url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        # Check that the amount was capped to 400
+        payment = Caisse.objects.get(id=response.data['id'])
+        self.assertEqual(payment.montant, Decimal('400.00'))
+

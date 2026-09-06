@@ -1,0 +1,788 @@
+"""
+Export Excel configurable du listing de stock pour l'inventaire.
+Supporte le regroupement par : rayon, forme, groupe, fournisseur.
+Supporte les filtres de stock : tous, nuls (=0), non nuls (>0).
+"""
+import io
+from decimal import Decimal
+
+from django.http import HttpResponse
+
+try:
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.utils import get_column_letter
+    HAS_OPENPYXL = True
+except ImportError:
+    HAS_OPENPYXL = False
+
+from api.models import PharmacySettings, Produit, StockLot, MouvementStock
+from django.db.models import Q
+
+# ---------------------------------------------------------------------------
+# Helpers style
+# ---------------------------------------------------------------------------
+
+def _make_border(style='thin'):
+    s = Side(style=style)
+    return Border(left=s, right=s, top=s, bottom=s)
+
+
+def _header_fill(hex_color='1F4E79'):
+    return PatternFill(fill_type='solid', fgColor=hex_color)
+
+
+def _group_fill(hex_color='BDD7EE'):
+    return PatternFill(fill_type='solid', fgColor=hex_color)
+
+
+def _subtotal_fill(hex_color='D9E1F2'):
+    return PatternFill(fill_type='solid', fgColor=hex_color)
+
+
+# ---------------------------------------------------------------------------
+# Fonction principale
+# ---------------------------------------------------------------------------
+
+def generate_listing_excel(
+    group_by: str = 'rayon',
+    stock_filter: str = 'tous',
+    filter_id: int | None = None,
+    inventaire_id: int | None = None,
+    blind: bool = False,
+    stock_location: str = 'tous',
+):
+    """
+    Génère un fichier Excel du listing de stock courant (Produit.stock).
+
+    Paramètres
+    ----------
+    group_by       : 'rayon' | 'forme' | 'groupe' | 'fournisseur'
+    stock_filter   : 'tous' | 'zero' | 'non_zero'
+    filter_id      : id de l'entité de regroupement pour filtrer (optionnel)
+    inventaire_id  : si fourni, liste les lignes d'un inventaire précis (optionnel)
+    blind          : si True, génère un listing à l'aveugle (sans stock théorique,
+                     juste CIP/Désignation/Lot/Exp + colonne vide "Qté Comptée")
+    stock_location : 'tous' | 'rayon' | 'reserve'
+                     - 'tous'    : tous les lots (comportement par défaut)
+                     - 'rayon'   : uniquement les lots avec stock rayon (quantity_remaining)
+                     - 'reserve' : uniquement les lots avec stock_reserve > 0
+    """
+    if not HAS_OPENPYXL:
+        return HttpResponse("openpyxl non installé", status=500)
+
+    # ------------------------------------------------------------------
+    # 1. Récupération des données
+    # ------------------------------------------------------------------
+    if inventaire_id:
+        rows = _get_rows_from_inventaire(inventaire_id, group_by, stock_filter, filter_id)
+        listing_type = 'inventaire'
+    else:
+        rows = _get_rows_from_stock(group_by, stock_filter, filter_id, stock_location=stock_location)
+        listing_type = 'blind' if blind else 'stock'
+
+    # ------------------------------------------------------------------
+    # 2. En-tête pharmacie
+    # ------------------------------------------------------------------
+    try:
+        pharmacy = PharmacySettings.objects.get(pk=1)
+        pharma_name = pharmacy.pharmacy_name or 'PHARMACIE'
+        pharma_address = f"{pharmacy.address or ''} {pharmacy.city or ''}".strip()
+        pharma_phone = pharmacy.phone or ''
+    except Exception:
+        pharma_name = 'PHARMACIE'
+        pharma_address = ''
+        pharma_phone = ''
+
+    from django.utils import timezone as tz
+    now_str = tz.localtime(tz.now()).strftime("%d/%m/%Y à %H:%M")
+
+    group_labels = {
+        'rayon': 'Rayon',
+        'forme': 'Forme galénique',
+        'groupe': 'Groupe thérapeutique',
+        'fournisseur': 'Fournisseur',
+    }
+    group_label = group_labels.get(group_by, group_by.capitalize())
+
+    stock_filter_labels = {
+        'tous': 'Tous les stocks',
+        'zero': 'Stocks nuls (Qté = 0)',
+        'non_zero': 'Stocks non nuls (Qté > 0)',
+    }
+    stock_label = stock_filter_labels.get(stock_filter, stock_filter)
+
+    # ------------------------------------------------------------------
+    # 3. Construction du classeur
+    # ------------------------------------------------------------------
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Listing Stock (Lots)" if listing_type == 'stock' else ("Listing Inventaire" if listing_type == 'inventaire' else "Listing Inventaire Aveugle")
+
+    thin_border = _make_border('thin')
+    medium_border = _make_border('medium')
+
+    # Fonts
+    font_title = Font(name='Calibri', bold=True, size=14, color='FFFFFF')
+    font_pharma = Font(name='Calibri', bold=True, size=11)
+    font_info = Font(name='Calibri', size=9, italic=True)
+    font_group = Font(name='Calibri', bold=True, size=10, color='1F4E79')
+    font_header = Font(name='Calibri', bold=True, size=9, color='FFFFFF')
+    font_data = Font(name='Calibri', size=9)
+    font_subtotal = Font(name='Calibri', bold=True, size=9)
+
+    # Colonnes : définition selon listing_type
+    if listing_type == 'inventaire':
+        columns = [
+            ('CIP', 14),
+            ('Désignation', 38),
+            ('N° Lot', 14),
+            ('Exp. Lot', 12),
+            ('Stock Théo.', 12),
+            ('Qté Comptée', 12),
+            ('Écart', 10),
+            ('PMP', 12),
+            ('Val. Écart', 14),
+        ]
+    elif listing_type == 'blind':
+        # Afficher la colonne (forme ou rayon) qui n'est PAS le critère de regroupement
+        # car le regroupement est déjà dans l'en-tête de section
+        if group_by == 'rayon':
+            secondary_col = ('Forme', 16)
+        elif group_by == 'forme':
+            secondary_col = ('Rayon', 14)
+        else:
+            secondary_col = ('Rayon', 14)
+        columns = [
+            ('ID', 8),
+            ('Désignation', 38),
+            secondary_col,
+            ('N° Lot', 14),
+            ('Exp. Lot', 12),
+            ('Qté Comptée', 14),
+        ]
+    else:
+        # Colonnes de stock selon l'emplacement choisi :
+        # - 'reserve' : uniquement Stock Rés. (quantity_reserved)
+        # - 'rayon'   : uniquement Stock Rayon (quantity_remaining)
+        # - 'tous'    : les deux colonnes
+        if stock_location == 'reserve':
+            stock_cols = [('Stock Rés.', 12)]
+        elif stock_location == 'rayon':
+            stock_cols = [('Stock Rayon', 12)]
+        else:
+            stock_cols = [('Stock Rayon', 10), ('Stock Rés.', 10)]
+
+        columns = [
+            ('ID', 8),
+            ('CIP', 14),
+            ('Désignation', 38),
+            ('Forme', 16),
+            ('Rayon', 14),
+            ('N° Lot', 14),
+            ('Exp. Lot', 12),
+            *stock_cols,
+            ('PMP', 12),
+            ('Val. Stock', 14),
+            ('Prix Vente', 12),
+        ]
+
+    nb_cols = len(columns)
+
+    # Appliquer largeurs
+    for i, (_, width) in enumerate(columns, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+    # ------------------------------------------------------------------
+    # 4. Bloc en-tête pharmacie
+    # ------------------------------------------------------------------
+    row = 1
+
+    # Ligne titre principale
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
+    cell = ws.cell(row=row, column=1, value="LISTING D'INVENTAIRE DE STOCK")
+    cell.font = font_title
+    cell.fill = _header_fill('1F4E79')
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[row].height = 22
+    row += 1
+
+    # Nom pharmacie
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
+    cell = ws.cell(row=row, column=1, value=pharma_name)
+    cell.font = font_pharma
+    cell.alignment = Alignment(horizontal='center')
+    row += 1
+
+    if pharma_address:
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
+        ws.cell(row=row, column=1, value=pharma_address).alignment = Alignment(horizontal='center')
+        ws.cell(row=row, column=1).font = font_info
+        row += 1
+
+    if pharma_phone:
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
+        ws.cell(row=row, column=1, value=f"Tél : {pharma_phone}").alignment = Alignment(horizontal='center')
+        ws.cell(row=row, column=1).font = font_info
+        row += 1
+
+    # Infos du listing
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
+    source_label = {
+        'stock': 'Stock courant (par lots)',
+        'inventaire': 'Inventaire',
+        'blind': "Inventaire à l'aveugle (sans stock théorique)",
+    }.get(listing_type, 'Stock courant')
+    info_text = f"Édité le : {now_str}  |  Source : {source_label}  |  Regroupement : {group_label}  |  Filtre : {stock_label}"
+    cell = ws.cell(row=row, column=1, value=info_text)
+    cell.font = font_info
+    cell.fill = PatternFill(fill_type='solid', fgColor='F2F2F2')
+    cell.alignment = Alignment(horizontal='center')
+    row += 1
+
+    # Ligne vide séparateur
+    row += 1
+
+    # ------------------------------------------------------------------
+    # 5. En-tête du tableau
+    # ------------------------------------------------------------------
+    header_row = row
+    for col_idx, (col_name, _) in enumerate(columns, start=1):
+        cell = ws.cell(row=header_row, column=col_idx, value=col_name)
+        cell.font = font_header
+        cell.fill = _header_fill('2E75B6')
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.border = thin_border
+    ws.row_dimensions[header_row].height = 18
+    row += 1
+
+    # ------------------------------------------------------------------
+    # 6. Données groupées
+    # ------------------------------------------------------------------
+    data_start_row = row
+    grand_total_stock = 0
+    grand_total_valeur = 0
+    grand_total_lines = 0
+    grand_total_refs = 0
+
+    for group_name, group_rows in rows.items():
+        if not group_rows:
+            continue
+
+        # En-tête du groupe
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=nb_cols)
+        cell = ws.cell(row=row, column=1, value=f"  {group_name.upper()}")
+        cell.font = font_group
+        cell.fill = _group_fill('BDD7EE')
+        cell.alignment = Alignment(vertical='center')
+        for col_idx in range(1, nb_cols + 1):
+            ws.cell(row=row, column=col_idx).fill = _group_fill('BDD7EE')
+            ws.cell(row=row, column=col_idx).border = thin_border
+        ws.row_dimensions[row].height = 16
+        row += 1
+
+        group_total_stock = 0
+        group_total_valeur = 0
+        group_unique_refs = set()
+
+        for r in group_rows:
+            group_unique_refs.add(r.get('cip') or r.get('name', ''))
+            if listing_type == 'inventaire':
+                vals = [
+                    r.get('cip', ''),
+                    r.get('name', ''),
+                    r.get('lot_numero', ''),
+                    r.get('lot_expiration', ''),
+                    r.get('stock_theorique', 0),
+                    r.get('quantite_physique', 0),
+                    r.get('ecart', 0),
+                    r.get('pmp', 0),
+                    r.get('valeur_ecart', 0),
+                ]
+                group_total_stock += r.get('quantite_physique', 0)
+                group_total_valeur += r.get('valeur_ecart', 0)
+            elif listing_type == 'blind':
+                # Colonne secondaire : forme si group_by=rayon, rayon sinon
+                if group_by == 'rayon':
+                    secondary_val = r.get('forme', '')
+                else:
+                    secondary_val = r.get('rayon', '')
+                vals = [
+                    r.get('produit_id', ''),
+                    r.get('name', ''),
+                    secondary_val,
+                    r.get('lot_numero', ''),
+                    r.get('lot_expiration', ''),
+                    '',  # Qté Comptée — vide pour saisie manuelle
+                ]
+                # Pas de totaux stock/valeur en mode aveugle
+            else:
+                # Colonnes de stock selon l'emplacement choisi
+                if stock_location == 'reserve':
+                    stock_val_for_excel = r.get('stock_reserve', 0)
+                    stock_vals = [stock_val_for_excel]
+                    group_total_stock += stock_val_for_excel
+                    # Valeur basée sur le stock réserve
+                    pmp_val = r.get('pmp', 0)
+                    valeur = stock_val_for_excel * pmp_val
+                    group_total_valeur += valeur
+                elif stock_location == 'rayon':
+                    stock_val_for_excel = r.get('stock', 0)
+                    stock_vals = [stock_val_for_excel]
+                    group_total_stock += stock_val_for_excel
+                    group_total_valeur += r.get('valeur_stock', 0)
+                else:  # 'tous'
+                    stock_vals = [r.get('stock', 0), r.get('stock_reserve', 0)]
+                    group_total_stock += r.get('stock', 0)
+                    group_total_valeur += r.get('valeur_stock', 0)
+
+                vals = [
+                    r.get('produit_id', ''),
+                    r.get('cip', ''),
+                    r.get('name', ''),
+                    r.get('forme', ''),
+                    r.get('rayon', ''),
+                    r.get('lot_numero', ''),
+                    r.get('lot_expiration', ''),
+                    *stock_vals,
+                    r.get('pmp', 0),
+                    r.get('valeur_stock', 0),
+                    r.get('prix_vente', 0),
+                ]
+
+            # Colonnes monétaires selon le mode et l'emplacement
+            if listing_type == 'stock':
+                # Les colonnes monétaires (PMP, Val. Stock, Prix Vente) sont
+                # décalées selon le nombre de colonnes de stock (1 ou 2)
+                nb_stock_cols = len(stock_vals) if listing_type == 'stock' else 0
+                # Position de PMP = 7 (fixes) + nb_stock_cols + 1
+                pmp_col = 8 + nb_stock_cols
+                money_cols = (pmp_col, pmp_col + 1, pmp_col + 2)
+            elif listing_type == 'inventaire':
+                money_cols = (8, 9)
+            else:  # blind : pas de colonnes monétaires
+                money_cols = ()
+            for col_idx, val in enumerate(vals, start=1):
+                cell = ws.cell(row=row, column=col_idx, value=val)
+                cell.font = font_data
+                cell.border = thin_border
+                if isinstance(val, (int, float, Decimal)):
+                    cell.alignment = Alignment(horizontal='right')
+                    if col_idx in money_cols:
+                        cell.number_format = '#,##0'
+                else:
+                    cell.alignment = Alignment(horizontal='left')
+            row += 1
+
+        nb_refs = len(group_unique_refs)
+        nb_lots = len(group_rows)
+
+        grand_total_stock += group_total_stock
+        grand_total_valeur += group_total_valeur
+        grand_total_lines += nb_lots
+        grand_total_refs += nb_refs
+
+        # Sous-total groupe (fin)
+        subtotal_cols = 4
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=subtotal_cols)
+        subtotal_label = f"  Total {group_name}  —  {nb_refs} réf.  |  {nb_lots} lot(s)  |  {group_total_stock} boîte(s)"
+        cell = ws.cell(row=row, column=1, value=subtotal_label)
+        cell.font = font_subtotal
+        cell.fill = _subtotal_fill()
+        cell.alignment = Alignment(horizontal='right')
+
+        if listing_type == 'inventaire':
+            qte_col = 6
+            val_col = 9
+        elif listing_type == 'blind':
+            qte_col = None  # Pas de total quantité en mode aveugle
+            val_col = None
+        else:
+            # Les colonnes dépendent du nombre de colonnes de stock (1 ou 2)
+            # Layout: ID(1) CIP(2) Désignation(3) Forme(4) Rayon(5) N°Lot(6) ExpLot(7) [Stock cols] PMP ValStock PrixVente
+            nb_stock_cols_local = len(stock_cols)
+            qte_col = 8  # Première colonne de stock (Stock Rayon)
+            val_col = 8 + nb_stock_cols_local + 1  # PMP = 8+nb_stock, Val. Stock = 9+nb_stock
+
+        for col_idx in range(1, nb_cols + 1):
+            c = ws.cell(row=row, column=col_idx)
+            c.fill = _subtotal_fill()
+            c.border = thin_border
+            c.font = font_subtotal
+
+        if qte_col:
+            ws.cell(row=row, column=qte_col, value=group_total_stock).number_format = '#,##0'
+            ws.cell(row=row, column=qte_col).font = font_subtotal
+            ws.cell(row=row, column=qte_col).fill = _subtotal_fill()
+            ws.cell(row=row, column=qte_col).alignment = Alignment(horizontal='right')
+
+        if val_col:
+            ws.cell(row=row, column=val_col, value=group_total_valeur).number_format = '#,##0'
+            ws.cell(row=row, column=val_col).font = font_subtotal
+            ws.cell(row=row, column=val_col).fill = _subtotal_fill()
+            ws.cell(row=row, column=val_col).alignment = Alignment(horizontal='right')
+
+        row += 1
+        # Ligne vide entre groupes
+        row += 1
+
+    # ------------------------------------------------------------------
+    # 7. TOTAL GÉNÉRAL
+    # ------------------------------------------------------------------
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+    cell = ws.cell(row=row, column=1, value=f"  TOTAL GÉNÉRAL  ({grand_total_refs} réf. / {grand_total_lines} lot(s))")
+    cell.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
+    cell.fill = _header_fill('1F4E79')
+    cell.alignment = Alignment(horizontal='right', vertical='center')
+
+    for col_idx in range(1, nb_cols + 1):
+        c = ws.cell(row=row, column=col_idx)
+        c.fill = _header_fill('1F4E79')
+        c.border = medium_border
+        c.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
+
+    if listing_type == 'inventaire':
+        qte_col, val_col = 6, 9
+    elif listing_type == 'blind':
+        qte_col, val_col = None, None
+    else:
+        # Les colonnes dépendent du nombre de colonnes de stock (1 ou 2)
+        nb_stock_cols_total = len(stock_cols)
+        qte_col = 8  # Première colonne de stock (Stock Rayon)
+        val_col = 8 + nb_stock_cols_total + 1  # Val. Stock = après PMP
+
+    if qte_col:
+        c_stock = ws.cell(row=row, column=qte_col, value=grand_total_stock)
+        c_stock.number_format = '#,##0'
+        c_stock.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
+        c_stock.fill = _header_fill('1F4E79')
+        c_stock.alignment = Alignment(horizontal='right')
+
+    if val_col:
+        c_val = ws.cell(row=row, column=val_col, value=grand_total_valeur)
+        c_val.number_format = '#,##0'
+        c_val.font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
+        c_val.fill = _header_fill('1F4E79')
+        c_val.alignment = Alignment(horizontal='right')
+
+    ws.row_dimensions[row].height = 20
+
+    # ------------------------------------------------------------------
+    # 8. Figer la ligne d'en-tête tableau
+    # ------------------------------------------------------------------
+    ws.freeze_panes = ws.cell(row=data_start_row, column=1)
+
+    # ------------------------------------------------------------------
+    # 9. Réponse HTTP
+    # ------------------------------------------------------------------
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    from django.utils import timezone as tz
+    filename = f"listing_inventaire_{group_by}_{tz.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+# ---------------------------------------------------------------------------
+# Source de données : Stock courant (Produit)
+# ---------------------------------------------------------------------------
+
+def _get_rows_from_stock(group_by: str, stock_filter: str, filter_id=None, stock_location: str = 'tous'):
+    """
+    Construit le dict {group_name: [rows]} à partir des lots de stock (StockLot).
+    Une ligne par lot, avec N° lot, date expiration, quantité restante et PMP.
+
+    stock_location:
+      - 'tous'    : tous les lots
+      - 'rayon'   : lots avec quantity_remaining > 0 (stock rayon)
+      - 'reserve' : lots avec quantity_reserved > 0 (stock réserve)
+    """
+    qs = StockLot.objects.filter(
+        produit__isnull=False,
+        produit__is_active=True,
+    ).select_related(
+        'produit', 'produit__rayon', 'produit__forme',
+        'produit__groupe', 'produit__fournisseur',
+        'fournisseur',
+    )
+
+    # ── Filtre par emplacement de stock (rayon vs réserve) ──
+    if stock_location == 'reserve':
+        # Uniquement les lots avec stock réserve > 0
+        qs = qs.filter(quantity_reserved__gt=0)
+    elif stock_location == 'rayon':
+        # Uniquement les lots avec stock rayon (quantity_remaining) > 0
+        qs = qs.filter(quantity_remaining__gt=0)
+    # else 'tous' : pas de filtre supplémentaire sur l'emplacement
+
+    # Filtre stock (sur quantity_remaining du lot)
+    produit_ids_avec_mouvement: set[int] = set()
+    if stock_filter == 'zero':
+        qs = qs.filter(quantity_remaining__lte=0)
+    elif stock_filter == 'non_zero':
+        qs = qs.filter(quantity_remaining__gt=0)
+    else:
+        # 'tous' : conserver un lot par ligne pour les lots encore en stock,
+        # et ajouter UNE ligne synthétique (lot vide) par produit à stock nul
+        # ayant au moins un mouvement d'achat ou vente.
+        produit_ids_avec_mouvement = set(
+            MouvementStock.objects.filter(
+                type_mouvement__in=['ENTREE', 'SORTIE'],
+                produit_id__isnull=False,
+            ).values_list('produit_id', flat=True).distinct()
+        )
+        # Garder les lots avec stock restant != 0 (positif ou négatif).
+        # Un stock négatif est une anomalie qu'il faut voir pour correction.
+        # Les lots à 0 sont regroupés en une seule ligne synthétique par produit.
+        if stock_location == 'reserve':
+            qs = qs.filter(Q(quantity_reserved__gt=0) | Q(quantity_reserved__lt=0))
+        else:
+            qs = qs.filter(Q(quantity_remaining__gt=0) | Q(quantity_remaining__lt=0))
+
+    # Filtre entité
+    if filter_id:
+        if group_by == 'rayon':
+            qs = qs.filter(produit__rayon_id=filter_id)
+        elif group_by == 'forme':
+            qs = qs.filter(produit__forme_id=filter_id)
+        elif group_by == 'groupe':
+            qs = qs.filter(produit__groupe_id=filter_id)
+        elif group_by == 'fournisseur':
+            # Filtrer par fournisseur du lot (FK), pas du produit (souvent NULL)
+            qs = qs.filter(fournisseur_id=filter_id)
+
+    # Tri : par groupe puis produit puis date de réception (FIFO)
+    # Pour fournisseur : tri par fournisseur du lot (FK) car produit.fournisseur est souvent NULL
+    sort_map = {
+        'rayon': ('produit__rayon__name', 'produit__name', 'date_reception'),
+        'forme': ('produit__forme__nom', 'produit__name', 'date_reception'),
+        'groupe': ('produit__groupe__nom', 'produit__name', 'date_reception'),
+        'fournisseur': ('fournisseur__name', 'fournisseur_nom', 'produit__name', 'date_reception'),
+    }
+    qs = qs.order_by(*sort_map.get(group_by, ('produit__name', 'date_reception')))
+
+    grouped = {}
+    seen_produit_ids = set()
+
+    for lot in qs:
+        p = lot.produit
+        seen_produit_ids.add(p.id)
+        group_name = _get_group_name(p, group_by, lot=lot)
+        if group_name not in grouped:
+            grouped[group_name] = []
+
+        stock_val = int(lot.quantity_remaining or 0)
+        stock_reserve = int(lot.quantity_reserved or 0)
+        # Utiliser p.pmp (PMP du produit) pour aligner avec le dashboard
+        # qui calcule stock_value = Produit.stock * Produit.pmp
+        pmp = float(p.pmp or p.cost_price or 0)
+        valeur_stock = stock_val * pmp
+
+        lot_expiration = ''
+        if lot.date_expiration:
+            lot_expiration = lot.date_expiration.strftime('%d/%m/%Y')
+
+        grouped[group_name].append({
+            'produit_id': p.id,
+            'cip': p.cip1 or '',
+            'name': p.name,
+            'forme': p.forme.nom if p.forme else '',
+            'rayon': p.rayon.name if p.rayon else '',
+            'fournisseur': lot.fournisseur_nom or (p.fournisseur.name if p.fournisseur else ''),
+            'lot_numero': lot.lot or '',
+            'lot_expiration': lot_expiration,
+            'stock': stock_val,
+            'stock_reserve': stock_reserve,
+            'pmp': round(pmp, 2),
+            'valeur_stock': round(valeur_stock, 0),
+            'prix_vente': float(lot.selling_price or p.selling_price or 0),
+        })
+
+    # En mode "zero" : inclure aussi les produits actifs sans aucun lot (stock nul implicite)
+    if stock_filter == 'zero':
+        prod_qs = Produit.objects.filter(
+            is_active=True,
+        ).exclude(
+            id__in=seen_produit_ids,
+        ).select_related('rayon', 'forme', 'groupe', 'fournisseur')
+
+        if filter_id:
+            if group_by == 'rayon':
+                prod_qs = prod_qs.filter(rayon_id=filter_id)
+            elif group_by == 'forme':
+                prod_qs = prod_qs.filter(forme_id=filter_id)
+            elif group_by == 'groupe':
+                prod_qs = prod_qs.filter(groupe_id=filter_id)
+            elif group_by == 'fournisseur':
+                prod_qs = prod_qs.filter(fournisseur_id=filter_id)
+
+        for p in prod_qs.order_by('name'):
+            group_name = _get_group_name(p, group_by)
+            if group_name not in grouped:
+                grouped[group_name] = []
+            pmp = float(p.pmp or p.cost_price or 0)
+            grouped[group_name].append({
+                'cip': p.cip1 or '',
+                'name': p.name,
+                'forme': p.forme.nom if p.forme else '',
+                'rayon': p.rayon.name if p.rayon else '',
+                'fournisseur': p.fournisseur.name if p.fournisseur else '',
+                'lot_numero': '',
+                'lot_expiration': '',
+                'stock': 0,
+                'stock_reserve': 0,
+                'pmp': round(pmp, 2),
+                'valeur_stock': 0.0,
+                'prix_vente': float(p.selling_price or 0),
+            })
+
+    # En mode "tous" : inclure aussi les produits actifs avec mouvement mais sans lot
+    if stock_filter == 'tous':
+        remaining_ids = produit_ids_avec_mouvement - seen_produit_ids
+        prod_qs = Produit.objects.filter(
+            id__in=remaining_ids,
+            is_active=True,
+        ).select_related('rayon', 'forme', 'groupe', 'fournisseur')
+
+        if filter_id:
+            if group_by == 'rayon':
+                prod_qs = prod_qs.filter(rayon_id=filter_id)
+            elif group_by == 'forme':
+                prod_qs = prod_qs.filter(forme_id=filter_id)
+            elif group_by == 'groupe':
+                prod_qs = prod_qs.filter(groupe_id=filter_id)
+            elif group_by == 'fournisseur':
+                prod_qs = prod_qs.filter(fournisseur_id=filter_id)
+
+        for p in prod_qs.order_by('name'):
+            group_name = _get_group_name(p, group_by)
+            if group_name not in grouped:
+                grouped[group_name] = []
+            pmp = float(p.pmp or p.cost_price or 0)
+            grouped[group_name].append({
+                'produit_id': p.id,
+                'cip': p.cip1 or '',
+                'name': p.name,
+                'forme': p.forme.nom if p.forme else '',
+                'rayon': p.rayon.name if p.rayon else '',
+                'fournisseur': p.fournisseur.name if p.fournisseur else '',
+                'lot_numero': '',
+                'lot_expiration': '',
+                'stock': 0,
+                'stock_reserve': 0,
+                'pmp': round(pmp, 2),
+                'valeur_stock': 0.0,
+                'prix_vente': float(p.selling_price or 0),
+            })
+
+    # Tri final : toutes les lignes de chaque groupe par désignation alphabétique
+    for group_name, rows in grouped.items():
+        rows.sort(key=lambda r: r['name'].lower())
+
+    return grouped
+
+
+# ---------------------------------------------------------------------------
+# Source de données : Lignes d'un inventaire
+# ---------------------------------------------------------------------------
+
+def _get_rows_from_inventaire(inventaire_id: int, group_by: str, stock_filter: str, filter_id=None):
+    """
+    Construit le dict {group_name: [rows]} à partir des lignes d'un inventaire.
+    """
+    from api.models import LigneInventaire
+
+    qs = LigneInventaire.objects.filter(inventaire_id=inventaire_id).select_related(
+        'produit', 'produit__rayon', 'produit__forme', 'produit__groupe',
+        'produit__fournisseur', 'stock_lot', 'stock_lot__fournisseur'
+    )
+
+    # Filtre stock (sur quantite_physique)
+    if stock_filter == 'zero':
+        qs = qs.filter(quantite_physique__lt=0)
+    elif stock_filter == 'non_zero':
+        qs = qs.filter(quantite_physique__gt=0)
+
+    # Filtre entité
+    if filter_id:
+        if group_by == 'rayon':
+            qs = qs.filter(produit__rayon_id=filter_id)
+        elif group_by == 'forme':
+            qs = qs.filter(produit__forme_id=filter_id)
+        elif group_by == 'groupe':
+            qs = qs.filter(produit__groupe_id=filter_id)
+        elif group_by == 'fournisseur':
+            qs = qs.filter(produit__fournisseur_id=filter_id)
+
+    # Tri
+    sort_map = {
+        'rayon': ('produit__rayon__name', 'produit__name'),
+        'forme': ('produit__forme__nom', 'produit__name'),
+        'groupe': ('produit__groupe__nom', 'produit__name'),
+        'fournisseur': ('stock_lot__fournisseur__name', 'stock_lot__fournisseur_nom', 'produit__name'),
+    }
+    qs = qs.order_by(*sort_map.get(group_by, ('produit__name',)))
+
+    grouped = {}
+    for ligne in qs:
+        p = ligne.produit
+        if not p:
+            continue
+
+        group_name = _get_group_name(p, group_by, lot=ligne.stock_lot)
+        if group_name not in grouped:
+            grouped[group_name] = []
+
+        pmp = float(p.pmp or p.cost_price or 0)
+        valeur_ecart = float(ligne.ecart) * pmp
+
+        lot_numero = ''
+        lot_expiration = ''
+        if ligne.stock_lot:
+            lot_numero = ligne.stock_lot.lot or ''
+            if ligne.stock_lot.date_expiration:
+                lot_expiration = ligne.stock_lot.date_expiration.strftime('%d/%m/%Y')
+
+        grouped[group_name].append({
+            'produit_id': p.id,
+            'cip': p.cip1 or '',
+            'name': p.name,
+            'lot_numero': lot_numero,
+            'lot_expiration': lot_expiration,
+            'stock_theorique': float(ligne.stock_theorique),
+            'quantite_physique': float(ligne.quantite_physique),
+            'ecart': float(ligne.ecart),
+            'pmp': round(pmp, 2),
+            'valeur_ecart': round(valeur_ecart, 0),
+        })
+
+    return grouped
+
+
+# ---------------------------------------------------------------------------
+# Helper : nom du groupe
+# ---------------------------------------------------------------------------
+
+def _get_group_name(produit, group_by: str, lot=None) -> str:
+    if group_by == 'rayon':
+        return produit.rayon.name if produit.rayon else 'SANS RAYON'
+    elif group_by == 'forme':
+        return produit.forme.nom if produit.forme else 'SANS FORME'
+    elif group_by == 'groupe':
+        return produit.groupe.nom if produit.groupe else 'SANS GROUPE'
+    elif group_by == 'fournisseur':
+        # Priorité : fournisseur du lot (FK) > nom sauvegardé du lot > fournisseur du produit
+        if lot and lot.fournisseur:
+            return lot.fournisseur.name
+        if lot and lot.fournisseur_nom:
+            return lot.fournisseur_nom
+        if produit.fournisseur:
+            return produit.fournisseur.name
+        return 'SANS FOURNISSEUR'
+    return 'AUTRES'

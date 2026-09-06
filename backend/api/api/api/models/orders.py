@@ -1,0 +1,470 @@
+"""
+Order-related models: Commande, CommandeProduit, Avoir, LigneAvoir.
+"""
+from datetime import date, timedelta
+from decimal import Decimal
+from typing import TYPE_CHECKING
+
+from django.contrib.auth.models import User
+from django.db import models
+from django.db.models import DecimalField, F, Sum
+from django.utils import timezone
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+    from django.db.models.fields.related_descriptors import RelatedManager
+
+    from .paiements import PaiementFournisseur
+
+
+class Commande(models.Model):
+    """Model representing an order."""
+    class Status(models.TextChoices):
+        EN_PREPARATION = 'PREP', 'En préparation'
+        EN_ATTENTE = 'ATT', 'En attente'
+        CLOTUREE = 'CLOT', 'Clôturée'
+    
+    class Type(models.TextChoices):
+        LOCALE = 'LOC', 'Locale'
+        DIRECTE = 'DIR', 'Directe'
+        DIVERS = 'DIV', 'Divers'
+    
+    class Source(models.TextChoices):
+        MANUEL = 'MANUEL', 'Manuel'
+        AUTO_SCHEDULE = 'AUTO', 'Planification auto'
+
+    id = models.AutoField(primary_key=True)
+    type = models.CharField(
+        max_length=3,
+        choices=Type.choices,
+        default=Type.LOCALE,
+        help_text="Type de commande (Locale, Directe ou Divers)"
+    )
+    taux_change = models.DecimalField(max_digits=10, decimal_places=3, default=655.957)
+    frais_coefficient = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
+    
+    fournisseur = models.ForeignKey(
+        'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True, db_index=True
+    )
+    fournisseur_nom = models.CharField(max_length=255, null=True, blank=True) # Nom si fournisseur supprimé
+    numero_facture = models.CharField(max_length=100, null=True, blank=True, unique=True)
+    date = models.DateTimeField(default=timezone.now)
+    date_cloture = models.DateTimeField(null=True, blank=True)
+    date_echeance = models.DateField(
+        null=True, blank=True, 
+        help_text="Calculée automatiquement selon le délai du fournisseur."
+    )
+    is_mise_en_place = models.BooleanField(
+        default=False,
+        help_text="Achat de mise en place / condition négociée avec le grossiste (délai de paiement propre à cette commande, différent du délai standard du fournisseur)."
+    )
+    delai_paiement_negocie_jours = models.IntegerField(
+        null=True, blank=True,
+        help_text="Délai de paiement négocié en jours pour cette commande (utilisé uniquement si is_mise_en_place=True, remplace le délai standard du fournisseur)."
+    )
+    paye_a_la_cloture = models.BooleanField(
+        default=False,
+        help_text="Achat payé intégralement au comptant (certains grossistes ne font pas crédit). "
+                   "Utilisé uniquement si is_mise_en_place=True : un paiement fournisseur pour le "
+                   "montant total est enregistré automatiquement à la clôture de la commande."
+    )
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.EN_PREPARATION, db_index=True)
+    
+    # Source de création (pour suivre les commandes auto-générées)
+    source = models.CharField(
+        max_length=10, 
+        choices=Source.choices, 
+        default=Source.MANUEL,
+        help_text="Origine de la commande (manuelle ou auto-générée)"
+    )
+    is_active = models.BooleanField(default=True, db_index=True, help_text="Commande active (non supprimée dans la corbeille)")
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_commandes', help_text="Utilisateur ayant supprimé cette commande"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
+
+    # Optimistic Locking - évite les verrous pessimistes (select_for_update)
+    version = models.IntegerField(
+        default=1,
+        help_text="Version pour optimistic locking (concurrency control)"
+    )
+    
+    # Reverse relations (declared for type checkers; populated by Django ORM)
+    produits: "RelatedManager[CommandeProduit]"
+    paiements: "RelatedManager[PaiementFournisseur]"
+    paiements_multiples: "RelatedManager[PaiementFournisseur]"
+
+    # Tracking
+    closed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='commandes_cloturees')
+
+    def save(self, *args, **kwargs):
+        if self.numero_facture:
+            self.numero_facture = self.numero_facture.upper().strip()
+            # Convert empty string to None to avoid uniqueness conflict in DB
+            if not self.numero_facture:
+                self.numero_facture = None
+        else:
+            self.numero_facture = None
+
+        # Fiabilité : sur une nouvelle instance, le taux de change doit venir
+        # de PharmacySettings (source de vérité unique), pas du default du modèle.
+        # Seuls les taux explicitement personnalisés (différent du vieux hardcodé)
+        # sont préservés afin de ne pas casser les commandes historiques modifiées.
+        if self._state.adding and self.taux_change == Decimal('655.957'):
+            try:
+                from .settings import PharmacySettings
+                ps = PharmacySettings.objects.first()
+                if ps and ps.taux_change_actif:
+                    self.taux_change = ps.taux_change_actif
+            except Exception:
+                pass  # Fallback silencieux sur le default du modèle
+
+        # Recalcule l'échéance si la commande est déjà clôturée et que les
+        # conditions négociées (mise en place) ont été modifiées après coup,
+        # ou si le fournisseur applique une échéance individuelle (FACTURE).
+        if self.status == self.Status.CLOTUREE and self.date_cloture:
+            self.date_echeance = self.compute_date_echeance()
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Commande {self.id}"
+
+    def compute_date_echeance(self):
+        """
+        Calcule la date d'échéance de paiement de cette commande.
+        - Si is_mise_en_place=True et paye_a_la_cloture=True : échéance = date de
+          clôture (achat au comptant, réglé immédiatement — certains grossistes ne
+          font pas crédit du tout).
+        - Si is_mise_en_place=True et un délai négocié est renseigné : ce délai
+          prévaut toujours, quel que soit le mode de règlement du fournisseur
+          (ces achats ont une échéance individuelle, jamais regroupée en relevé).
+        - Sinon, pour un fournisseur en mode FACTURE : délai standard du fournisseur.
+        - Sinon (RELEVE non négocié) : None, l'échéance est calculée dynamiquement
+          par tranche de relevé (cf. api/services/supplier_finance.py).
+        """
+        if not self.date_cloture:
+            return None
+        base_date = self.date_cloture.date()
+
+        if self.is_mise_en_place:
+            if self.paye_a_la_cloture:
+                return base_date
+            if self.delai_paiement_negocie_jours is not None:
+                return base_date + timedelta(days=self.delai_paiement_negocie_jours)
+
+        if self.fournisseur and self.fournisseur.type_reglement == 'FACTURE':
+            delai = self.fournisseur.delai_paiement_jours
+            return base_date + timedelta(days=delai) if delai > 0 else base_date
+
+        return None
+    
+    @property
+    def total(self):
+        """Calcule le total de la commande."""
+        total_value = self.produits.aggregate(
+            total=Sum(F('quantity') * F('price'), output_field=DecimalField())
+        )['total']
+        return total_value or Decimal("0.00")
+
+    @property
+    def montant_paye(self):
+        """Somme des paiements enregistrés pour cette commande."""
+        return self.paiements.aggregate(
+            total=Sum('montant', output_field=DecimalField())
+        )['total'] or Decimal("0.00")
+
+    @property
+    def reste_a_payer(self):
+        """Montant restant à régler."""
+        total = Decimal(str(self.total))
+        paye = self.montant_paye
+        return max(Decimal("0.00"), total - paye)
+
+    @property
+    def total_ht(self):
+        """Total Hors Taxes de la commande (prix d'achat HT)."""
+        return self.total
+
+    @property
+    def total_tva(self):
+        """Total TVA de la commande (calculée par ligne)."""
+        from decimal import Decimal
+        total = Decimal("0.00")
+        for ligne in self.produits.all():
+            qty = Decimal(str(ligne.quantity))
+            price = Decimal(str(ligne.price))
+            tva = Decimal(str(ligne.tva or 0))
+            total += qty * price * tva / Decimal(100)
+        return total.quantize(Decimal("0.01"))
+
+    @property
+    def total_ttc(self):
+        """Total Toutes Taxes Comprises."""
+        return self.total_ht + self.total_tva
+
+    @property
+    def taux_precompte(self):
+        """Taux de précompte applicable selon le régime fiscal et le mode d'imposition."""
+        from decimal import Decimal
+        try:
+            from .settings import PharmacySettings
+            ps = PharmacySettings.objects.first()
+            if not ps:
+                return Decimal(0)
+            if ps.mode_imposition == 'MARGE_ADMINISTREE':
+                return Decimal(0)
+            if ps.regime_fiscal == 'REEL':
+                return ps.taux_precompte_reel
+            return ps.taux_precompte_simplifie
+        except Exception:
+            return Decimal(0)
+
+    @property
+    def precompte(self):
+        """Montant du précompte sur achat (collecté par le fournisseur).
+        Garde la précision Decimal maximale — l'arrondi se fait au niveau de l'affichage/serializer."""
+        from decimal import Decimal
+        taux = self.taux_precompte
+        if taux <= 0:
+            return Decimal(0)
+        return self.total_ht * taux / Decimal(100)
+
+    @property
+    def statut_paiement(self):
+        """État du règlement de la facture."""
+        if self.status != self.Status.CLOTUREE:
+            return "NON_CONCERNE"
+        
+        reste = self.reste_a_payer
+        if reste <= 0:
+            return "PAYE"
+        
+        paye = self.montant_paye
+        if paye > 0:
+            return "PARTIEL"
+        
+        return "IMPAYE"
+
+
+class CommandeProduit(models.Model):
+    """Model representing a product in an order."""
+    id = models.AutoField(primary_key=True)
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, db_index=True)
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='produits', db_index=True)
+    quantity = models.IntegerField(help_text="Quantité commandée et payée")
+    unites_gratuites = models.IntegerField(default=0, help_text="Unités gratuites reçues (ex: promotion 3+1)")
+    prix_euro = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    lot = models.CharField(max_length=20, blank=True, null=True)
+    tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    taux_marge = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Taux de marge appliqué (ex: 1.60)")
+    date_expiration = models.DateField(blank=True, null=True)
+    stock_apres_reception = models.IntegerField(default=0, help_text="Stock du produit après réception (capturé au moment de la clôture)")
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Ligne de commande {self.id}"
+    
+    @property
+    def total_quantity(self):
+        """Quantité totale reçue (payée + gratuites)"""
+        return self.quantity + self.unites_gratuites
+    
+    @property
+    def effective_cost(self):
+        """Coût unitaire effectif incluant les UG"""
+        total_qty = self.total_quantity
+        if total_qty > 0:
+            return (self.quantity * self.price_cost) / total_qty
+        return self.price_cost
+
+
+class Avoir(models.Model):
+    """Modèle pour les retours fournisseurs (Avoirs)."""
+    TYPE_CHOICES = [
+        ('PERIME', 'Produit périmé'),
+        ('AVARIE', 'Produit avarié'),
+        ('NON_FACTURE', 'Livré non facturé'),
+        ('ERREUR', 'Erreur de livraison'),
+        ('AUTRE', 'Autre'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('BROUILLON', 'Brouillon'),
+        ('VALIDEE', 'Validée'),
+    ]
+    
+    numero = models.CharField(max_length=50, unique=True, blank=True)
+    fournisseur = models.ForeignKey(
+        'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True, 
+        related_name='avoirs'
+    )
+    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
+    type_avoir = models.CharField(max_length=20, choices=TYPE_CHOICES, default='AUTRE')
+    date = models.DateField(default=date.today)
+    observations = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='BROUILLON')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='avoirs_created')
+    validated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='avoirs_validated', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True, help_text="Avoir actif (non supprimé dans la corbeille)")
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_avoirs', help_text="Utilisateur ayant supprimé cet avoir"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
+    stock_decharge = models.BooleanField(default=False, help_text="True si le stock a été déchargé (retiré) pour cet avoir")
+    stock_decharge_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure du déchargement du stock")
+    stock_decharge_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='avoirs_decharges', help_text="Utilisateur ayant effectué le déchargement")
+    
+    if TYPE_CHECKING:
+        produits: "QuerySet[LigneAvoir]"
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+        verbose_name = 'Avoir fournisseur'
+        verbose_name_plural = 'Avoirs fournisseurs'
+    
+    def __str__(self):
+        fournisseur_name = self.fournisseur.name if self.fournisseur else 'N/A'
+        return f"{self.numero} - {fournisseur_name}"
+    
+    def save(self, *args, **kwargs):
+        if not self.numero:
+            self.numero = self.generate_numero()
+        super().save(*args, **kwargs)
+    
+    def generate_numero(self):
+        """Génère un numéro d'avoir au format AV-YYYYMM-XXXX"""
+        today = date.today()
+        prefix = f"AV-{today.strftime('%Y%m')}"
+        last = Avoir.objects.filter(numero__startswith=prefix).order_by('-numero').first()
+        if last:
+            try:
+                seq = int(last.numero.split('-')[-1]) + 1
+            except (ValueError, IndexError):
+                seq = 1
+        else:
+            seq = 1
+        return f"{prefix}-{seq:04d}"
+    
+    @property
+    def total_ht(self):
+        """Calcule le total HT de l'avoir"""
+        return self.produits.aggregate(
+            total=Sum(F('quantity') * F('price'), output_field=DecimalField())
+        )['total'] or Decimal('0.00')
+    
+    @property
+    def fournisseur_name(self):
+        return self.fournisseur.name if self.fournisseur else ''
+    
+    @property
+    def created_by_name(self):
+        return self.created_by.get_full_name() if self.created_by else ''
+
+
+class LigneAvoir(models.Model):
+    """Ligne d'un avoir fournisseur"""
+    avoir = models.ForeignKey(Avoir, related_name='produits', on_delete=models.CASCADE)
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True)
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    stock_lot = models.ForeignKey(
+        'StockLot', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='avoirs',
+        help_text="Lot spécifique retourné (si applicable)"
+    )
+    quantity = models.IntegerField(default=1)
+    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de retour")
+    lot = models.CharField(max_length=100, blank=True)
+    date_expiration = models.DateField(null=True, blank=True)
+    motif = models.CharField(max_length=200, blank=True, help_text="Motif spécifique de retour pour cette ligne")
+    est_cloture = models.BooleanField(default=False, help_text="Indique si cette ligne est administrativement clôturée")
+
+    class Meta:
+        verbose_name = "Ligne d'avoir"
+        verbose_name_plural = "Lignes d'avoir"
+    
+    def __str__(self):
+        produit_name = self.produit.name if self.produit else self.produit_nom or "Produit inconnu"
+        return f"{produit_name} x {self.quantity}"
+    
+    @property
+    def total(self):
+        """Calcule le total de la ligne"""
+        return self.quantity * self.price
+    
+    @property
+    def produit_cip(self):
+        return self.produit.cip1 if self.produit else ''
+
+
+class OrderSchedule(models.Model):
+    """Configuration for automated order generation."""
+    class ConditionLogic(models.TextChoices):
+        AND = 'AND', 'ET'
+        OR = 'OR', 'OU'
+
+    class TeletransmissionMode(models.TextChoices):
+        IMMEDIATE = 'IMMEDIATE', 'Immédiate'
+        BATCH = 'BATCH', 'Par lots'
+
+    class ExecutionMode(models.TextChoices):
+        SIMPLE = 'SIMPLE', 'Remplacement des ventes (Simple)'
+        OPTIMISE = 'OPTIMISE', 'Analyse prédictive (Intelligent)'
+        CUMULATIF = 'CUMULATIF', 'Cumulatif depuis dernière commande'
+
+    id = models.AutoField(primary_key=True)
+    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.CASCADE, related_name='schedules')
+    
+    # Scheduling
+    active_days = models.JSONField(default=list, help_text="List of active weekdays [0-6]")
+    active_month_days = models.JSONField(default=list, help_text="List of active month days [1-31]")
+    frequency_weeks = models.IntegerField(default=1)
+    start_date = models.DateField(default=date.today)
+    time = models.TimeField(default="12:00")
+    is_active = models.BooleanField(default=True)
+    
+    # Options
+    has_alert_sound = models.BooleanField(default=True)
+    has_teletransmission = models.BooleanField(default=False)
+    teletransmission_mode = models.CharField(max_length=20, choices=TeletransmissionMode.choices, default=TeletransmissionMode.IMMEDIATE)
+    needs_financial_reception = models.BooleanField(default=True)
+    print_copies = models.IntegerField(default=1)
+    
+    # Delivery
+    delivery_time = models.TimeField(null=True, blank=True)
+    auto_reception_delay = models.IntegerField(default=0, help_text="Minutes before auto-reception")
+    notify_sms = models.BooleanField(default=False)
+    notify_whatsapp = models.BooleanField(default=False)
+    
+    # Logic
+    special_code = models.CharField(max_length=50, blank=True)
+    min_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    min_items = models.IntegerField(default=0)
+    condition_logic = models.CharField(max_length=3, choices=ConditionLogic.choices, default=ConditionLogic.AND)
+    
+    # Automation Logic
+    execution_mode = models.CharField(max_length=10, choices=ExecutionMode.choices, default=ExecutionMode.OPTIMISE)
+    analysis_period_days = models.IntegerField(default=30, help_text="Période d'analyse des ventes pour calculer la VMD (jours).")
+    delai_couverture_jours = models.IntegerField(
+        default=30,
+        help_text="Autonomie de stock souhaitée après réception (jours de vente à couvrir). Peut varier pour un même fournisseur."
+    )
+    comment = models.TextField(blank=True)
+    last_run = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Schedule {self.id} - {self.fournisseur.name}"

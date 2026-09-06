@@ -147,12 +147,23 @@ class CommandeViewSet(
             return response
 
         queryset = self.filter_queryset(self.get_queryset())
+
+        # Les compteurs par statut doivent ignorer le filtre 'status' (sinon
+        # sélectionner "Préparation" met les autres compteurs à 0), mais garder
+        # les autres filtres (type, fournisseur, is_active).
+        counts_qs = self.get_queryset()
+        type_param = request.query_params.get('type')
+        if type_param:
+            counts_qs = counts_qs.filter(type=type_param)
+        fournisseur_param = request.query_params.get('fournisseur')
+        if fournisseur_param:
+            counts_qs = counts_qs.filter(fournisseur=fournisseur_param)
         status_counts = dict(
-            queryset.values('status').annotate(count=Count('id')).values_list('status', 'count')
+            counts_qs.values('status').annotate(count=Count('id')).values_list('status', 'count')
         )
         for s in [Commande.Status.EN_PREPARATION, Commande.Status.EN_ATTENTE, Commande.Status.CLOTUREE]:
-            if s not in status_counts:
-                status_counts[s] = 0
+            if s.value not in status_counts:
+                status_counts[s.value] = 0
 
         page = self.paginate_queryset(queryset)
         if page is not None:

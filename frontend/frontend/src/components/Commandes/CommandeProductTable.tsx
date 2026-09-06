@@ -91,7 +91,7 @@ export default function CommandeProductTable({
         }
     }, [commandeProduits, onViewProductDetails]);
 
-    const colSpan = commandeType === 'DIR' ? 15 : 14;
+    const colSpan = commandeType === 'DIR' ? 16 : 15;
 
     return (
         <div ref={tableRef} onKeyDownCapture={handleTableKeyDownCapture} className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200">
@@ -128,6 +128,7 @@ export default function CommandeProductTable({
                                 <TableHead className="bg-slate-100 pl-2 font-bold min-w-[260px] w-full whitespace-nowrap">{t('orders:product_table.headers.product')}</TableHead>
                                 <TableHead className="bg-slate-100 pl-2 font-bold min-w-[96px] whitespace-nowrap">{t('orders:product_table.headers.cip')}</TableHead>
                                 <TableHead className="bg-slate-100 text-center min-w-[56px] text-amber-600 font-bold border-x border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.stock_short')}</TableHead>
+                                <TableHead className="bg-slate-100 text-center min-w-[56px] text-blue-600 font-bold border-x border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.rotation')}</TableHead>
                                 <TableHead className="bg-slate-100 text-right min-w-[64px] font-bold whitespace-nowrap">{t('orders:product_table.headers.qty')}</TableHead>
                                 <TableHead className="bg-slate-100 text-center min-w-[56px] font-bold text-emerald-600 border-l border-slate-300/30 whitespace-nowrap">{t('orders:product_table.headers.ug')}</TableHead>
                                 {commandeType === 'DIR' && (
@@ -177,6 +178,7 @@ export default function CommandeProductTable({
                             ))}
                             <TableRow className="sticky bottom-0 z-30 bg-slate-100 text-[10px] uppercase font-bold text-slate-500 border-t-2 border-slate-300 shadow-md">
                                 <TableHead colSpan={3} className="bg-slate-100 pl-4 py-2">{t('orders:product_table.end_of_list', { count: commandeProduits.length })}</TableHead>
+                                <TableHead className="bg-slate-100 py-2"></TableHead>
                                 <TableHead className="bg-slate-100 py-2"></TableHead>
                                 <TableHead className="bg-slate-100 py-2"></TableHead>
                                 <TableHead className="bg-slate-100 py-2"></TableHead>
