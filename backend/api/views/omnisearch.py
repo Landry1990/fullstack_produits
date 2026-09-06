@@ -44,7 +44,8 @@ class GlobalSearchView(APIView):
             Q(name__icontains=query) | 
             Q(cip1__icontains=query) | 
             Q(cip2__icontains=query) | 
-            Q(cip3__icontains=query)
+            Q(cip3__icontains=query) |
+            Q(cip4__icontains=query)
         ).select_related('rayon', 'fournisseur', 'forme')[:limit]
 
         # 2. CLIENTS

@@ -187,7 +187,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       const qty = rapidCountMode ? 1 : parseInt(quantity || '1', 10);
 
       await saveOffline(
-        { id: product.id, name: product.name, cip1: product.cip1 || undefined },
+        { id: product.id, name: product.name, cip1: product.cip1 || product.cip2 || product.cip3 || product.cip4 || undefined },
         qty,
         inventaire
       );
@@ -224,7 +224,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
 
         if (rapidCountMode && !product.use_lot_management) {
           await saveOffline(
-            { id: product.id, name: product.name, cip1: product.cip1 || undefined },
+            { id: product.id, name: product.name, cip1: product.cip1 || product.cip2 || product.cip3 || product.cip4 || undefined },
             1,
             inventaire
           );
@@ -291,7 +291,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
           {
             id: scannedProduct.id,
             name: scannedProduct.name,
-            cip1: scannedProduct.cip1 || undefined
+            cip1: scannedProduct.cip1 || scannedProduct.cip2 || scannedProduct.cip3 || scannedProduct.cip4 || undefined
           },
           qty,
           inventaire,
@@ -304,7 +304,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       const newQty = parseInt(quantity, 10);
       if (!scannedProduct.use_lot_management && !isNaN(newQty) && newQty > 0) {
         await saveOffline(
-          { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || undefined },
+          { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || scannedProduct.cip2 || scannedProduct.cip3 || scannedProduct.cip4 || undefined },
           newQty,
           inventaire
         );
@@ -317,7 +317,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
         }
 
         await saveOffline(
-          { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || undefined },
+          { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || scannedProduct.cip2 || scannedProduct.cip3 || scannedProduct.cip4 || undefined },
           newQty,
           inventaire,
           newLotNumber || undefined,

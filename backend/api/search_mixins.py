@@ -26,7 +26,7 @@ def apply_multiterm_search(queryset, search_query, search_fields):
     # Si la recherche est purement numérique et de longueur >= 7, 
     # c'est très probablement un scan de code-barre.
     if search_query.isdigit() and len(search_query) >= 7:
-        barcode_query = Q(cip1=search_query) | Q(cip2=search_query) | Q(cip3=search_query)
+        barcode_query = Q(cip1=search_query) | Q(cip2=search_query) | Q(cip3=search_query) | Q(cip4=search_query)
         # On vérifie s'il y a un match exact avant de faire une recherche textuelle plus lourde
         if queryset.filter(barcode_query).exists():
             return queryset.filter(barcode_query)

@@ -33,7 +33,7 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
         'reason_type': ['exact'],
         'created_at': ['gte', 'lte', 'date'],
     }
-    search_fields = ['produit__name', 'reason_detail', 'produit__cip1']
+    search_fields = ['produit__name', 'reason_detail', 'produit__cip1', 'produit__cip4']
     ordering_fields = ['created_at', 'quantity_change']
     ordering = ['-created_at']
 

@@ -36,6 +36,7 @@ function getProductCip(cp: CommandeProduit): string[] {
         cips.push(normalizeCip(produit.cip1));
         cips.push(normalizeCip(produit.cip2));
         cips.push(normalizeCip(produit.cip3));
+        cips.push(normalizeCip(produit.cip4));
         cips.push(normalizeCip(cp.produit_cip));
         cips.push(normalizeCip(cp.produit_ref));
     }

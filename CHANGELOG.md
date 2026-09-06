@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-09-06 — Quatrième champ CIP (`cip4`) unique sur les 4 CIP
+
+### ✨ Nouveautés backend
+
+- `backend/api/models/products.py` : ajout de `cip4` (`CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)`)
+- Index trigramme `GinIndex` `produit_cip4_trgm_idx` pour la recherche partielle
+- `save()` : validation pour que `cip4` soit unique sur les 4 champs CIP (`cip1`/`cip2`/`cip3`/`cip4`) et que `cip1`/`cip2`/`cip3` ne réutilisent pas une valeur déjà prise en `cip4`
+  - Les 32 doublons croisés existants entre `cip1`/`cip2`/`cip3` sont conservés ; l'unicité globale n'est imposée que pour `cip4`
+- Migration `0251` réécrite avec `SeparateDatabaseAndState` + `CREATE INDEX CONCURRENTLY` pour ne pas bloquer `api_produit`
+- Recherche/scan mis à jour : `search_mixins.py`, `centralized_configs.py` (`product_fields`), `admin.py`, `serializers/mixins.py`, `serializers_optimized.py`, `omnisearch.py`, `produit_actions/bulk_ops.py`, `produit_actions/status_ops.py`, `stocks/stock_lots.py`, `stocks/cadencier.py`, `stocks/adjustments.py`, `stocks/inventaire/csv_import.py`
+- Fallbacks CIP étendus : `fournisseurs.py`, `commandes/pdf_generation.py`
+
+### ✨ Nouveautés frontend
+
+- `frontend/frontend/src/types/catalog.ts` : `ProduitModel.cip4`
+- `frontend/frontend/src/hooks/useProductSearchIndex.ts` : indexation et scoring `cip4`
+- `frontend/frontend/src/hooks/useProductSearch.ts` : détection de scan sur `cip4`
+- `frontend/frontend/src/hooks/useDataMatrixScanner.ts` : matching `cip4` pour les commandes
+- `pda-inventaire` : `Produit.cip4`, `CachedProduct.cip4`, `getByCip`, fallback `cip1`-`cip4` pour l'affichage des lignes offline
+
+### Vérification
+
+- `makemigrations` + `migrate` : OK (index créés en `CONCURRENTLY`)
+- `manage.py check` : OK
+- `api.tests.test_produit_filtering` : OK
+- `npx tsc --noEmit` frontend et `pda-inventaire` : OK
+- `npm run build` : OK
+
+---
+
+## 2026-09-05 — Détection popup bloqué pour l'impression du ticket
+
+### Fix frontend
+
+- `frontend/frontend/src/components/facturation/TicketPreviewModal.tsx` :
+  - Remplacement de l'impression via iframe par une fenêtre popup `window.open('', '_blank')`
+  - Affichage du toast `common:popup_blocked` si le navigateur bloque la fenêtre d'impression
+  - Utilisation de `buildTicketPrintHtml` pour générer le document à imprimer
+
+---
+
 ## 2026-09-05 — Période d'essai 30 jours au premier démarrage
 
 ### ✨ Nouveautés backend

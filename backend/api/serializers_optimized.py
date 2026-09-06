@@ -53,7 +53,7 @@ class ProduitListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Produit
         fields = [
-            'id', 'name', 'cip1', 'cip2', 'cip3',
+            'id', 'name', 'cip1', 'cip2', 'cip3', 'cip4',
             'stock', 'total_stock', 'stock_minimum', 'stock_maximum', 'stock_alert', 'pmp', 'selling_price',
             'rayon_name', 'fournisseur_name', 'forme_nom', 'rotation_moyenne',
             'use_lot_management',

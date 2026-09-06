@@ -21,6 +21,7 @@ interface SearchIndexEntry {
   cip1: string
   cip2: string
   cip3: string
+  cip4: string
   // Mots individuels du nom pour recherche par token
   nameTokens: string[]
 }
@@ -59,6 +60,7 @@ export function buildIndex(products: ProduitModel[]): SearchIndexEntry[] {
       cip1: normalizeCip(p.cip1),
       cip2: normalizeCip(p.cip2),
       cip3: normalizeCip(p.cip3),
+      cip4: normalizeCip(p.cip4),
       nameTokens: nameNorm.split(/\s+/).filter(t => t.length >= 2),
     }
   })
@@ -86,9 +88,11 @@ export function searchInIndex(index: SearchIndexEntry[], query: string, limit: n
       if (entry.cip1 === qCip) score = 100
       else if (entry.cip2 === qCip) score = 99
       else if (entry.cip3 === qCip) score = 98
+      else if (entry.cip4 === qCip) score = 97
       else if (entry.cip1.startsWith(qCip)) score = 90
       else if (entry.cip2.startsWith(qCip)) score = 89
       else if (entry.cip3.startsWith(qCip)) score = 88
+      else if (entry.cip4.startsWith(qCip)) score = 87
     }
 
     // --- Recherche par nom (uniquement si pas de match CIP global) ---
@@ -125,7 +129,7 @@ export function searchInIndex(index: SearchIndexEntry[], query: string, limit: n
           let termScore = 0
 
           // CIP match pour termes numériques
-          if (isNum && (entry.cip1.startsWith(qtCip) || entry.cip2.startsWith(qtCip) || entry.cip3.startsWith(qtCip))) {
+          if (isNum && (entry.cip1.startsWith(qtCip) || entry.cip2.startsWith(qtCip) || entry.cip3.startsWith(qtCip) || entry.cip4.startsWith(qtCip))) {
             termMatched = true
             termScore = 95
           }

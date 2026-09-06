@@ -7,7 +7,7 @@ import { TicketTemplate } from '../printing/TicketTemplate'
 import { ClientNameModal } from '../sales/modals/ClientNameModal'
 import api from '../../services/api'
 import type { TicketCaisse, Facture, PharmacySettings } from '../../types'
-import { buildTicketPrintHtml, writePrintDocument } from '../../utils/print/printHelpers'
+import { printTicketInIframe } from '../../utils/print/printHelpers'
 import { preparePrintAuthSync } from '../../utils/storage'
 
 interface CaisseTicketPreviewModalProps {
@@ -150,14 +150,9 @@ export function CaisseTicketPreviewModal({
 
     const ticketWidth = settings?.ticket_paper_width || 80
     const content = ticketElement.outerHTML
-    const win = window.open('about:blank', '_blank', 'noopener,height=800,width=600')
-    if (!win) {
+    printTicketInIframe(ticketWidth, content, styleTags, () => {
       gooeyToast.error(t('common:popup_blocked'))
-      return
-    }
-    const html = buildTicketPrintHtml(ticketWidth, content, styleTags)
-    writePrintDocument(win, html)
-    win.focus()
+    })
   }, [settings, styleTags, t])
 
   return (

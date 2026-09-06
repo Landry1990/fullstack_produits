@@ -240,7 +240,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
 
         # Chercher le produit sur les 3 CIP (insensible à la casse)
         produit = Produit.objects.filter(
-            Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip),
+            Q(cip1__iexact=cip) | Q(cip2__iexact=cip) | Q(cip3__iexact=cip) | Q(cip4__iexact=cip),
             is_active=True
         ).first()
 
@@ -248,7 +248,7 @@ class StockLotViewSet(BaseViewSetConfig, OptimizedSerializerMixin, viewsets.Mode
         if not produit and cip.startswith('0'):
             cip_no_zeros = cip.lstrip('0')
             produit = Produit.objects.filter(
-                Q(cip1__iexact=cip_no_zeros) | Q(cip2__iexact=cip_no_zeros) | Q(cip3__iexact=cip_no_zeros),
+                Q(cip1__iexact=cip_no_zeros) | Q(cip2__iexact=cip_no_zeros) | Q(cip3__iexact=cip_no_zeros) | Q(cip4__iexact=cip_no_zeros),
                 is_active=True
             ).first()
 
