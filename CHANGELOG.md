@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-09-06 — Bon de réception : renommage Total TTC + marge obtenue
+
+### ✨ Amélioration
+
+- `frontend/frontend/src/utils/print/printHelpers.ts` :
+  - "Total TTC Réception" → **"Total TTC"** (label plus simple).
+  - Ajout d'une ligne **"Marge obtenue"** dans la box des totaux, calculée comme :
+    `Σ (prix_vente_HT − prix_achat) × quantité` pour chaque ligne de produit.
+  - La marge est affichée en vert pour la distinguer visuellement.
+
+### Vérifications
+
+- Build frontend OK (4737 modules).
+- Déploiement frontend effectué.
+
+---
+
 ## 2026-09-06 — Fix compteurs statut commande (PREP/ATT/CLOT) selon filtre
 
 ### 🐛 Correctif
