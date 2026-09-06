@@ -1,0 +1,146 @@
+import io
+
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
+from django.db.models.functions import Abs, Coalesce
+from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
+from rest_framework import filters, permissions, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from ...models import StockAdjustment
+from ...pagination import StandardResultsSetPagination
+from ...search_mixins import MultiTermSearchMixin
+from ...serializers import StockAdjustmentSerializer
+
+
+class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint pour consulter l'historique des ajustements de stock.
+    Lecture seule - les ajustements sont créés via l'action 'adjust_stock' de ProduitViewSet.
+    """
+    queryset = StockAdjustment.objects.select_related('produit', 'user', 'stock_lot').order_by('-created_at')
+    serializer_class = StockAdjustmentSerializer
+    pagination_class = StandardResultsSetPagination
+    permission_classes = [permissions.AllowAny] # As per original view
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = {
+        'produit': ['exact'],
+        'user': ['exact'],
+        'reason_type': ['exact'],
+        'created_at': ['gte', 'lte', 'date'],
+    }
+    search_fields = ['produit__name', 'reason_detail', 'produit__cip1', 'produit__cip4']
+    ordering_fields = ['created_at', 'quantity_change']
+    ordering = ['-created_at']
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """
+        Calculates statistics based on current filters.
+        Retourne total_count, positive_sum et negative_sum pour les cartes du frontend.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        stats = queryset.aggregate(
+            total_count=Count('id'),
+            positive_sum=Sum('quantity_change', filter=Q(quantity_change__gt=0)),
+            negative_sum=Sum('quantity_change', filter=Q(quantity_change__lt=0))
+        )
+        
+        return Response({
+            'total_count': stats['total_count'] or 0,
+            'positive_sum': stats['positive_sum'] or 0,
+            'negative_sum': stats['negative_sum'] or 0
+        })
+
+    @action(detail=False, methods=['get'])
+    def export_excel(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Même annotation pour l'export
+        queryset = queryset.annotate(
+            valorisation_calcul=ExpressionWrapper(
+                Abs(F('quantity_change')) * Coalesce(F('stock_lot__price_cost'), Value(0, output_field=DecimalField())),
+                output_field=DecimalField()
+            )
+        )
+
+        from django.utils import timezone as tz
+
+        from ...models import PharmacySettings
+
+        wb = Workbook()
+        sheet = wb.active
+        if sheet is None:
+            sheet = wb.worksheets[0] if wb.worksheets else wb.create_sheet()
+        sheet.title = "Ajustements Stock"
+
+        # En-tête pharmacie
+        try:
+            pharmacy = PharmacySettings.objects.get(pk=1)
+            from ...utils.currency import get_pharmacy_name
+            pharma_name = get_pharmacy_name()
+            pharma_address = f"{pharmacy.address} - {pharmacy.city}".strip(" -") if pharmacy.address or pharmacy.city else ""
+            pharma_phone = f"Tél : {pharmacy.phone}" if pharmacy.phone else ""
+        except PharmacySettings.DoesNotExist:
+            from ...utils.currency import get_pharmacy_name
+            pharma_name = get_pharmacy_name()
+            pharma_address, pharma_phone = "", ""
+
+        now_str = tz.localtime(tz.now()).strftime("%d/%m/%Y à %H:%M")
+        for line in [pharma_name, pharma_address, pharma_phone, f"Édité le : {now_str}", "", "Journal des Ajustements de Stock"]:
+            sheet.append([line])
+        sheet.append([])  # ligne vide avant le tableau
+
+        # Ligne d'en-tête du tableau
+        columns = [
+            "Date", "Produit", "CIP", "Type", "Lot", "Qté Change", "Valorisation", "Utilisateur"
+        ]
+        sheet.append(columns)
+        header_row = sheet.max_row
+
+        # Style en-tête
+        for cell in sheet[header_row]:
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center')
+
+        # Données
+        for adj in queryset:
+            row = [
+                adj.created_at.strftime("%d/%m/%Y %H:%M") if adj.created_at else "",
+                adj.produit_name if hasattr(adj, 'produit_name') else (adj.produit.name if adj.produit else "-"),
+                adj.produit_cip if hasattr(adj, 'produit_cip') else (adj.produit.cip1 if adj.produit else "-"),
+                adj.get_reason_type_display(),
+                adj.lot_number if hasattr(adj, 'lot_number') else (adj.stock_lot.lot if adj.stock_lot else "-"),
+                adj.quantity_change,
+                adj.valorisation_calcul,
+                adj.username if hasattr(adj, 'username') else (adj.user.username if adj.user else "Système")
+            ]
+            sheet.append(row)
+
+        # Ajuster largeur colonnes (skip header block rows before the table)
+        dims = {}
+        for row in sheet.rows:
+            for cell in row:
+                if cell.row <= header_row:
+                    continue
+                if cell.value and cell.column is not None:
+                    col_letter = get_column_letter(cell.column)
+                    dims[col_letter] = max((dims.get(col_letter, 0), len(str(cell.value))))
+        for col, value in dims.items():
+            sheet.column_dimensions[col].width = min(30, max(10, value + 2))
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=journal_sorties_perimes.xlsx'
+        return response

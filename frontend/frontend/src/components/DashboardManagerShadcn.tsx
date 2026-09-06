@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   PlusCircle, Settings, Calendar, BarChart3, TrendingUp,
@@ -52,7 +52,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
   const currencySymbol = t('common:currency_symbol', 'F');
   const fmt = (n: number) => formatCurrency(n, currentLocale, currencySymbol);
 
-  const items = [
+  const items = useMemo(() => [
     {
       label: t("manager_dashboard.periods.today", "Aujourd'hui"),
       key: 'jour' as const,
@@ -83,7 +83,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
       barColor: 'bg-amber-500',
       gradient: 'from-amber-500/5 to-transparent',
     },
-  ];
+  ], [t]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
@@ -287,11 +287,11 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
   const { t } = useTranslation(['dashboard', 'common']);
   const fmt = (n: number) => formatCurrency(n, getLocale(), t('common:currency_symbol', 'F'));
 
-  const types = [
+  const types = useMemo(() => [
     { label: t('manager_dashboard.periods.daily', 'Journalier'), code: 'JOUR', color: 'text-emerald-600', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
     { label: t('manager_dashboard.periods.weekly', 'Hebdomadaire'), code: 'SEMAINE', color: 'text-blue-600', bg: 'bg-blue-50', dot: 'bg-blue-500' },
     { label: t('manager_dashboard.periods.monthly', 'Mensuel'), code: 'MOIS', color: 'text-amber-600', bg: 'bg-amber-50', dot: 'bg-amber-500' },
-  ];
+  ], [t]);
 
   return (
     <Card className="flex flex-col h-full">
@@ -306,7 +306,7 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
               <CardDescription>{t('manager_dashboard.objectives_subtitle', 'Cibles commerciales actives')}</CardDescription>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onRefresh} className="h-9 w-9 rounded-xl">
+          <Button variant="ghost" size="icon" onClick={onRefresh} className="h-9 w-9 rounded-xl" aria-label={t('common:refresh')}>
             <RefreshCw className="size-4 text-slate-500" />
           </Button>
         </div>
@@ -353,11 +353,11 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
 /* ─── Reports ─── */
 function ReportsShadcn({ onExport, exporting }: { onExport: (type: 'csv' | 'pdf' | 'dead_stock' | 'rapport_general') => void; exporting: boolean }) {
   const { t } = useTranslation(['dashboard', 'common']);
-  const reports: { key: 'csv' | 'pdf' | 'dead_stock'; label: string; desc: string }[] = [
+  const reports: { key: 'csv' | 'pdf' | 'dead_stock'; label: string; desc: string }[] = useMemo(() => [
     { key: 'csv', label: t('manager_dashboard.report_daily_title', 'Rapport Journalier'), desc: t('manager_dashboard.report_daily_desc', 'Export CSV du jour') },
     { key: 'pdf', label: t('manager_dashboard.report_weekly_title', 'Rapport Hebdo'), desc: t('manager_dashboard.report_weekly_desc', 'PDF de la semaine') },
     { key: 'dead_stock', label: t('manager_dashboard.dead_stock_short_title', 'Stocks Dormants'), desc: t('manager_dashboard.dead_stock_short_desc', 'Excel stocks inactifs') },
-  ];
+  ], [t]);
 
   return (
     <Card>
@@ -430,9 +430,6 @@ function HeaderShadcn({
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight">
             {t('manager_dashboard.title', 'Tableau de Bord')}
           </h1>
-          <Badge variant="outline" className="hidden lg:inline-flex text-[10px] uppercase tracking-wider font-semibold bg-white">
-            shadcn/ui
-          </Badge>
         </div>
         <p className="text-slate-500 text-sm">
           {t('manager_dashboard.subtitle', 'Suivi des performances et objectifs commerciaux')}
@@ -440,7 +437,7 @@ function HeaderShadcn({
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={onOpenSettings} className="h-10 w-10 rounded-xl">
+        <Button variant="ghost" size="icon" onClick={onOpenSettings} className="h-10 w-10 rounded-xl" aria-label={t('common:settings')}>
           <Settings className="size-5 text-slate-500" />
         </Button>
         <Button onClick={onOpenObjective} className="gap-2 rounded-xl px-3 lg:px-4">

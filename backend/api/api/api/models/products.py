@@ -1,0 +1,386 @@
+"""
+Product-related models: Rayon, Forme, Groupe, FamilleRisque, Substance, DrugInteraction, Produit.
+"""
+from decimal import Decimal
+from typing import TYPE_CHECKING
+
+from django.contrib.auth.models import User
+from django.contrib.postgres.indexes import GinIndex  # Recherche textuelle performante
+from django.db import models
+from django.db.models import Q
+from django.utils import timezone
+
+if TYPE_CHECKING:
+    from .stock import MouvementStock, StockAdjustment, StockLot
+
+
+class Rayon(models.Model):
+    """Model representing a product category."""
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100)
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, 
+        on_delete=models.SET_NULL, 
+        related_name='sub_rayons', 
+        verbose_name="Rayon Parent"
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class Forme(models.Model):
+    """Model representing a pharmaceutical form (e.g., Comprimé, Sirop)."""
+    id = models.AutoField(primary_key=True)
+    nom = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.nom
+
+
+class Groupe(models.Model):
+    """Model representing a product group."""
+    id = models.AutoField(primary_key=True)
+    nom = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.nom
+
+
+class FamilleRisque(models.Model):
+    """
+    Famille thérapeutique ou de risque (ex: AINS, Paracétamol).
+    Utilisé pour détecter les redondances ou surdosages lors de la vente.
+    """
+    id = models.AutoField(primary_key=True)
+    nom = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    
+    niveau_risque = models.CharField(max_length=20, default='STANDARD', choices=[
+        ('STANDARD', 'Standard'),
+        ('HAUT', 'Haut Risque'),
+    ])
+
+    def __str__(self):
+        return self.nom
+
+
+class Substance(models.Model):
+    """
+    Substance active (ex: Paracétamol, Ibuprofène).
+    Utilisé pour détecter les interactions et les redondances.
+    """
+    nom = models.CharField(max_length=255, unique=True)
+    code_cas = models.CharField(
+        max_length=50, blank=True, null=True,
+        help_text="Code CAS pour identification unique"
+    )
+    contre_indications = models.TextField(
+        blank=True, null=True,
+        help_text="Contre-indications et avertissements (source OpenFDA)"
+    )
+
+    def __str__(self):
+        return self.nom
+
+    class Meta:
+        ordering = ['nom']
+
+
+class MedicamentReference(models.Model):
+    """
+    Table de référence unifiée des médicaments (Base ANSM).
+    Contient le code CIS, le nom nettoyé, la forme et les substances actives.
+    Utilisée pour l'aide à la saisie et les suggestions de substitution.
+    """
+    cis = models.CharField(max_length=20, primary_key=True, verbose_name="Code CIS")
+    nom = models.CharField(max_length=500, db_index=True)
+    forme = models.CharField(max_length=255, blank=True, null=True)
+    substances = models.TextField(blank=True, null=True, help_text="Liste des substances actives séparées par des points-virgules")
+
+    def __str__(self):
+        return f"{self.cis} - {self.nom}"
+
+    class Meta:
+        verbose_name = "Référence Médicament"
+        verbose_name_plural = "Références Médicaments"
+        ordering = ['nom']
+        indexes = [
+            GinIndex(fields=['nom'], name='med_ref_nom_trgm_idx', opclasses=['gin_trgm_ops']),
+        ]
+
+
+class DrugInteraction(models.Model):
+    """Interaction entre deux substances."""
+    GRAVITY_CHOICES = [
+        ('PRECAUTION', 'Précaution d\'emploi'),
+        ('A_PRENDRE_EN_COMPTE', 'A prendre en compte'),
+        ('DECONSEILLE', 'Déconseillé'),
+        ('CONTRE_INDIQUE', 'Contre-indiqué'),
+    ]
+
+    substance_a = models.ForeignKey(
+        Substance, on_delete=models.CASCADE, related_name='interactions_a'
+    )
+    substance_b = models.ForeignKey(
+        Substance, on_delete=models.CASCADE, related_name='interactions_b'
+    )
+    gravity = models.CharField(max_length=20, choices=GRAVITY_CHOICES, default='PRECAUTION')
+    description = models.TextField(help_text="Description du risque et de la conduite à tenir")
+
+    class Meta:
+        unique_together = ('substance_a', 'substance_b')
+        verbose_name = "Interaction Médicamenteuse"
+        verbose_name_plural = "Interactions Médicamenteuses"
+
+    def __str__(self):
+        return f"{self.substance_a} + {self.substance_b} ({self.get_gravity_display()})"
+
+
+class Produit(models.Model):
+    """Model representing a product."""
+    id = models.AutoField(primary_key=True)
+    
+    # Reverse relationships (defined in other models)
+    if TYPE_CHECKING:
+        stock_lots: models.Manager[StockLot]
+        adjustments: models.Manager[StockAdjustment]
+        mouvements_stock: models.Manager[MouvementStock]
+    rayon = models.ForeignKey('Rayon', on_delete=models.SET_NULL, null=True, blank=True, db_index=True)
+    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True)
+    is_supplier_exclusive = models.BooleanField(
+        default=False,
+        help_text="Si activé, ce produit ne peut être commandé que chez ce fournisseur."
+    )
+    forme = models.ForeignKey('Forme', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits', db_index=True)
+    groupe = models.ForeignKey('Groupe', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits', db_index=True)
+    famille_risque = models.ForeignKey(
+        'FamilleRisque', on_delete=models.SET_NULL, null=True, blank=True, 
+        related_name='produits', help_text="Famille pour contrôle interactions (ex: AINS)"
+    )
+    name = models.CharField(max_length=100, db_index=True)
+    description = models.TextField(blank=True, null=True)
+    message_alerte = models.TextField(blank=True, null=True, help_text="Message d'alerte affiché lors de la saisie en caisse")
+    blocking_alerte = models.BooleanField(
+        default=False, 
+        help_text="Si coché, l'alerte bloque la validation de la vente tant qu'elle n'est pas acquittée."
+    )
+    stock = models.IntegerField(default=0)
+    use_lot_management = models.BooleanField(
+        default=True,
+        help_text="Activer la gestion par lots FIFO pour ce produit (recommandé pour traçabilité)"
+    )
+    cip1 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
+    cip2 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
+    cip3 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
+    cip4 = models.CharField(max_length=20, unique=True, blank=True, null=True, db_index=True)
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    expire_date = models.DateField(blank=True, null=True)
+    stock_alert = models.IntegerField(default=0)
+    stock_minimum = models.IntegerField(default=0)
+    stock_maximum = models.IntegerField(default=0)
+    tva = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    rotation_moyenne = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    taux_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
+    pourcentage_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
+    pmp = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix Moyen Pondéré")
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    date_premiere_vente = models.DateField(
+        blank=True, null=True,
+        help_text="Date de la première vente (pour calcul précis de la rotation)"
+    )
+    
+    # Optimistic Locking - évite les verrous pessimistes (select_for_update)
+    version = models.IntegerField(
+        default=1,
+        help_text="Version pour optimistic locking (concurrency control)"
+    )
+    
+    # Données Cliniques
+    code_atc = models.CharField(
+        max_length=20, blank=True, null=True, 
+        help_text="Code ATC (Anatomique Thérapeutique Chimique)"
+    )
+    substance_active = models.CharField(
+        max_length=255, blank=True, null=True, 
+        help_text="Nom de la substance active principale (Texte libre)"
+    )
+    substances = models.ManyToManyField(
+        Substance, blank=True, related_name='produits', 
+        help_text="Substances actives structurées pour les interactions"
+    )
+    dci_reference = models.ForeignKey(
+        Substance, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='produits_generiques',
+        help_text="DCI de référence pour la substitution générique (ex: Paracétamol)"
+    )
+    is_generic = models.BooleanField(
+        default=False,
+        help_text="Ce produit est un générique (prix généralement plus bas)"
+    )
+    produit_reference = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='generiques',
+        help_text="Produit de marque/origine de référence (si ce produit est un générique)"
+    )
+    
+    # Ordonnancier - Champs pour identifier les médicaments soumis à ordonnance
+    requires_prescription = models.BooleanField(
+        default=False,
+        help_text="Ce produit nécessite une ordonnance"
+    )
+    
+    SURVEILLANCE_CHOICES = [
+        ('NONE', 'Aucune'),
+        ('STANDARD', 'Surveillance standard'),
+        ('RENFORCEE', 'Surveillance renforcée'),
+    ]
+    surveillance_category = models.CharField(
+        max_length=20, 
+        choices=SURVEILLANCE_CHOICES, 
+        default='NONE',
+        help_text="Catégorie de surveillance du médicament"
+    )
+    
+    # Dates de dernière transaction
+    dernier_achat = models.DateField(
+        blank=True, 
+        null=True,
+        help_text="Date du dernier achat (réception de commande)"
+    )
+    dernier_vente = models.DateField(
+        blank=True, 
+        null=True,
+        help_text="Date de la dernière vente"
+    )
+    
+    # Vitrine - Disponibilité en ligne
+    is_public = models.BooleanField(
+        default=False,
+        help_text="Produit visible sur la vitrine en ligne"
+    )
+    is_active = models.BooleanField(
+        default=True, db_index=True,
+        help_text="Produit actif (visible dans les recherches)"
+    )
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='deleted_produits', help_text="Utilisateur ayant supprimé ce produit"
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
+
+    # --- Paramètres Stock Réservé & Réapprovisionnement ---
+    has_reserve_storage = models.BooleanField(
+        default=False,
+        help_text="Active la gestion Réserve / Rayon pour ce produit"
+    )
+    capacite_rayon = models.IntegerField(
+        default=0,
+        help_text="Capacité maximale d'exposition en rayon"
+    )
+    min_rayon = models.IntegerField(
+        default=0,
+        help_text="Seuil de déclenchement du réapprovisionnement"
+    )
+    stock_reserve = models.IntegerField(
+        default=0,
+        help_text="Quantité totale en réserve (stock tampon)"
+    )
+
+    # --- Paramètres Pathologies Chroniques ---
+    is_chronic = models.BooleanField(
+        default=False,
+        help_text="Indique si ce produit est destiné à un traitement chronique (diabète, hypertension, etc.)"
+    )
+    default_treatment_days = models.IntegerField(
+        default=30,
+        help_text="Durée par défaut du traitement en jours (utilisé pour les rappels)"
+    )
+
+    # Relations définies dans d'autres modèles (pour aide IDE)
+    # StockLot.produit avec related_name='stock_lots'
+    # StockAdjustment.produit avec related_name='adjustments'
+    # MouvementStock.produit avec related_name='mouvements_stock'
+    # RuptureFournisseur.produit avec related_name='ruptures_fournisseurs'
+
+
+    @property
+    def total_stock(self):
+        """
+        Returns the total stock: Rayon (stock) + Reserve (stock_reserve).
+        """
+        return (self.stock or 0) + (self.stock_reserve or 0)
+
+    def save(self, *args, **kwargs):
+        # Validation Exclusivité
+        if self.is_supplier_exclusive and not self.fournisseur:
+            from django.core.exceptions import ValidationError
+            raise ValidationError("Un produit ne peut être exclusif sans fournisseur attribué.")
+
+        # cip4 : unicité globale sur les 4 champs CIP sans casser les doublons
+        # historiques entre cip1/cip2/cip3 (32 doublons croisés existants).
+        from django.core.exceptions import ValidationError
+        cip4_val = (self.cip4 or '').strip()
+        if cip4_val:
+            if Produit.objects.exclude(pk=self.pk).filter(
+                Q(cip1=cip4_val) | Q(cip2=cip4_val) | Q(cip3=cip4_val) | Q(cip4=cip4_val)
+            ).exists():
+                raise ValidationError("Ce code CIP est déjà utilisé sur un autre produit.")
+        # Empêche cip1/cip2/cip3 de réutiliser une valeur déjà prise en cip4.
+        for cip_field in ('cip1', 'cip2', 'cip3'):
+            cip_val = (getattr(self, cip_field) or '').strip()
+            if cip_val and Produit.objects.exclude(pk=self.pk).filter(cip4=cip_val).exists():
+                raise ValidationError("Ce code CIP est déjà utilisé dans le champ CIP4 d'un autre produit.")
+
+        # Calcul automatique des marges — centralisé via MarginService
+        if self.cost_price and self.selling_price:
+            try:
+                from api.services.margin_service import MarginService
+                margins = MarginService.calculate_product_margin(
+                    Decimal(str(self.cost_price)),
+                    Decimal(str(self.selling_price))
+                )
+                self.taux_marge = margins['taux_marge']
+                self.pourcentage_marge = margins['pourcentage_marge']
+            except (ValueError, TypeError, ZeroDivisionError):
+                pass
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+    
+    def calculate_stock_from_lots(self):
+        """
+        Calcule et met à jour le stock du produit basé sur la somme
+        des quantités restantes de tous ses lots.
+        Gère à la fois le stock Rayon (quantity_remaining) et le stock Réserve (quantity_reserved).
+        """
+        from django.db.models import Sum
+        results = self.stock_lots.aggregate(
+            total_remaining=Sum('quantity_remaining'),
+            total_reserved=Sum('quantity_reserved')
+        )
+        
+        self.stock = results['total_remaining'] or 0
+        self.stock_reserve = results['total_reserved'] or 0
+        
+        self.save(update_fields=['stock', 'stock_reserve'])
+        return self.stock
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['stock']),
+            models.Index(fields=['rayon', 'stock']),
+            models.Index(fields=['fournisseur']),
+            models.Index(fields=['stock', 'stock_minimum']),
+            # Index Postgres pour recherche textuelle rapide (GIN + Trigramme)
+            GinIndex(fields=['name'], name='produit_name_trgm_idx', opclasses=['gin_trgm_ops']),
+            GinIndex(fields=['cip1'], name='produit_cip1_trgm_idx', opclasses=['gin_trgm_ops']),
+            GinIndex(fields=['cip2'], name='produit_cip2_trgm_idx', opclasses=['gin_trgm_ops']),
+            GinIndex(fields=['cip3'], name='produit_cip3_trgm_idx', opclasses=['gin_trgm_ops']),
+            GinIndex(fields=['cip4'], name='produit_cip4_trgm_idx', opclasses=['gin_trgm_ops']),
+        ]

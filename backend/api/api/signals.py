@@ -1,0 +1,98 @@
+from django.core.cache import cache
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
+
+from .models import Caisse, Client, EcritureComptable, Facture, LigneEcriture, Produit
+
+
+@receiver([post_save, post_delete], sender=Facture)
+@receiver([post_save, post_delete], sender=Caisse)
+@receiver([post_save, post_delete], sender=Client)
+@receiver([post_save, post_delete], sender=Produit)
+@receiver([post_save, post_delete], sender=EcritureComptable)
+@receiver([post_save, post_delete], sender=LigneEcriture)
+def invalidate_secondary_caches(sender, instance, **kwargs):
+    """
+    Invalide les caches secondaires (listes de factures, suggestions, dettes fournisseurs, compta).
+    Le cache dashboard est géré séparément par DashboardCache dans cache_invalidation.py.
+    """
+    # Invalider le cache de la liste des factures
+    try:
+        cache.delete_pattern('factures_list:*')
+    except AttributeError:
+        pass
+    # Invalider le cache des suggestions de commande
+    try:
+        cache.delete_pattern('suggestions:*')
+    except AttributeError:
+        pass
+    # Invalider le cache des dettes fournisseurs
+    try:
+        cache.delete_pattern('supplier_debts:*')
+    except AttributeError:
+        pass
+    # Invalider le cache de comptabilité
+    try:
+        cache.delete_pattern('compta_*')
+    except AttributeError:
+        pass
+
+# --- AUDIT LOGGING ---
+import json
+
+from django.core.serializers.json import DjangoJSONEncoder
+from django.forms.models import model_to_dict
+
+from .models import AuditLog, Commande, InvoiceSettings
+
+
+@receiver(post_save, sender=Produit)
+@receiver(post_save, sender=Commande)
+@receiver(post_save, sender=Client)
+@receiver(post_save, sender=InvoiceSettings)
+def log_save(sender, instance, created, **kwargs):
+    # Determine Action
+    action = AuditLog.Action.CREATE if created else AuditLog.Action.UPDATE
+    model_name = sender.__name__
+    
+    if not getattr(instance, '_skip_audit', False):
+        try:
+            # Basic serialization using model_to_dict
+            details_dict = model_to_dict(instance)
+            
+            # Re-serialize and deserialize to get a clean dict with serializable types
+            # Use ensure_ascii=True to avoid encoding issues during intermediate step
+            details_json = json.dumps(details_dict, cls=DjangoJSONEncoder, ensure_ascii=True)
+            safe_details = json.loads(details_json)
+            
+            AuditLog.objects.create(
+                action=action,
+                model_name=model_name,
+                object_id=str(instance.pk),
+                details=safe_details
+            )
+        except Exception as e:
+            try:
+                AuditLog.objects.create(
+                    action=action,
+                    model_name=model_name,
+                    object_id=str(instance.pk),
+                    details={"error": str(e), "note": "Audit serialization failed"}
+                )
+            except Exception:
+                pass
+
+@receiver(post_delete, sender=Produit)
+@receiver(post_delete, sender=Commande)
+@receiver(post_delete, sender=Client)
+def log_delete(sender, instance, **kwargs):
+    model_name = sender.__name__
+    try:
+        AuditLog.objects.create(
+            action=AuditLog.Action.DELETE,
+            model_name=model_name,
+            object_id=str(instance.pk),
+            details={"info": "Deleted completely"}
+        )
+    except Exception:
+        pass

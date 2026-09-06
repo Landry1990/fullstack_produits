@@ -106,3 +106,10 @@ export function resolveStock(p: CommandeProduit): number {
         ? p.produit.stock
         : p.produit_stock ?? 0;
 }
+
+export function resolveRotation(p: CommandeProduit): number {
+    if (p.produit && typeof p.produit === 'object' && p.produit.rotation_moyenne !== undefined) {
+        return Number(p.produit.rotation_moyenne) || 0;
+    }
+    return Number(p.produit_rotation_moyenne) || 0;
+}

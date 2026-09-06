@@ -207,7 +207,7 @@ const Cadencier: React.FC = () => {
 
   const allSelected = items.length > 0 && selectedIds.size === items.length;
 
-  const headers = [
+  const headers = useMemo(() => [
     t('stock:cadencier.product', 'Produit'),
     t('stock:cadencier.stock', 'Stock'),
     t('stock:cadencier.rotation', 'Rotation'),
@@ -218,8 +218,8 @@ const Cadencier: React.FC = () => {
     t('stock:cadencier.amount', 'Montant HT'),
     t('stock:cadencier.urgency', 'Urgence'),
     t('stock:cadencier.supplier', 'Fournisseur'),
-  ];
-  const widths = ['w-[28%]', 'w-16', 'w-24', 'w-20', 'w-16', 'w-24', 'w-28', 'w-28', 'w-24', 'w-[14%]'];
+  ], [t]);
+  const widths = useMemo(() => ['w-[28%]', 'w-16', 'w-24', 'w-20', 'w-16', 'w-24', 'w-28', 'w-28', 'w-24', 'w-[14%]'], []);
 
   return (
     <div className="h-screen overflow-hidden bg-slate-50 p-2 sm:p-3 lg:p-4">
@@ -271,6 +271,7 @@ const Cadencier: React.FC = () => {
 
                   <div className="md:col-span-2">
                     <select
+                      aria-label={t('stock:cadencier.type_label')}
                       value={filters.type}
                       onChange={(e) => handleFilterChange('type', e.target.value)}
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -282,21 +283,20 @@ const Cadencier: React.FC = () => {
 
                   <div className="md:col-span-2">
                     <select
+                      aria-label={t('stock:cadencier.coverage_label')}
                       value={String(filters.coverage_days)}
                       onChange={(e) => handleFilterChange('coverage_days', parseInt(e.target.value))}
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     >
-                      <option value="7">7 jours</option>
-                      <option value="15">15 jours</option>
-                      <option value="30">30 jours</option>
-                      <option value="45">45 jours</option>
-                      <option value="60">60 jours</option>
-                      <option value="90">90 jours</option>
+                      {[7, 15, 30, 45, 60, 90].map((d) => (
+                        <option key={d} value={String(d)}>{t('stock:cadencier.days_option', { days: d, defaultValue: `${d} jours` })}</option>
+                      ))}
                     </select>
                   </div>
 
                   <div className="md:col-span-2">
                     <select
+                      aria-label={t('stock:cadencier.rayon_label')}
                       value={filters.rayon}
                       onChange={(e) => handleFilterChange('rayon', e.target.value)}
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -308,6 +308,7 @@ const Cadencier: React.FC = () => {
 
                   <div className="md:col-span-2">
                     <select
+                      aria-label={t('stock:cadencier.provider_label')}
                       value={filters.fournisseur}
                       onChange={(e) => handleFilterChange('fournisseur', e.target.value)}
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -438,12 +439,13 @@ const Cadencier: React.FC = () => {
                 <Table className="w-full table-fixed text-sm">
                   <TableHeader className="sticky top-0 z-10">
                     <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
-                      <TableHead className="w-12 px-3 py-2 text-center">
+                      <TableHead scope="col" className="w-12 px-3 py-2 text-center">
                         <span className="sr-only">{t('stock:cadencier.selection')}</span>
                       </TableHead>
                       {headers.map((h, i) => (
                         <TableHead
                           key={h}
+                          scope="col"
                           className={`px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
                             i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
                           }`}
@@ -484,7 +486,7 @@ const Cadencier: React.FC = () => {
                 <Table className="w-full table-fixed text-sm">
                   <TableHeader className="sticky top-0 z-10">
                     <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
-                      <TableHead className="w-12 px-3 py-2 text-center">
+                      <TableHead scope="col" className="w-12 px-3 py-2 text-center">
                         <Checkbox
                           checked={allSelected}
                           onCheckedChange={toggleAll}
@@ -494,6 +496,7 @@ const Cadencier: React.FC = () => {
                       {headers.map((h, i) => (
                         <TableHead
                           key={h}
+                          scope="col"
                           className={`px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 ${widths[i]} ${
                             i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-center'
                           }`}

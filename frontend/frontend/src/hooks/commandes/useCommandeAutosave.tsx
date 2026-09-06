@@ -37,6 +37,44 @@ export function useCommandeAutosave({ state, setSaving, handleSaveCommande }: Us
     autoSaveStateRef.current = state;
   });
 
+  // Sauvegarde différée (debounce 10s) quand la liste des produits change
+  // — évite la perte de suppressions/modifications si l'utilisateur recharge avant le prochain cycle
+  useEffect(() => {
+    if (state.viewMode !== 'CREATE' && state.viewMode !== 'EDIT') return;
+    if (state.commandeProduits.length === 0 || !state.newCommandeFournisseurId) return;
+    if (state.isImporting) return;
+    if (state.isMiseEnPlace && !state.payeALaCloture && !state.delaiPaiementNegocieJours.trim()) return;
+
+    const timer = setTimeout(async () => {
+      const s = autoSaveStateRef.current;
+      if (s.isImporting) return;
+      setSaving(true);
+      try {
+        const cleanCommande: Partial<Commande> = {
+          fournisseur: normalizeNumberInput(s.newCommandeFournisseurId),
+          numero_facture: s.numeroFacture,
+          type: s.commandeType,
+          taux_change: s.commandeType === 'DIR' ? s.tauxChange : undefined,
+          frais_coefficient: s.commandeType === 'DIR' ? s.fraisCoefficient : undefined,
+          is_mise_en_place: s.isMiseEnPlace,
+          delai_paiement_negocie_jours: s.isMiseEnPlace && s.delaiPaiementNegocieJours.trim()
+            ? Number(s.delaiPaiementNegocieJours)
+            : null,
+          paye_a_la_cloture: s.isMiseEnPlace && s.payeALaCloture,
+        };
+        const mode = (s.viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
+        await handleSaveCommande(cleanCommande, s.commandeProduits, mode, s.selectedCommande, true);
+      } catch (err) {
+        logger.error('Auto-save (debounced) error:', err);
+      } finally {
+        setSaving(false);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.commandeProduits, state.viewMode, state.isImporting]);
+
   useEffect(() => {
     const interval = setInterval(async () => {
       const s = autoSaveStateRef.current;
@@ -68,7 +106,7 @@ export function useCommandeAutosave({ state, setSaving, handleSaveCommande }: Us
       } finally {
         setSaving(false);
       }
-    }, 30000);
+    }, 120000);
 
     return () => clearInterval(interval);
   }, [handleSaveCommande, setSaving]);

@@ -12,6 +12,27 @@ ce qui a été fait récemment et où on s'est arrêté.
 après une tâche significative : quoi, pourquoi, fichiers touchés. Garde le même format que les
 entrées existantes (titres avec emojis, listes à puces, mention des fichiers modifiés).
 
+## ⚠️ Demandes complexes ou bouleversantes — Avertir avant d'agir
+
+**Si une demande est jugée trop complexe ou susceptible de bouleverser le code actuel
+(refactor massif, changement d'architecture, modification de plusieurs modules critiques,
+casse potentielle du comportement existant), NE PAS agir immédiatement.**
+
+Procédure obligatoire :
+1. **Analyser** l'ampleur de la demande (fichiers touchés, risques de régression, impact production).
+2. **Avertir l'utilisateur** avec un résumé clair : ce qui va changer, les risques, les alternatives.
+3. **Attendre la confirmation** explicite de l'utilisateur avant toute modification.
+4. Une fois validé, procéder par étapes (idéalement via sous-agents) avec vérification à chaque étape.
+
+Critères déclenchant l'avertissement (non exhaustif) :
+- Modification de plus de 5 fichiers dans des modules critiques (models, serializers, views, store, routes).
+- Refactor d'une architecture existante (ex: changer la gestion d'état, le routing, l'auth).
+- Changement cassant le contrat backend ↔ frontend ou l'API publique.
+- Risque de perte de données ou de régression sur les workflows existants (caisse, facturation, commandes, stock).
+- Modification des migrations Django avec impact sur les données existantes.
+
+**En cas de doute, toujours privilégier l'avertissement plutôt que l'action.**
+
 ## ⚠️ Parallélisation — Tâches longues ou complexes
 
 **Toute tâche longue ou complexe doit être décomposée et confiée à un ou plusieurs

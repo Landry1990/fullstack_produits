@@ -54,19 +54,16 @@ export default function PerformanceOverview({
 }: PerformanceOverviewProps) {
   const navigate = useNavigate();
   const Recharts = useRecharts();
-  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
-  const { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = Recharts;
-  
+
+  const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
+  const totalDettes = supplierDebts?.total_debt ?? 0;
+  const nbFournisseursDetteurs = supplierDebts?.suppliers?.length ?? 0;
+
   const chartData = useMemo(() => revenueChart && revenueChart.labels ? revenueChart.labels.map((label: string, index: number) => ({
     jour: label,
     montant: revenueChart.data[index],
     nb_ventes: (revenueChart as RevenueChartData & { nb_ventes?: number[] }).nb_ventes?.[index] ?? 0,
   })) : [], [revenueChart]);
-
-  const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
-
-  const totalDettes = supplierDebts?.total_debt ?? 0;
-  const nbFournisseursDetteurs = supplierDebts?.suppliers?.length ?? 0;
 
   // KPI cards config
   const kpiCards = useMemo(() => stats ? (isVendeur ? [
@@ -124,6 +121,9 @@ export default function PerformanceOverview({
       icon: Package, accent: '#10b981', isPositive: true,
     },
   ]) : [], [isVendeur, stats, totalDettes, nbFournisseursDetteurs, t, formatCurrencyLocal]);
+
+  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  const { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = Recharts;
 
   return (
     <div className="space-y-5">

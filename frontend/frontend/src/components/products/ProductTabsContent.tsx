@@ -16,7 +16,7 @@ import { LocalizedDateInput } from '../LocalizedDateInput';
 import { Select } from '../ui/Select';
 import { Card, CardContent } from '../shadcn/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shadcn/table';
-import { Loader2, Check, X, Pencil, Download } from 'lucide-react';
+import { Loader2, Check, X, Pencil, Download, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { exportToExcel } from '../../utils/excelExport';
@@ -79,12 +79,13 @@ const PriceEvolutionChart = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
             <CardContent className="p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2">
-                        <span className="text-base font-black uppercase tracking-wider text-slate-400">
-                            📈 {t('products:detail.purchases.price_evolution', { defaultValue: 'Évolution Prix Achat' })}
+                        <span className="flex items-center gap-1.5 text-base font-black uppercase tracking-wider text-slate-400">
+                            <TrendingUp className="size-4" />
+                            {t('products:detail.purchases.price_evolution')}
                         </span>
                         {hasMultiplePoints && (
-                            <Badge variant={isStable ? 'secondary' : isHausse ? 'error' : 'success'} size="sm">
-                                {isStable ? '→' : isHausse ? '▲' : '▼'} {Math.abs(variation).toFixed(1)}%
+                            <Badge variant={isStable ? 'secondary' : isHausse ? 'error' : 'success'} size="sm" className="inline-flex items-center gap-1">
+                                {isStable ? <ArrowRight className="size-3" /> : isHausse ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />} {Math.abs(variation).toFixed(1)}%
                             </Badge>
                         )}
                     </div>
@@ -161,12 +162,12 @@ const PurchasesTabContent = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.date')}</TableHead>
-                        <TableHead className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.provider')}</TableHead>
-                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.purchases.qty')}</TableHead>
-                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.purchases.price')}</TableHead>
-                        <TableHead className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.lot')}</TableHead>
-                        <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.exp')}</TableHead>
+                        <TableHead scope="col" className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.date')}</TableHead>
+                        <TableHead scope="col" className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.provider')}</TableHead>
+                        <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.purchases.qty')}</TableHead>
+                        <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.purchases.price')}</TableHead>
+                        <TableHead scope="col" className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.lot')}</TableHead>
+                        <TableHead scope="col" className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.purchases.exp')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -256,14 +257,14 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.date_reception')}</TableHead>
-                    <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.lot_number')}</TableHead>
-                    <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.expiration')}</TableHead>
-                    <TableHead className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.provider')}</TableHead>
-                    <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</TableHead>
-                    <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.initial_qty')}</TableHead>
-                    <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.remaining_qty')}</TableHead>
-                    <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500"></TableHead>
+                        <TableHead scope="col" className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.date_reception')}</TableHead>
+                    <TableHead scope="col" className="w-36 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.lot_number')}</TableHead>
+                    <TableHead scope="col" className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.expiration')}</TableHead>
+                    <TableHead scope="col" className="w-40 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.lots.provider')}</TableHead>
+                    <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-28">{t('products:detail.purchases.price', { defaultValue: 'Prix' })}</TableHead>
+                    <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.initial_qty')}</TableHead>
+                    <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.lots.remaining_qty')}</TableHead>
+                    <TableHead scope="col" className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500"></TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -346,40 +347,44 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
 };
 
 const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: MonthlyStat[]; t: TFunction }) => {
+    const statsWithYear = useMemo(() => {
+        let currentYear: number | null = null;
+        return (monthlyStats || []).map((stat) => {
+            const showYear = stat.year !== currentYear;
+            currentYear = stat.year;
+            return { ...stat, showYear };
+        });
+    }, [monthlyStats]);
+
     if (!monthlyStats || monthlyStats.length === 0) return <p className="text-center text-slate-400 py-4">{t('products:detail.stats.empty')}</p>;
 
-    let currentYear: number | null = null;
     return (
         <div className="max-h-80 overflow-y-auto custom-scrollbar">
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500"></TableHead>
-                        <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.stats.month')}</TableHead>
-                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24 text-indigo-600">{t('products:detail.stats.qty_sold')}</TableHead>
-                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24 text-amber-600">{t('products:detail.stats.qty_ordered')}</TableHead>
-                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24 text-blue-600">{t('products:detail.stats.nb_clients')}</TableHead>
+                        <TableHead scope="col" className="w-16 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500"></TableHead>
+                        <TableHead scope="col" className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.stats.month')}</TableHead>
+                        <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24 text-indigo-600">{t('products:detail.stats.qty_sold')}</TableHead>
+                        <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24 text-amber-600">{t('products:detail.stats.qty_ordered')}</TableHead>
+                        <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-24 text-blue-600">{t('products:detail.stats.nb_clients')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {(monthlyStats || []).map((stat) => {
-                        const showYear = stat.year !== currentYear;
-                        currentYear = stat.year;
-                        return (
-                            <TableRow
-                                key={`${stat.year}-${stat.month_name}`}
-                                className={`${showYear ? 'border-t-2 border-slate-200' : ''}`}
-                            >
-                                <TableCell className="font-black text-sm text-slate-400 py-2 px-3">
-                                    {showYear ? stat.year : ''}
-                                </TableCell>
-                                <TableCell className="text-sm font-bold py-2 px-3">{stat.month_name}</TableCell>
-                                <TableCell className="text-right font-mono font-black text-sm text-indigo-600 py-2 px-3">{stat.qte_v}</TableCell>
-                                <TableCell className="text-right font-mono font-bold text-sm text-amber-600 py-2 px-3">{stat.qte_c}</TableCell>
-                                <TableCell className="text-right font-mono font-bold text-sm text-blue-600 py-2 px-3">{stat.nb_c}</TableCell>
-                            </TableRow>
-                        );
-                    })}
+                    {statsWithYear.map((stat) => (
+                        <TableRow
+                            key={`${stat.year}-${stat.month_name}`}
+                            className={stat.showYear ? 'border-t-2 border-slate-200' : ''}
+                        >
+                            <TableCell className="font-black text-sm text-slate-400 py-2 px-3">
+                                {stat.showYear ? stat.year : ''}
+                            </TableCell>
+                            <TableCell className="text-sm font-bold py-2 px-3">{stat.month_name}</TableCell>
+                            <TableCell className="text-right font-mono font-black text-sm text-indigo-600 py-2 px-3">{stat.qte_v}</TableCell>
+                            <TableCell className="text-right font-mono font-bold text-sm text-amber-600 py-2 px-3">{stat.qte_c}</TableCell>
+                            <TableCell className="text-right font-mono font-bold text-sm text-blue-600 py-2 px-3">{stat.nb_c}</TableCell>
+                        </TableRow>
+                    ))}
                 </TableBody>
             </Table>
             <div className="mt-2 text-[10px] text-slate-400 flex justify-around">
@@ -443,13 +448,13 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.date')}</TableHead>
-                        <TableHead className="w-44 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.type')}</TableHead>
-                        <TableHead className="min-w-[180px] px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.label')}</TableHead>
-                        <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.operator')}</TableHead>
-                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.movements.before')}</TableHead>
-                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.movements.qty')}</TableHead>
-                        <TableHead className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.movements.after')}</TableHead>
+                        <TableHead scope="col" className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.date')}</TableHead>
+                        <TableHead scope="col" className="w-44 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.type')}</TableHead>
+                        <TableHead scope="col" className="min-w-[180px] px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.label')}</TableHead>
+                        <TableHead scope="col" className="w-32 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:detail.movements.operator')}</TableHead>
+                        <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.movements.before')}</TableHead>
+                        <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.movements.qty')}</TableHead>
+                        <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 w-20">{t('products:detail.movements.after')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -607,11 +612,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.lot_management')}</TableCell>
-                <TableCell className="font-bold text-sm">{selectedProduit.use_lot_management ? `✅ ${t('products:detail.general.enabled')}` : `❌ ${t('products:detail.general.disabled')}`}</TableCell>
+                <TableCell className="inline-flex items-center gap-1.5 font-bold text-sm">{selectedProduit.use_lot_management ? <><Check className="size-4 text-emerald-600" /> {t('products:detail.general.enabled')}</> : <><X className="size-4 text-slate-400" /> {t('products:detail.general.disabled')}</>}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.prescription')}</TableCell>
-                <TableCell className="font-bold text-sm">{selectedProduit.requires_prescription ? `✅ ${t('products:detail.general.yes')}` : `❌ ${t('products:detail.general.no')}`}</TableCell>
+                <TableCell className="inline-flex items-center gap-1.5 font-bold text-sm">{selectedProduit.requires_prescription ? <><Check className="size-4 text-emerald-600" /> {t('products:detail.general.yes')}</> : <><X className="size-4 text-slate-400" /> {t('products:detail.general.no')}</>}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.surveillance')}</TableCell>

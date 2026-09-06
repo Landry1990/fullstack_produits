@@ -2,6 +2,175 @@
 
 ---
 
+## 2026-09-06 — Fix compteurs statut commande (PREP/ATT/CLOT) selon filtre
+
+### 🐛 Correctif
+
+- `backend/api/views/commandes/commandes.py` : les compteurs par statut (`status_counts`) étaient calculés sur le queryset **après** filtrage par `status`. Conséquence : si l'utilisateur sélectionnait "Préparation", les compteurs ATT et CLOT tombaient à 0.
+  - Les compteurs sont maintenant calculés sur un queryset filtré par `type` et `fournisseur` uniquement, **sans** le filtre `status`.
+  - Correction des clés manquantes : utilisation de `s.value` au lieu de l'enum `Commande.Status.X` pour matcher les valeurs brutes (`PREP`, `ATT`, `CLOT`) retournées par `values_list('status', ...)`.
+
+### Vérifications
+
+- Test via `APIRequestFactory` : `status_counts` identiques (`{'CLOT': 1, 'PREP': 1, 'ATT': 0}`) que le filtre soit `PREP`, `CLOT`, ou `ALL`.
+- `count` change correctement (1 pour PREP, 30 pour CLOT, 31 pour ALL).
+
+---
+
+## 2026-09-06 — Ajout colonne Rotation dans le tableau produits commande
+
+### ✨ Fonctionnalité
+
+- `frontend/frontend/src/components/Commandes/CommandeProductTable.tsx` : ajout d'une colonne "Rotation" dans l'en-tête du tableau des produits d'une commande, juste après la colonne "Stock".
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx` : affichage de la rotation moyenne mensuelle du produit (depuis `produit.rotation_moyenne` ou `produit_rotation_moyenne`). Affiche `-` si aucune rotation connue.
+- `frontend/frontend/src/components/Commandes/productTableUtils.ts` : ajout de la fonction `resolveRotation()` pour résoudre la rotation depuis l'objet produit ou le flat field.
+- `colSpan` mis à jour (15/16) pour la ligne d'expansion et le footer.
+
+### i18n
+
+- Clé `orders:product_table.headers.rotation` déjà existante en fr ("Rot.") et en ("Rot.") — aucune nouvelle traduction requise.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK.
+
+---
+
+## 2026-09-06 — Fix autosave commande : produit supprimé réapparaît après rechargement
+
+### 🐛 Correctif
+
+- `frontend/frontend/src/hooks/commandes/useCommandeAutosave.tsx` : l'autosave ne tournait que toutes les 30s. Si l'utilisateur supprimait un produit et rechargeait avant le prochain cycle, le backend avait encore l'ancienne liste → le produit réapparaissait.
+  - Ajout d'un **autosave debounced (3s)** qui se déclenche dès que `commandeProduits` change (ajout, suppression, modification de quantité/prix).
+  - L'autosave périodique de 30s est conservé en parallèle.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK.
+
+---
+
+## 2026-09-06 — Fix import CSV commande : séparateur virgule + cip4
+
+### 🐛 Correctif
+
+- `frontend/frontend/src/hooks/commandes/useCommandeCsv.tsx` :
+  - **Cause racine** : l'import splittait chaque ligne sur `;` en dur. Le fichier réception grossiste (ex: `Réception Commande *.csv`) utilise des **virgules** (`cip,qty,prix`) → `cols[0]` contenait toute la ligne → aucun produit reconnu.
+  - Détection automatique du séparateur (`;`, `,` ou tabulation) depuis la première ligne non vide.
+  - Suppression du BOM UTF-8 (`\uFEFF`) en début de fichier.
+  - Ajout de `cip4` dans `matchProduct` (matching exact et numérique sans zéros initiaux).
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK.
+
+---
+
+## 2026-09-06 — Fix import CSV commande : CIP4 non reconnu
+
+### 🐛 Correctif
+
+- `frontend/frontend/src/hooks/commandes/useCommandeCsv.tsx` : la fonction `matchProduct` ne vérifiait que `cip1`, `cip2`, `cip3` mais pas `cip4`. Les produits dont le CIP importé correspondait au champ `cip4` étaient donc marqués "non reconnus". Ajout de `cip4` dans la comparaison (exact et numérique).
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK.
+
+---
+
+## 2026-09-06 — Harmonisation des champs CIP1-4 en fiche produit
+
+### 🎨 UI
+
+- `frontend/frontend/src/components/ProduitFormModal.tsx` : les 4 champs CIP (CIP1-CIP4) sont maintenant dans une grille 4 colonnes de largeur égale (`grid-cols-2 sm:grid-cols-4`) avec `maxLength={13}`, style `font-mono` uniforme. Suppression de la clé dupliquée `selling_price` dans l'objet d'initialisation du formulaire.
+- `frontend/frontend/src/components/Commandes/QuickCreateProductModal.tsx` : harmonisation identique des champs CIP1-CIP4 en grille 4 colonnes avec `maxLength={13}`.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK (le warning `Duplicate key "selling_price"` est résolu).
+
+---
+
+## 2026-09-06 — Audit et correctif des useMemo conditionnels (React #310)
+
+### 🐛 Correctifs
+
+- `frontend/frontend/src/components/DashboardShadcn.tsx` : `useMemo` de `tabConfig` remonté avant les retours anticipés `if (loading)` / `if (error)`.
+- `frontend/frontend/src/components/dashboard/PerformanceOverview.tsx` : `useMemo` de `chartData` et `kpiCards` remontés avant `if (!Recharts)`.
+- `frontend/frontend/src/components/caisse/FacturesTable.tsx` : `useMemo` de `totalPages` et `pagedFactures` remontés avant le retour anticipé de chargement.
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx` : `useMemo` de `statsWithYear` remonté avant le retour anticipé de stats vides.
+- `npm run lint` repasse ; seuls les erreurs `react-hooks/rules-of-hooks` ont été corrigées.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK.
+
+---
+
+## 2026-09-06 — Fix React error #310 sur le dashboard (DashboardShadcn)
+
+### 🐛 Correctif
+
+- `frontend/frontend/src/components/DashboardShadcn.tsx` : le `useMemo` de `tabConfig` était placé après les retours anticipés `if (loading) return ...` et `if (error) return ...`, provoquant un nombre de hooks variable entre les renders. Le `useMemo` a été remonté avant les retours anticipés.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK.
+
+---
+
+## 2026-09-06 — Fix React error #310 sur le dashboard
+
+### 🐛 Correctif
+
+- `frontend/frontend/src/components/dashboard/PerformanceOverview.tsx` : `useMemo` pour `chartData` et `kpiCards` appelés après un `if (!Recharts) return ...`, ce qui provoquait un nombre de hooks variable entre les renders. Les hooks ont été remontés avant le retour anticipé.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK (warnings préexistants inchangés).
+
+---
+
+## 2026-09-06 — Vague 1 finale UI/UX : ProductFilters, StockIntelligence, Cadencier, DashboardManagerShadcn
+
+### 🎨 Améliorations
+
+- `frontend/frontend/src/components/products/ProductFilters.tsx` : SVG de recherche inline remplacé par `Search` Lucide, suppression de l'`autoFocus`, cases à cocher natives DaisyUI remplacées par `shadcn/checkbox`.
+- `frontend/frontend/src/components/dashboard/StockIntelligence.tsx` : `formatExpiryDuration` i18n avec clés de traduction, `formatDate` utilisé pour la date d'expiration, `select` d'expiration avec `aria-label` et icône `ChevronDown`.
+- `frontend/frontend/src/components/stock/Cadencier.tsx` : mémoïsation de `headers`/`widths`, ajout `scope="col"` sur tous les `TableHead`, `aria-label` sur les `<select>` natifs, options de couverture en jours i18n via `t('stock:cadencier.days_option')`.
+- `frontend/frontend/src/components/DashboardManagerShadcn.tsx` : mémoïsation des tableaux `items`, `types`, `reports` via `useMemo`, suppression du badge "shadcn/ui" hardcodé, `aria-label` sur les boutons icônes (paramètres, rafraîchir).
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK (warnings préexistants inchangés).
+
+---
+
+## 2026-09-06 — Vague 1 bis UI/UX produits, stock, dashboard : quick-wins restants
+
+### 🎨 Améliorations
+
+- `frontend/frontend/src/components/products/ProductTabsContent.tsx` : emojis (`📈`, `✅`, `❌`, `▲`, `▼`, `→`) remplacés par Lucide (`TrendingUp`, `TrendingDown`, `ArrowRight`, `Check`, `X`), `scope="col"` sur tous les en-têtes de tableaux, `currentYear` muté en render refactorisé en `useMemo` (`statsWithYear`), suppression d'un `defaultValue` sur le titre du graphique.
+- `frontend/frontend/src/components/dashboard/DashboardShadcn.tsx` : icônes emojis des toasts (`🔄`, `📊`, `📦`, `💳`) remplacées par des composants Lucide (`RefreshCw`, `BarChart3`, `Package`, `CreditCard`), `tabConfig` mémoïsé via `useMemo([t])`.
+- `frontend/frontend/src/components/dashboard/FinancialSummary.tsx` : ajout `scope="col"` sur les en-têtes, correction des classes `hover:bg-error/10/50` et `hover:bg-warning/10/50` en `hover:bg-error/10` et `hover:bg-warning/10`.
+- `frontend/frontend/src/components/stock/StockMatrixPanel.tsx` : suffixe `j` hardcodé remplacé par `t('matrix.penalties.days_short')`, ajout `scope="col"`, mémoïsation de `quadrants` et `sorted` via `useMemo`.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK (warnings préexistants inchangés).
+
+---
+
 ## 2026-09-06 — Vague 1 UI/UX dashboard : icônes Lucide, a11y et performance
 
 ### 🎨 Améliorations

@@ -86,7 +86,7 @@ export default function ProduitFormModal({
         ? Math.round(htPrice * (1 + initialTva / 100)).toString()
         : initialData?.selling_price ?? '';
       setForm({
-        name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
+        name: '', stock: '', cost_price: '', cip1: '', cip2: '', cip3: '', cip4: '',
         expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
         rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
         forme: '', groupe: '',
@@ -326,22 +326,22 @@ export default function ProduitFormModal({
                 <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.name')}</label>
                 <Input type="text" className={inputBase} value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required autoFocus />
               </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cip1')}</label>
-                <Input className={`${inputBase} font-mono`} value={form.cip1} onChange={(e) => setForm((p) => ({ ...p, cip1: e.target.value }))} />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cip1')}</label>
+                  <Input className={`${inputBase} font-mono`} maxLength={13} value={form.cip1} onChange={(e) => setForm((p) => ({ ...p, cip1: e.target.value }))} />
+                </div>
                 <div>
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cip2')}</label>
-                  <Input className={`${inputSm} font-mono`} value={form.cip2} onChange={(e) => setForm((p) => ({ ...p, cip2: e.target.value }))} />
+                  <Input className={`${inputBase} font-mono`} maxLength={13} value={form.cip2} onChange={(e) => setForm((p) => ({ ...p, cip2: e.target.value }))} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cip3')}</label>
-                  <Input className={`${inputSm} font-mono`} value={form.cip3} onChange={(e) => setForm((p) => ({ ...p, cip3: e.target.value }))} />
+                  <Input className={`${inputBase} font-mono`} maxLength={13} value={form.cip3} onChange={(e) => setForm((p) => ({ ...p, cip3: e.target.value }))} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cip4')}</label>
-                  <Input className={`${inputSm} font-mono`} value={form.cip4} onChange={(e) => setForm((p) => ({ ...p, cip4: e.target.value }))} />
+                  <Input className={`${inputBase} font-mono`} maxLength={13} value={form.cip4} onChange={(e) => setForm((p) => ({ ...p, cip4: e.target.value }))} />
                 </div>
               </div>
             </div>

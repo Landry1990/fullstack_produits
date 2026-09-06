@@ -288,20 +288,21 @@ export default function QuickCreateProductModal({
             </div>
           </div>
 
-          <div>
-            <label htmlFor="quick-product-cip1" className="block text-xs font-semibold text-slate-600 mb-1.5">
-              {t('products:form.cip1')}
-            </label>
-            <Input
-              id="quick-product-cip1"
-              type="text"
-              value={cip1}
-              onChange={(e) => setCip1(e.target.value)}
-              placeholder={t('products:cip1_placeholder')}
-              className="h-11 text-sm font-mono"
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <label htmlFor="quick-product-cip1" className="block text-xs font-semibold text-slate-600 mb-1.5">
+                {t('products:form.cip1')}
+              </label>
+              <Input
+                id="quick-product-cip1"
+                type="text"
+                maxLength={13}
+                value={cip1}
+                onChange={(e) => setCip1(e.target.value)}
+                placeholder={t('products:cip1_placeholder')}
+                className="h-11 text-sm font-mono"
+              />
+            </div>
             <div>
               <label htmlFor="quick-product-cip2" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.cip2')}
@@ -309,6 +310,7 @@ export default function QuickCreateProductModal({
               <Input
                 id="quick-product-cip2"
                 type="text"
+                maxLength={13}
                 value={cip2}
                 onChange={(e) => setCip2(e.target.value)}
                 placeholder={t('products:cip2_placeholder')}
@@ -322,6 +324,7 @@ export default function QuickCreateProductModal({
               <Input
                 id="quick-product-cip3"
                 type="text"
+                maxLength={13}
                 value={cip3}
                 onChange={(e) => setCip3(e.target.value)}
                 placeholder={t('products:cip3_placeholder')}
@@ -335,6 +338,7 @@ export default function QuickCreateProductModal({
               <Input
                 id="quick-product-cip4"
                 type="text"
+                maxLength={13}
                 value={cip4}
                 onChange={(e) => setCip4(e.target.value)}
                 placeholder={t('products:cip4_placeholder')}

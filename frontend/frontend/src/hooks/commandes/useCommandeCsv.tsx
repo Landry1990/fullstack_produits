@@ -41,13 +41,19 @@ export function useCommandeCsv({
 
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const text = e.target?.result as string;
+            const text = (e.target?.result as string).replace(/^\uFEFF/, '');
             if (!text) {
                 setIsImporting(false);
                 return;
             }
 
             const lines = text.split(/\r\n|\n/);
+
+            // Détecter le séparateur (';' | ',' | tab) depuis la première ligne non vide
+            const firstNonEmpty = lines.find(l => l.trim()) ?? '';
+            const separator = ([';', ',', '\t'] as const).reduce((best, sep) =>
+                firstNonEmpty.split(sep).length > firstNonEmpty.split(best).length ? sep : best
+            , ';');
             const currentList = [...commandeProduits];
             let productsFound = 0;
             let productsNotFound = 0;
@@ -67,7 +73,7 @@ export function useCommandeCsv({
                     }
                 }
 
-                const cols = line.split(';');
+                const cols = line.split(separator);
                 const cip = cols[0];
                 if (!cip) continue;
 
@@ -107,12 +113,14 @@ export function useCommandeCsv({
                     const norm1 = normalizeCip(p.cip1);
                     const norm2 = normalizeCip(p.cip2);
                     const norm3 = normalizeCip(p.cip3);
-                    if (norm1 === searchCip || norm2 === searchCip || norm3 === searchCip) return true;
+                    const norm4 = normalizeCip(p.cip4);
+                    if (norm1 === searchCip || norm2 === searchCip || norm3 === searchCip || norm4 === searchCip) return true;
                     if (numericSearch) {
                         const num1 = norm1.replace(/^0+/, '');
                         const num2 = norm2.replace(/^0+/, '');
                         const num3 = norm3.replace(/^0+/, '');
-                        if (num1 === numericSearch || num2 === numericSearch || num3 === numericSearch) return true;
+                        const num4 = norm4.replace(/^0+/, '');
+                        if (num1 === numericSearch || num2 === numericSearch || num3 === numericSearch || num4 === numericSearch) return true;
                     }
                     return false;
                 });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { gooeyToast } from 'goey-toast';
 import { getApiErrorDetail } from '../utils/errorHandling';
 import {
@@ -9,7 +9,9 @@ import {
   Wallet,
   MessageCircle,
   Calendar,
-  MoreHorizontal
+  MoreHorizontal,
+  BarChart3,
+  CreditCard
 } from 'lucide-react';
 import {
   useDashboardInit,
@@ -81,6 +83,12 @@ export default function DashboardShadcn() {
   const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
   const { data: frequentStockouts } = useFrequentStockouts(!isVendeur);
 
+  const tabConfig = useMemo(() => [
+    { key: 'overview', label: t('tabs.overview', { defaultValue: 'Performance' }), icon: TrendingUp, color: 'text-emerald-600' },
+    { key: 'stock', label: t('tabs.stock', { defaultValue: 'Stock' }), icon: Package, color: 'text-amber-600' },
+    { key: 'finance', label: t('tabs.finance', { defaultValue: 'Finance' }), icon: Wallet, color: 'text-blue-600' },
+  ] as const, [t]);
+
   const mergedStats = stats ? {
     ...stats,
     // margin_today: prioriser stats (rafraîchi toutes les 15s) sur heavyStats (5 min)
@@ -97,7 +105,7 @@ export default function DashboardShadcn() {
       refetchLowStock(),
       refetchExpiring(),
     ]);
-    gooeyToast.success(t('refresh_success'), { icon: '🔄' });
+    gooeyToast.success(t('refresh_success'), { icon: <RefreshCw className="size-4" /> });
   };
 
   const handleSendTelegramReport = async () => {
@@ -113,7 +121,7 @@ export default function DashboardShadcn() {
     setSendingReport(true);
     try {
       await api.post('telegram/rapport-flash/', { stats });
-      gooeyToast.success(t('common:telegram.send_success'), { icon: '📊' });
+      gooeyToast.success(t('common:telegram.send_success'), { icon: <BarChart3 className="size-4" /> });
     } catch (err) {
       gooeyToast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
     } finally {
@@ -129,7 +137,7 @@ export default function DashboardShadcn() {
     setSendingInventaire(true);
     try {
       await api.post('telegram/rapport-inventaire/');
-      gooeyToast.success(t('common:telegram.send_success'), { icon: '📦' });
+      gooeyToast.success(t('common:telegram.send_success'), { icon: <Package className="size-4" /> });
     } catch (err) {
       gooeyToast.error(getApiErrorDetail(err, t('common:telegram.send_error')));
     } finally {
@@ -155,7 +163,7 @@ export default function DashboardShadcn() {
         retards.length > 1
           ? t('echeances_overdue_toast_plural', '{{count}} échéances fournisseurs en retard !', { count: retards.length })
           : t('echeances_overdue_toast', '{{count}} échéance fournisseur en retard !', { count: retards.length }),
-        { duration: 6000, id: 'echeances-retard-dashboard', icon: '💳' }
+        { duration: 6000, id: 'echeances-retard-dashboard', icon: <CreditCard className="size-4" /> }
       );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -193,12 +201,6 @@ export default function DashboardShadcn() {
       </div>
     );
   }
-
-  const tabConfig = [
-    { key: 'overview', label: t('tabs.overview', { defaultValue: 'Performance' }), icon: TrendingUp, color: 'text-emerald-600' },
-    { key: 'stock', label: t('tabs.stock', { defaultValue: 'Stock' }), icon: Package, color: 'text-amber-600' },
-    { key: 'finance', label: t('tabs.finance', { defaultValue: 'Finance' }), icon: Wallet, color: 'text-blue-600' },
-  ] as const;
 
   return (
     <div className="h-full flex flex-col bg-slate-50 font-sans overflow-hidden">
