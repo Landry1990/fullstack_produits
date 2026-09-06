@@ -218,6 +218,7 @@
     },
     "details": {
         "title": "Commande #{{id}}",
+        "lock_document_label": "cette commande #{{id}}",
         "edit": "Modifier",
         "resume": "Reprendre",
         "suspend": "Mettre en attente",

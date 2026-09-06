@@ -524,6 +524,7 @@ export default function SimplePrintLabelsModal({
         resolved?.cip1 ||
         resolved?.cip2 ||
         resolved?.cip3 ||
+        resolved?.cip4 ||
         ''
 
       const rayon = resolved?.rayon_name || ''

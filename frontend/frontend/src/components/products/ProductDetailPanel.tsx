@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Package, BarChart3, Pencil, Trash2, Tag, Eye, EyeOff } from 'lucide-react';
 import type { ProduitModel, StockLot, AchatProduit } from '../../types';
 import type { MonthlyStat } from '../../services/produitService';
 import type { StockMovement } from '../../hooks/useProduits';
@@ -42,7 +43,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
     return (
       <div className="flex-1 bg-base-100 rounded-xl shadow-sm border border-base-200 flex flex-col items-center justify-center text-base-content/40 p-10 text-center">
         <div className="size-20 rounded-full bg-base-200 flex items-center justify-center mb-4">
-          <span className="text-2xl text-base-content/40">📦</span>
+          <Package className="size-8 text-base-content/40" />
         </div>
         <p className="font-semibold text-base-content/60">{t('products:detail.none_selected')}</p>
         <p className="text-sm text-base-content/50 mt-1 max-w-[200px]">{t('products:detail.select_hint')}</p>
@@ -77,51 +78,57 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                   className="p-2 text-base-content/50 hover:bg-warning/10 hover:text-warning rounded-lg transition-colors"
                   onClick={props.onOpenAdjustment}
                   title={t('products:actions.adjust_stock')}
+                  aria-label={t('products:actions.adjust_stock')}
                 >
-                  📊
+                  <BarChart3 className="size-5" />
                 </button>
                 {selectedProduit.has_reserve_storage && (selectedProduit.stock_reserve ?? 0) > 0 && (
                   <button
                     className={`p-2 text-base-content/50 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors ${transferLoading ? 'text-base-content/50' : ''}`}
                     onClick={() => props.onTransferToRayon(selectedProduit)}
                     title={t('products:actions.refill_rayon')}
+                    aria-label={t('products:actions.refill_rayon')}
                   >
-                    📦
+                    <Package className="size-5" />
                   </button>
                 )}
                 <button
                   className="p-2 text-base-content/50 hover:bg-info/10 hover:text-info rounded-lg transition-colors"
                   onClick={() => props.onOpenEdit(selectedProduit)}
                   title={t('products:actions.edit')}
+                  aria-label={t('products:actions.edit')}
                 >
-                  ✏️
+                  <Pencil className="size-5" />
                 </button>
                 <button
                   className="p-2 text-base-content/50 hover:bg-error/10 hover:text-error rounded-lg transition-colors"
                   onClick={() => props.onDelete(selectedProduit)}
                   title={t('products:actions.delete')}
+                  aria-label={t('products:actions.delete')}
                 >
-                  🗑️
+                  <Trash2 className="size-5" />
                 </button>
                 <button
                   className="p-2 text-base-content/50 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors"
                   onClick={() => props.onGenerateLabels(selectedProduit)}
                   title={t('products:actions.labels')}
+                  aria-label={t('products:actions.labels')}
                 >
-                  🏷️
+                  <Tag className="size-5" />
                 </button>
                 <button
                   className={`p-2 rounded-lg transition-colors ${selectedProduit.is_active === false ? 'text-warning bg-warning/10' : 'text-base-content/50 hover:bg-base-200'}`}
                   onClick={() => props.onToggleActive(selectedProduit)}
                   title={selectedProduit.is_active === false ? t('products:actions.reactivate') : t('products:actions.deactivate')}
+                  aria-label={selectedProduit.is_active === false ? t('products:actions.reactivate') : t('products:actions.deactivate')}
                 >
-                  {selectedProduit.is_active === false ? '👁️' : '🙈'}
+                  {selectedProduit.is_active === false ? <Eye className="size-5" /> : <EyeOff className="size-5" />}
                 </button>
               </div>
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-lg md:text-xl font-bold text-base-content uppercase tracking-tight leading-tight break-words mb-2">
+              <h2 className="text-lg md:text-xl font-bold text-base-content tracking-tight leading-tight break-words mb-2">
                 {selectedProduit.name}
               </h2>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -136,6 +143,11 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                 {selectedProduit.cip3 && (
                   <p className="text-sm text-base-content/50 font-mono font-medium">
                     • <span className="text-base-content">{selectedProduit.cip3}</span>
+                  </p>
+                )}
+                {selectedProduit.cip4 && (
+                  <p className="text-sm text-base-content/50 font-mono font-medium">
+                    • <span className="text-base-content">{selectedProduit.cip4}</span>
                   </p>
                 )}
               </div>

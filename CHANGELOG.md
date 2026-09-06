@@ -2,6 +2,276 @@
 
 ---
 
+## 2026-09-06 — Vague 1 UI/UX dashboard : icônes Lucide, a11y et performance
+
+### 🎨 Améliorations
+
+- `frontend/frontend/src/components/dashboard/DashboardVendeur.tsx` : médailles emojis remplacées par Lucide (`Trophy`, `Award`, `Star`), contraste `text-amber-700`, `aria-label` sur le bouton rafraîchir.
+- `frontend/frontend/src/components/dashboard/ExpirationAlertsWidget.tsx` : emojis `🚨`/`⚠️` remplacés par `AlertTriangle`, ajout `aria-pressed` sur les filtres jours, `aria-expanded`/`aria-label` sur le bouton d'expansion, `aria-label` sur le lien "Voir tous".
+- `frontend/frontend/src/components/dashboard/PerformanceOverview.tsx` : mémoïsation de `chartData` et `kpiCards` via `useMemo`, ajout `scope="col"` sur les en-têtes du tableau P&L, bannière réappro passée à `bg-cyan-700` avec `role="button"`, `tabIndex`, `aria-label` et gestion clavier.
+- `frontend/frontend/src/components/Sidebar.tsx` : suppression de l'emoji dans `Guide Financier`, mémoïsation de `allMenuItems` via `useMemo([t, i18n.language])` pour éviter la recréation à chaque render.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK (warnings préexistants inchangés).
+
+---
+
+## 2026-09-06 — Vague 1 UI/UX produits/stock : icônes Lucide, a11y et performance rapide
+
+### 🎨 Améliorations
+
+- `frontend/frontend/src/components/products/BulkActionsBar.tsx` : emojis remplacés par Lucide (`Folder`, `Factory`, `Trash2`, `X`, `Check`, `ChevronDown`), listes en `<button>` accessibles, ajout `aria-expanded`, `aria-haspopup`, `aria-label`.
+- `frontend/frontend/src/components/products/ProductDetailPanel.tsx` : emojis remplacés par Lucide (`Package`, `BarChart3`, `Pencil`, `Trash2`, `Tag`, `Eye`, `EyeOff`), `aria-label` sur les boutons icône, suppression de `uppercase` sur le nom du produit.
+- `frontend/frontend/src/components/products/ProductTable.tsx` : SVG inline et `+` remplacés par `Package` / `Plus`, `selectedSet` extrait en `useMemo`, `scope="col"` sur les en-têtes, correction des classes `bg-primary/10/50` et `bg-success/10/50`, suppression `uppercase` sur les noms produits.
+- `frontend/frontend/src/components/stock/StockAnalysisFilters.tsx` : suppression des SVG inline en data URI des `<select>` natifs.
+- `frontend/frontend/src/components/stock/StockAnalysisTable.tsx` : ajout `scope="col"` sur les en-têtes de tableau.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK (warnings préexistants inchangés).
+
+---
+
+## 2026-09-06 — Vague 1 UI/UX caisse/facturation : icônes Lucide et accessibilité rapide
+
+### 🎨 Améliorations
+
+- `frontend/frontend/src/components/caisse/JournalCaisseTable.tsx` : remplacement des emojis par des icônes Lucide (`Banknote`, `Receipt`, `CreditCard`, `Landmark`, `Wallet`, `Smartphone`, `Ticket`, `TicketPercent`, `TicketCheck`, `Coins`, `AlertTriangle`, `FolderOpen`, `User`, `ChevronRight`, `ChevronDown`, `CornerDownRight`), ajout de `scope="col"` sur les en-têtes de tableau.
+- `frontend/frontend/src/components/caisse/PaymentModal.tsx` : remplacement des emojis/symboles par Lucide (`Banknote`, `Check`, `X`, `Lightbulb`, `CornerDownLeft`, `Plus`, `Coins`), ajout `aria-label` et `aria-pressed` sur les boutons de mode et suppression.
+- `frontend/frontend/src/components/facturation/PaymentModal.tsx` : remplacement `💰`, `⚠️` et SVG inline par Lucide (`Wallet`, `AlertTriangle`, `User`, `Info`, `X`), remplacement des `✕` par `<X />`.
+- `frontend/frontend/src/components/facturation/TicketPreviewModal.tsx` : remplacement `✕` et SVG WhatsApp par `X` / `MessageCircle` Lucide.
+- `frontend/frontend/src/components/caisse/FacturesTable.tsx` : remplacement `📭` par `Inbox`, mémoïsation de `totalPages` et `pagedFactures` via `useMemo`, ajout `scope="col"`, correction du conflit de classe `line-through` / `text-slate-500`.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK (warnings préexistants sur `ProduitFormModal.tsx`, chunk circulaire et taille de chunks non liés au correctif).
+
+---
+
+## 2026-09-06 — Amélioration UI/UX du verrou et du détail commande
+
+### ✨ Améliorations
+
+- `frontend/frontend/src/components/common/LockBanner.tsx` : internationalisation complète
+  (fr/en), messages explicites avec nom du détenteur, états accessibles (`role`, `aria-live`,
+  `aria-atomic`), boutons `shadcn/ui` avec feedback visuel et action manuelle de réessai.
+- `frontend/frontend/src/hooks/useDocumentLock.ts` : réacquisition automatique sur
+  `lock_released`, états fonctionnels pour éviter les re-rendus inutiles, reconnexion marquée
+  comme `connecting`, suivi du détenteur actuel (`myHolderRef`) pour ne jamais afficher
+  incorrectement un verrou comme étant le sien.
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx` : labels et récapitulatifs
+  passés de `text-[10px]` à `text-xs` (accessibilité/lecture), état vide amélioré (contraste),
+  `aria-label` sur les boutons icône (retour, effacer recherche, correction lot), `useMemo`
+  pour la liste filtrée/triée des produits, libellé de verrou traduit (`lock_document_label`).
+- `frontend/frontend/src/components/inventaire/editor/InventaireEditor.tsx` : libellé de
+  verrou traduit pour l'inventaire (`cet inventaire #{{id}}`).
+
+### Fichiers de traduction
+
+- `frontend/frontend/public/locales/fr/common.json` & `en/common.json` : nouvelle section `lock`.
+- `frontend/frontend/public/locales/fr/orders.json` & `en/orders.json` :
+  `details.lock_document_label`.
+- `frontend/frontend/public/locales/fr/stock.json` & `en/stock.json` :
+  `inventaire.detail.lock_document_label`.
+
+### Vérifications
+
+- `npx tsc --noEmit` : OK.
+- `npm run build` : OK (warnings préexistants sur `ProduitFormModal.tsx`, chunk circulaire et taille de chunks non liés au correctif).
+- `.\deploy.ps1 -Target frontend` : OK.
+
+---
+
+## 2026-09-06 — Fiabilisation complète du verrou multi-postes des commandes
+
+### 🐛 Corrections
+
+- `frontend/frontend/src/hooks/useDocumentLock.ts` : récupération du token via `safeStorage`
+  (`sessionStorage`) au lieu de `localStorage`. Avant ce correctif, la WebSocket était rejetée
+  comme non authentifiée et ne pouvait donc afficher ni acquérir le verrou ni indiquer son détenteur.
+- Utilisation automatique de `wss://` lorsque l’application est chargée en HTTPS afin d’éviter
+  le blocage navigateur des WebSockets non sécurisées.
+- Réinitialisation de l’état local à chaque connexion et reprise automatique du verrou lorsqu’un
+  autre poste le libère.
+- `backend/api/consumers.py` : propriétaire Redis identifié par connexion (`owner_id`) en plus du
+  nom utilisateur. Un poste refusé ne peut plus libérer le verrou du vrai propriétaire, même si
+  deux postes utilisent accidentellement le même compte.
+- La déconnexion du propriétaire libère maintenant le verrou et diffuse immédiatement
+  `lock_update(holder=null)` aux autres postes ; un poste en attente peut alors l’acquérir.
+- Acquisition rendue idempotente pour éviter qu’une demande répétée bloque son propre propriétaire.
+
+### Vérifications
+
+- Scénario cache : poste A acquiert ; poste B est refusé ; poste B ne peut pas libérer ; poste A
+  libère correctement — OK.
+- `npx tsc --noEmit` : OK.
+- `python -m py_compile /app/api/consumers.py` : OK.
+- Build et déploiement frontend/backend : OK.
+
+---
+
+## 2026-09-06 — Correction des totaux à zéro dans le détail d'une commande
+
+### 🐛 Corrections
+
+- `frontend/frontend/src/hooks/commandes/useCommandeNavigation.tsx` : initialise désormais
+  le store `commandeProduits` avec les lignes complètes retournées par l'API avant d'afficher
+  la vue `DETAILS`.
+- Correction appliquée aux trois chemins d'ouverture : clic depuis la liste, navigation directe
+  avec `openDetailsId` et restauration de la vue après rechargement.
+- La liste visible et la barre de synthèse utilisent ainsi la même source : prix achat HT/TTC,
+  TVA achat, prix vente TTC, marge et coefficient ne restent plus à zéro quand la commande
+  contient des produits.
+
+### Tests
+
+- `npx tsc --noEmit` : OK
+- `Commandes.test.tsx` : 6 tests OK
+
+---
+
+## 2026-09-06 — Fix verrou pessimiste commandes (le lock n'était jamais acquis)
+
+### 🐛 Corrections
+
+**Problème** : deux postes pouvaient ouvrir et modifier la même commande simultanément.
+Le verrou pessimiste n'était jamais effectif.
+
+**Cause racine** : `useDocumentLock` ouvrait la connexion WebSocket mais n'envoyait
+jamais le message `{ type: 'acquire' }` au serveur. La fonction `acquire()` existait
+mais n'était appelée par personne. Le consumer WebSocket répondait `lock_released`
+(« personne ne détient le verrou ») à la connexion, mais le client ne demandait
+jamais le verrou → aucun `cache.add()` n'était exécuté → deux onglets voyaient
+tous les deux le document comme « disponible ».
+
+**Fix** :
+- `frontend/frontend/src/hooks/useDocumentLock.ts` : envoi automatique de
+  `{ type: 'acquire' }` dès `ws.onopen` — le verrou est demandé à la connexion
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx` : `isReadOnly`
+  bloque aussi pendant `status === 'connecting' | 'idle'` pour éviter une fenêtre
+  d'édition non protégée avant la première réponse WebSocket
+
+### Tests
+
+- `tsc --noEmit` : OK
+- Build frontend : OK
+
+---
+
+## 2026-09-06 — Affichage du champ cip4 dans les modals et listes produits
+
+### ✨ Améliorations
+
+Le champ `cip4` (4e code-barres produit, ajouté précédemment au modèle et à la recherche)
+est maintenant visible et éditable dans toute l'interface :
+
+- `frontend/frontend/src/types/catalog.ts` : `cip4` ajouté à `ProduitForm`
+- `frontend/frontend/src/schemas/productSchema.ts` : validation `cip4` (zod)
+- `frontend/frontend/src/components/ProduitFormModal.tsx` : champ CIP4 dans le formulaire
+  produit (state, reset, payload, UI — grille cip2/cip3/cip4)
+- `frontend/frontend/src/components/Commandes/QuickCreateProductModal.tsx` : champ CIP4
+  dans la création rapide depuis les commandes (state, édition, payload, UI)
+- `frontend/frontend/src/components/ProduitShadcn.tsx` : `cip4` dans le formulaire d'édition,
+  la colonne CIP du tableau produits et le panneau détail
+- `frontend/frontend/src/components/products/ProductDetailPanel.tsx` : affichage `cip4`
+  dans le panneau détail produit
+- `frontend/frontend/src/components/products/modals/ProductDetailsModal.tsx` : affichage
+  des CIP2/3/4 sous le CIP principal
+- `frontend/frontend/src/components/SimplePrintLabelsModal.tsx` : fallback `cip4` pour le
+  code-barres des étiquettes
+- `frontend/frontend/public/locales/fr|en/products.json` : `form.cip4` + `cip4_placeholder`
+- `frontend/frontend/src/hooks/useProductSearchIndex.test.ts` : fixture complétée
+
+Le backend expose déjà `cip4` (`ProduitSerializer` en `__all__`, `ProduitListSerializer`
+explicite). La recherche/scan sur `cip4` fonctionne via l'index produit existant.
+
+### Tests
+
+- `tsc --noEmit` : OK
+
+---
+
+## 2026-09-06 — Performance fusion inventaires (merge ~100x plus rapide)
+
+### 🐛 Corrections
+
+- `backend/api/views/stocks/inventaire/merge.py` : réécriture `merge_inventaires` en opérations en masse :
+  - Avant : boucle N+1 (1 `filter().first()` + lazy-load `produit`/`stock_lot` + `save()`/`delete()` par ligne source) → ~12 500 requêtes pour 2 500 lignes
+  - Après : dict `(produit_id, stock_lot_id)` → `bulk_update` + `update()` en masse → **9 requêtes**, **0.38s** pour 2 500 lignes fusionnées
+  - Suppression des lignes fusionnées AVANT déplacement (respect contrainte `unique_inventaire_lot`)
+  - `ecart` recalculé explicitement pour les lignes fusionnées (`.update()` ne passe pas par `save()`)
+- `backend/api/views/stocks/inventaire_main.py` : endpoint `lignes/` GET :
+  - `select_related('produit__rayon', 'stock_lot')` — fixe le N+1 sur `produit.rayon.name` dans le serializer
+  - Boucle AUTO-REPAIR convertie en `bulk_update` (1 requête au lieu de N `save()`)
+- `frontend/frontend/src/components/inventaire/editor/InventaireDataTab.tsx` : `content-visibility: auto` + `contain-intrinsic-size: auto 40px` sur chaque ligne — le navigateur ne rend que les lignes visibles (milliers de lignes sans blocage DOM)
+- `frontend/frontend/src/hooks/inventaire/useInventaireEditor.ts` : `handleEdit` charge lignes + stats en parallèle
+
+### Tests
+
+- `api.tests.test_stock_inventory` + `api.tests.test_inventory_consistency` : 6 tests OK
+- Benchmark réel : merge 1 800 → 1 500 lignes = **2.11s**, GET 3 000 lignes = **1.51s**
+
+---
+
+## 2026-09-06 — Ouverture directe du modal point de vente depuis la sidebar
+
+### ✨ Nouveautés frontend
+
+- `frontend/frontend/src/components/Facturation.tsx` :
+  - Auto-ouverture du `OpenPointDeVenteModal` au montage si aucun point de vente n'est actif
+  - Plus besoin de passer par `location.state.openPosteModal` — le modal s'ouvre directement
+- `frontend/frontend/src/components/facturation/FacturationHeader.tsx` :
+  - Suppression de l'overlay `PosteRequisOverlay` (page entière avec bouton "Ouvrir un point de vente")
+  - La bannière reste disponible pour rouvrir le modal si l'utilisateur le ferme
+- `frontend/frontend/src/components/facturation/PosteRequisOverlay.tsx` : **supprimé**
+
+### Vérification
+
+- `npm run build` : OK
+
+---
+
+## 2026-09-06 — Modal création client facturation simplifié (nom obligatoire, particuliers uniquement)
+
+### ✨ Nouveautés frontend
+
+- `frontend/frontend/src/components/facturation/ClientCreateModal.tsx` :
+  - **Nom = seul champ obligatoire** (avec `autoFocus`)
+  - Téléphone, email, adresse = facultatifs (certains clients refusent de donner leur numéro)
+  - Sélecteur PARTICULIER/PROFESSIONNEL supprimé — le modal ne crée plus que des particuliers
+  - Champs professionnels (plafond, taux couverture) supprimés du modal
+- `frontend/frontend/src/schemas/clientSchema.ts` :
+  - `facturationClientCreateSchema` : `name` obligatoire (min 2 caractères), `phone` facultatif
+- `frontend/frontend/src/hooks/useFacturationClients.ts` :
+  - `handleCreateClient` force `client_type = 'PARTICULIER'`
+
+### Vérification
+
+- `npm run build` : OK
+
+---
+
+## 2026-09-06 — Fix recherche clients facturation (non sélectionnables + doublons)
+
+### 🐛 Fix frontend
+
+- `frontend/frontend/src/hooks/useFacturationClients.ts` :
+  - **Doublons** : `handleSelectAyantDroit` utilisait `clients.some()` (closure stale) au lieu de `prev.some()` dans `setClients` → un client pouvait être ajouté en double lors de la sélection d'un ayant droit
+  - **Dedup par ID** : `filteredClients` déduplique maintenant par ID (Map) comme filet de sécurité
+  - **Clients non sélectionnables** : `page_size` passé de 25 à 50, `filteredClients` de 10 à 15 résultats
+- `frontend/frontend/src/components/facturation/ClientSection.tsx` :
+  - `mixedItems` affiche maintenant 10 clients au lieu de 5 dans le dropdown
+
+### Vérification
+
+- `npm run build` : OK
+
+---
+
 ## 2026-09-06 — Quatrième champ CIP (`cip4`) unique sur les 4 CIP
 
 ### ✨ Nouveautés backend

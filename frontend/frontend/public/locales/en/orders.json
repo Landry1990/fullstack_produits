@@ -218,6 +218,7 @@
     },
     "details": {
         "title": "Order #{{id}}",
+        "lock_document_label": "this order #{{id}}",
         "edit": "Edit",
         "resume": "Resume",
         "suspend": "Wait / Suspend",

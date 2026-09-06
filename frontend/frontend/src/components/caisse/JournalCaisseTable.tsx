@@ -1,5 +1,23 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import {
+  Loader2,
+  AlertTriangle,
+  FolderOpen,
+  User,
+  ChevronRight,
+  ChevronDown,
+  CornerDownRight,
+  Banknote,
+  Receipt,
+  CreditCard,
+  Landmark,
+  Wallet,
+  Smartphone,
+  Ticket,
+  TicketPercent,
+  TicketCheck,
+  Coins,
+} from 'lucide-react';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import type { CaisseTransaction, MouvementCaisse } from '../../types';
 import { normalizeNumberInput } from '../../utils/formatters';
@@ -11,17 +29,18 @@ interface Props {
 }
 
 const getModeIcon = (mode: string) => {
+  const className = 'size-3.5 shrink-0';
   switch (mode) {
-    case 'especes': return '💵';
-    case 'cheque': return '📝';
-    case 'carte': return '💳';
-    case 'virement': return '🏦';
-    case 'om': return '🟧';
-    case 'momo': return '📱';
-    case 'recouvrement': return '💸';
-    case 'avoir': return '🎫';
-    case 'coupon': return '🎟️';
-    default: return '💰';
+    case 'especes': return <Banknote className={className} />;
+    case 'cheque': return <Receipt className={className} />;
+    case 'carte': return <CreditCard className={className} />;
+    case 'virement': return <Landmark className={className} />;
+    case 'om': return <Wallet className={className} />;
+    case 'momo': return <Smartphone className={className} />;
+    case 'recouvrement': return <Banknote className={className} />;
+    case 'avoir': return <TicketCheck className={className} />;
+    case 'coupon': return <TicketPercent className={className} />;
+    default: return <Coins className={className} />;
   }
 };
 
@@ -47,7 +66,7 @@ export default function JournalCaisseTable({ state }: Props) {
     <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden mx-4 md:mx-6 mb-6">
       {error && (
         <div className="p-3 bg-red-50 border-b border-red-100 flex items-center gap-2 text-red-600 text-sm font-medium">
-          <span className="text-lg">⚠️</span>
+          <AlertTriangle className="size-5 shrink-0" />
           {error}
         </div>
       )}
@@ -60,7 +79,9 @@ export default function JournalCaisseTable({ state }: Props) {
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-slate-400 gap-3 text-center">
-            <div className="size-20 bg-slate-100 rounded-full flex items-center justify-center text-4xl mb-2 text-slate-400 shadow-inner">📂</div>
+            <div className="size-20 bg-slate-100 rounded-full flex items-center justify-center mb-2 text-slate-400 shadow-inner">
+              <FolderOpen className="size-10" />
+            </div>
             <p className="text-lg font-bold italic text-slate-600">{t('table.no_transaction')}</p>
             <p className="text-xs opacity-60 max-w-xs">{t('table.no_transaction_desc') || "Aucune opération ne correspond à vos filtres actuels."}</p>
           </div>
@@ -93,7 +114,10 @@ export default function JournalCaisseTable({ state }: Props) {
                       <div className="flex flex-col">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{info.date}</span>
                         <span className="font-bold text-sm text-slate-700 leading-tight mt-0.5">{info.title}</span>
-                        <span className="text-[11px] text-slate-500 font-medium">👤 {info.subtitle}</span>
+                        <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                                <User className="size-3" />
+                                {info.subtitle}
+                              </span>
                       </div>
                       <div className="text-right flex flex-col items-end">
                         <span className={cn("font-black text-base", isMouvement ? (item.type === 'ENTREE' ? 'text-emerald-600' : 'text-red-600') : 'text-slate-700')}>
@@ -114,14 +138,14 @@ export default function JournalCaisseTable({ state }: Props) {
             <table className="hidden md:table w-full table-fixed border-collapse text-sm border-separate border-spacing-0">
               <thead className="sticky top-0 z-30 bg-slate-100 opacity-100">
                 <tr className="border-b border-slate-200">
-                  <th className="w-36 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.date_time')}</th>
-                  <th className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.cashier')}</th>
-                  <th className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.entered_by')}</th>
-                  <th className="w-[20%] border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.client_label')}</th>
-                  <th className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.piece_num')}</th>
-                  <th className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.amount')}</th>
-                  <th className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.mode')}</th>
-                  <th className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.status')}</th>
+                  <th scope="col" className="w-36 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.date_time')}</th>
+                  <th scope="col" className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.cashier')}</th>
+                  <th scope="col" className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.entered_by')}</th>
+                  <th scope="col" className="w-[20%] border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.client_label')}</th>
+                  <th scope="col" className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.piece_num')}</th>
+                  <th scope="col" className="w-28 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.amount')}</th>
+                  <th scope="col" className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.mode')}</th>
+                  <th scope="col" className="w-24 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 text-right">{t('table.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -181,7 +205,7 @@ export default function JournalCaisseTable({ state }: Props) {
                             <span>{formatDate(transaction.date_paiement)}</span>
                             {transaction.isReleveGroup && (
                               <span className="text-[9px] font-black text-emerald-600 uppercase mt-1 flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-full border border-emerald-500/20 w-fit">
-                                {isExpanded ? '▼' : '▶'} {t('table.grouped_releve')}
+                                {isExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />} {t('table.grouped_releve')}
                               </span>
                             )}
                           </div>
@@ -245,7 +269,7 @@ export default function JournalCaisseTable({ state }: Props) {
                             return (
                               <div className="flex flex-col">
                                 <span className={cn("inline-flex items-center rounded-md font-bold text-[10px] gap-1.5 py-1 px-2", isRecouvrement ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700')}>
-                                  {isRecouvrement ? '💸' : getModeIcon(transaction.mode_paiement)} {isRecouvrement ? t('common:payment_modes.recouvrement_caps') || 'RECOUVREMENT' : transaction.mode_paiement_display?.toUpperCase()}
+                                  {isRecouvrement ? <Banknote className="size-3.5" /> : getModeIcon(transaction.mode_paiement)} {isRecouvrement ? t('common:payment_modes.recouvrement_caps') || 'RECOUVREMENT' : transaction.mode_paiement_display?.toUpperCase()}
                                 </span>
                                 {transaction.reference && (
                                   <span className="text-[10px] text-slate-500 mt-1 max-w-[120px] truncate" title={transaction.reference}>
@@ -269,7 +293,12 @@ export default function JournalCaisseTable({ state }: Props) {
 
                       {isExpanded && transaction.items?.map(subItem => (
                         <tr key={subItem.id} className="bg-emerald-50/50 border-l-2 border-l-emerald-500/30">
-                          <td className="pl-12 py-2 text-[11px] opacity-60 font-mono">↳ {formatDate(subItem.date_paiement).split(' ')[1]}</td>
+                          <td className="pl-12 py-2 text-[11px] opacity-60 font-mono">
+                            <span className="inline-flex items-center gap-1">
+                              <CornerDownRight className="size-3" />
+                              {formatDate(subItem.date_paiement).split(' ')[1]}
+                            </span>
+                          </td>
                           <td className="py-2 opacity-40 text-[11px]">-</td>
                           <td className="py-2 opacity-40 text-[11px]">-</td>
                           <td className="font-mono text-[11px] py-2 font-bold text-emerald-600/70 whitespace-nowrap">{subItem.facture_numero}</td>

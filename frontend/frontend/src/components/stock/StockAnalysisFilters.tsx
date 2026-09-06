@@ -40,10 +40,9 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                         className={`
                             w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm
                             focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20
-                            transition-all appearance-none cursor-pointer
+                            transition-all cursor-pointer
                             ${selectedFournisseur === '' ? 'text-slate-400' : 'text-slate-900'}
                         `}
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center' }}
                         value={selectedFournisseur}
                         onChange={(e) => onFournisseurChange(e.target.value)}
                     >
@@ -64,8 +63,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                         <select
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-900
                                        focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20
-                                       transition-all appearance-none cursor-pointer"
-                            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center' }}
+                                       transition-all cursor-pointer"
                             value={unsoldDays}
                             onChange={(e) => onUnsoldDaysChange(Number(e.target.value))}
                         >

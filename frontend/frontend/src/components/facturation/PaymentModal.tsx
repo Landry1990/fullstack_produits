@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { Facture, PosteVente } from '../../types'
 import { useTranslation } from 'react-i18next'
+import { Wallet, AlertTriangle, User, Info, X } from 'lucide-react'
 import { formatCurrency } from '../../utils/formatters'
 import PremiumModal from '../common/PremiumModal'
 import { getPaymentModeLabel } from '../../config/paymentModes'
@@ -91,7 +92,7 @@ export default function PaymentModal({
           isOpen={isOpen}
           onClose={onClose}
           title={t('facturation:payment.modal_title')}
-          icon={<span className="text-emerald-600 text-xl">💰</span>}
+          icon={<Wallet className="text-emerald-600 size-6" />}
           maxWidth="max-w-md"
         >
           {(facturePourPaiement || isNewSale) ? (
@@ -132,8 +133,9 @@ export default function PaymentModal({
 
                         if (soldeVal > 0 && amountToPay > soldeVal) {
                              return (
-                                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-amber-600 text-[10px] font-bold uppercase animate-pulse text-center">
-                                    ⚠️ {t('facturation:client.insufficient_deposit_warning', { solde: soldeVal })}
+                                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-amber-600 text-[10px] font-bold uppercase animate-pulse text-center flex items-center justify-center gap-1">
+                                    <AlertTriangle className="size-4" />
+                                    {t('facturation:client.insufficient_deposit_warning', { solde: soldeVal })}
                                 </div>
                              )
                         }
@@ -155,9 +157,7 @@ export default function PaymentModal({
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mt-2 mb-4">
                         <div className="mb-2">
                             <span className="uppercase font-bold text-emerald-600 flex items-center gap-1 text-xs">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
+                                <Wallet className="size-3" />
                                 {t('facturation:payment.send_to_cash_register')}
                             </span>
                         </div>
@@ -175,9 +175,7 @@ export default function PaymentModal({
                                         <div className="flex flex-col items-start">
                                             <span className="font-bold text-xs uppercase">{poste.nom}</span>
                                             <span className="text-[10px] opacity-70 flex items-center gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                                                </svg>
+                                                <User className="size-2.5" />
                                                 {caissierName}
                                             </span>
                                         </div>
@@ -202,7 +200,7 @@ export default function PaymentModal({
               {isNewSale && totals.tauxCouverture > 0 && totals.partAssurance > 0 ? (
                 <div className="space-y-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="shrink-0 size-5 text-blue-600"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <Info className="shrink-0 size-5 text-blue-600" />
                     <span className="text-sm text-blue-700">{t('facturation:payment.tiers_payant_active', { rate: totals.tauxCouverture })}</span>
                   </div>
                   
@@ -228,7 +226,10 @@ export default function PaymentModal({
                                                     type="button"
                                                     onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
                                                     className="inline-flex items-center justify-center h-5 w-5 rounded text-red-600 hover:bg-red-50 transition-colors text-xs"
-                                                >✕</button>
+                                                    aria-label={t('common:remove')}
+                                                >
+                                                    <X className="size-3" />
+                                                </button>
                                             </div>
                                         </div>
                                     ))}
@@ -283,10 +284,8 @@ export default function PaymentModal({
                             <>
                               {noCaisseOpen && (
                                 <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                  </svg>
-                                  {t('facturation:messages.no_cash_register_open', { defaultValue: 'Aucun point de caisse ouvert. Veuillez ouvrir une caisse pour facturer.' })}
+                                  <AlertTriangle className="size-4 shrink-0" />
+                                  {t('facturation:messages.no_cash_register_open')}
                                 </div>
                               )}
                               <label className="block py-1 text-xs uppercase font-bold text-slate-500">{label}</label>
@@ -320,7 +319,10 @@ export default function PaymentModal({
                                         type="button"
                                         onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
                                         className="inline-flex items-center justify-center h-6 w-6 rounded text-red-600 hover:bg-red-50 transition-colors text-xs"
-                                    >✕</button>
+                                        aria-label={t('common:remove')}
+                                    >
+                                        <X className="size-4" />
+                                    </button>
                                 </div>
                             </div>
                         ))}

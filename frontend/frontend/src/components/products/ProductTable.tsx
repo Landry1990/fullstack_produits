@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { Package, Plus } from 'lucide-react';
 import { Checkbox } from '../ui/Checkbox';
 
 interface ProductTableProps {
@@ -30,6 +31,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
 
   const isAllSelected = selectedProductIds.length === products.length && products.length > 0;
   const isPartiallySelected = selectedProductIds.length > 0 && selectedProductIds.length < products.length;
+  const selectedSet = useMemo(() => new Set(selectedProductIds), [selectedProductIds]);
 
   return (
     <div className="flex-1 overflow-x-hidden overflow-y-auto">
@@ -40,9 +42,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
       ) : products.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center h-full">
           <div className="size-16 rounded-full bg-base-200 flex items-center justify-center mb-4">
-            <svg className="size-8 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-            </svg>
+            <Package className="size-8 text-base-content/40" />
           </div>
           <h3 className="text-base font-semibold text-base-content/60">{t('products:table.empty_title', { defaultValue: 'Aucun produit' })}</h3>
           <p className="text-base-content/50 text-sm mt-1 max-w-sm">{t('products:table.empty_subtitle', { defaultValue: 'Créez votre premier produit ou service pour commencer.' })}</p>
@@ -53,7 +53,8 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
               if (parentBtn) (parentBtn as HTMLButtonElement).click();
             }}
           >
-             + {t('products:actions.create', { defaultValue: 'Créer un produit' })}
+             <Plus className="size-4" />
+             {t('products:actions.create')}
           </button>
         </div>
       ) : (
@@ -63,7 +64,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
             <table className="min-w-full divide-y divide-base-200">
               <thead className="bg-base-200 text-base-content/60 border-b border-base-200">
                 <tr>
-                  <th className="py-2.5 px-4 w-10">
+                  <th scope="col" className="py-2.5 px-4 w-10">
                     <Checkbox
                       checked={isAllSelected}
                       indeterminate={isPartiallySelected}
@@ -71,13 +72,12 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       size="sm"
                     />
                   </th>
-                  <th className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider w-32">{t('products:table.cip')}</th>
-                  <th className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider">{t('products:table.product', { defaultValue: 'Produit' })}</th>
+                  <th scope="col" className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider w-32">{t('products:table.cip')}</th>
+                  <th scope="col" className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider">{t('products:table.product', { defaultValue: 'Produit' })}</th>
                 </tr>
               </thead>
               <tbody className="bg-base-100 divide-y divide-base-200">
                 {products.map((produit) => {
-                  const selectedSet = new Set(selectedProductIds);
                   const stock = produit.stock ?? 0;
                   const isSelected = selectedProduit?.id === produit.id;
                   const isChecked = selectedSet.has(produit.id);
@@ -88,9 +88,9 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       data-product-id={produit.id}
                       className={`hover:bg-base-200 cursor-pointer transition-colors ${
                         isSelected
-                        ? 'bg-primary/10/50 border-l-2 border-l-indigo-500'
+                        ? 'bg-primary/10 border-l-2 border-l-indigo-500'
                         : isChecked
-                          ? 'bg-success/10/50 border-l-2 border-l-emerald-500'
+                          ? 'bg-success/10 border-l-2 border-l-emerald-500'
                           : 'text-base-content'
                       } ${stock < 0 ? 'text-error' : stock === 0 ? 'opacity-60 text-base-content/50' : ''}`}
                       onClick={() => onViewDetails(produit)}
@@ -118,7 +118,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                           }`}
                           title={produit.name}
                         >
-                          <span className="truncate uppercase">{produit.name}</span>
+                          <span className="truncate">{produit.name}</span>
                           {produit.is_supplier_exclusive && (
                             <span
                               className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/10 text-success border border-emerald-100 shrink-0"
@@ -139,7 +139,6 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
           {/* MOBILE POP-UP LIST (Cards) */}
           <div className="md:hidden flex flex-col w-full px-2 py-2 gap-2 bg-base-200">
             {products.map(produit => {
-              const selectedSet = new Set(selectedProductIds);
               const stock = produit.stock ?? 0;
               const isSelected = selectedProduit?.id === produit.id;
               const isChecked = selectedSet.has(produit.id);
@@ -168,7 +167,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
 
                     <div className="flex-1 min-w-0 pr-1 py-0.5">
                        <div className="flex items-center justify-between w-full mb-0.5">
-                          <div className={`text-sm font-semibold truncate tracking-tight uppercase ${stock < 0 ? 'text-error' : stock === 0 ? 'text-base-content/50' : 'text-base-content'}`}>
+                          <div className={`text-sm font-semibold truncate tracking-tight ${stock < 0 ? 'text-error' : stock === 0 ? 'text-base-content/50' : 'text-base-content'}`}>
                              {produit.name}
                           </div>
                        </div>

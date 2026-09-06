@@ -239,11 +239,13 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         inventaire = self.get_object()
         
         if request.method == 'GET':
-            lignes_objs = inventaire.lignes.select_related('produit', 'stock_lot').all()
+            lignes_objs = inventaire.lignes.select_related('produit__rayon', 'stock_lot').all()
             # AUTO-REPAIR: Fix potentially missing ecarts or pmp_snapshots (refactoring casualty)
+            # bulk_update pour éviter le N+1 (un save() par ligne)
+            needs_repair = []
             for l in lignes_objs:
-                needs_save = False
                 expected_ecart = l.quantite_physique - l.stock_theorique
+                needs_save = False
                 if l.ecart != expected_ecart:
                     l.ecart = expected_ecart
                     needs_save = True
@@ -251,7 +253,9 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                     l.pmp_snapshot = l.produit.pmp or l.produit.cost_price or 0
                     needs_save = True
                 if needs_save:
-                    l.save(update_fields=['ecart', 'pmp_snapshot'])
+                    needs_repair.append(l)
+            if needs_repair:
+                LigneInventaire.objects.bulk_update(needs_repair, ['ecart', 'pmp_snapshot'])
             
             serializer = LigneInventaireSerializer(lignes_objs, many=True)
             return Response(serializer.data)

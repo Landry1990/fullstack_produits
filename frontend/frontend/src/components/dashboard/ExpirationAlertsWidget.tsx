@@ -107,6 +107,8 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                     ? 'bg-emerald-500 text-white'
                     : 'bg-success/20 text-success hover:bg-emerald-200'
                 }`}
+                aria-pressed={daysFilter === d}
+                aria-label={t('expiration.filter_days_label', { days: d })}
               >
                 {t('expiration.days_filter', { days: d })}
               </button>
@@ -151,6 +153,8 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
                       ? 'bg-base-100 text-base-content shadow-sm'
                       : 'text-base-content/60 hover:text-base-content'
                   }`}
+                  aria-pressed={daysFilter === d}
+                  aria-label={t('expiration.filter_days_label', { days: d })}
                 >
                   {t('expiration.days_filter', { days: d })}
                 </button>
@@ -160,7 +164,8 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
             <Link
               to="/app/perimes"
               className="p-2 text-base-content/50 hover:text-base-content/70 hover:bg-base-200 rounded-lg transition-colors"
-              title={t('expiration.view_all', { defaultValue: 'Voir tous les périmés' })}
+              title={t('expiration.view_all')}
+              aria-label={t('expiration.view_all')}
             >
               <ExternalLink className="size-4" />
             </Link>
@@ -170,13 +175,15 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
         {/* Badges de statistiques */}
         <div className="flex gap-2 mt-3">
           {stats.critical_count > 0 && (
-            <span className="px-2 py-1 text-xs font-bold bg-error/20 text-error rounded-full">
-              🚨 {t('expiration.critical_count', { count: stats.critical_count })}
+            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold bg-error/20 text-error rounded-full">
+              <AlertTriangle className="size-3.5" />
+              {t('expiration.critical_count', { count: stats.critical_count })}
             </span>
           )}
           {stats.warning_count > 0 && (
-            <span className="px-2 py-1 text-xs font-bold bg-warning/20 text-warning rounded-full">
-              ⚠️ {t('expiration.urgent_count', { count: stats.warning_count })}
+            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold bg-warning/20 text-warning rounded-full">
+              <AlertTriangle className="size-3.5" />
+              {t('expiration.urgent_count', { count: stats.warning_count })}
             </span>
           )}
           {stats.notice_count > 0 && (
@@ -243,6 +250,8 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
       {hasMore && (
         <button
           onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          aria-label={expanded ? t('common:actions.show_less') : t('common:actions.show_more')}
           className="w-full p-3 text-sm font-medium text-base-content/60 hover:text-base-content hover:bg-base-200 transition-colors flex items-center justify-center gap-1"
         >
           {expanded ? (

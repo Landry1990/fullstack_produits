@@ -22,6 +22,13 @@ export default function Facturation() {
     }
   }, [location, navigate])
 
+  // Auto-ouvrir le modal de choix du point de vente si aucun poste actif au montage
+  useEffect(() => {
+    if (!hook.isPosteCaisseActive) {
+      setShowOpenPosteModal(true)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const scan = useDatamatrixScan({
     addProduit: (p, opts) => hook.cart.addProduit(p, opts),
     setLignesFacture: hook.cart.setLignesFacture,

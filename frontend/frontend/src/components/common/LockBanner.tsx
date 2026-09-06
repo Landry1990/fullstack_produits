@@ -6,66 +6,111 @@
  *   - Verrou libéré (disponible pour édition)
  */
 import React from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import { Lock, Unlock, AlertTriangle, Loader2 } from 'lucide-react';
+import { Button } from '../shadcn/button';
 import type { DocumentLockState } from '../../hooks/useDocumentLock';
 
 interface LockBannerProps {
   lock: DocumentLockState;
+  /** Phrase déjà traduite incluant l'article/genre du document, ex: "cette commande #123" */
   documentLabel?: string;
 }
 
-export function LockBanner({ lock, documentLabel = 'document' }: LockBannerProps) {
+export function LockBanner({ lock, documentLabel }: LockBannerProps) {
+  const { t } = useTranslation('common');
   const { status, isLocked, isMine, holder, acquire, release } = lock;
+  const label = documentLabel || t('lock.document');
 
   if (status === 'idle' || status === 'connecting') {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 text-sm">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        <span>Connexion au verrou…</span>
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-slate-100 text-slate-600 text-sm"
+      >
+        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+        <span>{t('lock.connecting')}</span>
       </div>
     );
   }
 
   if (isMine) {
     return (
-      <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-300 text-sm">
-        <div className="flex items-center gap-2">
-          <Unlock className="w-4 h-4" />
-          <span>Vous éditez ce {documentLabel}. Les autres postes ne peuvent pas le modifier.</span>
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg bg-green-50 border border-green-200 text-green-800 text-sm"
+      >
+        <div className="flex items-center gap-3">
+          <Unlock className="size-4 text-green-600" aria-hidden="true" />
+          <span>{t('lock.owned', { document: label })}</span>
         </div>
-        <button
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
           onClick={release}
-          className="ml-4 px-3 py-1 rounded text-xs bg-green-200 dark:bg-green-800 hover:bg-green-300 dark:hover:bg-green-700 transition-colors font-medium"
+          className="text-green-700 hover:bg-green-100 hover:text-green-800"
         >
-          Libérer le verrou
-        </button>
+          {t('lock.release')}
+        </Button>
       </div>
     );
   }
 
   if (isLocked && !isMine) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300 text-sm">
-        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-        <span>
-          Ce {documentLabel} est en cours d'édition par <strong>{holder}</strong>. Vous êtes en lecture seule.
-        </span>
+      <div
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm"
+      >
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="size-4 text-amber-600 flex-shrink-0" aria-hidden="true" />
+          <Trans
+            i18nKey="lock.held_by"
+            ns="common"
+            values={{ document: label, holder: holder || t('lock.unknown_holder') }}
+            components={[<strong className="font-semibold" key="holder" />]}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={acquire}
+          className="text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+        >
+          {t('lock.retry')}
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-300 text-sm">
-      <div className="flex items-center gap-2">
-        <Lock className="w-4 h-4" />
-        <span>Ce {documentLabel} est disponible pour édition.</span>
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-sm"
+    >
+      <div className="flex items-center gap-3">
+        <Lock className="size-4 text-blue-600" aria-hidden="true" />
+        <span>{t('lock.available', { document: label })}</span>
       </div>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
         onClick={acquire}
-        className="ml-4 px-3 py-1 rounded text-xs bg-blue-200 dark:bg-blue-800 hover:bg-blue-300 dark:hover:bg-blue-700 transition-colors font-medium"
+        className="text-blue-700 hover:bg-blue-100 hover:text-blue-800"
       >
-        Prendre le verrou
-      </button>
+        {t('lock.acquire')}
+      </Button>
     </div>
   );
 }

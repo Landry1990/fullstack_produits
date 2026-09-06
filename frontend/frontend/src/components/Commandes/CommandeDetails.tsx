@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useDocumentLock } from '../../hooks/useDocumentLock';
 import { LockBanner } from '../common/LockBanner';
 import { useTranslation } from 'react-i18next';
@@ -139,7 +139,9 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
   const queryClient = useQueryClient();
   const lock = useDocumentLock('commande', selectedCommande.id);
-  const isReadOnly = lock.isLocked && !lock.isMine;
+  // Lecture seule si le verrou appartient à quelqu'un d'autre,
+  // ou pendant la connexion (pour éviter une fenêtre d'édition non protégée)
+  const isReadOnly = (lock.isLocked && !lock.isMine) || lock.status === 'connecting' || lock.status === 'idle';
   const [editingLotId, setEditingLotId] = useState<number | null>(null);
   const [editLotValues, setEditLotValues] = useState<{ lot: string; date_expiration: string; produitId?: number }>({ lot: '', date_expiration: '' });
   const [savingLot, setSavingLot] = useState(false);
@@ -191,16 +193,38 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
 
 
+  const displayedProduits = useMemo(() => {
+    const q = searchDetailQuery.toLowerCase();
+    return [...(localProduits || [])]
+      .flatMap((p, originalIndex) => {
+        const produitData = (typeof p.produit === 'object') ? p.produit : produitsList.find(prod => prod.id === p.produit);
+        const produitName = (p as unknown).produit_nom || (produitData?.name || t('orders:product_table.unknown_product_id', { id: p.produit }));
+        const cip = (p as unknown).produit_cip || produitData?.cip1 || '-';
+        const enriched = { ...p, produitName, cip, originalIndex };
+        if (!searchDetailQuery) return [enriched];
+        return (produitName.toLowerCase().includes(q) || cip.toLowerCase().includes(q)) ? [enriched] : [];
+      })
+      .sort((a, b) => {
+        let comparison = 0;
+        if (detailSortKey === 'name') comparison = a.produitName.localeCompare(b.produitName);
+        else if (detailSortKey === 'quantity') comparison = normalizeNumberInput(a.quantity) - normalizeNumberInput(b.quantity);
+        else if (detailSortKey === 'price') comparison = normalizeNumberInput(a.price) - normalizeNumberInput(b.price);
+        return detailSortOrder === 'asc' ? comparison : -comparison;
+      });
+  }, [localProduits, searchDetailQuery, detailSortKey, detailSortOrder, produitsList, t]);
+
+
+
   return (
 
     <div className="flex-1 min-h-0 flex flex-col p-4 space-y-4">
       {/* Verrou pessimiste */}
       {selectedCommande.status !== 'CLOT' && (
-        <LockBanner lock={lock} documentLabel="commande" />
+        <LockBanner lock={lock} documentLabel={t('orders:details.lock_document_label', { id: selectedCommande.numero_facture || selectedCommande.id })} />
       )}
       {/* Header */}
       <div className="flex items-center gap-4 shrink-0">
-        <Button variant="ghost" size="icon" onClick={onBack} className="size-9 text-slate-400 hover:text-slate-600">
+        <Button variant="ghost" size="icon" onClick={onBack} aria-label={t('orders:form.back_to_list')} className="size-9 text-slate-400 hover:text-slate-600">
           <ArrowLeft className="size-5" />
         </Button>
 
@@ -304,32 +328,32 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
       {/* Grid Info */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm shrink-0">
         <div>
-          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.id')}</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.id')}</div>
           <div className="text-sm font-semibold text-slate-800">{selectedCommande.id}</div>
         </div>
         <div>
-          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.invoice')}</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.invoice')}</div>
           <div className="text-sm font-semibold text-slate-800">{selectedCommande.numero_facture || 'N/A'}</div>
         </div>
         <div>
-          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.provider')}</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.provider')}</div>
           <div className="text-sm font-semibold text-slate-800">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</div>
         </div>
         <div>
-          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.date')}</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.date')}</div>
           <div className="text-sm font-semibold text-slate-800">{formatDate(selectedCommande.date)}</div>
         </div>
         <div>
-          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.status')}</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.status')}</div>
           <div>
-            <Badge variant="outline" className={cn("text-[11px] font-semibold uppercase tracking-wider", getStatusBadgeClass(selectedCommande.status))}>
+            <Badge variant="outline" className={cn("text-xs font-semibold uppercase tracking-wider", getStatusBadgeClass(selectedCommande.status))}>
               {getStatusLabel(selectedCommande.status)}
             </Badge>
           </div>
         </div>
         {selectedCommande.status === 'CLOT' && selectedCommande.closed_by_name && (
           <div>
-            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.closed_by')}</div>
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('orders:details.closed_by')}</div>
             <div className="text-sm font-semibold text-slate-800">{selectedCommande.closed_by_name}</div>
           </div>
         )}
@@ -342,41 +366,41 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         <div className="flex flex-wrap gap-3 items-center">
           {/* PRIX A HT */}
           <div className="flex flex-col items-end">
-            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.buy_ht')}</span>
+            <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.buy_ht')}</span>
             <span className="text-sm font-bold text-slate-700">{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
           </div>
           {/* TVA A */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.buy_vat')}</span>
+            <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.buy_vat')}</span>
             <span className="text-sm font-bold text-slate-500">{formatCurrency((orderTotals?.totalBuyTTC || 0) - (orderTotals?.totalBuyHT || 0))}</span>
           </div>
           {/* PRIX A TTC */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.buy_ttc')}</span>
+            <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.buy_ttc')}</span>
             <span className="text-lg font-black leading-none text-slate-800">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
           </div>
           {/* PRIX V TTC */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-emerald-600 -mb-1">{t('orders:details.recap.sell_ttc')}</span>
+            <span className="text-xs uppercase font-bold text-emerald-600 -mb-1">{t('orders:details.recap.sell_ttc')}</span>
             <span className={cn("text-lg font-black leading-none", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalTTC || 0)}</span>
           </div>
           {/* MARGE */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.margin')}</span>
+            <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.margin')}</span>
             <span className={cn("text-sm font-bold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
           </div>
           {/* COEFF */}
           <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.coeff')}</span>
+            <span className="text-xs uppercase font-bold text-slate-400 -mb-1">{t('orders:details.recap.coeff')}</span>
             <div className="flex items-baseline gap-1">
               <span className={cn("text-sm font-bold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>x{orderTotals?.globalMargin || '1.00'}</span>
-              <span className={cn("text-[10px] font-semibold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-500' : 'text-amber-500')}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
+              <span className={cn("text-xs font-semibold", Number(orderTotals?.globalMargin || 0) >= 1.34 ? 'text-emerald-500' : 'text-amber-500')}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
             </div>
           </div>
           {/* PRÉCOMPTE */}
           {Number(selectedCommande.precompte) > 0 && (
             <div className="flex flex-col items-end border-l pl-3 border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-rose-500 -mb-1">{t('orders:details.recap.precompte')} ({selectedCommande.taux_precompte}%)</span>
+              <span className="text-xs uppercase font-bold text-rose-500 -mb-1">{t('orders:details.recap.precompte')} ({selectedCommande.taux_precompte}%)</span>
               <span className="text-sm font-bold text-rose-600">{formatCurrency(Number(selectedCommande.precompte) || 0)}</span>
             </div>
           )}
@@ -427,7 +451,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
               />
               <Search className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               {searchDetailQuery && (
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setSearchDetailQuery('')}>
+                <button type="button" aria-label={t('orders:list.clear_search')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setSearchDetailQuery('')}>
                   <X className="size-3.5" />
                 </button>
               )}
@@ -437,8 +461,8 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
         <div className="overflow-auto flex-1 bg-white">
           {(!selectedCommande.produits || selectedCommande.produits.length === 0) ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-              <Package className="size-12 mb-3 opacity-20" />
+            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+              <Package className="size-12 mb-3 text-slate-300" aria-hidden="true" />
               <p className="text-sm">{t('orders:details.empty_products')}</p>
             </div>
           ) : (
@@ -480,41 +504,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
               </TableHeader>
               <TableBody className="bg-white divide-y divide-slate-200">
 
-                {[...(localProduits || [])]
-
-                  .flatMap((p, originalIndex) => {
-
-                    const produitData = (typeof p.produit === 'object') ? p.produit : produitsList.find(prod => prod.id === p.produit);
-
-                    const produitName = (p as unknown).produit_nom || (produitData?.name || `Produit #${p.produit}`);
-
-                    const cip = (p as unknown).produit_cip || produitData?.cip1 || '-';
-
-                    const enriched = { ...p, produitName, cip, originalIndex };
-
-                    if (!searchDetailQuery) return [enriched];
-
-                    const q = searchDetailQuery.toLowerCase();
-
-                    return (enriched.produitName.toLowerCase().includes(q) || enriched.cip.toLowerCase().includes(q)) ? [enriched] : [];
-
-                  })
-
-                  .sort((a, b) => {
-
-                    let comparison = 0;
-
-                    if (detailSortKey === 'name') comparison = a.produitName.localeCompare(b.produitName);
-
-                    else if (detailSortKey === 'quantity') comparison = normalizeNumberInput(a.quantity) - normalizeNumberInput(b.quantity);
-
-                    else if (detailSortKey === 'price') comparison = normalizeNumberInput(a.price) - normalizeNumberInput(b.price);
-
-                    return detailSortOrder === 'asc' ? comparison : -comparison;
-
-                  })
-
-                  .map((p) => {
+                {displayedProduits.map((p) => {
 
                     const produitData = (typeof p.produit === 'object') ? p.produit : produitsList.find(prod => prod.id === p.produit);
 
@@ -576,15 +566,15 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                           <TableCell className="px-2 py-2 text-center" onClick={e => e.stopPropagation()}>
                             {editingLotId === p.id ? (
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm" className="h-6 px-1 text-emerald-600 hover:text-emerald-800" onClick={() => saveLotEdit(p.id)} disabled={savingLot} title={t('common:save')}>
+                                <Button variant="ghost" size="sm" className="h-6 px-1 text-emerald-600 hover:text-emerald-800" onClick={() => saveLotEdit(p.id)} disabled={savingLot} title={t('common:save')} aria-label={t('common:save')}>
                                   <Check className="size-3.5" />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-400 hover:text-slate-600" onClick={cancelLotEdit} disabled={savingLot} title={t('common:cancel')}>
+                                <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-400 hover:text-slate-600" onClick={cancelLotEdit} disabled={savingLot} title={t('common:cancel')} aria-label={t('common:cancel')}>
                                   <X className="size-3.5" />
                                 </Button>
                               </div>
                             ) : (
-                              <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-300 hover:text-blue-500" onClick={() => startLotEdit(p)} title={t('orders:details.correct_lot_expiry')}>
+                              <Button variant="ghost" size="sm" className="h-6 px-1 text-slate-300 hover:text-blue-500" onClick={() => startLotEdit(p)} title={t('orders:details.correct_lot_expiry')} aria-label={t('orders:details.correct_lot_expiry')}>
                                 <Pencil className="size-3" />
                               </Button>
                             )}
