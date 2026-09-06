@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { 
   TrendingUp, 
   Wallet, 
@@ -56,11 +57,11 @@ export default function PerformanceOverview({
   if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
   const { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = Recharts;
   
-  const chartData = revenueChart && revenueChart.labels ? revenueChart.labels.map((label: string, index: number) => ({
+  const chartData = useMemo(() => revenueChart && revenueChart.labels ? revenueChart.labels.map((label: string, index: number) => ({
     jour: label,
     montant: revenueChart.data[index],
     nb_ventes: (revenueChart as RevenueChartData & { nb_ventes?: number[] }).nb_ventes?.[index] ?? 0,
-  })) : [];
+  })) : [], [revenueChart]);
 
   const isVendeur = stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER';
 
@@ -68,7 +69,7 @@ export default function PerformanceOverview({
   const nbFournisseursDetteurs = supplierDebts?.suppliers?.length ?? 0;
 
   // KPI cards config
-  const kpiCards = stats ? (isVendeur ? [
+  const kpiCards = useMemo(() => stats ? (isVendeur ? [
     {
       title: t('stats.my_avg_basket'),
       value: formatCurrencyLocal(stats.user_stats?.avg_basket ?? 0),
@@ -122,7 +123,7 @@ export default function PerformanceOverview({
       sub: t('stats.products_count', { count: stats.stock_value?.count ?? 0 }),
       icon: Package, accent: '#10b981', isPositive: true,
     },
-  ]) : [];
+  ]) : [], [isVendeur, stats, totalDettes, nbFournisseursDetteurs, t, formatCurrencyLocal]);
 
   return (
     <div className="space-y-5">
@@ -175,8 +176,12 @@ export default function PerformanceOverview({
       {/* ── REAPPRO ALERT ──────────────────────────────────── */}
       {reapproStats && reapproStats.product_count > 0 && (
         <div
-          className="flex items-center justify-between p-4 sm:p-5 bg-cyan-500 rounded-2xl shadow-lg shadow-cyan-500/20 cursor-pointer hover:bg-cyan-600 transition-all group"
+          className="flex items-center justify-between p-4 sm:p-5 bg-cyan-700 rounded-2xl shadow-lg shadow-cyan-700/20 cursor-pointer hover:bg-cyan-800 transition-all group"
           onClick={() => navigate('/app/reappro-rayon')}
+          role="button"
+          tabIndex={0}
+          aria-label={t('reappro.alert_title')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/app/reappro-rayon'); } }}
         >
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <div className="size-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0 border border-white/30">
@@ -325,12 +330,12 @@ export default function PerformanceOverview({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-left px-5 py-2">{t('charts.pnl_day')}</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_ca_ttc')}</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_cout_achat')}</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_marge_brute')}</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_tx_marge')}</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.pnl_ventes')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-left px-5 py-2">{t('charts.pnl_day')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_ca_ttc')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_cout_achat')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_marge_brute')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right px-3 py-2">{t('charts.pnl_tx_marge')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.pnl_ventes')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -398,12 +403,12 @@ export default function PerformanceOverview({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-left px-5 py-2">#</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-left px-3 py-2">{t('charts.fs_product')}</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_ruptures')}</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_stock_current')}</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_stock_min')}</th>
-                  <th className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_rotation')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-left px-5 py-2">#</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-left px-3 py-2">{t('charts.fs_product')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_ruptures')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_stock_current')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_stock_min')}</th>
+                  <th scope="col" className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-center px-3 py-2">{t('charts.fs_rotation')}</th>
                 </tr>
               </thead>
               <tbody>

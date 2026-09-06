@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, ChevronLeft, ChevronRight, Loader2, Inbox } from 'lucide-react'
 import type { Facture, FactureProduit, CouponMonnaie } from '../../types'
 import {
   Dialog,
@@ -140,13 +140,15 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
     )
   }
 
-  const totalPages = Math.ceil(sortedFactures.length / pageSize)
-  const pagedFactures = sortedFactures.slice((page - 1) * pageSize, page * pageSize)
+  const totalPages = useMemo(() => Math.ceil(sortedFactures.length / pageSize), [sortedFactures.length, pageSize])
+  const pagedFactures = useMemo(() => sortedFactures.slice((page - 1) * pageSize, page * pageSize), [sortedFactures, page, pageSize])
 
   if (sortedFactures.length === 0) {
     return (
       <div className="text-center py-16 bg-white">
-        <div className="text-5xl mb-4">📭</div>
+        <div className="flex justify-center mb-4">
+          <Inbox className="size-12 text-slate-400" />
+        </div>
         <h3 className="font-bold text-lg text-slate-800">{t('no_pending')}</h3>
         <p className="text-slate-500 text-sm mt-1">{t('no_pending_desc')}</p>
       </div>
@@ -178,7 +180,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
           <TableHeader className="bg-slate-100 sticky top-0 z-10 border-b border-slate-200">
             <TableRow className="hover:bg-slate-100">
               {onToggleSelect && (
-                <TableHead className="w-12 px-3 py-2 text-center">
+                <TableHead scope="col" className="w-12 px-3 py-2 text-center">
                   <Checkbox
                     checked={selectedIds ? selectedIds.size === pagedFactures.length && pagedFactures.length > 0 : false}
                     onCheckedChange={() => { if (onSelectAll) onSelectAll() }}
@@ -187,14 +189,14 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   />
                 </TableHead>
               )}
-              <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.ticket')}</TableHead>
-              <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.invoice')}</TableHead>
-              <TableHead className="w-[20%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.client')}</TableHead>
-              <TableHead className="hidden lg:table-cell w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.date')}</TableHead>
-              <TableHead className="hidden xl:table-cell w-14 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.products')}</TableHead>
-              <TableHead className="hidden md:table-cell w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.seller', 'Vendeur')}</TableHead>
-              <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.amount')}</TableHead>
-              <TableHead className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.actions')}</TableHead>
+              <TableHead scope="col" className="w-20 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.ticket')}</TableHead>
+              <TableHead scope="col" className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.invoice')}</TableHead>
+              <TableHead scope="col" className="w-[20%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.client')}</TableHead>
+              <TableHead scope="col" className="hidden lg:table-cell w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.date')}</TableHead>
+              <TableHead scope="col" className="hidden xl:table-cell w-14 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.products')}</TableHead>
+              <TableHead scope="col" className="hidden md:table-cell w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.seller', 'Vendeur')}</TableHead>
+              <TableHead scope="col" className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.amount')}</TableHead>
+              <TableHead scope="col" className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -289,7 +291,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   <TableCell className="px-3 py-2 text-right font-mono font-bold text-lg text-slate-800">
                     {montantAPayer} {t('common:currency_symbol', 'F')}
                     {couponPourCetteFacture && (
-                      <div className="text-xs font-normal text-emerald-600 line-through text-slate-500 flex items-center justify-end gap-1">
+                      <div className="text-xs font-normal text-slate-500 line-through flex items-center justify-end gap-1">
                         {hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc)} {t('common:currency_symbol', 'F')}
                          <Button
                           variant="ghost"
@@ -448,11 +450,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                 <Table className="table-fixed">
                   <TableHeader>
                     <TableRow className="bg-slate-50 hover:bg-slate-50">
-                      <TableHead className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.product')}</TableHead>
-                      <TableHead className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.quantity')}</TableHead>
-                      <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.unit_price_short')}</TableHead>
-                      <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.total')}</TableHead>
-                      <TableHead className="w-10 px-3 py-2 text-center"></TableHead>
+                      <TableHead scope="col" className="px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.product')}</TableHead>
+                      <TableHead scope="col" className="w-32 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.quantity')}</TableHead>
+                      <TableHead scope="col" className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.unit_price_short')}</TableHead>
+                      <TableHead scope="col" className="w-28 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.total')}</TableHead>
+                      <TableHead scope="col" className="w-10 px-3 py-2 text-center"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

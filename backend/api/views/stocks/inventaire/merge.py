@@ -53,32 +53,54 @@ def merge_inventaires(
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Logique de fusion
-    merged_count = 0
-    moved_count = 0
+    # Logique de fusion — version optimisée en opérations en masse
+    # (évite le N+1 : 1 requête par ligne source → ~15k requêtes sur gros inventaires)
 
-    source_lignes = source_inventaire.lignes.all()
+    # 1. Charger les lignes cibles en un dict {(produit_id, stock_lot_id): ligne}
+    #    setdefault garde la première occurrence (même sémantique que filter().first())
+    target_lines = {}
+    for l in LigneInventaire.objects.filter(inventaire=target_inventaire):
+        target_lines.setdefault((l.produit_id, l.stock_lot_id), l)
 
-    for source_ligne in source_lignes:
-        # Chercher une ligne compatible dans la cible (même produit ET même lot)
-        compatible_line = LigneInventaire.objects.filter(
-            inventaire=target_inventaire,
-            produit=source_ligne.produit,
-            stock_lot=source_ligne.stock_lot
-        ).first()
+    # 2. Charger toutes les lignes source en une requête (IDs seulement, pas de lazy-load FK)
+    source_lignes = list(
+        source_inventaire.lignes.values('id', 'produit_id', 'stock_lot_id',
+                                        'quantite_physique', 'stock_theorique')
+    )
 
+    # 3. Partitionner : lignes à fusionner dans la cible vs lignes à déplacer
+    to_update = {}
+    merged_source_ids = []
+
+    for s in source_lignes:
+        compatible_line = target_lines.get((s['produit_id'], s['stock_lot_id']))
         if compatible_line:
-            # Fusionner : additionner la quantité saisie ET le théorique pour garder l'écart juste
-            compatible_line.quantite_physique += source_ligne.quantite_physique
-            compatible_line.stock_theorique += source_ligne.stock_theorique
-            compatible_line.save()
-            source_ligne.delete()
-            merged_count += 1
-        else:
-            # Déplacer : changer l'inventaire parent
-            source_ligne.inventaire = target_inventaire
-            source_ligne.save()
-            moved_count += 1
+            if compatible_line.id not in to_update:
+                to_update[compatible_line.id] = compatible_line
+            compatible_line.quantite_physique += s['quantite_physique']
+            compatible_line.stock_theorique += s['stock_theorique']
+            compatible_line.ecart = compatible_line.quantite_physique - compatible_line.stock_theorique
+            merged_source_ids.append(s['id'])
+
+    merged_count = len(merged_source_ids)
+
+    # 4. Supprimer d'abord les lignes source fusionnées (contrainte unique inventaire+lot)
+    if merged_source_ids:
+        LigneInventaire.objects.filter(id__in=merged_source_ids).delete()
+
+    # 5. Déplacer les lignes restantes de la source vers la cible (1 requête)
+    #    .update() ne réécrit pas ecart, mais quantite_physique/stock_theorique
+    #    sont inchangés → l'écart reste correct.
+    moved_count = LigneInventaire.objects.filter(
+        inventaire=source_inventaire
+    ).update(inventaire=target_inventaire)
+
+    # 6. Persister les lignes cibles fusionnées (1 requête par batch)
+    if to_update:
+        LigneInventaire.objects.bulk_update(
+            list(to_update.values()),
+            ['quantite_physique', 'stock_theorique', 'ecart']
+        )
 
     # Rattacher les mouvements de stock de la source vers la cible avant suppression
     source_inventaire.mouvements_stock.update(inventaire=target_inventaire)

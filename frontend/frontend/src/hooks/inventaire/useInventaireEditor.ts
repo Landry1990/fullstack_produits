@@ -158,13 +158,16 @@ export const useInventaireEditor = (
         setDescription(inv.description || '');
         setViewMode('EDIT');
         try {
-            const res = await api.get(`inventaires/${inv.id}/lignes/`);
+            // Charger lignes + stats en parallèle
+            const [res] = await Promise.all([
+                api.get(`inventaires/${inv.id}/lignes/`),
+                fetchInventoryStats(inv.id)
+            ]);
             const fetchedLignes = res.data.map((l: LigneInventaire) => ({
                 ...l,
                 isLocalOnly: false
             }));
             setLignes(fetchedLignes);
-            await fetchInventoryStats(inv.id);
         } catch (error) {
             logger.error(error);
             gooeyToast.error(t('common:messages.error_loading'));

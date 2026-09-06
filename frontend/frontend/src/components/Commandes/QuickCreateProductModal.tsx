@@ -55,6 +55,7 @@ export default function QuickCreateProductModal({
   const [cip1, setCip1] = useState('');
   const [cip2, setCip2] = useState('');
   const [cip3, setCip3] = useState('');
+  const [cip4, setCip4] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +70,7 @@ export default function QuickCreateProductModal({
         setCip1(editProduct.cip1 || '');
         setCip2(editProduct.cip2 || '');
         setCip3(editProduct.cip3 || '');
+        setCip4(editProduct.cip4 || '');
       } else {
         setName('');
         setCostPrice('');
@@ -78,6 +80,7 @@ export default function QuickCreateProductModal({
         setCip1('');
         setCip2('');
         setCip3('');
+        setCip4('');
       }
       setError(null);
       setLoading(false);
@@ -121,6 +124,7 @@ export default function QuickCreateProductModal({
         cip1: cip1.trim() || null,
         cip2: cip2.trim() || null,
         cip3: cip3.trim() || null,
+        cip4: cip4.trim() || null,
       };
 
       let data: ProduitModel;
@@ -297,7 +301,7 @@ export default function QuickCreateProductModal({
               className="h-11 text-sm font-mono"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label htmlFor="quick-product-cip2" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.cip2')}
@@ -321,6 +325,19 @@ export default function QuickCreateProductModal({
                 value={cip3}
                 onChange={(e) => setCip3(e.target.value)}
                 placeholder={t('products:cip3_placeholder')}
+                className="h-11 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label htmlFor="quick-product-cip4" className="block text-xs font-semibold text-slate-600 mb-1.5">
+                {t('products:form.cip4')}
+              </label>
+              <Input
+                id="quick-product-cip4"
+                type="text"
+                value={cip4}
+                onChange={(e) => setCip4(e.target.value)}
+                placeholder={t('products:cip4_placeholder')}
                 className="h-11 text-sm font-mono"
               />
             </div>

@@ -147,6 +147,7 @@ class DocumentLockConsumer(AsyncWebsocketConsumer):
         self.lock_key = _lock_key(self.model, self.pk)
         self.group = _group_name(self.model, self.pk)
         self.username = None
+        self.owner_id = self.channel_name
 
         user = self.scope.get('user')
         if user and user.is_authenticated:
@@ -162,7 +163,7 @@ class DocumentLockConsumer(AsyncWebsocketConsumer):
         if holder:
             await self.send(text_data=json.dumps({
                 'type': 'lock_denied',
-                'holder': holder,
+                'holder': self._holder_name(holder),
             }))
         else:
             await self.send(text_data=json.dumps({
@@ -170,8 +171,14 @@ class DocumentLockConsumer(AsyncWebsocketConsumer):
             }))
 
     async def disconnect(self, close_code):
+        released = False
         if self.username:
-            await self._release_if_owner()
+            released = await self._release_if_owner()
+        if released:
+            await self.channel_layer.group_send(self.group, {
+                'type': 'broadcast_lock_update',
+                'holder': None,
+            })
         await self.channel_layer.group_discard(self.group, self.channel_name)
 
     async def receive(self, text_data):
@@ -198,7 +205,7 @@ class DocumentLockConsumer(AsyncWebsocketConsumer):
                 holder = await self._get_lock_holder()
                 await self.send(text_data=json.dumps({
                     'type': 'lock_denied',
-                    'holder': holder or 'inconnu',
+                    'holder': self._holder_name(holder) if holder else 'inconnu',
                 }))
 
         elif msg_type == 'release':
@@ -219,6 +226,13 @@ class DocumentLockConsumer(AsyncWebsocketConsumer):
             'holder': event.get('holder'),
         }))
 
+    @staticmethod
+    def _holder_name(holder):
+        return holder.get('username') if isinstance(holder, dict) else holder
+
+    def _is_owner(self, holder):
+        return isinstance(holder, dict) and holder.get('owner_id') == self.owner_id
+
     @database_sync_to_async
     def _get_lock_holder(self):
         from django.core.cache import cache
@@ -227,12 +241,20 @@ class DocumentLockConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _try_acquire(self):
         from django.core.cache import cache
-        return cache.add(self.lock_key, self.username, timeout=LOCK_TTL)
+        holder = cache.get(self.lock_key)
+        if self._is_owner(holder):
+            cache.set(self.lock_key, holder, timeout=LOCK_TTL)
+            return True
+        return cache.add(
+            self.lock_key,
+            {'owner_id': self.owner_id, 'username': self.username},
+            timeout=LOCK_TTL,
+        )
 
     @database_sync_to_async
     def _release_if_owner(self):
         from django.core.cache import cache
-        if cache.get(self.lock_key) == self.username:
+        if self._is_owner(cache.get(self.lock_key)):
             cache.delete(self.lock_key)
             return True
         return False
@@ -240,7 +262,8 @@ class DocumentLockConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _renew_if_owner(self):
         from django.core.cache import cache
-        if cache.get(self.lock_key) == self.username:
-            cache.set(self.lock_key, self.username, timeout=LOCK_TTL)
+        holder = cache.get(self.lock_key)
+        if self._is_owner(holder):
+            cache.set(self.lock_key, holder, timeout=LOCK_TTL)
             return True
         return False

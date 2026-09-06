@@ -185,6 +185,7 @@
             "back": "← Back",
             "title_new": "New Inventory",
             "title_edit": "Inventory #{{id}}",
+            "lock_document_label": "this inventory #{{id}}",
             "validated": "VALIDATED",
             "duplicate_lot_confirm": "This product is already entered{{lot}} with a quantity of {{currentQty}}.\n\nDo you want to adjust the quantity of the existing line?",
             "duplicate_lots_message": "Lot(s) already entered: {{lots}}. Adjust the quantity on the existing line.",

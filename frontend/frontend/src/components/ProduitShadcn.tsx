@@ -313,6 +313,7 @@ export default function ProduitShadcn() {
       cip1: produit.cip1 || '',
       cip2: produit.cip2 || '',
       cip3: produit.cip3 || '',
+      cip4: produit.cip4 || '',
       expire_date: produit.expire_date || '',
       stock_alert: String(produit.stock_alert ?? '0'),
       stock_minimum: String(produit.stock_minimum ?? '0'),
@@ -515,6 +516,7 @@ export default function ProduitShadcn() {
                                 <span className="font-mono text-xs text-slate-500">{produit.cip1 || '-'}</span>
                                 {produit.cip2 && <span className="font-mono text-xs text-slate-400">{produit.cip2}</span>}
                                 {produit.cip3 && <span className="font-mono text-xs text-slate-400">{produit.cip3}</span>}
+                                {produit.cip4 && <span className="font-mono text-xs text-slate-400">{produit.cip4}</span>}
                               </div>
                             </td>
                             <td className="py-3 px-2">
@@ -603,6 +605,7 @@ export default function ProduitShadcn() {
                         <p className="text-sm text-slate-500 font-mono">{t('common:cip')}: <span className="text-slate-700">{selectedProduit.cip1 || '-'}</span></p>
                         {selectedProduit.cip2 && <p className="text-sm text-slate-400 font-mono">• <span className="text-slate-600">{selectedProduit.cip2}</span></p>}
                         {selectedProduit.cip3 && <p className="text-sm text-slate-400 font-mono">• <span className="text-slate-600">{selectedProduit.cip3}</span></p>}
+                        {selectedProduit.cip4 && <p className="text-sm text-slate-400 font-mono">• <span className="text-slate-600">{selectedProduit.cip4}</span></p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">

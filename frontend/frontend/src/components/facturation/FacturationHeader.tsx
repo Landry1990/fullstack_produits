@@ -6,7 +6,6 @@ import { Button } from '../shadcn/button'
 import { Input } from '../shadcn/input'
 import { Badge } from '../shadcn/badge'
 import { cn } from '../../lib/utils'
-import PosteRequisOverlay from './PosteRequisOverlay'
 import FacturationNotifications from './FacturationNotifications'
 import type { FacturationState } from '../../hooks/useFacturationState'
 
@@ -184,14 +183,6 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
             {hook.t('common:cancel')}
           </Button>
         </div>
-      )}
-
-      {/* ── VERROU POINT DE VENTE ── */}
-      {!hook.isPosteCaisseActive && (
-        <PosteRequisOverlay
-          hasMyActivePoste={hook.hasMyActivePoste}
-          onOpenExisting={() => setShowOpenPosteModal(true)}
-        />
       )}
 
       {/* ── NOTIFICATIONS ── */}

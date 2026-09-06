@@ -114,7 +114,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                     <TableHeader className="sticky top-0 z-10">
                         <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
                             {hasSelection && (
-                                <TableHead className="w-12 px-3 py-2 text-center">
+                                <TableHead scope="col" className="w-12 px-3 py-2 text-center">
                                     <span className="sr-only">{t('stock:analyse.selection')}</span>
                                 </TableHead>
                             )}
@@ -166,7 +166,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
                         {hasSelection && (
-                            <TableHead className="w-12 px-3 py-2 text-center">
+                            <TableHead scope="col" className="w-12 px-3 py-2 text-center">
                                 <Checkbox
                                     checked={allSelected}
                                     onCheckedChange={onToggleSelectAll}

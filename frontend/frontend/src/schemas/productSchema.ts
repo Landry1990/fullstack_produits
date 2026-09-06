@@ -5,6 +5,7 @@ export const productSchema = z.object({
   cip1: z.string().optional().nullable(),
   cip2: z.string().optional().nullable(),
   cip3: z.string().optional().nullable(),
+  cip4: z.string().optional().nullable(),
   
   selling_price: z.coerce.number().positive("Le prix de vente doit être positif"),
   cost_price: z.coerce.number().min(0, "Le prix d'achat ne peut pas être négatif"),

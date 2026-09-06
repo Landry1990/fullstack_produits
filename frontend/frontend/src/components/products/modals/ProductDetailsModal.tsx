@@ -61,6 +61,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase font-bold text-base-content/50">{t('products:detail.cip')}</span>
                 <span className="font-mono font-bold text-primary">{selectedProduit.cip1 || '-'}</span>
+                {[selectedProduit.cip2, selectedProduit.cip3, selectedProduit.cip4].filter(Boolean).map((cip) => (
+                  <span key={cip} className="font-mono text-xs text-base-content/60">{cip}</span>
+                ))}
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase font-bold text-base-content/50">{t('products:detail.total_stock')}</span>

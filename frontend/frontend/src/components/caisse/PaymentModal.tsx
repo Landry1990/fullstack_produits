@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Banknote, Check, X, Lightbulb, CornerDownLeft, Plus, Coins } from 'lucide-react'
 import { gooeyToast } from 'goey-toast'
 import type { Facture, CouponMonnaie } from '../../types'
 import PremiumModal from '../common/PremiumModal'
@@ -182,7 +183,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={t('payment.title_with_num', { num: facture.numero_facture })}
-      icon={<span className="text-emerald-600 text-xl">💰</span>}
+      icon={<Banknote className="text-emerald-600 size-6" />}
       maxWidth="max-w-2xl"
       footer={
         <div className="flex justify-end gap-3 w-full">
@@ -208,7 +209,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             {loading
               ? <div className="animate-spin rounded-full size-5 border-b-2 border-white"></div>
               : peutValider
-                ? `✓ ${t('payment.validate')}`
+                ? <><Check className="size-4" /> {t('payment.validate')}</>
                 : t('payment.remaining', { amount: resteReel })
             }
           </button>
@@ -236,7 +237,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             {soldeDepot > 0 && (
               <div className="mt-2 text-center">
                 <span className="inline-flex items-center gap-1 px-3 h-7 text-sm rounded-full bg-emerald-100 text-emerald-700 font-medium">
-                  💡 {t('payment.deposit_available', { amount: soldeDepot })}
+                  <Lightbulb className="size-4" />
+                  {t('payment.deposit_available', { amount: soldeDepot })}
                 </span>
               </div>
             )}
@@ -279,15 +281,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               onClick={() => handleAddPayment()}
               disabled={!montantPaye || Number(montantPaye) === 0}
               title={t('payment.amount_input_hint')}
+              aria-label={t('payment.add')}
             >
-              +
+              <Plus className="size-7" />
             </button>
           </div>
 
           {/* Hint: flux de saisie */}
           {Number(montantPaye) > 0 && Number(montantPaye) < resteReel && (
-            <div className="text-center text-xs text-slate-400 -mt-1">
-              ↵ {t('payment.amount_input_hint')}
+            <div className="text-center text-xs text-slate-400 -mt-1 flex items-center justify-center gap-1">
+              <CornerDownLeft className="size-3" />
+              {t('payment.amount_input_hint')}
             </div>
           )}
 
@@ -327,6 +331,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   }}
                   onKeyDown={(e) => handleModeKeyDown(e, idx)}
                   title={`${m.label} — ←→ pour naviguer, Entrée pour valider, Échap pour retour`}
+                  aria-pressed={modePaiement === m.value}
+                  aria-label={m.label}
                 >
                   {m.label}
                 </button>
@@ -348,7 +354,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <button
                       onClick={() => handleRemovePayment(idx)}
                       className="inline-flex items-center justify-center size-7 rounded text-red-500 hover:bg-red-50 transition-colors text-lg"
-                    >✕</button>
+                      aria-label={t('payment.remove')}
+                    >
+                      <X className="size-4" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -370,7 +379,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               )}
               {resteApercu < 0 && (
                 <div className="flex justify-between items-center px-4 py-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                  <span className="text-base font-semibold text-emerald-700">💰 {t('payment.change_back')}</span>
+                  <span className="text-base font-semibold text-emerald-700 flex items-center gap-1">
+                    <Coins className="size-4" />
+                    {t('payment.change_back')}
+                  </span>
                   <span className="font-mono font-bold text-emerald-700 text-3xl">{Math.abs(resteApercu)} {t('common:currency_symbol', 'F')}</span>
                 </div>
               )}

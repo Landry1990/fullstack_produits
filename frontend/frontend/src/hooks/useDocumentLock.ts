@@ -12,6 +12,7 @@
  *   ← lock_update    : broadcast (holder null = libéré)
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { safeStorage } from '../utils/storage';
 
 export type LockStatus = 'idle' | 'acquired' | 'denied' | 'released' | 'connecting';
 
@@ -24,7 +25,7 @@ export interface DocumentLockState {
   release: () => void;
 }
 
-const WS_BASE = import.meta.env.VITE_WS_URL ?? `ws://${window.location.host}`;
+const WS_BASE = import.meta.env.VITE_WS_URL ?? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`;
 const HEARTBEAT_INTERVAL = 15_000; // 15s < TTL 30s
 const RECONNECT_DELAY = 3_000;
 
@@ -36,6 +37,8 @@ export function useDocumentLock(
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  const wantsLockRef = useRef(true);
+  const myHolderRef = useRef<string | null>(null);
 
   const [status, setStatus] = useState<LockStatus>('idle');
   const [holder, setHolder] = useState<string | null>(null);
@@ -67,18 +70,29 @@ export function useDocumentLock(
     }
   }, [stopHeartbeat]);
 
+  const tryAcquire = useCallback((ws: WebSocket) => {
+    if (ws.readyState === WebSocket.OPEN && wantsLockRef.current) {
+      ws.send(JSON.stringify({ type: 'acquire' }));
+    }
+  }, []);
+
   const connect = useCallback(() => {
     if (!pk || !model) return;
     if (wsRef.current) disconnect();
 
-    const token = localStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     const url = `${WS_BASE}/ws/lock/${model}/${pk}/?token=${token ?? ''}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
-    setStatus('connecting');
+    wantsLockRef.current = true;
+    myHolderRef.current = null;
+    setStatus(prev => (prev === 'connecting' ? prev : 'connecting'));
+    setHolder(prev => (prev === null ? prev : null));
+    setIsMine(prev => (prev === false ? prev : false));
 
     ws.onopen = () => {
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !wantsLockRef.current) return;
+      tryAcquire(ws);
     };
 
     ws.onmessage = (event) => {
@@ -87,31 +101,44 @@ export function useDocumentLock(
         const data = JSON.parse(event.data as string);
         switch (data.type) {
           case 'lock_acquired':
-            setStatus('acquired');
-            setHolder(data.holder ?? null);
-            setIsMine(true);
+            myHolderRef.current = data.holder ?? null;
+            setStatus(prev => (prev === 'acquired' ? prev : 'acquired'));
+            setHolder(prev => (prev === (data.holder ?? null) ? prev : (data.holder ?? null)));
+            setIsMine(prev => (prev === true ? prev : true));
             startHeartbeat();
             break;
           case 'lock_denied':
-            setStatus('denied');
-            setHolder(data.holder ?? null);
-            setIsMine(false);
+            myHolderRef.current = null;
+            setStatus(prev => (prev === 'denied' ? prev : 'denied'));
+            setHolder(prev => (prev === (data.holder ?? null) ? prev : (data.holder ?? null)));
+            setIsMine(prev => (prev === false ? prev : false));
             stopHeartbeat();
             break;
           case 'lock_released':
-            setStatus('released');
-            setHolder(null);
-            setIsMine(false);
+            myHolderRef.current = null;
+            setStatus(prev => (prev === 'released' ? prev : 'released'));
+            setHolder(prev => (prev === null ? prev : null));
+            setIsMine(prev => (prev === false ? prev : false));
             stopHeartbeat();
+            tryAcquire(ws);
             break;
           case 'lock_update':
             if (data.holder === null) {
-              setStatus('released');
-              setHolder(null);
-              setIsMine(false);
+              myHolderRef.current = null;
+              setStatus(prev => (prev === 'released' ? prev : 'released'));
+              setHolder(prev => (prev === null ? prev : null));
+              setIsMine(prev => (prev === false ? prev : false));
               stopHeartbeat();
+              tryAcquire(ws);
             } else {
-              setHolder(data.holder);
+              const nowMine = data.holder === myHolderRef.current;
+              setHolder(prev => (prev === data.holder ? prev : data.holder));
+              setIsMine(prev => (prev === nowMine ? prev : nowMine));
+              if (!nowMine) {
+                setStatus(prev => (prev === 'denied' ? prev : 'denied'));
+                stopHeartbeat();
+                myHolderRef.current = null;
+              }
             }
             break;
         }
@@ -123,7 +150,8 @@ export function useDocumentLock(
     ws.onclose = () => {
       if (!mountedRef.current) return;
       stopHeartbeat();
-      setIsMine(false);
+      setIsMine(prev => (prev === false ? prev : false));
+      setStatus(prev => (prev === 'connecting' ? prev : 'connecting'));
       reconnectRef.current = setTimeout(() => {
         if (mountedRef.current) connect();
       }, RECONNECT_DELAY);
@@ -132,7 +160,7 @@ export function useDocumentLock(
     ws.onerror = () => {
       ws.close();
     };
-  }, [model, pk, disconnect, startHeartbeat, stopHeartbeat]);
+  }, [model, pk, disconnect, startHeartbeat, stopHeartbeat, tryAcquire]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -144,12 +172,15 @@ export function useDocumentLock(
   }, [model, pk]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const acquire = useCallback(() => {
+    wantsLockRef.current = true;
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'acquire' }));
     }
   }, []);
 
   const release = useCallback(() => {
+    wantsLockRef.current = false;
+    myHolderRef.current = null;
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'release' }));
     }
