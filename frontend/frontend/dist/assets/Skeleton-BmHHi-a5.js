@@ -1,1 +1,0 @@
-import{j as m}from"./vendor-query-D5KdFYG4.js";import"./vendor-i18n-D-FMpoh3.js";import{j as o}from"./feature-dashboard-NAYoiEht.js";const n=({className:t,...e})=>m.jsx("div",{className:o("animate-pulse rounded-md bg-muted",t),...e});export{n as S};
