@@ -132,7 +132,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
             )}
 
             {/* ── KPI Cards ────────────────────────────────────────────────── */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
                 {[
                     {
                         label: t('vendeur.this_week'),

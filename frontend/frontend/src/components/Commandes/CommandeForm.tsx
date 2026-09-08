@@ -202,7 +202,7 @@ export default function CommandeForm({
 
     return (
         <div className="flex flex-col h-full overflow-hidden bg-slate-50">
-          <div className="flex items-center justify-between px-3 py-2 shrink-0 bg-white border-b border-slate-200">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 shrink-0 bg-white border-b border-slate-200">
              <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
@@ -220,7 +220,7 @@ export default function CommandeForm({
                         ? t('orders:form.edit_title', { id: selectedCommande.numero_facture || selectedCommande.id })
                         : t('orders:form.new_title')}
                   </h3>
-                  <div className="hidden xl:flex gap-4 text-xs text-slate-400 mt-0.5">
+                  <div className="hidden 2xl:flex gap-4 text-xs text-slate-400 mt-0.5">
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">F2</kbd> {t('orders:form.shortcuts.search')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">F4</kbd> {t('orders:form.shortcuts.provider')}</span>
                     <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">Ctrl+A</kbd> {t('orders:form.shortcuts.select_all')}</span>

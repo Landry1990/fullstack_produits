@@ -90,7 +90,8 @@
         "manage_avoirs": "Manage Credits",
         "validate_zero_amount": "Allow 0F sales",
         "can_validate_sales": "Validate sales",
-        "view_cash_sessions": "View cash sessions"
+        "view_cash_sessions": "View cash sessions",
+        "view_cash_totals": "View cash journal totals"
     },
     "messages": {
         "load_error": "Error loading users",

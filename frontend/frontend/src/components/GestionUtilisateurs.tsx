@@ -43,6 +43,7 @@ interface User {
     can_do_remise?: boolean;
     can_modify_invoice?: boolean;
     can_view_cash_sessions?: boolean;
+    can_view_cash_totals?: boolean;
     max_discount_rate?: string | number;
   };
 }
@@ -212,6 +213,7 @@ export default function GestionUtilisateurs() {
     can_do_remise: false,
     can_modify_invoice: false,
     can_view_cash_sessions: false,
+    can_view_cash_totals: true,
     max_discount_rate: 0,
   });
 
@@ -265,6 +267,7 @@ export default function GestionUtilisateurs() {
       can_do_remise: sourceUser.profile?.can_do_remise || false,
       can_modify_invoice: sourceUser.profile?.can_modify_invoice || false,
       can_view_cash_sessions: sourceUser.profile?.can_view_cash_sessions || false,
+      can_view_cash_totals: sourceUser.profile?.can_view_cash_totals ?? true,
       max_discount_rate: Number(sourceUser.profile?.max_discount_rate || 0),
     }));
 
@@ -295,6 +298,7 @@ export default function GestionUtilisateurs() {
       updates.can_do_remise = true;
       updates.can_modify_invoice = true;
       updates.can_view_cash_sessions = true;
+      updates.can_view_cash_totals = true;
       updates.max_discount_rate = 100;
       if (!preserveMenus) updates.allowed_menus = getAllMenuKeys();
     } else if (role === 'CAISSIER') {
@@ -310,6 +314,7 @@ export default function GestionUtilisateurs() {
       updates.can_generate_coupon = false;
       updates.can_modify_invoice = true;
       updates.can_validate_sales = false;
+      updates.can_view_cash_totals = false;
       if (!preserveMenus) updates.allowed_menus = ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'];
     } else if (role === 'VENDEUR') {
       updates.is_superuser = false;
@@ -331,6 +336,7 @@ export default function GestionUtilisateurs() {
       updates.can_modify_price = false;
       updates.can_do_remise = false;
       updates.can_modify_invoice = false;
+      updates.can_view_cash_totals = false;
       updates.max_discount_rate = 0;
       if (!preserveMenus) updates.allowed_menus = ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'];
     } else if (role === 'COMPTABLE') {
@@ -353,6 +359,7 @@ export default function GestionUtilisateurs() {
       updates.can_modify_price = false;
       updates.can_do_remise = false;
       updates.can_modify_invoice = false;
+      updates.can_view_cash_totals = true;
       updates.max_discount_rate = 0;
       if (!preserveMenus) updates.allowed_menus = ['compta', 'compta_dashboard', 'compta_grand_livre', 'compta_balance', 'compta_resultat', 'compta_charges', 'compta_plan'];
     }
@@ -397,6 +404,7 @@ export default function GestionUtilisateurs() {
         can_do_remise: user.profile?.can_do_remise || false,
         can_modify_invoice: user.profile?.can_modify_invoice || false,
         can_view_cash_sessions: user.profile?.can_view_cash_sessions || false,
+        can_view_cash_totals: user.profile?.can_view_cash_totals ?? true,
         max_discount_rate: Number(user.profile?.max_discount_rate || 0),
       });
     } else {
@@ -430,6 +438,7 @@ export default function GestionUtilisateurs() {
         can_do_remise: false,
         can_modify_invoice: false,
         can_view_cash_sessions: false,
+        can_view_cash_totals: true,
         max_discount_rate: 0,
       });
     }
@@ -553,6 +562,7 @@ export default function GestionUtilisateurs() {
           can_do_remise: formData.can_do_remise,
           can_modify_invoice: formData.can_modify_invoice,
           can_view_cash_sessions: formData.can_view_cash_sessions,
+          can_view_cash_totals: formData.can_view_cash_totals,
           max_discount_rate: formData.max_discount_rate
         }
       };
@@ -982,11 +992,18 @@ export default function GestionUtilisateurs() {
                           label={t('permissions.modify_invoice')} 
                           className="p-2 bg-white rounded-lg border border-slate-200"
                         />
-                        <Checkbox 
+                        <Checkbox
                           size="xs"
-                          checked={formData.can_view_cash_sessions} 
-                          onChange={checked => setFormData({...formData, can_view_cash_sessions: checked})} 
-                          label={t('permissions.view_cash_sessions', 'Voir les sessions de caisse')} 
+                          checked={formData.can_view_cash_sessions}
+                          onChange={checked => setFormData({...formData, can_view_cash_sessions: checked})}
+                          label={t('permissions.view_cash_sessions', 'Voir les sessions de caisse')}
+                          className="p-2 bg-white rounded-lg border border-slate-200"
+                        />
+                        <Checkbox
+                          size="xs"
+                          checked={formData.can_view_cash_totals}
+                          onChange={checked => setFormData({...formData, can_view_cash_totals: checked})}
+                          label={t('permissions.view_cash_totals', 'Voir les totaux du journal de caisse')}
                           className="p-2 bg-white rounded-lg border border-slate-200"
                         />
                         <Checkbox 

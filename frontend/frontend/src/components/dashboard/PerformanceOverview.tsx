@@ -132,7 +132,7 @@ export default function PerformanceOverview({
       <div className={`grid gap-3 ${
         isVendeur
           ? 'grid-cols-1 sm:grid-cols-2'
-          : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'
+          : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
       }`}>
         {kpiCards.map((card: KpiCard, _i: number) => {
           const Icon = card.icon;
@@ -326,7 +326,7 @@ export default function PerformanceOverview({
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('charts.pnl_history_desc', "Chiffre d'affaires, coûts d'achat et marges par jour")}</p>
             </div>
           </div>
-          <div className="p-4 sm:p-5 h-64 sm:h-72 overflow-y-auto">
+          <div className="p-4 sm:p-5 h-64 sm:h-72 overflow-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
@@ -399,7 +399,7 @@ export default function PerformanceOverview({
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('charts.frequent_stockouts_desc', 'Produits qui tombent à 0 le plus souvent')}</p>
             </div>
           </div>
-          <div className="p-4 sm:p-5 h-64 sm:h-72 overflow-y-auto">
+          <div className="p-4 sm:p-5 h-64 sm:h-72 overflow-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">

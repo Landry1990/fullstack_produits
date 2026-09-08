@@ -223,7 +223,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         <LockBanner lock={lock} documentLabel={t('orders:details.lock_document_label', { id: selectedCommande.numero_facture || selectedCommande.id })} />
       )}
       {/* Header */}
-      <div className="flex items-center gap-4 shrink-0">
+      <div className="flex flex-wrap items-start gap-4 shrink-0">
         <Button variant="ghost" size="icon" onClick={onBack} aria-label={t('orders:form.back_to_list')} className="size-9 text-slate-400 hover:text-slate-600">
           <ArrowLeft className="size-5" />
         </Button>
@@ -528,8 +528,10 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                           />
                         </TableCell>
                         <TableCell className={cn("px-3 py-2 text-sm font-medium", isDeleted ? 'italic text-slate-400' : 'text-slate-800')}>
-                          {p.produitName}
-                          {isDeleted && <span className="text-xs ml-2 text-slate-400">({t('products:us.deleted', 'Supprimé')})</span>}
+                          <div className="truncate" title={p.produitName}>
+                            {p.produitName}
+                            {isDeleted && <span className="text-xs ml-2 text-slate-400">({t('products:us.deleted', 'Supprimé')})</span>}
+                          </div>
                         </TableCell>
                         <TableCell className="px-3 py-2 font-mono text-xs text-slate-500">{p.cip}</TableCell>
                         <TableCell className="px-3 py-2 text-center">

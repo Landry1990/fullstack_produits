@@ -13,7 +13,7 @@ interface FacturationLeftPanelProps {
 
 export default function FacturationLeftPanel({ hook, datamatrixEnabled, scan }: FacturationLeftPanelProps) {
   return (
-    <div className="shrink-0 lg:flex-1 flex flex-col overflow-y-auto pos-discovery p-4 sm:p-5 lg:p-6 gap-4 min-h-0 bg-slate-50">
+    <div className="lg:flex-1 flex flex-col overflow-y-auto pos-discovery p-4 sm:p-5 lg:p-6 gap-4 min-h-0 min-w-0 bg-slate-50">
 
       <div className="w-full flex flex-col gap-4 shrink-0">
         {/* Client */}

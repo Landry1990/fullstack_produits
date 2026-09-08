@@ -339,7 +339,7 @@ export default function CommandeList({
 
       {/* Table Section */}
       <div className="flex-1 min-h-0 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200 max-h-[60vh]">
-        <Table className="w-full text-sm">
+        <Table className="table-fixed min-w-[1020px] text-sm">
           <TableHeader>
             <TableRow className="bg-slate-50 text-slate-500 border-b border-slate-200 hover:bg-slate-50">
               <TableHead className="w-12 text-center sticky top-0 z-30 bg-slate-50">
@@ -555,8 +555,8 @@ export default function CommandeList({
                     const isDeleted = !fournisseur && !!commande.fournisseur_nom;
                     const nom = fournisseur?.name ?? (commande.fournisseur_nom || `${t('common:id')}: ${commande.fournisseur}`);
                     return (
-                      <div className="flex flex-col">
-                        <span className={cn("font-semibold text-sm", isDeleted ? 'italic text-slate-400' : 'text-slate-700')}>
+                      <div className="flex min-w-0 flex-col">
+                        <span title={nom} className={cn("truncate font-semibold text-sm", isDeleted ? 'italic text-slate-400' : 'text-slate-700')}>
                           {nom}
                         </span>
                       </div>
@@ -654,7 +654,7 @@ export default function CommandeList({
           const totalTva = selected.reduce((sum, c) => sum + Number(c.total_tva || 0), 0);
           const totalTtc = selected.reduce((sum, c) => sum + Number(c.total_ttc || c.total), 0);
           return (
-            <div className="flex items-center justify-end gap-4 text-sm border-t border-slate-100 pt-2">
+            <div className="flex flex-wrap items-center justify-end gap-4 text-sm border-t border-slate-100 pt-2">
               <span className="font-semibold text-slate-500">{t('orders:list.selected_count', { count: selectedOrderIds.size })}</span>
               <span className="text-slate-400">{t('orders:list.table.ht')} <span className="font-semibold text-slate-700">{formatCurrency(Number(totalHt.toFixed(2)))}</span></span>
               <span className="text-slate-400">{t('orders:list.table.tva')} <span className="font-semibold text-slate-700">{formatCurrency(Number(totalTva.toFixed(2)))}</span></span>

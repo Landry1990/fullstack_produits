@@ -2,6 +2,117 @@
 
 ---
 
+## 2026-09-08 — Adaptations responsive sur MacBook 13 pouces (Facturation, Ventes, Produits, Commandes, Dashboard)
+
+### Amélioration UI
+
+- Ajout de classes `min-w-0`, `shrink-0`, `truncate` et `flex-wrap` pour éviter les débordements de texte et de mise en page sur les écrans 13 pouces.
+- Ajustement des breakpoints Tailwind (`2xl`, `xl`, `lg`, `md`) pour une présentation cohérente entre les écrans standard et les grands moniteurs.
+- Commandes : tableaux à largeur fixe et minimale, header et grilles de filtres enroulables, noms de fournisseurs/fournitures tronqués.
+- Facturation : panier latéral responsive (`lg`/`xl`/`2xl`), boutons d'action avec textes réduits, wraps des éléments de l'en-tête, taille du total adaptée.
+- Ventes : colonne opérateur reportée à `2xl`, largeur de la colonne actions augmentée, troncature du nom client/opérateur.
+- Produits : ajout de `min-w-0` dans les colonnes des tableaux pour éviter le débordement, wraps des boutons de l'en-tête du détail.
+- Dashboard : onglets centrés, grilles de cartes ajustées pour `xl`/`2xl`, hauteurs des listes raccourcies sur écrans 13 pouces.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Commandes/CommandeDetails.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeForm.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeList.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeProductRow.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeProductTable.tsx`
+- `frontend/frontend/src/components/DashboardShadcn.tsx`
+- `frontend/frontend/src/components/Facturation.tsx`
+- `frontend/frontend/src/components/ProduitShadcn.tsx`
+- `frontend/frontend/src/components/dashboard/DashboardVendeur.tsx`
+- `frontend/frontend/src/components/dashboard/FinancialSummary.tsx`
+- `frontend/frontend/src/components/dashboard/PerformanceOverview.tsx`
+- `frontend/frontend/src/components/dashboard/StockIntelligence.tsx`
+- `frontend/frontend/src/components/facturation/ActionButtons.tsx`
+- `frontend/frontend/src/components/facturation/FacturationHeader.tsx`
+- `frontend/frontend/src/components/facturation/FacturationLeftPanel.tsx`
+- `frontend/frontend/src/components/facturation/FacturationModals.tsx`
+- `frontend/frontend/src/components/facturation/FacturationRightPanel.tsx`
+- `frontend/frontend/src/components/facturation/SidebarCartRow.tsx`
+- `frontend/frontend/src/components/facturation/TotalsSection.tsx`
+- `frontend/frontend/src/components/sales/SalesTable.tsx`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : OK (4737 modules, build Vite réussi).
+- Aucun fichier en dehors du scope responsive n'a été modifié dans ces composants.
+
+---
+
+## 2026-09-08 — Journal de caisse responsive sur écran 13 pouces
+
+### Amélioration UI
+
+- Réorganisation des cartes de statistiques en 3 colonnes sur les écrans de type MacBook 13 pouces, tout en conservant 5 colonnes sur les très grands écrans.
+- Réorganisation des filtres en grille responsive pour éviter les champs comprimés et les débordements.
+- Réduction des marges et suppression des espacements internes doublés.
+- Barre de synthèse adaptée à la largeur disponible.
+- Tableau doté d'une largeur minimale et d'un défilement horizontal contrôlé lorsque toutes les colonnes ne tiennent pas.
+- Fichiers modifiés : `JournalCaisse.tsx`, `JournalCaisseStats.tsx`, `JournalCaisseFilters.tsx`, `JournalCaisseTable.tsx`.
+- Vérifications : TypeScript sans erreur et build Vite réussi.
+
+---
+
+## 2026-09-06 — Facturation : forcer la sélection d'un point de vente
+
+### 🔒 Fix
+
+Sur la page Facturation, si l'utilisateur n'a pas de point de vente actif, le modal de sélection s'ouvre automatiquement et **ne peut pas être fermé** sans choisir un poste. Auparavant, fermer le modal permettait d'accéder à Facturation sans poste actif.
+
+### Modifications
+
+- `frontend/frontend/src/components/caisse/OpenPointDeVenteModal.tsx` :
+  - Ajout prop `forceSelection` : bloque Escape, clic extérieur, et masque le bouton Annuler quand des postes sont disponibles.
+  - Si aucun poste n'existe, le bouton Annuler reste visible (pour ne pas piéger l'utilisateur).
+- `frontend/frontend/src/components/facturation/FacturationModals.tsx` : passage de `forcePosteSelection` au modal.
+- `frontend/frontend/src/components/Facturation.tsx` :
+  - `forcePosteSelection={!hook.isPosteCaisseActive}`.
+  - Le `useEffect` surveille désormais `isPosteCaisseActive` en continu (pas seulement au montage) : si le poste est perdu en cours de session, le modal se rouvre.
+
+### Vérifications
+
+- TypeScript : 0 erreur.
+- Build frontend OK (4737 modules).
+- Déploiement frontend effectué.
+
+---
+
+## 2026-09-06 — Permission: masquer totaux journal de caisse
+
+### ✨ Nouvelle fonctionnalité
+
+Ajout d'une permission `can_view_cash_totals` sur le profil utilisateur permettant de masquer les cartes de totaux (ventes nettes, recouvrements, espèces, mobile money, banque) dans le journal de caisse. Certaines pharmacies ne veulent pas que les caissières voient les chiffres agrégés.
+
+### Modifications
+
+- **Backend** :
+  - `backend/api/models/users.py` : ajout du champ `can_view_cash_totals` (default=True) sur `Profile`.
+  - `backend/api/migrations/0252_add_can_view_cash_totals.py` : migration.
+  - `backend/api/serializers/users.py` : ajout du champ dans `ProfileSerializer`.
+  - `backend/api/views/users.py` : envoi de `can_view_cash_totals` dans la réponse de login.
+- **Frontend** :
+  - `frontend/frontend/src/types/auth.ts` : ajout du champ dans le type `User`.
+  - `frontend/frontend/src/context/AuthContext.tsx` : stockage/restauration de la permission.
+  - `frontend/frontend/src/hooks/useJournalCaisse.ts` : exposition de `canViewCashTotals`.
+  - `frontend/frontend/src/components/caisse/JournalCaisseStats.tsx` : masquage total si permission false.
+  - `frontend/frontend/src/components/GestionUtilisateurs.tsx` : checkbox + presets de rôles (PHARMACIEN=true, CAISSIER=false, VENDEUR=false, COMPTABLE=true).
+  - Traductions fr/en ajoutées dans `users.json`.
+
+### Vérifications
+
+- Migration appliquée avec succès.
+- TypeScript : 0 erreur.
+- Build frontend OK (4737 modules).
+- Déploiement backend + frontend effectué.
+
+---
+
 ## 2026-09-06 — Bon de réception : renommage Total TTC + marge obtenue
 
 ### ✨ Amélioration

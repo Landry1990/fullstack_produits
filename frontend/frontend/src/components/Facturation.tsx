@@ -22,12 +22,13 @@ export default function Facturation() {
     }
   }, [location, navigate])
 
-  // Auto-ouvrir le modal de choix du point de vente si aucun poste actif au montage
+  // Auto-ouvrir le modal de choix du point de vente si aucun poste actif
+  // et forcer la sélection (le modal ne peut pas être fermé sans choix)
   useEffect(() => {
     if (!hook.isPosteCaisseActive) {
       setShowOpenPosteModal(true)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hook.isPosteCaisseActive])
 
   const scan = useDatamatrixScan({
     addProduit: (p, opts) => hook.cart.addProduit(p, opts),
@@ -46,7 +47,7 @@ export default function Facturation() {
       />
 
       {/* ── MAIN LAYOUT ── */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 min-w-0">
         <FacturationLeftPanel hook={hook} datamatrixEnabled={datamatrixEnabled} scan={scan} />
         <FacturationRightPanel hook={hook} />
       </div>
@@ -56,6 +57,7 @@ export default function Facturation() {
         hook={hook}
         showOpenPosteModal={showOpenPosteModal}
         setShowOpenPosteModal={setShowOpenPosteModal}
+        forcePosteSelection={!hook.isPosteCaisseActive}
       />
     </div>
   )

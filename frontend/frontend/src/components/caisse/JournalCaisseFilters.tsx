@@ -21,8 +21,8 @@ export default function JournalCaisseFilters({ state }: Props) {
   } = state;
 
   return (
-    <div className="shrink-0 p-4">
-      <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+    <div className="shrink-0 p-3 xl:p-4">
+      <div className="flex flex-col 2xl:flex-row gap-3 justify-between items-start 2xl:items-center">
         <div className="flex items-center gap-4">
           <div className="p-2.5 bg-emerald-100 rounded-xl text-emerald-600 shrink-0">
             <Banknote className="size-6" />
@@ -37,9 +37,9 @@ export default function JournalCaisseFilters({ state }: Props) {
           </div>
         </div>
 
-        <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 w-full lg:w-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 items-center gap-2 w-full 2xl:w-auto 2xl:flex 2xl:flex-nowrap">
           {/* Search box */}
-          <div className="relative flex-1 min-w-[200px] lg:w-64">
+          <div className="relative sm:col-span-2 xl:col-span-3 2xl:w-56">
             <input
               type="text"
               placeholder={t('search_placeholder')}
@@ -51,7 +51,7 @@ export default function JournalCaisseFilters({ state }: Props) {
           </div>
 
           {/* Mode filter */}
-          <div className="w-full sm:w-auto">
+          <div className="w-full xl:col-span-2 2xl:w-auto">
             <select
               value={filterMode}
               onChange={(e) => setFilterMode(e.target.value)}
@@ -65,7 +65,7 @@ export default function JournalCaisseFilters({ state }: Props) {
           </div>
 
           {/* Cashier filter */}
-          <div className="w-full sm:w-auto">
+          <div className="w-full xl:col-span-2 2xl:w-auto">
             <select
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
@@ -81,8 +81,8 @@ export default function JournalCaisseFilters({ state }: Props) {
           </div>
 
           {/* Date Pickers */}
-          <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg p-0.5 w-full lg:w-auto">
-            <div className="flex items-center px-2 py-1 gap-1">
+          <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg p-0.5 w-full sm:col-span-2 xl:col-span-5 2xl:w-auto">
+            <div className="flex flex-1 min-w-0 items-center px-2 py-1 gap-1">
               <DatePicker
                 selected={dateDebut}
                 onChange={(date: Date | null) => setDateDebut(date)}
@@ -91,7 +91,7 @@ export default function JournalCaisseFilters({ state }: Props) {
                 dateFormat="dd/MM/yy HH:mm"
                 placeholderText={t('date_start')}
                 locale="fr"
-                className="w-36 text-xs bg-transparent focus:outline-none cursor-pointer pr-8 font-medium text-slate-700"
+                className="w-full min-w-0 text-xs bg-transparent focus:outline-none cursor-pointer pr-6 font-medium text-slate-700"
                 isClearable
               />
               <span className="text-slate-300 text-[10px]">→</span>
@@ -103,7 +103,7 @@ export default function JournalCaisseFilters({ state }: Props) {
                 dateFormat="dd/MM/yy HH:mm"
                 placeholderText={t('date_end')}
                 locale="fr"
-                className="w-36 text-xs bg-transparent focus:outline-none cursor-pointer pr-8 font-medium text-slate-700"
+                className="w-full min-w-0 text-xs bg-transparent focus:outline-none cursor-pointer pr-6 font-medium text-slate-700"
                 isClearable
               />
             </div>
@@ -139,7 +139,7 @@ export default function JournalCaisseFilters({ state }: Props) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 w-full sm:w-auto ml-auto">
+          <div className="flex gap-2 w-full sm:col-span-2 xl:col-span-12 2xl:w-auto 2xl:ml-auto">
             <Button
               variant="outline"
               size="sm"

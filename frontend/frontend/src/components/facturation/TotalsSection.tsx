@@ -109,7 +109,7 @@ export default function TotalsSection({
                 {tauxCouverture > 0 ? t('facturation:totals.part_patient') : t('facturation:totals.total_ttc')}
              </span>
              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black text-emerald-700 tracking-tight">
+                <span className="text-3xl xl:text-4xl font-black text-emerald-700 tracking-tight">
                    {formatCurrency(Math.round(mainTotal))}
                 </span>
              </div>

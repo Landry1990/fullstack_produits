@@ -1,0 +1,127 @@
+import logging
+
+from django.core.cache import cache
+from django.db import DatabaseError, transaction
+from django.http import JsonResponse
+
+from api.utils_licence import valider_licence_systeme
+
+logger = logging.getLogger(__name__)
+
+# Cache TTL: 1 heure (3600 secondes) pour réduire la charge DB
+LICENCE_CACHE_TTL = 3600
+LICENCE_CACHE_KEY = "system_licence_validation"
+
+
+class LicenceMiddleware:
+    """
+    Vigile de la licence système - Version optimisée.
+    
+    Optimisations:
+    - Cache étendu à 1h (au lieu de 5min) pour réduire les requêtes DB
+    - Vérification JWT légère (sans DB) si cache présent
+    - Vérification complète avec DB uniquement toutes les heures
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def _verifier_licence_rapide(self):
+        """
+        Vérification rapide sans DB - utilise uniquement le cache.
+        Retourne: (est_valide, message, payload) ou (None, None, None) si re-vérification DB nécessaire
+        """
+        cached_result = cache.get(LICENCE_CACHE_KEY)
+
+        if cached_result is None:
+            # Cache vide - re-vérification DB nécessaire
+            return None, None, None
+
+        # Vérifier la signature HMAC du cache (anti-empoisonnement Redis)
+        from api.utils_licence import _verify_cache_signature
+        if not _verify_cache_signature(cached_result):
+            logger.warning("[LICENCE] Cache middleware signé incorrectement — possible empoisonnement.")
+            cache.delete(LICENCE_CACHE_KEY)
+            return None, None, None
+
+        # Cache présent et signé correctement
+        try:
+            payload = cached_result.get('payload')
+            return cached_result.get('est_valide'), cached_result.get('message'), payload
+        except Exception as e:
+            logger.warning(f"[LICENCE] Erreur vérification rapide: {e!s}")
+            cache.delete(LICENCE_CACHE_KEY)
+            return None, None, None
+
+    def __call__(self, request):
+        path = request.path_info
+
+        # On autorise tout en mode TEST pour ne pas casser l'intégration continue
+        import sys
+        if 'test' in sys.argv or 'pytest' in sys.argv[0] or any('pytest' in arg for arg in sys.argv):
+            return self.get_response(request)
+
+        # 1. On exclut les URL critiques (connexion, admin, health check, et l'API de licence elle-même)
+        # Sinon le client ne pourra même pas soumettre sa nouvelle clé !
+        # Health check doit toujours être accessible pour le monitoring Docker
+        if (
+            path.startswith(('/api/licence/', '/api/users/login/', '/api/health/', '/admin/'))
+        ):
+            return self.get_response(request)
+
+        # 2. Pour tout le reste de l'API, on vérifie la licence
+        if path.startswith('/api/'):
+            # ESSAI 1: Vérification rapide sans DB (lecture cache uniquement)
+            est_valide, message, payload = self._verifier_licence_rapide()
+            
+            # Si le cache est vide ou invalide, faire la vérification complète avec DB
+            if est_valide is None:
+                try:
+                    # Utiliser une transaction séparée pour isoler les erreurs DB
+                    with transaction.atomic():
+                        est_valide, message, payload = valider_licence_systeme()
+                        
+                    # Mettre en cache le résultat pour 1 heure (signé HMAC)
+                    if est_valide:
+                        from api.utils_licence import _sign_cache_value
+                        result_dict = {
+                            'est_valide': est_valide,
+                            'message': message,
+                            'payload': payload
+                        }
+                        result_dict['_sig'] = _sign_cache_value(result_dict)
+                        cache.set(LICENCE_CACHE_KEY, result_dict, timeout=LICENCE_CACHE_TTL)
+                        
+                except DatabaseError as e:
+                    logger.error(f"[LICENCE] Erreur DB lors de la validation: {e!s}", exc_info=True)
+                    # En cas d'erreur DB, on utilise le cache si disponible (même expiré)
+                    cached_fallback = cache.get(LICENCE_CACHE_KEY)
+                    if cached_fallback:
+                        logger.warning("[LICENCE] Utilisation du cache fallback après erreur DB")
+                        est_valide = cached_fallback.get('est_valide', False)
+                        message = cached_fallback.get('message', 'Erreur DB - Cache fallback')
+                        payload = cached_fallback.get('payload')
+                    else:
+                        # Pas de cache — tenter une lecture directe minimale sans transaction
+                        try:
+                            from api.models.licence import Licence
+                            if Licence.objects.using('default').exists():
+                                # Une licence existe — on autorise temporairement le temps que la DB récupère
+                                logger.warning("[LICENCE] Erreur DB mais licence présente — autorisation temporaire")
+                                return self.get_response(request)
+                        except Exception:
+                            pass
+                        # Aucune licence jamais installée ou DB totalement HS — bloquer
+                        logger.error("[LICENCE] Pas de licence ni de cache — accès refusé")
+                        est_valide = False
+                        message = "Service temporairement indisponible. Veuillez réessayer."
+
+            if not est_valide:
+                return JsonResponse({
+                    "detail": message,
+                    "code_erreur": "LICENCE_INVALIDE"
+                }, status=403)
+
+            # 3. Attacher les infos de la licence à la requête
+            request.licence_payload = payload
+
+        return self.get_response(request)

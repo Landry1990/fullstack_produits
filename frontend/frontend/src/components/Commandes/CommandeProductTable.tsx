@@ -94,7 +94,7 @@ export default function CommandeProductTable({
     const colSpan = commandeType === 'DIR' ? 16 : 15;
 
     return (
-        <div ref={tableRef} onKeyDownCapture={handleTableKeyDownCapture} className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200">
+        <div ref={tableRef} onKeyDownCapture={handleTableKeyDownCapture} className="flex-1 min-h-0 min-w-0 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200">
             <CommandeProductToolbar
                 commandeProduitsCount={commandeProduits.length}
                 selectedRowsSize={selectedRows.size}
@@ -116,7 +116,7 @@ export default function CommandeProductTable({
                         <p className="font-light">{t('orders:product_table.empty_state')}</p>
                     </div>
                 ) : (
-                    <Table className="w-full relative text-sm">
+                    <Table className="min-w-full relative text-sm">
                         <TableHeader>
                             <TableRow className="sticky top-0 z-30 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-600 font-bold border-b-2 border-slate-300">
                                 <TableHead className="bg-slate-100 w-8 px-2 whitespace-nowrap">
