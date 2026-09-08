@@ -96,15 +96,15 @@ function SidebarActions({
         disabled={!isValid || loading}
         className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 relative"
       >
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 pr-10">
           {loading ? (
             <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <CreditCard className="size-5" />
           )}
-          <span className="text-base font-bold uppercase tracking-wider">{t('facturation:actions.pay')}</span>
+          <span className="text-sm xl:text-base font-bold uppercase tracking-wider">{t('facturation:actions.pay')}</span>
         </div>
-        <kbd className="absolute right-4 px-2 py-0.5 bg-emerald-700 rounded text-[10px] font-mono text-white/80">F9</kbd>
+        <kbd className="absolute right-3 px-1.5 py-0.5 bg-emerald-700 rounded text-[10px] font-mono text-white/80">F9</kbd>
       </Button>
 
       {/* Cancel Button */}

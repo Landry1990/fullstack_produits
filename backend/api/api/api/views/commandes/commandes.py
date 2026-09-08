@@ -162,8 +162,8 @@ class CommandeViewSet(
             counts_qs.values('status').annotate(count=Count('id')).values_list('status', 'count')
         )
         for s in [Commande.Status.EN_PREPARATION, Commande.Status.EN_ATTENTE, Commande.Status.CLOTUREE]:
-            if s not in status_counts:
-                status_counts[s] = 0
+            if s.value not in status_counts:
+                status_counts[s.value] = 0
 
         page = self.paginate_queryset(queryset)
         if page is not None:

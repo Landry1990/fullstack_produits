@@ -10,12 +10,16 @@ interface Props {
 }
 
 export default function JournalCaisseStats({ state }: Props) {
-  const { t, serverTotals, totauxParMode } = state;
+  const { t, serverTotals, totauxParMode, canViewCashTotals } = state;
+
+  if (!canViewCashTotals) {
+    return null;
+  }
 
   return (
     <>
       {/* Global Stats Cards — version compacte */}
-      <div className="grid grid-cols-5 gap-2 px-4 md:px-6 pt-3 pb-1 shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-2 shrink-0">
         {/* Card 1: Ventes nettes */}
         <div className="bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between gap-2">
           <div className="min-w-0">
@@ -87,7 +91,7 @@ export default function JournalCaisseStats({ state }: Props) {
       </div>
 
       {/* Adaptive Details Bar */}
-      <div className="px-4 md:px-6 flex flex-wrap gap-2 items-center mb-2 min-h-[28px]">
+      <div className="flex flex-wrap gap-2 items-center min-h-[28px]">
         <span className="text-[10px] font-black uppercase text-slate-400 mr-2">{t('stats.flow_details')}</span>
 
         {/* Part 1: All payments breakdown (Sales + Recoveries) */}
@@ -127,8 +131,8 @@ export default function JournalCaisseStats({ state }: Props) {
         )}
 
         {/* Performance Summary Bar */}
-        <div className="flex items-center gap-0 mt-2 sm:mt-0">
-          <div className="flex items-center gap-3 bg-slate-100 py-1.5 px-4 rounded-l-full border border-slate-200">
+        <div className="flex w-full xl:w-auto items-stretch sm:items-center gap-0 mt-1 xl:mt-0">
+          <div className="flex flex-1 xl:flex-none items-center gap-3 bg-slate-100 py-1.5 px-3 rounded-l-xl sm:rounded-l-full border border-slate-200">
             <div className="flex flex-col">
               <span className="text-[8px] font-black uppercase text-slate-500">{t('stats.interval_activity')}</span>
               <span className="text-xs font-bold text-slate-700">{formatCurrency((serverTotals?.total_ventes ?? totauxParMode.ventes) + (serverTotals?.total_entrees ?? totauxParMode.entrees))}</span>
@@ -139,7 +143,7 @@ export default function JournalCaisseStats({ state }: Props) {
               <span className="text-xs font-bold text-slate-700">-{formatCurrency(serverTotals?.total_sorties ?? totauxParMode.sorties)}</span>
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-emerald-600 text-white py-1.5 px-4 rounded-r-full shadow-lg shadow-emerald-200">
+          <div className="flex flex-1 xl:flex-none items-center justify-between gap-3 bg-emerald-600 text-white py-1.5 px-3 rounded-r-xl sm:rounded-r-full shadow-lg shadow-emerald-200">
             <div className="flex flex-col items-start">
               <span className="text-[8px] font-black uppercase text-white/70 tracking-wider leading-tight">{t('stats.net_operational_balance')}</span>
               <span className="text-[7px] text-white/60 uppercase font-bold">{t('stats.excluding_recoveries')}</span>

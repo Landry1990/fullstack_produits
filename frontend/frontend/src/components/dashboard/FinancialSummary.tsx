@@ -31,7 +31,7 @@ export default function FinancialSummary({
   return (
     <div className="space-y-6">
       {/* Row: UG (left) + Echéances (right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
         {/* Section Unités Gratuites (UG) */}
         {showUG && (
           <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">

@@ -25,9 +25,10 @@ interface FacturationModalsProps {
   hook: FacturationState
   showOpenPosteModal: boolean
   setShowOpenPosteModal: (open: boolean) => void
+  forcePosteSelection?: boolean
 }
 
-export default function FacturationModals({ hook, showOpenPosteModal, setShowOpenPosteModal }: FacturationModalsProps) {
+export default function FacturationModals({ hook, showOpenPosteModal, setShowOpenPosteModal, forcePosteSelection }: FacturationModalsProps) {
   return (
     <>
       {hook.ui.isPaymentModalOpen && (
@@ -381,6 +382,7 @@ export default function FacturationModals({ hook, showOpenPosteModal, setShowOpe
         onSessionOpened={() => {
           // Le contexte PosteCaisseMode active automatiquement le mode point de vente
         }}
+        forceSelection={forcePosteSelection}
       />
       </Suspense>
     </>

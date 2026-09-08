@@ -50,6 +50,8 @@ export function useJournalCaisse() {
   const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set());
 
   const { settings: pharmacySettings } = usePharmacySettings();
+  const { user } = useAuth();
+  const canViewCashTotals = user?.is_superuser || user?.can_view_cash_totals !== false;
   const { getServerDate } = useAuth();
 
   const [dateDebut, setDateDebut] = useState<Date | null>(() => {
@@ -448,6 +450,7 @@ export function useJournalCaisse() {
     filteredItems,
     groupedItems,
     totauxParMode,
+    canViewCashTotals,
 
     // Actions
     fetchData,

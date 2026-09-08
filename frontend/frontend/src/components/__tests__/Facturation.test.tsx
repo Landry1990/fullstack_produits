@@ -189,6 +189,10 @@ describe('Facturation Integration', () => {
     expect(screen.getByTestId('facturation-header')).toBeInTheDocument()
     expect(screen.getByTestId('encaisser-btn')).toBeInTheDocument()
     expect(screen.getByText(/Total TTC/i)).toBeInTheDocument()
+    expect(useProductSearch).toHaveBeenCalledWith(expect.objectContaining({
+      minSearchLength: 3,
+      pageSize: 50
+    }))
   })
 
   it('affiche un panier vide au démarrage', () => {

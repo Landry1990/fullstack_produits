@@ -35,6 +35,7 @@ class Profile(models.Model):
     can_validate_zero_amount = models.BooleanField(default=False, verbose_name="Valider des ventes à montant nul ou négatif")
     can_validate_sales = models.BooleanField(default=False, verbose_name="Valider les ventes")
     can_view_cash_sessions = models.BooleanField(default=False, verbose_name="Voir l'historique des sessions de caisse")
+    can_view_cash_totals = models.BooleanField(default=True, verbose_name="Voir les totaux du journal de caisse")
     is_terminal_account = models.BooleanField(
         default=False,
         verbose_name="Compte poste de vente partagé",

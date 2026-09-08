@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
 import { gooeyToast } from 'goey-toast'
 import type { ProduitModel } from '../../types'
@@ -13,6 +14,7 @@ interface UseFacturationSearchParams {
 
 export const useFacturationSearch = (params: UseFacturationSearchParams) => {
   const { t } = useTranslation(['facturation', 'common'])
+  const queryClient = useQueryClient()
   const { searchQuery, searchMode } = params
   
   const [selectedIndex, setSelectedIndex] = useState(-1)
@@ -40,64 +42,89 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
   
   // Search packs
   const searchPacks = useCallback(async (query: string) => {
-    if (query.length < 2) {
+    if (query.length < 3) {
       setPackResults([])
       return
     }
     setPackLoading(true)
     try {
-      const response = await api.get('promotions/', {
-        params: {
-          search: query,
-          discount_type: 'BUNDLE',
-          active: true
-        }
+      const results = await queryClient.fetchQuery({
+        queryKey: ['facturation', 'packs', query],
+        queryFn: async () => {
+          const response = await api.get('promotions/', {
+            params: {
+              search: query,
+              discount_type: 'BUNDLE',
+              active: true,
+              page_size: 50
+            }
+          })
+          const data = response.data
+          return Array.isArray(data) ? data : data.results || []
+        },
+        staleTime: 1000 * 30,
+        gcTime: 1000 * 60 * 5
       })
-      const data = response.data
-      setPackResults(Array.isArray(data) ? data : data.results || [])
+      setPackResults(results)
     } catch (e) {
       logger.error('Pack search error', e)
       gooeyToast.error(t('facturation:search.error_search_packs'))
     } finally {
       setPackLoading(false)
     }
-  }, [t])
+  }, [queryClient, t])
   
   // Search DCI
   const searchDci = useCallback(async (query: string) => {
-    if (query.length < 2) {
+    if (query.length < 3) {
       setDciResults([])
       return
     }
     setDciLoading(true)
     try {
-      const response = await api.get('substances/', {
-        params: { search: query, page_size: 50 }
+      const results = await queryClient.fetchQuery({
+        queryKey: ['facturation', 'dci', query],
+        queryFn: async () => {
+          const response = await api.get('substances/', {
+            params: { search: query, page_size: 50 }
+          })
+          const data = response.data
+          return Array.isArray(data) ? data : data.results || []
+        },
+        staleTime: 1000 * 30,
+        gcTime: 1000 * 60 * 5
       })
-      const data = response.data
-      setDciResults(Array.isArray(data) ? data : data.results || [])
+      setDciResults(results)
     } catch (e) {
       logger.error('DCI search error', e)
     } finally {
       setDciLoading(false)
     }
-  }, [])
+  }, [queryClient])
   
   // Fetch DCI products
   const fetchDciProducts = useCallback(async (substanceId: number) => {
     setDciProductsLoading(true)
     try {
-      const response = await api.get('produits/', {
-        params: { substances: substanceId, page_size: 100 }
+      const results = await queryClient.fetchQuery({
+        queryKey: ['facturation', 'dci-products', substanceId],
+        queryFn: async () => {
+          const response = await api.get('produits/', {
+            params: { substances: substanceId, page_size: 50 }
+          })
+          const data = response.data
+          return Array.isArray(data) ? data : data.results || []
+        },
+        staleTime: 1000 * 30,
+        gcTime: 1000 * 60 * 5
       })
-      const data = response.data
-      setDciProducts(Array.isArray(data) ? data : data.results || [])
+      setDciProducts(results)
     } catch (e) {
       logger.error('DCI products error', e)
     } finally {
       setDciProductsLoading(false)
     }
-  }, [])
+  }, [queryClient])
   
   // Debounced searches for packs and DCI
   useEffect(() => {
