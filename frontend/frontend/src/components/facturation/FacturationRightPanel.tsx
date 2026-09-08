@@ -11,7 +11,7 @@ interface FacturationRightPanelProps {
 
 export default function FacturationRightPanel({ hook }: FacturationRightPanelProps) {
   return (
-    <aside className="w-full lg:w-[400px] xl:w-[440px] pos-checkout flex flex-col z-10 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-hidden flex-1 lg:flex-none lg:min-h-0 lg:h-full bg-white">
+    <aside className="w-full lg:w-[380px] xl:w-[400px] 2xl:w-[440px] min-w-0 pos-checkout flex flex-col z-10 border-t lg:border-t-0 lg:border-l border-slate-200 overflow-hidden flex-1 lg:flex-none lg:min-h-0 lg:h-full bg-white">
 
       {/* Panier header */}
       <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">

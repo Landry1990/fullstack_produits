@@ -128,7 +128,7 @@ export default function StockIntelligence({
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
+    <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 auto-rows-fr">
         {/* Expiring Lots (Alertes Périssables) - Swapped to first position */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
           <div className="p-6 flex flex-col h-full">
@@ -165,7 +165,7 @@ export default function StockIntelligence({
               </div>
             </div>
 
-            <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
+            <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
               {expiringLots.length === 0 ? (
                 <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center py-6 border-2 border-dashed border-slate-200 rounded-xl h-full flex items-center justify-center">
                   <CalendarDays className="size-8 mb-2 text-slate-300" />
@@ -242,7 +242,7 @@ export default function StockIntelligence({
               )}
             </div>
 
-            <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
+            <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
               {dormantItems.length > 0 ? (
                 dormantItems.map((p) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-100 border border-slate-100 hover:border-slate-300 transition-all group">
@@ -296,7 +296,7 @@ export default function StockIntelligence({
               )}
             </div>
 
-            <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
+            <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
               {overstockItems.length > 0 ? (
                 overstockItems.map((p, i) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-amber-50/60 border border-orange-100 hover:border-orange-300 transition-all group">
@@ -349,7 +349,7 @@ export default function StockIntelligence({
                 </div>
                 <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold">{promisDisponibles.length}</span>
               </div>
-              <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
+              <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
                 {promisDisponibles.slice(0, 5).map((p) => (
                   <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-white border border-emerald-100 shadow-sm transition-all hover:border-emerald-300">
                     <div className="flex-1 min-w-0">
@@ -394,7 +394,7 @@ export default function StockIntelligence({
                 </span>
               </div>
 
-              <div className="flex-grow flex flex-col items-center justify-center p-4 text-center h-[350px]">
+              <div className="flex-grow flex flex-col items-center justify-center p-4 text-center h-[300px] 2xl:h-[350px]">
                 <div className="size-20 bg-cyan-100/50 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-inner">
                   <Package className="size-10 text-blue-500" />
                 </div>
@@ -443,7 +443,7 @@ export default function StockIntelligence({
                 <span className="bg-amber-500 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold animate-pulse">{stats.low_stock?.value || 0}</span>
               )}
             </div>
-            <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[350px]">
+            <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
               {lowStockItems.length === 0 ? (
                 <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center py-6 border-2 border-dashed border-slate-200 rounded-xl h-full flex items-center justify-center">
                   <ShoppingBag className="size-8 mb-2 text-slate-300" />

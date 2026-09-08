@@ -23,13 +23,15 @@ interface OpenPointDeVenteModalProps {
   onClose: () => void
   onSessionOpened?: () => void
   autoOpen?: boolean
+  forceSelection?: boolean
 }
 
 export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
   isOpen,
   onClose,
   onSessionOpened,
-  autoOpen = false
+  autoOpen = false,
+  forceSelection = false
 }) => {
   const { t } = useTranslation('caisse')
   const { openPoste, setActivePosteVente, activePoste } = usePosteCaisseMode()
@@ -113,6 +115,7 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
         e.preventDefault()
         handleOpenSessionRef.current()
       } else if (e.key === 'Escape') {
+        if (forceSelection && allPostes.length > 0) return
         e.preventDefault()
         onClose()
       }
@@ -120,7 +123,7 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, loadingPostes, selectablePostes, selectedPosteId, onClose])
+  }, [isOpen, loadingPostes, selectablePostes, selectedPosteId, onClose, forceSelection, allPostes.length])
 
   const handleOpenSession = useCallback(async (posteId?: number) => {
     const id = posteId ?? selectedPosteId
@@ -172,7 +175,11 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden">
+      <DialogContent
+        className="sm:max-w-2xl p-0 gap-0 overflow-hidden"
+        onInteractOutside={(e) => { if (forceSelection && allPostes.length > 0) e.preventDefault() }}
+        onEscapeKeyDown={(e) => { if (forceSelection && allPostes.length > 0) e.preventDefault() }}
+      >
         <DialogHeader className="p-6 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -274,9 +281,11 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
         </div>
 
         <DialogFooter className="p-6 pt-2 border-t border-slate-100 gap-3">
-          <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
-            {t('open_point_vente.cancel', { defaultValue: 'Annuler' })}
-          </Button>
+          {(!forceSelection || allPostes.length === 0) && (
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
+              {t('open_point_vente.cancel', { defaultValue: 'Annuler' })}
+            </Button>
+          )}
           <Button
             type="button"
             onClick={() => handleOpenSession()}

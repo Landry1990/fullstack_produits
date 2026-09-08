@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const can_delete_commande = safeStorage.getItem('can_delete_commande') === 'true';
     const can_close_commande = safeStorage.getItem('can_close_commande') === 'true';
     const can_generate_coupon = safeStorage.getItem('can_generate_coupon') === 'true';
+    const can_view_cash_totals = safeStorage.getItem('can_view_cash_totals') !== 'false'; // default true
     const is_terminal_account = safeStorage.getItem('is_terminal_account') === 'true';
     const role = safeStorage.getItem('role') || undefined;
 
@@ -75,6 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         can_delete_commande,
         can_close_commande,
         can_generate_coupon,
+        can_view_cash_totals,
         is_terminal_account,
         role,
         profile: {
@@ -124,6 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     safeStorage.setItem('can_delete_commande', String(userData.can_delete_commande || userData.profile?.can_delete_commande || false));
     safeStorage.setItem('can_close_commande', String(userData.can_close_commande || userData.profile?.can_close_commande || false));
     safeStorage.setItem('can_generate_coupon', String(userData.can_generate_coupon || userData.profile?.can_generate_coupon || false));
+    safeStorage.setItem('can_view_cash_totals', String(userData.can_view_cash_totals ?? userData.profile?.can_view_cash_totals ?? true));
     safeStorage.setItem('is_terminal_account', String(userData.is_terminal_account || false));
     if (userData.role) {
       safeStorage.setItem('role', userData.role);

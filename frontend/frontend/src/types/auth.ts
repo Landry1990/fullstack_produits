@@ -25,6 +25,7 @@ export interface User {
         can_modify_price?: boolean;
         can_do_remise?: boolean;
         can_validate_sales?: boolean;
+        can_view_cash_totals?: boolean;
         max_discount_rate?: number;
     };
 
@@ -41,6 +42,7 @@ export interface User {
     can_close_commande?: boolean;
     can_delete_fournisseur?: boolean;
     can_generate_coupon?: boolean;
+    can_view_cash_totals?: boolean;
     is_terminal_account?: boolean;
 }
 

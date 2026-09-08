@@ -127,9 +127,9 @@ export function useFacturationState() {
   }, [isRetrocession, t, currentMarkup])
 
   const productSearch = useProductSearch({
-    minSearchLength: 2,
+    minSearchLength: 3,
     debounceMs: 400,
-    pageSize: 1000,
+    pageSize: 50,
     onBarcodeMatch: handleBarcodeMatch
   })
 

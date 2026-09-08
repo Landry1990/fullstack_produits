@@ -114,9 +114,9 @@ export function CommandeProductRow({
                 {/* Product Info */}
                 <TableCell className="pl-2 py-0.5 min-w-[260px] w-full">
                     <div className="font-medium text-sm">
-                        <div className="flex items-center gap-1">
+                        <div className="flex min-w-0 items-center gap-1">
                             <span
-                                className={`${isDeleted ? 'italic text-slate-400' : ''} whitespace-nowrap overflow-hidden text-ellipsis ${onEditProduct ? 'cursor-pointer hover:text-blue-600 hover:underline' : ''}`}
+                                className={`min-w-0 ${isDeleted ? 'italic text-slate-400' : ''} whitespace-nowrap overflow-hidden text-ellipsis ${onEditProduct ? 'cursor-pointer hover:text-blue-600 hover:underline' : ''}`}
                                 title={produitName}
                                 onClick={onEditProduct}
                             >

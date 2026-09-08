@@ -22,10 +22,10 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
   return (
     <>
       {/* ── HEADER SHADCN ─────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 bg-white shrink-0 shadow-sm">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 bg-white shrink-0 shadow-sm min-w-0">
 
         {/* Left */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl shrink-0">
             <FileText className="size-5" />
           </div>
@@ -98,7 +98,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
       </div>
 
       {/* ── BARRE RAPPEL DE VENTE ── */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border-b border-slate-200 shrink-0">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-slate-50 border-b border-slate-200 shrink-0 min-w-0">
         <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">{hook.t('facturation:recall_invoice.title')}</span>
         <div className="relative flex items-center">
           <span className="absolute left-2.5 text-sm text-slate-500 pointer-events-none">FAC-</span>
@@ -132,8 +132,8 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
 
       {/* ── BANNIÈRE POINT DE VENTE NON ACTIF ── */}
       {!hook.isPosteCaisseActive && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-amber-50 border-b border-amber-200 shrink-0">
-          <div className="flex items-center gap-2 text-sm text-amber-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-amber-50 border-b border-amber-200 shrink-0 min-w-0">
+          <div className="flex items-center gap-2 text-sm text-amber-800 min-w-0">
             <Monitor className="size-4" />
             <span>{hook.hasMyActivePoste
               ? tCaisse('open_point_vente.banner.active_message', { defaultValue: 'Vous avez un point de vente ouvert sur une autre session. Cliquez pour le réactiver.' })

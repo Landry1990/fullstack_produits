@@ -63,7 +63,7 @@ export default function JournalCaisseTable({ state }: Props) {
   };
 
   return (
-    <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden mx-4 md:mx-6 mb-6">
+    <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
       {error && (
         <div className="p-3 bg-red-50 border-b border-red-100 flex items-center gap-2 text-red-600 text-sm font-medium">
           <AlertTriangle className="size-5 shrink-0" />
@@ -135,7 +135,7 @@ export default function JournalCaisseTable({ state }: Props) {
             </div>
 
             {/* Vue Desktop */}
-            <table className="hidden md:table w-full table-fixed border-collapse text-sm border-separate border-spacing-0">
+            <table className="hidden md:table w-full min-w-[1050px] table-fixed border-collapse text-sm border-separate border-spacing-0">
               <thead className="sticky top-0 z-30 bg-slate-100 opacity-100">
                 <tr className="border-b border-slate-200">
                   <th scope="col" className="w-36 border-b-2 border-slate-200 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2">{t('table.date_time')}</th>

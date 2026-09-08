@@ -1,0 +1,385 @@
+"""
+Serializers pour la facturation, caisse et paiements.
+"""
+from decimal import Decimal
+
+from django.db.models import Sum
+from rest_framework import serializers
+
+from ..models import (
+    Caisse,
+    ClotureCaisse,
+    Facture,
+    FactureProduit,
+    FactureProduitAllocation,
+)
+from .clients import AyantDroitSerializer
+
+
+class FactureProduitAllocationSerializer(serializers.ModelSerializer):
+    lot = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
+    date_expiration = serializers.DateField(source='stock_lot.date_expiration', read_only=True, allow_null=True)
+
+    class Meta:
+        model = FactureProduitAllocation
+        fields = ['id', 'facture_produit', 'stock_lot', 'quantity', 'cost_price', 'selling_price', 'created_at', 'lot', 'date_expiration']
+
+
+class FactureProduitSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.SerializerMethodField()
+    produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
+    produit_tva = serializers.DecimalField(source='produit.tva', max_digits=5, decimal_places=2, read_only=True)
+    allocations = FactureProduitAllocationSerializer(many=True, read_only=True)
+    cost_price = serializers.DecimalField(source='produit.cost_price', max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = FactureProduit
+        fields = '__all__'
+
+    def get_produit_nom(self, obj):
+        return obj.produit_nom or (obj.produit.name if obj.produit else 'Produit inconnu')
+
+
+class CaisseSerializer(serializers.ModelSerializer):
+    facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
+    client_name = serializers.SerializerMethodField()
+    user_details = serializers.SerializerMethodField()
+    facture_created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Caisse
+        fields = '__all__'
+        read_only_fields = ['date_paiement']
+
+    def get_client_name(self, obj):
+        if obj.facture:
+            if obj.facture.client:
+                return obj.facture.client.name
+            return obj.facture.client_name_override or 'Client de passage'
+        return 'N/A'
+
+    def get_user_details(self, obj):
+        if obj.user:
+            return {
+                'id': obj.user.id,
+                'username': obj.user.username,
+                'full_name': obj.user.get_full_name() or obj.user.username,
+                'first_name': obj.user.first_name,
+                'last_name': obj.user.last_name
+            }
+        return None
+
+    def get_facture_created_by_name(self, obj):
+        if obj.facture and obj.facture.created_by:
+            return obj.facture.created_by.get_full_name() or obj.facture.created_by.username
+        return None
+
+
+class ClotureCaisseSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    cloture_par_name = serializers.SerializerMethodField()
+    poste_caisse_nom = serializers.CharField(source='poste_caisse.nom', read_only=True)
+
+    class Meta:
+        model = ClotureCaisse
+        fields = '__all__'
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name() or obj.user.username
+        return None
+
+    def get_cloture_par_name(self, obj):
+        if obj.cloture_par:
+            return obj.cloture_par.get_full_name() or obj.cloture_par.username
+        return None
+
+
+class FactureSerializer(serializers.ModelSerializer):
+    client_name = serializers.SerializerMethodField()
+    client_phone = serializers.SerializerMethodField()
+    client_email = serializers.SerializerMethodField()
+    client_address = serializers.SerializerMethodField()
+    client_niu = serializers.SerializerMethodField()
+    client_solde_depot = serializers.SerializerMethodField()
+    client_points_fidelite = serializers.SerializerMethodField()
+    client_type = serializers.SerializerMethodField()
+    client_is_deposit_enabled = serializers.SerializerMethodField()
+    vendeur_name = serializers.SerializerMethodField()
+    produits = FactureProduitSerializer(many=True, read_only=True)
+    ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    is_remise_auto = serializers.SerializerMethodField()
+    paiements = CaisseSerializer(many=True, read_only=True)
+    created_by_name = serializers.SerializerMethodField()
+    validated_by_name = serializers.SerializerMethodField()
+    remise_validated_by_name = serializers.SerializerMethodField()
+    prix_validated_by_name = serializers.SerializerMethodField()
+    montant_paye = serializers.SerializerMethodField()
+    reste_a_payer = serializers.SerializerMethodField()
+    session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
+    avoirs_clients = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Facture
+        fields = [
+            'id', 'numero_facture', 'client', 'client_name', 'client_name_override',
+            'client_phone', 'client_email', 'client_address', 'client_niu',
+            'client_solde_depot', 'client_points_fidelite', 'client_type', 'client_is_deposit_enabled',
+            'ayant_droit', 'ayant_droit_details',
+            'date', 'date_document', 'status', 'status_display', 'produits',
+            'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
+            'vendeur_name', 'created_by_name', 'validated_by_name',
+            'remise_validated_by', 'remise_validated_by_name',
+            'prix_validated_by', 'prix_validated_by_name',
+            'is_remise_auto', 'part_client',
+            'created_by', 'validated_by',
+            'montant_paye', 'reste_a_payer', 'paiements',
+            'session_ticket_number',
+            'montant_verse', 'montant_rendu',
+            'poste_caisse', 'avoirs_clients',
+            'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
+        ]
+
+    def get_vendeur_name(self, obj):
+        if obj.created_by:
+            full = f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
+            return full or obj.created_by.username
+        return 'Système'
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return 'Système'
+
+    def get_validated_by_name(self, obj):
+        if obj.validated_by:
+            return obj.validated_by.get_full_name() or obj.validated_by.username
+        return None
+
+    def get_remise_validated_by_name(self, obj):
+        if obj.remise_validated_by:
+            return obj.remise_validated_by.get_full_name() or obj.remise_validated_by.username
+        return None
+
+    def get_prix_validated_by_name(self, obj):
+        if obj.prix_validated_by:
+            return obj.prix_validated_by.get_full_name() or obj.prix_validated_by.username
+        return None
+
+    def get_client_name(self, obj):
+        if obj.client_name_override:
+            return obj.client_name_override
+        if obj.client:
+            return obj.client.name
+        return 'Client de passage'
+
+    def get_client_phone(self, obj):
+        if obj.client:
+            return obj.client.phone
+        return None
+
+    def get_client_email(self, obj):
+        if obj.client:
+            return obj.client.email
+        return None
+
+    def get_client_address(self, obj):
+        if obj.client:
+            return obj.client.address
+        return None
+
+    def get_client_niu(self, obj):
+        if obj.client:
+            return obj.client.niu
+        return None
+
+    def get_client_solde_depot(self, obj):
+        if obj.client:
+            return str(obj.client.solde_depot)
+        return '0.00'
+
+    def get_client_points_fidelite(self, obj):
+        if obj.client:
+            return obj.client.points_fidelite
+        return 0
+
+    def get_client_type(self, obj):
+        if obj.client:
+            return obj.client.client_type
+        return None
+
+    def get_client_is_deposit_enabled(self, obj):
+        if obj.client:
+            return obj.client.is_deposit_enabled
+        return False
+
+    def get_montant_paye(self, obj):
+        total = obj.paiements.filter(
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).aggregate(
+            total=Sum('montant')
+        )['total']
+        return total or Decimal('0.00')
+
+    def get_reste_a_payer(self, obj):
+        montant_paye = self.get_montant_paye(obj)
+        return obj.total_ttc - montant_paye
+
+    def get_is_remise_auto(self, obj):
+        if not obj.remise or obj.remise <= 0:
+            return False
+        # Use annotated value if available (set by the view's prefetch), else fall back to a single query
+        has_promo = getattr(obj, '_has_promo_lines', None)
+        if has_promo is not None:
+            return has_promo
+        # Single aggregate query instead of loading all lines
+        return obj.produits.filter(free_quantity__gt=0).exists()
+
+    def get_avoirs_clients(self, obj):
+        return list(
+            obj.avoirs_clients.filter(statut='VALIDEE')
+            .values_list('numero', flat=True)
+        )
+
+
+class FacturePrintSerializer(serializers.ModelSerializer):
+    """Serializer optimisé pour l'impression de facture."""
+    client = serializers.SerializerMethodField()
+    vendeur_nom = serializers.SerializerMethodField()
+    validated_by_name = serializers.SerializerMethodField()
+    produits = FactureProduitSerializer(many=True, read_only=True)
+    montant_recu = serializers.SerializerMethodField()
+    montant_rendu = serializers.SerializerMethodField()
+    mode_reglement = serializers.SerializerMethodField()
+    tva_analysis = serializers.SerializerMethodField()
+    total_lettres = serializers.SerializerMethodField()
+    part_assurance = serializers.SerializerMethodField()
+    ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
+
+    class Meta:
+        model = Facture
+        fields = [
+            'id', 'numero_facture', 'date', 'status',
+            'client', 'client_name_override', 'ayant_droit', 'ayant_droit_details',
+            'total_ht', 'total_tva', 'total_ttc', 'remise',
+            'vendeur_nom', 'validated_by_name', 'produits',
+            'montant_recu', 'montant_rendu', 'mode_reglement',
+            'tva_analysis', 'total_lettres', 'notes',
+            'part_client', 'part_assurance'
+        ]
+
+    def get_client(self, obj):
+        from .clients import ClientSerializer
+        if obj.client:
+            return ClientSerializer(obj.client).data
+        return None
+
+    def get_part_assurance(self, obj):
+        if obj.part_client is not None:
+            return obj.total_ttc - obj.part_client
+        return Decimal('0.00')
+
+    def get_vendeur_nom(self, obj):
+        if obj.created_by:
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.username
+        return 'Système'
+
+    def get_validated_by_name(self, obj):
+        if obj.validated_by:
+            return f"{obj.validated_by.first_name} {obj.validated_by.last_name}".strip() or obj.validated_by.username
+        return ''
+
+    def get_montant_recu(self, obj):
+        total = obj.paiements.aggregate(total=Sum('montant'))['total']
+        return total or Decimal('0.00')
+
+    def get_montant_rendu(self, obj):
+        return Decimal('0.00')
+
+    def get_mode_reglement(self, obj):
+        # Use values_list to avoid loading full Caisse objects
+        modes_raw = list(obj.paiements.values_list('mode_paiement', flat=True))
+        if not modes_raw:
+            return 'Non réglé'
+
+        # Map of mode_paiement codes to display names (from Caisse model choices)
+        from ..models import Caisse
+        mode_choices = dict(Caisse._meta.get_field('mode_paiement').choices) if Caisse._meta.get_field('mode_paiement').choices else {}
+
+        modes = set()
+        for raw in modes_raw:
+            display = mode_choices.get(raw)
+            if display:
+                modes.add(str(display))
+            elif raw:
+                modes.add(str(raw))
+            else:
+                modes.add('Inconnu')
+        return ', '.join(sorted(modes))
+
+    def get_tva_analysis(self, obj):
+        analysis = obj.get_tva_analysis()
+        return [
+            {
+                'taux': str(taux),
+                'base_ht': vals['base_ht'],
+                'montant_tva': vals['montant_tva']
+            }
+            for taux, vals in analysis.items()
+        ]
+
+    def get_total_lettres(self, obj):
+        try:
+            from ..pdf_utils import number_to_french
+            return number_to_french(int(obj.total_ttc))
+        except Exception:
+            return ''
+
+
+class CreanceSerializer(serializers.ModelSerializer):
+    """Serializer pour les créances (ventes en compte)"""
+    client_name = serializers.SerializerMethodField()
+    ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    montant_paye = serializers.SerializerMethodField()
+    reste_a_payer = serializers.SerializerMethodField()
+    _paiements = CaisseSerializer(many=True, read_only=True, source='paiements')
+
+    class Meta:
+        model = Facture
+        fields = [
+            'id', 'client', 'numero_facture', 'client_name',
+            'ayant_droit_details', 'date', 'status_display',
+            'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc',
+            'montant_paye', 'reste_a_payer', '_paiements', 'notes'
+        ]
+
+    def get_client_name(self, obj):
+        if obj.client_name_override:
+            return obj.client_name_override
+        if obj.client:
+            return obj.client.name
+        return 'Client de passage'
+
+    def get_montant_paye(self, obj):
+        total = obj.paiements.filter(
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).aggregate(
+            total=Sum('montant')
+        )['total']
+        return total or Decimal('0.00')
+
+    def get_reste_a_payer(self, obj):
+        montant_paye = self.get_montant_paye(obj)
+        return obj.total_ttc - montant_paye

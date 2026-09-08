@@ -206,13 +206,13 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             <>
                                 <th className="w-32 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200">{t('sales:table.invoice_number')}</th>
                                 <th className="w-[20%] px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200">{t('sales:table.client')}</th>
-                                <th className="w-28 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 hidden xl:table-cell">{t('sales:table.operator')}</th>
+                                <th className="w-28 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 hidden 2xl:table-cell">{t('sales:table.operator')}</th>
                                 <th className="w-28 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.amount')}</th>
                                 <th className="w-28 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.amount_settled')}</th>
                                 <th className="w-24 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.amount_on_account')}</th>
                                 <th className="w-20 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center">{t('sales:table.discount')}</th>
                                 <th className="w-24 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-center hidden md:table-cell">{t('sales:table.status')}</th>
-                                <th className="w-24 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-right">{t('sales:table.actions')}</th>
+                                <th className="w-28 px-3 py-2 whitespace-nowrap sticky top-0 bg-slate-100 border-b border-slate-200 text-right">{t('sales:table.actions')}</th>
                             </>
                         )}
                     </tr>
@@ -265,7 +265,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                         <User className="size-4" />
                                     </div>
                                     <div className="flex flex-col">
-                                        <div className="font-medium text-slate-700 whitespace-nowrap">
+                                        <div className="font-medium text-slate-700 truncate max-w-[160px] xl:max-w-[200px]" title={facture.ayant_droit_details?.nom || facture.client_name || facture.client_name_override || t('common:passerby_client')}>
                                             {facture.ayant_droit_details?.nom || facture.client_name || facture.client_name_override || t('common:passerby_client')}
                                         </div>
                                         {facture.ayant_droit_details && (
@@ -276,8 +276,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     </div>
                                 </div>
                             </td>
-                            <td className="w-28 px-3 py-2 hidden xl:table-cell">
-                                <div className="text-sm text-slate-600">
+                            <td className="w-28 px-3 py-2 hidden 2xl:table-cell">
+                                <div className="text-sm text-slate-600 truncate">
                                     {facture.created_by_name || '-'}
                                 </div>
                             </td>
@@ -311,7 +311,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                 </span>
                             </td>
 
-                            <td className="w-24 px-3 py-2 text-right">
+                            <td className="w-28 px-3 py-2 text-right">
                                 {selectedIds.length === 0 && (
                                     <div className="flex justify-end gap-1 text-slate-200 group-hover:opacity-100 transition-opacity">
                                         <ActionIcon

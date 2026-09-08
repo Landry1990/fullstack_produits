@@ -421,7 +421,7 @@ export default function ProduitShadcn() {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-full min-h-0 w-full overflow-hidden">
 
           {/* ═════ Left Panel : List ═════ */}
-          <section className="xl:col-span-5 flex flex-col h-full min-h-0 gap-3">
+          <section className="xl:col-span-5 flex flex-col h-full min-h-0 min-w-0 gap-3">
 
             {/* Search & Filters */}
             <Card variant="default" padding="md" className="shrink-0">
@@ -520,8 +520,8 @@ export default function ProduitShadcn() {
                               </div>
                             </td>
                             <td className="py-3 px-2">
-                              <div className="flex items-center gap-2">
-                                <span className={cn("text-sm uppercase truncate", stockClass(stock))} title={produit.name}>
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className={cn("min-w-0 text-sm uppercase truncate", stockClass(stock))} title={produit.name}>
                                   {produit.name}
                                 </span>
                                 {produit.is_supplier_exclusive && (
@@ -576,7 +576,7 @@ export default function ProduitShadcn() {
           </section>
 
           {/* ═════ Right Panel : Details ═════ */}
-          <section className="xl:col-span-7 h-full min-h-0">
+          <section className="xl:col-span-7 h-full min-h-0 min-w-0">
             <Card variant="default" padding="none" className="h-full flex flex-col overflow-hidden">
               {selectedProduit ? (
                 <>
@@ -608,7 +608,7 @@ export default function ProduitShadcn() {
                         {selectedProduit.cip4 && <p className="text-sm text-slate-400 font-mono">• <span className="text-slate-600">{selectedProduit.cip4}</span></p>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                       <Button variant="outline" size="sm" onClick={() => {
                         setAdjustForm({
                           new_quantity: String(selectedProduit?.stock || 0),

@@ -97,7 +97,7 @@ export default React.memo(function SidebarCartRow({
       </div>
 
       {/* Ligne Bas: Block (Qté x Prix) + Bouton Lot */}
-      <div className="flex items-center gap-2 mt-2">
+      <div className="flex flex-wrap items-center gap-2 mt-2">
          {/* Combo Input Qté + Prix Unitaire + Remise */}
          <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg focus-within:border-emerald-300 focus-within:ring-1 focus-within:ring-emerald-100 overflow-hidden transition-all">
            <input
@@ -173,14 +173,14 @@ export default React.memo(function SidebarCartRow({
            variant="outline"
            size="sm"
            onClick={(e) => { e.stopPropagation(); onOpenLotModal(ligne.produit, ligne.lotId || null, ligne.quantite, ligne.lotAllocations || null, ligne.lineId); }}
-           className={`h-9 px-2 text-[11px] font-semibold uppercase transition-colors shrink gap-1.5
+           className={`h-9 px-2 text-[11px] font-semibold uppercase transition-colors shrink min-w-0 gap-1.5
              ${(ligne.lotId || ligne.lotAllocations?.length)
                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'
                : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200 hover:text-slate-600'}`}
            title={lotTooltip}
          >
            <Tag className="size-3 shrink-0" />
-           <span className="truncate max-w-[320px] tracking-wide">{lotDisplayText}</span>
+           <span className="truncate max-w-[140px] xl:max-w-[200px] 2xl:max-w-[320px] tracking-wide">{lotDisplayText}</span>
          </Button>
       </div>
     </div>

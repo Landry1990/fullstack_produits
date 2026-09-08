@@ -299,9 +299,9 @@ export default function DashboardShadcn() {
 
         {/* ── TABS — masqués pour les vendeurs ── */}
         {!isVendeur && (
-          <div className="mt-4">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-              <TabsList className="grid w-full max-w-md grid-cols-3 rounded-xl bg-slate-100 p-1">
+          <div className="mt-4 flex justify-center">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full max-w-xl">
+              <TabsList className="grid w-full grid-cols-3 rounded-xl bg-slate-100 p-1">
                 {tabConfig.map(({ key, label, icon: Icon }) => (
                   <TabsTrigger
                     key={key}
