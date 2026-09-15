@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   X,
@@ -93,6 +93,15 @@ export default function PurchaseHistoryDrawer({
   const [editingAlerte, setEditingAlerte] = useState(false);
   const [savingAlerte, setSavingAlerte] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const handleOpenAlerte = () => {
     setAlerteText(data?.message_alerte || '');
     setAlerteBlocking(data?.blocking_alerte || false);
@@ -130,9 +139,14 @@ export default function PurchaseHistoryDrawer({
 
   return (
     <div className={`fixed inset-0 z-[100] transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-      <div className="absolute inset-0 bg-gray-900/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-gray-900/30 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
 
-      <div className={`absolute right-0 top-0 bottom-0 w-full max-w-xl bg-white shadow-2xl transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
+      <div
+        className={`absolute right-0 top-0 bottom-0 w-full max-w-xl bg-white shadow-2xl transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="purchase-history-drawer-title"
+      >
 
         {/* ── Header ─────────────────────────────────────────── */}
         <div className="px-6 pt-5 pb-0 border-b border-slate-200 bg-white shrink-0">
@@ -142,7 +156,7 @@ export default function PurchaseHistoryDrawer({
                 <HistoryIcon className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-slate-800 tracking-tight">{t('clients:sections.purchase_history')}</h3>
+                <h3 id="purchase-history-drawer-title" className="text-lg font-black text-slate-800 tracking-tight">{t('clients:sections.purchase_history')}</h3>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{data?.client_name}</p>
               </div>
             </div>
@@ -154,17 +168,19 @@ export default function PurchaseHistoryDrawer({
                 <AlertTriangle className="size-3.5" />
                 {t('clients:history.edit_alerte', 'Alerte')}
               </button>
-              <button onClick={onClose} className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-all hover:rotate-90">
+              <button onClick={onClose} aria-label={t('common:close')} className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-all hover:rotate-90">
                 <X className="size-5" />
               </button>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1">
+          <div className="flex gap-1" role="tablist" aria-label={t('clients:sections.purchase_history')}>
             {tabs.map(tab => (
               <button
                 key={tab.key}
+                role="tab"
+                aria-selected={activeTab === tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition-colors ${activeTab === tab.key ? 'text-indigo-600 border-indigo-500 bg-indigo-50/50' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
               >
@@ -197,7 +213,7 @@ export default function PurchaseHistoryDrawer({
             <div className="p-6 space-y-6 animate-in fade-in duration-200">
 
               {/* KPI Cards */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
                   <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">
                     <ShoppingBag className="size-3" />{t('clients:history.total_visits', 'Visites')}
@@ -302,7 +318,16 @@ export default function PurchaseHistoryDrawer({
                 >
                   <div
                     className="p-4 flex items-center justify-between cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={expandedInvoice === facture.id}
                     onClick={() => setExpandedInvoice(expandedInvoice === facture.id ? null : facture.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setExpandedInvoice(expandedInvoice === facture.id ? null : facture.id);
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`size-9 rounded-xl flex items-center justify-center transition-colors shrink-0 ${expandedInvoice === facture.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500'}`}>
@@ -328,7 +353,7 @@ export default function PurchaseHistoryDrawer({
 
                   {expandedInvoice === facture.id && (
                     <div className="px-4 pb-4 animate-in slide-in-from-top-1 duration-200">
-                      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead className="bg-slate-50">
                             <tr>
@@ -374,7 +399,7 @@ export default function PurchaseHistoryDrawer({
                     <AlertTriangle className="size-4 text-red-500 mt-0.5 shrink-0" />
                     <p className="text-sm font-semibold text-red-700">{data.message_alerte}</p>
                   </div>
-                  <button onClick={() => setEditingAlerte(true)} className="text-red-400 hover:text-red-600 shrink-0">
+                  <button onClick={() => setEditingAlerte(true)} aria-label={t('common:edit')} className="text-red-400 hover:text-red-600 shrink-0">
                     <Edit3 className="size-4" />
                   </button>
                 </div>
@@ -399,6 +424,7 @@ export default function PurchaseHistoryDrawer({
               {editingAlerte && (
                 <div className="space-y-4">
                   <textarea
+                    aria-label={t('clients:history.tab_alerte', 'Alerte')}
                     className="w-full h-28 px-4 py-3 rounded-xl border border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 resize-none text-sm font-medium text-slate-700 bg-white outline-none transition-all"
                     placeholder={t('clients:history.alerte_placeholder', 'Ex: Client a des antécédents de créances impayées...')}
                     value={alerteText}
@@ -406,8 +432,17 @@ export default function PurchaseHistoryDrawer({
                   />
                   <label className="flex items-center gap-3 cursor-pointer select-none">
                     <div
+                      role="checkbox"
+                      aria-checked={alerteBlocking}
+                      tabIndex={0}
                       className={`relative w-10 h-5 rounded-full transition-colors ${alerteBlocking ? 'bg-red-500' : 'bg-slate-200'}`}
                       onClick={() => setAlerteBlocking(!alerteBlocking)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setAlerteBlocking(!alerteBlocking);
+                        }
+                      }}
                     >
                       <div className={`absolute top-0.5 left-0.5 size-4 bg-white rounded-full shadow transition-transform ${alerteBlocking ? 'translate-x-5' : ''}`} />
                     </div>
@@ -429,6 +464,7 @@ export default function PurchaseHistoryDrawer({
                     </button>
                     <button
                       onClick={() => { setEditingAlerte(false); setAlerteText(data?.message_alerte || ''); }}
+                      aria-label={t('common:cancel')}
                       className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 text-xs font-bold transition-colors"
                     >
                       <XCircle className="size-4" />

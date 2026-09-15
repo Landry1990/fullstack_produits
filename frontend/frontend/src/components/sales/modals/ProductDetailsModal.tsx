@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Calendar, User, CreditCard, Smartphone, CheckCircle2 } from 'lucide-react';
 import type { Facture } from '../../../types';
@@ -7,6 +7,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { gooeyToast } from 'goey-toast';
 import { formatCurrency } from '../../../utils/formatters';
 import { logger } from '../../../utils/logger'
+import SkeletonTable from '../../ui/SkeletonTable';
 
 interface ProductDetailsModalProps {
     isOpen: boolean;
@@ -60,16 +61,30 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         };
     }, [facture]);
 
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!isOpen || !facture) return null;
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
-            <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div
+                className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="product-details-modal-title"
+            >
                 {/* Header */}
                 <div className="border-b border-slate-200 p-6 flex justify-between items-center bg-slate-100">
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <h2 className="text-xl font-bold text-slate-800">
+                            <h2 id="product-details-modal-title" className="text-xl font-bold text-slate-800">
                                 {t('invoice_details')}
                             </h2>
                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
@@ -155,6 +170,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                     </div>
                     <button
                         onClick={onClose}
+                        aria-label={t('common:close')}
                         className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600"
                     >
                         <X className="size-6" />
@@ -164,9 +180,8 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 {/* Content */}
                 <div className="flex-1 overflow-auto p-0">
                     {loading ? (
-                        <div className="flex justify-center items-center h-48 text-slate-500">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mr-3"></div>
-                            {t('common:loading')}
+                        <div className="p-6">
+                            <SkeletonTable rows={5} columns={5} />
                         </div>
                     ) : (
                         <table className="w-full text-left border-collapse">

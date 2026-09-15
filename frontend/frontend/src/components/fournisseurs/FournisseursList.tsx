@@ -4,6 +4,7 @@ import type { useFournisseurs } from '../../hooks/useFournisseurs';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
+import { EmptyState } from '../ui/EmptyState';
 import { cn } from '../../lib/utils';
 
 interface Props {
@@ -47,7 +48,20 @@ export default function FournisseursList({ hook }: Props) {
             {selectedIds.length > 0 ? (
               <div className="flex items-center gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-200">
                 <div ref={containerRef} className="relative">
-                  <div role="button" onClick={() => setIsOpen(p => !p)} className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isOpen}
+                    onClick={() => setIsOpen(p => !p)}
+                    onKeyDown={(e) => {
+                      if (e.target !== e.currentTarget) return;
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsOpen(p => !p);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+                  >
                     <MoreVertical className="size-4" />
                     {t('common:actions_title', { defaultValue: 'Actions' })}
                     <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs bg-white/20 rounded-full">{selectedIds.length}</span>
@@ -58,7 +72,18 @@ export default function FournisseursList({ hook }: Props) {
                       {t('common:bulk_actions', { defaultValue: 'Actions Groupées' })}
                     </li>
                     <li>
-                      <a onClick={actions.handleBulkDelete} className="flex items-center gap-2 py-2 hover:bg-red-50 text-red-600 font-medium text-sm">
+                      <a
+                        role="button"
+                        tabIndex={0}
+                        onClick={actions.handleBulkDelete}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            actions.handleBulkDelete();
+                          }
+                        }}
+                        className="flex items-center gap-2 py-2 hover:bg-red-50 text-red-600 font-medium text-sm"
+                      >
                         <Trash2 className="size-4" /> {t('common:actions.delete', { defaultValue: 'Supprimer' })}
                       </a>
                     </li>
@@ -113,6 +138,7 @@ export default function FournisseursList({ hook }: Props) {
               <input
                 ref={searchInputRef}
                 type="text"
+                aria-label={t('providers:search_placeholder')}
                 placeholder={t('providers:search_placeholder')}
                 className="w-full pl-10 h-9 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                 value={searchTerm}
@@ -148,6 +174,15 @@ export default function FournisseursList({ hook }: Props) {
                 className={cn("group flex items-center p-2.5 rounded-lg cursor-pointer transition-all border border-transparent relative",
                   isSelected ? 'bg-emerald-50 border-emerald-100 shadow-sm' : isHighlighted ? 'bg-slate-100 border-slate-200' : isChecked ? 'bg-emerald-50/50 border-emerald-100' : 'hover:bg-slate-100')}
                 onClick={() => actions.selectFournisseur(fournisseur)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    actions.selectFournisseur(fournisseur);
+                  }
+                }}
               >
                 {/* Selection Indicator */}
                 {isSelected && <div className="absolute left-0 top-2.5 bottom-2.5 w-0.5 bg-emerald-500 rounded-full" />}
@@ -156,6 +191,7 @@ export default function FournisseursList({ hook }: Props) {
                 <div className="mr-2" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
+                    aria-label={fournisseur.name}
                     className={cn("size-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer transition-all", isChecked ? '' : 'opacity-0 group-hover:opacity-100')}
                     checked={isChecked}
                     onChange={() => actions.toggleSelect(fournisseur.id!)}
@@ -200,13 +236,12 @@ export default function FournisseursList({ hook }: Props) {
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-            <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-              <Truck className="size-8 text-slate-400" />
-            </div>
-            <h3 className="text-base font-semibold text-slate-600">{searchTerm ? t('providers:no_result') : t('providers:empty_list')}</h3>
-            <p className="text-sm text-slate-400 mt-1">{t('providers:search_hint', { defaultValue: 'Essayez de changer vos critères de recherche.' })}</p>
-          </div>
+          <EmptyState
+            className="h-full py-20"
+            icon={<Truck className="size-8" />}
+            title={searchTerm ? t('providers:no_result') : t('providers:empty_list')}
+            description={t('providers:search_hint', { defaultValue: 'Essayez de changer vos critères de recherche.' })}
+          />
         )}
       </div>
 

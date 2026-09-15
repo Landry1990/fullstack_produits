@@ -196,7 +196,7 @@ export default function EtatsInventaire() {
               <CardDescription className="text-[11px]">{t('stock:etats.card_grouping_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {groupByOptions.map(o => {
                   const active = groupBy === o.value;
                   return (
@@ -236,7 +236,7 @@ export default function EtatsInventaire() {
               <CardDescription className="text-[11px]">{t('stock:etats.card_source_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {sourceOptions.map(o => {
                   const active = source === o.value;
                   return (

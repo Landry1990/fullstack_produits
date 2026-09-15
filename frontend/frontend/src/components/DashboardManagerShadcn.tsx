@@ -21,6 +21,8 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle,
 } from './shadcn/dialog';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
 
 import { formatCurrency } from '../utils/formatters';
 import { formatDate, getLocale } from '../utils/dateUtils';
@@ -269,13 +271,12 @@ function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-            <div className="bg-emerald-50 rounded-2xl p-4 mb-3">
-              <CheckCircle2 className="size-8 text-emerald-400" />
-            </div>
-            <p className="text-sm font-semibold text-slate-600">{t('manager_dashboard.all_good', 'Tout va bien !')}</p>
-            <p className="text-xs text-slate-400 mt-1">{t('manager_dashboard.no_alerts_sub', 'Aucune alerte pour le moment.')}</p>
-          </div>
+          <EmptyState
+            icon={<CheckCircle2 className="size-8 text-emerald-400" />}
+            title={t('manager_dashboard.all_good', 'Tout va bien !')}
+            description={t('manager_dashboard.no_alerts_sub', 'Aucune alerte pour le moment.')}
+            className="py-10"
+          />
         )}
       </CardContent>
     </Card>
@@ -468,11 +469,19 @@ export default function DashboardManagerShadcn() {
 
   if (statsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
-        <div className="size-12 border-3 border-slate-200 border-t-emerald-500 rounded-full animate-spin" />
-        <p className="text-sm font-medium text-slate-400">
-          {t('manager_dashboard.loading', 'Chargement du tableau de bord...')}
-        </p>
+      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 space-y-6" aria-busy="true" aria-label={t('manager_dashboard.loading', 'Chargement du tableau de bord...')}>
+        <div className="max-w-[1400px] mx-auto w-full space-y-6">
+          <Skeleton className="h-10 w-72" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-2xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Skeleton className="h-64 rounded-2xl" />
+            <Skeleton className="h-64 rounded-2xl" />
+          </div>
+        </div>
       </div>
     );
   }

@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import { useConfirm } from '../../hooks/useConfirm';
 import PremiumModal from './PremiumModal';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
 import { logger } from '../../utils/logger'
 
 interface ConfigOption {
@@ -162,15 +164,17 @@ export default function ConfigOptionManager({
       {/* Grid View */}
       <div className="flex-1 overflow-y-auto">
          {loading ? (
-            <div className="flex flex-col items-center justify-center h-64 gap-4">
-               <span className="size-8 border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></span>
-               <p className="text-sm font-bold text-slate-400">{t('common:loading')}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+               {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-36 rounded-2xl" />
+               ))}
             </div>
          ) : filteredOptions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 bg-white rounded-2xl border-2 border-dashed border-slate-200 text-slate-300">
-               <Settings size={64} strokeWidth={1} className="mb-4" />
-               <p className="text-xl font-black text-slate-400">{searchTerm ? t('common:no_results_found') : t('common:messages.no_data')}</p>
-            </div>
+            <EmptyState
+               className="h-64 bg-white rounded-2xl border-2 border-dashed border-slate-200"
+               icon={<Settings className="size-8" />}
+               title={<span className="text-xl font-black">{searchTerm ? t('common:no_results_found') : t('common:messages.no_data')}</span>}
+            />
          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                {filteredOptions.map(option => (
@@ -239,7 +243,7 @@ export default function ConfigOptionManager({
         icon={editingOption ? <Pencil className="size-5" /> : <Plus className="size-5" />}
       >
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-           <div className="grid grid-cols-2 gap-4">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="col-span-2 sm:col-span-1">
                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.code_label')}</label>
                  <input

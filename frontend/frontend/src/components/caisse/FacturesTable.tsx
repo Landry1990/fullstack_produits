@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, ChevronLeft, ChevronRight, Loader2, Inbox } from 'lucide-react'
+import { Package, Minus, Plus, Trash2, Pencil, XCircle, Ticket, Banknote, ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
 import type { Facture, FactureProduit, CouponMonnaie } from '../../types'
 import {
   Dialog,
@@ -21,6 +21,9 @@ import {
   TableHeader,
   TableRow,
 } from '../shadcn/table'
+import { EmptyState } from '../ui/EmptyState'
+import SkeletonTable from '../ui/SkeletonTable'
+import { useConfirm } from '../../hooks/useConfirm'
 
 interface FacturesTableProps {
   sortedFactures: Facture[]
@@ -86,6 +89,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   onPreviewClosed
 }) => {
   const { t, i18n } = useTranslation('caisse')
+  const confirm = useConfirm()
   const [previewFacture, setPreviewFacture] = useState<Facture | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
@@ -137,21 +141,20 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
   if (loading && sortedFactures.length === 0) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="size-8 animate-spin text-slate-400" />
+      <div className="p-4">
+        <SkeletonTable rows={6} columns={8} />
       </div>
     )
   }
 
   if (sortedFactures.length === 0) {
     return (
-      <div className="text-center py-16 bg-white">
-        <div className="flex justify-center mb-4">
-          <Inbox className="size-12 text-slate-400" />
-        </div>
-        <h3 className="font-bold text-lg text-slate-800">{t('no_pending')}</h3>
-        <p className="text-slate-500 text-sm mt-1">{t('no_pending_desc')}</p>
-      </div>
+      <EmptyState
+        className="py-16 bg-white"
+        icon={<Inbox className="size-8" />}
+        title={t('no_pending')}
+        description={t('no_pending_desc')}
+      />
     )
   }
 
@@ -281,6 +284,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       }}
                       onDoubleClick={(e) => e.stopPropagation()}
                       title={t('table.view_products')}
+                      aria-label={t('table.view_products')}
                     >
                       {getProductsSummary(facture)}
                     </button>
@@ -303,6 +307,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                           }}
                           onDoubleClick={(e) => e.stopPropagation()}
                           title={t('table.remove_coupon')}
+                          aria-label={t('table.remove_coupon')}
                         >
                           <XCircle className="size-3" />
                         </Button>
@@ -395,7 +400,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
       {/* Pagination */}
       {sortedFactures.length > 0 && (
-        <div className="shrink-0 bg-white border-t border-slate-200 px-4 py-2 flex items-center justify-between text-sm">
+        <div className="shrink-0 bg-white border-t border-slate-200 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-sm">
           <div className="flex items-center gap-3">
             <select
               value={pageSize}
@@ -480,11 +485,17 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                     variant="ghost"
                                     size="icon"
                                     className="size-7 text-red-600 hover:bg-red-50"
-                                    onClick={(e) => {
+                                    aria-label={t('table.decrease_quantity', { defaultValue: 'Diminuer la quantité' })}
+                                    onClick={async (e) => {
                                       e.stopPropagation();
                                       if (qty > 1) {
                                         onUpdateProductQuantity(previewFacture.id, p.produit as number, qty - 1);
-                                      } else if (window.confirm(t('confirm_delete_product', { name }))) {
+                                      } else if (await confirm({
+                                        title: t('common:confirmation'),
+                                        message: t('confirm_delete_product', { name }),
+                                        confirmText: t('common:confirm'),
+                                        variant: 'danger'
+                                      })) {
                                         onRemoveProduct(previewFacture.id, p.produit as number);
                                       }
                                     }}
@@ -496,6 +507,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                     variant="ghost"
                                     size="icon"
                                     className="size-7 text-emerald-600 hover:bg-emerald-50"
+                                    aria-label={t('table.increase_quantity', { defaultValue: 'Augmenter la quantité' })}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       onUpdateProductQuantity(previewFacture.id, p.produit as number, qty + 1);
@@ -517,9 +529,15 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                                 variant="ghost"
                                 size="icon"
                                 className="size-7 text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
+                                aria-label={t('common:delete', { defaultValue: 'Supprimer' })}
+                                onClick={async (e) => {
                                   e.stopPropagation();
-                                  if (window.confirm(t('confirm_delete_product', { name }))) {
+                                  if (await confirm({
+                                    title: t('common:confirmation'),
+                                    message: t('confirm_delete_product', { name }),
+                                    confirmText: t('common:confirm'),
+                                    variant: 'danger'
+                                  })) {
                                     onRemoveProduct(previewFacture.id, p.produit as number);
                                   }
                                 }}
@@ -541,10 +559,11 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-500">
-                <Package className="size-10 mx-auto mb-2 text-slate-300" />
-                <p className="text-sm font-medium">{t('table.no_products')}</p>
-              </div>
+              <EmptyState
+                compact
+                icon={<Package className="size-6" />}
+                title={t('table.no_products')}
+              />
             )}
           </div>
 

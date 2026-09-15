@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
+import { gooeyToast } from 'goey-toast';
 import type { Promotion, PromotionPackItem } from '../../types/Promotion';
 import type { ProduitModel } from '../../types';
 import { DiscountType, ApplicationMode } from '../../types/Promotion';
@@ -189,7 +190,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
             onClose();
         } catch (error) {
             logger.error(error);
-            alert(t('promotions:form.save_error'));
+            gooeyToast.error(t('promotions:form.save_error'));
         } finally {
             setLoading(false);
         }
@@ -231,7 +232,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                         required
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2 text-emerald-600">
                                             <Calendar size={14} /> {t('promotions:form.start_date')}
@@ -289,7 +290,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 )}
 
                                 {discountType === DiscountType.BUY_X_GET_Y && (
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div className="bg-white p-2 rounded-lg border border-slate-200">
                                             <label className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.buy')}</label>
                                             <input type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold focus:outline-none focus:border-emerald-300" value={buyQuantity} onChange={e => {
@@ -338,7 +339,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                     </div>
 
                         {/* Selected Products Table */}
-                        <div className="mt-6 border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+                        <div className="mt-6 border border-slate-200 rounded-2xl overflow-hidden overflow-x-auto shadow-sm bg-white">
                             <table className="w-full text-sm">
                                 <thead className="bg-slate-50 border-b border-slate-100">
                                     <tr className="text-slate-500 uppercase text-[10px] tracking-widest">

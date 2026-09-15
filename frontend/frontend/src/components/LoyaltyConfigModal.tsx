@@ -159,7 +159,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
 
                             <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
                                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{t('clients:loyalty.auto_reward')}</p>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label htmlFor="auto_reward_threshold" className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                             {t('clients:loyalty.threshold')}

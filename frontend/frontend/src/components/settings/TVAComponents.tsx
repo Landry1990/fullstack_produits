@@ -11,6 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from '../shadcn/table'
+import { EmptyState } from '../ui/EmptyState'
+import { Skeleton } from '../ui/Skeleton'
 import type { SettingsTabProps } from './types'
 
 type TFunc = SettingsTabProps['t']
@@ -57,9 +59,9 @@ export function TVATable({ tvaList, loadingTVA, deleteTVA, t }: { tvaList: TVA[]
         </TableHeader>
         <TableBody>
           {loadingTVA ? (
-            <TableRow><TableCell colSpan={4} className="text-center p-12"><Loader2 className="inline-block size-8 animate-spin text-indigo-600" /></TableCell></TableRow>
+            <TableRow><TableCell colSpan={4} className="p-6"><div className="space-y-3"><Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-2/3" /></div></TableCell></TableRow>
           ) : !Array.isArray(tvaList) || tvaList.length === 0 ? (
-            <TableRow><TableCell colSpan={4} className="text-center p-12 opacity-40 italic">{t('tva.empty')}</TableCell></TableRow>
+            <TableRow><TableCell colSpan={4} className="p-0"><EmptyState compact title={t('tva.empty')} className="p-12" /></TableCell></TableRow>
           ) : (
             tvaList.map(tva => <TVARow key={tva.id} tva={tva} onDelete={deleteTVA} t={t} />)
           )}

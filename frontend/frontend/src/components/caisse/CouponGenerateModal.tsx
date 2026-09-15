@@ -53,8 +53,9 @@ export function CouponGenerateModal({
     >
       <div className="p-6">
         <div className="w-full mb-4">
-          <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('coupons.generate_modal.amount')} (F)</label>
+          <label htmlFor="coupon-amount" className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('coupons.generate_modal.amount')} (F)</label>
           <input
+            id="coupon-amount"
             type="number"
             className="w-full h-12 rounded-lg border border-slate-200 bg-white px-3 text-2xl font-bold text-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
             placeholder="Ex: 250"
@@ -65,8 +66,9 @@ export function CouponGenerateModal({
         </div>
 
         <div className="w-full mb-4">
-          <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('coupons.generate_modal.notes')}</label>
+          <label htmlFor="coupon-notes" className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">{t('coupons.generate_modal.notes')}</label>
           <textarea
+            id="coupon-notes"
             className="w-full h-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
             placeholder={t('movement_modal.description_placeholder')}
             value={notes}

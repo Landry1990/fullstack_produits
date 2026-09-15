@@ -14,6 +14,8 @@ import { useRecharts } from '../../hooks/useRecharts';
 import { formatCurrency } from '../../utils/formatters';
 import { useSupplierDashboard } from '../../hooks/useSupplierDashboard';
 import { Button } from '../shadcn/button';
+import { Skeleton } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
 import { useTranslation } from 'react-i18next';
 
 const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#a855f7', '#64748b'];
@@ -37,15 +39,17 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
   const { t } = useTranslation(['providers', 'common']);
   const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
   const Recharts = useRecharts();
-  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  if (!Recharts) return <div className="p-6"><Skeleton className="h-64 w-full" /></div>;
   const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } = Recharts;
 
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <RefreshCw className="size-8 text-primary animate-spin" />
-        <p className="text-sm font-bold text-base-content/40 uppercase tracking-widest animate-pulse">{t('providers:dashboard.loading')}</p>
+      <div className="p-4 sm:p-6 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />)}
+        </div>
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
@@ -282,7 +286,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
             <tbody className="divide-y divide-base-100">
               {(stats?.prochaines_echeances ?? []).length === 0 ? (
                  <tr>
-                    <td colSpan={6} className="text-center py-8 text-base-content/30 font-bold uppercase text-xs tracking-widest">{t('providers:dashboard.deadlines.no_deadlines')}</td>
+                    <td colSpan={6}><EmptyState compact variant="base" title={t('providers:dashboard.deadlines.no_deadlines')} /></td>
                  </tr>
               ) : (stats?.prochaines_echeances ?? []).map((ech, _i) => (
                 <tr key={ech.numero_facture} className="hover:bg-base-200/50 transition-colors group">

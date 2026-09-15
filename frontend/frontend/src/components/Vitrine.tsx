@@ -25,6 +25,8 @@ import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Checkbox } from './ui/Checkbox';
 import { Tabs, TabsList, TabsTrigger } from './ui/Tabs';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
 import {
   Table,
   TableBody,
@@ -191,17 +193,26 @@ function GestionVitrine({
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="px-3 py-12 text-center">
-                    <div className="flex justify-center">
-                      <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  </TableCell>
-                </TableRow>
+                Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="px-3 py-2 text-center"><Skeleton className="size-4 rounded mx-auto" /></TableCell>
+                    <TableCell className="px-3 py-2"><Skeleton className="h-4 w-40" /></TableCell>
+                    <TableCell className="px-3 py-2"><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell className="px-3 py-2"><Skeleton className="h-4 w-10" /></TableCell>
+                    <TableCell className="px-3 py-2"><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell className="px-3 py-2"><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell className="px-3 py-2 text-center"><Skeleton className="size-4 rounded mx-auto" /></TableCell>
+                  </TableRow>
+                ))
               ) : products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-3 py-12 text-center text-base-content/60">
-                    {t('gestion.table.empty')}
+                  <TableCell colSpan={7} className="px-3 py-8 text-center">
+                    <EmptyState
+                      compact
+                      variant="base"
+                      icon={<Package className="size-6" />}
+                      title={t('gestion.table.empty')}
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -401,8 +412,9 @@ function SimulateurClient() {
           {/* Résultats de recherche */}
           <div className="mt-4 space-y-2">
             {isLoading && (
-              <div className="text-center py-6">
-                <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="py-2 space-y-2">
+                <Skeleton className="h-14 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full rounded-lg" />
               </div>
             )}
 
@@ -456,8 +468,8 @@ function SimulateurClient() {
               </div>
             )}
             {debouncedSearch && results.length === 0 && !isLoading && (
-              <Card variant="bordered" padding="md" className="text-center text-base-content/60">
-                {t('simulateur.no_results')}
+              <Card variant="bordered" padding="md">
+                <EmptyState compact variant="base" title={t('simulateur.no_results')} className="p-2" />
               </Card>
             )}
           </div>
@@ -492,13 +504,13 @@ function SimulateurClient() {
           <div className="p-5 bg-base-100 flex-1 flex flex-col">
             <div className="space-y-3 overflow-y-auto max-h-[300px] lg:max-h-[500px] pr-1 flex-1">
               {cart.length === 0 ? (
-                <div className="text-center text-base-content/40 py-10 flex flex-col items-center h-full justify-center">
-                  <div className="h-16 w-16 rounded-2xl bg-base-200 flex items-center justify-center mx-auto mb-3">
-                    <ShoppingCart className="size-8 text-base-content/20" />
-                  </div>
-                  <p className="text-sm font-medium">{t('simulateur.empty_list')}</p>
-                  <p className="text-xs mt-1 max-w-[200px]">{t('simulateur.empty_list_hint')}</p>
-                </div>
+                <EmptyState
+                  variant="base"
+                  icon={<ShoppingCart className="size-8" />}
+                  title={t('simulateur.empty_list')}
+                  description={t('simulateur.empty_list_hint')}
+                  className="py-10 h-full"
+                />
               ) : (
                 cart.map((item) => (
                   <div
@@ -562,7 +574,7 @@ function SimulateurClient() {
                   <span className="text-sm text-base-content/60">{t('simulateur.total')}</span>
                   <span className="text-xl font-bold font-mono text-emerald-600">{formatCurrency(cartTotal)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <Button
                     variant="secondary"
                     size="sm"

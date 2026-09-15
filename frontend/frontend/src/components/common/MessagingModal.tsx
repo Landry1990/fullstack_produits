@@ -7,8 +7,10 @@ import type { InternalMessage, MessageTemplate } from '../../services/communicat
 import userService from '../../services/userService';
 import type { SimpleUser } from '../../services/userService';
 import PremiumModal from './PremiumModal';
+import { EmptyState } from '../ui/EmptyState';
 import { formatDateTime } from '../../utils/dateUtils';
 import { gooeyToast } from 'goey-toast';
+import { useConfirm } from '../../hooks/useConfirm';
 import { logger } from '../../utils/logger'
 
 // ── Composer reducer ────────────────────────────────────────────────────────
@@ -71,6 +73,7 @@ interface MessagingModalProps {
 
 export default function MessagingModal({ isOpen, onClose, currentUser, onMessageRead }: MessagingModalProps) {
   const { t } = useTranslation(['messaging', 'common']);
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<'received' | 'sent' | 'archived' | 'templates' | 'new' | 'supervision'>('received');
   const [allMessages, setAllMessages] = useState<InternalMessage[]>([]);
   const isAdmin = currentUser?.is_staff || currentUser?.is_superuser;
@@ -135,6 +138,15 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!zoomImage) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setZoomImage(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [zoomImage]);
 
   const receivedMessages = useMemo(() => 
     messages.filter((m: InternalMessage) => 
@@ -204,7 +216,13 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
   };
 
   const handleDeleteTemplate = async (id: number) => {
-    if (!window.confirm(t('templates.delete_confirm'))) return;
+    const confirmed = await confirm({
+      title: t('common:confirmation'),
+      message: t('templates.delete_confirm'),
+      confirmText: t('common:confirm'),
+      variant: 'danger'
+    });
+    if (!confirmed) return;
     try {
       await communicationService.deleteTemplate(id);
       gooeyToast.success(t('templates.success_deleted'));
@@ -328,7 +346,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
               </div>
               <div className="grid gap-3">
                 {receivedMessages.length === 0 ? (
-                   <div className="text-center py-10 text-slate-400 italic">{t('received.empty')}</div>
+                   <EmptyState compact icon={<MessageSquare className="size-6" />} title={t('received.empty')} className="py-10" />
                 ) : (
                   receivedMessages.map((m: InternalMessage) => (
                     <div 
@@ -393,7 +411,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
               </div>
               <div className="grid gap-3">
                 {sentMessages.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400 italic">{t('sent.empty')}</div>
+                  <EmptyState compact icon={<MessageSquare className="size-6" />} title={t('sent.empty')} className="py-10" />
                 ) : (
                   sentMessages.map((m: InternalMessage) => (
                     <div key={m.id} className="p-4 rounded-xl border bg-slate-100 border-slate-200">
@@ -434,7 +452,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
               </div>
               <div className="grid gap-3">
                 {archivedMessages.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400 italic">{t('no_archived')}</div>
+                  <EmptyState compact icon={<Archive className="size-6" />} title={t('no_archived')} className="py-10" />
                 ) : (
                   archivedMessages.map((m: InternalMessage) => (
                     <div 
@@ -496,7 +514,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
               </div>
               <div className="grid gap-3">
                 {allMessages.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400 italic">{t('no_messages')}</div>
+                  <EmptyState compact icon={<MessageSquare className="size-6" />} title={t('no_messages')} className="py-10" />
                 ) : (
                   allMessages.map((m: InternalMessage) => (
                     <div 
@@ -705,8 +723,8 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
 
       {zoomImage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setZoomImage(null)}>
-          <div className="relative max-w-5xl max-h-[90vh] size-full flex flex-col items-center justify-center" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute top-2 right-2 text-white/70 hover:text-white bg-black/50 hover:bg-black/70 rounded-full transition-all p-2 z-10 shadow-lg" onClick={() => setZoomImage(null)}>
+          <div className="relative max-w-5xl max-h-[90vh] size-full flex flex-col items-center justify-center" role="dialog" aria-modal="true" aria-label={t('messaging:zoom_image', 'Image agrandie')} onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-2 right-2 text-white/70 hover:text-white bg-black/50 hover:bg-black/70 rounded-full transition-all p-2 z-10 shadow-lg" onClick={() => setZoomImage(null)} aria-label={t('common:close')}>
                <X size={24} />
             </button>
             <div className="bg-white p-2 rounded-xl shadow-2xl h-full w-full flex items-center justify-center overflow-auto relative">

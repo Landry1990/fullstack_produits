@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, X, Users, DollarSign } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
@@ -24,6 +26,17 @@ export default function BulkDeleteWarningModal({
   clientsWithUnpaid,
   totalDue
 }: BulkDeleteWarningModalProps) {
+  const { t } = useTranslation(['common']);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const blockedCount = clientsWithUnpaid.length;
@@ -31,7 +44,12 @@ export default function BulkDeleteWarningModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-base-100 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div
+        className="bg-base-100 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('common:warning', { defaultValue: 'Suppression impossible' })}
+      >
         {/* Header */}
         <div className="bg-warning/10 p-6 border-b border-warning/20">
           <div className="flex items-start gap-4">
@@ -49,6 +67,7 @@ export default function BulkDeleteWarningModal({
             <Button
               onClick={onClose}
               variant="ghost" size="icon" className="rounded-full"
+              aria-label={t('common:close')}
             >
               <X className="size-5" />
             </Button>
@@ -58,7 +77,7 @@ export default function BulkDeleteWarningModal({
         {/* Body */}
         <div className="p-6 space-y-6">
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-error/10 border border-red-200 rounded-xl p-4">
               <div className="flex items-center gap-2 text-error mb-2">
                 <Users className="size-5" />

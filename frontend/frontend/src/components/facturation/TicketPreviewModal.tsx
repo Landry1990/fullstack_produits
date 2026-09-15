@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X, MessageCircle } from 'lucide-react'
 import { TicketTemplate } from '../printing/TicketTemplate'
@@ -21,6 +22,15 @@ export default function TicketPreviewModal({
   onSendWhatsApp
 }: TicketPreviewModalProps) {
   const { t } = useTranslation(['facturation', 'common'])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
 
   if (!isOpen || !ticket || !settings) return null
 
@@ -50,9 +60,14 @@ export default function TicketPreviewModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]">
+      <div
+        className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ticket-preview-modal-title"
+      >
         <div className="bg-slate-50 p-3 flex justify-between items-center border-b border-slate-200">
-          <h3 className="font-bold text-lg text-slate-800">{t('common:receipt')}</h3>
+          <h3 id="ticket-preview-modal-title" className="font-bold text-lg text-slate-800">{t('common:receipt')}</h3>
           <button className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-colors" onClick={onClose} aria-label={t('common:close')}>
             <X className="size-4" />
           </button>

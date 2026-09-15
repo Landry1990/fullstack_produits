@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
 
 import { Label } from './ui/Label';
 import { Select } from './ui/Select';
+import { useConfirm } from '../hooks/useConfirm';
 import { logger } from '../utils/logger'
 import {
   Table,
@@ -51,6 +52,7 @@ interface RecapStats {
 
 const UserSessionsShadcn: React.FC = () => {
   const { t } = useTranslation(['users', 'common']);
+  const confirm = useConfirm();
   const { user, getServerDate } = useAuth();
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [recapData, setRecapData] = useState<RecapStats[]>([]);
@@ -140,7 +142,13 @@ const UserSessionsShadcn: React.FC = () => {
   };
 
   const handleForceLogout = async (sessionId: number, username: string) => {
-    if (!window.confirm(t('sessions.force_logout_confirm', { username }))) {
+    const confirmed = await confirm({
+      title: t('common:confirmation'),
+      message: t('sessions.force_logout_confirm', { username }),
+      confirmText: t('common:confirm'),
+      variant: 'danger'
+    });
+    if (!confirmed) {
       return;
     }
     setDisconnectingId(sessionId);

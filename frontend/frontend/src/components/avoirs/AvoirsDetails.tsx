@@ -8,6 +8,7 @@ import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../shadcn/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shadcn/table';
+import { EmptyState } from '../ui/EmptyState';
 import { isDraftStatus, getStatusStyle, getStatusLabel } from './utils';
 
 interface AvoirsDetailsProps {
@@ -331,8 +332,8 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
 
                                     {(!selectedAvoir.produits || selectedAvoir.produits.length === 0) && (
                                         <TableRow>
-                                            <TableCell colSpan={isDraft ? 9 : 8} className="text-center py-8 text-slate-500">
-                                                {t('stock:avoirs.details.no_lines')}
+                                            <TableCell colSpan={isDraft ? 9 : 8}>
+                                                <EmptyState compact title={t('stock:avoirs.details.no_lines')} />
                                             </TableCell>
                                         </TableRow>
                                     )}

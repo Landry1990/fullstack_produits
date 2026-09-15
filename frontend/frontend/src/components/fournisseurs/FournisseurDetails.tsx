@@ -4,6 +4,8 @@ import { formatCurrency } from '../../utils/formatters';
 import type { useFournisseurs } from '../../hooks/useFournisseurs';
 import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
 import { cn } from '../../lib/utils';
 
 interface Props {
@@ -25,13 +27,12 @@ export default function FournisseurDetails({ hook }: Props) {
   if (!selectedFournisseur) {
     return (
       <div className="md:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
-        <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
-            <div className="size-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-              <Building2 className="size-10 text-slate-400" />
-            </div>
-            <p className="font-semibold text-slate-600">{t('providers:details.no_provider_selected')}</p>
-            <p className="text-sm text-slate-400 mt-1 max-w-[200px]">{t('providers:details.select_instruction')}</p>
-        </div>
+        <EmptyState
+          className="flex-1"
+          icon={<Building2 className="size-8" />}
+          title={t('providers:details.no_provider_selected')}
+          description={t('providers:details.select_instruction')}
+        />
       </div>
     );
   }
@@ -83,7 +84,7 @@ export default function FournisseurDetails({ hook }: Props) {
                   {selectedFournisseur.address || t('providers:details.not_provided')}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('providers:details.direct_line')}</span>
                   <div className="text-sm font-mono font-medium text-slate-700">{selectedFournisseur.phone || '—'}</div>
@@ -115,7 +116,7 @@ export default function FournisseurDetails({ hook }: Props) {
                 {t('providers:details.manage_payments')}
               </Button>
             </div>
-            <div className="p-5 grid grid-cols-2 gap-4">
+            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg">
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{t('providers:details.debt_balance')}</div>
                   <div className={cn("text-lg font-bold font-mono", solde > 0 ? 'text-red-600' : 'text-emerald-600')}>
@@ -138,6 +139,16 @@ export default function FournisseurDetails({ hook }: Props) {
             <div
               className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
               onClick={() => state.setShowCatalogue(!showCatalogue)}
+              role="button"
+              tabIndex={0}
+              aria-expanded={showCatalogue}
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return;
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  state.setShowCatalogue(!showCatalogue);
+                }
+              }}
             >
               <div className="flex items-center gap-3">
                 <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-md">
@@ -183,18 +194,16 @@ export default function FournisseurDetails({ hook }: Props) {
                 )}
 
                 {catalogueLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full size-6 border-b-2 border-emerald-600"></div>
+                  <div className="space-y-2 py-4">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
                   </div>
                 ) : filteredCatalogue.length === 0 ? (
-                  <div className="text-center py-6 text-slate-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto mb-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                    </svg>
-                    <p className="text-sm">
-                      {catalogueSearch ? t('providers:catalogue.no_result') : t('providers:catalogue.empty')}
-                    </p>
-                  </div>
+                  <EmptyState
+                    compact
+                    title={catalogueSearch ? t('providers:catalogue.no_result') : t('providers:catalogue.empty')}
+                  />
                 ) : (
                   <div className="overflow-x-auto rounded-lg border border-slate-200">
                     <table className="min-w-full divide-y divide-slate-200">

@@ -18,6 +18,8 @@
         "cip2": "CIP2",
         "cip3": "CIP3",
         "cip4": "CIP4",
+        "cip_invalid": "CIP must contain 7 or 13 digits",
+        "negative_margin_warning": "Warning: negative margin — selling price is below cost price",
         "provider": "Supplier",
         "alert": "Alert",
         "min": "Min",

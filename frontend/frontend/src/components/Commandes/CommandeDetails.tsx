@@ -20,6 +20,7 @@ import {
   TableRow,
 } from '../shadcn/table';
 import { cn } from '../../lib/utils';
+import { EmptyState } from '../ui/EmptyState';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -461,10 +462,11 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
 
         <div className="overflow-auto flex-1 bg-white">
           {(!selectedCommande.produits || selectedCommande.produits.length === 0) ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-              <Package className="size-12 mb-3 text-slate-300" aria-hidden="true" />
-              <p className="text-sm">{t('orders:details.empty_products')}</p>
-            </div>
+            <EmptyState
+              className="py-12"
+              icon={<Package className="size-8" aria-hidden="true" />}
+              title={t('orders:details.empty_products')}
+            />
           ) : (
             <Table className="table-fixed">
               <TableHeader className="bg-slate-50">
@@ -481,19 +483,19 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                       }}
                     />
                   </TableHead>
-                  <TableHead className="w-[28%] px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
+                  <TableHead className="w-[28%] px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } } }}>
                     {t('orders:product_table.headers.product')} {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.cip')}</TableHead>
                   <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500">{t('products:table.stock')}</TableHead>
                   <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.rotation', 'Rot.')}</TableHead>
-                  <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
+                  <TableHead className="w-20 px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } } }}>
                     {t('orders:product_table.headers.qty')} {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
 
                   </TableHead>
 
                   <TableHead className="w-16 px-3 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide text-slate-500 bg-emerald-50">{t('orders:product_table.headers.ug')}</TableHead>
-                  <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }}>
+                  <TableHead className="w-24 px-3 py-2 whitespace-nowrap text-right text-xs font-semibold uppercase tracking-wide text-slate-500 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } } }}>
                     {t('orders:details.price_unit')} {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead className="w-28 px-3 py-2 whitespace-nowrap text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t('orders:product_table.headers.lot')}</TableHead>
@@ -519,7 +521,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                     const isDeleted = p.produit === null;
 
                     return (
-                      <TableRow key={p.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100" onClick={() => toggleRowSelection(p.originalIndex)}>
+                      <TableRow key={p.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100" onClick={() => toggleRowSelection(p.originalIndex)} role="checkbox" aria-checked={selectedRows.has(p.originalIndex)} tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleRowSelection(p.originalIndex); } }}>
                         <TableCell className="px-3 py-2">
                           <Checkbox
                             checked={selectedRows.has(p.originalIndex)}

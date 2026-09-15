@@ -5,6 +5,7 @@ import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters'
 import { formatDate } from '../../../utils/dateUtils';
 import type { LigneInventaire } from '../../../types';
 import { getProduitName } from '../../../types/inventory';
+import { EmptyState } from '../../ui/EmptyState';
 
 interface InventaireDataTabProps {
     lignes: LigneInventaire[];
@@ -112,22 +113,17 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
     if (sortedLines.length === 0) {
         return (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center text-slate-400 flex flex-col items-center gap-4 animate-in fade-in">
-                <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center mb-2">
-                    <PackageX className="h-8 w-8" />
-                </div>
-                <div>
-                   <h3 className="text-lg font-bold text-slate-700 mb-1">
-                       {lignes.length === 0
-                           ? t('inventaire.detail.empty_list_title')
-                           : t('inventaire.detail.no_ecart_title')}
-                   </h3>
-                   <p className="text-sm max-w-sm mx-auto">
-                       {lignes.length === 0
-                           ? t('inventaire.detail.empty_list')
-                           : t('inventaire.detail.no_ecart_desc')}
-                   </p>
-                </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 animate-in fade-in">
+                <EmptyState
+                    icon={<PackageX className="size-8" />}
+                    title={lignes.length === 0
+                        ? t('inventaire.detail.empty_list_title')
+                        : t('inventaire.detail.no_ecart_title')}
+                    description={lignes.length === 0
+                        ? t('inventaire.detail.empty_list')
+                        : t('inventaire.detail.no_ecart_desc')}
+                    className="p-12"
+                />
             </div>
         );
     }

@@ -120,6 +120,15 @@ export default function LotSelectionModal({
                 isAuto ? 'bg-blue-50 border-blue-300' : 'bg-white border-slate-200 hover:bg-slate-50'
               }`}
               onClick={handleSwitchAuto}
+              role="button"
+              aria-pressed={isAuto}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSwitchAuto();
+                }
+              }}
             >
               <div className={`size-4 rounded-full border-2 flex items-center justify-center ${isAuto ? 'border-blue-600' : 'border-slate-300'}`}>
                 {isAuto && <div className="size-2 bg-blue-600 rounded-full"></div>}
@@ -130,7 +139,7 @@ export default function LotSelectionModal({
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200">
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
               <table className="w-full text-sm">
                 <thead className="bg-slate-100/50">
                   <tr className="text-left text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -170,6 +179,7 @@ export default function LotSelectionModal({
                             type="number"
                             min={0}
                             max={lot.quantity_remaining}
+                            aria-label={`Quantité lot ${lot.lot}`}
                             value={allocatedQty || ''}
                             onChange={(e) => handleQuantityChange(lot.id, e.target.value)}
                             className="w-20 px-2 py-1 text-sm text-center border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

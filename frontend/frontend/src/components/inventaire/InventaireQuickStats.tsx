@@ -40,7 +40,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
     }, [inventaires]);
 
     return (
-        <div className="grid grid-cols-3 md:grid-cols-3 gap-2 lg:gap-4 mt-2 lg:mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 lg:gap-4 mt-2 lg:mt-4">
             {/* Inventaires En Cours Card */}
             <div className="bg-white p-2 lg:p-4 rounded-lg border border-slate-200 border-l-4 border-l-amber-500 flex items-center justify-between">
                 <div>

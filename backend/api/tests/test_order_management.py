@@ -7,6 +7,7 @@ Tests critical business logic:
 """
 from decimal import Decimal
 
+from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -54,6 +55,25 @@ class OrderManagementTestCase(APITestCase):
         self.assertEqual(Commande.objects.count(), 1)
         # Default status is PREP according to models.py
         self.assertEqual(Commande.objects.first().status, 'PREP')
+
+    def test_status_counts_ignore_status_and_keep_other_filters(self):
+        other_fournisseur = TestDataFactory.create_fournisseur(name='Autre Grossiste')
+        TestDataFactory.create_commande(fournisseur=self.fournisseur, status='PREP', type='LOC')
+        TestDataFactory.create_commande(fournisseur=self.fournisseur, status='ATT', type='LOC')
+        TestDataFactory.create_commande(fournisseur=self.fournisseur, status='CLOT', type='DIR')
+        TestDataFactory.create_commande(fournisseur=other_fournisseur, status='CLOT', type='LOC')
+        TestDataFactory.create_commande(fournisseur=self.fournisseur, status='ATT', type='LOC', is_active=False)
+        cache.clear()
+
+        response = self.client.get(reverse('commande-list'), {
+            'status': 'PREP',
+            'type': 'LOC',
+            'fournisseur': self.fournisseur.id,
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status_counts'], {'PREP': 1, 'ATT': 1, 'CLOT': 0})
+        self.assertEqual(response.data['count'], 1)
 
     def test_add_lines_to_commande(self):
         """Test adding products to a command."""

@@ -28,6 +28,7 @@ import BulkDeleteWarningModal from './clients/BulkDeleteWarningModal';
 import clientService from '../services/clientService';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { clientSchema } from '../schemas/clientSchema';
+import { useConfirm } from '../hooks/useConfirm';
 
 // Components
 import LoyaltyConfigModal from './LoyaltyConfigModal';
@@ -35,6 +36,8 @@ import ClientFormModal from './clients/ClientFormModal';
 import PurchaseHistoryDrawer from './clients/PurchaseHistoryDrawer';
 import SelectionHeader from './ui/SelectionHeader';
 import Pagination from './ui/Pagination';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
 import { logger } from '../utils/logger'
 
 const emptyForm: Partial<Client> = {
@@ -55,6 +58,7 @@ const emptyForm: Partial<Client> = {
 
 export default function Clients() {
   const { t } = useTranslation(['clients', 'common']);
+  const confirm = useConfirm();
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -290,7 +294,13 @@ export default function Clients() {
     }
 
     // Si pas de factures impayées, procéder à la confirmation
-    if (window.confirm(t('clients:modals.delete_confirm', { name: selectedClient.name }))) {
+    const confirmed = await confirm({
+        title: t('common:confirmation'),
+        message: t('clients:modals.delete_confirm', { name: selectedClient.name }),
+        confirmText: t('common:confirm'),
+        variant: 'danger'
+    });
+    if (confirmed) {
         const deletedId = selectedClient.id;
 
         try {
@@ -343,7 +353,12 @@ export default function Clients() {
       // En cas d'erreur, on continue avec la confirmation standard
     }
 
-    const confirmed = window.confirm(t('clients:modals.bulk_delete_confirm', { count: selectedIds.length }));
+    const confirmed = await confirm({
+        title: t('common:confirmation'),
+        message: t('clients:modals.bulk_delete_confirm', { count: selectedIds.length }),
+        confirmText: t('common:confirm'),
+        variant: 'danger'
+    });
 
     if (confirmed) {
         const selectedSet = new Set(selectedIds);
@@ -376,7 +391,18 @@ export default function Clients() {
                 colSpan={1}
                 actions={
                   <li>
-                    <a onClick={handleBulkDelete} className="text-red-600 hover:bg-red-50 font-medium">
+                    <a
+                      role="button"
+                      tabIndex={0}
+                      onClick={handleBulkDelete}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleBulkDelete();
+                        }
+                      }}
+                      className="text-red-600 hover:bg-red-50 font-medium"
+                    >
                       <Trash2 className="size-4" />
                       {t('clients:actions.bulk_delete', { count: selectedIds.length })}
                     </a>
@@ -401,6 +427,7 @@ export default function Clients() {
                     onClick={() => setShowInactive(!showInactive)}
                     className={cn("size-9", showInactive ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500')}
                     title={showInactive ? t('clients:filters.hide_inactive') : t('clients:filters.show_inactive')}
+                    aria-label={showInactive ? t('clients:filters.hide_inactive') : t('clients:filters.show_inactive')}
                  >
                     {showInactive ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                  </Button>
@@ -409,6 +436,7 @@ export default function Clients() {
                     size="icon"
                     onClick={() => setIsLoyaltyConfigOpen(true)}
                     className="size-9 text-slate-500"
+                    aria-label={t('common:settings')}
                  >
                     <Settings className="size-4" />
                  </Button>
@@ -424,6 +452,7 @@ export default function Clients() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <Input
                 className="w-full pl-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700"
+                aria-label={t('common:search')}
                 placeholder={t('clients:filters.search_placeholder')}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -433,8 +462,10 @@ export default function Clients() {
 
         <div className="flex-1 overflow-y-auto">
           {loading && clients.length === 0 ? (
-            <div className="flex justify-center p-12">
-              <div className="animate-spin rounded-full size-8 border-b-2 border-emerald-600"></div>
+            <div className="p-2 space-y-1">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-lg" />
+              ))}
             </div>
           ) : (
             <ul className="p-2 space-y-0.5">
@@ -442,7 +473,18 @@ export default function Clients() {
                  const selectedSet = new Set(selectedIds);
                  return (
                  <li key={client.id}>
-                    <div className={cn("flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer", selectedClient?.id === client.id ? 'bg-emerald-50' : 'hover:bg-slate-100')} onClick={() => handleSelectClient(client)}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className={cn("flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer", selectedClient?.id === client.id ? 'bg-emerald-50' : 'hover:bg-slate-100')}
+                      onClick={() => handleSelectClient(client)}
+                      onKeyDown={(e) => {
+                        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                          e.preventDefault();
+                          handleSelectClient(client);
+                        }
+                      }}
+                    >
                        <Checkbox
                          checked={selectedSet.has(client.id)}
                          onCheckedChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id]; })}
@@ -494,6 +536,7 @@ export default function Clients() {
                     size="icon"
                     className="lg:hidden mr-1"
                     onClick={handleDeselectClient}
+                    aria-label={t('common:back', { defaultValue: 'Retour' })}
                   >
                     <ArrowLeft className="size-5 text-slate-500" />
                   </Button>
@@ -505,7 +548,7 @@ export default function Clients() {
                        {selectedClient.name}
                        {selectedClient.is_active === false && <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-[10px]">{t('clients:status.inactive')}</Badge>}
                      </h2>
-                     <p className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                     <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-0.5">
                         <span className="flex items-center gap-1"><Phone className="size-3" /> {selectedClient.phone || '—'}</span>
                         <span className="flex items-center gap-1"><Mail className="size-3" /> {selectedClient.email || '—'}</span>
                      </p>
@@ -524,6 +567,7 @@ export default function Clients() {
                     onClick={() => setIsHistoryOpen(true)}
                     className="text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
                     title={t('clients:sections.purchase_history')}
+                    aria-label={t('clients:sections.purchase_history')}
                   >
                     <ShoppingBag className="size-4" />
                   </Button>
@@ -534,6 +578,7 @@ export default function Clients() {
                       onClick={() => setIsDepositModalOpen(true)}
                       className="text-slate-500"
                       title={t('clients:finance.manage_deposit')}
+                      aria-label={t('clients:finance.manage_deposit')}
                     >
                       <CreditCard className="size-4" />
                     </Button>
@@ -543,6 +588,7 @@ export default function Clients() {
                     size="icon"
                     onClick={handleToggleActive}
                     className="text-slate-500"
+                    aria-label={selectedClient.is_active ? t('clients:filters.hide_inactive') : t('clients:filters.show_inactive')}
                   >
                     {selectedClient.is_active ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </Button>
@@ -581,7 +627,7 @@ export default function Clients() {
                         <div className="p-1.5 bg-amber-100 text-amber-600 rounded-md"><ShieldCheck className="size-4" /></div>
                         <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t('clients:sections.programs')}</h3>
                      </div>
-                     <div className="p-5 grid grid-cols-2 gap-3">
+                     <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {selectedClient.client_type === 'PARTICULIER' && (
                            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex flex-col gap-1 relative">
                               <div className="flex items-center justify-between">
@@ -632,7 +678,18 @@ export default function Clients() {
                         {selectedClient.client_type === 'PARTICULIER' && (
                           <>
                             {selectedClient.is_deposit_enabled ? (
-                              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex flex-col gap-1 cursor-pointer hover:bg-indigo-100 transition-colors" onClick={() => setIsDepositModalOpen(true)}>
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex flex-col gap-1 cursor-pointer hover:bg-indigo-100 transition-colors"
+                                onClick={() => setIsDepositModalOpen(true)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setIsDepositModalOpen(true);
+                                  }
+                                }}
+                              >
                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500/70">{t('clients:finance.solde_depot')}</span>
                                  <div className="text-lg font-bold text-indigo-600">{formatCurrency(parseFloat(selectedClient.solde_depot || '0'))}</div>
                               </div>
@@ -706,7 +763,7 @@ export default function Clients() {
                                     </TableRow>
                                   ))
                                 ) : (
-                                  <TableRow><TableCell colSpan={3} className="py-12 text-center text-sm text-slate-400">{t('clients:beneficiaries.empty')}</TableCell></TableRow>
+                                  <TableRow><TableCell colSpan={3} className="p-0"><EmptyState compact title={t('clients:beneficiaries.empty')} className="py-12" /></TableCell></TableRow>
                                 )}
                              </TableBody>
                           </Table>
@@ -717,13 +774,12 @@ export default function Clients() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-6 text-slate-300 p-12 text-center">
-             <Users className="size-24 text-slate-300" />
-             <div>
-                <h3 className="text-xl font-bold text-slate-400">{t('clients:modals.select_client_empty')}</h3>
-                <p className="text-sm text-slate-400 mt-2 max-w-sm mx-auto">{t('clients:modals.select_client_empty_desc')}</p>
-             </div>
-          </div>
+          <EmptyState
+            className="flex-1 p-12"
+            icon={<Users className="size-12" />}
+            title={t('clients:modals.select_client_empty')}
+            description={t('clients:modals.select_client_empty_desc')}
+          />
         )}
       </div>
 

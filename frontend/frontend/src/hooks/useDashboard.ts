@@ -70,7 +70,7 @@ export const useDashboardInit = () => {
             return response.data;
         },
         staleTime: 1000 * 60, // 60 secondes
-        refetchInterval: 1000 * 60, // Auto-update every 60 seconds
+        refetchInterval: 1000 * 60 * 2, // Auto-update every 2 minutes
         refetchIntervalInBackground: false,
     });
 };
@@ -82,8 +82,8 @@ export const useDashboardStats = () => {
             const response = await api.get<DashboardStats>('dashboard/stats/');
             return response.data;
         },
-        staleTime: 1000 * 15,
-        refetchInterval: 1000 * 15,
+        staleTime: 1000 * 60,
+        refetchInterval: 1000 * 60,
         refetchIntervalInBackground: false,
     });
 };
@@ -122,8 +122,8 @@ export const useRevenueChart = () => {
             const response = await api.get<RevenueChartData>('dashboard/revenue_chart/');
             return response.data;
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        refetchInterval: 1000 * 60 * 5, // Auto-update every 5 minutes
+        staleTime: 1000 * 60, // 1 minute
+        refetchInterval: 1000 * 60 * 2, // Auto-update every 2 minutes
         refetchIntervalInBackground: false,
     });
 };

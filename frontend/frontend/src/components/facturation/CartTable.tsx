@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '../shadcn/table'
 import { ShoppingCart } from 'lucide-react'
+import { EmptyState } from '../ui/EmptyState'
 import CartRow from './CartRow'
 
 interface CartTableProps {
@@ -67,10 +68,11 @@ const CartTable = React.memo(({
 
   if (lignesFacture.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-4 min-h-[200px] text-slate-300">
-        <ShoppingCart className="size-16" />
-        <p className="font-light text-slate-400">{t('facturation:cart.empty')}</p>
-      </div>
+      <EmptyState
+        className="h-full min-h-[200px]"
+        icon={<ShoppingCart className="size-8" />}
+        title={t('facturation:cart.empty')}
+      />
     )
   }
 

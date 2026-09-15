@@ -16,6 +16,7 @@ import { Button } from '../../shadcn/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../shadcn/card';
 import { Badge } from '../../shadcn/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../shadcn/table';
+import { EmptyState } from '../../ui/EmptyState';
 
 // Constante de module pour éviter la recréation à chaque render
 const EMPTY_PARAMS: Record<string, unknown> = {};
@@ -53,10 +54,13 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
     if (!results) {
         return (
             <Card className="flex-1 flex flex-col items-center justify-center border-dashed border-slate-300 bg-slate-50/50 animate-in fade-in duration-700">
-                <CardContent className="flex flex-col items-center justify-center py-20 text-slate-400">
-                    <Inbox className="size-20 mb-4 opacity-20" />
-                    <CardTitle className="text-xl font-black uppercase tracking-[0.2em] text-slate-500">{t('results.execute_prompt', 'En attente d\'exécution...')}</CardTitle>
-                    <CardDescription className="mt-2">{t('results.execute_prompt', { defaultValue: 'Exécutez une requête pour visualiser les résultats' })}</CardDescription>
+                <CardContent className="p-0">
+                    <EmptyState
+                        icon={<Inbox className="size-10 opacity-40" />}
+                        title={<span className="text-xl font-black uppercase tracking-[0.2em]">{t('results.execute_prompt', 'En attente d\'exécution...')}</span>}
+                        description={t('results.execute_prompt', { defaultValue: 'Exécutez une requête pour visualiser les résultats' })}
+                        className="py-20"
+                    />
                 </CardContent>
             </Card>
         );
@@ -132,9 +136,12 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             if (results.length === 0) {
                 return (
                     <Card className="border-dashed border-slate-300 bg-slate-50/50">
-                        <CardContent className="flex flex-col items-center justify-center py-20 text-slate-400 italic">
-                            <Inbox className="size-12 mb-2 text-slate-300" />
-                            <CardDescription className="text-base">{t('results.empty', 'Aucun résultat trouvé pour cette période.')}</CardDescription>
+                        <CardContent className="p-0">
+                            <EmptyState
+                                icon={<Inbox className="size-8" />}
+                                title={t('results.empty', 'Aucun résultat trouvé pour cette période.')}
+                                className="py-20"
+                            />
                         </CardContent>
                     </Card>
                 );

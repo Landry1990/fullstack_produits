@@ -10,6 +10,7 @@ import { CommandeProductToolbar } from './CommandeProductToolbar';
 import { CommandeProductRow } from './CommandeProductRow';
 import { CommandeProductExpandedRow } from './CommandeProductExpandedRow';
 import { CommandeDeleteModals } from './CommandeDeleteModals';
+import { EmptyState } from '../ui/EmptyState';
 
 interface CommandeProductTableProps {
     commandeProduits: CommandeProduit[];
@@ -111,10 +112,11 @@ export default function CommandeProductTable({
 
             <div className="flex-1 overflow-x-auto overflow-y-auto min-h-0">
                 {commandeProduits.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 py-12">
-                        <Package className="h-16 w-16 text-slate-200" />
-                        <p className="font-light">{t('orders:product_table.empty_state')}</p>
-                    </div>
+                    <EmptyState
+                        className="h-full"
+                        icon={<Package className="size-8" />}
+                        title={t('orders:product_table.empty_state')}
+                    />
                 ) : (
                     <Table className="min-w-full relative text-sm">
                         <TableHeader>

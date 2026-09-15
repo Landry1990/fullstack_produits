@@ -18,7 +18,8 @@ import { formatCurrency, formatNumber } from '../utils/formatters';
 import { Button } from './ui/Button';
 import { Select } from './ui/Select';
 import { Badge } from './shadcn/badge';
-import { Loader2 } from 'lucide-react';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
 
 // Color palette
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
@@ -126,7 +127,7 @@ export default function ModuleFinancier() {
   );
 
   const Recharts = useRecharts();
-  if (!Recharts) return <div className="flex items-center justify-center p-8"><Loader2 className="size-8 animate-spin text-slate-400" /></div>;
+  if (!Recharts) return <div className="p-8"><Skeleton className="h-64 w-full" /></div>;
   const { AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
   return (
@@ -258,7 +259,7 @@ export default function ModuleFinancier() {
           </div>
 
           {loadingVariance ? (
-            <div className="p-8 flex justify-center"><Loader2 className="size-8 animate-spin text-slate-400" /></div>
+            <div className="p-8"><Skeleton className="h-48 w-full" /></div>
           ) : varianceReport && (
             <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left: Summary & Insights */}
@@ -384,9 +385,7 @@ export default function ModuleFinancier() {
                 )}
               </div>
               {loadingCA ? (
-                <div className="h-80 flex items-center justify-center">
-                  <Loader2 className="size-8 animate-spin text-slate-400" />
-                </div>
+                <Skeleton className="h-80 w-full" />
               ) : (
                 <ResponsiveContainer width="100%" height={350}>
                   <AreaChart data={caChartData}>
@@ -438,9 +437,7 @@ export default function ModuleFinancier() {
                 )}
               </div>
               {loadingMarges ? (
-                <div className="h-80 flex items-center justify-center">
-                  <Loader2 className="size-8 animate-spin text-slate-400" />
-                </div>
+                <Skeleton className="h-80 w-full" />
               ) : (
                 <ResponsiveContainer width="100%" height={350}>
                   <BarChart data={margesChartData}>
@@ -480,9 +477,7 @@ export default function ModuleFinancier() {
                 )}
               </div>
               {loadingPredictions ? (
-                <div className="h-80 flex items-center justify-center">
-                  <Loader2 className="size-8 animate-spin text-slate-400" />
-                </div>
+                <Skeleton className="h-80 w-full" />
               ) : (
                 <ResponsiveContainer width="100%" height={350}>
                   <LineChart data={predictionsChartData}>
@@ -537,9 +532,7 @@ export default function ModuleFinancier() {
               </Select>
             </div>
             {loadingRepartition ? (
-              <div className="h-64 flex items-center justify-center">
-                <Loader2 className="size-8 animate-spin text-slate-400" />
-              </div>
+              <Skeleton className="h-64 w-full" />
             ) : repartition && repartition.data.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
@@ -562,9 +555,7 @@ export default function ModuleFinancier() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-64 flex items-center justify-center text-slate-400">
-                {t('common:no_data', 'Aucune donnée')}
-              </div>
+              <EmptyState title={t('common:no_data', 'Aucune donnée')} className="h-64" />
             )}
           </div>
         </div>
@@ -586,9 +577,7 @@ export default function ModuleFinancier() {
               </Select>
             </div>
             {loadingTop ? (
-              <div className="h-64 flex items-center justify-center">
-                <Loader2 className="size-8 animate-spin text-slate-400" />
-              </div>
+              <Skeleton className="h-64 w-full" />
             ) : topProducts && topProducts.data.length > 0 ? (
               <div className="overflow-x-auto max-h-72">
                 <table className="w-full text-sm table-fixed">
@@ -617,9 +606,7 @@ export default function ModuleFinancier() {
                 </table>
               </div>
             ) : (
-              <div className="h-64 flex items-center justify-center text-slate-400">
-                {t('common:no_data', 'Aucune donnée')}
-              </div>
+              <EmptyState title={t('common:no_data', 'Aucune donnée')} className="h-64" />
             )}
           </div>
         </div>
@@ -660,9 +647,7 @@ export default function ModuleFinancier() {
           </div>
           
           {loadingCategories ? (
-            <div className="h-64 flex items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-slate-400" />
-            </div>
+            <Skeleton className="h-64 w-full" />
           ) : categoryAnalysis && categoryAnalysis.data.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Bar Chart */}
@@ -715,9 +700,7 @@ export default function ModuleFinancier() {
               </div>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-slate-400">
-              {t('category.no_data', 'Aucune donnée pour cette catégorie')}
-            </div>
+            <EmptyState title={t('category.no_data', 'Aucune donnée pour cette catégorie')} className="h-64" />
           )}
           
           {/* Category Summary */}
@@ -750,9 +733,7 @@ export default function ModuleFinancier() {
           </h3>
           
           {loadingMarginAnalysis ? (
-            <div className="h-48 flex items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-slate-400" />
-            </div>
+            <Skeleton className="h-48 w-full" />
           ) : marginAnalysis ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
@@ -800,7 +781,7 @@ export default function ModuleFinancier() {
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center text-slate-400 px-3 py-2">{t('analysis.no_opportunity', 'Aucune opportunité détectée')}</td></tr>
+                          <tr><td colSpan={3} className="px-3 py-2"><EmptyState compact title={t('analysis.no_opportunity', 'Aucune opportunité détectée')} /></td></tr>
                         )}
                       </tbody>
                     </table>
@@ -852,7 +833,7 @@ export default function ModuleFinancier() {
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center text-slate-400 px-3 py-2">{t('analysis.no_dormant', 'Aucun produit dormant détecté')}</td></tr>
+                          <tr><td colSpan={3} className="px-3 py-2"><EmptyState compact title={t('analysis.no_dormant', 'Aucun produit dormant détecté')} /></td></tr>
                         )}
                       </tbody>
                     </table>
@@ -904,7 +885,7 @@ export default function ModuleFinancier() {
                             );
                           })
                         ) : (
-                          <tr><td colSpan={3} className="text-center text-slate-400 px-3 py-2">{t('analysis.optimized', 'Prix optimisés')}</td></tr>
+                          <tr><td colSpan={3} className="px-3 py-2"><EmptyState compact title={t('analysis.optimized', 'Prix optimisés')} /></td></tr>
                         )}
                       </tbody>
                     </table>
@@ -914,9 +895,7 @@ export default function ModuleFinancier() {
 
             </div>
           ) : (
-            <div className="h-48 flex items-center justify-center text-slate-400">
-              {t('common:no_data', 'Aucune donnée disponible')}
-            </div>
+            <EmptyState title={t('common:no_data', 'Aucune donnée disponible')} className="h-48" />
           )}
         </div>
       </div>
@@ -931,9 +910,7 @@ export default function ModuleFinancier() {
           </h3>
 
           {loadingSupplierAnalysis ? (
-            <div className="h-48 flex items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-slate-400" />
-            </div>
+            <Skeleton className="h-48 w-full" />
           ) : supplierAnalysis && supplierAnalysis.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm table-fixed">
@@ -1000,9 +977,7 @@ export default function ModuleFinancier() {
               </table>
             </div>
           ) : (
-             <div className="h-48 flex items-center justify-center text-slate-400">
-              {t('supplier.no_data_12m', 'Aucune donnée fournisseur disponible sur 12 mois')}
-            </div>
+            <EmptyState title={t('supplier.no_data_12m', 'Aucune donnée fournisseur disponible sur 12 mois')} className="h-48" />
           )}
         </div>
       </div>

@@ -31,7 +31,7 @@ export default function FacturationNotifications({
   if (!error && !successInfo) return null
 
   return (
-    <div className="toast toast-top toast-end z-[100] mt-16 mr-4">
+    <div className="fixed top-0 right-0 z-[100] mt-16 mr-4 flex flex-col items-end gap-2">
       {/* Notification d'Erreur */}
       {error && (
         <div role="alert" className="flex items-start gap-3 p-4 rounded-lg bg-[#fee2e2] text-[#7f1d1d] dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-lg max-w-md animate-in fade-in slide-in-from-right-5 duration-300">

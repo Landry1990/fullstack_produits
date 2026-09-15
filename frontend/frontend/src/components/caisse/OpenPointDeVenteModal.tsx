@@ -16,6 +16,8 @@ import {
 import { Card } from '../shadcn/card'
 import { Badge } from '../shadcn/badge'
 import { Button } from '../shadcn/button'
+import { EmptyState } from '../ui/EmptyState'
+import { Skeleton } from '../ui/Skeleton'
 import { getApiErrorDetail } from '../../utils/errorHandling'
 
 interface OpenPointDeVenteModalProps {
@@ -174,9 +176,10 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
   const canOpenSelected = selectedPoste && (!selectedPoste.est_actif || isSelectedMine)
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !(forceSelection && allPostes.length > 0)) onClose() }}>
       <DialogContent
         className="sm:max-w-2xl p-0 gap-0 overflow-hidden"
+        hideCloseButton={forceSelection && allPostes.length > 0}
         onInteractOutside={(e) => { if (forceSelection && allPostes.length > 0) e.preventDefault() }}
         onEscapeKeyDown={(e) => { if (forceSelection && allPostes.length > 0) e.preventDefault() }}
       >
@@ -198,22 +201,19 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
 
         <div className="p-6">
           {loadingPostes ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="size-8 text-indigo-600 animate-spin" />
-              <p className="text-sm text-slate-500">{t('open_point_vente.loading', { defaultValue: 'Chargement des points de vente...' })}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
             </div>
           ) : allPostes.length === 0 ? (
-            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-8 text-center">
-              <div className="size-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
-                <Store className="size-7" />
-              </div>
-              <p className="text-base font-semibold text-slate-700">
-                {t('open_point_vente.no_points', { defaultValue: 'Aucun point de vente disponible.' })}
-              </p>
-              <p className="text-sm text-slate-500 mt-2">
-                {t('open_point_vente.create_hint', { defaultValue: 'Créez-en un dans Paramètres > Points de vente.' })}
-              </p>
-            </div>
+            <EmptyState
+              className="bg-slate-50 rounded-2xl border border-slate-200"
+              icon={<Store className="size-7" />}
+              title={t('open_point_vente.no_points', { defaultValue: 'Aucun point de vente disponible.' })}
+              description={t('open_point_vente.create_hint', { defaultValue: 'Créez-en un dans Paramètres > Points de vente.' })}
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {allPostes.map((poste) => {

@@ -505,6 +505,7 @@
             "nb_orders": "Nombre de commandes",
             "nb_products": "Nombre de produits",
             "total_purchase": "Total Achats",
+            "supplier": "Fournisseur",
             "date": "Date",
             "product": "Désignation Produit",
             "cip": "CIP / Code",

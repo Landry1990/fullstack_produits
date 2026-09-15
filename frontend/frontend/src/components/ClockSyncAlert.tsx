@@ -73,7 +73,7 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] max-w-sm animate-in slide-in-from-bottom-5 duration-300">
+    <div className="fixed bottom-4 right-4 z-[9999] w-[calc(100vw_-_2rem)] max-w-sm animate-in slide-in-from-bottom-5 duration-300">
       <div className="rounded-2xl border-2 border-amber-400 bg-white shadow-2xl shadow-amber-500/20 overflow-hidden">
         {/* En-tête */}
         <div className="flex items-center gap-2 bg-amber-50 px-4 py-2.5 border-b border-amber-200">

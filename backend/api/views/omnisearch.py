@@ -1,11 +1,11 @@
 from django.core.cache import cache
-from django.db.models import Count, DecimalField, F, Q, Sum
+from django.db.models import Count, DecimalField, F, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import Client, Commande, CommandeProduit, Facture, Fournisseur, Produit
+from ..models import Caisse, Client, Commande, CommandeProduit, Facture, Fournisseur, Produit
 from ..models.paiements import PaiementFournisseur
 from ..serializers import FournisseurSerializer
 from ..serializers_optimized import (
@@ -21,7 +21,10 @@ class GlobalSearchView(APIView):
 
     def get(self, request):
         query = request.query_params.get('q', '').strip()
-        limit = int(request.query_params.get('limit', 5))
+        try:
+            limit = max(1, min(int(request.query_params.get('limit', 5)), 20))
+        except (TypeError, ValueError):
+            limit = 5
 
         if not query:
             return Response({
@@ -36,7 +39,7 @@ class GlobalSearchView(APIView):
         cache_key = f'omnisearch:{query}:{limit}'
         cached_data = cache.get(cache_key)
         
-        if cached_data:
+        if cached_data is not None:
             return Response(cached_data)
 
         # 1. PRODUITS
@@ -49,10 +52,40 @@ class GlobalSearchView(APIView):
         ).select_related('rayon', 'fournisseur', 'forme')[:limit]
 
         # 2. CLIENTS
+        paid_amount_subquery = Caisse.objects.filter(
+            facture=OuterRef('pk'),
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).values('facture').annotate(
+            total_paid=Sum('montant')
+        ).values('total_paid')[:1]
+
+        current_debt_subquery = Facture.objects.filter(
+            client=OuterRef('pk'),
+            status__in=['VAL', 'PAY'],
+            is_active=True
+        ).annotate(
+            paid_amount=Coalesce(
+                Subquery(paid_amount_subquery),
+                Value(0, output_field=DecimalField())
+            ),
+            remainder=F('total_ttc') - F('paid_amount')
+        ).filter(
+            remainder__gt=0
+        ).values('client').annotate(
+            total_debt=Sum('remainder')
+        ).values('total_debt')[:1]
+
         clients = Client.objects.filter(
-            Q(name__icontains=query) | 
+            Q(name__icontains=query) |
             Q(phone__icontains=query)
-        )[:limit]
+        ).annotate(
+            current_debt_annotated=Coalesce(
+                Subquery(current_debt_subquery, output_field=DecimalField()),
+                Value(0, output_field=DecimalField())
+            )
+        ).prefetch_related('ayants_droit')[:limit]
 
         # 3. FACTURES (Ventes)
         factures = Facture.objects.filter(
@@ -60,8 +93,6 @@ class GlobalSearchView(APIView):
             Q(client_name_override__icontains=query) |
             Q(client__name__icontains=query)
         ).select_related('client', 'created_by', 'validated_by', 'ayant_droit').prefetch_related('produits__produit')[:limit]
-
-        from django.db.models import OuterRef, Subquery, Value
 
         # 4. COMMANDES (Optimisé avec Subqueries pour éviter les doublons SQL)
         total_items_subquery = CommandeProduit.objects.filter(
@@ -109,7 +140,7 @@ class GlobalSearchView(APIView):
             'fournisseurs': FournisseurSerializer(fournisseurs, many=True).data,
         }
         
-        # Cache the result for 5 minutes (300 seconds)
-        cache.set(cache_key, response_data, timeout=300)
+        # Cache the result for 1 minute
+        cache.set(cache_key, response_data, timeout=60)
         
         return Response(response_data)

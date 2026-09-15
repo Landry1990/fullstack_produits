@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { ProduitModel, User } from '../../types'
 import { safeStorage } from '../../utils/storage'
 import api from '../../services/api'
@@ -28,6 +29,10 @@ interface ProductSearchSectionProps {
   onScanKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
 }
 
+const RECENT_PRODUCTS_KEY = 'facturation_recent_products'
+const RECENT_STALE_TIME = 1000 * 60
+const RECENT_GC_TIME = 1000 * 60 * 5
+
 const ProductSearchSection = React.memo(({
   searchQuery,
   setSearchQuery,
@@ -48,48 +53,53 @@ const ProductSearchSection = React.memo(({
   onScanKeyDown,
 }: ProductSearchSectionProps) => {
   const [searchMode, setSearchMode] = useState<SearchMode>('products')
-  const [recentProducts, setRecentProducts] = useState<SearchResult[]>([])
+  const [recentVersion, setRecentVersion] = useState(0)
 
-  const RECENT_PRODUCTS_KEY = 'facturation_recent_products'
+  const { data: recentProductsData } = useQuery<SearchResult[]>({
+    queryKey: ['facturation', 'recent-products', recentVersion],
+    queryFn: async () => {
+      const stored = getRecentProducts()
+      const ids = stored.map(p => p.id).filter((id): id is number => typeof id === 'number')
+      if (ids.length === 0) return []
+
+      try {
+        const { data } = await api.get<ProduitModel[]>('produits/recent/', {
+          params: { ids: ids.join(',') }
+        })
+        const results = Array.isArray(data) ? data : (data as { results?: ProduitModel[] }).results || []
+        const byId = new Map<number, SearchResult>(
+          results.map(p => [p.id, p as unknown as SearchResult])
+        )
+        return stored.map(p => {
+          const fresh = byId.get(p.id)
+          if (!fresh) return p
+          return { ...p, ...fresh } as SearchResult
+        })
+      } catch {
+        return stored
+      }
+    },
+    staleTime: RECENT_STALE_TIME,
+    gcTime: RECENT_GC_TIME
+  })
+
+  const recentProducts = recentProductsData ?? getRecentProducts()
 
   useEffect(() => {
-    const loadAndRefresh = async () => {
-      try {
-        const parsed = getRecentProducts()
-        const refreshed = await Promise.all(parsed.map(async (p) => {
-          try {
-            const { data } = await api.get<ProduitModel>(`produits/${p.id}/`)
-            return {
-              ...p,
-              stock: data.stock,
-              stock_minimum: data.stock_minimum,
-              selling_price: data.selling_price,
-              cip1: data.cip1 ?? p.cip1,
-              rayon_name: data.rayon_name ?? p.rayon_name,
-              active_promis_count: data.active_promis_count ?? p.active_promis_count
-            } as SearchResult
-          } catch {
-            return p
-          }
-        }))
-        setRecentProducts(refreshed)
-      } catch { /* ignore */ }
+    if (recentProductsData) {
+      safeStorage.setItem(RECENT_PRODUCTS_KEY, JSON.stringify(recentProductsData), 'session')
     }
-    loadAndRefresh()
+  }, [recentProductsData])
 
-    const handleUpdate = (e: CustomEvent<SearchResult[]>) => {
-      setRecentProducts(e.detail)
+  useEffect(() => {
+    const handleUpdate = () => {
+      setRecentVersion(v => v + 1)
     }
     window.addEventListener('recent-products-updated', handleUpdate as EventListener)
     return () => {
       window.removeEventListener('recent-products-updated', handleUpdate as EventListener)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    safeStorage.setItem(RECENT_PRODUCTS_KEY, JSON.stringify(recentProducts), 'session')
-  }, [recentProducts])
 
   const {
     packResults,
@@ -98,8 +108,7 @@ const ProductSearchSection = React.memo(({
     setSelectedDci,
     dciProducts,
     handleKeyDown,
-    getItemProps,
-    fetchDciProducts
+    getItemProps
   } = useFacturationSearch({ searchQuery, searchMode })
 
   // Wrapper that clears search after adding product
@@ -118,7 +127,6 @@ const ProductSearchSection = React.memo(({
   const handleSelectDci = (dci: DciResult) => {
     setSelectedDci(dci)
     setSearchQuery('')
-    fetchDciProducts(dci.id)
   }
 
   // Get current loading state (simplified - you can enhance useFacturationSearch to expose these)

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Loader2,
   AlertTriangle,
   FolderOpen,
   User,
@@ -22,6 +21,8 @@ import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
 import type { CaisseTransaction, MouvementCaisse } from '../../types';
 import { normalizeNumberInput } from '../../utils/formatters';
 import { Button } from '../shadcn/button';
+import { EmptyState } from '../ui/EmptyState';
+import SkeletonTable from '../ui/SkeletonTable';
 import { cn } from '../../lib/utils';
 
 interface Props {
@@ -73,18 +74,16 @@ export default function JournalCaisseTable({ state }: Props) {
 
       <div className="flex-1 overflow-auto">
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-64 bg-white gap-4">
-            <Loader2 className="size-8 text-emerald-600 animate-spin" />
-            <p className="text-slate-500 font-medium animate-pulse">{t('table.loading')}</p>
+          <div className="p-4 bg-white">
+            <SkeletonTable rows={8} columns={8} />
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 text-slate-400 gap-3 text-center">
-            <div className="size-20 bg-slate-100 rounded-full flex items-center justify-center mb-2 text-slate-400 shadow-inner">
-              <FolderOpen className="size-10" />
-            </div>
-            <p className="text-lg font-bold italic text-slate-600">{t('table.no_transaction')}</p>
-            <p className="text-xs opacity-60 max-w-xs">{t('table.no_transaction_desc') || "Aucune opération ne correspond à vos filtres actuels."}</p>
-          </div>
+          <EmptyState
+            icon={<FolderOpen className="size-8" />}
+            title={t('table.no_transaction')}
+            description={t('table.no_transaction_desc') || "Aucune opération ne correspond à vos filtres actuels."}
+            className="p-12"
+          />
         ) : (
           <>
             {/* Vue Mobile */}
@@ -199,6 +198,14 @@ export default function JournalCaisseTable({ state }: Props) {
                       <tr
                         className={cn("hover:bg-slate-50/50 transition-colors group", transaction.isReleveGroup ? 'bg-emerald-50/50 cursor-pointer border-l-2 border-l-emerald-500 ring-1 ring-inset ring-emerald-500/10' : '')}
                         onClick={() => transaction.isReleveGroup && transaction.releve_id && toggleReleve(transaction.releve_id)}
+                        tabIndex={transaction.isReleveGroup ? 0 : undefined}
+                        aria-expanded={transaction.isReleveGroup ? !!isExpanded : undefined}
+                        onKeyDown={(e) => {
+                          if (transaction.isReleveGroup && transaction.releve_id && (e.key === 'Enter' || e.key === ' ')) {
+                            e.preventDefault();
+                            toggleReleve(transaction.releve_id);
+                          }
+                        }}
                       >
                         <td className="font-mono text-xs whitespace-nowrap px-3 py-2">
                           <div className="flex flex-col">

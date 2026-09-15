@@ -15,6 +15,8 @@ import {
     TableRow,
 } from '../shadcn/table';
 import { cn } from '../../lib/utils';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
 
 interface ClientCreditsListProps {
     credits: ClientCredit[];
@@ -169,23 +171,26 @@ export const ClientCreditsList: React.FC<ClientCreditsListProps> = ({
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="h-64 text-center text-slate-500">
-                                        <div className="flex flex-col items-center justify-center gap-3">
-                                            <Loader2 className="size-8 animate-spin text-emerald-600" />
-                                            <span className="text-sm">{t('common:loading')}</span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i} className="border-b border-slate-100">
+                                        <TableCell className="px-4 py-3"><Skeleton className="h-4 w-20" /></TableCell>
+                                        <TableCell className="px-4 py-3"><Skeleton className="h-4 w-20" /></TableCell>
+                                        <TableCell className="px-4 py-3"><Skeleton className="h-4 w-28" /></TableCell>
+                                        <TableCell className="px-4 py-3"><Skeleton className="h-4 w-20" /></TableCell>
+                                        <TableCell className="pl-4 pr-8 py-3"><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
+                                        <TableCell className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
+                                        <TableCell className="px-4 py-3"><Skeleton className="h-7 w-20 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))
                             ) : credits.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="h-64 text-center">
-                                        <div className="flex flex-col items-center justify-center gap-3 text-slate-400">
-                                            <div className="p-3 bg-slate-50 rounded-full">
-                                                <FileText className="size-8 text-slate-300" />
-                                            </div>
-                                            <p className="text-sm font-medium">{t('list.no_results')}</p>
-                                        </div>
+                                        <EmptyState
+                                            compact
+                                            icon={<FileText className="size-6" />}
+                                            title={t('list.no_results')}
+                                            className="h-full"
+                                        />
                                     </TableCell>
                                 </TableRow>
                             ) : (

@@ -39,7 +39,7 @@ export default function Creances() {
             {/* Header Area */}
             <div className="flex flex-col gap-6">
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white/50">
+                    <div className="p-6 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-white/50">
                         <div>
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">

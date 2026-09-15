@@ -172,7 +172,7 @@ export default function CatalogDCIAddModal({
                 >
                   <input
                     type="checkbox"
-                    className="checkbox checkbox-secondary mt-1"
+                    className="mt-1 size-4 rounded border-base-300 accent-secondary cursor-pointer"
                     checked={isSelected}
                     disabled={alreadyLinked}
                     onChange={() => !alreadyLinked && toggleSelect(prod.id)}

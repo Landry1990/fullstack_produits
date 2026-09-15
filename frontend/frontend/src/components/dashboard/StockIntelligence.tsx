@@ -12,6 +12,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import type { TFunction } from 'i18next';
 import { formatDate } from '../../utils/dateUtils';
+import { EmptyState } from '../ui/EmptyState';
 
 interface StockStats {
   low_stock?: { value?: number };
@@ -167,10 +168,12 @@ export default function StockIntelligence({
 
             <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
               {expiringLots.length === 0 ? (
-                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center py-6 border-2 border-dashed border-slate-200 rounded-xl h-full flex items-center justify-center">
-                  <CalendarDays className="size-8 mb-2 text-slate-300" />
-                  {t('alerts.no_expiry_alerts')}
-                </div>
+                <EmptyState
+                  compact
+                  icon={<CalendarDays className="size-6" />}
+                  title={<span className="text-[10px] font-bold uppercase tracking-widest">{t('alerts.no_expiry_alerts')}</span>}
+                  className="border-2 border-dashed border-slate-200 rounded-xl h-full"
+                />
               ) : (
                 expiringLots.slice(0, 10).map((lot) => {
                   const today = getServerDate();
@@ -316,10 +319,11 @@ export default function StockIntelligence({
                   </div>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-slate-300 text-center h-full">
-                  <TrendingUp className="size-12 mb-2" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">{t('overstock.none_detected', 'Aucun surstock détecté')}</span>
-                </div>
+                <EmptyState
+                  icon={<TrendingUp className="size-8" />}
+                  title={<span className="text-[10px] font-bold uppercase tracking-widest">{t('overstock.none_detected', 'Aucun surstock détecté')}</span>}
+                  className="py-12 h-full"
+                />
               )}
             </div>
 
@@ -445,10 +449,12 @@ export default function StockIntelligence({
             </div>
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
               {lowStockItems.length === 0 ? (
-                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center py-6 border-2 border-dashed border-slate-200 rounded-xl h-full flex items-center justify-center">
-                  <ShoppingBag className="size-8 mb-2 text-slate-300" />
-                  {t('alerts.no_stock_alerts')}
-                </div>
+                <EmptyState
+                  compact
+                  icon={<ShoppingBag className="size-6" />}
+                  title={<span className="text-[10px] font-bold uppercase tracking-widest">{t('alerts.no_stock_alerts')}</span>}
+                  className="border-2 border-dashed border-slate-200 rounded-xl h-full"
+                />
               ) : (
                 lowStockItems.slice(0, 10).map((item) => (
                   <div key={item.id} className={`flex flex-col gap-1 p-3 rounded-xl border transition-all ${item.stock <= 0 ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-amber-50 border-amber-100'}`}>

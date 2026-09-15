@@ -755,8 +755,17 @@ class DashboardCoreMixin(viewsets.ViewSet):
         revenue_map = {item['day'].date(): float(item['total']) for item in daily_revenue}
         ventes_map = {item['day'].date(): item['nb_ventes'] for item in daily_revenue}
 
-        # Utiliser MarginService pour calculer la marge par jour (cohérent avec margin_today)
+        # Utiliser MarginService pour calculer les marges des 7 jours en une seule passe SQL groupée
         from ...services.margin_service import MarginService
+
+        try:
+            margins_by_day = MarginService.calculate_daily_margin_with_discounts(
+                date_debut=start_date.date(),
+                date_fin=end_date.date(),
+                exclude_is_divers=False
+            )
+        except Exception:
+            margins_by_day = {}
 
         DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
         while current_date <= end_date.date():
@@ -764,17 +773,12 @@ class DashboardCoreMixin(viewsets.ViewSet):
             labels.append(day_label)
             day_ca = revenue_map.get(current_date, 0)
 
-            # Calcul marge du jour via MarginService (même formule que margin_today)
-            try:
-                margin_stats = MarginService.calculate_period_margin_with_discounts(
-                    date_debut=current_date,
-                    date_fin=current_date + timedelta(days=1),
-                    exclude_is_divers=False
-                )
+            margin_stats = margins_by_day.get(current_date)
+            if margin_stats:
                 day_cout = float(margin_stats['cout_achat_total'])
                 day_marge = float(margin_stats['marge_brute'])
                 day_marge_pct = float(margin_stats['marge_pct'])
-            except Exception:
+            else:
                 day_cout = 0
                 day_marge = 0
                 day_marge_pct = 0
@@ -794,7 +798,8 @@ class DashboardCoreMixin(viewsets.ViewSet):
             'marges': marges_data,
             'marges_pct': marges_pct_data,
         }
-        DashboardCache.set_revenue_chart(user_id, '7d', response_data)
+        # Cache 45s : le graphique change souvent mais ne mérite pas une requête par seconde
+        DashboardCache.set_revenue_chart(user_id, '7d', response_data, ttl=DashboardCache.CHART_FAST_TTL)
         return Response(response_data)
     
     @action(detail=False, methods=['get'])
