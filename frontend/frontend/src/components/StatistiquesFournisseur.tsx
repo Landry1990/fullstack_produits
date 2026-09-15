@@ -20,6 +20,9 @@ import { Input } from './ui/Input';
 import { LocalizedDateInput } from './LocalizedDateInput';
 import { Select } from './ui/Select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './shadcn/table';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
+import SkeletonTable from './ui/SkeletonTable';
 import { logger } from '../utils/logger'
 import financeService from '../services/financeService';
 import fournisseurService from '../services/fournisseurService';
@@ -208,7 +211,7 @@ export default function StatistiquesFournisseur() {
   }, [stats]);
 
   const Recharts = useRecharts();
-  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  if (!Recharts) return <div className="p-3 sm:p-6"><Skeleton className="h-96 w-full" /></div>;
   const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } = Recharts;
 
   return (
@@ -253,12 +256,12 @@ export default function StatistiquesFournisseur() {
 
       {/* Tabs Navigation */}
       <div className="w-full max-w-full overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
-        <div className="inline-flex bg-base-100 p-1 rounded-lg border border-base-200 gap-1 w-max min-w-full sm:min-w-0 sm:w-fit">
-        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'ventes' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('ventes')}>{t('tabs.sales')}</a>
-        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'performance' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('performance')}>{t('tabs.performance')}</a>
-        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'prix' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('prix')}>{t('tabs.price_comparison')}</a>
-        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'concentration' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('concentration')}>{t('tabs.concentration')}</a>
-        <a className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'paiements' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('paiements')}>{t('tabs.payments')}</a>
+        <div role="tablist" className="inline-flex bg-base-100 p-1 rounded-lg border border-base-200 gap-1 w-max min-w-full sm:min-w-0 sm:w-fit">
+        <a role="tab" aria-selected={activeTab === 'ventes'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'ventes' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('ventes')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('ventes'); } }}>{t('tabs.sales')}</a>
+        <a role="tab" aria-selected={activeTab === 'performance'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'performance' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('performance')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('performance'); } }}>{t('tabs.performance')}</a>
+        <a role="tab" aria-selected={activeTab === 'prix'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'prix' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('prix')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('prix'); } }}>{t('tabs.price_comparison')}</a>
+        <a role="tab" aria-selected={activeTab === 'concentration'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'concentration' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('concentration')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('concentration'); } }}>{t('tabs.concentration')}</a>
+        <a role="tab" aria-selected={activeTab === 'paiements'} tabIndex={0} className={`px-4 py-1.5 text-sm font-medium rounded-md cursor-pointer transition-colors whitespace-nowrap ${activeTab === 'paiements' ? 'bg-primary text-primary-content' : 'text-base-content/60 hover:bg-base-200'}`} onClick={() => setActiveTab('paiements')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('paiements'); } }}>{t('tabs.payments')}</a>
         </div>
       </div>
 
@@ -345,8 +348,8 @@ export default function StatistiquesFournisseur() {
                     <TableBody>
                         {stats.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="px-3 py-8 text-center">
-                                    {t('sales_tab.table.no_data')}
+                                <TableCell colSpan={6} className="px-3 py-8">
+                                    <EmptyState compact title={t('sales_tab.table.no_data')} />
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -387,8 +390,8 @@ export default function StatistiquesFournisseur() {
           </Card>
 
           {loadingAnalysis ? (
-            <div className="h-64 flex items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-slate-400" />
+            <div className="p-4">
+              <SkeletonTable rows={5} columns={5} />
             </div>
           ) : (
             <Card className="overflow-hidden">
@@ -406,8 +409,8 @@ export default function StatistiquesFournisseur() {
                   <TableBody>
                     {!supplierAnalysis?.length ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="px-3 py-8 text-center text-slate-500">
-                          {t('performance_tab.no_data', { defaultValue: 'Aucune analyse disponible' })}
+                        <TableCell colSpan={5} className="px-3 py-8">
+                          <EmptyState compact title={t('performance_tab.no_data', { defaultValue: 'Aucune analyse disponible' })} />
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -465,8 +468,8 @@ export default function StatistiquesFournisseur() {
             </div>
 
             {loadingPrix ? (
-                <div className="h-64 flex items-center justify-center">
-                    <Loader2 className="size-8 animate-spin" />
+                <div className="p-4">
+                    <SkeletonTable rows={5} columns={4} />
                  </div>
             ) : (
                 <Card className="bg-base-100 shadow-sm border border-base-200">
@@ -525,9 +528,7 @@ export default function StatistiquesFournisseur() {
                     <CardTitle>{t('concentration_tab.title')}</CardTitle>
                     
                     {loadingRepartition ? (
-                        <div className="h-64 flex items-center justify-center">
-                            <Loader2 className="size-8 animate-spin" />
-                        </div>
+                        <Skeleton className="h-64 w-full" />
                     ) : (
                         <div className="flex flex-col md:flex-row items-center justify-center gap-8">
                             <div className="h-80 w-80">
@@ -687,14 +688,18 @@ export default function StatistiquesFournisseur() {
                   <TableBody>
                     {loadingPaiements ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="px-3 py-8 text-center">
-                          <Loader2 className="size-6 animate-spin mx-auto" />
+                        <TableCell colSpan={7} className="px-3 py-6">
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-2/3" />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ) : paiements.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="px-3 py-8 text-center text-slate-500">
-                          {t('payments_tab.table.no_data')}
+                        <TableCell colSpan={7} className="px-3 py-8">
+                          <EmptyState compact title={t('payments_tab.table.no_data')} />
                         </TableCell>
                       </TableRow>
                     ) : (

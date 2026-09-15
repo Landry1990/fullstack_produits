@@ -1,5 +1,6 @@
 ﻿import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import { isToday, isYesterday, parseISO } from 'date-fns';
 import { getLocalDateString, formatTime, formatDateLong } from '../utils/dateUtils';
@@ -204,7 +205,7 @@ const JournalAudit: React.FC = () => {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-        } catch { alert(t('messages.export_error')); }
+        } catch { gooeyToast.error(t('messages.export_error')); }
     };
 
     const handleResetFilters = () => {
@@ -253,7 +254,7 @@ const JournalAudit: React.FC = () => {
 
             {/* ── KPI Stats ────────────────────────────────────────── */}
             {statistics && (
-                <div className="grid grid-cols-4 gap-3 mb-5">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                     {[
                         { label: 'Total logs', value: formatNumber(statistics.total_logs), color: 'text-slate-800', sub: 'depuis le début' },
                         { label: 'Dernières 24h', value: statistics.recent_activity.last_24h, color: 'text-indigo-700', sub: 'aujourd\'hui' },

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, Database, AlertCircle } from 'lucide-react';
 import type { Inventaire } from '../../../types';
@@ -32,11 +33,24 @@ export function InventaireMergeModal({
 }: InventaireMergeModalProps) {
     const { t } = useTranslation(['stock', 'common']);
 
+    // Fermeture du modal via la touche Échap
+    useEffect(() => {
+        if (!showMergeModal) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setShowMergeModal(false);
+                setSelectedMergeSource(null);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showMergeModal, setShowMergeModal, setSelectedMergeSource]);
+
     if (!showMergeModal) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowMergeModal(false)}>
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" role="dialog" aria-modal="true" aria-label={t('inventaire.merge.modal_title')} onClick={e => e.stopPropagation()}>
                 <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
                     <div className="size-12 rounded-xl bg-blue-50 flex items-center justify-center">
                         <ArrowUpDown className="h-6 w-6 text-blue-500" />
@@ -74,6 +88,7 @@ export function InventaireMergeModal({
                         {viewMode === 'LIST' ? (
                             <select
                                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                aria-label={t('inventaire.modals.target_inventory')}
                                 value={selectedMergeSource || ''}
                                 onChange={(e) => setSelectedMergeSource(e.target.value ? Number(e.target.value) : null)}
                             >
@@ -90,6 +105,7 @@ export function InventaireMergeModal({
                         ) : (
                             <select
                                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-60"
+                                aria-label={t('inventaire.merge.select_source')}
                                 value={selectedMergeSource || ''}
                                 onChange={(e) => setSelectedMergeSource(e.target.value ? Number(e.target.value) : null)}
                                 disabled={loadingMergeCandidates}

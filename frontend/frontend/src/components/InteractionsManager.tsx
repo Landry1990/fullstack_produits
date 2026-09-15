@@ -99,6 +99,16 @@ export default function InteractionsManager() {
   useEffect(() => { fetchInteractions(); }, [fetchInteractions]);
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
+  // Fermeture du modal via la touche Échap
+  useEffect(() => {
+    if (!showModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowModal(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showModal]);
+
   const openAddModal = () => {
     setEditingId(null);
     setFormSubA('');
@@ -204,7 +214,7 @@ export default function InteractionsManager() {
 
       {/* Actions bar */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           <input
             type="text"
             placeholder={t('products:interactions.search_placeholder')}
@@ -318,13 +328,14 @@ export default function InteractionsManager() {
       {/* Modal Add/Edit */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowModal(false)}>
-          <div className="bg-base-100 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-base-100 rounded-2xl p-6 w-full max-w-lg shadow-2xl" role="dialog" aria-modal="true" aria-label={editingId ? 'Modifier l\'interaction' : 'Nouvelle interaction'} onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-bold mb-4">{editingId ? 'Modifier l\'interaction' : 'Nouvelle interaction'}</h2>
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider opacity-50">Substance A</label>
                 <select
                   className="w-full rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mt-1"
+                  aria-label="Substance A"
                   value={formSubA}
                   onChange={e => setFormSubA(Number(e.target.value))}
                 >
@@ -336,6 +347,7 @@ export default function InteractionsManager() {
                 <label className="text-xs font-bold uppercase tracking-wider opacity-50">Substance B</label>
                 <select
                   className="w-full rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mt-1"
+                  aria-label="Substance B"
                   value={formSubB}
                   onChange={e => setFormSubB(Number(e.target.value))}
                 >
@@ -347,6 +359,7 @@ export default function InteractionsManager() {
                 <label className="text-xs font-bold uppercase tracking-wider opacity-50">Gravité</label>
                 <select
                   className="w-full rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mt-1"
+                  aria-label="Gravité"
                   value={formGravity}
                   onChange={e => setFormGravity(e.target.value)}
                 >
@@ -359,8 +372,9 @@ export default function InteractionsManager() {
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider opacity-50">Description / Conduite à tenir</label>
                 <textarea
-                  className="textarea textarea-bordered w-full rounded-xl bg-base-200/50 border-none mt-1"
+                  className="w-full rounded-xl bg-base-200/50 border-none mt-1"
                   rows={3}
+                  aria-label="Description / Conduite à tenir"
                   value={formDescription}
                   onChange={e => setFormDescription(e.target.value)}
                   placeholder={t('products:interactions.risk_placeholder')}

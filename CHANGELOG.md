@@ -2,6 +2,534 @@
 
 ---
 
+## 2026-09-15 — Validation CIP + coefficient & marge dans le formulaire produit
+
+### 🐛 Correctif
+
+`ProduitFormModal.tsx` : le champ **Coefficient de marge** affichait la valeur calculée en `toFixed(3)` (ex. `1.345`) avec `step="0.01"` → la validation native du navigateur bloquait la soumission (« Please select a valid value… ») et forçait à modifier le taux. `step` passé à `"any"`.
+
+### ✨ Amélioration
+
+Les 4 champs CIP doivent être vides ou contenir exactement **7 ou 13 chiffres**.
+
+- **Validation au blur** : quitter un champ CIP invalide affiche une bordure rouge + message inline « Le CIP doit contenir 7 ou 13 chiffres » (`aria-invalid`).
+- **Saisie contrainte** : `inputMode="numeric"` + filtrage des caractères non numériques à la frappe.
+- **Blocage à la soumission** : tout CIP invalide bloque l'enregistrement avec toast d'erreur.
+- Les 4 champs identiques ont été refactorisés en `.map` sur `CIP_FIELDS`.
+- **Marge négative** : bandeau d'alerte rouge (`role="alert"`) sous la section Tarification quand PV HT < PR HT + `gooeyToast.warning` non bloquant à la soumission.
+
+### 🎨 UI/UX du modal produit
+
+- **Footer sticky** : Annuler/Enregistrer toujours visibles en bas du modal (fond `bg-white/95` + `backdrop-blur`), plus besoin de scroller jusqu'en bas.
+- **Icônes Lucide** : `💾` remplacé par `Save`, `⚠️` du bandeau d'erreur par `AlertCircle` (avec `role="alert"`).
+- **Contraste** : titres de sections passés de `text-slate-300` (illisible) à `text-slate-500`.
+- **Auto-scroll** : à l'apparition d'une erreur, le formulaire remonte en douceur jusqu'au bandeau (`scrollIntoView` + `scroll-mt` pour ne pas passer sous le header sticky).
+
+### Fichiers modifiés
+
+- `components/ProduitFormModal.tsx`
+- `public/locales/fr/products.json`, `public/locales/en/products.json` — clés `form.cip_invalid`, `form.negative_margin_warning`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur
+- `npm run build` : OK
+- `deploy.ps1 -Target frontend` : OK
+
+---
+
+## 2026-09-15 — Historique d'achats : colonne Fournisseur + date courte + UI/UX
+
+### ✨ Amélioration
+
+Écran **Historique des Achats** (`HistoriqueAchats.tsx`) : le tableau ne montrait pas le fournisseur et affichait les dates au format long (« dimanche 13 septembre 2026 »).
+
+- **Colonne Fournisseur** ajoutée sur les deux onglets :
+  - *Résumé par jour* : agrégation passée de `(jour)` à `(jour, fournisseur)` — chaque ligne affiche le nom du fournisseur (icône Truck + nom tronqué, `—` si aucun).
+  - *Détails par produit* : agrégation passée à `(produit, fournisseur)` — une ligne par couple produit/fournisseur.
+- **Date courte** : `formatDate` (dd/mm/yyyy) remplace `formatDateLong` dans le tableau résumé.
+- **Export Excel** : colonne Fournisseur ajoutée aux deux onglets.
+- **UI/UX** : spinner de chargement remplacé par `SkeletonTable`, état vide remplacé par `EmptyState` (composants standardisés), clés de lignes corrigées (`date+fournisseur` / `produit+fournisseur`).
+
+### Fichiers modifiés
+
+- `backend/api/views/historique_achats.py` — groupement `values('jour','fournisseur_id','fournisseur__name')` et `values('produit_*','commande__fournisseur_*')`
+- `components/HistoriqueAchats.tsx`
+- `public/locales/fr/orders.json`, `public/locales/en/orders.json` — clé `history.columns.supplier`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur
+- `npm run build` : OK
+- `deploy.ps1 -Target all` : frontend + backend déployés
+
+---
+
+## 2026-09-13 — Accessibilité : passe partielle (a11y quick wins)
+
+### ♿ Accessibilité
+
+Passe a11y démarrée par sous-agents (interrompus par erreur de connexion — leurs éditions étaient valides) puis complétée en direct. `npx tsc --noEmit` : 0 erreur.
+
+- **Modales custom** : `role="dialog"` + `aria-modal="true"` + `aria-label`/`aria-labelledby` ajoutés sur ~20 modales n'utilisant pas Radix (ProduitFormModal, ClientFormModal, modales avoirs/caisse/inventaire/facturation, InteractionsManager, StockHealthSettingsModal, ImportProductsModal, InventaireMergeModal, PurchaseHistoryDrawer, ObjectivesSettings, FeedbackModal…).
+- **`PremiumModal`** (composant partagé) : `role="dialog"` + `aria-modal` + `aria-label` ajoutés une seule fois — bénéficie à tous les consommateurs (LotSelectionModal, CatalogDCIAddModal, MessagingModal…). ESC déjà géré.
+- **Fermeture ESC** ajoutée sur les modales qui ne l'avaient pas : `ObjectivesSettings`, `FeedbackModal`, zoom image de `MessagingModal`.
+- **Divs cliquables** : `role="button"`/`role="checkbox"` + `tabIndex` + `onKeyDown` (Enter/Espace) sur les éléments interactifs non-boutons (cartes toggle de ProduitFormModal, toggle FournisseursList, items Clients…).
+- **Boutons icône** : `aria-label` ajoutés (✕ de fermeture, navigation…).
+- **Focus clavier global** : `:focus-visible { outline: 2px solid var(--color-primary) }` dans `index.css`.
+- **Backdrops** : `aria-hidden="true"` sur les overlays purement décoratifs (AvoirsForm…).
+
+### Reste à faire (repris dans la roadmap, item H)
+
+- Audit des contrastes et focus trap dans les modales custom (actuellement ESC ok mais pas de piège à focus).
+- `htmlFor`/`id` sur les formulaires non couverts.
+- Landmark `<main>` à vérifier dans `Layout.tsx`.
+
+### Fichiers modifiés (extraits)
+
+- `components/common/PremiumModal.tsx`, `components/common/FeedbackModal.tsx`, `components/common/MessagingModal.tsx`
+- `components/dashboard/ObjectivesSettings.tsx`
+- `components/avoirs/AvoirsForm.tsx`
+- + les fichiers touchés par les sous-agents avant interruption (~20 modales/sections listées ci-dessus)
+- `src/index.css` (`:focus-visible`)
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 757 modules.
+- `deploy.ps1 -Target frontend` : déploiement OK.
+
+---
+
+## 2026-09-12 — Dark mode : complétion de la couverture des couleurs
+
+### ✨ UI/UX
+
+Le thème sombre (`theme-midnight`) existait déjà : toggle dans `UserHeader`/`FacturationHeader`, persistance `localStorage`, boot dans `index.html`, variant Tailwind `dark:` (`@custom-variant`) et un large bloc de surcharges dans `index.css`. Cette passe comble les trous de couverture détectés — **modifications limitées à `src/index.css`**.
+
+- **Pastels manquants** : `bg-{sky,cyan,teal,violet,fuchsia,pink,lime}-50/100` (+variantes `/NN`) → versions sombres translucides (~34 usages qui restaient blancs criards).
+- **Variantes d'opacité** : `bg-{color}-50/NN` et `-100/NN` pour les couleurs déjà couvertes (amber, emerald, red, blue, indigo, orange, purple, yellow, green, rose).
+- **Tons 200/300 colorés** : `bg-{color}-200/300` → translucide 0.22 (badges, barres).
+- **Bordures colorées** : `border-{color}-100/200/300` complété pour orange, purple, yellow, green, rose, sky, cyan, teal, violet, fuchsia, pink, lime + `-100` des couleurs existantes (~200 usages).
+- **Textes colorés** : `text-{color}-600/700/800` → nuance 400, `-900` → nuance 300 pour sky, cyan, teal, violet, fuchsia, pink, lime, yellow, green, rose + `orange-800/900`, `purple-800/900`.
+- **Dégradés clairs** : `from/via/to-{color}-50/100/200` et `*-white` → `--tw-gradient-from/via/to` remappés vers les teintes nuit ou `base-*` (16 sites : Perimes, HistoriqueAchats, FacturesTable, Transformations, CategoryManager, SalesQuickStats, SuggestionCommandeModal, LoginShadcn).
+- **Hovers manquants** : `hover:bg-{color}-50/100` pour les nouvelles couleurs + `hover:bg-white`.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/index.css` (uniquement)
+
+### Vérifications
+
+- `npm run build` : réussi, 4 757 modules.
+- `deploy.ps1 -Target frontend` : déploiement OK.
+- `.devin/notes/ui-ux-roadmap.md` : item E « Mode sombre » passé à `[x]`.
+
+---
+
+## 2026-09-12 — Passe responsive mobile/tablette (quick wins sur toute l'app)
+
+### ✨ UI/UX
+
+Passe responsive « quick wins » réalisée par 3 sous-agents sur zones disjointes + contrôle. **Modifications limitées aux classes CSS** (`className`) — aucun changement de logique, d'état ou de comportement.
+
+- **Grids non responsives** : ~45 `grid grid-cols-N` sans variante mobile → `grid-cols-1 sm:grid-cols-2` / `lg:grid-cols-N` (cartes KPI, stats, formulaires, paires de champs date/quantité).
+- **Tables sans conteneur scrollable** : ajout d'`overflow-x-auto` sur le wrapper des `<table>` natives qui ne l'avaient pas (PosteVenteSettingsSection ×4, ClientCreditsPage, ClientFormModal, PurchaseHistoryDrawer, CreanceDetailsModal, LotSelectionModal, ProduitShadcn, PromotionForm…). La plupart des tables étaient déjà wrappées (le composant `shadcn/table.tsx` l'est nativement).
+- **Largeurs fixes** : `CouponPanel` `w-96` → `w-96 max-w-full` ; toast `ClockSyncAlert` `max-w-sm` → `w-[calc(100vw-2rem)] max-w-sm` ; sidebar `CatalogDCI` `w-96` → `w-full lg:w-96` + layout `flex-col lg:flex-row`.
+- **Flex rows qui débordent** : ajout de `flex-wrap` sur les toolbars/paginations/headers à risque (FacturesTable, PrescriptionScannerModal, InteractionsManager, ProductFilters, Organisation tabs, Maintenance, Corbeille, CaisseCentralisee, SystemAdmin tabs…).
+- **Vérifié OK sans changement** : `Sidebar.tsx` déjà off-canvas sur mobile (`-translate-x-full` + overlay + hamburger) ; modales déjà en `w-full max-w-*`/`w-[95vw]` ; `min-w-*` des tables déjà dans des conteneurs scrollables ; templates d'impression exclus volontairement.
+
+### Fichiers modifiés (extraits, ~55 fichiers)
+
+- `components/caisse/` : CashBreakdownModal, ClosingReportModal, CouponPanel, BulkCancelModal, JournalCaisseClosingModal, FacturesTable
+- `components/clients/` : ClientFormModal, ClientDeleteWarningModal, BulkDeleteWarningModal, PurchaseHistoryDrawer
+- `components/facturation/` : AyantDroitSection, PrescriptionScannerModal
+- `components/Commandes/` : TransferCommandeModal, ExportCommandeModal, MergeCommandesModal, SuggestionCommandeModal, QuickCreateProductModal
+- `components/stock/`, `inventaire/`, `products/` : ReapproRayon, ReapproHistory, StockMatrixPanel, InventaireCreateModal, InventaireQuickStats, StockAdjustmentModal, ProductFilters
+- `components/settings/` : PosteVenteSettingsSection
+- `components/compta/`, `Promotions/`, `common/`, `challenges/` : Comptabilite, PromotionForm, ConfigOptionManager, ChallengeFormModal
+- Racine : Clients, Creances, CaisseCentralisee, HistoriqueClotures, LoyaltyConfigModal, JournalAudit, RapportMensuel, PlanningOperateurs, SystemAdmin, Maintenance, Corbeille, ClockSyncAlert, CatalogDCI, LotSelectionModal, ProduitShadcn, ProduitFormModal, HistoriqueAchats, EtatsInventaire, Vitrine, Perimes, Organisation, Fournisseurs/FournisseurDetails, InteractionsManager, avoirs-client/ClientCreditsPage
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 757 modules.
+- `deploy.ps1 -Target frontend` : déploiement OK.
+- `.devin/notes/ui-ux-roadmap.md` : item F « Responsive mobile/tablette » passé à `[x]`.
+
+---
+
+## 2026-09-11 — Fin de la migration DaisyUI → shadcn/ui (nettoyage final + suppression de la dépendance)
+
+### ✨ UI/UX
+
+- Suppression des dernières classes DaisyUI restantes dans les `className` des composants (badges, boutons, cards, inputs résiduels).
+- La migration vers shadcn/ui est désormais considérée comme complète : plus aucune classe DaisyUI dans le code source (hors commentaires) et la dépendance `daisyui` a été retirée de `package.json` — elle n'était de toute façon pas chargée par Tailwind (pas de `@plugin "daisyui"` dans `src/index.css`, pas de `tailwind.config.*`).
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/clients/ClientFormModal.tsx`
+- `frontend/frontend/src/components/fournisseurs/FournisseurFormModals.tsx`
+- `frontend/frontend/src/components/PointageReleveModal.tsx`
+- `frontend/frontend/src/components/facturation/FacturationNotifications.tsx`
+- `frontend/frontend/src/components/dashboard/ObjectivesSettings.tsx`
+- `frontend/frontend/src/components/InteractionsManager.tsx`
+- `frontend/frontend/src/components/HelpTraining.tsx` (`kbd` → Tailwind)
+- `frontend/frontend/src/components/CatalogDCIAddModal.tsx` (`checkbox-secondary` → `accent-secondary`)
+- `frontend/frontend/src/components/SimplePrintLabelsModal.tsx` (`checkbox-primary` → `accent-primary`, suppression de la classe morte `label-item`)
+- `frontend/frontend/package.json` + `package-lock.json` (retrait de `daisyui`)
+- `.devin/notes/ui-ux-roadmap.md` (item A « Migration complète vers shadcn/ui » passé à `[x]`)
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 757 modules transformés.
+- `deploy.ps1 -Target frontend` : déploiement réussi dans le conteneur Nginx.
+- `grep -i daisyui` sur `src/` : plus aucune référence hors commentaires.
+
+---
+
+## 2026-09-11 — Uniformisation du feedback toast (fin des `alert()`)
+
+### ✨ UI/UX
+
+- Suppression des derniers `alert(...)` bloquants et remplacement par `gooeyToast.error(...)`, standard déjà utilisé dans toute l'application.
+- Sites convertis :
+  - `Promotions/PromotionList.tsx` (erreur de suppression)
+  - `Promotions/PromotionForm.tsx` (erreur de sauvegarde)
+  - `ImportDCIPage.tsx` (upload, auto-match, liaison manuelle DCI)
+  - `compta/Comptabilite.tsx` (compte de charge introuvable, erreur journal)
+  - `JournalAudit.tsx` (erreur export CSV)
+  - `printing/PrintPage.tsx` (échec d'impression)
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/Promotions/PromotionList.tsx`
+- `frontend/frontend/src/components/Promotions/PromotionForm.tsx`
+- `frontend/frontend/src/components/ImportDCIPage.tsx`
+- `frontend/frontend/src/components/compta/Comptabilite.tsx`
+- `frontend/frontend/src/components/JournalAudit.tsx`
+- `frontend/frontend/src/components/printing/PrintPage.tsx`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 757 modules transformés.
+- `deploy.ps1 -Target frontend` : déploiement réussi dans le conteneur Nginx.
+- `grep alert(` sur `src/` : plus aucun appel (hors test `printHelpers.test.ts` qui vérifie l'échappement HTML).
+
+---
+
+## 2026-09-11 — Standardisation des confirmations d'actions destructrices via `useConfirm`/`ConfirmDialog`
+
+### ✨ UI/UX
+
+- Remplacement de tous les `window.confirm(...)` natifs (~22 sites) par le hook existant `useConfirm` (modale `ConfirmDialog` shadcn, variantes `warning`/`danger`, textes traduits).
+- Les handlers concernés sont passés en `async` et utilisent `await confirm({ title, message, confirmText, variant })` à la place du confirm bloquant du navigateur.
+- `useConfirm`/`ConfirmDialog` devient le standard unique pour toute confirmation d'action destructrice ou sensible (suppression, purge, affectation de masse, doublons…).
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/inventaire/useProductSearch.ts` (correction du chemin d'import `../useConfirm`)
+- ~22 composants/hooks sous `frontend/frontend/src/components/` et `frontend/frontend/src/hooks/` (conversion `window.confirm` → `useConfirm` ; ex. `Inventaire.tsx`, `Clients.tsx`, `Corbeille.tsx`, `Transformations.tsx`, `CaisseCentralisee.tsx`, `GestionUtilisateurs.tsx`, `useCommandesState.tsx`, `useFacturationActions.ts`, `useSalesData.ts`, `usePromisData.ts`, `useInventaireList.ts`, `useCreanceActions.ts`, `useInvoiceModification.ts`, `useFournisseurs.ts`, `InventaireListTable.tsx`, `FacturesTable.tsx`, `PromotionList.tsx`, `CategoryManager.tsx`, `ConfigOptionManager.tsx`, `MessagingModal.tsx`, `PosteVenteSettingsSection.tsx`, `ClientCreditsPage.tsx`, `ProduitShadcn.tsx`, `LoginShadcn.tsx`, `UserSessionsShadcn.tsx`, `FinanceFournisseurModal.tsx`, `InteractionsManager.tsx`, `useCommandeProductLines.tsx`)
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 757 modules transformés.
+- `deploy.ps1 -Target frontend` : déploiement réussi dans le conteneur Nginx.
+
+---
+
+## 2026-09-11 — Généralisation EmptyState et skeletons de chargement sur les écrans de liste
+
+### ✨ UI/UX
+
+- Généralisation du composant `EmptyState` (icône, titre, description, action, variant `slate`/`base`, mode `compact`) sur l'ensemble des écrans : listes vides, "aucun résultat", "sélectionner un élément", modales et panneaux.
+- Standardisation des indicateurs de chargement : remplacement des spinners et textes « Chargement… » par `Skeleton` et `SkeletonTable` (lignes/colonnes configurables) sur les principaux écrans de liste :
+  - Ventes / caisse / facturation : `sales/SalesTable.tsx`, `caisse/FacturesTable.tsx`, `caisse/JournalCaisseTable.tsx`, `facturation/CartTable.tsx`, `facturation/PendingSalesDrawer.tsx`, `facturation/ClientSection.tsx`
+  - Produits / stock / inventaire : `products/ProductTable.tsx`, `products/ProductTabsContent.tsx`, `stock/*` (Cadencier, ReapproRayon, ReapproHistory, StockAnalysisTable, StockMatrixPanel), `inventaire/*`, `Perimes.tsx`, `Transformations.tsx`, `Vitrine.tsx`
+  - Commandes / fournisseurs : `Commandes/*` (CommandeList, CommandeDetails, CommandeProductTable, modales), `fournisseurs/*`, `Promotions/PromotionList.tsx`, `StatistiquesFournisseur.tsx`, `EcheancierFournisseursModal.tsx`
+  - Finance / divers : `avoirs/*`, `avoirs-client/*`, `creances/CreancesTable.tsx`, `ModuleFinancier.tsx`, `PlanningOperateurs.tsx`, `ImportDCIPage.tsx`, `HelpTraining.tsx`
+  - Dashboard / réglages / admin : `dashboard/*`, `DashboardShadcn.tsx`, `DashboardManagerShadcn.tsx`, `settings/*`, `systemadmin/*`, `common/*` (CategoryManager, ConfigOptionManager, MessagingModal, ProductSearch), `challenges/ChallengesPage.tsx`
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/ui/EmptyState.tsx` (nouveau)
+- `frontend/frontend/src/components/ui/Skeleton.tsx`
+- `frontend/frontend/src/components/ui/SkeletonTable.tsx`
+- ~80 composants d'écrans sous `frontend/frontend/src/components/` (cf. liste ci-dessus)
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 757 modules transformés.
+- `deploy.ps1 -Target frontend` : déploiement réussi dans le conteneur Nginx.
+
+---
+
+## 2026-09-11 — Composant EmptyState shadcn et standardisation des états vides
+
+### ✨ UI/UX
+
+- Création du composant réutilisable `EmptyState` (variant `slate` / `base`, mode `compact`, icône, titre, description, action).
+- Remplacement des blocs d'état vide manuels par `EmptyState` sur les écrans principaux :
+  - `products/ProductTable.tsx` (variant `base` + action "Créer un produit")
+  - `ProduitShadcn.tsx` (variant `slate` + action "Créer un produit")
+  - `Commandes/CommandeList.tsx` (mode `compact` dans la table)
+  - `Clients.tsx` (état "Sélectionner un client")
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/ui/EmptyState.tsx` (nouveau)
+- `frontend/frontend/src/components/products/ProductTable.tsx`
+- `frontend/frontend/src/components/ProduitShadcn.tsx`
+- `frontend/frontend/src/components/Commandes/CommandeList.tsx`
+- `frontend/frontend/src/components/Clients.tsx`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 757 modules transformés.
+- `deploy.ps1 -Target frontend` : déploiement réussi dans le conteneur Nginx.
+
+---
+
+## 2026-09-11 — UI/UX du Rangement Intelligent : confirmation, actions de masse, accessibilité
+
+### ✨ UI/UX
+
+- Modale de confirmation avant le rangement massif, avec récapitulatif des filtres et du nombre de produits.
+- Actions de masse dans l'aperçu : tout exclure, tout réinclure, inverser la sélection.
+- Remplacement de la case à cocher `Respecter la casse` par un `Switch` shadcn.
+- Skeleton à l'ouverture du modal à la place du spinner brut.
+- Distinction des états vides : message "Saisissez une plage" vs "Aucun résultat".
+- Ajout des labels `htmlFor`, des attributs `aria-*` sur les champs, suggestions et aperçu.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/common/SmartOrganizerModal.tsx`
+- `frontend/frontend/src/components/ui/Switch.tsx` (nouveau)
+- `frontend/frontend/public/locales/fr/stock.json`
+- `frontend/frontend/public/locales/en/stock.json`
+- `frontend/frontend/package.json`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 756 modules transformés.
+- `deploy.ps1 -Target frontend` : déploiement réussi dans le conteneur Nginx.
+
+---
+
+## 2026-09-11 — UI/UX du Rangement Intelligent : autocomplétion, indicateur, virtualisation
+
+### ✨ UI/UX
+
+- Autocomplétion sur les champs `De (Inclus)`, `À` et `Contient` (suggestions de noms produits, navigation clavier, sélection rapide).
+- Indicateur « Calcul de l'aperçu… » pendant le debounce/filtrage.
+- Liste d'aperçu virtualisée avec `react-window` pour supporter les grandes plages sans ralentir le DOM.
+- Remplacement de la case à cocher native par le composant `Checkbox` shadcn.
+- Bouton ✕ pour effacer chaque champ et clés de traduction complétées.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/common/SmartOrganizerModal.tsx`
+- `frontend/frontend/public/locales/fr/stock.json`
+- `frontend/frontend/public/locales/en/stock.json`
+- `frontend/frontend/package.json`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 744 modules transformés.
+- `deploy.ps1 -Target frontend` : déploiement réussi dans le conteneur Nginx.
+
+---
+
+## 2026-09-11 — Création de la roadmap UI/UX
+
+### 📝 Documentation
+
+- Création de `.devin/notes/ui-ux-roadmap.md` pour tracer les améliorations UI/UX identifiées pour le Rangement Intelligent et l'application en général.
+- Permet de suivre l'évolution, le statut (`En attente` / `En cours` / `Fait`) et les notes pour chaque point.
+
+### Fichiers modifiés
+
+- `.devin/notes/ui-ux-roadmap.md`
+
+---
+
+## 2026-09-11 — Réactivité du champ De (Inclus) du Rangement Intelligent
+
+### ⚡ Performance
+
+- Débounce de 300 ms appliqué aux champs `De (Inclus)`, `À` et `Contient` du Rangement Intelligent.
+- Le filtrage, le tri et la réinitialisation des exclusions utilisent désormais les valeurs débounced, évitant les recalculs à chaque frappe.
+- Index pré-trié (sensible/insensible à la casse) avec recherche dichotomique pour la plage alphabétique, réduisant drastiquement le temps de filtrage.
+- La saisie reste réactive et ne perd plus de caractères sur le champ « De (Inclus) ».
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/common/SmartOrganizerModal.tsx`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 737 modules transformés.
+- `deploy.ps1 -Target frontend` : déploiement réussi dans le conteneur Nginx.
+
+---
+
+## 2026-09-11 — Correction de la recherche produit du Rangement Intelligent
+
+### 🐛 Fix
+
+- Le filtre de recherche produit du Rangement Intelligent respecte désormais l'option "Respecter la casse".
+- Protection des noms de produits éventuellement manquants ou vides lors du filtrage et du tri.
+- Le tri des résultats s'adapte à l'option de casse.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/common/SmartOrganizerModal.tsx`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 737 modules transformés.
+
+---
+
+## 2026-09-09 — Déploiement local des optimisations de performance
+
+### 🚀 Déploiement
+
+- Déploiement frontend et backend effectué avec `deploy.ps1 -Target all`, sans migration ni commit.
+- Frontend reconstruit avec succès : 4 737 modules transformés, fichiers copiés dans Nginx puis rechargés.
+- Backend copié dans le conteneur et redémarré avec 4 workers Uvicorn.
+- Contrôle après déploiement : page frontend HTTP 200 et endpoint `/api/health/` HTTP 200.
+- PostgreSQL, Redis/cache et espace disque déclarés opérationnels par le health check.
+
+### Point à surveiller
+
+- Django signale des changements de modèles non reflétés dans une migration, bien que toutes les migrations existantes soient appliquées. Aucun changement de modèle réalisé dans les optimisations déployées ne nécessite de migration.
+
+---
+
+## 2026-09-09 — Compteurs de statuts commandes allégés
+
+### ⚡ Performance
+
+- Les compteurs `PREP`, `ATT` et `CLOT` utilisent désormais un queryset `Commande` minimal au lieu du queryset de liste enrichi de quatre sous-requêtes corrélées.
+- Les filtres `type`, `fournisseur` et `is_active=True` restent appliqués aux compteurs, tandis que le filtre `status` reste volontairement ignoré.
+- Le queryset enrichi demeure utilisé uniquement pour les lignes paginées qui nécessitent les totaux, paiements, articles et TVA.
+
+### Fichiers modifiés
+
+- `backend/api/views/commandes/commandes.py`
+- `backend/api/tests/test_order_management.py`
+
+### Vérifications
+
+- Tests backend `api.tests.test_order_management` : 7 réussis.
+- Test ajouté pour vérifier les compteurs avec filtres fournisseur/type, l'indépendance du filtre statut et l'exclusion des commandes inactives.
+
+---
+
+## 2026-09-09 — Déduplication et cache React Query pour la recherche facturation
+
+### ⚡ Performance
+
+- Conversion de `useFacturationSearch` vers `useQuery` pour les recherches de packs, de DCI et de produits DCI, avec `staleTime` de 60 secondes.
+- Conversion du chargement des produits récents dans `ProductSearchSection` en une requête React Query unique via le nouvel endpoint `produits/recent/`.
+- Création de l'action `recent_products` dans `ProduitViewSet` permettant de récupérer plusieurs produits par IDs en un seul appel.
+- Suppression de la boucle `Promise.all` de requêtes individuelles `produits/<id>/` lors du rafraîchissement des derniers produits.
+
+### Fichiers modifiés
+
+- `backend/api/views/produit_actions/bulk_ops.py`
+- `frontend/frontend/src/hooks/product-search/useFacturationSearch.ts`
+- `frontend/frontend/src/components/facturation/ProductSearchSection.tsx`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi, 4 737 modules transformés.
+- Compilation Python (`py_compile`) du fichier backend : réussie.
+
+---
+
+## 2026-09-09 — Optimisation du graphique de revenus du dashboard
+
+### ⚡ Performance
+
+- Le graphique de revenus remplace les 7 appels individuels à `MarginService` par une agrégation SQL groupée avec `TruncDay` sur les 7 derniers jours.
+- Ajout de `MarginService.calculate_daily_margin_with_discounts` : un seul calcul groupé pour les coûts alloués, les coûts non alloués (PMP) et les marges journalières.
+- Cache du graphique réduit à 45 secondes (`CHART_FAST_TTL`) afin d’alléger la base de données tout en gardant une fraîcheur acceptable.
+- Rafraîchissement automatique du dashboard étendu : `useDashboardInit` passe à 2 minutes, `useDashboardStats` à 1 minute et `useRevenueChart` à 2 minutes.
+
+### Fichiers modifiés
+
+- `backend/api/services/margin_service.py`
+- `backend/api/views/dashboard/core.py`
+- `backend/api/dashboard_cache.py`
+- `backend/api/tests/test_dashboard.py`
+- `frontend/frontend/src/hooks/useDashboard.ts`
+
+### Vérifications
+
+- `python -m py_compile` sur `margin_service.py`, `core.py`, `dashboard_cache.py` : OK.
+- Tests backend `api.tests.test_dashboard` : 14 réussis.
+- `npx tsc --noEmit` : 0 erreur.
+- `npm run build` : réussi.
+
+---
+
+## 2026-09-08 — Omnisearch clients sans requêtes N+1
+
+### ⚡ Performance
+
+- Annotation SQL de `current_debt_annotated` dans la recherche globale afin d'éviter le recalcul individuel de la dette pour chaque client.
+- Préchargement des ayants droit avant sérialisation : leur nombre ne génère plus une requête supplémentaire par client.
+- Paramètre `limit` borné entre 1 et 20, avec retour à la valeur par défaut 5 lorsque la valeur reçue est invalide.
+- Durée du cache omnisearch réduite de 5 minutes à 1 minute pour limiter l'obsolescence des résultats.
+- Lecture du cache corrigée pour reconnaître explicitement toute valeur présente.
+
+### Fichiers modifiés
+
+- `backend/api/views/omnisearch.py`
+- `backend/api/tests/test_integration_recent_fixes.py`
+
+### Vérifications
+
+- Tests backend ciblés : 4 réussis.
+- Couverture ajoutée pour la borne de 20 résultats, la valeur invalide, la dette annotée, le nombre d’ayants droit et la stabilité du nombre de requêtes.
+
+---
+
+## 2026-09-08 — Recherche produits Facturation allégée
+
+### ⚡ Performance
+
+- La recherche principale en facturation démarre désormais à partir de 3 caractères et retourne au maximum 50 produits au lieu de 1 000.
+- Les recherches de promotions, de DCI et de produits associés à une DCI sont limitées à 50 résultats.
+- Ces recherches utilisent le cache React Query pendant 30 secondes, avec conservation en mémoire pendant 5 minutes, afin d'éviter les appels API identiques rapprochés.
+- La navigation clavier et les différents modes de recherche restent inchangés ; la virtualisation n'a pas été introduite dans cette étape.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/hooks/useFacturationState.ts`
+- `frontend/frontend/src/hooks/product-search/useFacturationSearch.ts`
+- `frontend/frontend/src/components/__tests__/Facturation.test.tsx`
+
+### Vérifications
+
+- `npx tsc --noEmit` : 0 erreur.
+- Test Facturation ciblé : 3 réussis, 1 ignoré (avertissements `act(...)` préexistants).
+- `npm run build` : réussi, 4 737 modules transformés.
+
+---
+
 ## 2026-09-08 — Adaptations responsive sur MacBook 13 pouces (Facturation, Ventes, Produits, Commandes, Dashboard)
 
 ### Amélioration UI

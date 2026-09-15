@@ -33,6 +33,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose
                     onClick={onClose}
                     className="absolute -top-2 -right-2 size-7 flex items-center justify-center rounded-full bg-base-100 border border-base-300 text-base-content/50 hover:bg-error/10 hover:text-error transition-colors z-10 shadow-sm"
                     title={t('sales:actions.hide_report')}
+                    aria-label={t('sales:actions.hide_report')}
                 >
                     ✕
                 </button>

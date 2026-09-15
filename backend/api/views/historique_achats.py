@@ -45,16 +45,16 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         if commande_type:
             queryset = queryset.filter(type=commande_type)
 
-        # Aggregation by Day
+        # Aggregation by Day + Supplier
         daily_stats = queryset.annotate(
             jour=TruncDate('date')
-        ).values('jour').annotate(
+        ).values('jour', 'fournisseur_id', 'fournisseur__name').annotate(
             nb_commandes=Count('id', distinct=True),
             total_achat=Coalesce(Sum(
                 F('produits__quantity') * F('produits__price'),
                 output_field=DecimalField()
             ), Value(0, output_field=DecimalField()))
-        ).order_by('-jour')
+        ).order_by('-jour', 'fournisseur__name')
 
         # Global Totals Aggregation
         global_totals = queryset.aggregate(
@@ -74,6 +74,8 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
             for stat in page:
                 results.append({
                     'date': stat['jour'],
+                    'fournisseur_id': stat['fournisseur_id'],
+                    'fournisseur_name': stat['fournisseur__name'] or '',
                     'nb_commandes': stat['nb_commandes'],
                     'total_achat': stat['total_achat'] or 0,
                 })
@@ -88,6 +90,8 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         for stat in daily_stats:
             results.append({
                 'date': stat['jour'],
+                'fournisseur_id': stat['fournisseur_id'],
+                'fournisseur_name': stat['fournisseur__name'] or '',
                 'nb_commandes': stat['nb_commandes'],
                 'total_achat': stat['total_achat'] or 0,
             })
@@ -119,11 +123,13 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         if commande_type:
             queryset = queryset.filter(commande__type=commande_type)
 
-        # Aggregation by Product
+        # Aggregation by Product + Supplier
         product_stats = queryset.values(
-            'produit_id', 
-            'produit__name', 
-            'produit__cip1'
+            'produit_id',
+            'produit__name',
+            'produit__cip1',
+            'commande__fournisseur_id',
+            'commande__fournisseur__name',
         ).annotate(
             total_quantite=Sum('quantity'),
             total_achat=Coalesce(Sum(F('quantity') * F('price'), output_field=DecimalField()), Value(0, output_field=DecimalField())),

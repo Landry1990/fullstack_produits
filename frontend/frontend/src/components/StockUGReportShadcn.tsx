@@ -13,6 +13,7 @@ import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
 import { LocalizedDateInput } from './LocalizedDateInput';
 import { Skeleton } from './ui/Skeleton';
+import { EmptyState } from './ui/EmptyState';
 import {
   Table,
   TableBody,
@@ -392,9 +393,13 @@ export default function StockUGReportShadcn() {
                 <TableBody>
                   {filteredSuppliers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-12 text-center text-base-content/40">
-                        <PackageOpen className="size-12 mx-auto mb-3 text-base-content/20" />
-                        <p className="font-medium text-base-content/60">{t('stock:rapport_ug.table.empty')}</p>
+                      <TableCell colSpan={6} className="py-8 text-center">
+                        <EmptyState
+                          compact
+                          variant="base"
+                          icon={<PackageOpen className="size-6" />}
+                          title={t('stock:rapport_ug.table.empty')}
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (

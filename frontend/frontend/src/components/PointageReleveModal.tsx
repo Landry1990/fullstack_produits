@@ -178,7 +178,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
             <div>
               <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.provider_label')}</label>
               <select 
-                className="select select-sm select-bordered w-full md:w-48 font-bold text-base-content/90" 
+                className="w-full md:w-48 h-10 rounded-xl border border-base-300 bg-base-100 px-3 text-sm font-bold text-base-content/90 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" 
                 value={selectedFournisseurId} 
                 onChange={e => setSelectedFournisseurId(e.target.value === '' ? '' : Number(e.target.value))}
               >
@@ -192,7 +192,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
               <>
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.month_label')}</label>
-                  <select className="select select-sm select-bordered w-full md:w-32" value={month} onChange={e => setMonth(Number(e.target.value))} disabled={periodeType === 'CUSTOM'}>
+                  <select className="w-full md:w-32 h-10 rounded-xl border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" value={month} onChange={e => setMonth(Number(e.target.value))} disabled={periodeType === 'CUSTOM'}>
                     {Array.from({length: 12}, (_, i) => i + 1).map(m => (
                       <option key={m} value={m}>{new Date(0, m - 1).toLocaleString(getLocale(), { month: 'long' })}</option>
                     ))}
@@ -200,7 +200,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                 </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.year_label')}</label>
-              <select className="select select-sm select-bordered w-full md:w-24" value={year} onChange={e => setYear(Number(e.target.value))} disabled={periodeType === 'CUSTOM'}>
+              <select className="w-full md:w-24 h-10 rounded-xl border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" value={year} onChange={e => setYear(Number(e.target.value))} disabled={periodeType === 'CUSTOM'}>
                 {[currentYear - 1, currentYear, currentYear + 1].map(y => (
                   <option key={y} value={y}>{y}</option>
                 ))}
@@ -208,7 +208,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.target_period')}</label>
-              <select className="select select-sm select-bordered w-full md:w-48" value={periodeType} onChange={e => setPeriodeType(e.target.value)}>
+              <select className="w-full md:w-48 h-10 rounded-xl border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" value={periodeType} onChange={e => setPeriodeType(e.target.value)}>
                 <option value="MENSUELLER">{t('providers:pointage_modal.period_full')}</option>
                 <optgroup label="Quinzaines">
                   <option value="QUINZAINE_1">{t('providers:pointage_modal.period_q1')}</option>
@@ -227,11 +227,11 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
               <>
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.start_label')}</label>
-                  <LocalizedDateInput  className="input input-sm input-bordered" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+                  <LocalizedDateInput  className="h-10 rounded-xl border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" value={customStart} onChange={e => setCustomStart(e.target.value)} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-base-content/40 mb-1">{t('providers:pointage_modal.end_label')}</label>
-                  <LocalizedDateInput  className="input input-sm input-bordered" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+                  <LocalizedDateInput  className="h-10 rounded-xl border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
                 </div>
               </>
             )}
@@ -311,13 +311,13 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                       return (
                         <tr 
                           key={f.id} 
-                          className={`hover transition-colors cursor-pointer border-b border-slate-100 last:border-0 ${isPointed ? 'bg-success/10/50' : 'bg-base-100'}`}
+                          className={`transition-colors cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 ${isPointed ? 'bg-success/10/50' : 'bg-base-100'}`}
                           onClick={() => togglePointage(f.id)}
                         >
                           <td className="text-center">
                             <input 
                               type="checkbox" 
-                              className="checkbox checkbox-sm checkbox-success" 
+                              className="size-4 rounded border-slate-300 accent-emerald-600 focus:ring-emerald-500 cursor-pointer" 
                               checked={isPointed}
                               onChange={() => {}} // Handle on TR click
                             />

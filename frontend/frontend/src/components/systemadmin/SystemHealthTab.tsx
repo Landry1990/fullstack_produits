@@ -5,6 +5,7 @@ import {
 import type { TFunction } from 'i18next';
 import type { SystemStatus } from './types';
 import { backupStatusColor } from './types';
+import { Skeleton } from '../ui/Skeleton';
 
 interface SystemHealthTabProps {
   systemStatus: SystemStatus | null;
@@ -53,9 +54,11 @@ export function SystemHealthTab({
       </div>
 
       {loadingStatus ? (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
-          {t('loading')}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-3" aria-busy="true" aria-label={t('loading')}>
+          <Skeleton className="h-5 w-48" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
         </div>
       ) : !systemStatus ? (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center text-red-500">

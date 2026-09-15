@@ -34,6 +34,8 @@ import {
   DialogFooter,
 } from '../ui/Dialog';
 import { Button } from '../ui/Button';
+import { Skeleton } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
 import { logger } from '../../utils/logger'
 
 export default function ReapproRayon() {
@@ -387,20 +389,26 @@ export default function ReapproRayon() {
             </thead>
             <tbody>
               {loading && products.length === 0 ? (
-                <tr>
-                   <td colSpan={7} className="py-24 text-center">
-                      <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-500 mx-auto"></div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 mt-4 italic">{t('stock:reappro.loading')}</p>
-                   </td>
-                </tr>
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-slate-100">
+                    <td className="no-print px-4 py-3"><Skeleton className="size-4 rounded" /></td>
+                    <td className="py-3"><Skeleton className="h-4 w-40" /></td>
+                    <td className="py-3"><Skeleton className="h-4 w-24" /></td>
+                    <td className="py-3 text-center"><Skeleton className="h-4 w-10 mx-auto" /></td>
+                    <td className="py-3 text-center"><Skeleton className="h-4 w-10 mx-auto" /></td>
+                    <td className="py-3 text-center"><Skeleton className="h-6 w-12 mx-auto rounded-full" /></td>
+                    <td className="no-print py-3 text-right"><Skeleton className="h-4 w-16 ml-auto" /></td>
+                  </tr>
+                ))
               ) : products.length === 0 ? (
                 <tr>
-                   <td colSpan={7} className="py-24 text-center">
-                      <div className="flex flex-col items-center justify-center text-slate-200">
-                          <Package className="size-16 mb-4" />
-                          <h3 className="text-xl font-black uppercase tracking-tight">{t('stock:reappro.empty')}</h3>
-                          <p className="text-sm font-bold max-w-xs mt-2 italic">{t('stock:reappro.empty_desc')}</p>
-                      </div>
+                   <td colSpan={7} className="py-16 text-center">
+                      <EmptyState
+                        compact
+                        icon={<Package className="size-6" />}
+                        title={t('stock:reappro.empty')}
+                        description={t('stock:reappro.empty_desc')}
+                      />
                    </td>
                 </tr>
               ) : (
@@ -610,7 +618,7 @@ export default function ReapproRayon() {
                 <Download className="size-3.5 mr-2" />
                 {t('stock:reappro.modal.download_pdf')}
               </Button>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Link
                   to="/app/reappro-history"
                   className="inline-flex items-center justify-center h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors gap-1.5"

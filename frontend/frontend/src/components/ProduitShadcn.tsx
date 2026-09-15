@@ -30,6 +30,7 @@ import { Input } from './ui/Input'
 import { Badge } from './ui/Badge'
 import { Checkbox } from './ui/Checkbox'
 import SkeletonTable from './ui/SkeletonTable'
+import { EmptyState } from './ui/EmptyState'
 import { ProductTabsContent } from './products/ProductTabsContent'
 import ProduitCreateModal from './ProduitFormModal'
 import PasswordConfirmModal from './PasswordConfirmModal'
@@ -475,20 +476,21 @@ export default function ProduitShadcn() {
               </div>
 
               {/* Table Body */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto overflow-x-auto">
                 {isLoading ? (
                   <SkeletonTable />
                 ) : produits.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                      <Package className="size-8 text-slate-300" />
-                    </div>
-                    <h3 className="text-base font-semibold text-slate-500">{t('products:table.empty_title', { defaultValue: 'Aucun produit' })}</h3>
-                    <p className="text-slate-400 text-sm mt-1 max-w-sm">{t('products:table.empty_subtitle', { defaultValue: 'Créez votre premier produit ou service pour commencer.' })}</p>
-                    <Button variant="primary" size="sm" className="mt-6" onClick={() => setIsCreateOpen(true)}>
-                      + {t('products:actions.create', { defaultValue: 'Créer un produit' })}
-                    </Button>
-                  </div>
+                  <EmptyState
+                    className="py-16"
+                    icon={<Package className="size-8" />}
+                    title={t('products:table.empty_title', { defaultValue: 'Aucun produit' })}
+                    description={t('products:table.empty_subtitle', { defaultValue: 'Créez votre premier produit ou service pour commencer.' })}
+                    action={
+                      <Button variant="primary" size="sm" onClick={() => setIsCreateOpen(true)}>
+                        + {t('products:actions.create', { defaultValue: 'Créer un produit' })}
+                      </Button>
+                    }
+                  />
                 ) : (
                   <table className="w-full">
                     <tbody className="divide-y divide-slate-100">
@@ -502,6 +504,15 @@ export default function ProduitShadcn() {
                             key={produit.id}
                             data-product-id={produit.id}
                             onClick={() => setSelectedProduit(produit)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.target !== e.currentTarget) return;
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setSelectedProduit(produit);
+                              }
+                            }}
                             className={`cursor-pointer transition-colors ${
                               isSelected ? 'bg-emerald-50 border-l-2 border-l-emerald-500' :
                               isChecked ? 'bg-emerald-50/50' :
@@ -509,7 +520,7 @@ export default function ProduitShadcn() {
                             }`}
                           >
                             <td className="py-3 px-4 w-10" onClick={e => e.stopPropagation()}>
-                              <Checkbox size="sm" checked={isChecked} onChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(produit.id) ? prev.filter(id => id !== produit.id) : [...prev, produit.id]; })} />
+                              <Checkbox size="sm" checked={isChecked} aria-label={produit.name} onChange={() => setSelectedIds(prev => { const s = new Set(prev); return s.has(produit.id) ? prev.filter(id => id !== produit.id) : [...prev, produit.id]; })} />
                             </td>
                             <td className="py-3 px-2 w-36">
                               <div className="flex flex-col gap-0.5">

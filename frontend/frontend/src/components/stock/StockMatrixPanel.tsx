@@ -5,6 +5,7 @@ import {
     Info, TrendingDown, TrendingUp, ArrowRight
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
+import { EmptyState } from '../ui/EmptyState';
 import type { StockHealthData, MatrixProduct } from '../../hooks/useStockHealth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -223,7 +224,7 @@ const MatrixGrid: React.FC<{ data: StockHealthData; stats: MatrixStats }> = ({ d
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {quadrants.map(({ key, count, value, valueLabel }) => {
                     const cfg = QUADRANT_CONFIG[key];
                     const Icon = cfg.icon;
@@ -271,7 +272,7 @@ const TopPenaltiesTable: React.FC<{ products: MatrixProduct[] }> = ({ products }
         return (
             <div className="bg-white rounded-2xl border border-slate-200 p-3">
                 <p className="text-xs font-semibold text-slate-800 mb-1">{t('matrix.penalties.title')}</p>
-                <p className="text-xs text-slate-500">{t('matrix.penalties.empty')}</p>
+                <EmptyState compact title={t('matrix.penalties.empty')} className="p-2" />
             </div>
         );
     }

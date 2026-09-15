@@ -42,6 +42,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
                   ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}
+              aria-label={hook.isZenithMode ? hook.t('facturation:zenith_mode_on', { defaultValue: 'Désactiver le mode Zenith' }) : hook.t('facturation:zenith_mode_off', { defaultValue: 'Activer le mode Zenith' })}
             >
               {hook.isZenithMode ? <EyeOff size={16} /> : <Eye size={16} />}
             </Button>
@@ -55,6 +56,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
                   ? 'bg-slate-800 text-amber-400 hover:bg-slate-900'
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}
+              aria-label={hook.isMidnightTheme ? hook.t('facturation:theme_light', { defaultValue: 'Passer en thème clair' }) : hook.t('facturation:theme_dark', { defaultValue: 'Passer en thème sombre' })}
             >
               {hook.isMidnightTheme ? <Sun size={16} /> : <Moon size={16} />}
             </Button>
@@ -69,6 +71,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}
               title={datamatrixEnabled ? hook.t('facturation:disable_datamatrix') : hook.t('facturation:enable_datamatrix')}
+              aria-label={datamatrixEnabled ? hook.t('facturation:disable_datamatrix') : hook.t('facturation:enable_datamatrix')}
             >
               <ScanLine size={16} />
             </Button>
@@ -104,6 +107,7 @@ export default function FacturationHeader({ hook, datamatrixEnabled, setDatamatr
           <span className="absolute left-2.5 text-sm text-slate-500 pointer-events-none">FAC-</span>
           <Input
             type="text"
+            aria-label={hook.t('facturation:recall_invoice.title')}
             value={hook.recallNumber}
             onChange={(e) => {
               const raw = e.target.value.toUpperCase()

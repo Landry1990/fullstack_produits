@@ -60,9 +60,9 @@ export default function CatalogDCI() {
   });
 
   return (
-    <div className="flex h-full gap-6 overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-full gap-6 overflow-hidden">
       {/* Sidebar - Liste des DCI */}
-      <div className="w-96 flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
+      <div className="w-full lg:w-96 min-h-0 max-h-72 lg:max-h-none flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
         <div className="p-6 bg-primary/5 border-b border-base-200">
           <h2 className="text-xl font-bold flex items-center gap-3 text-primary mb-4">
             <Icons.Pill />
@@ -162,7 +162,7 @@ export default function CatalogDCI() {
               </Button>
             </div>
 
-            <div className={`flex-1 grid gap-6 overflow-hidden ${(refMedsData?.count || 0) > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <div className={`flex-1 grid gap-6 overflow-hidden ${(refMedsData?.count || 0) > 0 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
               {/* Produits en Stock */}
               <div className="flex flex-col bg-base-100 rounded-3xl shadow-xl border border-base-200 overflow-hidden">
                 <div className="p-6 border-b border-base-200 flex items-center justify-between">

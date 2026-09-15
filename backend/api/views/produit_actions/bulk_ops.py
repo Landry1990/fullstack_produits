@@ -46,6 +46,25 @@ class ProduitBulkMixin:
         serializer = ProduitListSerializer(produits, many=True, context={'request': request})
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='recent')
+    def recent_products(self, request):
+        """Retourne plusieurs produits par IDs en une seule requête (produits récents)."""
+        ids_param = request.query_params.get('ids', '')
+        if not ids_param:
+            return Response([])
+
+        try:
+            product_ids = [int(x) for x in ids_param.split(',') if x]
+        except ValueError:
+            return Response({'detail': 'IDs invalides'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not product_ids:
+            return Response([])
+
+        produits = self.get_queryset().filter(id__in=product_ids)
+        serializer = ProduitListSerializer(produits, many=True, context={'request': request})
+        return Response(serializer.data)
+
     @action(detail=False, methods=['post'], url_path='by-cips')
     def by_cips(self, request):
         cips = request.data.get('cips', [])

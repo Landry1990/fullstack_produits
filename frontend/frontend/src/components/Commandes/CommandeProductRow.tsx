@@ -119,6 +119,9 @@ export function CommandeProductRow({
                                 className={`min-w-0 ${isDeleted ? 'italic text-slate-400' : ''} whitespace-nowrap overflow-hidden text-ellipsis ${onEditProduct ? 'cursor-pointer hover:text-blue-600 hover:underline' : ''}`}
                                 title={produitName}
                                 onClick={onEditProduct}
+                                role={onEditProduct ? 'button' : undefined}
+                                tabIndex={onEditProduct ? 0 : undefined}
+                                onKeyDown={onEditProduct ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEditProduct(); } } : undefined}
                             >
                                 {produitName}
                             </span>

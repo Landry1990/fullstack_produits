@@ -6,6 +6,8 @@ import { formatDate } from '../../../utils/dateUtils';
 import { ProductSearch, type SearchResult } from '../../common/ProductSearch';
 import QuickCreateProductModal from '../../Commandes/QuickCreateProductModal';
 import type { ProduitModel } from '../../../types';
+import { EmptyState } from '../../ui/EmptyState';
+import { Skeleton } from '../../ui/Skeleton';
 
 interface InventaireProductSearchProps {
     searchLogic: ReturnType<typeof useProductSearch>;
@@ -91,8 +93,16 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
 
             {/* Lot Selection Modal */}
             {showLotModal && selectedProductForLot && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                    <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                            e.preventDefault();
+                            closeLotModal();
+                        }
+                    }}
+                >
+                    <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden" role="dialog" aria-modal="true" aria-label={t('inventaire.lot_modal.title', { name: selectedProductForLot.name })}>
                         <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center gap-4">
                             <div className="size-12 rounded-xl bg-emerald-50 flex items-center justify-center">
                                 <Database className="h-6 w-6 text-emerald-600" />
@@ -121,20 +131,18 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                             tabIndex={-1}
                         >
                             {loadingLots ? (
-                                <div className="flex flex-col items-center justify-center py-12 gap-4">
-                                    <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-500"></div>
-                                    <p className="text-sm text-slate-500 font-medium animate-pulse">{t('inventaire.lot_modal.loading')}</p>
+                                <div className="space-y-3">
+                                    <Skeleton className="h-20 w-full rounded-xl" />
+                                    <Skeleton className="h-20 w-full rounded-xl" />
+                                    <Skeleton className="h-20 w-full rounded-xl" />
                                 </div>
                             ) : availableLots.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 gap-3 text-center px-6">
-                                    <div className="size-16 rounded-full bg-white flex items-center justify-center mb-2 shadow-sm border border-slate-200">
-                                        <Database className="h-8 w-8 text-slate-200" />
-                                    </div>
-                                    <h4 className="font-bold text-slate-700 text-lg">{t('inventaire.lot_modal.no_lots_title')}</h4>
-                                    <p className="text-sm text-slate-500 max-w-sm">
-                                        {t('inventaire.lot_modal.no_lots_desc', "Il n'y a actuellement aucun lot en stock pour ce produit.")}
-                                    </p>
-                                </div>
+                                <EmptyState
+                                    icon={<Database className="size-8" />}
+                                    title={t('inventaire.lot_modal.no_lots_title')}
+                                    description={t('inventaire.lot_modal.no_lots_desc', "Il n'y a actuellement aucun lot en stock pour ce produit.")}
+                                    className="py-12 px-6"
+                                />
                             ) : (
                                 <div className="space-y-3">
                                     {availableLots.map((lot, idx) => (
@@ -155,6 +163,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                                 <input
                                                     id={`lot-input-${idx}`}
                                                     type="number"
+                                                    aria-label={`Quantité lot ${lot.lot}`}
                                                     className="w-full h-10 text-center font-mono font-bold text-sm rounded-lg border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                                                     value={lotQuantities[lot.id.toString()] ?? ''}
                                                     onChange={e => setLotQuantities(prev => ({ ...prev, [lot.id.toString()]: e.target.value }))}

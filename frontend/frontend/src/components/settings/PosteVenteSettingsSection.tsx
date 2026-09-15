@@ -4,6 +4,8 @@ import { Store, Plus, Loader2, Trash2, AlertCircle } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../shadcn/input'
 import { Badge } from '../shadcn/badge'
+import { EmptyState } from '../ui/EmptyState'
+import { Skeleton } from '../ui/Skeleton'
 import { gooeyToast } from 'goey-toast'
 import {
   cashSessionService,
@@ -11,6 +13,7 @@ import {
   type PosteCaisse,
 } from '../../services/cashSessionService'
 import { getApiErrorDetail } from '../../utils/errorHandling'
+import { useConfirm } from '../../hooks/useConfirm'
 
 function formatDate(value: string | null): string {
   if (!value) return '-'
@@ -23,6 +26,7 @@ function formatDate(value: string | null): string {
 
 export default function PosteVenteSettingsSection() {
   const { t } = useTranslation('pharmacy_settings')
+  const confirm = useConfirm()
   const [postes, setPostes] = useState<PosteVente[]>([])
   const [caissesDisponibles, setCaissesDisponibles] = useState<PosteCaisse[]>([])
   const [loading, setLoading] = useState(false)
@@ -69,7 +73,13 @@ export default function PosteVenteSettingsSection() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Supprimer ce point de vente ?')) return
+    const confirmedDelete = await confirm({
+      title: t('common:confirmation'),
+      message: 'Supprimer ce point de vente ?',
+      confirmText: t('common:confirm'),
+      variant: 'danger'
+    })
+    if (!confirmedDelete) return
     try {
       await cashSessionService.deletePosteVente(id)
       gooeyToast.success(t('messages.pos_deleted'))
@@ -80,7 +90,13 @@ export default function PosteVenteSettingsSection() {
   }
 
   const handleClose = async (id: number) => {
-    if (!window.confirm('Fermer ce point de vente ?')) return
+    const confirmedClose = await confirm({
+      title: t('common:confirmation'),
+      message: 'Fermer ce point de vente ?',
+      confirmText: t('common:confirm'),
+      variant: 'danger'
+    })
+    if (!confirmedClose) return
     try {
       await cashSessionService.forcerFermeturePosteVente(id)
       gooeyToast.success(t('messages.pos_closed'))
@@ -156,8 +172,10 @@ export default function PosteVenteSettingsSection() {
 
         {/* Liste */}
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="size-8 animate-spin text-indigo-600" />
+          <div className="space-y-3" aria-busy="true">
+            <Skeleton className="h-6 w-64" />
+            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded-xl" />
           </div>
         ) : (
           <div className="space-y-8">
@@ -168,11 +186,13 @@ export default function PosteVenteSettingsSection() {
                 <Badge className="bg-slate-400 text-white">{definitionsDisponibles.length}</Badge>
               </h4>
               {definitionsDisponibles.length === 0 ? (
-                <p className="text-sm text-slate-400 italic">
-                  {t('postes_vente.no_available', { defaultValue: 'Aucun point de vente disponible. Créez-en un ci-dessus.' })}
-                </p>
+                <EmptyState
+                  compact
+                  icon={<Store className="size-6" />}
+                  title={t('postes_vente.no_available', { defaultValue: 'Aucun point de vente disponible. Créez-en un ci-dessus.' })}
+                />
               ) : (
-                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-100 text-slate-500">
                       <tr>
@@ -211,7 +231,7 @@ export default function PosteVenteSettingsSection() {
                   {t('postes_vente.active', { defaultValue: 'Points de vente actifs' })}
                   <Badge className="bg-emerald-500 text-white">{definitionsActives.length}</Badge>
                 </h4>
-                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-100 text-slate-500">
                       <tr>
@@ -254,7 +274,7 @@ export default function PosteVenteSettingsSection() {
                   {t('postes_vente.caisse_available', { defaultValue: 'Points de caisse disponibles' })}
                   <Badge className="bg-slate-400 text-white">{caissesDisponibles.length}</Badge>
                 </h4>
-                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-100 text-slate-500">
                       <tr>
@@ -282,7 +302,7 @@ export default function PosteVenteSettingsSection() {
                   {t('postes_vente.caisse_active', { defaultValue: 'Points de caisse actifs' })}
                   <Badge className="bg-emerald-500 text-white">{caisseActives.length}</Badge>
                 </h4>
-                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-100 text-slate-500">
                       <tr>

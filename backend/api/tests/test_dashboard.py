@@ -2,6 +2,7 @@
 Tests pour les endpoints du Dashboard.
 Tests couvrent:
 - Endpoint stats (revenus, stock, créances, user_stats)
+- Endpoint revenue_chart (marges journalières groupées)
 - Endpoint low_stock
 - Endpoint supplier_debts
 - Contrôle d'accès par rôle
@@ -14,7 +15,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import Produit
+from ..models import FactureProduitAllocation, Produit
 from .factories import TestDataFactory
 
 
@@ -426,3 +427,53 @@ class DashboardManagerStatsTestCase(APITestCase):
         health_response = self.client.get('/api/statistiques/stock_health/')
         self.assertEqual(health_response.status_code, status.HTTP_200_OK)
         self.assertEqual(health_response.data['dead_stock']['count'], 1)
+
+
+class DashboardRevenueChartTestCase(APITestCase):
+    """Test suite pour l'endpoint /api/dashboard/revenue_chart/."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse('dashboard-revenue-chart')
+
+    def test_revenue_chart_returns_seven_days_with_margin(self):
+        """Vérifie que le graphique renvoie 7 jours et calcule la marge en une passe groupée."""
+        produit = TestDataFactory.create_produit(stock=100, cost_price=Decimal('50.00'), selling_price=Decimal('100.00'))
+        client = TestDataFactory.create_client()
+
+        facture = TestDataFactory.create_facture(
+            client=client,
+            status='PAY',
+            total_ttc=Decimal('1000.00'),
+            date=timezone.now()
+        )
+        fp = TestDataFactory.create_facture_produit(facture=facture, produit=produit, quantity=10)
+        lot = TestDataFactory.create_stock_lot(produit=produit, quantity=50, price_cost=Decimal('50.00'))
+        FactureProduitAllocation.objects.create(
+            facture_produit=fp,
+            stock_lot=lot,
+            quantity=10,
+            cost_price=Decimal('50.00'),
+            selling_price=Decimal('100.00')
+        )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.data
+        self.assertEqual(len(data['labels']), 7)
+        self.assertEqual(len(data['data']), 7)
+        self.assertEqual(len(data['marges']), 7)
+        self.assertEqual(len(data['couts']), 7)
+        self.assertEqual(len(data['marges_pct']), 7)
+        self.assertEqual(len(data['nb_ventes']), 7)
+
+        # Le jour contenant la facture doit avoir CA=1000, coût=500, marge=500, marge_pct=50
+        weekday_label = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'][timezone.localtime(timezone.now()).weekday()]
+        idx = data['labels'].index(weekday_label)
+        self.assertEqual(data['data'][idx], 1000.0)
+        self.assertEqual(data['couts'][idx], 500.0)
+        self.assertEqual(data['marges'][idx], 500.0)
+        self.assertEqual(data['marges_pct'][idx], 50.0)
+        self.assertEqual(data['nb_ventes'][idx], 1)

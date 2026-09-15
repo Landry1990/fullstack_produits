@@ -4,6 +4,8 @@ import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import { Eye, DollarSign, ArrowUpRight, ChevronRight, Hash, Calendar, Users } from 'lucide-react';
 import type { Creance, Client } from '../../types';
+import { EmptyState } from '../ui/EmptyState';
+import SkeletonTable from '../ui/SkeletonTable';
 
 interface SortIconProps {
     column: string;
@@ -50,11 +52,8 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 gap-4">
-                <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-600"></div>
-                <p className="text-sm font-medium text-slate-400 uppercase tracking-widest animate-pulse">
-                    {t('creances:loading')}
-                </p>
+            <div className="p-4">
+                <SkeletonTable rows={6} columns={6} />
             </div>
         );
     }
@@ -62,12 +61,11 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
     if (mode === 'clients') {
         if (groupedClients.length === 0) {
             return (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-slate-200">
-                    <div className="p-4 bg-slate-100 rounded-full mb-4">
-                        <Users className="size-8 text-slate-400" />
-                    </div>
-                    <p className="text-slate-500 font-medium">{t('creances:client_list.empty')}</p>
-                </div>
+                <EmptyState
+                    className="py-20 bg-white rounded-xl border border-dashed border-slate-200"
+                    icon={<Users className="size-8" />}
+                    title={t('creances:client_list.empty')}
+                />
             );
         }
 
@@ -90,6 +88,13 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                 key={groupe.client.id}
                                 className="hover:bg-slate-50/50 transition-all cursor-pointer group"
                                 onClick={() => onViewClient(groupe.client.id.toString())}
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                                        e.preventDefault();
+                                        onViewClient(groupe.client.id.toString());
+                                    }
+                                }}
                             >
                                 <td className="py-4 px-6">
                                     <div className="flex items-center gap-4">
@@ -119,6 +124,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                 <td className="text-center py-4 px-6">
                                     <button
                                         className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                                        aria-label={t('common:details', { defaultValue: 'Voir le détail' })}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             onViewClient(groupe.client.id.toString());
@@ -138,12 +144,11 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
     // mode === 'invoices'
     if (filteredCreances.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border-2 border-dashed border-slate-100 m-8">
-                <div className="p-5 bg-white shadow-xl shadow-slate-100/50 rounded-xl mb-6">
-                    <Hash className="size-10 text-slate-200" />
-                </div>
-                <p className="text-slate-400 font-black uppercase tracking-widest text-xs">{t('creances:invoice_list.empty')}</p>
-            </div>
+            <EmptyState
+                className="py-24 m-8 bg-white rounded-2xl border-2 border-dashed border-slate-100"
+                icon={<Hash className="size-8" />}
+                title={t('creances:invoice_list.empty')}
+            />
         );
     }
 
@@ -156,30 +161,39 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                             <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 w-12 text-center p-4">
                                 <input
                                     type="checkbox"
+                                    aria-label={t('common:select_all', { defaultValue: 'Tout sélectionner' })}
                                     className="size-4 rounded border-slate-200 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                     onChange={onSelectAll}
                                     checked={filteredCreances.length > 0 && selectedIds.length === filteredCreances.filter(c => normalizeNumberInput(c.reste_a_payer) > 0).length}
                                 />
                             </th>
                         )}
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors p-4" onClick={() => onSort('date')}>
-                            <div className="flex items-center gap-2"><Calendar className="size-3.5" /> {t('creances:invoice_list.date')} <SortIcon column="date" sortConfig={sortConfig} /></div>
-                        </th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors p-4" onClick={() => onSort('numero_facture')}>
-                            <div className="flex items-center gap-2"><Hash className="size-3.5" /> {t('creances:invoice_list.invoice_number')} <SortIcon column="numero_facture" sortConfig={sortConfig} /></div>
-                        </th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors p-4" onClick={() => onSort('ayant_droit')}>
-                            <div className="flex items-center gap-2"><Users className="size-3.5" /> {t('creances:invoice_list.beneficiary')} <SortIcon column="ayant_droit" sortConfig={sortConfig} /></div>
-                        </th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap" onClick={() => onSort('total_ttc')}>
-                            <div className="flex items-center justify-end gap-1.5">{t('creances:invoice_list.total')} <SortIcon column="total_ttc" sortConfig={sortConfig} /></div>
-                        </th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap" onClick={() => onSort('montant_paye')}>
-                            <div className="flex items-center justify-end gap-1.5">{t('creances:invoice_list.paid')} <SortIcon column="montant_paye" sortConfig={sortConfig} /></div>
-                        </th>
-                        <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap" onClick={() => onSort('reste_a_payer')}>
-                            <div className="flex items-center justify-end gap-1.5">{t('creances:invoice_list.remaining')} <SortIcon column="reste_a_payer" sortConfig={sortConfig} /></div>
-                        </th>
+                        {([
+                            { key: 'date', label: t('creances:invoice_list.date'), icon: <Calendar className="size-3.5" />, align: 'left' },
+                            { key: 'numero_facture', label: t('creances:invoice_list.invoice_number'), icon: <Hash className="size-3.5" />, align: 'left' },
+                            { key: 'ayant_droit', label: t('creances:invoice_list.beneficiary'), icon: <Users className="size-3.5" />, align: 'left' },
+                            { key: 'total_ttc', label: t('creances:invoice_list.total'), icon: null, align: 'right' },
+                            { key: 'montant_paye', label: t('creances:invoice_list.paid'), icon: null, align: 'right' },
+                            { key: 'reste_a_payer', label: t('creances:invoice_list.remaining'), icon: null, align: 'right' },
+                        ] as const).map((col) => (
+                            <th
+                                key={col.key}
+                                className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors p-4 whitespace-nowrap"
+                                onClick={() => onSort(col.key)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        onSort(col.key);
+                                    }
+                                }}
+                                tabIndex={0}
+                                aria-sort={sortConfig.key === col.key ? (sortConfig.direction === 'asc' ? 'ascending' : 'descending') : undefined}
+                            >
+                                <div className={`flex items-center gap-2 ${col.align === 'right' ? 'justify-end' : ''}`}>
+                                    {col.icon} {col.label} <SortIcon column={col.key} sortConfig={sortConfig} />
+                                </div>
+                            </th>
+                        ))}
                         <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.status')}</th>
                         <th className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center p-4">{t('creances:invoice_list.actions')}</th>
                     </tr>
@@ -197,6 +211,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     <td className="text-center p-4">
                                         <input
                                             type="checkbox"
+                                            aria-label={t('common:select_row', { defaultValue: 'Sélectionner cette facture' })}
                                             className="size-4 rounded border-slate-200 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                             checked={isSelected}
                                             onChange={() => onSelectOne(creance.id)}
@@ -238,6 +253,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                             onClick={() => onViewDetails(creance)}
                                             className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm group/btn"
                                             title={t('creances:invoice_list.view_payments')}
+                                            aria-label={t('creances:invoice_list.view_payments')}
                                         >
                                             <Eye className="size-4" />
                                         </button>
@@ -246,6 +262,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                                 onClick={() => onPay(creance)}
                                                 className="inline-flex items-center justify-center size-8 rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:scale-110 active:scale-95 transition-all"
                                                 title={t('creances:invoice_list.add_payment')}
+                                                aria-label={t('creances:invoice_list.add_payment')}
                                             >
                                                 <DollarSign className="size-4" />
                                             </button>

@@ -17,6 +17,7 @@ import { Label } from '../ui/Label';
 import {
     Table, TableHeader, TableBody, TableRow, TableHead, TableCell
 } from '../shadcn/table';
+import { EmptyState } from '../ui/EmptyState';
 
 interface AvoirsFormProps {
     data: UseAvoirsDataReturn;
@@ -189,13 +190,13 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                 )}
 
                                 {showFournisseurList && fournisseurSearch && filteredFournisseurs.length === 0 && !isSearchingFournisseur && (
-                                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white rounded-xl shadow-lg border border-slate-200 p-4 text-center text-sm text-slate-400">
-                                        {t('stock:avoirs.form.no_fournisseur')}
+                                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white rounded-xl shadow-lg border border-slate-200">
+                                        <EmptyState compact title={t('stock:avoirs.form.no_fournisseur')} />
                                     </div>
                                 )}
 
                                 {showFournisseurList && (
-                                    <div className="fixed inset-0 z-[45]" onClick={() => setShowFournisseurList(false)} />
+                                    <div className="fixed inset-0 z-[45]" onClick={() => setShowFournisseurList(false)} aria-hidden="true" />
                                 )}
                             </div>
 
@@ -232,12 +233,11 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
 
                         <div className="flex-1 p-0 overflow-x-auto">
                             {lignes.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-4">
-                                    <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center">
-                                        <Package className="size-8" />
-                                    </div>
-                                    <p className="text-lg font-medium">{t('stock:avoirs.form.empty_lines')}</p>
-                                </div>
+                                <EmptyState
+                                    className="h-64"
+                                    icon={<Package className="size-8" />}
+                                    title={t('stock:avoirs.form.empty_lines')}
+                                />
                             ) : (
                                 <Table>
                                     <TableHeader>

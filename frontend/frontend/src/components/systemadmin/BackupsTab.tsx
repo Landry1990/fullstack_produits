@@ -7,6 +7,8 @@ import {
 import type { TFunction } from 'i18next';
 import type { BackupListData, BackupSettings, WalStatus } from './types';
 import { Button } from '../shadcn/button';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
 import { BackupPathBrowser } from './BackupPathBrowser';
 
 interface BackupsTabProps {
@@ -453,15 +455,18 @@ export function BackupsTab({
         </div>
 
         {loadingBackups ? (
-          <div className="p-8 text-center text-gray-400">
-            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
-            {t('loading')}
+          <div className="p-5 space-y-3" aria-busy="true" aria-label={t('loading')}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
           </div>
         ) : !backupList || backupList.backups.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
-            <HardDrive className="w-6 h-6 mx-auto mb-2" />
-            {t('no_backup_available')}
-          </div>
+          <EmptyState
+            compact
+            icon={<HardDrive className="size-6" />}
+            title={t('no_backup_available')}
+            className="p-8"
+          />
         ) : (
           <div className="divide-y divide-gray-50">
             {backupList.backups.map((backup, i) => (
@@ -747,9 +752,9 @@ export function BackupsTab({
             </div>
           </div>
         ) : loadingWal ? (
-          <div className="text-center py-4 text-gray-400">
-            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
-            {t('wal_loading')}
+          <div className="py-4 px-5 space-y-2" aria-busy="true" aria-label={t('wal_loading')}>
+            <Skeleton className="h-4 w-2/3 mx-auto" />
+            <Skeleton className="h-4 w-1/3 mx-auto" />
           </div>
         ) : (
           <div className="text-center py-4 text-red-500">

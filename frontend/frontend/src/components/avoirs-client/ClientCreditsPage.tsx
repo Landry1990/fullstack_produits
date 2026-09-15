@@ -15,12 +15,14 @@ import {
     useValidateClientCredit,
     useExportClientCredits,
 } from '../../hooks/useClientCredits';
+import { useConfirm } from '../../hooks/useConfirm';
 import type { ClientCredit, ClientCreditFilters } from '../../types';
 
 const PAGE_SIZE = 25;
 
 export const ClientCreditsPage: React.FC = () => {
     const { t } = useTranslation(['avoirs_client', 'common']);
+    const confirm = useConfirm();
     const locale = t('common:locale', { defaultValue: 'fr-FR' });
     const [showForm, setShowForm] = useState(false);
     const [selectedCredit, setSelectedCredit] = useState<ClientCredit | null>(null);
@@ -47,7 +49,12 @@ export const ClientCreditsPage: React.FC = () => {
 
     const handleValidate = async (credit: ClientCredit) => {
         const refundMethod = 'cash';
-        if (refundMethod === 'credit' && !window.confirm(t('messages.confirm_credit_refund'))) {
+        if (refundMethod === 'credit' && !(await confirm({
+            title: t('common:confirmation'),
+            message: t('messages.confirm_credit_refund'),
+            confirmText: t('common:confirm'),
+            variant: 'warning'
+        }))) {
             return;
         }
         setValidatingId(credit.id);
@@ -116,7 +123,7 @@ export const ClientCreditsPage: React.FC = () => {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 text-sm">
-                            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                                 <div>
                                     <span className="text-slate-500 block">{t('detail.date')}</span>
                                     <span className="font-medium">{new Date(selectedCredit.date).toLocaleDateString(locale)}</span>
@@ -150,7 +157,7 @@ export const ClientCreditsPage: React.FC = () => {
                                 </div>
                             )}
 
-                            <div>
+                            <div className="overflow-x-auto">
                                 <h3 className="font-semibold text-slate-800 mb-2">{t('detail.lines')}</h3>
                                 <table className="w-full text-left border-separate border-spacing-0">
                                     <thead className="bg-slate-100 text-slate-500 text-xs uppercase">

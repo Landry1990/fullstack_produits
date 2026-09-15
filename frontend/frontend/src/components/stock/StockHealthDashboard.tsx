@@ -75,12 +75,14 @@ const StockHealthDashboard: React.FC = () => {
                     <div className="absolute top-6 right-6 flex gap-2">
                         <button
                             onClick={() => setIsSettingsOpen(true)}
+                            aria-label={t('stock:health.config_title')}
                             className="inline-flex items-center justify-center rounded-full size-7 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover:opacity-100"
                         >
                             <Settings className="size-4" />
                         </button>
                         <button
                             onClick={refresh}
+                            aria-label={t('common:refresh')}
                             className="inline-flex items-center justify-center rounded-full size-7 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover:opacity-100"
                         >
                             <RefreshCw className="size-4" />

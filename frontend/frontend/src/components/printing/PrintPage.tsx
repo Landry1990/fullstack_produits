@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
+import { gooeyToast } from 'goey-toast';
 import { useLicence } from '../../context/LicenceContext';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
 import InventairePrintTemplate, { type InventairePrintData } from './InventairePrintTemplate';
@@ -133,7 +134,7 @@ const PrintPage: React.FC = () => {
                 window.print();
             } catch (err) {
                 logger.error("Print execution failed:", err);
-                alert("Impossible de lancer l'impression. Veuillez utiliser le raccourci Ctrl+P.");
+                gooeyToast.error("Impossible de lancer l'impression. Veuillez utiliser le raccourci Ctrl+P.");
             } finally {
                 setIsPrinting(false);
             }

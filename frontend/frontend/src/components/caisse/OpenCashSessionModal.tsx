@@ -15,6 +15,8 @@ import {
 import { Card } from '../shadcn/card'
 import { Badge } from '../shadcn/badge'
 import { Button } from '../shadcn/button'
+import { EmptyState } from '../ui/EmptyState'
+import { Skeleton } from '../ui/Skeleton'
 
 interface OpenCashSessionModalProps {
   isOpen: boolean
@@ -124,19 +126,18 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
 
         <div className="p-6 space-y-5">
           {loadingCaisses ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="size-8 text-emerald-600 animate-spin" />
-              <p className="text-sm text-slate-500">{t('cash_session.loading', { defaultValue: 'Chargement des postes de caisse...' })}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
             </div>
           ) : allCaisses.length === 0 ? (
-            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-8 text-center">
-              <div className="size-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
-                <Monitor className="size-7" />
-              </div>
-              <p className="text-base font-semibold text-slate-700">
-                {t('cash_session.no_caisse', { defaultValue: 'Aucun poste de caisse configuré.' })}
-              </p>
-            </div>
+            <EmptyState
+              className="bg-slate-50 rounded-2xl border border-slate-200"
+              icon={<Monitor className="size-7" />}
+              title={t('cash_session.no_caisse', { defaultValue: 'Aucun poste de caisse configuré.' })}
+            />
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -147,7 +148,17 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
                   return (
                     <Card
                       key={caisse.id}
+                      role="button"
+                      tabIndex={isActive ? -1 : 0}
+                      aria-disabled={isActive}
+                      aria-pressed={isSelected}
                       onClick={() => !isActive && setSelectedPosteId(caisse.id)}
+                      onKeyDown={(e) => {
+                        if (!isActive && (e.key === 'Enter' || e.key === ' ')) {
+                          e.preventDefault();
+                          setSelectedPosteId(caisse.id);
+                        }
+                      }}
                       className={`
                         relative p-4 cursor-pointer transition-all duration-200
                         ${isSelected ? 'ring-2 ring-emerald-500 border-emerald-500 bg-emerald-50/40' : 'border-slate-200 hover:border-emerald-300 hover:shadow-md'}
@@ -190,12 +201,13 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
               </div>
 
               <div className="w-full">
-                <label className="block py-1 text-xs font-semibold text-slate-700">
+                <label htmlFor="open-session-fond" className="block py-1 text-xs font-semibold text-slate-700">
                   {t('cash_session.initial_amount', { defaultValue: 'Fond de caisse (optionnel)' })}
                 </label>
                 <div className="relative">
                   <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                   <input
+                    id="open-session-fond"
                     type="number"
                     step="0.01"
                     className="w-full h-10 px-3 pl-10 rounded-lg border border-slate-200 bg-white text-right font-mono text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm"

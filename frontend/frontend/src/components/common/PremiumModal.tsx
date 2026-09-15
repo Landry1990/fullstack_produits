@@ -104,6 +104,9 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
       <div
         className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} overflow-hidden flex flex-col max-h-[90vh] ${className}`}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
       >
         {/* Header */}
         <div className={`bg-gradient-to-r from-${gradientFrom} via-${gradientVia} to-${gradientTo} px-6 py-5 border-b border-slate-200 shrink-0`}>

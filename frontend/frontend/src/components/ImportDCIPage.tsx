@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { gooeyToast } from 'goey-toast';
 import api from '../services/api';
 import type { Substance } from '../hooks/useSubstances';
 import InteractionsManager from './InteractionsManager';
 import { Button } from './shadcn/button';
 import { Badge } from './ui/Badge';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
 import { logger } from '../utils/logger'
 
 interface StatsData {
@@ -93,7 +96,7 @@ export default function ImportDCIPage() {
         setUploadResult(r.data);
         fetchStats();
       })
-      .catch(err => alert(err.response?.data?.error || 'Erreur upload'))
+      .catch(err => gooeyToast.error(err.response?.data?.error || 'Erreur upload'))
       .finally(() => setUploading(false));
   };
 
@@ -105,7 +108,7 @@ export default function ImportDCIPage() {
         fetchStats();
         fetchUnlinked();
       })
-      .catch(err => alert(err.response?.data?.error || 'Erreur matching'))
+      .catch(err => gooeyToast.error(err.response?.data?.error || 'Erreur matching'))
       .finally(() => setMatching(false));
   };
 
@@ -121,7 +124,7 @@ export default function ImportDCIPage() {
         fetchUnlinked();
         fetchStats();
       })
-      .catch(err => alert(err.response?.data?.error || 'Erreur liaison'))
+      .catch(err => gooeyToast.error(err.response?.data?.error || 'Erreur liaison'))
       .finally(() => setLinkingId(null));
   };
 
@@ -140,10 +143,10 @@ export default function ImportDCIPage() {
 
       {/* Tabs */}
       <div role="tablist" className="inline-flex border-b border-base-200 gap-0">
-        <a role="tab" className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'dci' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('dci')}>
+        <a role="tab" aria-selected={activeTab === 'dci'} tabIndex={0} className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'dci' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('dci')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('dci'); } }}>
           DCI & Substances
         </a>
-        <a role="tab" className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'interactions' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('interactions')}>
+        <a role="tab" aria-selected={activeTab === 'interactions'} tabIndex={0} className={`px-4 py-2 text-sm font-medium cursor-pointer border-b-2 transition-colors ${activeTab === 'interactions' ? 'border-primary text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`} onClick={() => setActiveTab('interactions')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('interactions'); } }}>
           Interactions médicamenteuses
         </a>
       </div>
@@ -274,9 +277,27 @@ export default function ImportDCIPage() {
             </thead>
             <tbody>
               {loadingUnlinked ? (
-                <tr><td colSpan={7} className="text-center py-12"><Loader2 className="size-5 animate-spin" /></td></tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-base-200">
+                    <td className="py-3"><Skeleton className="h-4 w-40" /></td>
+                    <td className="py-3"><Skeleton className="h-4 w-16" /></td>
+                    <td className="py-3"><Skeleton className="h-4 w-10" /></td>
+                    <td className="py-3"><Skeleton className="h-4 w-16" /></td>
+                    <td className="py-3"><Skeleton className="h-5 w-24 rounded-full" /></td>
+                    <td className="py-3"><Skeleton className="h-8 w-full rounded-xl" /></td>
+                    <td></td>
+                  </tr>
+                ))
               ) : unlinkedData?.results.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 opacity-40 font-medium">{t('products:dci_admin.all_linked', 'Tous les produits sont liés !')}</td></tr>
+                <tr>
+                  <td colSpan={7} className="py-8">
+                    <EmptyState
+                      compact
+                      variant="base"
+                      title={t('products:dci_admin.all_linked', 'Tous les produits sont liés !')}
+                    />
+                  </td>
+                </tr>
               ) : (
                 unlinkedData?.results.map(p => (
                   <tr key={p.id} className="border-b border-base-200 hover:bg-base-200/30 transition-colors">
@@ -435,8 +456,9 @@ function DCISearchCombobox({ placeholder, onSelect, disabled }: DCISearchCombobo
           role="listbox"
         >
           {loading ? (
-            <li className="px-3 py-2 text-xs text-base-content/50 flex items-center gap-2">
-              <Loader2 className="size-3 animate-spin" /> Recherche...
+            <li className="px-3 py-2 space-y-1.5">
+              <Skeleton className="h-3.5 w-3/4" />
+              <Skeleton className="h-3.5 w-1/2" />
             </li>
           ) : results.length === 0 ? (
             <li className="px-3 py-2 text-xs text-base-content/40">
@@ -472,7 +494,7 @@ function StatCard({ label, value, loading, icon, sub, accent }: { label: string;
         <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">{label}</span>
       </div>
       <div className="text-3xl font-black tracking-tight">
-        {loading ? <Loader2 className="size-5 animate-spin" /> : value}
+        {loading ? <Skeleton className="h-9 w-20" /> : value}
       </div>
       {sub && <div className="text-xs font-bold text-success mt-1 opacity-80">{sub}</div>}
     </div>

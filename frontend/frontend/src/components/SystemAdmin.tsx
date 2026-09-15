@@ -460,7 +460,7 @@ export default function SystemAdmin() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-white border border-gray-100 rounded-xl p-1 shadow-sm w-fit">
+        <div className="flex gap-1 mb-6 bg-white border border-gray-100 rounded-xl p-1 shadow-sm w-fit max-w-full overflow-x-auto">
           {tabs.map(tab => (
             <button
               key={tab.id}

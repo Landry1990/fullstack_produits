@@ -5,6 +5,7 @@ import {
   Phone, MapPin, ShieldCheck, CreditCard, Building2, FileText
 } from 'lucide-react';
 import type { Client, AyantDroit } from '../../types';
+import { Switch } from '../ui/Switch';
 
 interface ClientFormModalProps {
   isOpen: boolean;
@@ -17,16 +18,17 @@ interface ClientFormModalProps {
 }
 
 function Field({
-  label, icon: Icon, children, required
+  label, icon: Icon, children, required, id
 }: {
   label: string;
   icon: React.ElementType;
   children: React.ReactNode;
   required?: boolean;
+  id?: string;
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-medium text-base-content/60">
+      <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-medium text-base-content/60">
         <Icon className="size-3.5 text-indigo-500" />
         {label}
         {required && <span className="text-red-500">*</span>}
@@ -50,6 +52,15 @@ export default function ClientFormModal({
     }
   }, [isOpen, isEdit]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const isPro = data.client_type === 'PROFESSIONNEL';
@@ -68,8 +79,13 @@ export default function ClientFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-3xl max-h-[92vh] flex flex-col bg-base-100 rounded-xl shadow-2xl border border-base-200 m-4">
+      <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div
+        className="relative z-10 w-full max-w-3xl max-h-[92vh] flex flex-col bg-base-100 rounded-xl shadow-2xl border border-base-200 m-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="client-form-modal-title"
+      >
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-base-200">
@@ -78,7 +94,7 @@ export default function ClientFormModal({
               <User className="size-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-base-content leading-tight">
+              <h2 id="client-form-modal-title" className="text-lg font-bold text-base-content leading-tight">
                 {isEdit ? t('clients:actions.edit') : t('clients:actions.create')}
               </h2>
               {isEdit && data.id && (
@@ -88,7 +104,7 @@ export default function ClientFormModal({
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-base-200 rounded-lg transition-colors">
+          <button onClick={onClose} aria-label={t('common:close')} className="p-2 hover:bg-base-200 rounded-lg transition-colors">
             <X className="size-5 text-base-content/50" />
           </button>
         </div>
@@ -121,41 +137,45 @@ export default function ClientFormModal({
               {t('clients:sections.general_info')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label={t('common:name')} icon={User} required>
+              <Field label={t('common:name')} icon={User} required id="cfm-name">
                 <input
+                  id="cfm-name"
                   ref={nameInputRef}
                   value={data.name || ''}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
                   required
-                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder={t('clients:placeholders.full_name')}
                 />
               </Field>
 
-              <Field label={t('common:phone')} icon={Phone}>
+              <Field label={t('common:phone')} icon={Phone} id="cfm-phone">
                 <input
+                  id="cfm-phone"
                   value={data.phone || ''}
                   onChange={(e) => setData({ ...data, phone: e.target.value })}
-                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg font-mono focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none font-mono focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder="+225 XX XX XX XX"
                 />
               </Field>
 
-              <Field label={t('common:email')} icon={Mail}>
+              <Field label={t('common:email')} icon={Mail} id="cfm-email">
                 <input
+                  id="cfm-email"
                   type="text"
                   value={data.email || ''}
                   onChange={(e) => setData({ ...data, email: e.target.value })}
-                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder={t('clients:placeholders.email')}
                 />
               </Field>
 
-              <Field label={t('clients:fields.address')} icon={MapPin}>
+              <Field label={t('clients:fields.address')} icon={MapPin} id="cfm-address">
                 <input
+                  id="cfm-address"
                   value={data.address || ''}
                   onChange={(e) => setData({ ...data, address: e.target.value })}
-                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder={t('clients:placeholders.address')}
                 />
               </Field>
@@ -169,19 +189,21 @@ export default function ClientFormModal({
                 {t('clients:sections.pro_info')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label={t('clients:fields.niu')} icon={ShieldCheck}>
+                <Field label={t('clients:fields.niu')} icon={ShieldCheck} id="cfm-niu">
                   <input
+                    id="cfm-niu"
                     value={data.niu || ''}
                     onChange={(e) => setData({ ...data, niu: e.target.value })}
-                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder={t('clients:placeholders.niu')}
                   />
                 </Field>
-                <Field label={t('clients:fields.rccm')} icon={FileText}>
+                <Field label={t('clients:fields.rccm')} icon={FileText} id="cfm-rccm">
                   <input
+                    id="cfm-rccm"
                     value={data.registre_commerce || ''}
                     onChange={(e) => setData({ ...data, registre_commerce: e.target.value })}
-                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder={t('clients:placeholders.rccm')}
                   />
                 </Field>
@@ -203,11 +225,10 @@ export default function ClientFormModal({
                   </div>
                   <span className="text-sm font-medium text-base-content">{t('common:is_active')}</span>
                 </div>
-                <input
-                  type="checkbox"
+                <Switch
                   checked={data.is_active ?? true}
-                  onChange={(e) => setData({ ...data, is_active: e.target.checked })}
-                  className="toggle toggle-success toggle-sm"
+                  onCheckedChange={(checked) => setData({ ...data, is_active: checked })}
+                  className="data-[state=checked]:bg-emerald-500"
                 />
               </label>
 
@@ -224,11 +245,10 @@ export default function ClientFormModal({
                     )}
                   </div>
                 </div>
-                <input
-                  type="checkbox"
+                <Switch
                   checked={data.is_loyalty_member ?? true}
-                  onChange={(e) => setData({ ...data, is_loyalty_member: e.target.checked })}
-                  className="toggle toggle-warning toggle-sm"
+                  onCheckedChange={(checked) => setData({ ...data, is_loyalty_member: checked })}
+                  className="data-[state=checked]:bg-amber-500"
                 />
               </label>
 
@@ -241,11 +261,9 @@ export default function ClientFormModal({
                     </div>
                     <span className="text-sm font-medium text-base-content">{t('clients:fields.is_deposit_enabled')}</span>
                   </div>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={data.is_deposit_enabled ?? false}
-                    onChange={(e) => setData({ ...data, is_deposit_enabled: e.target.checked })}
-                    className="toggle toggle-primary toggle-sm"
+                    onCheckedChange={(checked) => setData({ ...data, is_deposit_enabled: checked })}
                   />
                 </label>
               )}
@@ -258,41 +276,45 @@ export default function ClientFormModal({
               {t('clients:sections.finance')}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Field label={t('clients:finance.auto_discount') + ' (%)'} icon={ShieldCheck}>
+              <Field label={t('clients:finance.auto_discount') + ' (%)'} icon={ShieldCheck} id="cfm-remise">
                 <input
+                  id="cfm-remise"
                   type="number"
                   min={0} max={100}
                   value={data.remise_automatique || '0'}
                   onChange={(e) => setData({ ...data, remise_automatique: e.target.value })}
-                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                 />
               </Field>
               {isPro && (
                 <>
-                  <Field label={t('clients:finance.credit_limit')} icon={CreditCard}>
+                  <Field label={t('clients:finance.credit_limit')} icon={CreditCard} id="cfm-plafond">
                     <input
+                      id="cfm-plafond"
                       type="number"
                       value={data.plafond || '0'}
                       onChange={(e) => setData({ ...data, plafond: e.target.value })}
-                      className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                      className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                     />
                   </Field>
-                  <Field label={t('clients:finance.coverage') + ' (%)'} icon={ShieldCheck}>
+                  <Field label={t('clients:finance.coverage') + ' (%)'} icon={ShieldCheck} id="cfm-taux">
                     <input
+                      id="cfm-taux"
                       type="number"
                       min={0} max={100}
                       value={data.taux_couverture || '0'}
                       onChange={(e) => setData({ ...data, taux_couverture: e.target.value })}
-                      className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                      className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                     />
                   </Field>
-                  <Field label={t('clients:finance.majoration_pro') + ' (%)'} icon={ShieldCheck}>
+                  <Field label={t('clients:finance.majoration_pro') + ' (%)'} icon={ShieldCheck} id="cfm-majoration">
                     <input
+                      id="cfm-majoration"
                       type="number"
                       min={0} max={100}
                       value={data.majoration_pro_pourcentage || '0'}
                       onChange={(e) => setData({ ...data, majoration_pro_pourcentage: e.target.value })}
-                      className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                      className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                     />
                   </Field>
                 </>
@@ -309,25 +331,28 @@ export default function ClientFormModal({
               <div className="flex gap-2 items-end">
                 <div className="flex-1 min-w-0">
                   <input
+                    aria-label={t('clients:beneficiaries.name_placeholder')}
                     value={tempAD.nom}
                     onChange={(e) => setTempAD({ ...tempAD, nom: e.target.value })}
-                    className="input-ref input-bordered input-sm w-full h-9 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full h-9 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder={t('clients:beneficiaries.name_placeholder')}
                   />
                 </div>
                 <div className="flex-1 min-w-0">
                   <input
+                    aria-label={t('clients:beneficiaries.id_placeholder')}
                     value={tempAD.matricule}
                     onChange={(e) => setTempAD({ ...tempAD, matricule: e.target.value })}
-                    className="input-ref input-bordered input-sm w-full h-9 rounded-lg font-mono focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full h-9 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none font-mono focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder={t('clients:beneficiaries.id_placeholder')}
                   />
                 </div>
                 <div className="flex-1 min-w-0">
                   <input
+                    aria-label={t('clients:placeholders.company')}
                     value={tempAD.societe || ''}
                     onChange={(e) => setTempAD({ ...tempAD, societe: e.target.value })}
-                    className="input-ref input-bordered input-sm w-full h-9 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full h-9 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                     placeholder={t('clients:placeholders.company')}
                   />
                 </div>
@@ -335,6 +360,7 @@ export default function ClientFormModal({
                   type="button"
                   onClick={addAD}
                   disabled={!tempAD.nom || !tempAD.matricule}
+                  aria-label={t('common:add', { defaultValue: 'Ajouter' })}
                   className="inline-flex items-center px-3 py-2 h-9 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                 >
                   <Plus className="size-4" />
@@ -342,7 +368,7 @@ export default function ClientFormModal({
               </div>
 
               {data.ayants_droit && data.ayants_droit.length > 0 && (
-                <div className="rounded-xl overflow-hidden border border-base-200">
+                <div className="rounded-xl overflow-hidden overflow-x-auto border border-base-200">
                   <table className="min-w-full divide-y divide-base-300">
                     <thead className="bg-base-200">
                       <tr>
@@ -362,6 +388,7 @@ export default function ClientFormModal({
                             <button
                               type="button"
                               onClick={() => removeAD(idx)}
+                              aria-label={t('common:delete')}
                               className="p-1 text-base-content/40 hover:text-error hover:bg-error/10 rounded-md transition-colors"
                             >
                               <Trash2 className="size-3.5" />

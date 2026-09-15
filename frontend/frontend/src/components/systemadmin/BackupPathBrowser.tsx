@@ -7,6 +7,8 @@ import { Input } from '../shadcn/input';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '../shadcn/dialog';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
 
 interface BrowseEntry {
   name: string;
@@ -116,9 +118,13 @@ export function BackupPathBrowser({ open, onOpenChange, onSelect, t }: BackupPat
           {/* Liste */}
           <div className="border border-slate-200 rounded-lg overflow-hidden max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="p-4 text-center text-sm text-slate-500">{t('backup.browse.loading')}</div>
+              <div className="p-4 space-y-2" aria-busy="true" aria-label={t('backup.browse.loading')}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
+              </div>
             ) : entries.length === 0 ? (
-              <div className="p-4 text-center text-sm text-slate-400">{t('backup.browse.empty')}</div>
+              <EmptyState compact title={t('backup.browse.empty')} />
             ) : (
               <div className="divide-y divide-slate-100">
                 {entries.filter((e) => e.type === 'directory').map((entry) => (

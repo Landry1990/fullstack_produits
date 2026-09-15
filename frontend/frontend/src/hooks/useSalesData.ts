@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import { getLocalDateString, toApiDateEnd } from '../utils/dateUtils';
 import { logger } from '../utils/logger'
+import { useConfirm } from './useConfirm';
 
 export const useSalesData = () => {
     const { t } = useTranslation(['sales', 'common']);
+    const confirm = useConfirm();
     const [factures, setFactures] = useState<Facture[]>([]);
     const [loading, setLoading] = useState(true);
     const [startDate, setStartDate] = useState(() => getLocalDateString());
@@ -133,7 +135,7 @@ export const useSalesData = () => {
     }, [startDate, endDate, statusFilter, sellerFilter, fetchPageInit]);
 
     const handleDeleteBrouillons = async () => {
-        if (!window.confirm(t('messages.delete_drafts_confirm'))) return;
+        if (!(await confirm({ title: t('common:confirmation'), message: t('messages.delete_drafts_confirm'), confirmText: t('common:confirm'), variant: 'danger' }))) return;
         try {
             await venteService.deleteBrouillons();
             gooeyToast.success(t('messages.delete_drafts_success'));
@@ -145,7 +147,7 @@ export const useSalesData = () => {
     };
 
     const deleteFacture = async (id: number) => {
-        if (!window.confirm(t('confirm_delete'))) return;
+        if (!(await confirm({ title: t('common:confirmation'), message: t('confirm_delete'), confirmText: t('common:confirm'), variant: 'danger' }))) return;
         try {
             await venteService.deleteFacture(id);
             gooeyToast.success(t('messages.delete_success'));
@@ -157,7 +159,7 @@ export const useSalesData = () => {
     };
 
     const bulkDeleteFactures = async (ids: number[]) => {
-        if (!window.confirm(t('confirm_bulk_delete', { count: ids.length }))) return;
+        if (!(await confirm({ title: t('common:confirmation'), message: t('confirm_bulk_delete', { count: ids.length }), confirmText: t('common:confirm'), variant: 'danger' }))) return;
         try {
             await venteService.bulkDelete(ids);
             gooeyToast.success(t('messages.bulk_delete_success'));

@@ -57,10 +57,11 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                 <div className="space-y-4">
                     {/* Payment Mode */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="cp-payment-mode" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <CreditCard className="size-3" /> {t('creances:payment_modal.payment_mode')}
                         </label>
                         <select
+                            id="cp-payment-mode"
                             value={form.modePaiement}
                             onChange={(e) => form.setModePaiement(e.target.value)}
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
@@ -77,11 +78,12 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
 
                     {/* Amount */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="cp-amount" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <DollarSign className="size-3" /> {t('creances:payment_modal.amount_to_pay')}
                         </label>
                         <div className="relative group">
                             <input
+                                id="cp-amount"
                                 type="number"
                                 value={form.montantPaiement}
                                 onChange={(e) => form.setMontantPaiement(e.target.value)}
@@ -102,10 +104,11 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
 
                     {/* Reference */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="cp-reference" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <Hash className="size-3" /> {t('creances:payment_modal.reference')}
                         </label>
                         <input
+                            id="cp-reference"
                             type="text"
                             placeholder={t('creances:payment_modal.reference_placeholder')}
                             value={form.referencePaiement}

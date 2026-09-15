@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import {
     Trophy, TrendingUp, ShoppingCart,
     Target, Clock, Star, BarChart2, Zap,
-    RefreshCw, Loader2, Award
+    RefreshCw, Award
 } from 'lucide-react';
+import { Skeleton } from '../ui/Skeleton';
 import { useRecharts } from '../../hooks/useRecharts';
 import { useVendeurStats } from '../../hooks/useDashboard';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -50,14 +51,25 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
     }, [dataUpdatedAt, dateLocale]);
 
     const Recharts = useRecharts();
-    if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+    if (!Recharts) return <div className="p-8"><Skeleton className="h-64 w-full rounded-2xl" /></div>;
     const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } = Recharts;
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center py-24">
-                <Loader2 className="size-8 animate-spin text-indigo-500" />
-                <span className="mt-3 text-xs font-black uppercase tracking-widest text-slate-300">{t('vendeur.loading')}</span>
+            <div className="space-y-5" aria-busy="true" aria-label={t('vendeur.loading')}>
+                <div className="flex items-center gap-3">
+                    <Skeleton className="size-11 rounded-2xl" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-5 w-40" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <Skeleton key={i} className="h-24 rounded-2xl" />
+                    ))}
+                </div>
+                <Skeleton className="h-40 rounded-2xl" />
             </div>
         );
     }

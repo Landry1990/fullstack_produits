@@ -18,6 +18,8 @@
         "cip2": "CIP2",
         "cip3": "CIP3",
         "cip4": "CIP4",
+        "cip_invalid": "Le CIP doit contenir 7 ou 13 chiffres",
+        "negative_margin_warning": "Attention : marge négative — le prix de vente est inférieur au prix de revient",
         "provider": "Fournisseur",
         "alert": "Alerte",
         "min": "Min",

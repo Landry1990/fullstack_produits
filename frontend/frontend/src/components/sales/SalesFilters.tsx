@@ -48,6 +48,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                     </div>
                     <input
                         type="text"
+                        aria-label={t('common:search')}
                         placeholder={t('sales:filters.search_placeholder')}
                         className="w-full rounded-lg border border-base-300 bg-base-100 pl-10 h-10 text-sm text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                         value={searchTerm}
@@ -59,14 +60,14 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                 <div className={`flex items-center gap-2 bg-base-100 p-1.5 rounded-lg border px-3 transition-all ${searchTerm ? 'border-amber-300 opacity-40 pointer-events-none' : 'border-base-300'}`}>
                     <Calendar className="h-5 w-5 text-base-content/60" />
                     <LocalizedDateInput
-                        
+                        aria-label={t('sales:filters.start_date', { defaultValue: 'Date de début' })}
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
                         className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
                     />
                     <span className="text-base-content/50">-</span>
                     <LocalizedDateInput
-                        
+                        aria-label={t('sales:filters.end_date', { defaultValue: 'Date de fin' })}
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
                         className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-base-content"
@@ -83,6 +84,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                             <Filter className="h-4 w-4 text-base-content/50" />
                         </div>
                         <select
+                            aria-label={t('sales:filters.status_all')}
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="w-full rounded-lg border border-base-300 bg-base-100 pl-10 h-9 text-xs text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none"
@@ -101,6 +103,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                             <User className="h-4 w-4 text-base-content/50" />
                         </div>
                         <select
+                            aria-label={t('sales:filters.all_sellers')}
                             value={sellerFilter || ''}
                             onChange={(e) => setSellerFilter(e.target.value)}
                             className="w-full rounded-lg border border-base-300 bg-base-100 pl-10 h-9 text-xs text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none"
@@ -122,6 +125,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                         onClick={onDeleteDrafts}
                         className="p-2 rounded-lg text-error hover:bg-error/10 transition-colors"
                         title={t('sales:actions.delete_drafts')}
+                        aria-label={t('sales:actions.delete_drafts')}
                     >
                         <Trash2 className="size-5" />
                     </button>
@@ -130,6 +134,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                         onClick={onRefresh}
                         className="p-2 rounded-lg text-base-content/60 hover:bg-base-200 transition-colors"
                         title={t('common:refresh')}
+                        aria-label={t('common:refresh')}
                     >
                         <RefreshCw className="size-5" />
                     </button>

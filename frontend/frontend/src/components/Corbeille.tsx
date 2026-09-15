@@ -236,7 +236,7 @@ export default function Corbeille() {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-base-100 border-b border-base-200 px-6 py-3 flex items-center gap-3 shrink-0">
+      <div className="bg-base-100 border-b border-base-200 px-6 py-3 flex flex-wrap items-center gap-3 shrink-0">
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />

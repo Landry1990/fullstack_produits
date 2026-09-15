@@ -138,6 +138,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
                     <button
                         className="inline-flex items-center justify-center size-8 rounded-xl text-slate-500 hover:bg-white hover:text-emerald-600 transition-all disabled:opacity-30"
+                        aria-label={t('common:previous')}
                         disabled={currentPage <= 1}
                         onClick={() => onPageChange(currentPage - 1)}
                     >
@@ -148,6 +149,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                     </div>
                     <button
                         className="inline-flex items-center justify-center size-8 rounded-xl text-slate-500 hover:bg-white hover:text-emerald-600 transition-all disabled:opacity-30"
+                        aria-label={t('common:next')}
                         disabled={currentPage >= totalPages}
                         onClick={() => onPageChange(currentPage + 1)}
                     >

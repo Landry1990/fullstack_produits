@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../shadcn/dialog'
+import { EmptyState } from '../ui/EmptyState'
 
 interface PendingSale {
   id: number
@@ -89,9 +90,7 @@ export default function PendingSalesDrawer({
 
         <div className="px-6 pb-6">
           {ventesEnAttente.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              {t('facturation:pending_sales.no_sales')}
-            </div>
+            <EmptyState compact title={t('facturation:pending_sales.no_sales')} />
           ) : (
             <div className="space-y-3">
               {ventesEnAttente.map((vente, idx) => {

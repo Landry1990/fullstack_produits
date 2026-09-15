@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Printer, Plus, Trash2, User as UserIcon, Banknote } from 'lucide-react';
 import { normalizeNumberInput } from '../../utils/formatters';
 import type { useJournalCaisse } from '../../hooks/useJournalCaisse';
@@ -7,6 +7,7 @@ import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import { getPaymentModeLabel } from '../../config/paymentModes';
 import { CashBreakdownModal, type CashBreakdown } from './CashBreakdownModal';
+import { EmptyState } from '../ui/EmptyState';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 
 interface Props {
@@ -63,10 +64,19 @@ export default function JournalCaisseClosingModal({ state }: Props) {
     setManualMovements(prev => prev.filter(m => m.id !== id));
   };
 
+  useEffect(() => {
+    if (!isClosingModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsClosingModalOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isClosingModalOpen, setIsClosingModalOpen]);
+
   if (!isClosingModalOpen) return null;
 
   return (
-    <dialog open aria-labelledby="closing-modal-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
+    <dialog open aria-modal="true" aria-labelledby="closing-modal-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
       <div className="w-full max-w-lg p-0 overflow-hidden rounded-2xl border border-slate-200 shadow-2xl max-h-[90vh] flex flex-col bg-white">
         {/* Header */}
         <div className="bg-emerald-600 p-5 text-white shrink-0">
@@ -123,7 +133,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                       </div>
                     )] : [])}
                   {(!closingTotals.details || Object.keys(closingTotals.details).filter(k => !k.startsWith('__')).length === 0) && (
-                    <div className="text-xs text-slate-400 italic text-center py-1">{t('closing.no_sales')}</div>
+                    <EmptyState compact title={t('closing.no_sales')} className="py-1" />
                   )}
                 </div>
               </div>
@@ -167,6 +177,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                 </div>
                 <div className="flex gap-2">
                   <select
+                    aria-label={t('closing.add_movement')}
                     className="h-8 px-2 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300 w-24 shrink-0"
                     value={newType}
                     onChange={e => setNewType(e.target.value as 'ENTREE' | 'SORTIE')}
@@ -176,6 +187,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                   </select>
                   <input
                     type="text"
+                    aria-label={t('closing.reason_placeholder')}
                     placeholder={t('closing.reason_placeholder')}
                     className="flex-1 min-w-0 h-8 px-3 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300"
                     value={newMotif}
@@ -186,6 +198,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                 <div className="flex gap-2">
                   <input
                     type="number"
+                    aria-label={t('closing.amount_placeholder')}
                     placeholder={t('closing.amount_placeholder')}
                     className="flex-1 h-8 px-3 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 text-right focus:outline-none focus:border-emerald-300"
                     value={newMontant}
@@ -232,6 +245,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                             size="sm"
                             className="h-5 w-5 p-0 text-red-600"
                             onClick={() => handleRemoveMovement(m.id)}
+                            aria-label={t('common:remove', { defaultValue: 'Supprimer' })}
                           >
                             <Trash2 className="size-3" />
                           </Button>
@@ -255,7 +269,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
 
               {/* === MONTANT RÉEL === */}
               <div className="w-full">
-                <label className="block py-1">
+                <label htmlFor="closing-real-amount" className="block py-1">
                   <span className="text-xs font-black text-slate-500 uppercase">{t('closing.real_amount')}</span>
                 </label>
                 <div className="relative flex gap-2">
@@ -264,12 +278,22 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                       className="relative flex-1 cursor-text"
                       onClick={() => setIsBreakdownOpen(true)}
                       onFocus={() => setIsBreakdownOpen(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setIsBreakdownOpen(true);
+                        }
+                      }}
                       tabIndex={0}
                       role="button"
+                      aria-label={t('closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
                     >
                       <input
+                        id="closing-real-amount"
                         type="text"
                         readOnly
+                        tabIndex={-1}
+                        aria-hidden="true"
                         placeholder={t('closing.breakdown_placeholder', { defaultValue: 'Touchez pour billetter' })}
                         className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all cursor-pointer"
                         value={actualAmount}
@@ -280,6 +304,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                   ) : (
                     <div className="relative flex-1">
                       <input
+                        id="closing-real-amount"
                         type="number"
                         placeholder={t('closing.real_amount_placeholder', { defaultValue: 'Saisissez le montant réel' })}
                         className="w-full h-12 px-4 rounded-lg bg-slate-100 border border-slate-200 font-black text-2xl text-center text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
@@ -295,6 +320,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
                     className="h-12 px-3 border-emerald-300 text-emerald-700 hover:bg-emerald-50 shrink-0"
                     onClick={() => setIsBreakdownOpen(true)}
                     title={t('closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
+                    aria-label={t('closing.breakdown_open', { defaultValue: 'Ouvrir le billetage' })}
                   >
                     <Banknote className="size-5" />
                   </Button>
@@ -334,7 +360,7 @@ export default function JournalCaisseClosingModal({ state }: Props) {
           >
             {loading ? <div className="animate-spin rounded-full size-5 border-b-2 border-white" /> : t('closing.confirm')}
           </Button>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button variant="outline" className="border-slate-300 font-bold flex items-center justify-center gap-2" onClick={() => handleImprimerCloture()}>
               <Printer className="size-5" /> {t('closing.ticket')}
             </Button>

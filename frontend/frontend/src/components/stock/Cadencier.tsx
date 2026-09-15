@@ -18,6 +18,7 @@ import {
   Card, CardContent, CardHeader, CardTitle, CardDescription
 } from '../shadcn/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../shadcn/table';
+import { EmptyState } from '../ui/EmptyState';
 import { logger } from '../../utils/logger'
 
 interface CadencierItem {
@@ -470,17 +471,12 @@ const Cadencier: React.FC = () => {
                 </Table>
               </div>
             ) : items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <div className="p-4 bg-slate-100 rounded-2xl mb-4">
-                  <AlertTriangle className="size-10 text-slate-300" />
-                </div>
-                <h3 className="text-base font-semibold text-slate-700">
-                  {t('stock:cadencier.empty', 'Aucun produit à afficher dans le cadencier')}
-                </h3>
-                <p className="text-sm text-slate-500 mt-1 max-w-sm">
-                  {t('stock:analyse.empty.all_good', 'Tout est à jour.')}
-                </p>
-              </div>
+              <EmptyState
+                icon={<AlertTriangle className="size-8" />}
+                title={t('stock:cadencier.empty', 'Aucun produit à afficher dans le cadencier')}
+                description={t('stock:analyse.empty.all_good', 'Tout est à jour.')}
+                className="py-16 px-6"
+              />
             ) : (
               <div className="overflow-auto flex-1 min-h-0">
                 <Table className="w-full table-fixed text-sm">
@@ -521,6 +517,16 @@ const Cadencier: React.FC = () => {
                             isSelected ? 'bg-emerald-50/40' : 'hover:bg-slate-50/80'
                           )}
                           onClick={() => toggleSelection(item.produit_id)}
+                          role="checkbox"
+                          aria-checked={isSelected}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.target !== e.currentTarget) return;
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              toggleSelection(item.produit_id);
+                            }
+                          }}
                         >
                           <TableCell className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                             <Checkbox
@@ -601,6 +607,7 @@ const Cadencier: React.FC = () => {
                 <Button
                   variant="outline"
                   size="icon"
+                  aria-label={t('common:previous')}
                   onClick={() => fetchCadencier(Math.max(1, page - 1))}
                   disabled={page <= 1}
                 >
@@ -612,6 +619,7 @@ const Cadencier: React.FC = () => {
                 <Button
                   variant="outline"
                   size="icon"
+                  aria-label={t('common:next')}
                   onClick={() => fetchCadencier(Math.min(totalPages, page + 1))}
                   disabled={page >= totalPages}
                 >

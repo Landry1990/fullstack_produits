@@ -42,11 +42,19 @@ export default function ForceStockModal({ product, onClose, onSubstitute, onForc
         } else if (e.key === 'Enter' && current >= 0) {
           e.preventDefault()
           buttons[current].click()
+        } else if (e.key === 'Escape') {
+          e.preventDefault()
+          onClose()
         }
       }}
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
-        <h3 className="font-bold text-lg mb-2 text-slate-800">
+      <div
+        className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="force-stock-modal-title"
+      >
+        <h3 id="force-stock-modal-title" className="font-bold text-lg mb-2 text-slate-800">
           {t('common:force_stock.title', { produit: product.name, defaultValue: `Stock insuffisant — ${product.name}` })}
         </h3>
         <p className="text-sm text-slate-600 mb-4">

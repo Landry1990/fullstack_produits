@@ -9,6 +9,7 @@ import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import type { ProduitModel } from '../../types';
 import { logger } from '../../utils/logger'
+import { EmptyState } from '../ui/EmptyState'
 
 interface PrescriptionScannerModalProps {
   isOpen: boolean;
@@ -353,10 +354,11 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {matchResults.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 italic">
-                      <AlertCircle className="size-12 mb-4 stroke-1" />
-                      <p>{t('facturation:prescription_scanner.no_results_placeholder')}</p>
-                    </div>
+                    <EmptyState
+                      className="h-full"
+                      icon={<AlertCircle className="size-8" />}
+                      title={t('facturation:prescription_scanner.no_results_placeholder')}
+                    />
                   ) : (
                     matchResults.map((result, idx) => (
                       <div key={result.ocrLine} className={`p-3 rounded-xl border transition-all ${result.matchedProduct ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-100'}`}>
@@ -394,7 +396,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-6 bg-slate-100/80 backdrop-blur-md border-t border-slate-100 flex justify-between items-center">
+        <div className="p-6 bg-slate-100/80 backdrop-blur-md border-t border-slate-100 flex flex-wrap justify-between items-center gap-3">
             <div className="text-xs text-slate-400">
                 {extractionData && (
                     <div className="flex gap-4">

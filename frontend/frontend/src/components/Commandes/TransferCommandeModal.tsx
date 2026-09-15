@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2 } from 'lucide-react';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
@@ -15,6 +14,7 @@ import {
     DialogDescription,
 } from '../shadcn/dialog';
 import { Select } from '../shadcn/select';
+import { Skeleton } from '../ui/Skeleton';
 
 interface TransferCommandeModalProps {
     isOpen: boolean;
@@ -241,7 +241,7 @@ export default function TransferCommandeModal({
 
                     {transferTargetFournisseur && (
                         <div className="bg-white border border-slate-200 rounded-lg p-4">
-                            <div className="grid grid-cols-3 gap-4 text-center">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                                 <div>
                                     <div className="text-xs text-slate-500 uppercase">{t('orders:transfer_modal.current_cost')}</div>
                                     <div className="font-bold">{formatCurrency(transferCalc.totalCurrentCost)}</div>
@@ -268,9 +268,9 @@ export default function TransferCommandeModal({
                     )}
 
                     {loadingCatalogue && (
-                        <div className="flex items-center justify-center py-4 text-slate-600">
-                            <Loader2 className="size-4 animate-spin mr-2" />
-                            {t('orders:transfer_modal.loading_prices')}
+                        <div className="py-4 space-y-2">
+                            <Skeleton className="h-4 w-1/2 mx-auto" />
+                            <Skeleton className="h-4 w-1/3 mx-auto" />
                         </div>
                     )}
 

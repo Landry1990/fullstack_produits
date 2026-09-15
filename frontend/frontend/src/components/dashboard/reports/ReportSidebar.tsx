@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FileText, ChevronRight, X, Search } from 'lucide-react';
 import { QUERIES } from '../../../hooks/useCentreRapports';
 import type { QueryDefinition } from '../../../hooks/useCentreRapports';
+import { EmptyState } from '../../ui/EmptyState';
 
 interface ReportSidebarProps {
     selectedQuery: QueryDefinition | null;
@@ -64,9 +65,10 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {filteredQueries.length === 0 && search && (
-                    <div className="p-6 text-center text-sm text-slate-500">
-                        {t('search_no_results', { defaultValue: 'Aucun rapport trouvé' })}
-                    </div>
+                    <EmptyState
+                        compact
+                        title={t('search_no_results', { defaultValue: 'Aucun rapport trouvé' })}
+                    />
                 )}
                 {filteredQueries.map(query => (
                     <button

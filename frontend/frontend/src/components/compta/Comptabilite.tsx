@@ -22,6 +22,7 @@ import {
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import { gooeyToast } from 'goey-toast';
 import Pagination from '../ui/Pagination';
 import { LocalizedDateInput } from '../LocalizedDateInput';
 
@@ -253,7 +254,7 @@ function DashboardTab({ resultat, actions, t }: DashboardTabProps) {
             {/* Performance Card */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 border-t-4 border-t-emerald-500 shadow-sm">
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide mb-2 truncate">{t('performance.title')}</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="bg-emerald-50 p-2 rounded-lg border border-emerald-100">
                         <p className="text-[10px] text-emerald-600 font-medium truncate">{t('performance.produits_label')}</p>
                         <p className="text-sm font-bold text-emerald-600">{formatFCFA(resultat?.total_produits || 0)}</p>
@@ -948,7 +949,7 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
             } catch { return; }
         }
         if (!chargeCompte) {
-            alert(t('charges_simple.account_not_found'));
+            gooeyToast.error(t('charges_simple.account_not_found'));
             return;
         }
 
@@ -977,7 +978,7 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                 const res = await api.post('compta/journaux/', { code: journalCode, nom: journalNom });
                 targetJournal = res.data;
             } catch {
-                alert(t('charges_simple.journal_error', { journalCode }));
+                gooeyToast.error(t('charges_simple.journal_error', { journalCode }));
                 return;
             }
         }
@@ -1050,7 +1051,7 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="col-span-2 md:col-span-1">
                                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges_simple.payment_method')}</label>
                                 <select 

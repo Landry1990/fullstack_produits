@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from './shadcn/button';
 import { Card, CardContent } from './shadcn/card';
 import { cn } from '../lib/utils';
+import { useConfirm } from '../hooks/useConfirm';
 import { logger } from '../utils/logger'
 
 const getDeviceType = () => {
@@ -23,19 +24,9 @@ const getDeviceType = () => {
   return 'PC';
 };
 
-const handleResetLicence = async () => {
-  if (window.confirm('Êtes-vous sûr de vouloir supprimer la licence actuelle ? Le système se verrouillera à nouveau.')) {
-    try {
-      await api.delete('/licence/');
-      window.location.reload();
-    } catch (err) {
-      logger.error('Error resetting licence:', err);
-    }
-  }
-};
-
 export default function LoginShadcn() {
   const { t } = useTranslation(['auth', 'common']);
+  const confirm = useConfirm();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -69,6 +60,23 @@ export default function LoginShadcn() {
     const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `${type}-${randomId}`;
   });
+
+  const handleResetLicence = async () => {
+    const confirmed = await confirm({
+      title: t('common:confirmation'),
+      message: 'Êtes-vous sûr de vouloir supprimer la licence actuelle ? Le système se verrouillera à nouveau.',
+      confirmText: t('common:confirm'),
+      variant: 'danger'
+    });
+    if (confirmed) {
+      try {
+        await api.delete('/licence/');
+        window.location.reload();
+      } catch (err) {
+        logger.error('Error resetting licence:', err);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -6,6 +6,8 @@ import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import ActionIcon from '../ui/ActionIcon';
 import SelectionHeader from '../ui/SelectionHeader';
+import { EmptyState } from '../ui/EmptyState';
+import SkeletonTable from '../ui/SkeletonTable';
 import { cn } from '../../lib/utils';
 
 // Composant séparé pour éviter les re-renders inutiles
@@ -29,35 +31,42 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
 }) => {
     const { t } = useTranslation(['sales', 'common']);
 
+    const handleMenuKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.currentTarget.click();
+        }
+    };
+
     if (selectedIds.length === 1) {
         const selectedFacture = factures.find(f => f.id === selectedIds[0]);
         if (!selectedFacture) return null;
         return (
             <>
                 <li className="text-[10px] font-medium text-slate-500 px-4 py-2 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</li>
-                <li><a onClick={() => onView(selectedFacture)} className="gap-3 py-3"><Eye className="size-4 text-slate-500" />{t('common:details')}</a></li>
-                <li><a onClick={() => onPrint(selectedFacture)} className="gap-3 py-3"><Printer className="size-4 text-emerald-600" />{t('sales:print.a4')}</a></li>
-                <li><a onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3"><Receipt className="size-4 text-emerald-600" />{t('sales:print.ticket')}</a></li>
-                <li><a onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3"><Truck className="size-4 text-emerald-600" />{t('sales:print.delivery_note')}</a></li>
-                <li><a onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3"><Copy className="size-4 text-blue-500" />{t('common:duplicate', { defaultValue: 'Dupliquer' })}</a></li>
+                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onView(selectedFacture)} className="gap-3 py-3"><Eye className="size-4 text-slate-500" />{t('common:details')}</a></li>
+                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onPrint(selectedFacture)} className="gap-3 py-3"><Printer className="size-4 text-emerald-600" />{t('sales:print.a4')}</a></li>
+                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3"><Receipt className="size-4 text-emerald-600" />{t('sales:print.ticket')}</a></li>
+                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onPrintBL(selectedFacture)} className="gap-3 py-3"><Truck className="size-4 text-emerald-600" />{t('sales:print.delivery_note')}</a></li>
+                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3"><Copy className="size-4 text-blue-500" />{t('common:duplicate', { defaultValue: 'Dupliquer' })}</a></li>
                 {(selectedFacture.status === 'PROF' || selectedFacture.status === 'PROFORMA') && (
-                    <li><a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><FileEdit className="size-4 text-emerald-600" />{t('sales:load_to_facturation', { defaultValue: 'Charger en facturation' })}</a></li>
+                    <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><FileEdit className="size-4 text-emerald-600" />{t('sales:load_to_facturation', { defaultValue: 'Charger en facturation' })}</a></li>
                 )}
                 {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
-                    <li><a onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3"><FileDigit className="size-4 text-emerald-600" />Générer un avoir</a></li>
+                    <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3"><FileDigit className="size-4 text-emerald-600" />Générer un avoir</a></li>
                 )}
                 {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && selectedFacture.status !== 'PROF' && selectedFacture.status !== 'PROFORMA' && (
-                    <li><a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><RotateCcw className="size-4 text-amber-500" />{t('common:refund', { defaultValue: "Modifier/Retour" })}</a></li>
+                    <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onRefund(selectedFacture)} className="gap-3 py-3"><RotateCcw className="size-4 text-amber-500" />{t('common:refund', { defaultValue: "Modifier/Retour" })}</a></li>
                 )}
                 <div className="border-t border-slate-200 my-1"></div>
-                <li><a onClick={() => onDelete(selectedFacture.id)} className="gap-3 py-3 text-red-600 hover:bg-red-50 font-bold"><Trash2 className="size-4" />{t('common:delete')}</a></li>
+                <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onDelete(selectedFacture.id)} className="gap-3 py-3 text-red-600 hover:bg-red-50 font-bold"><Trash2 className="size-4" />{t('common:delete')}</a></li>
             </>
         );
     }
     return (
         <>
             <li className="text-[10px] font-medium text-slate-500 px-4 py-2 uppercase tracking-widest">{t('common:bulk_actions')}</li>
-            <li><a onClick={onBulkDelete} className="gap-3 py-3 text-red-600 hover:bg-red-50 font-bold"><Trash2 className="size-4" />{t('sales:confirm_bulk_delete', { count: selectedIds.length })}</a></li>
+            <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={onBulkDelete} className="gap-3 py-3 text-red-600 hover:bg-red-50 font-bold"><Trash2 className="size-4" />{t('sales:confirm_bulk_delete', { count: selectedIds.length })}</a></li>
         </>
     );
 });
@@ -149,18 +158,18 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     };
 
     if (loading)         return (
-             <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                <div className="size-10 border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin mb-3"></div>
-                <p className="text-sm font-medium text-slate-500">{t('common:loading')}</p>
+             <div className="p-4">
+                <SkeletonTable rows={8} columns={9} />
             </div>
          );
 
     if (factures.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-500 bg-slate-50 m-4 rounded-2xl border border-dashed border-slate-200">
-                <h3 className="text-base font-semibold text-slate-700 mb-1">{t('sales:no_sales_found')}</h3>
-                <p className="text-sm text-slate-500">{t('sales:try_different_filters')}</p>
-            </div>
+            <EmptyState
+                className="py-20 m-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200"
+                title={t('sales:no_sales_found')}
+                description={t('sales:try_different_filters')}
+            />
         );
     }
 

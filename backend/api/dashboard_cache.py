@@ -22,6 +22,7 @@ class DashboardCache:
     HEAVY_STATS_TTL = 300  # 5 minutes pour dormant_stock + margin
     ALERTS_TTL = 60  # 1 minute pour les alertes
     CHARTS_TTL = 300  # 5 minutes pour les graphiques
+    CHART_FAST_TTL = 45  # 45 secondes pour le graphique de revenus (fraîcheur sans surcharge)
     
     # Préfixes de clés
     PREFIX_STATS = "dashboard_stats"

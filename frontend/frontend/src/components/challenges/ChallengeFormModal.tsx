@@ -694,7 +694,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                         <div className="space-y-2">
                                             {form.point_tiers.map((tier, idx) => (
                                                 <div key={idx} className="flex items-center gap-2">
-                                                    <div className="flex-1 grid grid-cols-2 gap-2">
+                                                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
                                                                 ≤

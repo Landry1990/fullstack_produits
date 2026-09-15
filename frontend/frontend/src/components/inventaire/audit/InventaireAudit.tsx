@@ -8,6 +8,8 @@ import {
 import { useRecharts } from '../../../hooks/useRecharts';
 import { useInventaireAudit } from '../../../hooks/inventaire/useInventaireAudit';
 import { LocalizedDateInput } from '../../LocalizedDateInput';
+import { EmptyState } from '../../ui/EmptyState';
+import { Skeleton } from '../../ui/Skeleton';
 
 interface InventaireAuditProps {
     onBack: () => void;
@@ -63,7 +65,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
     }, [data?.top_pertes, sortConfig]);
 
     const Recharts = useRecharts();
-    if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+    if (!Recharts) return <div className="p-8"><Skeleton className="h-64 w-full" /></div>;
     const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = Recharts;
 
     const handleSort = (key: string) => {
@@ -75,9 +77,14 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
 
     if (loading && !data) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-                <div className="animate-spin rounded-full size-12 border-b-2 border-emerald-500"></div>
-                <p className="text-slate-500 font-medium tracking-tight">{t('inventaire.audit.loading')}</p>
+            <div className="min-h-[400px] p-4 space-y-4">
+                <Skeleton className="h-6 w-56" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                </div>
+                <Skeleton className="h-64 w-full" />
             </div>
         );
     }
@@ -288,13 +295,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                             <thead className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                                 <tr className="border-b border-slate-100">
                                     <th className="py-3 text-left font-black">{t('inventaire.audit.table.col_product')}</th>
-                                    <th className="text-right py-3 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => handleSort('total_quantite')}>
+                                    <th className="text-right py-3 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => handleSort('total_quantite')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('total_quantite'); } }}>
                                         {t('inventaire.audit.table.col_gap_qty')} <SortIcon column="total_quantite" sortConfig={sortConfig} />
                                     </th>
-                                    <th className="text-right py-3 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => handleSort('total_valeur')}>
+                                    <th className="text-right py-3 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => handleSort('total_valeur')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('total_valeur'); } }}>
                                         {t('inventaire.audit.table.col_total_val')} <SortIcon column="total_valeur" sortConfig={sortConfig} />
                                     </th>
-                                    <th className="text-center py-3 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => handleSort('occurrence')}>
+                                    <th className="text-center py-3 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => handleSort('occurrence')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('occurrence'); } }}>
                                         {t('inventaire.audit.table.col_occurrences')} <SortIcon column="occurrence" sortConfig={sortConfig} />
                                     </th>
                                 </tr>
@@ -319,11 +326,12 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                 ))}
                                 {(!data?.top_pertes || data.top_pertes.length === 0) && (
                                     <tr>
-                                        <td colSpan={4} className="text-center py-12">
-                                            <div className="flex flex-col items-center text-slate-200 gap-2">
-                                                <Package className="h-12 w-12" />
-                                                <p className="text-sm font-bold uppercase tracking-widest text-slate-400">{t('inventaire.audit.table.empty')}</p>
-                                            </div>
+                                        <td colSpan={4} className="text-center py-6">
+                                            <EmptyState
+                                                compact
+                                                icon={<Package className="size-6" />}
+                                                title={t('inventaire.audit.table.empty')}
+                                            />
                                         </td>
                                     </tr>
                                 )}

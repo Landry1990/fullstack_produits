@@ -10,6 +10,8 @@ import { Button } from '../shadcn/button';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../shadcn/table';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
 
 import { formatCurrency } from '../../utils/formatters';
 import { getLocale } from '../../utils/dateUtils';
@@ -140,9 +142,12 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
             </TableBody>
           </Table>
         ) : (
-          <p className="text-xs text-slate-400 italic py-2">
-            {t('dashboard.manager_dashboard.challenges_no_ranking', 'Aucun classement disponible')}
-          </p>
+          <EmptyState
+            compact
+            icon={<Trophy className="size-6" />}
+            title={<span className="text-xs italic font-normal">{t('dashboard.manager_dashboard.challenges_no_ranking', 'Aucun classement disponible')}</span>}
+            className="py-2"
+          />
         )}
       </div>
     </div>
@@ -188,8 +193,9 @@ export function ChallengesSummary() {
       </CardHeader>
       <CardContent className="space-y-3">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="size-8 border-2 border-slate-200 border-t-emerald-500 rounded-full animate-spin" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Skeleton className="h-44 w-full rounded-xl" />
+            <Skeleton className="h-44 w-full rounded-xl" />
           </div>
         ) : challenges && challenges.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -198,26 +204,23 @@ export function ChallengesSummary() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-            <div className="bg-slate-50 rounded-2xl p-4 mb-3">
-              <Trophy className="size-8 text-slate-300" />
-            </div>
-            <p className="text-sm font-semibold text-slate-600">
-              {t('dashboard.manager_dashboard.challenges_empty', 'Aucun challenge en cours')}
-            </p>
-            <p className="text-xs text-slate-400 mt-1 text-center max-w-xs">
-              {t('dashboard.manager_dashboard.challenges_empty_desc', 'Créez un challenge pour suivre les performances de vos équipes')}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4 gap-1.5 rounded-lg"
-              onClick={() => navigate('/app/challenges')}
-            >
-              <Trophy className="size-4" />
-              {t('dashboard.manager_dashboard.challenges_view_all', 'Voir tous les challenges')}
-            </Button>
-          </div>
+          <EmptyState
+            icon={<Trophy className="size-8" />}
+            title={t('dashboard.manager_dashboard.challenges_empty', 'Aucun challenge en cours')}
+            description={t('dashboard.manager_dashboard.challenges_empty_desc', 'Créez un challenge pour suivre les performances de vos équipes')}
+            className="py-10"
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-lg"
+                onClick={() => navigate('/app/challenges')}
+              >
+                <Trophy className="size-4" />
+                {t('dashboard.manager_dashboard.challenges_view_all', 'Voir tous les challenges')}
+              </Button>
+            }
+          />
         )}
       </CardContent>
     </Card>

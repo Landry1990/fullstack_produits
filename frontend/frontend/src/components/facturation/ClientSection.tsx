@@ -4,6 +4,7 @@ import type { Client, AyantDroit } from '../../types'
 import { safeStorage } from '../../utils/storage'
 import { Button } from '../shadcn/button'
 import { X, UserPlus, Loader2 } from 'lucide-react'
+import { EmptyState } from '../ui/EmptyState'
 import AyantDroitSection from './AyantDroitSection'
 import ClientInfoBadges from './ClientInfoBadges'
 
@@ -452,20 +453,23 @@ export default function ClientSection({
                   ))}
                 </>
               ) : (
-                <div className="px-3 py-4 text-center">
-                  <div className="text-sm text-slate-400 mb-3">{t('facturation:client.no_results')}</div>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      onOpenCreateClient(clientSearch)
-                      setShowClientDropdown(false)
-                    }}
-                    className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-xs"
-                  >
-                    <UserPlus className="size-3.5" />
-                    {t('facturation:client.create_button')} "{clientSearch}"
-                  </Button>
-                </div>
+                <EmptyState
+                  compact
+                  title={t('facturation:client.no_results')}
+                  action={
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        onOpenCreateClient(clientSearch)
+                        setShowClientDropdown(false)
+                      }}
+                      className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-xs"
+                    >
+                      <UserPlus className="size-3.5" />
+                      {t('facturation:client.create_button')} "{clientSearch}"
+                    </Button>
+                  }
+                />
               )}
             </div>
           )}

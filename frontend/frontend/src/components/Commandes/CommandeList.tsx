@@ -17,6 +17,7 @@ import {
 } from '../shadcn/table';
 import CommandeSelectionHeader from './CommandeSelectionHeader';
 import { cn } from '../../lib/utils';
+import { EmptyState } from '../ui/EmptyState';
 
 
 
@@ -270,6 +271,7 @@ export default function CommandeList({
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
+              aria-label={t('orders:list.search_placeholder', 'Rechercher (N° facture, ID)…')}
               placeholder={t('orders:list.search_placeholder', 'Rechercher (N° facture, ID)…')}
               className="w-full h-8 pl-8 pr-7 text-xs"
             />
@@ -385,7 +387,7 @@ export default function CommandeList({
 
                                 <li>
 
-                                  <a onClick={() => onViewDetails(commande)} className="flex items-center gap-2 py-2 hover:bg-sky-50 text-sky-600 font-medium text-sm">
+                                  <a role="button" tabIndex={0} onClick={() => onViewDetails(commande)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onViewDetails(commande); } }} className="flex items-center gap-2 py-2 hover:bg-sky-50 text-sky-600 font-medium text-sm">
 
                                     <Eye className="size-4" /> {t('orders:list.table.view_details')}
 
@@ -397,7 +399,7 @@ export default function CommandeList({
 
                                     <li>
 
-                                        <a onClick={() => {/* Handle print if available */}} className="flex items-center gap-2 py-2 hover:bg-slate-100 text-slate-600 font-medium text-sm">
+                                        <a role="button" tabIndex={0} onClick={() => {/* Handle print if available */}} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); }} className="flex items-center gap-2 py-2 hover:bg-slate-100 text-slate-600 font-medium text-sm">
 
                                             <Printer className="size-4" /> {t('common:print', 'Imprimer')}
 
@@ -411,7 +413,7 @@ export default function CommandeList({
 
                                      <li>
 
-                                        <a onClick={onBulkDelete} className="flex items-center gap-2 py-2 hover:bg-red-50 text-red-600 font-medium text-sm">
+                                        <a role="button" tabIndex={0} onClick={onBulkDelete} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onBulkDelete(); } }} className="flex items-center gap-2 py-2 hover:bg-red-50 text-red-600 font-medium text-sm">
 
                                             <Trash2 className="size-4" /> {t('common:actions.delete')}
 
@@ -443,7 +445,7 @@ export default function CommandeList({
 
                             <li>
 
-                                <a onClick={onOpenMergeModal} className="flex items-center gap-2 py-2 hover:bg-sky-50 text-sky-600 font-medium text-sm">
+                                <a role="button" tabIndex={0} onClick={onOpenMergeModal} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenMergeModal(); } }} className="flex items-center gap-2 py-2 hover:bg-sky-50 text-sky-600 font-medium text-sm">
 
                                     <GitMerge className="size-4" /> {t('orders:list.selection.merge')}
 
@@ -455,7 +457,7 @@ export default function CommandeList({
 
                           <li>
 
-                            <a onClick={onBulkDelete} className="flex items-center gap-2 py-2 hover:bg-error/10 text-error font-medium text-sm">
+                            <a role="button" tabIndex={0} onClick={onBulkDelete} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onBulkDelete(); } }} className="flex items-center gap-2 py-2 hover:bg-error/10 text-error font-medium text-sm">
 
                               <Trash2 className="size-4" /> {t('orders:bulk_delete_btn')}
 
@@ -477,7 +479,7 @@ export default function CommandeList({
 
                 ) : (
                   <>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('numero')}>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('numero')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('numero'); } }}>
                       <div className="flex items-center gap-2">
                         {t('orders:list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
@@ -485,12 +487,12 @@ export default function CommandeList({
                     <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.invoice_number')}
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('date')}>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('date')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('date'); } }}>
                       <div className="flex items-center gap-2">
                         {t('common:date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('fournisseur')}>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('fournisseur')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('fournisseur'); } }}>
                       <div className="flex items-center gap-2">
                         {t('common:supplier')} {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
@@ -508,7 +510,7 @@ export default function CommandeList({
                     <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.ttc')}
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('status')}>
+                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('status')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('status'); } }}>
                       <div className="flex items-center gap-2 justify-center">
                         {t('common:us_title')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
@@ -531,6 +533,15 @@ export default function CommandeList({
                   selectedOrderIds.has(commande.id) ? 'bg-emerald-50/50' : ''
                 )}
                 onClick={() => selectedOrderIds.size === 0 && onViewDetails(commande)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if ((e.key === 'Enter' || e.key === ' ') && selectedOrderIds.size === 0) {
+                    e.preventDefault();
+                    onViewDetails(commande);
+                  }
+                }}
               >
                 <TableCell className="text-center py-3" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
@@ -596,13 +607,12 @@ export default function CommandeList({
 
             {sortedCommandes.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-12 text-slate-400">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center">
-                      <Package className="size-6 text-slate-400" />
-                    </div>
-                    <p className="text-sm">{t('orders:list.table.empty')}</p>
-                  </div>
+                <TableCell colSpan={10} className="py-4">
+                  <EmptyState
+                    compact
+                    icon={<Package className="size-6" />}
+                    title={t('orders:list.table.empty')}
+                  />
                 </TableCell>
               </TableRow>
             )}

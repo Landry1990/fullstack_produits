@@ -112,7 +112,7 @@ export default function AyantDroitSection({
       </div>
 
       {showNewAyantDroit || ayantsDroitList.length === 0 ? (
-        <div className="grid grid-cols-3 gap-2 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 relative">
           <input
             ref={nomRef}
             type="text"
@@ -146,7 +146,7 @@ export default function AyantDroitSection({
             className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
           />
           {duplicate && (
-            <div className="col-span-3 text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded px-2 py-1">
+            <div className="col-span-full text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded px-2 py-1">
               {t('facturation:client.ayant_droit.duplicate_warning')} : {duplicate.nom} ({duplicate.matricule})
             </div>
           )}
@@ -154,7 +154,7 @@ export default function AyantDroitSection({
             <button
               type="button"
               onClick={() => setShowNewAyantDroit(false)}
-              className="text-[10px] text-slate-500 hover:text-emerald-600 underline col-span-3"
+              className="text-[10px] text-slate-500 hover:text-emerald-600 underline col-span-full"
             >
               {t('facturation:client.ayant_droit.existing_button')}
             </button>
@@ -189,7 +189,7 @@ export default function AyantDroitSection({
 
           {selectedData && (
             <div
-              className={`mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-100 text-xs grid grid-cols-2 gap-x-4 gap-y-1 transition-all duration-500 ease-out transform ${
+              className={`mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-100 text-xs grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 transition-all duration-500 ease-out transform ${
                 showCard ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
               }`}
             >

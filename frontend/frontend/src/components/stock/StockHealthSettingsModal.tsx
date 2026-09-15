@@ -25,6 +25,16 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
         }
     }, [isOpen, settings.availability_weight]);
 
+    // Fermeture du modal via la touche Échap
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     const handleSave = async () => {
@@ -57,7 +67,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="bg-white w-full max-w-xl p-0 overflow-hidden rounded-[40px] border border-slate-200 shadow-2xl relative z-10">
+            <div className="bg-white w-full max-w-xl p-0 overflow-hidden rounded-[40px] border border-slate-200 shadow-2xl relative z-10" role="dialog" aria-modal="true" aria-label={t('stock:health.config_title')}>
                 {/* Header */}
                 <div className="bg-slate-50 p-8 border-b border-slate-100">
                     <div className="flex items-center gap-4 mb-2">
@@ -98,6 +108,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                             type="range"
                             min="0"
                             max="100"
+                            aria-label={t('stock:health.availability')}
                             value={availWeight}
                             onChange={(e) => setAvailWeight(parseInt(e.target.value, 10))}
                             className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
@@ -157,7 +168,7 @@ const StockHealthSettingsModal: React.FC<StockHealthSettingsModalProps> = ({ isO
                     </div>
                 </div>
             </div>
-            <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-0" onClick={onClose}></div>
+            <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-0" onClick={onClose} aria-hidden="true"></div>
         </div>
     );
 };

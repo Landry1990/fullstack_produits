@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
+import { useDebounce } from 'use-debounce'
 import api from '../../services/api'
 import { gooeyToast } from 'goey-toast'
 import type { ProduitModel } from '../../types'
@@ -12,145 +13,106 @@ interface UseFacturationSearchParams {
   searchMode: SearchMode
 }
 
+const STALE_TIME = 1000 * 60
+const GC_TIME = 1000 * 60 * 5
+
 export const useFacturationSearch = (params: UseFacturationSearchParams) => {
   const { t } = useTranslation(['facturation', 'common'])
-  const queryClient = useQueryClient()
   const { searchQuery, searchMode } = params
-  
+
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  
-  // Results states
+
   const [productResults, setProductResults] = useState<SearchResult[]>([])
-  const [packResults, setPackResults] = useState<PackResult[]>([])
-  const [dciResults, setDciResults] = useState<DciResult[]>([])
-  const [dciProducts, setDciProducts] = useState<ProduitModel[]>([])
-  
-  // Loading states
-  const [loading, _setLoading] = useState(false)
-  const [packLoading, setPackLoading] = useState(false)
-  const [dciLoading, setDciLoading] = useState(false)
-  const [dciProductsLoading, setDciProductsLoading] = useState(false)
-  
-  // DCI selection
   const [selectedDci, setSelectedDci] = useState<DciResult | null>(null)
-  
+
+  const [debouncedSearch] = useDebounce(searchQuery, 300)
+
   // Reset index when query changes
   useEffect(() => {
     setSelectedIndex(-1)
   }, [searchQuery])
-  
-  // Search packs
-  const searchPacks = useCallback(async (query: string) => {
-    if (query.length < 3) {
-      setPackResults([])
-      return
-    }
-    setPackLoading(true)
-    try {
-      const results = await queryClient.fetchQuery({
-        queryKey: ['facturation', 'packs', query],
-        queryFn: async () => {
-          const response = await api.get('promotions/', {
-            params: {
-              search: query,
-              discount_type: 'BUNDLE',
-              active: true,
-              page_size: 50
-            }
-          })
-          const data = response.data
-          return Array.isArray(data) ? data : data.results || []
-        },
-        staleTime: 1000 * 30,
-        gcTime: 1000 * 60 * 5
+
+  // Pack search
+  const {
+    data: packResults = [],
+    isLoading: packLoading,
+    error: packError
+  } = useQuery<PackResult[]>({
+    queryKey: ['facturation', 'packs', debouncedSearch],
+    queryFn: async () => {
+      const response = await api.get('promotions/', {
+        params: {
+          search: debouncedSearch,
+          discount_type: 'BUNDLE',
+          active: true,
+          page_size: 50
+        }
       })
-      setPackResults(results)
-    } catch (e) {
-      logger.error('Pack search error', e)
-      gooeyToast.error(t('facturation:search.error_search_packs'))
-    } finally {
-      setPackLoading(false)
-    }
-  }, [queryClient, t])
-  
-  // Search DCI
-  const searchDci = useCallback(async (query: string) => {
-    if (query.length < 3) {
-      setDciResults([])
-      return
-    }
-    setDciLoading(true)
-    try {
-      const results = await queryClient.fetchQuery({
-        queryKey: ['facturation', 'dci', query],
-        queryFn: async () => {
-          const response = await api.get('substances/', {
-            params: { search: query, page_size: 50 }
-          })
-          const data = response.data
-          return Array.isArray(data) ? data : data.results || []
-        },
-        staleTime: 1000 * 30,
-        gcTime: 1000 * 60 * 5
-      })
-      setDciResults(results)
-    } catch (e) {
-      logger.error('DCI search error', e)
-    } finally {
-      setDciLoading(false)
-    }
-  }, [queryClient])
-  
-  // Fetch DCI products
-  const fetchDciProducts = useCallback(async (substanceId: number) => {
-    setDciProductsLoading(true)
-    try {
-      const results = await queryClient.fetchQuery({
-        queryKey: ['facturation', 'dci-products', substanceId],
-        queryFn: async () => {
-          const response = await api.get('produits/', {
-            params: { substances: substanceId, page_size: 50 }
-          })
-          const data = response.data
-          return Array.isArray(data) ? data : data.results || []
-        },
-        staleTime: 1000 * 30,
-        gcTime: 1000 * 60 * 5
-      })
-      setDciProducts(results)
-    } catch (e) {
-      logger.error('DCI products error', e)
-    } finally {
-      setDciProductsLoading(false)
-    }
-  }, [queryClient])
-  
-  // Debounced searches for packs and DCI
+      const data = response.data
+      return Array.isArray(data) ? data : data.results || []
+    },
+    enabled: searchMode === 'packs' && debouncedSearch.length >= 3,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME
+  })
+
   useEffect(() => {
-    if (searchMode === 'packs') {
-      const timer = setTimeout(() => {
-        if (searchQuery) searchPacks(searchQuery)
-      }, 300)
-      return () => clearTimeout(timer)
+    if (packError) {
+      logger.error('Pack search error', packError)
+      gooeyToast.error(t('facturation:search.error_search_packs'))
     }
-    if (searchMode === 'dci') {
-      const timer = setTimeout(() => {
-        if (searchQuery) searchDci(searchQuery)
-      }, 300)
-      return () => clearTimeout(timer)
+  }, [packError, t])
+
+  // Search DCI
+  const {
+    data: dciResults = [],
+    isLoading: dciLoading,
+    error: dciError
+  } = useQuery<DciResult[]>({
+    queryKey: ['facturation', 'dci', debouncedSearch],
+    queryFn: async () => {
+      const response = await api.get('substances/', {
+        params: { search: debouncedSearch, page_size: 50 }
+      })
+      const data = response.data
+      return Array.isArray(data) ? data : data.results || []
+    },
+    enabled: searchMode === 'dci' && debouncedSearch.length >= 3,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME
+  })
+
+  useEffect(() => {
+    if (dciError) {
+      logger.error('DCI search error', dciError)
     }
-  }, [searchQuery, searchMode, searchPacks, searchDci])
-  
+  }, [dciError])
+
+  // Fetch DCI products
+  const {
+    data: dciProducts = [],
+    isLoading: dciProductsLoading
+  } = useQuery<ProduitModel[]>({
+    queryKey: ['facturation', 'dci-products', selectedDci?.id],
+    queryFn: async () => {
+      const response = await api.get('produits/', {
+        params: { substances: selectedDci!.id, page_size: 50 }
+      })
+      const data = response.data
+      return Array.isArray(data) ? data : data.results || []
+    },
+    enabled: !!selectedDci,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME
+  })
+
   const resetSearch = useCallback(() => {
     setSelectedIndex(-1)
     setSelectedDci(null)
     setProductResults([])
-    setPackResults([])
-    setDciResults([])
-    setDciProducts([])
   }, [])
-  
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, resultCount: number) => {
     switch (e.key) {
       case 'ArrowDown':
@@ -196,7 +158,7 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
         break
     }
   }, [selectedIndex, selectedDci])
-  
+
   const getItemProps = useCallback((index: number) => {
     const isSelected = index === selectedIndex
     return {
@@ -205,7 +167,7 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
       style: isSelected ? { transform: 'scale(1.01)' } : {}
     }
   }, [selectedIndex])
-  
+
   // Get current results based on mode
   const getCurrentResults = useCallback((): SearchResult[] => {
     switch (searchMode) {
@@ -223,18 +185,18 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
         return productResults
     }
   }, [searchMode, productResults, packResults, dciResults, dciProducts, selectedDci])
-  
+
   // Get current loading state
-  const isLoading = searchMode === 'packs' ? packLoading : 
+  const isLoading = searchMode === 'packs' ? packLoading :
                     searchMode === 'dci' ? (selectedDci ? dciProductsLoading : dciLoading) :
-                    loading
-  
+                    false
+
   return {
     // Search state
     searchInputRef,
     selectedIndex,
     setSelectedIndex,
-    
+
     // Results
     results: getCurrentResults(),
     loading: isLoading,
@@ -245,17 +207,16 @@ export const useFacturationSearch = (params: UseFacturationSearchParams) => {
     selectedDci,
     setSelectedDci,
     dciProducts,
-    
+
     // Actions
     resetSearch,
     handleKeyDown,
     getItemProps,
-    fetchDciProducts,
-    
+    fetchDciProducts: async (_substanceId: number) => { /* driven by selectedDci state */ },
+
     // Mode-specific actions
     onSelectDci: (dci: DciResult) => {
       setSelectedDci(dci)
-      fetchDciProducts(dci.id)
     }
   }
 }

@@ -4,6 +4,7 @@ import {
   TrendingUp, Users, Settings, Truck, Clock, ChevronRight, Keyboard, Lightbulb, Printer, Activity
 } from 'lucide-react';
 import { Button } from './shadcn/button';
+import { EmptyState } from './ui/EmptyState';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
@@ -194,7 +195,7 @@ const HelpTraining = () => {
                   {SHORTCUTS.map((s: Shortcut) => (
                     <div key={s.key} className="flex items-center justify-between px-2 py-1">
                       <span className="text-xs text-base-content/50">{s.label}</span>
-                      <kbd className={`kbd kbd-xs text-[10px] ${s.highlight ? 'bg-primary text-white border-primary' : ''}`}>{s.key}</kbd>
+                      <kbd className={`inline-flex items-center justify-center rounded border border-base-300 bg-base-200 px-1.5 py-0.5 font-mono text-[10px] ${s.highlight ? 'bg-primary text-white border-primary' : ''}`}>{s.key}</kbd>
                     </div>
                   ))}
                 </div>
@@ -359,11 +360,13 @@ const HelpTraining = () => {
             </div>
 
             {allVideos.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
-                <Search className="size-10 mb-3" />
-                <p className="font-bold">{t('help:training.no_results')}</p>
-                <p className="text-sm">{t('help:training.try_again')}</p>
-              </div>
+              <EmptyState
+                variant="base"
+                className="py-20 opacity-60"
+                icon={<Search className="size-8" />}
+                title={t('help:training.no_results')}
+                description={t('help:training.try_again')}
+              />
             )}
           </div>
         </div>

@@ -211,7 +211,7 @@ export default function QuickCreateProductModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label htmlFor="quick-product-cost" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.cost_price')} <span className="text-red-500">*</span>
@@ -246,7 +246,7 @@ export default function QuickCreateProductModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label htmlFor="quick-product-tva" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 {t('products:form.tva')}

@@ -23,6 +23,7 @@ import {
   TableCell,
 } from './shadcn/table';
 import SkeletonTable from './ui/SkeletonTable';
+import { EmptyState } from './ui/EmptyState';
 import {
   Search,
   CalendarDays,
@@ -190,13 +191,13 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
               <SkeletonTable rows={6} columns={6} />
             </div>
           ) : filteredEcheances.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-10 bg-base-200/30 rounded-xl border border-base-200 text-center">
-              <div className="p-4 bg-emerald-50 rounded-full mb-4">
-                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-              </div>
-              <h3 className="text-lg font-bold text-base-content/90">{t('providers:schedule.empty')}</h3>
-              <p className="text-sm text-base-content/60 mt-1">{t('providers:schedule.empty_subtitle')}</p>
-            </div>
+            <EmptyState
+              variant="base"
+              className="flex-1 rounded-xl border border-base-200 bg-base-200/30"
+              icon={<CheckCircle2 className="h-8 w-8" />}
+              title={t('providers:schedule.empty')}
+              description={t('providers:schedule.empty_subtitle')}
+            />
           ) : (
             <div className="flex-1 overflow-auto rounded-xl border border-base-200 shadow-sm">
               <Table className="border-0">

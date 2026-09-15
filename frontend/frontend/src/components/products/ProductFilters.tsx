@@ -59,7 +59,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
           />
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50" />
         </div>
-        <div className="flex items-center gap-4 mt-3 px-1">
+        <div className="flex flex-wrap items-center gap-4 mt-3 px-1">
           <label htmlFor="filter-in-stock" className="flex items-center gap-2 cursor-pointer group">
             <Checkbox
               id="filter-in-stock"

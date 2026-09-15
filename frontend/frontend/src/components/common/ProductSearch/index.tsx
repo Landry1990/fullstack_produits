@@ -4,6 +4,7 @@ import { formatCurrency } from '../../../utils/formatters'
 import { Pill, Package, FlaskConical, Search, Plus, ArrowLeft, Upload } from 'lucide-react'
 import { Button } from '../../shadcn/button'
 import { Badge } from '../../shadcn/badge'
+import { EmptyState } from '../../ui/EmptyState'
 import { cn } from '../../../lib/utils'
 import type { ProductSearchProps, SearchMode, SearchResult, PackResult, DciResult } from './types'
 
@@ -386,9 +387,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     if (searchMode === 'packs') {
       if (packResults.length === 0) {
         return (
-          <div className="text-center py-8 text-slate-400 text-sm">
-            {searchQuery.length < 2 ? t('facturation:search.placeholder_pack') : t('facturation:search.no_results_pack')}
-          </div>
+          <EmptyState
+            compact
+            icon={<Package className="size-6" />}
+            title={searchQuery.length < 2 ? t('facturation:search.placeholder_pack') : t('facturation:search.no_results_pack')}
+          />
         )
       }
       return (
@@ -402,9 +405,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     if (searchMode === 'dci') {
       if (dciResults.length === 0) {
         return (
-          <div className="text-center py-8 text-slate-400 text-sm">
-            {searchQuery.length < 2 ? t('facturation:search.min_chars') : t('facturation:search.no_results_dci')}
-          </div>
+          <EmptyState
+            compact
+            icon={<FlaskConical className="size-6" />}
+            title={searchQuery.length < 2 ? t('facturation:search.min_chars') : t('facturation:search.no_results_dci')}
+          />
         )
       }
       return (
@@ -430,9 +435,10 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     }
     if (results.length === 0) {
       return (
-        <div className="text-center py-8 text-slate-400 text-sm">
-          {searchQuery.length < 2 ? t('facturation:search.min_chars') : t('facturation:search.no_results')}
-        </div>
+        <EmptyState
+          compact
+          title={searchQuery.length < 2 ? t('facturation:search.min_chars') : t('facturation:search.no_results')}
+        />
       )
     }
     

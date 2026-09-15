@@ -24,6 +24,7 @@ import {
   TableRow,
 } from '../shadcn/table'
 import { cn } from '../../lib/utils'
+import { EmptyState } from '../ui/EmptyState'
 import {
   Brain,
   Calendar,
@@ -394,7 +395,7 @@ export default function SuggestionCommandeModal({
                         >{t('common:today')}</Button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <span className="text-xs text-slate-500">{t('orders:suggestion_modal.date_from')}</span>
                         <Input
@@ -512,6 +513,16 @@ export default function SuggestionCommandeModal({
                               : 'bg-white hover:bg-slate-50'
                           )}
                           onClick={() => toggleSuggestionSelection(index)}
+                          role="checkbox"
+                          aria-checked={selectedSuggestions.has(index)}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.target !== e.currentTarget) return;
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              toggleSuggestionSelection(index);
+                            }
+                          }}
                         >
                           <TableCell className="px-3 py-2.5 w-10">
                             <Checkbox
@@ -582,16 +593,17 @@ export default function SuggestionCommandeModal({
                   </Table>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 p-12 text-center bg-slate-50">
-                  <div className="size-14 bg-slate-200 rounded-full flex items-center justify-center mb-4">
-                    <Search className="size-7 text-slate-400" />
-                  </div>
-                  <h3 className="text-base font-semibold text-slate-700">{t('orders:suggestion_modal.no_results_title')}</h3>
-                  <p className="text-sm text-slate-500 max-w-xs mx-auto mt-1">{t('orders:suggestion_modal.no_results_desc')}</p>
-                  <Button variant="ghost" size="sm" className="mt-4 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => setStepSuggestion(1)}>
-                    {t('orders:suggestion_modal.modify_params')}
-                  </Button>
-                </div>
+                <EmptyState
+                  className="flex-1 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50"
+                  icon={<Search className="size-7" />}
+                  title={t('orders:suggestion_modal.no_results_title')}
+                  description={t('orders:suggestion_modal.no_results_desc')}
+                  action={
+                    <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => setStepSuggestion(1)}>
+                      {t('orders:suggestion_modal.modify_params')}
+                    </Button>
+                  }
+                />
               )}
             </div>
           )}
