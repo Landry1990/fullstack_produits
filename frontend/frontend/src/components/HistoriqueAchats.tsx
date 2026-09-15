@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { formatDate, formatDateLong, getLocalDateString } from '../utils/dateUtils';
+import { formatDate, getLocalDateString } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight, FileDown, Printer } from 'lucide-react';
+import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight, FileDown, Printer, Truck } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { exportToExcel } from '../utils/excelExport';
 import { logger } from '../utils/logger'
 import { LocalizedDateInput } from './LocalizedDateInput';
+import { EmptyState } from './ui/EmptyState';
+import SkeletonTable from './ui/SkeletonTable';
 
 interface DailyPurchase {
   date: string;
+  fournisseur_id: number | null;
+  fournisseur_name: string;
   nb_commandes: number;
   total_achat: number;
 }
@@ -22,6 +26,8 @@ interface DetailedPurchase {
   produit_id: number;
   produit__name: string;
   produit__cip1: string;
+  commande__fournisseur_id: number | null;
+  commande__fournisseur__name: string;
   total_quantite: number;
   total_achat: number;
   nb_commandes: number;
@@ -159,6 +165,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         if (activeTab === 'summary') {
             dataToExport = (exportData as DailyPurchase[]).map((row) => ({
                 [t('history.columns.date')]: formatDate(row.date),
+                [t('history.columns.supplier')]: row.fournisseur_name || '-',
                 [t('history.columns.nb_orders')]: row.nb_commandes,
                 [t('history.columns.total_purchase')]: normalizeNumber(row.total_achat)
             }));
@@ -166,6 +173,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             dataToExport = (exportData as DetailedPurchase[]).map((row) => ({
                 [t('history.columns.product')]: row.produit__name,
                 [t('history.columns.cip')]: row.produit__cip1,
+                [t('history.columns.supplier')]: row.commande__fournisseur__name || '-',
                 [t('history.columns.quantity')]: row.total_quantite,
                 [t('history.columns.nb_purchases')]: row.nb_commandes,
                 [t('history.columns.total_purchase')]: normalizeNumber(row.total_achat)
@@ -324,7 +332,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           )}
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 gap-4 mb-4 shrink-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 shrink-0">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200 rounded-2xl px-5 py-3 flex items-center shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-blue-100 flex items-center justify-center">
@@ -362,13 +370,15 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                     {activeTab === 'summary' ? (
                       <>
                         <th className="sticky top-0 z-30 w-28 px-3 py-2 whitespace-nowrap text-left border-b border-slate-200 bg-slate-50">{t('history.columns.date')}</th>
+                        <th className="sticky top-0 z-30 px-3 py-2 whitespace-nowrap text-left border-b border-slate-200 bg-slate-50">{t('history.columns.supplier')}</th>
                         <th className="sticky top-0 z-30 w-28 px-3 py-2 whitespace-nowrap text-center border-b border-slate-200 bg-slate-50">{t('history.columns.nb_orders')}</th>
                         <th className="sticky top-0 z-30 w-32 px-3 py-2 whitespace-nowrap text-right border-b border-slate-200 bg-slate-50">{t('history.columns.total_purchase')}</th>
                       </>
                     ) : (
                       <>
-                        <th className="sticky top-0 z-30 w-[30%] px-3 py-2 whitespace-nowrap text-left border-b border-slate-200 bg-slate-50">{t('history.columns.product')}</th>
+                        <th className="sticky top-0 z-30 w-[28%] px-3 py-2 whitespace-nowrap text-left border-b border-slate-200 bg-slate-50">{t('history.columns.product')}</th>
                         <th className="sticky top-0 z-30 w-28 px-3 py-2 whitespace-nowrap text-left border-b border-slate-200 bg-slate-50">{t('history.columns.cip')}</th>
+                        <th className="sticky top-0 z-30 px-3 py-2 whitespace-nowrap text-left border-b border-slate-200 bg-slate-50">{t('history.columns.supplier')}</th>
                         <th className="sticky top-0 z-30 w-20 px-3 py-2 whitespace-nowrap text-center border-b border-slate-200 bg-slate-50">{t('history.columns.quantity')}</th>
                         <th className="sticky top-0 z-30 w-20 px-3 py-2 whitespace-nowrap text-center border-b border-slate-200 bg-slate-50">{t('history.columns.nb_purchases')}</th>
                         <th className="sticky top-0 z-30 w-32 px-3 py-2 whitespace-nowrap text-right border-b border-slate-200 bg-slate-50">{t('history.columns.total_purchase')}</th>
@@ -379,22 +389,30 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 <tbody className="divide-y divide-slate-100 font-sans">
                   {loading && data.length === 0 ? (
                     <tr>
-                      <td colSpan={activeTab === 'summary' ? 3 : 5} className="py-20 text-center">
-                        <span className="size-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin inline-block"></span>
+                      <td colSpan={activeTab === 'summary' ? 4 : 6} className="p-4">
+                        <SkeletonTable rows={6} columns={activeTab === 'summary' ? 4 : 6} />
                       </td>
                     </tr>
                   ) : filteredData.map((row, i) => {
                     const summaryRow = row as DailyPurchase;
                     const detailRow = row as DetailedPurchase;
                     return (
-                    <tr key={activeTab === 'summary' ? summaryRow.date : detailRow.produit_id} className="group hover:bg-blue-50/40 transition-colors">
+                    <tr key={activeTab === 'summary' ? `${summaryRow.date}-${summaryRow.fournisseur_id ?? 'none'}` : `${detailRow.produit_id}-${detailRow.commande__fournisseur_id ?? 'none'}`} className="group hover:bg-blue-50/40 transition-colors">
                       {activeTab === 'summary' ? (
                         <>
                           <td className="w-28 px-3 py-2">
                             <div className="flex items-center gap-3">
                               <div className={`size-1.5 rounded-full ${i === 0 ? 'bg-blue-500' : 'bg-slate-200'}`} />
                               <span className="text-sm font-bold text-slate-600">
-                                {summaryRow.date ? formatDateLong(summaryRow.date) : '---'}
+                                {summaryRow.date ? formatDate(summaryRow.date) : '---'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Truck className="size-3.5 text-slate-400 shrink-0" />
+                              <span className="text-sm font-semibold text-slate-700 truncate">
+                                {summaryRow.fournisseur_name || '—'}
                               </span>
                             </div>
                           </td>
@@ -418,6 +436,14 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                           <td className="w-28 px-3 py-2">
                             <div className="font-mono text-xs text-slate-400">{detailRow.produit__cip1}</div>
                           </td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Truck className="size-3.5 text-slate-400 shrink-0" />
+                              <span className="text-xs font-semibold text-slate-600 truncate">
+                                {detailRow.commande__fournisseur__name || '—'}
+                              </span>
+                            </div>
+                          </td>
                           <td className="w-20 px-3 py-2 text-center">
                             <span className="inline-flex items-center justify-center h-6 px-2.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">{detailRow.total_quantite}</span>
                           </td>
@@ -437,11 +463,12 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   })}
                   {data.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={activeTab === 'summary' ? 3 : 5} className="text-center py-24">
-                        <div className="flex flex-col items-center gap-3 text-slate-300">
-                          <Package className="size-12" />
-                          <p className="text-sm font-bold uppercase tracking-widest">{t('history.no_data')}</p>
-                        </div>
+                      <td colSpan={activeTab === 'summary' ? 4 : 6} className="py-16">
+                        <EmptyState
+                          icon={<Package className="size-7" />}
+                          title={t('history.no_data')}
+                          compact
+                        />
                       </td>
                     </tr>
                   )}

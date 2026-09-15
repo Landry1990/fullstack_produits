@@ -5,6 +5,8 @@ import type { ProduitModel, StockLot, AchatProduit } from '../../types';
 import type { MonthlyStat } from '../../services/produitService';
 import type { StockMovement } from '../../hooks/useProduits';
 import { ProductTabsContent } from './ProductTabsContent';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
 
 interface ProductDetailPanelProps {
   selectedProduit: ProduitModel | null;
@@ -33,20 +35,24 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
 
   if (detailsLoading) {
     return (
-      <div className="flex-1 bg-base-100 rounded-xl shadow-sm border border-base-200 flex items-center justify-center">
-        <div className="animate-spin rounded-full size-8 border-b-2 border-indigo-600"></div>
+      <div className="flex-1 bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 space-y-4">
+        <Skeleton className="h-6 w-1/3" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }
 
   if (!selectedProduit) {
     return (
-      <div className="flex-1 bg-base-100 rounded-xl shadow-sm border border-base-200 flex flex-col items-center justify-center text-base-content/40 p-10 text-center">
-        <div className="size-20 rounded-full bg-base-200 flex items-center justify-center mb-4">
-          <Package className="size-8 text-base-content/40" />
-        </div>
-        <p className="font-semibold text-base-content/60">{t('products:detail.none_selected')}</p>
-        <p className="text-sm text-base-content/50 mt-1 max-w-[200px]">{t('products:detail.select_hint')}</p>
+      <div className="flex-1 bg-base-100 rounded-xl shadow-sm border border-base-200">
+        <EmptyState
+          variant="base"
+          className="h-full"
+          icon={<Package className="size-8" />}
+          title={t('products:detail.none_selected')}
+          description={t('products:detail.select_hint')}
+        />
       </div>
     );
   }

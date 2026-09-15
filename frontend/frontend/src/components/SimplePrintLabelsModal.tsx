@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Info } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
 import PremiumModal from './common/PremiumModal'
 import { useTranslation, type TFunction } from 'react-i18next'
 import { Button } from './shadcn/button'
 import { Badge } from './ui/Badge'
+import { EmptyState } from './ui/EmptyState'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Commande, ProduitModel } from '../types'
 
@@ -199,7 +200,6 @@ function LabelPreview({
 
   return (
     <div
-      className="label-item"
       style={{
         width: isCompact ? '30mm' : '40mm',
         height: isCompact ? '15mm' : '20mm',
@@ -980,7 +980,7 @@ ${labelsHTML}
                   </span>
                   <input
                     type="checkbox"
-                    className="checkbox checkbox-primary checkbox-sm shrink-0"
+                    className="size-4 rounded border-base-300 accent-primary cursor-pointer shrink-0"
                     checked={field.enabled}
                     onChange={() => toggleField(field.key)}
                     onClick={(e) => e.stopPropagation()}
@@ -1068,6 +1068,7 @@ ${labelsHTML}
                 <Button 
                   type="button"
                   variant="ghost" size="icon" className="h-6 w-6 rounded-full"
+                  aria-label={t('common:remove', { defaultValue: 'Diminuer' })}
                   onClick={() => setFixedQty(Math.max(0, fixedQty - 1))}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
@@ -1075,6 +1076,7 @@ ${labelsHTML}
                 <input
                   type="number"
                   min="0"
+                  aria-label={t('qty.fixed_count_label', { defaultValue: "Nombre d'étiquettes par produit" })}
                   className="w-16 text-center font-bold rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   value={fixedQty}
                   onChange={(e) => setFixedQty(Math.max(0, parseInt(e.target.value) || 0))}
@@ -1082,6 +1084,7 @@ ${labelsHTML}
                 <Button 
                   type="button"
                   variant="ghost" size="icon" className="h-6 w-6 rounded-full"
+                  aria-label={t('common:add', { defaultValue: 'Augmenter' })}
                   onClick={() => setFixedQty(fixedQty + 1)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -1130,15 +1133,12 @@ ${labelsHTML}
 
         {/* ── No data warning ── */}
         {labelsData.length === 0 && (
-          <div className="flex items-start gap-3 p-4 rounded-lg bg-[#fef3c7] text-[#78350f] dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-xl">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-5">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <div className="text-sm">
-              <p><strong>{t('no_data_title', { defaultValue: 'Aucune donnée produit disponible' })}</strong></p>
-              <p className="text-xs mt-0.5">{t('no_data_desc', { defaultValue: 'Les données de la commande doivent être chargées pour générer les étiquettes.' })}</p>
-            </div>
-          </div>
+          <EmptyState
+            variant="base"
+            icon={<Info className="size-8" />}
+            title={t('no_data_title', { defaultValue: 'Aucune donnée produit disponible' })}
+            description={t('no_data_desc', { defaultValue: 'Les données de la commande doivent être chargées pour générer les étiquettes.' })}
+          />
         )}
 
         {/* ── Actions ── */}

@@ -6,6 +6,7 @@ import api from '../services/api'
 import type { Facture } from '../types'
 import { getApiErrorDetail } from '../utils/errorHandling'
 import { logger } from '../utils/logger'
+import { useConfirm } from './useConfirm'
 
 interface ModificationState {
   setLoading: (loading: boolean) => void
@@ -18,13 +19,14 @@ export const useInvoiceModification = ({
 }: ModificationState) => {
   const navigate = useNavigate()
   const { t } = useTranslation('caisse')
+  const confirm = useConfirm()
 
   /**
    * Modifier une facture complète (redirection vers Facturation)
    * Charge tous les produits, annule la facture originale, puis navigue
    */
   const handleFullModification = useCallback(async (facture: Facture) => {
-    if (!window.confirm(t('confirm_modify_invoice'))) return
+    if (!(await confirm({ title: t('common:confirmation'), message: t('confirm_modify_invoice'), confirmText: t('common:confirm'), variant: 'danger' }))) return
 
     try {
       setLoading(true)
@@ -87,7 +89,7 @@ export const useInvoiceModification = ({
     } finally {
       setLoading(false)
     }
-  }, [navigate, setLoading, t])
+  }, [navigate, setLoading, t, confirm])
 
   /**
    * Modification partielle - met à jour la quantité d'un produit
@@ -146,7 +148,7 @@ const _response = await api.post(`factures/${factureId}/modifier/`, {
 
       // Si plus de produits, proposer d'annuler la facture
       if (updatedProducts.length === 0) {
-        if (window.confirm(t('messages.confirm_cancel_empty'))) {
+        if (await confirm({ title: t('common:confirmation'), message: t('messages.confirm_cancel_empty'), confirmText: t('common:confirm'), variant: 'danger' })) {
           await handleAnnuler(facture)
         }
         setLoading(false)
@@ -169,7 +171,7 @@ const _response = await api.post(`factures/${factureId}/modifier/`, {
     } finally {
       setLoading(false)
     }
-  }, [fetchFacturesEnAttente, setLoading, t])
+  }, [fetchFacturesEnAttente, setLoading, t, confirm])
 
   return {
     handleFullModification,

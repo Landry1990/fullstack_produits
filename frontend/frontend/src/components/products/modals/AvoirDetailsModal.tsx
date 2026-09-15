@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Package, User, Building2, FileText, Loader2 } from 'lucide-react';
+import { Calendar, Package, User, Building2, FileText } from 'lucide-react';
 import type { Avoir } from '../../../types';
 import avoirService from '../../../services/avoirService';
 import { formatCurrency } from '../../../utils/formatters';
@@ -16,6 +16,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../../shadcn/card';
 import { Button } from '../../shadcn/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../shadcn/table';
+import { EmptyState } from '../../ui/EmptyState';
+import { Skeleton } from '../../ui/Skeleton';
 
 interface AvoirDetailsModalProps {
   isOpen: boolean;
@@ -72,16 +74,18 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
 
         <div className="p-6 space-y-6">
           {loading && (
-            <div className="flex items-center justify-center py-12 text-slate-500">
-              <Loader2 className="size-6 animate-spin mr-2" />
-              {t('common:loading', { defaultValue: 'Chargement...' })}
+            <div className="space-y-3 py-4">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-4 w-2/3" />
             </div>
           )}
 
           {!loading && !avoir && (
-            <p className="text-center text-slate-500 py-8">
-              {t('stock:avoirs.details.not_found', { defaultValue: 'Avoir introuvable' })}
-            </p>
+            <EmptyState
+              compact
+              title={t('stock:avoirs.details.not_found', { defaultValue: 'Avoir introuvable' })}
+            />
           )}
 
           {!loading && avoir && (
@@ -191,8 +195,11 @@ export const AvoirDetailsModal: React.FC<AvoirDetailsModalProps> = ({
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center text-slate-400 py-6">
-                            {t('stock:avoirs.details.no_lines', { defaultValue: 'Aucune ligne' })}
+                          <TableCell colSpan={6}>
+                            <EmptyState
+                              compact
+                              title={t('stock:avoirs.details.no_lines', { defaultValue: 'Aucune ligne' })}
+                            />
                           </TableCell>
                         </TableRow>
                       )}

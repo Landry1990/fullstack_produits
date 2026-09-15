@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/formatters';
 import { Badge } from '../../shadcn/badge';
+import { EmptyState } from '../../ui/EmptyState';
 
 interface CAData {
     ca_ttc?: number;
@@ -152,9 +153,11 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                             </div>
                         ))}
                         {(!data.encaissements || data.encaissements.length === 0) && (
-                            <div className="text-center py-4 text-xs font-bold text-slate-300 uppercase">
-                                {t('monthly_report.no_payments', 'Aucun encaissement')}
-                            </div>
+                            <EmptyState
+                                compact
+                                title={<span className="text-xs font-bold uppercase">{t('monthly_report.no_payments', 'Aucun encaissement')}</span>}
+                                className="py-4"
+                            />
                         )}
                     </div>
                 </div>

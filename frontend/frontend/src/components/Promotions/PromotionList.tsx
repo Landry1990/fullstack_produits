@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useTranslation } from 'react-i18next';
+import { gooeyToast } from 'goey-toast';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType } from '../../types/Promotion';
 import { formatDate } from '../../utils/dateUtils';
@@ -9,11 +10,15 @@ import { Button } from '../shadcn/button';
 import { Badge } from '../shadcn/badge';
 import { cn } from '../../lib/utils';
 import { Plus, Pencil, Trash2, Tag, CalendarDays } from 'lucide-react';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
+import { useConfirm } from '../../hooks/useConfirm';
 import { logger } from '../../utils/logger'
 
 
 const PromotionList: React.FC = () => {
     const { t } = useTranslation(['promotions', 'common']);
+    const confirm = useConfirm();
     const [promotions, setPromotions] = useState<Promotion[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -52,13 +57,19 @@ const PromotionList: React.FC = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm(t('promotions:delete_confirm'))) return;
+        const confirmed = await confirm({
+            title: t('common:confirmation'),
+            message: t('promotions:delete_confirm'),
+            confirmText: t('common:confirm'),
+            variant: 'danger'
+        });
+        if (!confirmed) return;
         try {
             await api.delete(`promotions/${id}/`);
             setPromotions(promotions.filter(p => p.id !== id));
         } catch (error: unknown) {
             logger.error("Delete failed", error);
-            alert(t('promotions:delete_error', { message: error.message || error }));
+            gooeyToast.error(t('promotions:delete_error', { message: error.message || error }));
         }
     };
 
@@ -73,9 +84,12 @@ const PromotionList: React.FC = () => {
     };
 
     if (loading) return (
-      <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center justify-center gap-4">
-        <div className="animate-spin rounded-full size-10 border-b-2 border-emerald-600"></div>
-        <p className="text-slate-500 font-medium">{t('promotions:loading')}</p>
+      <div className="min-h-screen bg-slate-50 p-6 space-y-4">
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
       </div>
     );
     if (error) return (
@@ -181,11 +195,13 @@ const PromotionList: React.FC = () => {
                         ))}
                         {promotions.length === 0 && (
                           <tr>
-                            <td colSpan={6} className="h-64 text-center text-slate-500">
-                              <div className="flex flex-col items-center justify-center gap-3">
-                                <Tag className="size-12 text-slate-300" />
-                                <p className="text-lg font-medium">{t('promotions:no_promotions')}</p>
-                              </div>
+                            <td colSpan={6} className="h-64 text-center">
+                              <EmptyState
+                                compact
+                                icon={<Tag className="size-6" />}
+                                title={t('promotions:no_promotions')}
+                                className="h-full"
+                              />
                             </td>
                           </tr>
                         )}

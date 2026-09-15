@@ -18,6 +18,7 @@ import {
   Store
 } from 'lucide-react'
 import { Button } from '../ui/Button'
+import { Skeleton } from '../ui/Skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs'
 import type { TabId } from './types'
 import { GeneralTab } from './GeneralTab'
@@ -181,8 +182,17 @@ export default function PharmacySettingsForm() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+      <div className="p-6 space-y-6" aria-busy="true">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-72" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <Skeleton className="h-10 w-full rounded-xl" />
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+          <Skeleton className="h-12 w-2/3 rounded-xl" />
+        </div>
       </div>
     )
   }

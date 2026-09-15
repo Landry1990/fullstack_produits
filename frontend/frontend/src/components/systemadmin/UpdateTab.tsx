@@ -3,6 +3,7 @@ import {
 } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import type { UpdateStatus } from './types';
+import { Skeleton } from '../ui/Skeleton';
 
 interface UpdateTabProps {
   updateStatus: UpdateStatus | null;
@@ -86,9 +87,9 @@ export function UpdateTab({
 
         {/* Résultat de la vérification */}
         {checkingUpdate && (
-          <div className="text-center py-4 text-gray-400">
-            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
-            {t('update_checking_github')}
+          <div className="py-4 space-y-2" aria-busy="true" aria-label={t('update_checking_github')}>
+            <Skeleton className="h-4 w-2/3 mx-auto" />
+            <Skeleton className="h-4 w-1/3 mx-auto" />
           </div>
         )}
 
@@ -233,8 +234,9 @@ export function UpdateTab({
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{t('update_schedule_title')}</h3>
 
           {loadingSchedule ? (
-            <div className="text-sm text-gray-400 flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 animate-spin" /> {t('update_schedule_loading')}
+            <div className="space-y-3" aria-busy="true" aria-label={t('update_schedule_loading')}>
+              <Skeleton className="h-5 w-56" />
+              <Skeleton className="h-9 w-64" />
             </div>
           ) : (
             <div className="space-y-4">

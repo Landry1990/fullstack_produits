@@ -26,12 +26,14 @@ import { useCaisseSession } from '../hooks/caisse/useCaisseSession'
 import { CaisseHeader } from './caisse/CaisseHeader'
 import { CaisseStatsCards } from './caisse/CaisseStatsCards'
 import { SessionRecapBar } from './caisse/SessionRecapBar'
+import { useConfirm } from '../hooks/useConfirm'
 import { logger } from '../utils/logger'
 
 export default function CaisseCentralisee() {
 const _queryClient = useQueryClient()
   const { t } = useTranslation('caisse')
 const _navigate = useNavigate()
+  const confirm = useConfirm()
   const { user } = useAuth()
   const { settings: pharmacySettings } = usePharmacySettings()
   const [facturesEnAttente, setFacturesEnAttente] = useState<Facture[]>([])
@@ -191,7 +193,13 @@ const _navigate = useNavigate()
       return
     }
 
-    if (!window.confirm(t('cash_session.confirm_close', { defaultValue: 'Fermer votre caisse ?' }))) return
+    const confirmedClose = await confirm({
+      title: t('common:confirmation'),
+      message: t('cash_session.confirm_close', { defaultValue: 'Fermer votre caisse ?' }),
+      confirmText: t('common:confirm'),
+      variant: 'danger'
+    })
+    if (!confirmedClose) return
     try {
       const { data } = await cashSessionService.closePosteVente(myActivePoste.id, hideAmounts)
       setClosingReport(data)
@@ -306,7 +314,13 @@ const _navigate = useNavigate()
   // Annuler une facture
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleAnnuler = async (facture: Facture) => {
-    if (!window.confirm(t('confirm_cancel_invoice', { numero: facture.numero_facture }))) return
+    const confirmedCancel = await confirm({
+      title: t('common:confirmation'),
+      message: t('confirm_cancel_invoice', { numero: facture.numero_facture }),
+      confirmText: t('common:confirm'),
+      variant: 'danger'
+    })
+    if (!confirmedCancel) return
 
     try {
       await api.post(`factures/${facture.id}/annuler/`, { motif: 'Annulation depuis Caisse Centrale' })
@@ -458,7 +472,7 @@ const _navigate = useNavigate()
               <Keyboard className="size-3.5" />
               <span className="hidden sm:inline">{t('shortcuts.title')}</span>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">↑↓</kbd> {t('shortcuts.navigate')}</span>
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">{t('shortcuts.enter_key', 'Entrée')}</kbd> {t('shortcuts.cash_in')}</span>
               <span><kbd className="inline-block px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">{t('shortcuts.space_key', 'Espace')}</kbd> {t('shortcuts.view_products')}</span>
@@ -567,7 +581,7 @@ const _navigate = useNavigate()
         }
       >
         <div className="p-5 space-y-2 text-sm">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <span className="font-mono font-bold text-slate-700">↑ ↓ / j k</span>
             <span className="text-slate-600">{t('settings:shortcuts.navigate')}</span>
             <span className="font-mono font-bold text-slate-700">Home / End</span>

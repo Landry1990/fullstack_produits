@@ -50,7 +50,7 @@ export function BulkCancelModal({
         </div>
 
         {selectedFactureIds.size > 0 && selectedFactureIds.size < facturesEnAttente.length && (
-          <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200">
+          <div className="max-h-40 overflow-auto rounded-lg border border-slate-200">
             <table className="w-full border-collapse text-xs">
               <thead className="bg-slate-100 sticky top-0">
                 <tr>

@@ -12,6 +12,7 @@ import {
 import { Button } from '../ui/Button';
 import { Checkbox } from '../ui/Checkbox';
 import { Input } from '../ui/Input';
+import { EmptyState } from '../ui/EmptyState';
 import api from '../../services/api';
 import { getApiErrorDetail } from '../../utils/errorHandling';
 import type { TransformationDisponible } from '../../services/commandeService';
@@ -236,11 +237,13 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
           <>
             <div className="space-y-2 py-1">
               {transformations.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm italic">
-                  {t('orders:reconditionnement.no_transformations', {
+                <EmptyState
+                  compact
+                  icon={<Package className="size-6" />}
+                  title={t('orders:reconditionnement.no_transformations', {
                     defaultValue: 'Aucun produit de cette commande n\'a de relation de reconditionnement configurée.',
                   })}
-                </div>
+                />
               ) : (
                 transformations.map((tr) => {
                   const state = states[tr.relation_id];

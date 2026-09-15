@@ -4,6 +4,8 @@ import type { ProduitModel } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { Package, Plus } from 'lucide-react';
 import { Checkbox } from '../ui/Checkbox';
+import { EmptyState } from '../ui/EmptyState';
+import SkeletonTable from '../ui/SkeletonTable';
 
 interface ProductTableProps {
   products: ProduitModel[];
@@ -36,27 +38,29 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
   return (
     <div className="flex-1 overflow-x-hidden overflow-y-auto">
       {loading ? (
-        <div className="flex items-center justify-center p-12 h-full">
-          <div className="animate-spin rounded-full size-8 border-b-2 border-indigo-600"></div>
+        <div className="p-4 h-full">
+          <SkeletonTable rows={8} columns={3} />
         </div>
       ) : products.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center h-full">
-          <div className="size-16 rounded-full bg-base-200 flex items-center justify-center mb-4">
-            <Package className="size-8 text-base-content/40" />
-          </div>
-          <h3 className="text-base font-semibold text-base-content/60">{t('products:table.empty_title', { defaultValue: 'Aucun produit' })}</h3>
-          <p className="text-base-content/50 text-sm mt-1 max-w-sm">{t('products:table.empty_subtitle', { defaultValue: 'Créez votre premier produit ou service pour commencer.' })}</p>
-          <button
-            className="inline-flex items-center gap-2 px-6 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus mt-6 transition-colors"
-            onClick={() => {
-              const parentBtn = document.querySelector('button.bg-primary');
-              if (parentBtn) (parentBtn as HTMLButtonElement).click();
-            }}
-          >
-             <Plus className="size-4" />
-             {t('products:actions.create')}
-          </button>
-        </div>
+        <EmptyState
+          variant="base"
+          className="h-full py-16"
+          icon={<Package className="size-8" />}
+          title={t('products:table.empty_title', { defaultValue: 'Aucun produit' })}
+          description={t('products:table.empty_subtitle', { defaultValue: 'Créez votre premier produit ou service pour commencer.' })}
+          action={
+            <button
+              className="inline-flex items-center gap-2 px-6 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus transition-colors"
+              onClick={() => {
+                const parentBtn = document.querySelector('button.bg-primary');
+                if (parentBtn) (parentBtn as HTMLButtonElement).click();
+              }}
+            >
+              <Plus className="size-4" />
+              {t('products:actions.create')}
+            </button>
+          }
+        />
       ) : (
         <>
           {/* DESKTOP VIEW (Table) */}
@@ -70,6 +74,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       indeterminate={isPartiallySelected}
                       onChange={onSelectAll}
                       size="sm"
+                      aria-label={t('common:maintenance.select_all', { defaultValue: 'Tout sélectionner' })}
                     />
                   </th>
                   <th scope="col" className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-wider w-32">{t('products:table.cip')}</th>
@@ -98,12 +103,22 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                         e.stopPropagation();
                         onZoom();
                       }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.target !== e.currentTarget) return;
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onViewDetails(produit);
+                        }
+                      }}
                     >
                       <td className="py-3 px-4 w-10" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={isChecked}
                           onChange={() => onSelectProduct(produit.id)}
                           size="md"
+                          aria-label={produit.name}
                         />
                       </td>
                       <td className="py-3 px-3 w-32">
@@ -151,6 +166,15 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                     isSelected ? 'border-indigo-300 shadow-sm' : isChecked ? 'border-emerald-300' : 'border-base-200 hover:border-base-300'
                   }`}
                   onClick={() => onViewDetails(produit)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onViewDetails(produit);
+                    }
+                  }}
                 >
                   {(isSelected || isChecked) && (
                     <div className={`absolute top-0 bottom-0 left-0 w-1 ${isSelected ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
@@ -162,6 +186,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                           checked={isChecked}
                           onChange={() => onSelectProduct(produit.id)}
                           size="sm"
+                          aria-label={produit.name}
                         />
                     </div>
 

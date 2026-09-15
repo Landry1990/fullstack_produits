@@ -752,7 +752,7 @@ export default function Maintenance() {
 
         {/* Right Column: Controls */}
         <div className="space-y-4">
-          <div className="flex gap-2 mb-2">
+          <div className="flex flex-wrap gap-2 mb-2">
             <button
               type="button"
               onClick={() => setActiveRightTab('nettoyage')}

@@ -8,6 +8,8 @@ import { useProductSearch } from '../hooks/useProductSearch';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
 import PremiumModal from './common/PremiumModal';
 import { Checkbox } from './ui/Checkbox';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
 import type { ProduitModel } from '../types';
 import { 
   ChevronRight, Trash2, Plus, Undo2 
@@ -158,9 +160,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
         {showResults && (
           <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
             {produits.length === 0 && !loading && (
-              <div className="p-4 text-center text-slate-400 italic text-sm">
-                {t('common:no_results_found')}
-              </div>
+              <EmptyState compact title={t('common:no_results_found')} className="p-4" />
             )}
             {produits.map((p, idx) => {
               const itemProps = getItemProps(idx);
@@ -172,6 +172,14 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
                   className={`px-4 py-3 cursor-pointer border-b border-slate-100 last:border-0 flex items-center gap-3 transition-colors group ${itemProps.className}`}
                   style={itemProps.style}
                   onClick={() => handleSelect(p)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSelect(p);
+                    }
+                  }}
                 >
                   <div className="size-8 rounded-lg bg-slate-100 group-hover:bg-emerald-50 flex items-center justify-center text-slate-500 group-hover:text-emerald-600 font-bold text-xs transition-colors"
                     style={itemProps.style.backgroundColor ? { backgroundColor: 'rgba(255,255,255,0.2)' } : {}}
@@ -527,9 +535,11 @@ const Transformations: React.FC = () => {
       {/* Main Content Section */}
       <div className="flex-1 overflow-auto p-6">
         {loading ? (
-          <div className="flex flex-col items-center justify-center p-20 gap-4">
-            <span className="size-10 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin"></span>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('common:loading')}</p>
+          <div className="space-y-3">
+            <Skeleton className="h-20 w-full rounded-2xl" />
+            <Skeleton className="h-20 w-full rounded-2xl" />
+            <Skeleton className="h-20 w-full rounded-2xl" />
+            <Skeleton className="h-20 w-full rounded-2xl" />
           </div>
         ) : (
           <div className="h-full">
@@ -588,10 +598,11 @@ const Transformations: React.FC = () => {
                   </div>
                 ))}
                 {filteredRelations.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-20 text-slate-300 italic">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                    <p className="font-bold uppercase tracking-widest text-xs">{searchQuery ? t('common:no_results_found', { defaultValue: 'Aucun résultat' }) : t('stock:transformations.labels.no_relations')}</p>
-                  </div>
+                  <EmptyState
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
+                    title={searchQuery ? t('common:no_results_found', { defaultValue: 'Aucun résultat' }) : t('stock:transformations.labels.no_relations')}
+                    className="py-20"
+                  />
                 )}
               </div>
             )}
@@ -662,7 +673,12 @@ const Transformations: React.FC = () => {
                       ))}
                       {filteredHistorique.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="text-center py-20 text-slate-300 italic font-bold uppercase tracking-widest text-xs">{searchQuery ? t('common:no_results_found', { defaultValue: 'Aucun résultat' }) : t('stock:transformations.table_history.empty')}</td>
+                          <td colSpan={6} className="py-12">
+                            <EmptyState
+                              compact
+                              title={searchQuery ? t('common:no_results_found', { defaultValue: 'Aucun résultat' }) : t('stock:transformations.table_history.empty')}
+                            />
+                          </td>
                         </tr>
                       )}
                     </tbody>

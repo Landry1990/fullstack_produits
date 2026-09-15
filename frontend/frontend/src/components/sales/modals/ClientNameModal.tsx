@@ -32,6 +32,15 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
         }
     }, [isOpen, facture, t]);
 
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onConfirm(clientNameInput.trim());
@@ -41,14 +50,19 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+            <div
+                className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="client-name-modal-title"
+            >
                 <div className="border-b border-slate-200 p-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="bg-emerald-50 p-2 rounded-lg">
                             <Printer className="size-5 text-emerald-600" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-slate-800">
+                            <h3 id="client-name-modal-title" className="font-semibold text-slate-800">
                                 {t('modals.print_invoice')}
                             </h3>
                             <div className="text-xs text-slate-400 font-mono">
@@ -56,18 +70,19 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                             </div>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
+                    <button onClick={onClose} aria-label={t('common:close')} className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
                         <X className="size-5" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6">
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label htmlFor="client-name-input" className="block text-sm font-medium text-slate-700 mb-2">
                             {t('messages.prompt_client_name')}
                         </label>
                         <div className="relative">
                             <input
+                                id="client-name-input"
                                 type="text"
                                 value={clientNameInput}
                                 onChange={(e) => setClientNameInput(e.target.value.toUpperCase())}

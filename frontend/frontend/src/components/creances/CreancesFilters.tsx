@@ -56,7 +56,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Client Selector */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
+                        <label htmlFor="creances-client-filter" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                             <Users className="size-3.5" /> {t('creances:filters.client_label')}
                         </label>
                         {selectedClient ? (
@@ -70,6 +70,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         ) : (
                             <div className="relative group">
                                 <select
+                                    id="creances-client-filter"
                                     value={selectedClient}
                                     onChange={(e) => onClientChange(e.target.value)}
                                     className="w-full pl-10 h-10 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
@@ -88,10 +89,11 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
 
                     {/* Date Ranges */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
+                        <label htmlFor="creances-date-debut" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                             <Calendar className="size-3.5" /> {t('creances:filters.start_date')}
                         </label>
                         <LocalizedDateInput
+                            id="creances-date-debut"
                             value={dateDebut}
                             onChange={(e) => onDateDebutChange(e.target.value)}
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-mono text-xs font-bold text-slate-700"
@@ -99,10 +101,11 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
+                        <label htmlFor="creances-date-fin" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                             <Calendar className="size-3.5" /> {t('creances:filters.end_date')}
                         </label>
                         <LocalizedDateInput
+                            id="creances-date-fin"
                             value={dateFin}
                             onChange={(e) => onDateFinChange(e.target.value)}
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-mono text-xs font-bold text-slate-700"
@@ -115,8 +118,17 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                             <History className="size-3.5" /> {t('creances:history_toggle')}
                         </label>
                         <div
+                            role="switch"
+                            aria-checked={showHistory}
+                            tabIndex={0}
                             className={`flex items-center gap-1 p-1 bg-slate-100/50 rounded-xl cursor-pointer transition-all h-10 ${showHistory ? 'ring-2 ring-emerald-500/20' : ''}`}
                             onClick={() => onHistoryToggle(!showHistory)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    onHistoryToggle(!showHistory);
+                                }
+                            }}
                         >
                             <div className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${!showHistory ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-500'}`}>
                                 {t('creances:invoice_list.pending_badge')}

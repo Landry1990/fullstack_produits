@@ -62,7 +62,7 @@ export function ClosingReportModal({
           {/* Stats - masquées si sécurité activée */}
           {!r.hide_amounts ? (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-white p-3 rounded-lg border border-slate-200">
                   <p className="text-[10px] uppercase text-slate-500">{t('cash_session.fond_initial', { defaultValue: 'Fond Initial' })}</p>
                   <p className="font-mono font-bold text-lg text-slate-800">

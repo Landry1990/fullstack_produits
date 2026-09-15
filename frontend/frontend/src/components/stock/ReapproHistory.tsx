@@ -22,6 +22,7 @@ import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { Skeleton } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
 import {
   Table,
   TableHeader,
@@ -115,7 +116,7 @@ export default function ReapproHistory() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <Link to="/app/reappro-rayon">
-            <Button variant="outline" size="sm" className="rounded-full w-10 h-10 p-0">
+            <Button variant="outline" size="sm" className="rounded-full w-10 h-10 p-0" aria-label={t('common:back', { defaultValue: 'Retour' })}>
               <ChevronLeft className="size-5" />
             </Button>
           </Link>
@@ -173,13 +174,12 @@ export default function ReapproHistory() {
                 ))
               ) : filteredHistory.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-3 py-24 text-center">
-                    <div className="flex flex-col items-center justify-center text-slate-300">
-                      <History className="size-16 mb-4" />
-                      <h3 className="text-lg font-medium text-slate-600">
-                        Aucun historique trouvé
-                      </h3>
-                    </div>
+                  <TableCell colSpan={6} className="px-3 py-16 text-center">
+                    <EmptyState
+                      compact
+                      icon={<History className="size-6" />}
+                      title="Aucun historique trouvé"
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -275,7 +275,7 @@ export default function ReapproHistory() {
           </div>
 
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Card variant="bordered" padding="md" className="rounded-xl">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
                   Résumé

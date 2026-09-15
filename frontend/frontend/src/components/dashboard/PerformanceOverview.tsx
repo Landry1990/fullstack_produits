@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRecharts } from '../../hooks/useRecharts';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
+import { Skeleton } from '../ui/Skeleton';
 import type { TFunction } from 'i18next';
 import type { DashboardStats, RevenueChartData, HourlyTrafficData, SupplierDebtsResponse, FrequentStockoutItem } from '../../hooks/useDashboard';
 
@@ -122,7 +123,7 @@ export default function PerformanceOverview({
     },
   ]) : [], [isVendeur, stats, totalDettes, nbFournisseursDetteurs, t, formatCurrencyLocal]);
 
-  if (!Recharts) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" /></div>;
+  if (!Recharts) return <div className="p-8"><Skeleton className="h-64 w-full rounded-2xl" /></div>;
   const { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = Recharts;
 
   return (

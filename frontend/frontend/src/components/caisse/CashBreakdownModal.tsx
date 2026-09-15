@@ -255,7 +255,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
                 })}
               </h4>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {BILLETS.map(renderBilletTile)}
             </div>
           </section>
@@ -270,7 +270,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
                 })}
               </h4>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {PIECES.map(renderPieceTile)}
             </div>
           </section>
@@ -285,7 +285,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
                 })}
               </h4>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="flex flex-col items-center gap-1 p-2 rounded-lg border border-orange-200 bg-orange-50/40">
                 <span className="text-xs font-black text-orange-600 leading-none">
                   {t('journal.closing.breakdown.orange_money', {
@@ -328,7 +328,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
           </section>
 
           {/* === SOUS-TOTAUX === */}
-          <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5">
               <div className="text-[10px] font-bold uppercase text-slate-400">
                 {t('journal.closing.breakdown.cash_subtotal', {

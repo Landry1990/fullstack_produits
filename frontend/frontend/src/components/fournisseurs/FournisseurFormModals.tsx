@@ -1,3 +1,5 @@
+import { useEffect, useId, isValidElement, cloneElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { X, Plus, Save, Building2 } from 'lucide-react';
 import type { useFournisseurs } from '../../hooks/useFournisseurs';
 import type { Fournisseur } from '../../types';
@@ -11,17 +13,20 @@ const Field = ({
   label, children, required
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
   required?: boolean;
-}) => (
-  <div className="space-y-1.5">
-    <label className="block text-xs font-medium text-base-content/60">
-      {label}
-      {required && <span className="text-red-500 ml-0.5">*</span>}
-    </label>
-    {children}
-  </div>
-);
+}) => {
+  const id = useId();
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="block text-xs font-medium text-base-content/60">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {isValidElement(children) ? cloneElement(children as ReactElement<{ id?: string }>, { id }) : children}
+    </div>
+  );
+};
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm space-y-4">
@@ -43,6 +48,19 @@ export default function FournisseurFormModals({ hook }: Props) {
     isSubmitting
   } = state;
 
+  // Fermeture des modals via la touche Échap
+  useEffect(() => {
+    if (!isAddModalOpen && !isEditModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isEditModalOpen) actions.closeEditModal();
+        else actions.closeAddModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAddModalOpen, isEditModalOpen, actions]);
+
   const renderForm = (isEdit: boolean) => {
     const data = (isEdit ? editingFournisseur : newFournisseur) as Fournisseur | null;
     if (!data) return null;
@@ -62,8 +80,8 @@ export default function FournisseurFormModals({ hook }: Props) {
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={close} />
-        <div className="relative z-10 w-full max-w-2xl max-h-[92vh] flex flex-col bg-base-100 rounded-xl shadow-2xl border border-base-200 m-4">
+        <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={close} aria-hidden="true" />
+        <div className="relative z-10 w-full max-w-2xl max-h-[92vh] flex flex-col bg-base-100 rounded-xl shadow-2xl border border-base-200 m-4" role="dialog" aria-modal="true" aria-label={title}>
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-base-200">
             <div className="flex items-center gap-3">
@@ -77,7 +95,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                 )}
               </div>
             </div>
-            <button onClick={close} className="p-2 hover:bg-base-200 rounded-lg transition-colors">
+            <button onClick={close} aria-label={t('common:close')} className="p-2 hover:bg-base-200 rounded-lg transition-colors">
               <X className="size-5 text-base-content/50" />
             </button>
           </div>
@@ -92,7 +110,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     placeholder={t('providers:form.name_placeholder')}
                     value={data.name}
                     onChange={e => setData(f => ({...f, name: e.target.value}))}
-                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                     required
                     disabled={isSubmitting}
                     autoFocus={!isEdit}
@@ -104,7 +122,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     placeholder={t('providers:form.phone_placeholder')}
                     value={data.phone}
                     onChange={e => setData(f => ({...f, phone: e.target.value}))}
-                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                     disabled={isSubmitting}
                   />
                 </Field>
@@ -115,7 +133,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                   placeholder={t('providers:form.email_placeholder')}
                   value={data.email}
                   onChange={e => setData((f) => ({...f, email: e.target.value}))}
-                  className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                   disabled={isSubmitting}
                 />
               </Field>
@@ -154,7 +172,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     placeholder={t('providers:form.delay_hint')}
                     value={data.delai_paiement_jours}
                     onChange={e => setData((f) => ({...f, delai_paiement_jours: parseInt(e.target.value) || 0}))}
-                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                     disabled={isSubmitting}
                   />
                 </Field>
@@ -168,10 +186,11 @@ export default function FournisseurFormModals({ hook }: Props) {
                     type="number"
                     min="1"
                     max="31"
+                    aria-label="Durée de la tranche de relevé (jours)"
                     placeholder="Ex: 10"
                     value={data.periode_releve_jours ?? 10}
                     onChange={e => setData((f) => ({...f, periode_releve_jours: parseInt(e.target.value) || 10}))}
-                    className="input-ref input-bordered input-sm w-full h-10 rounded-lg focus:border-orange-400 focus:ring-1 focus:ring-orange-200"
+                    className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-200 transition-all"
                     disabled={isSubmitting}
                   />
                   <p className="text-[11px] text-orange-500 mt-1">Le relevé commence le 1er du mois.</p>

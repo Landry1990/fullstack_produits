@@ -73,10 +73,11 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                 <div className="space-y-4">
                     {/* Montant personnalisé - Paiement partiel */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="bulk-montant" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <Wallet className="size-3" /> Montant à régler (optionnel)
                         </label>
                         <input
+                            id="bulk-montant"
                             type="number"
                             placeholder={`Max: ${formatCurrency(totalAmount)} - Laisser vide pour tout régler`}
                             value={form.montantTotalBulk}
@@ -98,10 +99,11 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="bulk-mode" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <CreditCard className="size-3" /> {t('creances:bulk_modal.payment_mode')}
                         </label>
                         <select
+                            id="bulk-mode"
                             value={form.modePaiement}
                             onChange={(e) => form.setModePaiement(e.target.value)}
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
@@ -116,10 +118,11 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="bulk-reference" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <Hash className="size-3" /> {t('creances:bulk_modal.bulk_reference')}
                         </label>
                         <input
+                            id="bulk-reference"
                             type="text"
                             placeholder={t('creances:bulk_modal.reference_placeholder')}
                             value={form.referencePaiement}

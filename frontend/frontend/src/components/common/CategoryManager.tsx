@@ -13,6 +13,9 @@ import { useConfirm } from '../../hooks/useConfirm';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import PremiumModal from './PremiumModal';
 import SmartOrganizerModal from './SmartOrganizerModal';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
+import SkeletonTable from '../ui/SkeletonTable';
 import { logger } from '../../utils/logger'
 import { generateUUID } from '../../utils/uuid'
 
@@ -449,9 +452,13 @@ export default function CategoryManager({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
            {loading ? (
-              <div className="flex justify-center p-8"><span className="size-6 border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></span></div>
+              <div className="space-y-2">
+                 {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-11 w-full rounded-xl" />
+                 ))}
+              </div>
            ) : hierarchy.length === 0 ? (
-              <div className="text-center p-8 text-slate-400 italic text-sm">{t('stock:organisation.category_manager.no_items', { type })}</div>
+              <EmptyState compact title={t('stock:organisation.category_manager.no_items', { type })} className="p-8" />
            ) : (
               hierarchy.map((cat) => (
                 <div key={cat.id} className="space-y-1">
@@ -611,16 +618,14 @@ export default function CategoryManager({
 
                <div className="flex-1 overflow-auto p-4">
                   {productsLoading ? (
-                     <div className="flex flex-col items-center justify-center h-64 gap-4">
-                        <span className="size-8 border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></span>
-                        <p className="text-sm font-medium text-slate-400">{t('common:loading')}</p>
-                     </div>
+                     <SkeletonTable rows={6} columns={5} />
                   ) : products.length === 0 ? (
-                     <div className="flex flex-col items-center justify-center h-64 text-slate-300">
-                        <Package size={64} strokeWidth={1} className="mb-4" />
-                        <p className="text-lg font-bold text-slate-400">{t('stock:organisation.category_manager.no_items', { type: 'produit' })}</p>
-                        <p className="text-sm text-slate-400">{t('stock:organisation.category_manager.select_item_hint')}</p>
-                     </div>
+                     <EmptyState
+                        className="h-64"
+                        icon={<Package className="size-8" />}
+                        title={t('stock:organisation.category_manager.no_items', { type: 'produit' })}
+                        description={t('stock:organisation.category_manager.select_item_hint')}
+                     />
                   ) : (
                      <div className="flex flex-col h-full border border-slate-200 rounded-2xl overflow-hidden bg-white">
                         <div className="overflow-y-auto flex-1">
@@ -811,9 +816,10 @@ export default function CategoryManager({
 
            <div className="flex-1 overflow-auto bg-slate-50 rounded-2xl p-4 border border-slate-200">
                {isSearching ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-4">
-                     <span className="size-8 border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin"></span>
-                     <p className="text-sm font-bold text-slate-400">{t('common:loading')}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                     {Array.from({ length: 4 }).map((_, i) => (
+                        <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                     ))}
                   </div>
                ) : searchResults.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -833,10 +839,11 @@ export default function CategoryManager({
                      ))}
                   </div>
                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-slate-400 italic">
-                     <Search size={48} className="mb-2 text-slate-200" />
-                     {productSearchTerm.length < 2 ? t('common:messages.hint_min_char') : t('common:no_results_found')}
-                  </div>
+                  <EmptyState
+                     className="h-full"
+                     icon={<Search className="size-6" />}
+                     title={<span className="italic font-normal">{productSearchTerm.length < 2 ? t('common:messages.hint_min_char') : t('common:no_results_found')}</span>}
+                  />
                )}
            </div>
 

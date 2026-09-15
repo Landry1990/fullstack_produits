@@ -109,7 +109,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
         <form className="space-y-4" onSubmit={onSubmit}>
           {/* Current stock display */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-center">
               <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
                 {selectedProduit?.has_reserve_storage ? 'Rayon' : 'Stock actuel'}

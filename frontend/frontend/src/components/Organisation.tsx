@@ -81,7 +81,7 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
               <p className="text-slate-500 text-sm mt-1">{t('organisation.subtitle')}</p>
            </div>
 
-           <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex gap-1">
+           <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex flex-wrap gap-1">
               {tabs.map(tab => (
                 <button
                   key={tab.id}

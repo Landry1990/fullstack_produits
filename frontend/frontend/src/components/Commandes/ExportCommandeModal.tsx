@@ -32,6 +32,7 @@ import {
   TableCell,
 } from '../shadcn/table';
 import { cn } from '../../lib/utils';
+import { Skeleton } from '../ui/Skeleton';
 
 interface ExportCommandeModalProps {
   isOpen: boolean;
@@ -194,12 +195,14 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
 
           {/* Stats */}
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="size-8 animate-spin text-emerald-600" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-2">
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
             </div>
           ) : preview ? (
             <>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-white border border-slate-200 rounded-xl p-3 text-center shadow-sm">
                   <div className="text-xl font-bold text-slate-800">{preview.stats.total_produits}</div>
                   <div className="text-xs text-slate-500">{t('stats.total')}</div>

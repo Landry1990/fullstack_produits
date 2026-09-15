@@ -289,6 +289,7 @@ const StockAnalysis = () => {
                                         <Button
                                             variant="outline"
                                             size="icon"
+                                            aria-label={t('common:previous')}
                                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                                             disabled={page === 1}
                                         >
@@ -300,6 +301,7 @@ const StockAnalysis = () => {
                                         <Button
                                             variant="outline"
                                             size="icon"
+                                            aria-label={t('common:next')}
                                             onClick={() => setPage((p) => Math.min(data.total_pages || 1, p + 1))}
                                             disabled={page === data.total_pages}
                                         >
@@ -338,6 +340,7 @@ const StockAnalysis = () => {
                                     <Button
                                         variant="ghost"
                                         size="icon"
+                                        aria-label={t('common:cancel')}
                                         className="text-slate-400 hover:text-white hover:bg-white/10"
                                         onClick={() => actions.toggleSelectAll()}
                                     >

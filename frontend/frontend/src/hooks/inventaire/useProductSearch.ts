@@ -7,6 +7,7 @@ import type { ProduitModel, LigneInventaire, StockLot } from '../../types';
 import { getProduitId } from '../../types/inventory';
 import { logger } from '../../utils/logger'
 import { useProductSearch as useSearchNav } from '../product-search/useProductSearch';
+import { useConfirm } from '../useConfirm';
 
 const focusFirstQty = (id?: number) => {
     setTimeout(() => {
@@ -27,6 +28,7 @@ export const useProductSearch = (
     inventoryType?: 'GLOBAL' | 'RAYON' | 'RESERVE'
 ) => {
     const { t } = useTranslation(['stock', 'common']);
+    const confirm = useConfirm();
 
     // Navigation clavier / sélection partagée avec les autres écrans de recherche produit
     const {
@@ -264,7 +266,7 @@ export const useProductSearch = (
                 lot: lotLabel,
                 currentQty
             });
-            if (window.confirm(confirmMsg)) {
+            if (await confirm({ title: t('common:confirmation'), message: confirmMsg, confirmText: t('common:confirm'), variant: 'warning' })) {
                 // L'utilisateur veut ajuster — on focus le champ quantité de la ligne existante
                 focusFirstQty(existingLine.id);
                 setSearchQuery('');

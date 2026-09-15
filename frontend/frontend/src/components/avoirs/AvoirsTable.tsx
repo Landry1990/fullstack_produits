@@ -19,6 +19,7 @@ import {
     DropdownMenuLabel, DropdownMenuItem
 } from '../shadcn/dropdown-menu';
 import { isDraftStatus, getStatusStyle, getStatusLabel, getTypeAvoirStyle, getTypeAvoirLabel } from './utils';
+import { EmptyState } from '../ui/EmptyState';
 
 interface BulkActionsMenuProps {
     selectedIds: Set<number>;
@@ -155,12 +156,11 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
 
     if (avoirs.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <div className="p-4 bg-slate-100 rounded-2xl mb-4">
-                    <Inbox className="size-10 text-slate-300" />
-                </div>
-                <h3 className="text-base font-semibold text-slate-700">{t('stock:avoirs.empty')}</h3>
-            </div>
+            <EmptyState
+                className="py-16"
+                icon={<Inbox className="size-8" />}
+                title={t('stock:avoirs.empty')}
+            />
         );
     }
 

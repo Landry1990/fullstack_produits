@@ -37,6 +37,7 @@ import { Button } from './shadcn/button';
 import { Card, CardContent } from './shadcn/card';
 import { Badge } from './shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from './shadcn/tabs';
+import { Skeleton } from './ui/Skeleton';
 import { cn } from '../lib/utils';
 
 // Sub-components (réutilisés)
@@ -181,11 +182,20 @@ export default function DashboardShadcn() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="size-12 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin" />
-          <p className="text-sm font-medium text-slate-400">{t('loading', 'Chargement...')}</p>
+      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 space-y-6" aria-busy="true" aria-label={t('loading', 'Chargement...')}>
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-12 rounded-xl" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-5 w-56" />
+            <Skeleton className="h-3 w-32" />
+          </div>
         </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-64 rounded-2xl" />
       </div>
     );
   }

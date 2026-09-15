@@ -220,6 +220,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                           onClick={() => setMenuOpen(o => !o)}
                           aria-expanded={menuOpen}
                           aria-haspopup="menu"
+                          aria-label={t('inventaire.detail.export_share')}
                       >
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="hidden sm:inline">{t('inventaire.detail.export_share')}</span>

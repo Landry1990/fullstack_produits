@@ -95,8 +95,10 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
         >
             <div className="flex flex-col h-full">
                 {/* Tabs */}
-                <div className="flex border-b border-base-300 px-6 bg-base-100 sticky top-0 z-10">
+                <div className="flex border-b border-base-300 px-6 bg-base-100 sticky top-0 z-10" role="tablist" aria-label={t('clients:finance.manage_deposit')}>
                     <button
+                        role="tab"
+                        aria-selected={activeTab === 'transaction'}
                         className={`py-4 px-6 text-sm font-medium transition-colors border-b-2 ${activeTab === 'transaction' ? 'border-indigo-500 text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`}
                         onClick={() => setActiveTab('transaction')}
                     >
@@ -106,6 +108,8 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                         </div>
                     </button>
                     <button
+                        role="tab"
+                        aria-selected={activeTab === 'history'}
                         className={`py-4 px-6 text-sm font-medium transition-colors border-b-2 ${activeTab === 'history' ? 'border-indigo-500 text-primary' : 'border-transparent text-base-content/60 hover:text-base-content'}`}
                         onClick={() => setActiveTab('history')}
                     >
@@ -138,9 +142,10 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('common:total')}</label>
+                                    <label htmlFor="deposit-amount" className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('common:total')}</label>
                                     <div className="relative">
                                         <input
+                                            id="deposit-amount"
                                             type="number"
                                             className="w-full h-12 rounded-xl border border-base-300 bg-base-100 pl-10 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                             value={montant}
@@ -153,8 +158,9 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('common:payment_modes.title') || 'Mode de paiement'}</label>
+                                    <label htmlFor="deposit-mode" className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">{t('common:payment_modes.title') || 'Mode de paiement'}</label>
                                     <select
+                                        id="deposit-mode"
                                         className="w-full h-12 rounded-xl border border-base-300 bg-base-100 px-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
                                         value={modePaiement}
                                         onChange={e => setModePaiement(e.target.value)}
@@ -167,8 +173,9 @@ export default function ClientDepositModal({ isOpen, onClose, client, onSuccess 
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">Notes</label>
+                                <label htmlFor="deposit-notes" className="block text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2">Notes</label>
                                 <textarea
+                                    id="deposit-notes"
                                     className="w-full rounded-xl border border-base-300 bg-base-100 p-3 text-sm font-medium text-base-content focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                     rows={3}
                                     value={notes}

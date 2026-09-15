@@ -1,9 +1,12 @@
 
+from django.core.cache import cache
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from api.models import AuditLog
+from api.models import AuditLog, AyantDroit, Client
 
 from .factories import TestDataFactory
 
@@ -75,3 +78,39 @@ class RecentFixesIntegrationTest(APITestCase):
         self.assertNotIn('No Alert Healthy', names)
         self.assertNotIn('No Alert Inactive', names)
         self.assertEqual(len(names), 3)
+
+    def test_omnisearch_caps_limit_and_handles_invalid_values(self):
+        Client.objects.bulk_create([Client(name=f'Omni Client {index}') for index in range(25)])
+        url = reverse('global-search')
+
+        response = self.client.get(url, {'q': 'Omni Client', 'limit': 999})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['clients']), 20)
+
+        response = self.client.get(url, {'q': 'Omni Client', 'limit': 'invalid'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['clients']), 5)
+
+    def test_omnisearch_client_serialization_has_constant_query_count(self):
+        url = reverse('global-search')
+        first = Client.objects.create(name='Query Client 1')
+        AyantDroit.objects.create(client=first, matricule='Q1', nom='Ayant 1')
+        TestDataFactory.create_facture(client=first, status='VAL', total_ttc='125.00')
+        cache.clear()
+
+        with CaptureQueriesContext(connection) as single_client_queries:
+            response = self.client.get(url, {'q': 'Query Client', 'limit': 20})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['clients'][0]['ayants_droit_count'], 1)
+        self.assertEqual(response.data['clients'][0]['current_debt'], '125.00')
+
+        for index in range(2, 6):
+            client = Client.objects.create(name=f'Query Client {index}')
+            AyantDroit.objects.create(client=client, matricule=f'Q{index}', nom=f'Ayant {index}')
+        cache.clear()
+
+        with CaptureQueriesContext(connection) as multiple_client_queries:
+            response = self.client.get(url, {'q': 'Query Client', 'limit': 20})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['clients']), 5)
+        self.assertEqual(len(multiple_client_queries), len(single_client_queries))

@@ -5,6 +5,8 @@ import { useConfirm } from '../../hooks/useConfirm';
 import type { Inventaire } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { formatDate } from '../../utils/dateUtils';
+import { EmptyState } from '../ui/EmptyState';
+import SkeletonTable from '../ui/SkeletonTable';
 
 interface InventaireListTableProps {
     inventaires: Inventaire[];
@@ -48,20 +50,20 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 animate-in fade-in duration-500">
-                <div className="size-16 border-4 border-emerald-100 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
-                <p className="font-medium animate-pulse">{t('common:loading')}</p>
+            <div className="p-4">
+                <SkeletonTable rows={6} columns={8} />
             </div>
         );
     }
 
     if (inventaires.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white/50 m-4 rounded-2xl border border-dashed border-slate-200">
-                <div className="bg-slate-100/50 p-4 rounded-full mb-4">
-                    <Package className="size-10 text-slate-300" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-700 mb-1">{t('inventaire.list.empty')}</h3>
+            <div className="bg-white/50 m-4 rounded-2xl border border-dashed border-slate-200">
+                <EmptyState
+                    icon={<Package className="size-8" />}
+                    title={t('inventaire.list.empty')}
+                    className="py-20"
+                />
             </div>
         );
     }

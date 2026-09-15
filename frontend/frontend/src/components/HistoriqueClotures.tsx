@@ -1265,7 +1265,7 @@ export default function HistoriqueClotures() {
 
             <div className="p-6 space-y-5 overflow-y-auto">
               {/* Infos session */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-white p-4 rounded-xl border border-slate-200">
                   <div className="text-xs uppercase font-bold text-slate-500 mb-1">{t('sessions.modal.opening')}</div>
                   <div className="font-mono text-sm font-bold">{formatDate(selectedSession.date_ouverture)}</div>

@@ -26,6 +26,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './sha
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from './shadcn/dialog';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
 import {
   SHIFT_STYLES, LEAVE_STATUS_VARIANTS, LEAVE_TYPES,
   formatDateISO, getMonthName, getDaysInMonth, getWeekdayShort,
@@ -109,8 +111,9 @@ function ConfigTab() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="size-8 text-emerald-600 animate-spin" />
+      <div className="max-w-3xl mx-auto p-8 space-y-4">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
       </div>
     );
   }
@@ -336,12 +339,18 @@ function TeamsTab() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-8"><Loader2 className="size-8 text-emerald-600 animate-spin" /></div>
-      ) : !teams || teams.length === 0 ? (
-        <div className="text-center py-12 text-slate-400">
-          <Users size={48} className="mx-auto mb-3 opacity-50" />
-          <p>{t('teams.empty')}</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
         </div>
+      ) : !teams || teams.length === 0 ? (
+        <EmptyState
+          icon={<Users className="size-8" />}
+          title={t('teams.empty')}
+          className="py-12"
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {teams.map(team => (
@@ -453,7 +462,7 @@ function StatsPanel({ scheduleId }: { scheduleId: number }) {
     queryFn: () => planningService.getStats(scheduleId),
   });
 
-  if (isLoading) return <div className="flex justify-center p-4"><Loader2 className="size-6 text-emerald-600 animate-spin" /></div>;
+  if (isLoading) return <Skeleton className="h-24 w-full mb-4" />;
   if (!stats || stats.length === 0) return null;
 
   return (
@@ -744,12 +753,20 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Calendar Grid */}
       {isLoading ? (
-        <div className="flex justify-center p-8"><Loader2 className="size-8 text-emerald-600 animate-spin" /></div>
-      ) : !schedule ? (
-        <div className="text-center py-12 text-slate-400">
-          <CalendarDays size={48} className="mx-auto mb-3 opacity-50" />
-          <p>{t('planning.no_schedule')}{isAdmin ? t('planning.no_schedule_admin') : ''}</p>
+        <div className="p-8 space-y-2">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
         </div>
+      ) : !schedule ? (
+        <EmptyState
+          icon={<CalendarDays className="size-8" />}
+          title={t('planning.no_schedule')}
+          description={isAdmin ? t('planning.no_schedule_admin') : undefined}
+          className="py-12"
+        />
       ) : (
         <div id="planning-print-area" className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 print:border print:border-black print:bg-white">
           <table className="w-full table-fixed text-sm border-collapse">
@@ -818,7 +835,7 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
               })()}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {(Object.keys(SHIFT_STYLES) as ShiftType[]).map(type => {
               const { Icon } = SHIFT_STYLES[type];
               return (
@@ -932,7 +949,7 @@ function LeavesTab({ isAdmin }: { isAdmin: boolean }) {
             <DialogDescription>{t('leaves.new_request_desc')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.start_date')}</label>
                 <LocalizedDateInput value={formData.start_date} onChange={e => setFormData(prev => ({ ...prev, start_date: e.target.value }))} />
@@ -970,12 +987,17 @@ function LeavesTab({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Leave requests list */}
       {isLoading ? (
-        <div className="flex justify-center p-8"><Loader2 className="size-8 text-emerald-600 animate-spin" /></div>
-      ) : !leaves || leaves.length === 0 ? (
-        <div className="text-center py-12 text-slate-400">
-          <Plane size={48} className="mx-auto mb-3 opacity-50" />
-          <p>{t('leaves.no_leaves')}</p>
+        <div className="space-y-2 p-8">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
         </div>
+      ) : !leaves || leaves.length === 0 ? (
+        <EmptyState
+          icon={<Plane className="size-8" />}
+          title={t('leaves.no_leaves')}
+          className="py-12"
+        />
       ) : (
         <div className="space-y-2">
           {leaves.map(leave => {

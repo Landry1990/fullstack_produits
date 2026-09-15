@@ -505,6 +505,7 @@
             "nb_orders": "Number of orders",
             "nb_products": "Number of products",
             "total_purchase": "Total Purchase",
+            "supplier": "Supplier",
             "date": "Date",
             "product": "Product Name",
             "cip": "CIP / Code",

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2 } from 'lucide-react';
 import api from '../../services/api';
 import { gooeyToast } from 'goey-toast';
 import type { Commande, Fournisseur } from '../../types';
@@ -15,6 +14,7 @@ import {
     DialogDescription,
 } from '../shadcn/dialog';
 import { Select } from '../shadcn/select';
+import { Skeleton } from '../ui/Skeleton';
 
 interface MergeCommandesModalProps {
     isOpen: boolean;
@@ -101,9 +101,10 @@ export default function MergeCommandesModal({
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 {loadingMergeDetails ? (
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <Loader2 className="size-8 animate-spin text-indigo-600 mb-4" />
-                        <p>{t('orders:merge_modal.loading')}</p>
+                    <div className="py-8 space-y-3">
+                        <Skeleton className="h-4 w-1/3" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-24 w-full" />
                     </div>
                 ) : (
                     <>
@@ -145,9 +146,18 @@ export default function MergeCommandesModal({
                                     {mergeOrdersDetails.map(order => {
                                         const isTarget = order.id === mergeTargetOrderId;
                                         return (
-                                            <div 
-                                                key={order.id} 
+                                            <div
+                                                key={order.id}
                                                 onClick={() => setMergeTargetOrderId(order.id)}
+                                                role="radio"
+                                                aria-checked={isTarget}
+                                                tabIndex={0}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        setMergeTargetOrderId(order.id);
+                                                    }
+                                                }}
                                                 className={`
                                                     flex justify-between items-center text-sm p-2 rounded cursor-pointer
                                                     ${isTarget ? 'bg-indigo-100 border border-indigo-500' : 'bg-white border border-slate-200'}
@@ -171,7 +181,7 @@ export default function MergeCommandesModal({
                             </div>
 
                             <div className="bg-white border border-slate-200 rounded-lg p-4">
-                                <div className="grid grid-cols-2 gap-4 text-center">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
                                     <div>
                                         <div className="text-xs text-slate-500 uppercase">{t('orders:merge_modal.total_products')}</div>
                                         <div className="font-bold text-lg">{totalProduits}</div>

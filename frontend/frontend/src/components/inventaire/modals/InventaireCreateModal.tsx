@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRayons, useFormes, useGroupes } from '../../../hooks/useProduits';
 import { CheckCircle2, ClipboardIcon, Settings2, Warehouse, Store, Archive, Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
@@ -35,6 +35,16 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
     const { data: rayons, isPending: loadingRayons } = useRayons();
     const { data: formes, isPending: loadingFormes } = useFormes();
     const { data: groupes, isPending: loadingGroupes } = useGroupes();
+
+    // Fermeture du modal via la touche Échap
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 
@@ -129,22 +139,22 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
                                     {t('inventaire.create.stock_type_title')}
                                 </span>
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'GLOBAL' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
                                         <Archive className={`h-5 w-5 mb-2 ${stockType === 'GLOBAL' ? 'text-emerald-600' : 'text-slate-300'}`} />
-                                        <input type="radio" name="stockType" className="hidden" checked={stockType === 'GLOBAL'} onChange={() => setStockType('GLOBAL')} />
+                                        <input type="radio" name="stockType" className="sr-only" checked={stockType === 'GLOBAL'} onChange={() => setStockType('GLOBAL')} aria-label={t('inventaire.create.stock_global')} />
                                         <span className={`text-xs font-bold text-center ${stockType === 'GLOBAL' ? 'text-emerald-700' : 'text-slate-500'}`}>{t('inventaire.create.stock_global')}</span>
                                     </label>
 
                                     <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RAYON' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
                                         <Store className={`h-5 w-5 mb-2 ${stockType === 'RAYON' ? 'text-emerald-600' : 'text-slate-300'}`} />
-                                        <input type="radio" name="stockType" className="hidden" checked={stockType === 'RAYON'} onChange={() => setStockType('RAYON')} />
+                                        <input type="radio" name="stockType" className="sr-only" checked={stockType === 'RAYON'} onChange={() => setStockType('RAYON')} aria-label={t('inventaire.create.stock_rayon')} />
                                         <span className={`text-xs font-bold text-center ${stockType === 'RAYON' ? 'text-emerald-700' : 'text-slate-500'}`}>{t('inventaire.create.stock_rayon')}</span>
                                     </label>
 
                                     <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RESERVE' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
                                         <Warehouse className={`h-5 w-5 mb-2 ${stockType === 'RESERVE' ? 'text-emerald-600' : 'text-slate-300'}`} />
-                                        <input type="radio" name="stockType" className="hidden" checked={stockType === 'RESERVE'} onChange={() => setStockType('RESERVE')} />
+                                        <input type="radio" name="stockType" className="sr-only" checked={stockType === 'RESERVE'} onChange={() => setStockType('RESERVE')} aria-label={t('inventaire.create.stock_reserve')} />
                                         <span className={`text-xs font-bold text-center ${stockType === 'RESERVE' ? 'text-emerald-700' : 'text-slate-500'}`}>{t('inventaire.create.stock_reserve')}</span>
                                     </label>
                                 </div>
@@ -164,6 +174,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                             </label>
                                             <select
                                                 className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
+                                                aria-label={t('sidebar.stock.organisation.tabs.rayons', 'Rayon')}
                                                 value={rayonId || ''}
                                                 onChange={(e) => setRayonId(e.target.value ? parseInt(e.target.value) : undefined)}
                                                 disabled={loadingRayons}
@@ -179,6 +190,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                             </label>
                                             <select
                                                 className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
+                                                aria-label={t('sidebar.stock.organisation.tabs.groupes', 'Groupe')}
                                                 value={groupeId || ''}
                                                 onChange={(e) => setGroupeId(e.target.value ? parseInt(e.target.value) : undefined)}
                                                 disabled={loadingGroupes}
@@ -194,6 +206,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                             </label>
                                             <select
                                                 className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
+                                                aria-label={t('sidebar.stock.organisation.tabs.formes', 'Forme')}
                                                 value={formeId || ''}
                                                 onChange={(e) => setFormeId(e.target.value ? parseInt(e.target.value) : undefined)}
                                                 disabled={loadingFormes}

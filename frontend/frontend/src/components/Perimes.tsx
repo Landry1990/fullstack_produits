@@ -49,6 +49,9 @@ import {
   DropdownMenuSeparator,
 } from './shadcn/dropdown-menu'
 import { cn } from '../lib/utils'
+import { EmptyState } from './ui/EmptyState'
+import { Skeleton } from './ui/Skeleton'
+import SkeletonTable from './ui/SkeletonTable'
 import { logger } from '../utils/logger'
 
 // Types pour les statistiques
@@ -432,8 +435,10 @@ export default function Perimes() {
           <div className="space-y-4 lg:space-y-6">
             {/* KPI Cards Row */}
             {loadingStats ? (
-              <div className="flex items-center justify-center py-12">
-                <span className="size-8 border-2 border-slate-200 border-t-red-500 rounded-full animate-spin"></span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-4">
+                <Skeleton className="h-24 w-full rounded-xl" />
+                <Skeleton className="h-24 w-full rounded-xl" />
+                <Skeleton className="h-24 w-full rounded-xl" />
               </div>
             ) : stats ? (
               <>
@@ -485,7 +490,7 @@ export default function Perimes() {
                     <CardTitle className="text-lg">⏰ {t('perimes.prevision.title')}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-3 md:grid-cols-3 gap-2 lg:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 lg:gap-4">
                       {(['30j', '60j', '90j'] as const).map((key, i) => (
                         <div key={key} className={cn("border-2 rounded-xl p-3 lg:p-4", getUrgencyClass(stats.previsions[key].valeur_vente))}>
                           <div className="flex items-center justify-between mb-2">
@@ -556,7 +561,7 @@ export default function Perimes() {
           /* ========== LIST VIEW ========== */
           <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-2 lg:p-4 border-b border-slate-100 bg-white sticky top-0 z-20 shrink-0">
-               <div className="flex justify-between items-center h-10">
+               <div className="flex flex-wrap justify-between items-center gap-2 min-h-10 py-1">
                   {selectedLotIds.size > 0 ? (
                      <div className="flex items-center gap-2">
                        <DropdownMenu>
@@ -625,14 +630,13 @@ export default function Perimes() {
 
             <div className="flex-1 overflow-auto">
               {loading ? (
-                <div className="flex items-center justify-center h-64">
-                  <span className="size-8 border-2 border-slate-200 border-t-red-500 rounded-full animate-spin"></span>
-                </div>
+                <SkeletonTable rows={8} columns={8} />
               ) : lots.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-slate-300 gap-4">
-                  <PieChart className="size-16" />
-                  <p className="text-sm font-bold uppercase tracking-widest text-slate-400">{t('perimes.no_result')}</p>
-                </div>
+                <EmptyState
+                  icon={<PieChart className="size-8" />}
+                  title={t('perimes.no_result')}
+                  className="h-64"
+                />
               ) : (
                 <Table className="w-full text-xs">
                   <TableHeader className="bg-slate-50 sticky top-0 z-30 border-b border-slate-100">
@@ -774,13 +778,12 @@ export default function Perimes() {
              )}
 
              {loadingAdjustments ? (
-               <div className="flex items-center justify-center h-64">
-                 <span className="size-8 border-2 border-slate-200 border-t-red-500 rounded-full animate-spin"></span>
-               </div>
+               <SkeletonTable rows={6} columns={7} />
              ) : adjustments.length === 0 ? (
-               <div className="flex flex-col items-center justify-center h-64 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
-                 <p className="text-lg font-bold">{t('perimes.history.no_result')}</p>
-               </div>
+               <EmptyState
+                 title={t('perimes.history.no_result')}
+                 className="h-64 border-2 border-dashed border-slate-200 rounded-2xl"
+               />
              ) : (
                <Card className="overflow-hidden">
                  <div className="overflow-x-auto">

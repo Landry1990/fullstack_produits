@@ -132,6 +132,12 @@ input, button, textarea, select {
   font-family: inherit;
 }
 
+/* Focus clavier visible (a11y) — n'affecte pas le clic souris */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 /* Pharmacy Theme Custom Styles */
 .pharma-sidebar {
   background: linear-gradient(180deg, #171c26 0%, #0c0f14 100%);
@@ -1295,6 +1301,601 @@ div[style*="overflow-y: auto"]::-webkit-scrollbar {
 .theme-midnight .file\:bg-slate-100::file-selector-button {
   background-color: var(--color-base-300) !important;
   color: var(--color-base-content) !important;
+}
+
+/* ── Pastels manquants (sky/cyan/teal/violet/fuchsia/pink/lime) ── */
+.theme-midnight .bg-sky-50,
+.theme-midnight .bg-sky-100,
+.theme-midnight [class*="bg-sky-50/"],
+.theme-midnight [class*="bg-sky-100/"] {
+  background-color: rgba(14, 165, 233, 0.12) !important;
+}
+.theme-midnight .bg-cyan-50,
+.theme-midnight .bg-cyan-100,
+.theme-midnight [class*="bg-cyan-50/"],
+.theme-midnight [class*="bg-cyan-100/"] {
+  background-color: rgba(6, 182, 212, 0.12) !important;
+}
+.theme-midnight .bg-teal-50,
+.theme-midnight .bg-teal-100,
+.theme-midnight [class*="bg-teal-50/"],
+.theme-midnight [class*="bg-teal-100/"] {
+  background-color: rgba(20, 184, 166, 0.12) !important;
+}
+.theme-midnight .bg-violet-50,
+.theme-midnight .bg-violet-100,
+.theme-midnight [class*="bg-violet-50/"],
+.theme-midnight [class*="bg-violet-100/"] {
+  background-color: rgba(139, 92, 246, 0.12) !important;
+}
+.theme-midnight .bg-fuchsia-50,
+.theme-midnight .bg-fuchsia-100,
+.theme-midnight [class*="bg-fuchsia-50/"],
+.theme-midnight [class*="bg-fuchsia-100/"] {
+  background-color: rgba(217, 70, 239, 0.12) !important;
+}
+.theme-midnight .bg-pink-50,
+.theme-midnight .bg-pink-100,
+.theme-midnight [class*="bg-pink-50/"],
+.theme-midnight [class*="bg-pink-100/"] {
+  background-color: rgba(236, 72, 153, 0.12) !important;
+}
+.theme-midnight .bg-lime-50,
+.theme-midnight .bg-lime-100,
+.theme-midnight [class*="bg-lime-50/"],
+.theme-midnight [class*="bg-lime-100/"] {
+  background-color: rgba(132, 204, 22, 0.12) !important;
+}
+
+/* ── Pastels existants avec opacité (bg-X-50/NN, bg-X-100/NN) ── */
+.theme-midnight [class*="bg-amber-50/"],
+.theme-midnight [class*="bg-amber-100/"] {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+}
+.theme-midnight [class*="bg-emerald-50/"],
+.theme-midnight [class*="bg-emerald-100/"] {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+.theme-midnight [class*="bg-red-50/"],
+.theme-midnight [class*="bg-red-100/"] {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+}
+.theme-midnight [class*="bg-blue-50/"],
+.theme-midnight [class*="bg-blue-100/"] {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+}
+.theme-midnight [class*="bg-indigo-50/"],
+.theme-midnight [class*="bg-indigo-100/"] {
+  background-color: rgba(99, 102, 241, 0.12) !important;
+}
+.theme-midnight [class*="bg-orange-50/"],
+.theme-midnight [class*="bg-orange-100/"] {
+  background-color: rgba(249, 115, 22, 0.12) !important;
+}
+.theme-midnight [class*="bg-purple-50/"],
+.theme-midnight [class*="bg-purple-100/"] {
+  background-color: rgba(168, 85, 247, 0.12) !important;
+}
+.theme-midnight [class*="bg-yellow-50/"],
+.theme-midnight [class*="bg-yellow-100/"] {
+  background-color: rgba(234, 179, 8, 0.12) !important;
+}
+.theme-midnight [class*="bg-green-50/"],
+.theme-midnight [class*="bg-green-100/"] {
+  background-color: rgba(34, 197, 94, 0.12) !important;
+}
+.theme-midnight [class*="bg-rose-50/"],
+.theme-midnight [class*="bg-rose-100/"] {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+}
+
+/* ── Tons colorés 200/300 (badges, barres) ─────────── */
+.theme-midnight .bg-amber-200,
+.theme-midnight .bg-amber-300,
+.theme-midnight [class*="bg-amber-200/"],
+.theme-midnight [class*="bg-amber-300/"] {
+  background-color: rgba(245, 158, 11, 0.22) !important;
+}
+.theme-midnight .bg-emerald-200,
+.theme-midnight .bg-emerald-300,
+.theme-midnight [class*="bg-emerald-200/"],
+.theme-midnight [class*="bg-emerald-300/"] {
+  background-color: rgba(16, 185, 129, 0.22) !important;
+}
+.theme-midnight .bg-red-200,
+.theme-midnight .bg-red-300,
+.theme-midnight [class*="bg-red-200/"],
+.theme-midnight [class*="bg-red-300/"] {
+  background-color: rgba(239, 68, 68, 0.22) !important;
+}
+.theme-midnight .bg-blue-200,
+.theme-midnight .bg-blue-300,
+.theme-midnight [class*="bg-blue-200/"],
+.theme-midnight [class*="bg-blue-300/"] {
+  background-color: rgba(59, 130, 246, 0.22) !important;
+}
+.theme-midnight .bg-indigo-200,
+.theme-midnight .bg-indigo-300,
+.theme-midnight [class*="bg-indigo-200/"],
+.theme-midnight [class*="bg-indigo-300/"] {
+  background-color: rgba(99, 102, 241, 0.22) !important;
+}
+.theme-midnight .bg-orange-200,
+.theme-midnight .bg-orange-300 {
+  background-color: rgba(249, 115, 22, 0.22) !important;
+}
+.theme-midnight .bg-purple-200,
+.theme-midnight .bg-purple-300 {
+  background-color: rgba(168, 85, 247, 0.22) !important;
+}
+.theme-midnight .bg-yellow-200,
+.theme-midnight .bg-yellow-300 {
+  background-color: rgba(234, 179, 8, 0.22) !important;
+}
+.theme-midnight .bg-green-200,
+.theme-midnight .bg-green-300 {
+  background-color: rgba(34, 197, 94, 0.22) !important;
+}
+.theme-midnight .bg-rose-200,
+.theme-midnight .bg-rose-300 {
+  background-color: rgba(244, 63, 94, 0.22) !important;
+}
+.theme-midnight .bg-sky-200,
+.theme-midnight .bg-sky-300 {
+  background-color: rgba(14, 165, 233, 0.22) !important;
+}
+.theme-midnight .bg-cyan-200,
+.theme-midnight .bg-cyan-300 {
+  background-color: rgba(6, 182, 212, 0.22) !important;
+}
+.theme-midnight .bg-teal-200,
+.theme-midnight .bg-teal-300 {
+  background-color: rgba(20, 184, 166, 0.22) !important;
+}
+.theme-midnight .bg-violet-200,
+.theme-midnight .bg-violet-300 {
+  background-color: rgba(139, 92, 246, 0.22) !important;
+}
+.theme-midnight .bg-fuchsia-200,
+.theme-midnight .bg-fuchsia-300 {
+  background-color: rgba(217, 70, 239, 0.22) !important;
+}
+.theme-midnight .bg-pink-200,
+.theme-midnight .bg-pink-300 {
+  background-color: rgba(236, 72, 153, 0.22) !important;
+}
+.theme-midnight .bg-lime-200,
+.theme-midnight .bg-lime-300 {
+  background-color: rgba(132, 204, 22, 0.22) !important;
+}
+
+/* ── Bordures colorées manquantes ───────────────────── */
+.theme-midnight .border-orange-100,
+.theme-midnight .border-orange-200,
+.theme-midnight .border-orange-300 {
+  border-color: rgba(249, 115, 22, 0.3) !important;
+}
+.theme-midnight .border-purple-100,
+.theme-midnight .border-purple-200,
+.theme-midnight .border-purple-300 {
+  border-color: rgba(168, 85, 247, 0.3) !important;
+}
+.theme-midnight .border-yellow-100,
+.theme-midnight .border-yellow-200,
+.theme-midnight .border-yellow-300 {
+  border-color: rgba(234, 179, 8, 0.3) !important;
+}
+.theme-midnight .border-green-100,
+.theme-midnight .border-green-200,
+.theme-midnight .border-green-300 {
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+.theme-midnight .border-rose-100,
+.theme-midnight .border-rose-200,
+.theme-midnight .border-rose-300 {
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+.theme-midnight .border-sky-100,
+.theme-midnight .border-sky-200,
+.theme-midnight .border-sky-300 {
+  border-color: rgba(14, 165, 233, 0.3) !important;
+}
+.theme-midnight .border-cyan-100,
+.theme-midnight .border-cyan-200,
+.theme-midnight .border-cyan-300 {
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+.theme-midnight .border-teal-100,
+.theme-midnight .border-teal-200,
+.theme-midnight .border-teal-300 {
+  border-color: rgba(20, 184, 166, 0.3) !important;
+}
+.theme-midnight .border-violet-100,
+.theme-midnight .border-violet-200,
+.theme-midnight .border-violet-300 {
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+.theme-midnight .border-fuchsia-100,
+.theme-midnight .border-fuchsia-200,
+.theme-midnight .border-fuchsia-300 {
+  border-color: rgba(217, 70, 239, 0.3) !important;
+}
+.theme-midnight .border-pink-100,
+.theme-midnight .border-pink-200,
+.theme-midnight .border-pink-300 {
+  border-color: rgba(236, 72, 153, 0.3) !important;
+}
+.theme-midnight .border-lime-100,
+.theme-midnight .border-lime-200,
+.theme-midnight .border-lime-300 {
+  border-color: rgba(132, 204, 22, 0.3) !important;
+}
+.theme-midnight .border-amber-100 {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+.theme-midnight .border-emerald-100 {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+.theme-midnight .border-red-100 {
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+.theme-midnight .border-blue-100 {
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+.theme-midnight .border-indigo-100 {
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+/* ── Textes colorés manquants ───────────────────────── */
+.theme-midnight .text-sky-600,
+.theme-midnight .text-sky-700,
+.theme-midnight .text-sky-800 {
+  color: #38bdf8 !important;
+}
+.theme-midnight .text-sky-900 { color: #7dd3fc !important; }
+.theme-midnight .text-cyan-600,
+.theme-midnight .text-cyan-700,
+.theme-midnight .text-cyan-800 {
+  color: #22d3ee !important;
+}
+.theme-midnight .text-cyan-900 { color: #67e8f9 !important; }
+.theme-midnight .text-teal-600,
+.theme-midnight .text-teal-700,
+.theme-midnight .text-teal-800 {
+  color: #2dd4bf !important;
+}
+.theme-midnight .text-teal-900 { color: #5eead4 !important; }
+.theme-midnight .text-violet-600,
+.theme-midnight .text-violet-700,
+.theme-midnight .text-violet-800 {
+  color: #a78bfa !important;
+}
+.theme-midnight .text-violet-900 { color: #c4b5fd !important; }
+.theme-midnight .text-fuchsia-600,
+.theme-midnight .text-fuchsia-700,
+.theme-midnight .text-fuchsia-800 {
+  color: #e879f9 !important;
+}
+.theme-midnight .text-fuchsia-900 { color: #f0abfc !important; }
+.theme-midnight .text-pink-600,
+.theme-midnight .text-pink-700,
+.theme-midnight .text-pink-800 {
+  color: #f472b6 !important;
+}
+.theme-midnight .text-pink-900 { color: #f9a8d4 !important; }
+.theme-midnight .text-lime-600,
+.theme-midnight .text-lime-700,
+.theme-midnight .text-lime-800 {
+  color: #a3e635 !important;
+}
+.theme-midnight .text-lime-900 { color: #bef264 !important; }
+.theme-midnight .text-yellow-600,
+.theme-midnight .text-yellow-700,
+.theme-midnight .text-yellow-800 {
+  color: #facc15 !important;
+}
+.theme-midnight .text-yellow-900 { color: #fde047 !important; }
+.theme-midnight .text-green-600,
+.theme-midnight .text-green-700,
+.theme-midnight .text-green-800 {
+  color: #4ade80 !important;
+}
+.theme-midnight .text-green-900 { color: #86efac !important; }
+.theme-midnight .text-rose-600,
+.theme-midnight .text-rose-700,
+.theme-midnight .text-rose-800 {
+  color: #fb7185 !important;
+}
+.theme-midnight .text-rose-900 { color: #fda4af !important; }
+.theme-midnight .text-orange-800 { color: #fb923c !important; }
+.theme-midnight .text-orange-900 { color: #fdba74 !important; }
+.theme-midnight .text-purple-800 { color: #c084fc !important; }
+.theme-midnight .text-purple-900 { color: #d8b4fe !important; }
+
+/* ── Dégradés clairs → nuit ─────────────────────────── */
+/* Neutral stops */
+.theme-midnight .from-slate-50,
+.theme-midnight .from-slate-100,
+.theme-midnight .from-slate-200,
+.theme-midnight .from-gray-50,
+.theme-midnight .from-gray-100,
+.theme-midnight .from-gray-200,
+.theme-midnight [class*="from-slate-50/"],
+.theme-midnight [class*="from-gray-50/"] {
+  --tw-gradient-from: var(--color-base-200) !important;
+}
+.theme-midnight .via-slate-50,
+.theme-midnight .via-slate-100,
+.theme-midnight .via-gray-50,
+.theme-midnight .via-gray-100,
+.theme-midnight .via-white,
+.theme-midnight [class*="via-white/"] {
+  --tw-gradient-via: var(--color-base-200) !important;
+}
+.theme-midnight .to-slate-50,
+.theme-midnight .to-slate-100,
+.theme-midnight .to-gray-50,
+.theme-midnight .to-gray-100,
+.theme-midnight .to-white,
+.theme-midnight [class*="to-white/"] {
+  --tw-gradient-to: var(--color-base-200) !important;
+}
+.theme-midnight .from-white {
+  --tw-gradient-from: var(--color-base-100) !important;
+}
+
+/* Colored stops — mapped to the same translucent dark tints as bg-*-50 */
+.theme-midnight .from-emerald-50,
+.theme-midnight .from-emerald-100,
+.theme-midnight [class*="from-emerald-50/"],
+.theme-midnight [class*="from-emerald-100/"] {
+  --tw-gradient-from: rgba(16, 185, 129, 0.15) !important;
+}
+.theme-midnight .via-emerald-50,
+.theme-midnight .via-emerald-100,
+.theme-midnight [class*="via-emerald-50/"],
+.theme-midnight [class*="via-emerald-100/"] {
+  --tw-gradient-via: rgba(16, 185, 129, 0.15) !important;
+}
+.theme-midnight .to-emerald-50,
+.theme-midnight .to-emerald-100,
+.theme-midnight [class*="to-emerald-50/"],
+.theme-midnight [class*="to-emerald-100/"] {
+  --tw-gradient-to: rgba(16, 185, 129, 0.15) !important;
+}
+.theme-midnight .from-red-50,
+.theme-midnight .from-red-100,
+.theme-midnight [class*="from-red-50/"],
+.theme-midnight [class*="from-red-100/"] {
+  --tw-gradient-from: rgba(239, 68, 68, 0.15) !important;
+}
+.theme-midnight .via-red-50,
+.theme-midnight .via-red-100,
+.theme-midnight [class*="via-red-50/"],
+.theme-midnight [class*="via-red-100/"] {
+  --tw-gradient-via: rgba(239, 68, 68, 0.15) !important;
+}
+.theme-midnight .to-red-50,
+.theme-midnight .to-red-100,
+.theme-midnight [class*="to-red-50/"],
+.theme-midnight [class*="to-red-100/"] {
+  --tw-gradient-to: rgba(239, 68, 68, 0.15) !important;
+}
+.theme-midnight .from-amber-50,
+.theme-midnight .from-amber-100,
+.theme-midnight [class*="from-amber-50/"],
+.theme-midnight [class*="from-amber-100/"] {
+  --tw-gradient-from: rgba(245, 158, 11, 0.15) !important;
+}
+.theme-midnight .via-amber-50,
+.theme-midnight .via-amber-100 {
+  --tw-gradient-via: rgba(245, 158, 11, 0.15) !important;
+}
+.theme-midnight .to-amber-50,
+.theme-midnight .to-amber-100,
+.theme-midnight [class*="to-amber-50/"],
+.theme-midnight [class*="to-amber-100/"] {
+  --tw-gradient-to: rgba(245, 158, 11, 0.15) !important;
+}
+.theme-midnight .from-blue-50,
+.theme-midnight .from-blue-100,
+.theme-midnight [class*="from-blue-50/"],
+.theme-midnight [class*="from-blue-100/"] {
+  --tw-gradient-from: rgba(59, 130, 246, 0.15) !important;
+}
+.theme-midnight .via-blue-50,
+.theme-midnight .via-blue-100 {
+  --tw-gradient-via: rgba(59, 130, 246, 0.15) !important;
+}
+.theme-midnight .to-blue-50,
+.theme-midnight .to-blue-100,
+.theme-midnight [class*="to-blue-50/"],
+.theme-midnight [class*="to-blue-100/"] {
+  --tw-gradient-to: rgba(59, 130, 246, 0.15) !important;
+}
+.theme-midnight .from-indigo-50,
+.theme-midnight .from-indigo-100,
+.theme-midnight [class*="from-indigo-50/"],
+.theme-midnight [class*="from-indigo-100/"] {
+  --tw-gradient-from: rgba(99, 102, 241, 0.15) !important;
+}
+.theme-midnight .via-indigo-50,
+.theme-midnight .via-indigo-100 {
+  --tw-gradient-via: rgba(99, 102, 241, 0.15) !important;
+}
+.theme-midnight .to-indigo-50,
+.theme-midnight .to-indigo-100,
+.theme-midnight [class*="to-indigo-50/"],
+.theme-midnight [class*="to-indigo-100/"] {
+  --tw-gradient-to: rgba(99, 102, 241, 0.15) !important;
+}
+.theme-midnight .from-sky-50,
+.theme-midnight .from-sky-100,
+.theme-midnight [class*="from-sky-50/"],
+.theme-midnight [class*="from-sky-100/"] {
+  --tw-gradient-from: rgba(14, 165, 233, 0.15) !important;
+}
+.theme-midnight .via-sky-50,
+.theme-midnight .via-sky-100 {
+  --tw-gradient-via: rgba(14, 165, 233, 0.15) !important;
+}
+.theme-midnight .to-sky-50,
+.theme-midnight .to-sky-100,
+.theme-midnight [class*="to-sky-50/"],
+.theme-midnight [class*="to-sky-100/"] {
+  --tw-gradient-to: rgba(14, 165, 233, 0.15) !important;
+}
+.theme-midnight .from-cyan-50,
+.theme-midnight .from-cyan-100,
+.theme-midnight [class*="from-cyan-50/"],
+.theme-midnight [class*="from-cyan-100/"] {
+  --tw-gradient-from: rgba(6, 182, 212, 0.15) !important;
+}
+.theme-midnight .via-cyan-50,
+.theme-midnight .via-cyan-100,
+.theme-midnight [class*="via-cyan-50/"],
+.theme-midnight [class*="via-cyan-100/"] {
+  --tw-gradient-via: rgba(6, 182, 212, 0.15) !important;
+}
+.theme-midnight .to-cyan-50,
+.theme-midnight .to-cyan-100,
+.theme-midnight [class*="to-cyan-50/"],
+.theme-midnight [class*="to-cyan-100/"] {
+  --tw-gradient-to: rgba(6, 182, 212, 0.15) !important;
+}
+.theme-midnight .from-green-50,
+.theme-midnight .from-green-100 {
+  --tw-gradient-from: rgba(34, 197, 94, 0.15) !important;
+}
+.theme-midnight .to-green-50,
+.theme-midnight .to-green-100 {
+  --tw-gradient-to: rgba(34, 197, 94, 0.15) !important;
+}
+.theme-midnight .from-rose-50,
+.theme-midnight .from-rose-100 {
+  --tw-gradient-from: rgba(244, 63, 94, 0.15) !important;
+}
+.theme-midnight .to-rose-50,
+.theme-midnight .to-rose-100 {
+  --tw-gradient-to: rgba(244, 63, 94, 0.15) !important;
+}
+.theme-midnight .from-orange-50,
+.theme-midnight .from-orange-100 {
+  --tw-gradient-from: rgba(249, 115, 22, 0.15) !important;
+}
+.theme-midnight .to-orange-50,
+.theme-midnight .to-orange-100 {
+  --tw-gradient-to: rgba(249, 115, 22, 0.15) !important;
+}
+.theme-midnight .from-purple-50,
+.theme-midnight .from-purple-100 {
+  --tw-gradient-from: rgba(168, 85, 247, 0.15) !important;
+}
+.theme-midnight .to-purple-50,
+.theme-midnight .to-purple-100 {
+  --tw-gradient-to: rgba(168, 85, 247, 0.15) !important;
+}
+.theme-midnight .from-violet-50,
+.theme-midnight .from-violet-100 {
+  --tw-gradient-from: rgba(139, 92, 246, 0.15) !important;
+}
+.theme-midnight .to-violet-50,
+.theme-midnight .to-violet-100 {
+  --tw-gradient-to: rgba(139, 92, 246, 0.15) !important;
+}
+.theme-midnight .from-teal-50,
+.theme-midnight .from-teal-100 {
+  --tw-gradient-from: rgba(20, 184, 166, 0.15) !important;
+}
+.theme-midnight .to-teal-50,
+.theme-midnight .to-teal-100 {
+  --tw-gradient-to: rgba(20, 184, 166, 0.15) !important;
+}
+.theme-midnight .from-yellow-50,
+.theme-midnight .from-yellow-100 {
+  --tw-gradient-from: rgba(234, 179, 8, 0.15) !important;
+}
+.theme-midnight .to-yellow-50,
+.theme-midnight .to-yellow-100 {
+  --tw-gradient-to: rgba(234, 179, 8, 0.15) !important;
+}
+.theme-midnight .from-pink-50,
+.theme-midnight .from-pink-100 {
+  --tw-gradient-from: rgba(236, 72, 153, 0.15) !important;
+}
+.theme-midnight .to-pink-50,
+.theme-midnight .to-pink-100 {
+  --tw-gradient-to: rgba(236, 72, 153, 0.15) !important;
+}
+.theme-midnight .from-fuchsia-50,
+.theme-midnight .from-fuchsia-100 {
+  --tw-gradient-from: rgba(217, 70, 239, 0.15) !important;
+}
+.theme-midnight .to-fuchsia-50,
+.theme-midnight .to-fuchsia-100 {
+  --tw-gradient-to: rgba(217, 70, 239, 0.15) !important;
+}
+.theme-midnight .from-lime-50,
+.theme-midnight .from-lime-100 {
+  --tw-gradient-from: rgba(132, 204, 22, 0.15) !important;
+}
+.theme-midnight .to-lime-50,
+.theme-midnight .to-lime-100 {
+  --tw-gradient-to: rgba(132, 204, 22, 0.15) !important;
+}
+
+/* ── Hover sur pastels manquants ────────────────────── */
+.theme-midnight .hover\:bg-sky-50:hover,
+.theme-midnight .hover\:bg-sky-100:hover {
+  background-color: rgba(14, 165, 233, 0.15) !important;
+}
+.theme-midnight .hover\:bg-cyan-50:hover,
+.theme-midnight .hover\:bg-cyan-100:hover {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+}
+.theme-midnight .hover\:bg-teal-50:hover,
+.theme-midnight .hover\:bg-teal-100:hover {
+  background-color: rgba(20, 184, 166, 0.15) !important;
+}
+.theme-midnight .hover\:bg-green-50:hover,
+.theme-midnight .hover\:bg-green-100:hover {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+}
+.theme-midnight .hover\:bg-rose-50:hover,
+.theme-midnight .hover\:bg-rose-100:hover {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+.theme-midnight .hover\:bg-orange-50:hover,
+.theme-midnight .hover\:bg-orange-100:hover {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+}
+.theme-midnight .hover\:bg-purple-50:hover,
+.theme-midnight .hover\:bg-purple-100:hover {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+}
+.theme-midnight .hover\:bg-violet-50:hover,
+.theme-midnight .hover\:bg-violet-100:hover {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+}
+.theme-midnight .hover\:bg-yellow-50:hover,
+.theme-midnight .hover\:bg-yellow-100:hover {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+}
+.theme-midnight .hover\:bg-pink-50:hover,
+.theme-midnight .hover\:bg-pink-100:hover {
+  background-color: rgba(236, 72, 153, 0.15) !important;
+}
+.theme-midnight .hover\:bg-fuchsia-50:hover,
+.theme-midnight .hover\:bg-fuchsia-100:hover {
+  background-color: rgba(217, 70, 239, 0.15) !important;
+}
+.theme-midnight .hover\:bg-lime-50:hover,
+.theme-midnight .hover\:bg-lime-100:hover {
+  background-color: rgba(132, 204, 22, 0.15) !important;
+}
+.theme-midnight .hover\:bg-white:hover,
+.theme-midnight [class*="hover:bg-white/"]:hover {
+  background-color: var(--color-base-200) !important;
 }
 
 /* Impression / templates : forcer le blanc */

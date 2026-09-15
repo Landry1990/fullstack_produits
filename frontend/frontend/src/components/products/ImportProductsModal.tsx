@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { gooeyToast } from 'goey-toast'
@@ -28,6 +28,15 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
   const [result, setResult] = useState<ImportResult | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const jobIdRef = useRef<string | null>(null)
+
+  // Fermeture du modal via la touche Échap (désactivée pendant l'import)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !uploading) onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [uploading, onClose])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -106,8 +115,8 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={() => !uploading && onClose()} />
-      <div className="relative bg-base-100 rounded-xl shadow-2xl border border-base-200 w-full max-w-lg">
+      <div className="absolute inset-0 bg-black/40" onClick={() => !uploading && onClose()} aria-hidden="true" />
+      <div className="relative bg-base-100 rounded-xl shadow-2xl border border-base-200 w-full max-w-lg" role="dialog" aria-modal="true" aria-label={t('products:import.title')}>
         {/* Header */}
         <div className="px-6 py-4 border-b border-base-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -118,6 +127,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common:close')}
             className="p-2 text-base-content/50 hover:bg-base-200 rounded-lg transition-colors"
             disabled={uploading}
           >
@@ -136,6 +146,16 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              aria-label={t('products:import.drag_drop')}
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  fileInputRef.current?.click()
+                }
+              }}
             >
               <input
                 type="file"

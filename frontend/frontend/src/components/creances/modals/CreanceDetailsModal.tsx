@@ -80,7 +80,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                             <p className="text-slate-400 italic text-sm">{t('creances:details_modal.no_payments')}</p>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto shadow-sm">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-slate-200">

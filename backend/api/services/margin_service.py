@@ -13,13 +13,15 @@ from django.db.models import (
     Exists,
     F,
     OuterRef,
+    Q,
     Sum,
     Value,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, TruncDay
 from django.utils import timezone
 
 from api.models import (
+    Caisse,
     Facture,
     FactureProduit,
     FactureProduitAllocation,
@@ -291,6 +293,120 @@ class MarginService:
             'marge_pct': marge_pct.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
             'nb_factures': Decimal(str(factures_qs.count()))
         }
+    
+    @staticmethod
+    def calculate_daily_margin_with_discounts(
+        date_debut,
+        date_fin,
+        exclude_is_divers=True
+    ) -> dict[date_type, dict[str, Decimal]]:
+        """
+        Calcule les marges journalières sur une période en une seule passe SQL groupée par jour.
+        
+        Remplace les appels répétés de calculate_period_margin_with_discounts pour chaque jour
+        par une agrégation groupée avec TruncDay, ce qui réduit drastiquement le nombre de
+        requêtes sur la base de données.
+        
+        Args:
+            date_debut: Date de début (date ou datetime)
+            date_fin: Date de fin (date ou datetime)
+            exclude_is_divers: Exclure les lots is_divers (même logique que calculate_period_margin_with_discounts)
+            
+        Returns:
+            Dict {date: {ca_ttc_total, ca_ttc_net, cout_achat_total, remise_globale,
+                         ratio_remise, marge_brute, marge_pct, nb_factures}}
+        """
+        if isinstance(date_debut, datetime):
+            date_debut = date_debut.date()
+        if isinstance(date_fin, datetime):
+            date_fin = date_fin.date()
+
+        # Requête de base : même filtrage que revenue_chart (status + paiement)
+        factures_qs = Facture.objects.filter(
+            date__date__gte=date_debut,
+            date__date__lte=date_fin,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).exclude(~Q(id__in=Caisse.objects.values('facture_id')), status='VAL')
+
+        # 1. Totaux TTC / remise / nb factures groupés par jour
+        daily_totals = factures_qs.annotate(
+            day=TruncDay('date')
+        ).values('day').annotate(
+            total_ttc=Coalesce(Sum('total_ttc'), Decimal(0)),
+            total_remise=Coalesce(Sum('remise'), Decimal(0)),
+            nb_factures=Count('id')
+        ).order_by('day')
+
+        # 2. Coût des produits alloués groupés par jour
+        allocations_qs = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__in=factures_qs
+        )
+        if exclude_is_divers:
+            allocations_qs = allocations_qs.exclude(stock_lot__is_divers=True)
+
+        allocated_costs = {
+            item['day'].date(): item['total']
+            for item in allocations_qs.annotate(
+                day=TruncDay('facture_produit__facture__date')
+            ).values('day').annotate(
+                total=Coalesce(
+                    Sum(F('cost_price') * F('quantity'), output_field=DecimalField()),
+                    Decimal(0)
+                )
+            )
+        }
+
+        # 3. Coût des produits non alloués (fallback PMP) groupés par jour
+        unallocated_qs = FactureProduit.objects.filter(
+            facture__in=factures_qs
+        ).annotate(
+            has_alloc=Exists(
+                FactureProduitAllocation.objects.filter(facture_produit=OuterRef('pk'))
+            )
+        ).filter(has_alloc=False)
+
+        if exclude_is_divers:
+            unallocated_qs = unallocated_qs.exclude(produit__stock_lots__is_divers=True)
+
+        unallocated_costs = {
+            item['day'].date(): item['total']
+            for item in unallocated_qs.annotate(
+                day=TruncDay('facture__date')
+            ).values('day').annotate(
+                total=Coalesce(
+                    Sum(F('produit__pmp') * F('quantity'), output_field=DecimalField()),
+                    Decimal(0)
+                )
+            )
+        }
+
+        results: dict[date_type, dict[str, Decimal]] = {}
+        for item in daily_totals:
+            day = item['day'].date()
+            ca_ttc_total = item['total_ttc'] or Decimal(0)
+            total_remise = item['total_remise'] or Decimal(0)
+            total_cost = allocated_costs.get(day, Decimal(0)) + unallocated_costs.get(day, Decimal(0))
+
+            ratio_remise = Decimal(1)
+            if ca_ttc_total + total_remise > 0:
+                ratio_remise = ca_ttc_total / (ca_ttc_total + total_remise)
+
+            ca_ttc_net = ca_ttc_total * ratio_remise
+            marge_brute = ca_ttc_net - total_cost
+            marge_pct = (marge_brute / ca_ttc_net * 100) if ca_ttc_net > 0 else Decimal('0.00')
+
+            results[day] = {
+                'ca_ttc_total': ca_ttc_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                'ca_ttc_net': ca_ttc_net.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                'cout_achat_total': total_cost.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                'remise_globale': total_remise.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                'ratio_remise': ratio_remise.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP),
+                'marge_brute': marge_brute.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                'marge_pct': marge_pct.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                'nb_factures': item['nb_factures']
+            }
+
+        return results
     
     @staticmethod
     def update_product_margins(product_ids: list[int] | None = None) -> int:

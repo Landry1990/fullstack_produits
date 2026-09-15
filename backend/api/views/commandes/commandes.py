@@ -151,7 +151,7 @@ class CommandeViewSet(
         # Les compteurs par statut doivent ignorer le filtre 'status' (sinon
         # sélectionner "Préparation" met les autres compteurs à 0), mais garder
         # les autres filtres (type, fournisseur, is_active).
-        counts_qs = self.get_queryset()
+        counts_qs = Commande.objects.filter(is_active=True)
         type_param = request.query_params.get('type')
         if type_param:
             counts_qs = counts_qs.filter(type=type_param)

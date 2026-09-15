@@ -4,6 +4,7 @@ import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';
 import type { Fournisseur, PaiementFournisseur } from '../types';
 import { useFinanceFournisseurs } from '../hooks/useFinanceFournisseurs';
+import { useConfirm } from '../hooks/useConfirm';
 import fournisseurService from '../services/fournisseurService';
 import {
   Dialog,
@@ -103,6 +104,7 @@ export default function FinanceFournisseurModal({
   commandeIds,
 }: FinanceFournisseurModalProps) {
   const { t } = useTranslation(['providers', 'common']);
+  const confirm = useConfirm();
   const {
     paiements,
     loading,
@@ -176,7 +178,13 @@ export default function FinanceFournisseurModal({
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm(t('providers:finance.delete_confirm'))) {
+    const confirmed = await confirm({
+      title: t('common:confirmation'),
+      message: t('providers:finance.delete_confirm'),
+      confirmText: t('common:confirm'),
+      variant: 'danger'
+    });
+    if (confirmed) {
       await deletePaiement(id);
       if (onSuccess) onSuccess();
     }

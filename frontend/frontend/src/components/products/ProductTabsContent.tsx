@@ -16,7 +16,10 @@ import { LocalizedDateInput } from '../LocalizedDateInput';
 import { Select } from '../ui/Select';
 import { Card, CardContent } from '../shadcn/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../shadcn/table';
-import { Loader2, Check, X, Pencil, Download, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { Check, X, Pencil, Download, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
+import SkeletonTable from '../ui/SkeletonTable';
 import type { TFunction } from 'i18next';
 import { usePharmacySettings } from '../../hooks/usePharmacySettings';
 import { exportToExcel } from '../../utils/excelExport';
@@ -59,7 +62,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
     }, [achats, selectedFournisseur]);
 
     const Recharts = useRecharts();
-    if (!Recharts) return <div className="flex items-center justify-center p-8"><Loader2 className="size-8 animate-spin text-slate-400" /></div>;
+    if (!Recharts) return <Skeleton className="h-[180px] w-full mb-4" />;
     const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } = Recharts;
 
     if (chartData.length === 0) return null;
@@ -154,7 +157,7 @@ const PriceEvolutionChart = ({ achats, t }: { achats: AchatProduit[]; t: TFuncti
 };
 
 const PurchasesTabContent = ({ achats, t }: { achats: AchatProduit[]; t: TFunction }) => {
-    if (!achats || achats.length === 0) return <p className="text-center text-slate-400 py-8">{t('products:detail.purchases.empty')}</p>;
+    if (!achats || achats.length === 0) return <EmptyState compact title={t('products:detail.purchases.empty')} />;
 
     return (
         <div>
@@ -241,7 +244,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
         }
     }, [editValues, queryClient, produitId, t]);
 
-    if (!localLots || localLots.length === 0) return <p className="text-center text-slate-400 py-8">{t('products:detail.lots.empty')}</p>;
+    if (!localLots || localLots.length === 0) return <EmptyState compact title={t('products:detail.lots.empty')} />;
 
     return (
         <div className="flex flex-col h-full">
@@ -356,7 +359,7 @@ const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: MonthlyStat[]; t: 
         });
     }, [monthlyStats]);
 
-    if (!monthlyStats || monthlyStats.length === 0) return <p className="text-center text-slate-400 py-4">{t('products:detail.stats.empty')}</p>;
+    if (!monthlyStats || monthlyStats.length === 0) return <EmptyState compact title={t('products:detail.stats.empty')} />;
 
     return (
         <div className="max-h-80 overflow-y-auto custom-scrollbar">
@@ -425,12 +428,12 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
     }, [stockHistory, settings, produitName, t]);
 
     if (loadingHistory) return (
-        <div className="flex justify-center py-12">
-            <Loader2 className="size-8 animate-spin text-indigo-600" />
+        <div className="py-4">
+            <SkeletonTable rows={5} columns={7} />
         </div>
     );
 
-    if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-slate-400 py-8">{t('products:detail.movements.empty')}</p>;
+    if (!stockHistory || stockHistory.length === 0) return <EmptyState compact title={t('products:detail.movements.empty')} />;
 
     return (
         <div className="flex flex-col h-full">

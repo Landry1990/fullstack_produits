@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, Package, Clock, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { useExpirationAlerts } from '../../hooks/useExpirationAlerts';
 import { formatCurrency } from '../../utils/formatters';
+import { Skeleton } from '../ui/Skeleton';
 
 interface ExpirationAlertsWidgetProps {
   className?: string;
@@ -62,8 +63,8 @@ export default function ExpirationAlertsWidget({ className = '' }: ExpirationAle
           <span className="text-sm font-semibold text-base-content/70">{t('expiration.widget_title', { defaultValue: 'Alertes Péremption' })}</span>
         </div>
         <div className="space-y-2">
-          <div className="h-12 bg-base-200 animate-pulse rounded-lg" />
-          <div className="h-12 bg-base-200 animate-pulse rounded-lg" />
+          <Skeleton className="h-12 rounded-lg" />
+          <Skeleton className="h-12 rounded-lg" />
         </div>
       </div>
     );

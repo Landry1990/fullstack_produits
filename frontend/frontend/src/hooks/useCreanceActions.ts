@@ -8,6 +8,7 @@ import { usePharmacySettings } from './usePharmacySettings';
 import { generateRelevePdfDraft } from '../utils/print/relevePdfDraft';
 import { generateTicketReglementPdfDraft } from '../utils/print/ticketReglementPdfDraft';
 import { logger } from '../utils/logger'
+import { useConfirm } from './useConfirm';
 
 interface ReleveData {
     client: { id?: number; name: string };
@@ -43,6 +44,7 @@ export const useCreanceActions = ({
     updateLocalSynthese: _updateLocalSynthese
 }: UseCreanceActionsProps) => {
     const { t } = useTranslation(['creances', 'common']);
+    const confirm = useConfirm();
     const { sudoState, requireSudo, closeSudo } = useSudo();
     const { settings: pharmacySettings } = usePharmacySettings();
 
@@ -169,7 +171,7 @@ export const useCreanceActions = ({
 
             gooeyToast.success(t('creances:toasts.payment_success'));
 
-            if (window.confirm(t('creances:toasts.confirm_print_receipt'))) {
+            if (await confirm({ title: t('common:confirmation'), message: t('creances:toasts.confirm_print_receipt'), confirmText: t('common:confirm'), variant: 'warning' })) {
                 await handlePrintDirectReceipt(selectedCreance.id, paiementId);
             }
         } catch (err: unknown) {
@@ -179,7 +181,7 @@ export const useCreanceActions = ({
             throw err;
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedCreance, montantPaiement, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt, updateLocalCreance]);
+    }, [selectedCreance, montantPaiement, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt, updateLocalCreance, confirm]);
 
     const handleAjouterPaiement = () => {
         requireSudo(performAjouterPaiement, { permission: 'can_cash_out' });
@@ -253,7 +255,7 @@ export const useCreanceActions = ({
                 }
             }
 
-            if (releveId && window.confirm(t('creances:toasts.confirm_print_bulk_receipt'))) {
+            if (releveId && (await confirm({ title: t('common:confirmation'), message: t('creances:toasts.confirm_print_bulk_receipt'), confirmText: t('common:confirm'), variant: 'warning' }))) {
                 await handlePrintBulkReceipt(releveId);
             }
         } catch (err: unknown) {
@@ -263,7 +265,7 @@ export const useCreanceActions = ({
             throw err;
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedIds, modePaiement, referencePaiement, montantTotalBulk, setSelectedIds, refresh, handlePrintBulkReceipt, filteredCreances, pharmacySettings]);
+    }, [selectedIds, modePaiement, referencePaiement, montantTotalBulk, setSelectedIds, refresh, handlePrintBulkReceipt, filteredCreances, pharmacySettings, confirm]);
 
     const confirmBulkPayment = () => {
         requireSudo(performBulkPayment, { permission: 'can_cash_out' });

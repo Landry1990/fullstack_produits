@@ -528,7 +528,7 @@ export default function RapportMensuel() {
                 {t('free_units.title')}
               </h2>
 
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
                 <div className="text-center p-2 bg-emerald-50 rounded-xl border border-emerald-100">
                   <div className="text-xs text-emerald-600">{t('free_units.value')}</div>
                   <div className="text-sm font-bold text-emerald-600">{formatCurrency(Math.round(rapport.unites_gratuites.valeur_totale))}</div>

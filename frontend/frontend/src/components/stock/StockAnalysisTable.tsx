@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '../shadcn/table';
+import { EmptyState } from '../ui/EmptyState';
 
 interface StockAnalysisTableProps {
     items: StockAnalysisItem[];
@@ -148,15 +149,12 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
         };
 
         return (
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <div className="p-4 bg-slate-100 rounded-2xl mb-4">
-                    {emptyStateIcons[activeTab]}
-                </div>
-                <h3 className="text-base font-semibold text-slate-700">{labels[activeTab]}</h3>
-                <p className="text-sm text-slate-500 mt-1 max-w-sm">
-                    {t('stock:analyse.empty.all_good')}
-                </p>
-            </div>
+            <EmptyState
+                icon={emptyStateIcons[activeTab]}
+                title={labels[activeTab]}
+                description={t('stock:analyse.empty.all_good')}
+                className="py-16 px-6"
+            />
         );
     }
 

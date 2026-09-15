@@ -11,6 +11,8 @@ import { Textarea } from '../shadcn/textarea';
 import api from '../../services/api';
 import { useProductSearch } from '../../hooks/useProductSearch';
 import { cn } from '../../lib/utils';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
 import { gooeyToast } from 'goey-toast';
 
 interface FormLine {
@@ -350,9 +352,11 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                 </div>
 
                 {lines.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500 text-sm border border-dashed border-slate-200 rounded-xl">
-                        {t('form.no_lines')}
-                    </div>
+                    <EmptyState
+                        compact
+                        title={t('form.no_lines')}
+                        className="border border-dashed border-slate-200 rounded-xl py-8"
+                    />
                 ) : (
                     <div className="space-y-3">
                         {lines.map((line, index) => (
@@ -390,9 +394,9 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                             {productSearch && !line.produit && (
                                                 <ul className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg max-h-40 overflow-auto mt-1">
                                                     {productsLoading ? (
-                                                        <li className="px-3 py-2 text-sm text-slate-500 flex items-center gap-2">
-                                                            <Loader2 className="size-3.5 animate-spin" />
-                                                            {t('common:loading')}
+                                                        <li className="px-3 py-2 space-y-2">
+                                                            <Skeleton className="h-4 w-3/4" />
+                                                            <Skeleton className="h-4 w-1/2" />
                                                         </li>
                                                     ) : produits.length === 0 ? (
                                                         <li className="px-3 py-2 text-sm text-slate-500">

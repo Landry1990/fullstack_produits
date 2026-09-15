@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Loader2 } from 'lucide-react';
+import { Package } from 'lucide-react';
 import type { StockLot } from '../../../types';
 import { formatCurrency } from '../../../utils/formatters';
 import {
@@ -10,6 +10,8 @@ import { Button } from '../../shadcn/button';
 import {
     Table, TableHeader, TableBody, TableRow, TableHead, TableCell
 } from '../../shadcn/table';
+import { EmptyState } from '../../ui/EmptyState';
+import SkeletonTable from '../../ui/SkeletonTable';
 
 interface LotModalProps {
     isOpen: boolean;
@@ -55,13 +57,12 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
 
                 <div className="p-5">
                     {loadingLots ? (
-                        <div className="flex justify-center py-10">
-                            <Loader2 className="size-6 animate-spin text-indigo-600" />
-                        </div>
+                        <SkeletonTable rows={3} columns={5} />
                     ) : availableLots.length === 0 ? (
-                        <div className="text-center py-10 text-slate-400 text-sm">
-                            Aucun lot disponible en stock pour ce produit.
-                        </div>
+                        <EmptyState
+                            compact
+                            title="Aucun lot disponible en stock pour ce produit."
+                        />
                     ) : (
                         <div className="overflow-x-auto rounded-xl border border-slate-100">
                             <Table>
