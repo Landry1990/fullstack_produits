@@ -73,6 +73,7 @@ const Promis: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => setHeaderCollapsed(!headerCollapsed)}
+                        aria-expanded={!headerCollapsed}
                         className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 h-8 px-2 self-start sm:self-auto"
                         title={headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
                     >

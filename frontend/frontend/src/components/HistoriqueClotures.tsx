@@ -424,10 +424,11 @@ export default function HistoriqueClotures() {
 
           <div className="flex flex-wrap lg:flex-nowrap gap-3 items-end w-full lg:w-auto">
             <div className="flex-1 lg:w-48">
-              <label className="block py-1">
+              <label htmlFor="cloture-date-debut" className="block py-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-600">{t('filters.date_start')}</span>
               </label>
               <DatePicker
+                id="cloture-date-debut"
                 selected={dateDebut}
                 onChange={(date: Date | null) => {
                   const now = new Date()
@@ -443,10 +444,11 @@ export default function HistoriqueClotures() {
             </div>
 
             <div className="flex-1 lg:w-48">
-              <label className="block py-1">
+              <label htmlFor="cloture-date-fin" className="block py-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-600">{t('filters.date_end')}</span>
               </label>
               <DatePicker
+                id="cloture-date-fin"
                 selected={dateFin}
                 onChange={(date: Date | null) => {
                   const now = new Date()
@@ -463,10 +465,11 @@ export default function HistoriqueClotures() {
             </div>
 
             <div className="flex-1 lg:w-48">
-                <label className="block py-1">
+                <label htmlFor="cloture-cashier-select" className="block py-1">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-600">{t('filters.cashier')}</span>
                 </label>
                 <select
+                    id="cloture-cashier-select"
                     value={selectedUser}
                     onChange={(e) => {
                         setSelectedUser(e.target.value)
@@ -485,10 +488,11 @@ export default function HistoriqueClotures() {
 
             {isMultiCaisse && (
                 <div className="flex-1 lg:w-48">
-                    <label className="block py-1">
+                    <label htmlFor="cloture-poste-select" className="block py-1">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-600">{t('filters.post')}</span>
                     </label>
                     <select
+                        id="cloture-poste-select"
                         value={selectedPosteCaisse}
                         onChange={(e) => {
                             setSelectedPosteCaisse(e.target.value)
@@ -662,6 +666,7 @@ export default function HistoriqueClotures() {
                               onClick={() => setSelectedSession(session)}
                               className="text-emerald-600 h-8 w-8 p-0"
                               title={t('sessions.view_detail')}
+                              aria-label={t('sessions.view_detail')}
                             >
                               <Eye className="size-4" />
                             </Button>
@@ -702,6 +707,7 @@ export default function HistoriqueClotures() {
             </h2>
             <div className="flex flex-wrap gap-2 items-center justify-end w-full sm:w-auto">
               <select
+                aria-label={t('performance.month_label', { defaultValue: 'Mois' })}
                 className="h-8 px-2 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300 font-bold"
                 value={metricMonth}
                 onChange={(e) => {
@@ -727,6 +733,7 @@ export default function HistoriqueClotures() {
                 <option value="12">{t('performance.months.12')}</option>
               </select>
               <select
+                aria-label={t('performance.year_label', { defaultValue: 'Année' })}
                 className="h-8 px-2 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-emerald-300 font-bold"
                 value={metricYear}
                 onChange={(e) => {
@@ -908,6 +915,7 @@ export default function HistoriqueClotures() {
                               onClick={() => setSelectedCloture(cloture)}
                               className="text-emerald-600 h-8 w-8 p-0"
                               title={t('table.view_details')}
+                              aria-label={t('table.view_details')}
                             >
                               <Eye className="size-4" />
                             </Button>
@@ -917,6 +925,7 @@ export default function HistoriqueClotures() {
                               onClick={() => handlePrint(cloture)}
                               className="text-slate-500 h-8 w-8 p-0"
                               title={t('table.print')}
+                              aria-label={t('table.print')}
                             >
                               <Printer className="size-4" />
                             </Button>
@@ -1060,7 +1069,7 @@ export default function HistoriqueClotures() {
 
       {/* Modal détails */}
       {selectedCloture && (
-        <dialog open aria-labelledby="cloture-detail-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
+        <dialog open aria-labelledby="cloture-detail-title" onKeyDown={(e) => { if (e.key === 'Escape') setSelectedCloture(null) }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
           <div className="w-full max-w-xl p-0 overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
             <div className="bg-emerald-600 p-6 text-white shrink-0">
               <h3 id="cloture-detail-title" className="font-bold text-xl flex items-center gap-3">
@@ -1160,6 +1169,7 @@ export default function HistoriqueClotures() {
                     type="button"
                     onClick={() => setShowBilletage(s => !s)}
                     className="w-full px-4 py-2 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between hover:bg-slate-100 transition-colors"
+                    aria-expanded={showBilletage}
                   >
                     <span className="flex items-center gap-2">
                       <Banknote className="size-4" />
@@ -1251,7 +1261,7 @@ export default function HistoriqueClotures() {
 
       {/* Modal Détail Session de Caisse */}
       {selectedSession && (
-        <dialog open aria-labelledby="session-detail-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
+        <dialog open aria-labelledby="session-detail-title" onKeyDown={(e) => { if (e.key === 'Escape') setSelectedSession(null) }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm w-full h-full p-0 m-0 border-none">
           <div className="w-full max-w-lg p-0 overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
             <div className={cn("p-6 shrink-0", selectedSession.est_actif ? 'bg-emerald-600 text-white' : 'bg-emerald-600 text-white')}>
               <h3 id="session-detail-title" className="font-bold text-xl flex items-center gap-3">

@@ -191,6 +191,9 @@ export function buildTicketPrintHtml(ticketWidth: number, content: string, style
   const safeStyleTags = DOMPurify.sanitize(styleTags, {
     ALLOWED_TAGS: ['style', 'link'],
     ALLOWED_ATTR: ['rel', 'href', 'type', 'media'],
+    // Sans FORCE_BODY, DOMPurify parse en mode document : les <link>/<style> sont
+    // déplacés dans <head> et le fragment renvoyé ressort vide — tout le CSS est perdu.
+    FORCE_BODY: true,
     RETURN_TRUSTED_TYPE: false,
   })
 

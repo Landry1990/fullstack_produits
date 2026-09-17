@@ -125,6 +125,7 @@ const StockAnalysis = () => {
                                 onClick={handleExportExcel}
                                 disabled={!data.items.length}
                                 title={t('stock:analyse.export_excel', 'Exporter Excel')}
+                                aria-label={t('stock:analyse.export_excel', 'Exporter Excel')}
                             >
                                 <FileSpreadsheet className="size-4 mr-1.5 text-emerald-600" />
                                 <span className="hidden sm:inline">{t('stock:analyse.export_excel', 'Excel')}</span>

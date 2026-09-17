@@ -69,6 +69,13 @@ export default React.memo(function TableCartRow({
         ${flashId === ligne.lineId ? 'animate-pulse bg-emerald-100' : ''}`}
       ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
       onClick={() => onSelectLine?.(index)}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault()
+          onSelectLine?.(index)
+        }
+      }}
     >
       <TableCell className="pl-2 md:pl-4 py-2">
         <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
@@ -90,6 +97,7 @@ export default React.memo(function TableCartRow({
                 <span className="text-[10px] text-emerald-600">{t('facturation:cart.product_status.treatment')}</span>
                 <input
                    type="number"
+                   aria-label={t('facturation:cart.product_status.treatment')}
                    className="w-8 bg-transparent text-[10px] font-semibold text-emerald-700 outline-none"
                    value={ligne.treatment_duration_days || ''}
                    onChange={(e) => updateTreatmentDuration?.(ligne.lineId, normalizeNumberInput(e.target.value) || 0)}
@@ -108,6 +116,7 @@ export default React.memo(function TableCartRow({
             else quantityInputsRef.current.delete(ligne.produit.id)
           }}
           type="text"
+          aria-label={t('facturation:cart.headers.qty')}
           value={localQty}
           onChange={(e) => handleQtyChange(e.target.value)}
           onBlur={handleQtySubmit}
@@ -129,6 +138,7 @@ export default React.memo(function TableCartRow({
       <TableCell className="text-right py-1">
         <Input
           type="text"
+          aria-label={t('facturation:cart.headers.price')}
           value={localPrice}
           onChange={(e) => setLocalPrice(e.target.value.replace(/[^0-9.]/g, ''))}
           onKeyDown={(e) => {
@@ -146,6 +156,7 @@ export default React.memo(function TableCartRow({
       <TableCell className="text-right py-1 hidden lg:table-cell">
         <Input
           type="text"
+          aria-label={t('facturation:cart.headers.discount')}
           value={localRemise}
           onChange={(e) => setLocalRemise(e.target.value.replace(/[^0-9.]/g, ''))}
           onKeyDown={(e) => {

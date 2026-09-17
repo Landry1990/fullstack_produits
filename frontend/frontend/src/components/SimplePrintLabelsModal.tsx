@@ -984,6 +984,7 @@ ${labelsHTML}
                     checked={field.enabled}
                     onChange={() => toggleField(field.key)}
                     onClick={(e) => e.stopPropagation()}
+                    aria-label={field.label}
                   />
                   <span className="text-base select-none shrink-0">{field.icon}</span>
                   <span className={`text-sm font-medium select-none flex-1 ${field.enabled ? 'text-base-content' : 'text-base-content/50'}`}>

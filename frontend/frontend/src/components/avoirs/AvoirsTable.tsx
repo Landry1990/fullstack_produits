@@ -239,6 +239,13 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                 key={avoir.id}
                                 className={`group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80 ${selectedIds.has(avoir.id) ? 'bg-emerald-50/40' : ''}`}
                                 onClick={() => selectedIds.size === 0 && onView(avoir)}
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ') && selectedIds.size === 0) {
+                                        e.preventDefault();
+                                        onView(avoir);
+                                    }
+                                }}
                                 data-state={selectedIds.has(avoir.id) ? 'selected' : undefined}
                             >
                                 <TableCell className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
@@ -302,6 +309,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                                 className="size-8 text-slate-400 hover:text-sky-600 hover:bg-sky-50"
                                                 onClick={() => onView(avoir)}
                                                 title={t('common:view')}
+                                                aria-label={t('common:view')}
                                             >
                                                 <Eye className="size-4" />
                                             </Button>
@@ -314,6 +322,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                                         className="size-8 text-slate-400 hover:text-amber-600 hover:bg-amber-50"
                                                         onClick={() => onEdit(avoir)}
                                                         title={t('common:edit')}
+                                                        aria-label={t('common:edit')}
                                                     >
                                                         <Edit className="size-4" />
                                                     </Button>
@@ -324,6 +333,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                                         className="size-8 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
                                                         onClick={() => onValidate(avoir)}
                                                         title={t('common:validate')}
+                                                        aria-label={t('common:validate')}
                                                     >
                                                         <CheckCircle2 className="size-4" />
                                                     </Button>
@@ -334,6 +344,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                                         className="size-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
                                                         onClick={() => onDelete(avoir)}
                                                         title={t('common:delete')}
+                                                        aria-label={t('common:delete')}
                                                     >
                                                         <Trash2 className="size-4" />
                                                     </Button>

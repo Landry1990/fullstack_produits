@@ -199,6 +199,7 @@ export default function ImportDCIPage() {
             <input
               type="file"
               accept=".txt"
+              aria-label={t('products:dci_admin.import_compo', 'Importer COMPO.txt')}
               onChange={e => { setFile(e.target.files?.[0] || null); setUploadResult(null); }}
               className="file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-base-300 file:text-base-content hover:file:bg-base-200 text-sm w-full rounded-xl border border-base-300 bg-base-200/50 px-3 py-2"
             />
@@ -255,6 +256,7 @@ export default function ImportDCIPage() {
             <input
               type="text"
               placeholder={t('products:dci_admin.search_product', 'Rechercher un produit...')}
+              aria-label={t('products:dci_admin.search_product', 'Rechercher un produit...')}
               className="w-full md:w-64 rounded-xl bg-base-200/50 border-none h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               value={unlinkedSearch}
               onChange={e => { setUnlinkedSearch(e.target.value); setUnlinkedPage(1); }}

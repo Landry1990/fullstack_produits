@@ -48,6 +48,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         onClick={handleBackToList}
                         className="text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                         title={t('stock:avoirs.details.back')}
+                        aria-label={t('stock:avoirs.details.back')}
                     >
                         <ArrowLeft className="size-5" />
                     </Button>
@@ -281,6 +282,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                     onClick={() => handleToggleCloture(ligne.id, ligne.est_cloture)}
                                                     className={`size-8 rounded-full transition-colors ${ligne.est_cloture ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'}`}
                                                     title={ligne.est_cloture ? t('stock:avoirs.details.reopen_line') : t('stock:avoirs.details.close_line')}
+                                                    aria-label={ligne.est_cloture ? t('stock:avoirs.details.reopen_line') : t('stock:avoirs.details.close_line')}
                                                 >
                                                     {ligne.est_cloture ? <Lock className="size-4" /> : <Unlock className="size-4" />}
                                                 </Button>
@@ -322,6 +324,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                         onClick={() => handleDeleteLigne(ligne.id)}
                                                         className="size-8 rounded-full text-red-400 hover:text-red-600 hover:bg-red-50"
                                                         title={t('stock:avoirs.details.delete_line', 'Supprimer cette ligne')}
+                                                        aria-label={t('stock:avoirs.details.delete_line', 'Supprimer cette ligne')}
                                                     >
                                                         <Trash2 className="size-4" />
                                                     </Button>

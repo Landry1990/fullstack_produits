@@ -179,7 +179,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   return (
     <>
       <div className="overflow-auto flex-1 min-h-0">
-        <Table className="table-fixed">
+        <Table className="table-fixed min-w-[1180px]">
           <TableHeader className="bg-slate-100 sticky top-0 z-10 border-b border-slate-200">
             <TableRow className="hover:bg-slate-100">
               {onToggleSelect && (
@@ -192,14 +192,14 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   />
                 </TableHead>
               )}
-              <TableHead scope="col" className="w-20 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.ticket')}</TableHead>
-              <TableHead scope="col" className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.invoice')}</TableHead>
-              <TableHead scope="col" className="w-[20%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.client')}</TableHead>
-              <TableHead scope="col" className="hidden lg:table-cell w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.date')}</TableHead>
-              <TableHead scope="col" className="hidden xl:table-cell w-14 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.products')}</TableHead>
-              <TableHead scope="col" className="hidden md:table-cell w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.seller', 'Vendeur')}</TableHead>
-              <TableHead scope="col" className="w-24 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.amount')}</TableHead>
-              <TableHead scope="col" className="w-36 px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.actions')}</TableHead>
+              <TableHead scope="col" className="w-[72px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.ticket')}</TableHead>
+              <TableHead scope="col" className="w-[128px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.invoice')}</TableHead>
+              <TableHead scope="col" className="w-[200px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.client')}</TableHead>
+              <TableHead scope="col" className="hidden lg:table-cell w-[100px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.date')}</TableHead>
+              <TableHead scope="col" className="hidden xl:table-cell w-[220px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.products')}</TableHead>
+              <TableHead scope="col" className="hidden md:table-cell w-[120px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('table.seller', 'Vendeur')}</TableHead>
+              <TableHead scope="col" className="w-[120px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">{t('table.amount')}</TableHead>
+              <TableHead scope="col" className="w-[190px] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 text-center">{t('table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -261,7 +261,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     )}
                   </TableCell>
                   <TableCell className="px-3 py-2">
-                    <div className="font-bold">{facture.client_name || t('table.passerby_client')}</div>
+                    <div className="truncate font-bold" title={facture.client_name || t('table.passerby_client')}>{facture.client_name || t('table.passerby_client')}</div>
                   </TableCell>
                   <TableCell className="px-3 py-2 text-xs hidden lg:table-cell text-slate-600">
                     <div className="font-medium">{new Date(facture.date).toLocaleDateString(dateLocale, {
@@ -274,10 +274,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       minute: '2-digit'
                     })}</div>
                   </TableCell>
-                  <TableCell className="px-3 py-2 text-xs max-w-xs hidden xl:table-cell">
+                  <TableCell className="hidden px-3 py-2 text-xs xl:table-cell">
                     <button
                       type="button"
-                      className="text-sky-600 hover:text-sky-700 hover:underline text-left truncate block max-w-[150px] font-medium"
+                      className="block w-full truncate text-left font-medium text-sky-600 hover:text-sky-700 hover:underline"
                       onClick={(e) => {
                         e.stopPropagation()
                         setPreviewFacture(facture)
@@ -289,10 +289,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       {getProductsSummary(facture)}
                     </button>
                   </TableCell>
-                  <TableCell className="px-3 py-2 text-xs hidden md:table-cell">
-                    <div className="font-medium">{facture.created_by_name || '-'}</div>
+                  <TableCell className="hidden px-3 py-2 text-xs md:table-cell">
+                    <div className="truncate font-medium" title={facture.created_by_name || '-'}>{facture.created_by_name || '-'}</div>
                   </TableCell>
-                  <TableCell className="px-3 py-2 text-right font-mono font-bold text-lg text-slate-800">
+                  <TableCell className="whitespace-nowrap px-3 py-2 text-right font-mono text-lg font-bold text-slate-800">
                     {montantAPayer} {t('common:currency_symbol', 'F')}
                     {couponPourCetteFacture && (
                       <div className="text-xs font-normal text-slate-500 line-through flex items-center justify-end gap-1">

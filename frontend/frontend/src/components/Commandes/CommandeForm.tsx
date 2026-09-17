@@ -279,6 +279,7 @@ export default function CommandeForm({
                     <Input
                       type="text"
                       placeholder={t('orders:form.invoice_placeholder')}
+                      aria-label={t('orders:form.invoice_label')}
                       className="w-full h-9 bg-slate-100 border-slate-200 text-sm"
                       value={numeroFacture}
                       onChange={(e) => setNumeroFacture(e.target.value.toUpperCase())}
@@ -309,6 +310,7 @@ export default function CommandeForm({
                           step="1"
                           required={!payeALaCloture}
                           placeholder={t('orders:form.delai_negocie_placeholder')}
+                          aria-label={t('orders:form.delai_negocie_label')}
                           className="w-24 h-7 text-sm px-2"
                           value={delaiPaiementNegocieJours}
                           onChange={(e) => setDelaiPaiementNegocieJours(e.target.value)}
@@ -335,11 +337,11 @@ export default function CommandeForm({
                     <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-semibold text-blue-600 uppercase">{t('orders:form.rate_short')}</span>
-                        <Input type="number" step="0.001" className="w-20 h-7 text-sm px-2" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} />
+                        <Input type="number" step="0.001" className="w-20 h-7 text-sm px-2" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} aria-label={t('orders:form.rate_short')} />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-[10px] font-semibold text-blue-600 uppercase">{t('orders:form.coeff_short')}</span>
-                        <Input type="number" step="0.01" className="w-14 h-7 text-sm px-2" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} />
+                        <Input type="number" step="0.01" className="w-14 h-7 text-sm px-2" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} aria-label={t('orders:form.coefficient')} />
                       </div>
                     </div>
                   )}
@@ -391,6 +393,7 @@ export default function CommandeForm({
                     <input
                         type="file"
                         accept=".csv"
+                        aria-label={t('orders:import_btn')}
                         className="hidden"
                         ref={fileInputRef}
                         onChange={handleCsvImport}

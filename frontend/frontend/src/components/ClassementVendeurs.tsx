@@ -137,11 +137,13 @@ export default function ClassementVendeurs() {
         <div className="flex gap-2">
           <input
             type="month"
+            aria-label={t('sellers:ranking.period.month')}
             className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
             value={mois}
             onChange={(e) => setMois(e.target.value)}
           />
           <select
+            aria-label={t('sellers:ranking.subtitle')}
             className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
             value={periode}
             onChange={(e) => setPeriode(e.target.value as 'mois' | 'trimestre' | 'annee')}
@@ -165,6 +167,15 @@ export default function ClassementVendeurs() {
                 'bg-gradient-to-br from-orange-400 to-orange-600 text-white'
               }`}
               onClick={() => setSelectedVendeur(v.vendeur_id)}
+              role="button"
+              tabIndex={0}
+              aria-pressed={selectedVendeur === v.vendeur_id}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedVendeur(v.vendeur_id);
+                }
+              }}
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -222,6 +233,15 @@ export default function ClassementVendeurs() {
                         selectedVendeur === v.vendeur_id ? 'bg-blue-50' : 'hover:bg-slate-50'
                       }`}
                       onClick={() => setSelectedVendeur(v.vendeur_id)}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={selectedVendeur === v.vendeur_id}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedVendeur(v.vendeur_id);
+                        }
+                      }}
                     >
                       <td className="py-2.5 pl-3 font-bold text-slate-700">{getMedal(v.rang)}</td>
                       <td className="py-2.5 text-slate-700">{v.vendeur}</td>

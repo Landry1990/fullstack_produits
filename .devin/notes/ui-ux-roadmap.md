@@ -36,13 +36,13 @@ Fichier de suivi des améliorations UI/UX identifiées.
 | E | Mode sombre (dark mode) | `[x]` | `theme-midnight` déjà en place (toggle UserHeader/FacturationHeader, localStorage, `dark:` variant). Couverture complétée dans `index.css` : pastels sky/cyan/teal/violet/fuchsia/pink/lime, tons 200/300, bordures + textes colorés, dégradés `from/to-*-50`, hovers (2026-09-12) |
 | F | Responsive mobile/tablette des écrans critiques | `[x]` | Passe quick-wins sur toute l'app (~55 fichiers, CSS only) : grids `grid-cols-N` → mobile-first, `overflow-x-auto` sur tables natives, `flex-wrap` sur toolbars, `w-[95vw]`/`max-w-full` sur largeurs fixes. Sidebar déjà off-canvas mobile (2026-09-12) |
 | G | Feedback de sauvegarde / erreur uniformisé (toast) | `[x]` | `gooeyToast` est le standard unique ; tous les `alert()` restants ont été convertis |
-| H | Accessibilité générale (a11y) | `[~]` | Passe partielle 2026-09-13 : `role="dialog"`/`aria-modal` sur ~20 modales custom + `PremiumModal` partagé, ESC sur modales manquantes, `role="button"`/`checkbox` + clavier sur divs cliquables, `aria-label` boutons icône, `:focus-visible` global. Reste : focus trap, contrastes, `htmlFor` résiduels, landmark `<main>` — voir section ci-dessous |
+| H | Accessibilité générale (a11y) | `[x]` | Passe complète en 3 zones (2026-09-16) : `role="dialog"`/`aria-modal` sur toutes les modales custom, ESC partout, `role="button"`/`checkbox` + clavier sur divs cliquables, `aria-label` boutons icône + checkboxes (`ui/Checkbox` accepte désormais `aria-label`), `htmlFor`/`id` sur les formulaires, `ui/Input` auto-`useId`, `aria-pressed`/`aria-expanded`/`aria-current` sur toggles et navigations, `role="status"`/`aria-busy` sur chargements, `<main>` confirmé dans `Layout.tsx`. Reste éventuel : focus trap dans modales custom, audit contrastes |
 
 ---
 
-## 2026-09-12 — Item H : Accessibilité — plan de reprise
+## 2026-09-12 — Item H : Accessibilité — ~~plan de reprise~~ **TERMINÉ (2026-09-16)**
 
-Passe a11y interrompue (sous-agents tués par erreur de connexion). Pour reprendre :
+Passe a11y interrompue (sous-agents tués par erreur de connexion) puis **reprise et achevée le 2026-09-16** par 3 sous-agents sur les zones ci-dessous + contrôle (`tsc` 0 erreur, build OK, déployé). Voir CHANGELOG 2026-09-16 (entrées Zone 1/2/3).
 
 1. **Vérifier l'état** : `cd frontend/frontend && npx tsc --noEmit` — des éditions partielles peuvent exister.
 2. **Déjà fait** : `:focus-visible` global ajouté dans `src/index.css` (outline primary 2px).

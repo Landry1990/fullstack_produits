@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { gooeyToast } from 'goey-toast'
 import { cashSessionService, type PosteVente } from '../../services/cashSessionService'
 import { usePosteCaisseMode } from '../../context/PosteCaisseModeContext'
 import { useAuth } from '../../context/AuthContext'
-import { Store, Check, Loader2 } from 'lucide-react'
+import { Store, Check, Loader2, LogOut } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
   forceSelection = false
 }) => {
   const { t } = useTranslation('caisse')
+  const navigate = useNavigate()
   const { openPoste, setActivePosteVente, activePoste } = usePosteCaisseMode()
   const { user } = useAuth()
   const [allPostes, setAllPostes] = useState<PosteVente[]>([])
@@ -44,6 +46,17 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
   const [loadingPostes, setLoadingPostes] = useState(false)
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const handleOpenSessionRef = useRef<(posteId?: number) => Promise<void>>(async () => {})
+
+  // En mode sélection forcée, on ne peut pas fermer le modal sur la facturation :
+  // la seule alternative au choix d'un poste est de quitter la page.
+  const handleQuit = useCallback(() => {
+    onClose()
+    navigate('/app')
+  }, [onClose, navigate])
+  const handleQuitRef = useRef(handleQuit)
+  handleQuitRef.current = handleQuit
+
+  const isForced = forceSelection && allPostes.length > 0
 
   const selectablePostes = allPostes.filter((p) => !p.est_actif || p.vendeur === user?.id || p.vendeur_name === (user?.username || '') || user?.is_superuser)
 
@@ -100,6 +113,16 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
     if (!isOpen || loadingPostes) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        if (forceSelection && allPostes.length > 0) {
+          handleQuitRef.current()
+        } else {
+          onClose()
+        }
+        return
+      }
+
       if (selectablePostes.length === 0) return
 
       const currentIndex = selectablePostes.findIndex((p) => p.id === selectedPosteId)
@@ -116,10 +139,6 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
       } else if (e.key === 'Enter') {
         e.preventDefault()
         handleOpenSessionRef.current()
-      } else if (e.key === 'Escape') {
-        if (forceSelection && allPostes.length > 0) return
-        e.preventDefault()
-        onClose()
       }
     }
 
@@ -176,12 +195,12 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
   const canOpenSelected = selectedPoste && (!selectedPoste.est_actif || isSelectedMine)
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !(forceSelection && allPostes.length > 0)) onClose() }}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !isForced) onClose() }}>
       <DialogContent
         className="sm:max-w-2xl p-0 gap-0 overflow-hidden"
-        hideCloseButton={forceSelection && allPostes.length > 0}
-        onInteractOutside={(e) => { if (forceSelection && allPostes.length > 0) e.preventDefault() }}
-        onEscapeKeyDown={(e) => { if (forceSelection && allPostes.length > 0) e.preventDefault() }}
+        hideCloseButton={isForced}
+        onInteractOutside={(e) => { if (isForced) e.preventDefault() }}
+        onEscapeKeyDown={(e) => { if (isForced) e.preventDefault() }}
       >
         <DialogHeader className="p-6 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -281,7 +300,12 @@ export const OpenPointDeVenteModal: React.FC<OpenPointDeVenteModalProps> = ({
         </div>
 
         <DialogFooter className="p-6 pt-2 border-t border-slate-100 gap-3">
-          {(!forceSelection || allPostes.length === 0) && (
+          {isForced ? (
+            <Button type="button" variant="outline" onClick={handleQuit} className="rounded-xl">
+              <LogOut className="size-4 mr-2" />
+              {t('open_point_vente.quit', { defaultValue: 'Quitter la facturation' })}
+            </Button>
+          ) : (
             <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
               {t('open_point_vente.cancel', { defaultValue: 'Annuler' })}
             </Button>

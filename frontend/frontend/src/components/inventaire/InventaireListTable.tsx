@@ -79,6 +79,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                 className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                 checked={inventaires.length > 0 && selectedIds.size === inventaires.length}
                                 onChange={onSelectAll}
+                                aria-label={t('stock:cadencier.select_all')}
                             />
                         </th>
                         <th className="px-6 py-3">
@@ -108,6 +109,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                     checked={selectedIds.has(inv.id)}
                                     onChange={() => onSelect(inv.id)}
+                                    aria-label={`Sélectionner inventaire #${inv.id}`}
                                 />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -177,6 +179,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                             onClick={() => onShareWhatsApp(inv.id)}
                                             disabled={sharingId === inv.id}
                                             title={t('common:share_whatsapp')}
+                                            aria-label={t('common:share_whatsapp')}
                                         >
                                             {sharingId === inv.id
                                                 ? <div className="animate-spin rounded-full size-4 border-b-2 border-[#25D366]"></div>
@@ -190,6 +193,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                             onClick={() => handleDelete(inv)}
                                             disabled={deleting}
                                             title={t('common:delete')}
+                                            aria-label={t('common:delete')}
                                         >
                                             {deleting
                                                 ? <div className="animate-spin rounded-full size-4 border-b-2 border-slate-400"></div>

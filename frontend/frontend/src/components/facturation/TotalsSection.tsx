@@ -69,6 +69,7 @@ export default function TotalsSection({
                   <select
                     value={remiseMode}
                     onChange={(e) => setRemiseMode(e.target.value as 'montant' | 'taux')}
+                    aria-label={`${t('facturation:totals.discount')} (F/%)`}
                     className="bg-transparent text-[10px] text-slate-500 border-r border-slate-200 px-2 py-1 outline-none"
                   >
                     <option value="montant">F</option>
@@ -80,6 +81,7 @@ export default function TotalsSection({
                     onChange={(e) => setLocalRemise(e.target.value.replace(/[^0-9.]/g, ''))}
                     onBlur={handleRemiseCommit}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleRemiseCommit() } }}
+                    aria-label={t('facturation:totals.discount')}
                     className="w-14 bg-transparent text-xs text-right font-semibold text-slate-700 outline-none px-2 py-1"
                   />
                </div>
@@ -141,6 +143,7 @@ export default function TotalsSection({
                 <select
                     value={remiseMode}
                     onChange={(e) => setRemiseMode(e.target.value as 'montant' | 'taux')}
+                    aria-label={`${t('facturation:totals.discount')} (F/%)`}
                     className="bg-slate-100 border-r border-slate-200 text-[10px] sm:text-xs text-slate-600 focus:bg-slate-50 px-2 outline-none"
                 >
                     <option value="montant">F</option>
@@ -152,6 +155,7 @@ export default function TotalsSection({
                     onChange={(e) => setLocalRemise(e.target.value.replace(/[^0-9.]/g, ''))}
                     onBlur={handleRemiseCommit}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleRemiseCommit() } }}
+                    aria-label={t('facturation:totals.discount')}
                     className="w-16 sm:w-24 text-right focus:bg-white bg-transparent font-semibold text-sm sm:text-base outline-none px-2"
                     placeholder="0"
                 />

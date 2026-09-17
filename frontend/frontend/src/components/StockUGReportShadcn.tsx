@@ -341,6 +341,7 @@ export default function StockUGReportShadcn() {
                   className="bg-transparent border-none outline-none text-sm text-base-content/90 w-full shadow-none focus-visible:ring-0 h-6 px-0"
                   value={dateDebut}
                   onChange={e => setDateDebut(e.target.value)}
+                  aria-label={t('common:from')}
                 />
               </div>
               <span className="text-base-content/40 font-medium whitespace-nowrap">{t('stock:rapport_ug.filters.to')}</span>
@@ -351,6 +352,7 @@ export default function StockUGReportShadcn() {
                   className="bg-transparent border-none outline-none text-sm text-base-content/90 w-full shadow-none focus-visible:ring-0 h-6 px-0"
                   value={dateFin}
                   onChange={e => setDateFin(e.target.value)}
+                  aria-label={t('common:to')}
                 />
               </div>
 
@@ -361,6 +363,7 @@ export default function StockUGReportShadcn() {
                   className="rounded-full size-8 p-0"
                   onClick={handleClearDates}
                   title={t('stock:rapport_ug.filters.clear_dates')}
+                  aria-label={t('stock:rapport_ug.filters.clear_dates')}
                 >
                   <RefreshCw className="size-4" />
                 </Button>
@@ -429,6 +432,7 @@ export default function StockUGReportShadcn() {
                             className="size-8 p-0"
                             onClick={() => setSelectedSupplier(stat)}
                             title={t('common:details')}
+                            aria-label={t('common:details')}
                           >
                             <Eye className="size-4" />
                           </Button>

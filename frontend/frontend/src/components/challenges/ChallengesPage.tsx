@@ -183,7 +183,7 @@ const ChallengesPage: React.FC = () => {
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 w-full">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <label htmlFor="challenges-search" className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                             {t('challenges:filters.search')}
                         </label>
                         <div className="relative group">
@@ -191,6 +191,7 @@ const ChallengesPage: React.FC = () => {
                                 <Search className="size-4" />
                             </div>
                             <input
+                                id="challenges-search"
                                 type="text"
                                 value={searchInput}
                                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -202,17 +203,19 @@ const ChallengesPage: React.FC = () => {
                                     type="button"
                                     onClick={() => handleSearchChange('')}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    aria-label={t('common:clear')}
                                 >
-                                    <span className="text-lg leading-none">&times;</span>
+                                    <span className="text-lg leading-none" aria-hidden="true">&times;</span>
                                 </button>
                             )}
                         </div>
                     </div>
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <label htmlFor="challenges-statut" className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                             {t('challenges:filters.statut')}
                         </label>
                         <Select
+                            id="challenges-statut"
                             value={statutFilter}
                             onChange={(e) => handleStatutChange(e.target.value)}
                             className="w-full sm:w-48 text-sm h-10"
@@ -366,6 +369,7 @@ const ChallengesPage: React.FC = () => {
                                                     className="gap-1.5 h-8 px-2.5"
                                                     onClick={() => openClassement(challenge)}
                                                     title={t('challenges:view_classement')}
+                                                    aria-label={t('challenges:view_classement')}
                                                 >
                                                     <BarChart3 className="size-3.5" />
                                                     <span className="hidden xl:inline">{t('challenges:view_classement')}</span>
@@ -376,6 +380,7 @@ const ChallengesPage: React.FC = () => {
                                                     className="gap-1.5 h-8 px-2.5"
                                                     onClick={() => openEdit(challenge)}
                                                     title={t('challenges:edit')}
+                                                    aria-label={t('challenges:edit')}
                                                 >
                                                     <Pencil className="size-3.5" />
                                                     <span className="hidden xl:inline">{t('challenges:edit')}</span>
@@ -386,6 +391,7 @@ const ChallengesPage: React.FC = () => {
                                                     className="gap-1.5 h-8 px-2.5 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                                                     onClick={() => setDeleteTarget(challenge)}
                                                     title={t('challenges:delete')}
+                                                    aria-label={t('challenges:delete')}
                                                 >
                                                     <Trash2 className="size-3.5" />
                                                     <span className="hidden xl:inline">{t('challenges:delete')}</span>

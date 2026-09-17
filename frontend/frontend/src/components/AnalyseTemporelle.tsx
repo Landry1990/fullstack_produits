@@ -97,6 +97,7 @@ export default function AnalyseTemporelle() {
                   className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                   value={hoursDays}
                   onChange={(e) => setHoursDays(Number(e.target.value))}
+                  aria-label={t('common:period')}
                 >
                   <option value={7}>{t('common:last_7_days', '7 derniers jours')}</option>
                   <option value={30}>{t('common:last_30_days', '30 derniers jours')}</option>
@@ -180,6 +181,7 @@ export default function AnalyseTemporelle() {
                   className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                   value={daysWeeks}
                   onChange={(e) => setDaysWeeks(Number(e.target.value))}
+                  aria-label={t('common:period')}
                 >
                   <option value={4}>{t('common:last_4_weeks', '4 dernières semaines')}</option>
                   <option value={12}>{t('common:last_12_weeks', '12 dernières semaines')}</option>
@@ -263,6 +265,7 @@ export default function AnalyseTemporelle() {
                   className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                   value={seasonsMonths}
                   onChange={(e) => setSeasonsMonths(Number(e.target.value))}
+                  aria-label={t('common:period')}
                 >
                   <option value={12}>{t('common:last_12_months', '12 derniers mois')}</option>
                   <option value={24}>{t('common:last_24_months', '24 derniers mois')}</option>

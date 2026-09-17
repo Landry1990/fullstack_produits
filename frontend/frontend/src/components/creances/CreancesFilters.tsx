@@ -160,6 +160,8 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         <div ref={printMenuRef} className="relative">
                             <button
                                 onClick={() => setShowPrintMenu(!showPrintMenu)}
+                                aria-expanded={showPrintMenu}
+                                aria-haspopup="true"
                                 className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-slate-700 text-white gap-2 shadow-md shadow-slate-200 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px] hover:bg-slate-800"
                             >
                                 <Printer className="size-4" />

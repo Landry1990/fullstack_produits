@@ -169,8 +169,9 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         <button
                             onClick={() => presets.delete(preset.id)}
                             className="size-7 p-0 rounded-full opacity-0 group-hover:opacity-100 text-red-600 hover:bg-red-50 transition-all flex items-center justify-center"
+                            aria-label={`${t('common:delete', { defaultValue: 'Supprimer' })} ${preset.name}`}
                         >
-                            <Trash2 className="size-3" />
+                            <Trash2 className="size-3" aria-hidden="true" />
                         </button>
                     </div>
                 )] : [];
@@ -191,7 +192,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6 sm:items-end w-full">
             {filteredParams.map(param => (
                 <div key={param.key} className="w-full sm:w-auto sm:min-w-[200px] min-w-0">
-                    <label className="block py-1">
+                    <label htmlFor={`rp-${param.key}`} className="block py-1">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                             {t(`params.${param.key}`, { defaultValue: param.label })}
                             {param.required && <span className="text-red-600 ml-1">*</span>}
@@ -200,6 +201,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'month' && (
                             <DatePicker
+                                id={`rp-${param.key}`}
                                 selected={safeDate(params[param.key] ? (params[param.key] as string) + '-01' : null)}
                                 onChange={(date: Date | null) => {
                                     if (date) {
@@ -216,6 +218,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'date' && (
                             <DatePicker
+                                id={`rp-${param.key}`}
                                 selected={safeDate(params[param.key])}
                                 onChange={(date: Date | null) => {
                                     if (date) {
@@ -231,6 +234,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'datetime' && (
                             <DatePicker
+                                id={`rp-${param.key}`}
                                 selected={safeDate(params[param.key])}
                                 onChange={(date: Date | null) => {
                                     if (date) {
@@ -254,6 +258,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'number' && (
                             <Input
+                                id={`rp-${param.key}`}
                                 type="number"
                                 value={params[param.key] !== undefined && params[param.key] !== null ? (params[param.key] as string | number) : ''}
                                 onChange={e => setParam(param.key, e.target.value === '' ? '' : Number(e.target.value))}
@@ -263,6 +268,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'text' && (
                             <Input
+                                id={`rp-${param.key}`}
                                 type="text"
                                 value={(params[param.key] as string) || ''}
                                 onChange={e => setParam(param.key, e.target.value)}
@@ -276,6 +282,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     <Search className="size-4" />
                                 </div>
                                 <Input
+                                    id={`rp-${param.key}`}
                                     type="text"
                                     value={clientSearch.query || clientSearch.selectedName}
                                     onChange={e => {
@@ -322,6 +329,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     <Search className="size-4" />
                                 </div>
                                 <Input
+                                    id={`rp-${param.key}`}
                                     type="text"
                                     value={supplierSearch.query || supplierSearch.selectedName}
                                     onChange={e => {
@@ -367,6 +375,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     <Users className="size-4" />
                                 </div>
                                 <Input
+                                    id={`rp-${param.key}`}
                                     type="text"
                                     value={userSearch.query || userSearch.selectedName}
                                     onChange={e => {
@@ -431,6 +440,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                     <Search className="size-4" />
                                 </div>
                                 <Input
+                                    id={`rp-${param.key}`}
                                     type="text"
                                     value={familleSearch.query || familleSearch.selectedName}
                                     onChange={e => {
@@ -472,6 +482,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                         {param.type === 'select' && param.options && (
                             <Select
+                                id={`rp-${param.key}`}
                                 value={(params[param.key] as string) || ''}
                                 onChange={e => setParam(param.key, e.target.value)}
                                 className="w-full rounded-lg border border-slate-200 bg-slate-50/50 font-bold h-10 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
@@ -487,8 +498,10 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                         {param.type === 'checkbox' && (
                             <div className="flex items-center gap-3 bg-slate-50/50 px-4 h-12 rounded-lg border border-slate-200">
                                 <Checkbox
+                                    id={`rp-${param.key}`}
                                     checked={!!params[param.key]}
                                     onCheckedChange={(checked) => setParam(param.key, !!checked)}
+                                    aria-label={t(`params.${param.key}`, { defaultValue: param.label })}
                                 />
                                 <span className="text-xs font-bold uppercase tracking-tight text-slate-500">
                                     {t(`params.${param.key}_active`, { defaultValue: t('common:active', { defaultValue: 'Activé' }) })}
@@ -500,8 +513,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                                 {/* Condition Builder */}
                                 <div ref={conditionsRef} className="relative">
-                                    <button type="button" onClick={() => setConditionsOpen(v => !v)} className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
-                                        <Filter className="size-4 text-indigo-600" />
+                                    <button type="button" id={`rp-${param.key}`} onClick={() => setConditionsOpen(v => !v)} aria-expanded={conditionsOpen} aria-haspopup="true" className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
+                                        <Filter className="size-4 text-indigo-600" aria-hidden="true" />
                                         <span>{t('dynamic_constructor.conditions_title')}</span>
                                         {currentConditions.length > 0 && (
                                             <Badge variant="secondary" className="ml-1">{currentConditions.length}</Badge>
@@ -517,17 +530,19 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                             
                                             {/* Global Logic Toggle (AND/OR) */}
                                             <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
-                                                <Button 
+                                                <Button
                                                     variant="ghost" size="sm"
                                                     className={`rounded-lg px-3 transition-all ${(!params.logic || params.logic === 'AND') ? 'bg-indigo-600 text-white' : ''}`}
                                                     onClick={() => setParam('logic', 'AND')}
+                                                    aria-pressed={!params.logic || params.logic === 'AND'}
                                                 >
                                                     {t('dynamic_constructor.logic_and')}
                                                 </Button>
-                                                <Button 
+                                                <Button
                                                     variant="ghost" size="sm"
                                                     className={`rounded-lg px-3 transition-all ${params.logic === 'OR' ? 'bg-slate-700 text-white' : ''}`}
                                                     onClick={() => setParam('logic', 'OR')}
+                                                    aria-pressed={params.logic === 'OR'}
                                                 >
                                                     {t('dynamic_constructor.logic_or')}
                                                 </Button>
@@ -547,8 +562,9 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                 
                                                 return (
                                                     <div key={`cond-${cond.field}-${cond.operator}`} className="flex flex-wrap items-center gap-2 p-3 bg-slate-50/50 rounded-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
-                                                        <Select 
+                                                        <Select
                                                             className="rounded-lg flex-1 min-w-[140px] font-bold text-[11px] uppercase bg-white h-8 px-2 text-xs border border-slate-200"
+                                                            aria-label={t('dynamic_constructor.field_placeholder')}
                                                             value={cond.field}
                                                             onChange={(e) => {
                                                                 const newConds = [...currentConditions];
@@ -567,8 +583,9 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                             <option value="stock_minimum">{t('dynamic_constructor.fields.stock_minimum')}</option>
                                                         </Select>
 
-                                                        <Select 
+                                                        <Select
                                                             className="rounded-lg w-32 font-bold text-[11px] bg-white h-8 px-2 text-xs border border-slate-200"
+                                                            aria-label={t('dynamic_constructor.operator_label', 'Opérateur')}
                                                             value={cond.operator}
                                                             onChange={(e) => {
                                                                 const newConds = [...currentConditions];
@@ -586,10 +603,11 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                         </Select>
 
                                                         {showValueInput ? (
-                                                            <Input 
+                                                            <Input
                                                                 type="text"
                                                                 className="rounded-lg w-24 font-bold text-[11px] bg-white h-8 px-2 text-xs border border-slate-200"
                                                                 placeholder={t('dynamic_constructor.value_placeholder')}
+                                                                aria-label={t('dynamic_constructor.value_placeholder')}
                                                                 value={cond.value}
                                                                 onChange={(e) => {
                                                                     const newConds = [...currentConditions];
@@ -603,14 +621,15 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                                                             </div>
                                                         )}
 
-                                                        <button 
+                                                        <button
                                                             className="size-7 p-0 rounded-full text-red-600 hover:bg-red-50 ml-auto flex items-center justify-center transition-colors"
+                                                            aria-label={t('dynamic_constructor.remove_condition', 'Supprimer la condition')}
                                                             onClick={() => {
                                                                 const newConds = currentConditions.filter((_: Condition, i: number) => i !== idx);
                                                                 setParam('conditions', JSON.stringify(newConds));
                                                             }}
                                                         >
-                                                            <X className="size-4" />
+                                                            <X className="size-4" aria-hidden="true" />
                                                         </button>
                                                     </div>
                                                 );
@@ -633,8 +652,8 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
                                 {/* Fields Selector Dropdown */}
                                 <div ref={fieldsRef} className="relative">
-                                    <button type="button" onClick={() => setFieldsOpen(v => !v)} className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
-                                        <LayoutPanelTop className="size-4" />
+                                    <button type="button" onClick={() => setFieldsOpen(v => !v)} aria-expanded={fieldsOpen} aria-haspopup="true" className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 cursor-pointer text-sm font-medium transition-all">
+                                        <LayoutPanelTop className="size-4" aria-hidden="true" />
                                         <span>{t('dynamic_constructor.select_columns')}</span>
                                         <Badge className="ml-1">
                                             {((params[param.key] as string) || '').split(',').filter(Boolean).length}

@@ -85,6 +85,7 @@ function SidebarActions({
             onClick={onScanOrdonnance}
             className="h-9 px-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300"
             title={t('facturation:actions.scan_ordonnance_tooltip')}
+            aria-label={t('facturation:actions.scan_ordonnance_tooltip')}
           >
             <Camera className="size-4" />
           </Button>

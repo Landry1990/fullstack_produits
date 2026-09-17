@@ -247,11 +247,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           {/* Ligne de saisie : Montant + boutons Mode + Ajouter */}
           <div className="flex gap-3 items-end">
             <div className="flex-1">
-              <label className="block py-1 text-sm font-semibold text-slate-700">
+              <label htmlFor="payment-amount" className="block py-1 text-sm font-semibold text-slate-700">
                 {t('payment.amount')}
               </label>
               <input
                 ref={montantInputRef}
+                id="payment-amount"
                 type="number"
                 className="w-full h-14 px-4 rounded-xl border-2 border-slate-200 bg-white text-right font-mono text-2xl font-semibold text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all"
                 value={montantPaye}

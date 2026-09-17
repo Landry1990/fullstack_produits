@@ -225,6 +225,10 @@ class Client(models.Model):
         related_name='deleted_clients', help_text="Utilisateur ayant supprimé ce client"
     )
     deleted_at = models.DateTimeField(null=True, blank=True, help_text="Date/heure de la suppression")
+    merged_into = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='merged_from', help_text="Client dans lequel celui-ci a été fusionné"
+    )
 
     def __str__(self):
         return self.name

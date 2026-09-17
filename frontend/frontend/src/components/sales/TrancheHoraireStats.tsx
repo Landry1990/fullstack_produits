@@ -63,8 +63,9 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
 
             <div className="flex flex-wrap items-end gap-4">
                 <div>
-                    <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('sales:tranche_horaire.start_time')}</label>
+                    <label htmlFor="tranche-start-time" className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('sales:tranche_horaire.start_time')}</label>
                     <input
+                        id="tranche-start-time"
                         type="time"
                         lang={getLocale()}
                         className="rounded-lg border border-base-300 bg-base-100 h-9 px-3 text-sm text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
@@ -73,8 +74,9 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
                     />
                 </div>
                 <div>
-                    <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('sales:tranche_horaire.end_time')}</label>
+                    <label htmlFor="tranche-end-time" className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">{t('sales:tranche_horaire.end_time')}</label>
                     <input
+                        id="tranche-end-time"
                         type="time"
                         lang={getLocale()}
                         className="rounded-lg border border-base-300 bg-base-100 h-9 px-3 text-sm text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"

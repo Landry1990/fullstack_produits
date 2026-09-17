@@ -111,6 +111,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                         variant="ghost"
                         size="icon"
                         onClick={handleBackToList}
+                        aria-label={t('common:back', { defaultValue: 'Retour' })}
                         className="text-slate-500 hover:text-slate-700 hover:bg-slate-100"
                     >
                         <ArrowLeft className="size-5" />
@@ -153,12 +154,13 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="relative">
-                                <Label>
+                                <Label htmlFor="avoir-fournisseur-search">
                                     {t('stock:avoirs.form.fournisseur')} <span className="text-red-500">*</span>
                                 </Label>
                                 <div className="relative mt-1.5">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
                                     <Input
+                                        id="avoir-fournisseur-search"
                                         type="text"
                                         placeholder={t('stock:avoirs.form.fournisseur_placeholder')}
                                         value={fournisseurSearch}
@@ -179,8 +181,16 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                         {filteredFournisseurs.map(f => (
                                             <div
                                                 key={f.id}
+                                                role="button"
+                                                tabIndex={0}
                                                 className="p-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors"
                                                 onClick={() => selectFournisseur(f)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        selectFournisseur(f);
+                                                    }
+                                                }}
                                             >
                                                 <div className="font-medium text-sm text-slate-800">{f.name}</div>
                                                 {f.address && <div className="text-xs text-slate-400 mt-0.5">{f.address}</div>}
@@ -201,8 +211,9 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label>{t('stock:avoirs.form.observations_label')}</Label>
+                                <Label htmlFor="avoir-observations">{t('stock:avoirs.form.observations_label')}</Label>
                                 <Textarea
+                                    id="avoir-observations"
                                     placeholder={t('stock:avoirs.form.observations_placeholder')}
                                     value={observations}
                                     onChange={(e) => setObservations(e.target.value)}
@@ -284,6 +295,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                             type="text"
                                                             size="sm"
                                                             className="text-xs"
+                                                            aria-label={t('stock:avoirs.form.table_motif')}
                                                             placeholder={t('stock:avoirs.form.motif_placeholder')}
                                                             value={ligne.motif || ''}
                                                             onChange={(e) => updateLine(index, 'motif', e.target.value)}
@@ -295,6 +307,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                             min="1"
                                                             size="sm"
                                                             className="text-center"
+                                                            aria-label={t('stock:avoirs.form.table_qty')}
                                                             value={ligne.quantity}
                                                             onChange={(e) => updateLine(index, 'quantity', e.target.value)}
                                                         />
@@ -315,6 +328,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                             className="size-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
                                                             onClick={() => removeLine(index)}
                                                             title={t('common:remove')}
+                                                            aria-label={t('common:remove')}
                                                         >
                                                             <Trash2 className="size-4" />
                                                         </Button>

@@ -184,8 +184,9 @@ export function BackupsTab({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Heure de backup */}
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">{t('trigger_time')}</label>
+                <label htmlFor="backup-trigger-time" className="block text-xs font-semibold text-gray-500 mb-1">{t('trigger_time')}</label>
                 <input
+                  id="backup-trigger-time"
                   type="time"
                   value={backupSettings.backup_time}
                   onChange={(e) => setBackupSettings({ ...backupSettings, backup_time: e.target.value })}
@@ -195,8 +196,9 @@ export function BackupsTab({
 
               {/* Intervalle */}
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">{t('interval')}</label>
+                <label htmlFor="backup-interval" className="block text-xs font-semibold text-gray-500 mb-1">{t('interval')}</label>
                 <select
+                  id="backup-interval"
                   value={backupSettings.backup_interval_minutes}
                   onChange={(e) => setBackupSettings({ ...backupSettings, backup_interval_minutes: Number(e.target.value) })}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
@@ -212,8 +214,9 @@ export function BackupsTab({
 
               {/* Rétention */}
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">{t('retention')}</label>
+                <label htmlFor="backup-retention" className="block text-xs font-semibold text-gray-500 mb-1">{t('retention')}</label>
                 <input
+                  id="backup-retention"
                   type="number"
                   min={1}
                   max={365}
@@ -229,9 +232,10 @@ export function BackupsTab({
 
             {/* Chemin secondaire */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">{t('secondary_path')}</label>
+              <label htmlFor="backup-secondary-path" className="block text-xs font-semibold text-gray-500 mb-1">{t('secondary_path')}</label>
               <div className="flex gap-2">
                 <input
+                  id="backup-secondary-path"
                   type="text"
                   placeholder={t('secondary_path_placeholder')}
                   value={backupSettings.secondary_backup_path}
@@ -257,9 +261,10 @@ export function BackupsTab({
               <p className="text-xs text-gray-400 mb-3">{t('external_destinations_desc')}</p>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_1')}</label>
+                  <label htmlFor="backup-ext-1" className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_1')}</label>
                   <div className="flex gap-2">
                     <input
+                      id="backup-ext-1"
                       type="text"
                       placeholder={t('external_destination_1_placeholder')}
                       value={backupSettings.external_backup_path_1}
@@ -273,9 +278,10 @@ export function BackupsTab({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_2')}</label>
+                  <label htmlFor="backup-ext-2" className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_2')}</label>
                   <div className="flex gap-2">
                     <input
+                      id="backup-ext-2"
                       type="text"
                       placeholder={t('external_destination_2_placeholder')}
                       value={backupSettings.external_backup_path_2}
@@ -289,9 +295,10 @@ export function BackupsTab({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_3')}</label>
+                  <label htmlFor="backup-ext-3" className="block text-xs font-semibold text-gray-500 mb-1">{t('external_destination_3')}</label>
                   <div className="flex gap-2">
                     <input
+                      id="backup-ext-3"
                       type="text"
                       placeholder={t('external_destination_3_placeholder')}
                       value={backupSettings.external_backup_path_3}
@@ -329,8 +336,9 @@ export function BackupsTab({
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">{t('endpoint')}</label>
+                      <label htmlFor="backup-cloud-endpoint" className="block text-xs font-semibold text-gray-500 mb-1">{t('endpoint')}</label>
                       <input
+                        id="backup-cloud-endpoint"
                         type="text"
                         placeholder={t('endpoint_placeholder')}
                         value={backupSettings.cloud_backup_endpoint}
@@ -339,8 +347,9 @@ export function BackupsTab({
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">{t('bucket')}</label>
+                      <label htmlFor="backup-cloud-bucket" className="block text-xs font-semibold text-gray-500 mb-1">{t('bucket')}</label>
                       <input
+                        id="backup-cloud-bucket"
                         type="text"
                         placeholder={t('bucket_placeholder')}
                         value={backupSettings.cloud_backup_bucket}
@@ -352,8 +361,9 @@ export function BackupsTab({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">{t('access_key')}</label>
+                      <label htmlFor="backup-cloud-access-key" className="block text-xs font-semibold text-gray-500 mb-1">{t('access_key')}</label>
                       <input
+                        id="backup-cloud-access-key"
                         type="text"
                         placeholder={t('access_key_placeholder')}
                         value={backupSettings.cloud_backup_access_key}
@@ -362,8 +372,9 @@ export function BackupsTab({
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">{t('secret_key')}</label>
+                      <label htmlFor="backup-cloud-secret-key" className="block text-xs font-semibold text-gray-500 mb-1">{t('secret_key')}</label>
                       <input
+                        id="backup-cloud-secret-key"
                         type="password"
                         placeholder="••••••••••••••••"
                         value={backupSettings.cloud_backup_secret_key}
@@ -375,8 +386,9 @@ export function BackupsTab({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">{t('region')}</label>
+                      <label htmlFor="backup-cloud-region" className="block text-xs font-semibold text-gray-500 mb-1">{t('region')}</label>
                       <input
+                        id="backup-cloud-region"
                         type="text"
                         placeholder={t('region_placeholder')}
                         value={backupSettings.cloud_backup_region}
@@ -385,8 +397,9 @@ export function BackupsTab({
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">{t('folder_prefix')}</label>
+                      <label htmlFor="backup-cloud-prefix" className="block text-xs font-semibold text-gray-500 mb-1">{t('folder_prefix')}</label>
                       <input
+                        id="backup-cloud-prefix"
                         type="text"
                         placeholder={t('folder_prefix_placeholder')}
                         value={backupSettings.cloud_backup_path_prefix}
@@ -434,6 +447,7 @@ export function BackupsTab({
           <input
             type="file"
             accept=".sql.gz,.sql"
+            aria-label={t('restore_title')}
             onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
             className="text-xs text-gray-600 flex-1"
           />
@@ -541,10 +555,15 @@ export function BackupsTab({
       {/* Modal de confirmation */}
       {showRestoreConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-lg mx-4 p-6">
+          <div
+            className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-lg mx-4 p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="restore-confirm-title"
+          >
             <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
-              <h3 className="text-lg font-bold text-gray-900">{t('confirm_restore')}</h3>
+              <AlertTriangle className="w-6 h-6 text-red-500" aria-hidden="true" />
+              <h3 id="restore-confirm-title" className="text-lg font-bold text-gray-900">{t('confirm_restore')}</h3>
             </div>
 
             {/* Warning explicite */}
@@ -719,10 +738,11 @@ export function BackupsTab({
               </div>
               <div className="flex items-end gap-3">
                 <div className="flex-1">
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  <label htmlFor="pitr-target-time" className="block text-xs font-semibold text-gray-500 mb-1">
                     {t('pitr_target_time')}
                   </label>
                   <input
+                    id="pitr-target-time"
                     type="text"
                     placeholder={t('pitr_target_placeholder')}
                     value={pitrTargetTime}

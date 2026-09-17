@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from django.db import transaction
 from django.db.models import DecimalField, F, OuterRef, ProtectedError, Subquery, Sum
+from django.db.models.functions import Lower
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -29,7 +30,7 @@ from ..sudo_utils import validate_sudo_mode
 
 class FournisseurViewSet(viewsets.ModelViewSet):
     """API endpoint for fournisseurs."""
-    queryset = Fournisseur.objects.all().order_by('name')
+    queryset = Fournisseur.objects.all().order_by(Lower('name'))
     serializer_class = FournisseurSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination

@@ -263,6 +263,7 @@ const Cadencier: React.FC = () => {
                       <input
                         type="text"
                         placeholder={t('stock:cadencier.search_placeholder', 'Rechercher un produit, CIP...')}
+                        aria-label={t('stock:cadencier.search_placeholder', 'Rechercher un produit, CIP...')}
                         value={filters.search}
                         onChange={(e) => handleFilterChange('search', e.target.value)}
                         className="h-full border-0 focus:outline-none focus:ring-0 p-0 text-sm bg-transparent w-full"
@@ -326,6 +327,7 @@ const Cadencier: React.FC = () => {
                       onClick={() => fetchCadencier(1)}
                       className="gap-1 h-9 px-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                       title={t('common:refresh', 'Rafraîchir')}
+                      aria-label={t('common:refresh', 'Rafraîchir')}
                     >
                       <RotateCcw className="size-4 text-emerald-600" />
                     </Button>
@@ -336,6 +338,7 @@ const Cadencier: React.FC = () => {
                   <Checkbox
                     checked={filters.only_below_target}
                     onCheckedChange={(checked) => handleFilterChange('only_below_target', checked)}
+                    aria-label={t('stock:cadencier.only_below_target', 'Uniquement les produits sous le seuil')}
                   />
                   <label className="text-xs text-slate-500 cursor-pointer select-none">
                     {t('stock:cadencier.only_below_target', 'Uniquement les produits sous le seuil')}

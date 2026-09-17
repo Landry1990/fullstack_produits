@@ -92,6 +92,7 @@ export default function Avoirs() {
                         onClick={() => setHeaderCollapsed(!headerCollapsed)}
                         className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 transition-colors px-2 py-1 rounded hover:bg-emerald-50 self-start sm:self-auto"
                         title={headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}
+                        aria-expanded={!headerCollapsed}
                     >
                         {headerCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
                         {headerCollapsed ? t('common:show_header', 'Afficher') : t('common:hide_header', 'Masquer')}

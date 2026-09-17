@@ -47,8 +47,9 @@ export default function ClientCreateModal({
       <form onSubmit={handleCreateClient} className="p-6 space-y-5">
         {/* Nom — seul champ obligatoire */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t('create_client.name')} *</label>
+          <label htmlFor="ccm-name" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t('create_client.name')} *</label>
           <input
+            id="ccm-name"
             type="text"
             value={newClientForm.name}
             onChange={e => setNewClientForm((prev) => ({ ...prev, name: e.target.value }))}
@@ -61,8 +62,9 @@ export default function ClientCreateModal({
 
         {/* Téléphone — facultatif */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t('create_client.phone')}</label>
+          <label htmlFor="ccm-phone" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t('create_client.phone')}</label>
           <input
+            id="ccm-phone"
             type="tel"
             value={newClientForm.phone}
             onChange={e => setNewClientForm((prev) => ({ ...prev, phone: e.target.value }))}
@@ -73,8 +75,9 @@ export default function ClientCreateModal({
 
         {/* Email — facultatif */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t('create_client.email')}</label>
+          <label htmlFor="ccm-email" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t('create_client.email')}</label>
           <input
+            id="ccm-email"
             type="email"
             value={newClientForm.email}
             onChange={e => setNewClientForm((prev) => ({ ...prev, email: e.target.value }))}
@@ -85,8 +88,9 @@ export default function ClientCreateModal({
 
         {/* Adresse — facultative */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t('create_client.address')}</label>
+          <label htmlFor="ccm-address" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t('create_client.address')}</label>
           <textarea
+            id="ccm-address"
             value={newClientForm.address}
             onChange={e => setNewClientForm((prev) => ({ ...prev, address: e.target.value }))}
             className="w-full h-16 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"

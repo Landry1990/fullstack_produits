@@ -238,7 +238,7 @@ const LoyaltyPage: React.FC = () => {
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 w-full">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <div className="flex flex-col gap-1 flex-1 min-w-0" ref={clientDropdownRef}>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <label htmlFor="loyalty-client-search" className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                             {t('loyalty:filters.client')}
                         </label>
                         <div className="relative group">
@@ -246,6 +246,7 @@ const LoyaltyPage: React.FC = () => {
                                 <Search className="size-4" />
                             </div>
                             <input
+                                id="loyalty-client-search"
                                 type="text"
                                 value={clientSearchQuery || clientSelectedName}
                                 onChange={e => {
@@ -264,16 +265,19 @@ const LoyaltyPage: React.FC = () => {
                                     type="button"
                                     onClick={handleClientClear}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    aria-label={t('common:remove')}
                                 >
                                     <X className="size-4" />
                                 </button>
                             )}
                             {showClientDropdown && allClients.length > 0 && (
-                                <ul className="absolute z-50 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-slate-200 py-2 animate-in fade-in zoom-in duration-200">
+                                <ul role="listbox" className="absolute z-50 w-full bg-white shadow-xl rounded-2xl mt-2 max-h-60 overflow-auto border border-slate-200 py-2 animate-in fade-in zoom-in duration-200">
                                     {allClients.map(c => (
-                                        <li key={c.id}>
+                                        <li key={c.id} role="presentation">
                                             <button
                                                 type="button"
+                                                role="option"
+                                                aria-selected={clientFilter === String(c.id)}
                                                 className="w-full text-left px-4 py-3 hover:bg-slate-100 transition-colors flex items-center gap-3"
                                                 onClick={() => handleClientSelect(c.id, c.name)}
                                             >
@@ -292,10 +296,11 @@ const LoyaltyPage: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <label htmlFor="loyalty-type-filter" className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                             {t('loyalty:filters.type')}
                         </label>
                         <Select
+                            id="loyalty-type-filter"
                             value={typeFilter}
                             onChange={(e) => handleTypeChange(e.target.value)}
                             className="w-full sm:w-48 text-sm"

@@ -264,12 +264,21 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                         )}
                     </div>
                     {invoiceResults.length > 0 && (
-                        <ul className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                        <ul role="listbox" className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-auto">
                             {invoiceResults.map((invoice) => (
                                 <li
                                     key={invoice.id}
+                                    role="option"
+                                    aria-selected={false}
+                                    tabIndex={0}
                                     className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700"
                                     onClick={() => handleSelectInvoice(invoice)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            handleSelectInvoice(invoice);
+                                        }
+                                    }}
                                 >
                                     {invoice.numero_facture} — {invoice.client_name}
                                 </li>
@@ -366,7 +375,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                             >
                             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                                 <div className="sm:col-span-4 space-y-1 relative">
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.product')}</label>
+                                    <label htmlFor={`credit-product-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.product')}</label>
                                     {line.produit ? (
                                         <div className="flex items-center justify-between h-10 px-3 rounded-md border border-slate-200 bg-slate-50 text-sm">
                                             <span className="truncate">{line.produit_nom}</span>
@@ -374,6 +383,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                                 type="button"
                                                 onClick={() => updateLine(line.id, { produit: null, produit_nom: '' })}
                                                 className="text-slate-400 hover:text-red-500"
+                                                aria-label={t('common:remove')}
                                             >
                                                 <X className="size-3.5" />
                                             </button>
@@ -382,6 +392,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                         <div className="relative">
                                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
                                             <Input
+                                                id={`credit-product-${line.id}`}
                                                 value={line.produit_nom}
                                                 onChange={(e) => {
                                                     updateLine(line.id, { produit_nom: e.target.value });
@@ -392,7 +403,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                                 disabled={isSubmitting}
                                             />
                                             {productSearch && !line.produit && (
-                                                <ul className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg max-h-40 overflow-auto mt-1">
+                                                <ul role="listbox" className="absolute z-10 w-full bg-white border border-slate-200 rounded-md shadow-lg max-h-40 overflow-auto mt-1">
                                                     {productsLoading ? (
                                                         <li className="px-3 py-2 space-y-2">
                                                             <Skeleton className="h-4 w-3/4" />
@@ -406,8 +417,17 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                                         produits.map((p) => (
                                                             <li
                                                                 key={p.id}
+                                                                role="option"
+                                                                aria-selected={false}
+                                                                tabIndex={0}
                                                                 className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 truncate"
                                                                 onClick={() => handleSelectProduct(line.id, p)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                                        e.preventDefault();
+                                                                        handleSelectProduct(line.id, p);
+                                                                    }
+                                                                }}
                                                             >
                                                                 {p.name}
                                                             </li>
@@ -419,8 +439,9 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                     )}
                                 </div>
                                 <div className="sm:col-span-1 space-y-1">
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.quantity')}</label>
+                                    <label htmlFor={`credit-qty-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.quantity')}</label>
                                     <Input
+                                        id={`credit-qty-${line.id}`}
                                         type="number"
                                         min={1}
                                         value={line.quantity}
@@ -429,8 +450,9 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                     />
                                 </div>
                                 <div className="sm:col-span-2 space-y-1">
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.unit_price')}</label>
+                                    <label htmlFor={`credit-price-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.unit_price')}</label>
                                     <Input
+                                        id={`credit-price-${line.id}`}
                                         type="number"
                                         step="0.01"
                                         min={0}
@@ -440,8 +462,9 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                     />
                                 </div>
                                 <div className="sm:col-span-2 space-y-1">
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.discount')}</label>
+                                    <label htmlFor={`credit-discount-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.discount')}</label>
                                     <Input
+                                        id={`credit-discount-${line.id}`}
                                         type="number"
                                         step="0.01"
                                         min={0}
@@ -451,8 +474,9 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                     />
                                 </div>
                                 <div className="sm:col-span-2 space-y-1">
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.vat')}</label>
+                                    <label htmlFor={`credit-vat-${line.id}`} className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('form.vat')}</label>
                                     <Input
+                                        id={`credit-vat-${line.id}`}
                                         type="number"
                                         step="0.01"
                                         min={0}
@@ -469,6 +493,7 @@ export const ClientCreditForm: React.FC<ClientCreditFormProps> = ({
                                         onClick={() => removeLine(line.id)}
                                         disabled={isSubmitting}
                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        aria-label={t('common:remove')}
                                     >
                                         <X className="size-4" />
                                     </Button>

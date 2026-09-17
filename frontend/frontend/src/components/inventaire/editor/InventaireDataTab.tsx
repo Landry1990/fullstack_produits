@@ -156,6 +156,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                 </div>
                 <select
                     className="h-8 px-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
+                    aria-label={t('inventaire.detail.sort.title')}
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'nom' | 'chronologie' | 'ecart' | 'prix')}
                 >
@@ -169,6 +170,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                     className="inline-flex items-center justify-center size-8 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                     title={sortOrder === 'asc' ? t('common:sort.asc') : t('common:sort.desc')}
+                    aria-label={sortOrder === 'asc' ? t('common:sort.asc') : t('common:sort.desc')}
                 >
                     {sortOrder === 'asc' ? <ArrowUp className="size-4" /> : <ArrowDown className="size-4" />}
                 </button>
@@ -185,6 +187,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                     className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                     checked={selectedLines.size === sortedLines.length && sortedLines.length > 0}
                                     onChange={toggleSelectAll}
+                                    aria-label={t('stock:cadencier.select_all')}
                                 />
                             </div>
                         )}
@@ -222,6 +225,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                                 className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                                 checked={selectedLines.has(l.id)}
                                                 onChange={() => toggleSelectLine(l.id)}
+                                                aria-label={`Sélectionner ${l.produit_nom || getProduitName(l.produit)}`}
                                             />
                                         </div>
                                     )}
@@ -366,6 +370,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                                 onClick={() => handleDeleteLine(l.id)}
                                                 disabled={saving}
                                                 title={t('common:remove')}
+                                                aria-label={t('common:remove')}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </button>

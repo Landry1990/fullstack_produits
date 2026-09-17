@@ -492,14 +492,15 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                         <TabsContent value="objectif" className="space-y-4 min-h-[420px]">
                             {/* Sélecteur de type de challenge en cartes */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                <span className="block text-xs font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:type_challenge')} <span className="text-red-500">*</span>
-                                </label>
+                                </span>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     {/* CA */}
                                     <button
                                         type="button"
                                         onClick={() => selectType('CA')}
+                                        aria-pressed={form.type_objectif === 'CA'}
                                         className={cn(
                                             'text-left p-4 rounded-xl border-2 transition-all',
                                             form.type_objectif === 'CA'
@@ -533,6 +534,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                     <button
                                         type="button"
                                         onClick={() => selectType('BOITES')}
+                                        aria-pressed={form.type_objectif === 'BOITES'}
                                         className={cn(
                                             'text-left p-4 rounded-xl border-2 transition-all',
                                             form.type_objectif === 'BOITES'
@@ -566,6 +568,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                     <button
                                         type="button"
                                         onClick={() => selectType('POINTS')}
+                                        aria-pressed={form.type_objectif === 'POINTS'}
                                         className={cn(
                                             'text-left p-4 rounded-xl border-2 transition-all',
                                             form.type_objectif === 'POINTS'
@@ -702,6 +705,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                             <Input
                                                                 type="number"
                                                                 disableUppercase
+                                                                aria-label={t('challenges:point_tier_mois_max')}
                                                                 value={tier.mois_max}
                                                                 onChange={(e) => updatePointTier(idx, 'mois_max', e.target.value)}
                                                                 placeholder={t('challenges:point_tier_mois_placeholder')}
@@ -717,6 +721,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                             <Input
                                                                 type="number"
                                                                 disableUppercase
+                                                                aria-label={t('challenges:point_tier_points')}
                                                                 value={tier.points}
                                                                 onChange={(e) => updatePointTier(idx, 'points', e.target.value)}
                                                                 placeholder={t('challenges:point_tier_points_placeholder')}
@@ -734,8 +739,9 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                         size="sm"
                                                         className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 shrink-0"
                                                         onClick={() => removePointTier(idx)}
+                                                        aria-label={t('common:remove')}
                                                     >
-                                                        <Trash2 className="size-3.5" />
+                                                        <Trash2 className="size-3.5" aria-hidden="true" />
                                                     </Button>
                                                 </div>
                                             ))}
@@ -856,8 +862,9 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                             size="sm"
                                                             className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 shrink-0"
                                                             onClick={() => removeEquipe(idx)}
+                                                            aria-label={t('challenges:equipe_remove')}
                                                         >
-                                                            <Trash2 className="size-3.5" />
+                                                            <Trash2 className="size-3.5" aria-hidden="true" />
                                                         </Button>
                                                     </div>
                                                     <div className="border border-slate-100 rounded-md p-2 max-h-32 overflow-y-auto bg-slate-50/50">
@@ -927,6 +934,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                             }}
                                             onFocus={() => setShowProductDropdown(true)}
                                             placeholder={t('challenges:form.produits_search_placeholder')}
+                                            aria-label={t('challenges:form.produits_search_placeholder')}
                                             className="w-full pl-10 pr-8 rounded-lg border border-slate-200 bg-white font-medium h-11 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
                                         />
                                         {productSearch && (
@@ -937,8 +945,9 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                     setShowProductDropdown(false);
                                                 }}
                                                 className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                                aria-label={t('common:clear')}
                                             >
-                                                <X className="size-4" />
+                                                <X className="size-4" aria-hidden="true" />
                                             </button>
                                         )}
                                         {showProductDropdown && allProducts.length > 0 && (
@@ -981,8 +990,9 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                         type="button"
                                                         onClick={() => removeProduct(p.id)}
                                                         className="hover:text-amber-900"
+                                                        aria-label={`${t('common:remove')} ${p.name}`}
                                                     >
-                                                        <X className="size-3" />
+                                                        <X className="size-3" aria-hidden="true" />
                                                     </button>
                                                 </Badge>
                                             ))}

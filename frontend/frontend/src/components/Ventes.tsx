@@ -96,6 +96,8 @@ const Ventes: React.FC = () => {
                                 onClick={() => setHeaderCollapsed(true)}
                                 className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 transition-colors px-2 py-1 rounded hover:bg-emerald-50"
                                 title={t('common:hide_header', 'Masquer')}
+                                aria-label={t('common:hide_header', 'Masquer')}
+                                aria-expanded={!headerCollapsed}
                             >
                                 <ChevronUp className="size-3.5" />
                                 <span className="hidden sm:inline">{t('common:hide_header', 'Masquer')}</span>
@@ -111,6 +113,8 @@ const Ventes: React.FC = () => {
                         onClick={() => setHeaderCollapsed(false)}
                         className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-emerald-600 transition-colors px-2 py-1 rounded hover:bg-emerald-50"
                         title={t('common:show_header', 'Afficher')}
+                        aria-label={t('common:show_header', 'Afficher')}
+                        aria-expanded={!headerCollapsed}
                     >
                         <ChevronDown className="size-3.5" />
                         <span className="hidden sm:inline">{t('common:show_header', 'Afficher')}</span>

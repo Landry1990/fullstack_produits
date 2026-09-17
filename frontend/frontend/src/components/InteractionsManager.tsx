@@ -218,12 +218,14 @@ export default function InteractionsManager() {
           <input
             type="text"
             placeholder={t('products:interactions.search_placeholder')}
+            aria-label={t('products:interactions.search_placeholder')}
             className="w-64 rounded-xl bg-base-200/50 border-none h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
           />
           <select
             className="rounded-xl bg-base-200/50 border-none h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            aria-label={t('products:interactions.col_gravity')}
             value={gravityFilter}
             onChange={e => { setGravityFilter(e.target.value); setPage(1); }}
           >
@@ -249,6 +251,7 @@ export default function InteractionsManager() {
           <input
             type="file"
             accept=".csv"
+            aria-label={t('products:interactions.csv_import')}
             onChange={e => { setCsvFile(e.target.files?.[0] || null); setUploadResult(null); }}
             className="file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-base-300 file:text-base-content hover:file:bg-base-200 text-sm w-full max-w-xs rounded-xl border border-base-300 bg-base-200/50 px-3 py-1.5"
           />

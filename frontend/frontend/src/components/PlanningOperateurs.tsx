@@ -135,20 +135,20 @@ function ConfigTab() {
         </CardHeader>
         <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.work_days_before_rest')}</label>
-            <Input type="number" min={1} max={14} value={form.work_days_before_rest ?? 5} onChange={e => update('work_days_before_rest', parseInt(e.target.value) || 5)} />
+            <label htmlFor="cfg-work-days" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.work_days_before_rest')}</label>
+            <Input id="cfg-work-days" type="number" min={1} max={14} value={form.work_days_before_rest ?? 5} onChange={e => update('work_days_before_rest', parseInt(e.target.value) || 5)} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.rest_days')}</label>
-            <Input type="number" min={1} max={14} value={form.rest_days ?? 2} onChange={e => update('rest_days', parseInt(e.target.value) || 2)} />
+            <label htmlFor="cfg-rest-days" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.rest_days')}</label>
+            <Input id="cfg-rest-days" type="number" min={1} max={14} value={form.rest_days ?? 2} onChange={e => update('rest_days', parseInt(e.target.value) || 2)} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.guard_frequency')}</label>
-            <Input type="number" min={1} max={30} value={form.guard_frequency_days ?? 7} onChange={e => update('guard_frequency_days', parseInt(e.target.value) || 7)} />
+            <label htmlFor="cfg-guard-freq" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.guard_frequency')}</label>
+            <Input id="cfg-guard-freq" type="number" min={1} max={30} value={form.guard_frequency_days ?? 7} onChange={e => update('guard_frequency_days', parseInt(e.target.value) || 7)} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.annual_leave_days')}</label>
-            <Input type="number" min={0} max={60} value={form.annual_leave_days ?? 26} onChange={e => update('annual_leave_days', parseInt(e.target.value) || 26)} />
+            <label htmlFor="cfg-annual-leave" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.annual_leave_days')}</label>
+            <Input id="cfg-annual-leave" type="number" min={0} max={60} value={form.annual_leave_days ?? 26} onChange={e => update('annual_leave_days', parseInt(e.target.value) || 26)} />
           </div>
         </CardContent>
       </Card>
@@ -163,20 +163,20 @@ function ConfigTab() {
         </CardHeader>
         <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <label className="block text-xs text-slate-500 mb-1">{t('config.morning_start')}</label>
-            <Input type="time" value={form.morning_start ?? '08:00'} onChange={e => update('morning_start', e.target.value)} />
+            <label htmlFor="cfg-morning-start" className="block text-xs text-slate-500 mb-1">{t('config.morning_start')}</label>
+            <Input id="cfg-morning-start" type="time" value={form.morning_start ?? '08:00'} onChange={e => update('morning_start', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">{t('config.morning_end')}</label>
-            <Input type="time" value={form.morning_end ?? '16:00'} onChange={e => update('morning_end', e.target.value)} />
+            <label htmlFor="cfg-morning-end" className="block text-xs text-slate-500 mb-1">{t('config.morning_end')}</label>
+            <Input id="cfg-morning-end" type="time" value={form.morning_end ?? '16:00'} onChange={e => update('morning_end', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">{t('config.night_start')}</label>
-            <Input type="time" value={form.night_start ?? '16:00'} onChange={e => update('night_start', e.target.value)} />
+            <label htmlFor="cfg-night-start" className="block text-xs text-slate-500 mb-1">{t('config.night_start')}</label>
+            <Input id="cfg-night-start" type="time" value={form.night_start ?? '16:00'} onChange={e => update('night_start', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">{t('config.night_end')}</label>
-            <Input type="time" value={form.night_end ?? '22:00'} onChange={e => update('night_end', e.target.value)} />
+            <label htmlFor="cfg-night-end" className="block text-xs text-slate-500 mb-1">{t('config.night_end')}</label>
+            <Input id="cfg-night-end" type="time" value={form.night_end ?? '22:00'} onChange={e => update('night_end', e.target.value)} />
           </div>
         </CardContent>
       </Card>
@@ -198,8 +198,8 @@ function ConfigTab() {
           <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
             <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('config.team_section')}</h4>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_mode')}</label>
-              <Select value={form.team_mode ?? 'INDIVIDUAL'} onChange={e => update('team_mode', e.target.value as TeamMode)}>
+              <label htmlFor="cfg-team-mode" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_mode')}</label>
+              <Select id="cfg-team-mode" value={form.team_mode ?? 'INDIVIDUAL'} onChange={e => update('team_mode', e.target.value as TeamMode)}>
                 <option value="INDIVIDUAL">{t('config.team_modes.INDIVIDUAL')}</option>
                 <option value="FIXED">{t('config.team_modes.FIXED')}</option>
                 <option value="ROTATING">{t('config.team_modes.ROTATING')}</option>
@@ -207,8 +207,8 @@ function ConfigTab() {
             </div>
             {form.team_mode && form.team_mode !== 'INDIVIDUAL' && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_rotation_days')}</label>
-                <Input type="number" min={1} max={30} value={form.team_rotation_days ?? 3} onChange={e => update('team_rotation_days', parseInt(e.target.value) || 3)} />
+                <label htmlFor="cfg-team-rotation-days" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('config.team_rotation_days')}</label>
+                <Input id="cfg-team-rotation-days" type="number" min={1} max={30} value={form.team_rotation_days ?? 3} onChange={e => update('team_rotation_days', parseInt(e.target.value) || 3)} />
                 <p className="text-xs text-slate-400 mt-1">{t('config.team_rotation_hint')}</p>
               </div>
             )}
@@ -364,11 +364,11 @@ function TeamsTab() {
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(team)}>
-                    <Settings size={14} />
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(team)} aria-label={t('teams.edit')}>
+                    <Settings size={14} aria-hidden="true" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500" onClick={() => deleteMutation.mutate(team.id)}>
-                    <Trash2 size={14} />
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500" onClick={() => deleteMutation.mutate(team.id)} aria-label={t('common:delete')}>
+                    <Trash2 size={14} aria-hidden="true" />
                   </Button>
                 </div>
               </div>
@@ -395,19 +395,19 @@ function TeamsTab() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.name')}</label>
-              <Input value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder={t('teams.name_placeholder')} />
+              <label htmlFor="team-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.name')}</label>
+              <Input id="team-name" value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder={t('teams.name_placeholder')} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.default_shift')}</label>
-              <Select value={formData.default_shift} onChange={e => setFormData(prev => ({ ...prev, default_shift: e.target.value as ShiftType }))}>
+              <label htmlFor="team-default-shift" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.default_shift')}</label>
+              <Select id="team-default-shift" value={formData.default_shift} onChange={e => setFormData(prev => ({ ...prev, default_shift: e.target.value as ShiftType }))}>
                 <option value="MATIN">{t('shift_types.MORNING')}</option>
                 <option value="NUIT">{t('shift_types.NIGHT')}</option>
                 <option value="REPOS">{t('shift_types.REST')}</option>
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.color')}</label>
+              <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.color')}</span>
               <div className="flex flex-wrap gap-2">
                 {TEAM_COLORS.map(color => (
                   <button
@@ -416,12 +416,14 @@ function TeamsTab() {
                     className={`w-8 h-8 rounded-full border-2 transition ${formData.color === color ? 'border-slate-800 dark:border-white scale-110' : 'border-transparent'}`}
                     style={{ backgroundColor: color }}
                     onClick={() => setFormData(prev => ({ ...prev, color }))}
+                    aria-label={color}
+                    aria-pressed={formData.color === color}
                   />
                 ))}
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.members')}</label>
+              <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('teams.members')}</span>
               <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
                 {(operators || []).map(op => (
                   <label key={op.id} className="flex items-center gap-2 cursor-pointer">
@@ -637,19 +639,19 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
         <div className="flex items-center gap-2">
           {viewMode === 'month' ? (
             <>
-              <Button variant="ghost" size="icon" onClick={prevMonth}><ChevronLeft size={18} /></Button>
+              <Button variant="ghost" size="icon" onClick={prevMonth} aria-label={t('common:previous')}><ChevronLeft size={18} aria-hidden="true" /></Button>
               <h3 className="text-lg font-semibold capitalize text-slate-800 dark:text-slate-200 min-w-[180px] text-center">
                 {getMonthName(currentMonth, locale)}
               </h3>
-              <Button variant="ghost" size="icon" onClick={nextMonth}><ChevronRight size={18} /></Button>
+              <Button variant="ghost" size="icon" onClick={nextMonth} aria-label={t('common:next')}><ChevronRight size={18} aria-hidden="true" /></Button>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="icon" onClick={prevWeek}><ChevronLeft size={18} /></Button>
+              <Button variant="ghost" size="icon" onClick={prevWeek} aria-label={t('common:previous')}><ChevronLeft size={18} aria-hidden="true" /></Button>
               <h3 className="text-lg font-semibold capitalize text-slate-800 dark:text-slate-200 min-w-[180px] text-center">
                 {getWeekLabel(days[0], days[6], locale)}
               </h3>
-              <Button variant="ghost" size="icon" onClick={nextWeek}><ChevronRight size={18} /></Button>
+              <Button variant="ghost" size="icon" onClick={nextWeek} aria-label={t('common:next')}><ChevronRight size={18} aria-hidden="true" /></Button>
             </>
           )}
         </div>
@@ -659,6 +661,7 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
             variant={viewMode === 'month' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('month')}
+            aria-pressed={viewMode === 'month'}
           >
             <Calendar size={16} className="mr-1" /> {t('planning.month_view')}
           </Button>
@@ -666,6 +669,7 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
             variant={viewMode === 'week' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('week')}
+            aria-pressed={viewMode === 'week'}
           >
             <CalendarDays size={16} className="mr-1" /> {t('planning.week_view')}
           </Button>
@@ -804,13 +808,29 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
                     return (
                       <td
                         key={dateStr}
-                        className={`px-1 py-2 text-center cursor-${isAdmin ? 'pointer' : 'default'} ${isToday ? 'ring-1 ring-emerald-200 dark:ring-emerald-800' : ''} ${isAdmin && schedule ? 'hover:ring-2 hover:ring-emerald-500/30' : ''}`}
-                        onClick={() => handleCellClick(op.id, dateStr)}
+                        className={`px-1 py-2 text-center ${isToday ? 'ring-1 ring-emerald-200 dark:ring-emerald-800' : ''}`}
                       >
-                        {style && (
-                          <div className={`inline-flex items-center justify-center w-7 h-7 rounded-md ${style.bg} ${style.text} ${style.border} border`} title={t(style.labelKey)}>
-                            <style.Icon size={14} />
-                          </div>
+                        {isAdmin && schedule ? (
+                          <button
+                            type="button"
+                            onClick={() => handleCellClick(op.id, dateStr)}
+                            className="w-full min-h-7 inline-flex items-center justify-center rounded-md cursor-pointer hover:ring-2 hover:ring-emerald-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                            aria-label={`${t('planning.edit_assignment')} — ${op.first_name || op.last_name ? `${op.first_name} ${op.last_name}`.trim() : op.username}, ${dateStr}`}
+                          >
+                            {style ? (
+                              <span className={`inline-flex items-center justify-center w-7 h-7 rounded-md ${style.bg} ${style.text} ${style.border} border`} title={t(style.labelKey)}>
+                                <style.Icon size={14} aria-hidden="true" />
+                              </span>
+                            ) : (
+                              <span className="inline-block w-7 h-7" aria-hidden="true" />
+                            )}
+                          </button>
+                        ) : (
+                          style && (
+                            <div className={`inline-flex items-center justify-center w-7 h-7 rounded-md ${style.bg} ${style.text} ${style.border} border`} title={t(style.labelKey)}>
+                              <style.Icon size={14} />
+                            </div>
+                          )
                         )}
                       </td>
                     );
@@ -951,25 +971,25 @@ function LeavesTab({ isAdmin }: { isAdmin: boolean }) {
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.start_date')}</label>
-                <LocalizedDateInput value={formData.start_date} onChange={e => setFormData(prev => ({ ...prev, start_date: e.target.value }))} />
+                <label htmlFor="leave-start-date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.start_date')}</label>
+                <LocalizedDateInput id="leave-start-date" value={formData.start_date} onChange={e => setFormData(prev => ({ ...prev, start_date: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.end_date')}</label>
-                <LocalizedDateInput value={formData.end_date} onChange={e => setFormData(prev => ({ ...prev, end_date: e.target.value }))} />
+                <label htmlFor="leave-end-date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.end_date')}</label>
+                <LocalizedDateInput id="leave-end-date" value={formData.end_date} onChange={e => setFormData(prev => ({ ...prev, end_date: e.target.value }))} />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.type')}</label>
-              <Select value={formData.leave_type} onChange={e => setFormData(prev => ({ ...prev, leave_type: e.target.value as LeaveType }))}>
+              <label htmlFor="leave-type" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.type')}</label>
+              <Select id="leave-type" value={formData.leave_type} onChange={e => setFormData(prev => ({ ...prev, leave_type: e.target.value as LeaveType }))}>
                 {LEAVE_TYPES.map(lt => (
                   <option key={lt} value={lt}>{t(`leaves.leave_types.${lt}`)}</option>
                 ))}
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.notes')}</label>
-              <Textarea rows={2} value={formData.notes} onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))} />
+              <label htmlFor="leave-notes" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('leaves.notes')}</label>
+              <Textarea id="leave-notes" rows={2} value={formData.notes} onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>
@@ -1025,11 +1045,11 @@ function LeavesTab({ isAdmin }: { isAdmin: boolean }) {
                   <Badge variant={statusVariant} className="text-xs">{t(`leaves.status.${leave.status}`)}</Badge>
                   {isAdmin && leave.status === 'PENDING' && (
                     <div className="flex gap-1">
-                      <Button variant="default" size="sm" className="h-7 w-7 p-0" onClick={() => approveMutation.mutate(leave.id)}>
-                        <Check size={14} />
+                      <Button variant="default" size="sm" className="h-7 w-7 p-0" onClick={() => approveMutation.mutate(leave.id)} aria-label={t('leaves.status.APPROVED')}>
+                        <Check size={14} aria-hidden="true" />
                       </Button>
-                      <Button variant="destructive" size="sm" className="h-7 w-7 p-0" onClick={() => rejectMutation.mutate(leave.id)}>
-                        <X size={14} />
+                      <Button variant="destructive" size="sm" className="h-7 w-7 p-0" onClick={() => rejectMutation.mutate(leave.id)} aria-label={t('leaves.status.REJECTED')}>
+                        <X size={14} aria-hidden="true" />
                       </Button>
                     </div>
                   )}

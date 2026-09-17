@@ -91,11 +91,12 @@ export function BackupPathBrowser({ open, onOpenChange, onSelect, t }: BackupPat
               onChange={(e) => setManualPath(e.target.value)}
               className="flex-1 text-sm"
               onKeyDown={(e) => { if (e.key === 'Enter') handleGo(); }}
+              aria-label={t('backup.browse.title')}
             />
             <Button size="sm" variant="outline" onClick={handleGo} disabled={loading}>
               {t('backup.browse.go')}
             </Button>
-            <Button size="sm" variant="outline" onClick={handleParent} disabled={loading || path === '/'}>
+            <Button size="sm" variant="outline" onClick={handleParent} disabled={loading || path === '/'} aria-label={t('common:previous')}>
               <ChevronUp className="size-4" />
             </Button>
           </div>

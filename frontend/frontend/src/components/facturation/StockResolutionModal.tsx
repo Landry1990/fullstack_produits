@@ -225,10 +225,11 @@ export default function StockResolutionModal({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="w-full">
-                        <label className="block pb-1.5 text-[11px] font-bold uppercase text-slate-500 tracking-wide">
+                        <label htmlFor="promis-client-name" className="block pb-1.5 text-[11px] font-bold uppercase text-slate-500 tracking-wide">
                             {t('stock_resolution.client_name')} <span className="lowercase font-normal text-slate-400">({t('stock_resolution.optional')})</span>
                         </label>
                         <input
+                            id="promis-client-name"
                             type="text"
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                             value={promisClientName}
@@ -237,10 +238,11 @@ export default function StockResolutionModal({
                         />
                     </div>
                     <div className="w-full">
-                        <label className="block pb-1.5 text-[11px] font-bold uppercase text-slate-500 tracking-wide">
+                        <label htmlFor="promis-client-phone" className="block pb-1.5 text-[11px] font-bold uppercase text-slate-500 tracking-wide">
                             {t('stock_resolution.client_phone_for_promised_ticket')}
                         </label>
                         <input
+                            id="promis-client-phone"
                             type="text"
                             className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
                             value={promisPhone}

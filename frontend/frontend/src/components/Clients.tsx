@@ -25,6 +25,7 @@ import type { Client, AyantDroit } from '../types';
 import ClientDepositModal from './clients/ClientDepositModal';
 import ClientDeleteWarningModal from './clients/ClientDeleteWarningModal';
 import BulkDeleteWarningModal from './clients/BulkDeleteWarningModal';
+import ClientMergeModal from './clients/ClientMergeModal';
 import clientService from '../services/clientService';
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import { clientSchema } from '../schemas/clientSchema';
@@ -63,6 +64,7 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [showInactive, setShowInactive] = useState<boolean>(false);
+  const [clientTypeFilter, setClientTypeFilter] = useState<'all' | 'PARTICULIER' | 'PROFESSIONNEL'>('all');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -81,6 +83,9 @@ export default function Clients() {
   const [isLoyaltyConfigOpen, setIsLoyaltyConfigOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+  const [mergeCandidates, setMergeCandidates] = useState<Array<{ id: number; name: string; client_type: 'PARTICULIER' | 'PROFESSIONNEL'; phone: string | null; score: number }>>([]);
+  const [pendingFormData, setPendingFormData] = useState<{ data: Partial<Client>; mode: 'create' | 'edit' } | null>(null);
   const [isDeleteWarningOpen, setIsDeleteWarningOpen] = useState(false);
   const [deleteWarningData, setDeleteWarningData] = useState<{
     clientName: string;
@@ -129,7 +134,8 @@ export default function Clients() {
         page: currentPage,
         page_size: itemsPerPage,
         // @ts-expect-error - Backend supports include_inactive
-        include_inactive: showInactive
+        include_inactive: showInactive,
+        ...(clientTypeFilter !== 'all' ? { client_type: clientTypeFilter } : {})
       }, skipCache) as Client[] | { results: Client[]; count: number };
       
       if (data && 'results' in data) {
@@ -150,7 +156,7 @@ export default function Clients() {
     fetchClients();
     fetchLoyaltyThreshold();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showInactive, currentPage, debouncedSearch]);
+  }, [showInactive, clientTypeFilter, currentPage, debouncedSearch]);
 
   const fetchLoyaltyThreshold = async () => {
     try {
@@ -231,11 +237,47 @@ export default function Clients() {
     setIsFormModalOpen(true);
   };
 
+  const processFormData = async (cleanData: Partial<Client>, mode: 'create' | 'edit', targetId?: number) => {
+    try {
+        if (mode === 'create') {
+            const created = await clientService.create(cleanData);
+            let resultClient = created;
+            if (targetId) {
+                const mergeResult = await clientService.merge(created.id as number, targetId) as { client: Client };
+                resultClient = mergeResult.client;
+            }
+            setClients(prev => [resultClient, ...prev.filter(c => c.id !== created.id && c.id !== targetId)]);
+            setTotalCount(prev => prev + 1);
+            gooeyToast.success(targetId ? t('clients:messages.merge_success') : t('clients:messages.create_success'));
+        } else if (formData.id) {
+            const updated = await clientService.update(formData.id, cleanData);
+            let resultClient = updated;
+            if (targetId) {
+                const mergeResult = await clientService.merge(updated.id as number, targetId) as { client: Client };
+                resultClient = mergeResult.client;
+            }
+            setClients(prev => prev.map(c => c.id === updated.id ? { ...updated, is_active: Boolean(targetId ? false : true) } : c.id === targetId ? resultClient : c));
+            if (selectedClient?.id === updated.id) {
+                setSelectedClient(targetId ? null : updated);
+            }
+            gooeyToast.success(targetId ? t('clients:messages.merge_success') : t('clients:messages.update_success'));
+        }
+        setIsFormModalOpen(false);
+        setIsMergeModalOpen(false);
+        setPendingFormData(null);
+    } catch (err: unknown) {
+        const axiosErr = err as { response?: { data?: { message?: string; detail?: string } } };
+        const msg = axiosErr.response?.data?.message || axiosErr.response?.data?.detail || t('clients:messages.error_save');
+        gooeyToast.error(msg as string, { duration: 5000 });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-        // Validation avec Zod
         const validation = clientSchema.safeParse(formData);
         if (!validation.success) {
             const errorMsg = (validation.error as { errors: Array<{ path: (string | number)[]; message: string }> }).errors
@@ -247,27 +289,38 @@ export default function Clients() {
         }
 
         const cleanData = validation.data as unknown as Partial<Client>;
+        const dupData = { name: cleanData.name, phone: cleanData.phone, exclude_id: formData.id || undefined };
+        const { candidates } = await clientService.checkDuplicates(dupData);
 
-        if (formMode === 'create') {
-            const created = await clientService.create(cleanData);
-            setClients(prev => [created, ...prev]);
-            setTotalCount(prev => prev + 1);
-            gooeyToast.success(t('clients:messages.create_success'));
-        } else if (formData.id) {
-            const updated = await clientService.update(formData.id, cleanData);
-            setClients(prev => prev.map(c => c.id === updated.id ? updated : c));
-            if (selectedClient?.id === updated.id) {
-                setSelectedClient(updated);
-            }
-            gooeyToast.success(t('clients:messages.update_success'));
+        if (candidates && candidates.length > 0) {
+            setPendingFormData({ data: cleanData, mode: formMode });
+            setMergeCandidates(candidates);
+            setIsMergeModalOpen(true);
+            setIsSubmitting(false);
+            return;
         }
-        setIsFormModalOpen(false);
+
+        await processFormData(cleanData, formMode);
     } catch (err: unknown) {
         const axiosErr = err as { response?: { data?: { message?: string } } };
         gooeyToast.error(axiosErr.response?.data?.message || t('clients:messages.error_save'));
     } finally {
         setIsSubmitting(false);
     }
+  };
+
+  const handleKeepNew = async () => {
+    if (!pendingFormData) return;
+    setIsSubmitting(true);
+    setIsMergeModalOpen(false);
+    await processFormData(pendingFormData.data, pendingFormData.mode);
+  };
+
+  const handleMerge = async (candidate: { id: number; name: string; client_type: 'PARTICULIER' | 'PROFESSIONNEL'; phone: string | null; score: number }) => {
+    if (!pendingFormData) return;
+    setIsSubmitting(true);
+    setIsMergeModalOpen(false);
+    await processFormData(pendingFormData.data, pendingFormData.mode, candidate.id);
   };
 
   const handleDelete = async () => {
@@ -457,6 +510,36 @@ export default function Clients() {
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
+           </div>
+
+           <div className="flex gap-2" role="group" aria-label={t('clients:fields.type')}>
+              <Button
+                type="button"
+                size="sm"
+                variant={clientTypeFilter === 'all' ? 'default' : 'outline'}
+                className={cn('flex-1', clientTypeFilter === 'all' ? 'bg-emerald-600 hover:bg-emerald-700' : 'text-slate-600')}
+                onClick={() => { setClientTypeFilter('all'); setCurrentPage(1); }}
+              >
+                {t('clients:filters.type_all')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={clientTypeFilter === 'PARTICULIER' ? 'default' : 'outline'}
+                className={cn('flex-1', clientTypeFilter === 'PARTICULIER' ? 'bg-slate-700 hover:bg-slate-800' : 'text-slate-600')}
+                onClick={() => { setClientTypeFilter('PARTICULIER'); setCurrentPage(1); }}
+              >
+                {t('clients:types.individual')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={clientTypeFilter === 'PROFESSIONNEL' ? 'default' : 'outline'}
+                className={cn('flex-1', clientTypeFilter === 'PROFESSIONNEL' ? 'bg-amber-600 hover:bg-amber-700' : 'text-slate-600')}
+                onClick={() => { setClientTypeFilter('PROFESSIONNEL'); setCurrentPage(1); }}
+              >
+                {t('clients:types.professional')}
+              </Button>
            </div>
         </div>
 
@@ -830,6 +913,14 @@ export default function Clients() {
         clientCount={bulkDeleteWarningData?.clientCount || 0}
         clientsWithUnpaid={bulkDeleteWarningData?.clientsWithUnpaid || []}
         totalDue={bulkDeleteWarningData?.totalDue || 0}
+      />
+
+      <ClientMergeModal
+        isOpen={isMergeModalOpen}
+        onClose={() => { setIsMergeModalOpen(false); setPendingFormData(null); }}
+        onKeepNew={handleKeepNew}
+        onMerge={handleMerge}
+        candidates={mergeCandidates}
       />
     </div>
   );
