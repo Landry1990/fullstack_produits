@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface HeaderProps {
   reference: string;
@@ -36,8 +37,15 @@ export default function Header({
   onToggleKeyboard,
   count,
 }: HeaderProps) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.header}>
+    <View
+      style={[
+        styles.header,
+        { paddingTop: Platform.OS === 'web' ? 0 : insets.top },
+      ]}
+    >
       <TouchableOpacity onPress={onBack} style={styles.backBtn}>
         <Text style={styles.backBtnText}>Terminer</Text>
       </TouchableOpacity>
@@ -111,7 +119,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a2e',
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === 'web' ? 10 : 14,
-    paddingTop: Platform.OS === 'web' ? 0 : 48,
     minHeight: 56,
   },
   backBtn: {

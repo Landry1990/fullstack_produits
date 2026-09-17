@@ -2,6 +2,56 @@
 
 ---
 
+## 2026-09-17 — 🔄 Retour au commit 9a4049f1 + diagnostic régression perçue
+
+### Contexte
+
+L'utilisateur a signalé une impression de régression d'environ 1 mois, avec exemple concret :
+la sidebar ne montrait plus les sections de catégories.
+
+### Diagnostic
+
+- Le dernier commit `9a4049f1` (01h16) n'avait pas supprimé les sections de la sidebar ;
+  il ajoutait seulement des attributs d'accessibilité (`aria-expanded`, `aria-hidden`).
+- L'auto-collapse de la sidebar sur écrans 1024–1280px (`SidebarContext.tsx`) pouvait
+  expliquer la disparition des titres de catégories sur MacBook 13".
+- Anomalie structurelle identifiée : dossiers `backend/api/api/api/api/` emboîtés
+  trackés par Git depuis les commits `6e4301ed` / `3b99ebd9`. Ils ne semblent pas
+  utilisés par les imports mais constituent une pollution du repo.
+- `frontend/dist/` désynchronisé avec de nouveaux bundles non suivis.
+
+### Action
+
+Retour strict au commit `9a4049f1` :
+- `git reset --hard HEAD` : toutes les modifications trackées ont été annulées.
+- `git clean -fd` : fichiers non suivis supprimés (nouveaux bundles dist,
+  `pda-inventaire/src/utils/gs1Parser.ts`, refactor `historiqueClotures/` non commité,
+  fichiers temporaires Postgres).
+
+Redéploiement complet :
+- `.\deploy.ps1 -Target all` : frontend rebuild + copie nginx, backend copié + restart.
+- Backend Docker : démarrage confirmé (`Application startup complete`).
+- `http://localhost/` → 200 après démarrage.
+
+### Résolution
+
+L'impression de régression était principalement liée à un **cache PWA / ancien `dist/`
+servi par nginx** et non au code source. Après redeploiement + `Ctrl+F5`, l'application
+est revenue à l'état normal.
+
+### Vérifications
+
+- `npx tsc -p tsconfig.json --noEmit` dans `pda-inventaire` : propre (0 erreur).
+- `npx tsc --noEmit` dans `frontend/frontend` : propre (0 erreur).
+
+### Points à surveiller
+
+- Les dossiers `backend/api/api/api/api/` emboîtés restent présents dans l'historique
+  et le working tree. À nettoyer dans un commit dédié si confirmation.
+- `frontend/dist/` est cohérent avec le commit actuel (anciens bundles).
+
+---
+
 ## 2026-09-17 — 🧑‍🤝‍🧑 Fusion simplifiée des doublons clients
 
 ### Fonctionnalité
