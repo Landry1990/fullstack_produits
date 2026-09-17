@@ -27,6 +27,8 @@ export const Input: React.FC<InputProps> = ({
   type,
   ...props
 }) => {
+  const autoId = React.useId();
+  const inputId = props.id ?? autoId;
   const sizeClasses = {
     sm: 'h-9 text-xs px-3',
     md: 'h-10 text-sm px-4',
@@ -45,7 +47,7 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className={`w-full ${containerClassName}`}>
       {label && (
-        <label className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">
+        <label htmlFor={inputId} className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">
           {label}
         </label>
       )}
@@ -56,6 +58,7 @@ export const Input: React.FC<InputProps> = ({
           </div>
         )}
         <input
+          id={inputId}
           type={type}
           onChange={handleChange}
           className={`

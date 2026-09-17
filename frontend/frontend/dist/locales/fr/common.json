@@ -63,6 +63,9 @@
     "show_header": "Afficher",
     "hide_header": "Masquer",
     "add": "Ajouter",
+    "decrease": "Diminuer",
+    "increase": "Augmenter",
+    "clear": "Effacer",
     "restore": "Restaurer",
     "import": "Import",
     "no_address": "Sans adresse",
@@ -80,7 +83,11 @@
         "search": "Chercher",
         "close": "Fermer",
         "refresh": "Actualiser",
-        "processing": "Traitement…"
+        "processing": "Traitement…",
+        "add": "Ajouter",
+        "edit": "Modifier",
+        "cancel": "Annuler",
+        "delete": "Supprimer"
     },
     "telegram": {
         "send_success": "Rapport envoyé sur Telegram !",
@@ -99,6 +106,8 @@
     },
     "validate": "Valider",
     "validate_all": "Tout valider",
+    "select_all": "Tout sélectionner",
+    "export_csv_title": "Exporter en CSV",
     "delete_all": "Tout supprimer",
     "single_selection": "Sélection",
     "bulk_actions": "Actions groupées",
@@ -119,6 +128,7 @@
     "export_error": "Erreur lors de l'export",
     "date": "Date",
     "messages": {
+        "hint_min_char": "Tapez au moins 1 caractère",
         "created": "Créé avec succès",
         "updated": "Mis à jour",
         "deleted": "Supprimé",

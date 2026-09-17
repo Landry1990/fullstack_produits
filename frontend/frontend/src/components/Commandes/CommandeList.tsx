@@ -348,6 +348,7 @@ export default function CommandeList({
                 <Checkbox
                   checked={selectedOrderIds.size === sortedCommandes.length && sortedCommandes.length > 0}
                   onCheckedChange={onToggleAllOrdersSelection}
+                  aria-label={t('common:maintenance.select_all')}
                 />
               </TableHead>
 
@@ -547,6 +548,7 @@ export default function CommandeList({
                   <Checkbox
                     checked={selectedOrderIds.has(commande.id)}
                     onCheckedChange={() => onToggleOrderSelection(commande.id)}
+                    aria-label={`Sélectionner commande #${commande.id}`}
                   />
                 </TableCell>
                 <TableCell className="text-left py-3 px-4">

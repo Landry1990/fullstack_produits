@@ -123,6 +123,7 @@ export default function CatalogDCIAddModal({
             type="text"
             className="w-full pl-10 rounded-xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:ring-2 ring-primary/20 transition-all"
             placeholder={t('products:form.search_med_ref') || 'Rechercher un produit...'}
+            aria-label={t('products:form.search_med_ref') || 'Rechercher un produit...'}
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -176,6 +177,7 @@ export default function CatalogDCIAddModal({
                     checked={isSelected}
                     disabled={alreadyLinked}
                     onChange={() => !alreadyLinked && toggleSelect(prod.id)}
+                    aria-label={prod.name}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">

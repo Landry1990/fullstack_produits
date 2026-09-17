@@ -2,7 +2,334 @@
 
 ---
 
-## 2026-09-15 — Validation CIP + coefficient & marge dans le formulaire produit
+## 2026-09-17 — 🧑‍🤝‍🧑 Fusion simplifiée des doublons clients
+
+### Fonctionnalité
+
+Ajout d'une fusion de doublons clients accessible depuis la création/édition d'un client.
+Lorsqu'un nom ou un téléphone ressemble fortement à un client existant, un modal propose
+soit de fusionner les données dans le client existant, soit de créer un nouveau client.
+
+### Détails
+
+- **Modèle** : ajout du champ `merged_into` (`ForeignKey` self-référencée) sur `Client`
+  avec `related_name='merged_from'`.
+- **Migration** : `backend/api/migrations/0253_add_client_merged_into.py` — seul le
+  champ est ajouté, aucun index superflu.
+- **Service** : `backend/api/services/client_merger.py`
+  - `find_duplicate_candidates` : recherche par téléphone exact puis par similarité
+    trigramme sur le nom, score de correspondance incluant `difflib`.
+  - `merge_clients` : cumule points de fidélité, solde dépôt, historique fidélité,
+    dépôts et ayants-droit, conserve la cible active et désactive la source.
+  - **Les factures ne sont PAS déplacées** : demande métier explicite.
+- **Endpoints** : `POST /api/clients/check_duplicates/` et
+  `POST /api/clients/<id>/merge/`.
+- **Frontend** :
+  - `frontend/frontend/src/components/clients/ClientMergeModal.tsx` (shadcn/ui) ;
+  - intégration dans `frontend/frontend/src/components/Clients.tsx` ;
+  - méthodes `checkDuplicates` / `merge` dans `frontend/frontend/src/services/clientService.ts`.
+- **Traductions** : clés `clients:merge.*` et `clients:messages.merge_success`
+  ajoutées en `fr` et `en`.
+- **Tests** : `backend/api/tests/test_client_merge.py` créé avec un test unitaire
+  couvrant la fusion des points, dépôts, historique et la désactivation de la source.
+
+### Fichiers modifiés
+
+- `backend/api/models/clients.py`
+- `backend/api/migrations/0253_add_client_merged_into.py`
+- `backend/api/services/client_merger.py`
+- `backend/api/views/clients.py`
+- `frontend/frontend/src/components/clients/ClientMergeModal.tsx`
+- `frontend/frontend/src/components/Clients.tsx`
+- `frontend/frontend/src/services/clientService.ts`
+- `frontend/frontend/public/locales/fr/clients.json`
+- `frontend/frontend/public/locales/en/clients.json`
+- `backend/api/tests/test_client_merge.py`
+
+---
+
+## 2026-09-16 — ⚡ Fix : apparition retardée des ventes à la Caisse centrale
+
+### Problème
+
+Une vente envoyée depuis un point de vente pouvait apparaître immédiatement ou seulement après plusieurs secondes à la Caisse centrale. En cas de rafraîchissement manqué, l'interface devait attendre le polling de secours configuré à 30 secondes.
+
+### Cause
+
+`SaleFinalizer.finalize_sale()` est exécuté sous `@transaction.atomic`, mais diffusait l'événement WebSocket `facture_update` avant le commit PostgreSQL. La Caisse centrale recevait l'événement et rechargeait la liste alors que la nouvelle facture n'était pas encore visible par une autre connexion à la base. Aucun second événement n'étant émis après le commit, la facture restait absente jusqu'au polling suivant.
+
+### Correctif
+
+`backend/api/services/sale_finalizer.py` :
+- émission WebSocket enregistrée via `transaction.on_commit()` ;
+- notification envoyée uniquement lorsque la facture est réellement persistée et interrogeable ;
+- conservation de l'isolation des erreurs WebSocket afin qu'un problème temps réel ne fasse jamais échouer la vente.
+
+### Vérifications
+
+- `pytest api/tests/test_sale_finalizer.py -q` dans le conteneur backend : **19 tests réussis**.
+- La commande Django ne découvre pas cette suite car elle est écrite pour pytest (`0 test`, sans échec).
+
+---
+
+## 2026-09-16 — 🐛 Fix : faux blocage popup Safari lors de l'ouverture d'une facture depuis la Caisse centrale
+
+### Problème
+
+Sur Safari, la génération d'une facture depuis l'aperçu du ticket de Caisse centrale signalait une popup bloquée et pouvait ne pas ouvrir la facture, particulièrement après la saisie du nom d'un client générique.
+
+### Cause
+
+`CaisseTicketPreviewModal` appelait `window.open(..., 'noopener,noreferrer')`. Avec `noopener`, Safari — et potentiellement d'autres navigateurs — peut créer l'onglet tout en retournant `null`, puisque la référence vers la nouvelle fenêtre est volontairement coupée. L'application interprétait alors ce résultat comme un blocage. Dans le flux asynchrone, elle perdait aussi la référence nécessaire pour rediriger l'onglet `about:blank` après l'enregistrement du client.
+
+### Correctif
+
+`frontend/src/components/caisse/CaisseTicketPreviewModal.tsx` :
+- ouverture de la fenêtre sans couper immédiatement la référence ;
+- sécurisation juste après l'ouverture avec `printWindow.opener = null` ;
+- même traitement pour l'impression directe et pour le flux asynchrone avec saisie du client ;
+- conservation de la pré-ouverture avant l'appel API afin de respecter les politiques anti-popup de Safari, Chrome et Firefox.
+
+### Vérifications
+
+- Audit de tous les appels `window.open` du frontend : le défaut bloquant était localisé aux deux chemins facture de la Caisse centrale utilisant `noopener,noreferrer` tout en ayant besoin de la référence retournée.
+- `npx tsc --noEmit` : propre.
+- `npm run build` : propre.
+
+---
+
+## 2026-09-16 — 🎨 UI : ticket de caisse allégé et plus lisible
+
+### Problème
+
+Après restauration du CSS d'impression, le ticket respectait les alignements mais paraissait trop chargé : séparateurs noirs trop présents, montants et totaux excessivement gras, espaces verticaux importants.
+
+### Correctif
+
+`frontend/src/components/printing/TicketTemplate.tsx` :
+- traits noirs épais remplacés par des séparateurs fins à faible opacité ;
+- suppression des traits entre chaque article ;
+- graisses des produits, montants, paiements, numéro de ticket et pied réduites ;
+- bloc NET À PAYER ramené à une taille sobre avec un montant en `font-semibold` ;
+- espacement vertical compacté ;
+- en-tête et pied toujours centrés ;
+- valeurs, paiements et montants toujours alignés à l'extrême droite ;
+- code-barres et zone de silence conservés sans modification.
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+- `npm run build` : propre.
+
+---
+
+## 2026-09-16 — 🐛 Fix : espacement des colonnes de la table Caisse centrale
+
+### Problème
+
+Dans la table des factures de la Caisse centrale, les contenus des colonnes **Produits** et **Vendeur** se chevauchaient sur les écrans intermédiaires. La colonne Produits ne disposait que de 56 px alors que son contenu pouvait atteindre 150 px, et `table-fixed` comprimait l'ensemble des colonnes dans la largeur disponible.
+
+### Correctif
+
+`frontend/src/components/caisse/FacturesTable.tsx` :
+- largeur minimale de 1180 px pour préserver la lisibilité des huit colonnes ;
+- largeurs explicites et équilibrées pour Ticket, Facture, Client, Date, Produits, Vendeur, Montant et Actions ;
+- largeur Produits portée à 220 px et Actions à 190 px ;
+- troncature propre des noms longs (client, produits et vendeur), avec valeur complète au survol ;
+- montant maintenu sur une seule ligne ;
+- défilement horizontal conservé lorsque l'écran est plus étroit que la table.
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+- `npm run build` : propre.
+
+---
+
+## 2026-09-16 — 🐛 Fix : code-barres du ticket de caisse illisible / résultat bizarre au scan
+
+### Problème
+
+Le code-barres en bas du ticket scannait mal et renvoyait un résultat incohérent. La valeur encodée pouvait aussi ne pas correspondre au numéro de facture affiché.
+
+### Cause
+
+`TicketTemplate.tsx` avait `margin={0}` sur le composant `<Barcode />`, supprimant la zone blanche (quiet zone) obligatoire de part et d'autre du code-barres : sans cette marge, le scanner ne repère pas correctement les start/stop et retourne des caractères erronés. De plus, le numéro encodé utilisait uniquement `facture?.numero_facture`, qui est indéfini quand `ticket.facture` est seulement un id (pas un objet).
+
+### Correctif
+
+`frontend/src/components/printing/TicketTemplate.tsx` :
+- `format="CODE128"` explicité.
+- `width` porté à `1.8` et `margin` à `15` : les barres sont moins denses et la zone blanche (quiet zone) est large — corrige le mauvais décodage du start pattern (`FAC-` lu `FQC°`).
+- `height` porté à `50` pour un meilleur confort de scan.
+- La valeur du code-barres et le numéro affiché en haut du ticket utilisent tous deux `ticket.facture_numero || facture?.numero_facture` : cohérence garantie, même quand seul l'id facture est présent.
+
+### Fichiers modifiés
+
+- `frontend/src/components/printing/TicketTemplate.tsx`
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+- `npm run build` : propre — dist régénérée.
+
+---
+
+## 2026-09-16 — 🐛 Fix : ticket de caisse non stylé à l'impression (tout à gauche, montants non alignés)
+
+### Problème
+
+À l'impression du ticket de caisse, l'en-tête et le pied de page étaient collés à gauche au lieu d'être centrés, les montants n'étaient pas alignés à droite, et certains labels étaient collés aux montants (ex. `NET À PAYER (CFA)7 110` sans espace). Capture : le ticket apparaissait sans les classes Tailwind (`text-center`, `text-right`, `justify-between`...).
+
+### Cause
+
+`buildTicketPrintHtml` copiait les balises `<style>`/`<link>` du document source via `DOMPurify.sanitize(styleTags, ...)`. Comme ces balises sont des éléments de `<head>`, DOMPurify les parse en mode document et les déplace dans `<head>` ; le fragment retourné (contenu de `<body>`) ressortait **vide**. Résultat : le document d'impression n'embarquait **aucun CSS applicatif** → les classes Tailwind du `TicketTemplate` étaient inactives.
+
+### Correctif
+
+`frontend/src/utils/print/printHelpers.ts` : ajout de `FORCE_BODY: true` à l'appel `DOMPurify.sanitize(styleTags, ...)` afin de forcer le parsing en contexte `<body>` et conserver les feuilles de style. Avec le CSS enfin chargé dans le document d'impression, l'en-tête/pied reprennent leur `text-center`, les montants leur `text-right` et les totaux leur `justify-between`.
+
+### Fichiers modifiés
+
+- `frontend/src/utils/print/printHelpers.ts`
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+- `npm run build` : propre — dist régénérée.
+
+---
+
+## 2026-09-16 — 🐛 Fix : utilisateur piégé sur le modal « Ouvrir un point de vente » après fermeture du POS
+
+### Problème
+
+Après avoir cliqué sur **« Fermer le point »** (bandeau mode POS de `Layout`) ou **F10**, la sidebar réapparaissait mais restait incliquable : `Facturation.tsx` rouvrait automatiquement `OpenPointDeVenteModal` en mode `forceSelection`, qui bloquait toutes les sorties (pas de ✕, pas d'« Annuler », `Escape` et clic-extérieur neutralisés). L'overlay Radix `fixed inset-0` couvrait tout le viewport — sidebar comprise. Seule issue : rouvrir un point de vente.
+
+### Correctif
+
+`frontend/src/components/caisse/OpenPointDeVenteModal.tsx` : en mode sélection forcée, le modal offre désormais une issue explicite — bouton **« Quitter la facturation »** (`LogOut`) qui ferme le modal et navigue vers `/app`. `Escape` déclenche la même action (déplacé avant le garde-fou `selectablePostes.length === 0` qui le rendait inerte). Le clic extérieur et le bouton ✕ restent bloqués : l'utilisateur doit choisir un poste **ou** quitter la page — plus de piège.
+
+### 🌐 Traductions ajoutées (fr + en)
+
+- `caisse` : `open_point_vente.quit` (« Quitter la facturation » / « Leave billing »).
+
+### Fichiers modifiés
+
+- `frontend/src/components/caisse/OpenPointDeVenteModal.tsx`
+- `frontend/public/locales/fr/caisse.json`, `frontend/public/locales/en/caisse.json`
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+
+---
+
+## 2026-09-16 — Passe accessibilité Zone 3 (administration / maintenance / planning / dashboards / promotions / challenges / comptabilité / audit / utilisateurs / divers / corbeille / rapports)
+
+### ♿ Accessibilité
+
+Audit + correctifs ciblés dans `frontend/src/components/` (zone 3 uniquement) — aucun changement de layout ni de style, clés i18n existantes réutilisées (quelques clés ajoutées, fr + en) :
+
+- **Modales custom `fixed inset-0`** : `role="dialog"`, `aria-modal="true"`, `aria-labelledby` ajoutés — `Promotions/PromotionForm` (formulaire plein écran), `GestionUtilisateurs` (modal utilisateur), `compta/Comptabilite` (modal compte + confirmation suppression), `systemadmin/BackupsTab` (confirmation restauration), `systemadmin/RestoreOverlay`, `dashboard/ObjectivesSettings`. Les `<dialog>` natifs de `HistoriqueClotures` et les modales Radix/shadcn étaient déjà conformes.
+- **Boutons icône seuls** : `aria-label` traduit ajouté — édition/suppression comptes (`Comptabilite`), actions corbeille (`Corbeille` : refresh, restaurer, supprimer, déplier), presets rapports (`dashboard/reports/ReportFilters`), actions challenges (`ChallengesPage`), actions catégories (`common/CategoryManager`, `common/ConfigOptionManager`), badges permissions (`GestionUtilisateurs` : `role="img"` + `aria-label`).
+- **Boutons icône + texte masqué sur mobile** (`hidden sm:inline` / `hidden xl:inline`) : `aria-label` ajouté car le nom accessible disparaît sous le breakpoint — `ChallengesPage` (classement/édition/suppression), `DashboardShadcn` (TabsTrigger), `DashboardManagerShadcn` (objectif), `Corbeille` (vider), `ConfigOptionManager` (ajouter), `Perimes` (onglets + refresh).
+- **Labels ↔ contrôles** : `htmlFor`/`id` associés — `Maintenance` (dates, mots de passe, sauvegarde planifiée), `PlanningOperateurs` (config équipes, congés), `BackupsTab` (paramètres sauvegarde/PITR/cloud), `UpdateTab` (heure de mise à jour), `JournalAudit` (recherche/utilisateur/dates), `Comptabilite` (modal compte, formulaire de charge), `PromotionForm` (nom/dates/type/remise/quantités/recherche), `ChallengesPage` + `ChallengeFormModal`, `dashboard/ObjectivesSettings` (marge/coefficient/jours/croissance), `dashboard/reports/ReportFilters` (`id="rp-<param>"` sur tous les types de paramètres), `ConfigOptionManager`.
+- **États accessibles** : `aria-pressed` sur sélections (types de charge `Comptabilite`, valorisation `GestionDivers`, modes `ObjectivesSettings`, ET/OU `ReportFilters`, filtre marge `ReportResults`, vues mois/semaine et couleurs/shifts `PlanningOperateurs`, types de challenge `ChallengeFormModal`, catégories `CategoryManager`, langues `UserHeader`) ; `aria-expanded`/`aria-haspopup` sur triggers dépliants (`ReportFilters` conditions/colonnes, `JournalAudit` détails techniques, `UserHeader` menu, `Corbeille` détails) ; `aria-current` sur la sélection `ReportSidebar`.
+- **Éléments cliquables** : `role="button"` + `tabIndex` + Enter/Espace sur lignes/cellules cliquables (`GestionDivers` lignes journalières, `PlanningOperateurs` cellules calendrier, `dashboard/ChallengesSummary`, `dashboard/StockIntelligence` en-têtes navigables) ; en-têtes de catégories `Maintenance` réécrits sans interactif imbriqué ; backdrop mobile `Sidebar` marqué `aria-hidden="true"`.
+- **Chargement** : `aria-busy`/`role="status"` + labels sur zones de chargement (`common/LoadingScreen`, `Corbeille`, `JournalAudit`, `UpdateTab`, `SystemHealthTab`, `DashboardManagerShadcn`).
+- **Composant `ui/Input`** : `id` auto via `React.useId()` + `htmlFor` sur le label interne — tout `<Input label=…>` est désormais correctement associé.
+
+### 🌐 Traductions ajoutées (fr + en)
+
+- `common` : `decrease`, `increase`, `select_all`, `export_csv_title`, `messages.hint_min_char`, `actions.add/edit/cancel/delete` (clés déjà référencées par le code mais absentes).
+- `accounting` : `exercice.label`.
+- `reports` : `dynamic_constructor.operator_label`, `dynamic_constructor.remove_condition`.
+
+### Fichiers modifiés (zone 3)
+
+- `systemadmin/` : `RestoreOverlay`, `BackupsTab`, `BackupPathBrowser`, `UpdateTab` (`SystemHealthTab` vérifié, déjà conforme)
+- `dashboard/` : `ObjectivesSettings`, `ChallengesSummary`, `StockIntelligence`, `PerformanceOverview`, `reports/ReportFilters`, `reports/ReportResults`, `reports/ReportSidebar`
+- `Promotions/PromotionForm.tsx`
+- `challenges/` : `ChallengesPage`, `ChallengeFormModal`
+- `compta/Comptabilite.tsx`
+- `divers/GestionDivers.tsx`
+- `common/` : `CategoryManager`, `ConfigOptionManager`, `UserHeader`, `LoadingScreen`
+- `ui/Input.tsx`
+- Racine : `Maintenance`, `PlanningOperateurs`, `JournalAudit`, `GestionUtilisateurs`, `Corbeille`, `DashboardShadcn`, `DashboardManagerShadcn`, `Perimes`, `Sidebar`, `CentreRapports` (vérifié)
+- Locales : `fr/en` `common.json`, `accounting.json`, `reports.json`
+
+`common/PremiumModal.tsx`, `common/FeedbackModal.tsx`, `common/MessagingModal.tsx`, `common/SmartOrganizerModal.tsx` **non modifiés** (exclus du périmètre).
+
+### Vérifications
+
+- Re-scan zone 3 : overlays `fixed inset-0`, `<div onClick>`, boutons icône, labels sans `htmlFor`, lignes cliquables — conformes ou corrigés.
+- `npx tsc --noEmit` / `npm run build` : à lancer par l'agent principal (exécution shell non autorisée dans le sous-agent).
+
+---
+
+## 2026-09-16 — Passe accessibilité Zone 2 (produits / stock / inventaire / commandes / fournisseurs)
+
+### ♿ Accessibilité
+
+Audit + correctifs ciblés dans `frontend/src/components/` (zone 2 uniquement) — aucun changement de layout ni de style, clés i18n existantes réutilisées :
+
+- **Composant `ui/Checkbox`** : nouveau prop optionnel `'aria-label'` appliqué sur le `div[role="checkbox"]` (avec repli sur `label`) — nécessaire car un `<div role="checkbox">` n'est pas un élément labellisable, les `<label>` englobants ne lui donnent pas de nom accessible.
+- **Cases à cocher de sélection** : `aria-label` ajouté sur les cases « tout sélectionner » et par ligne (`ProduitShadcn`, `ProductTable`, `ReapproRayon`, `Perimes`, `Vitrine`, `InventaireDataTab`, `InventaireListTable`, `CommandeList`, `CommandeDetails`, `CommandeProductTable`, `CommandeProductRow`, `SuggestionCommandeModal`, `ReconditionnementModal`, `CatalogDCIAddModal`, `SimplePrintLabelsModal`, `PointageReleveModal`, `Cadencier`, `StockAnalysisTable`, `Transformations`).
+- **Champs de recherche / filtres / dates** : `aria-label` sur les recherches (`ProductFilters`, `Cadencier`, `ReapproRayon`, `ReapproHistory`, `Vitrine` gestion+simulateur, `CatalogDCI`, `CatalogDCIAddModal`, `EcheancierFournisseursModal`, `HistoriqueAchats`, `InteractionsManager`, `InventaireFilters`, `ProduitShadcn`, `CommandeProductToolbar`, `CommandeDetails`, `Transformations`, `ImportDCIPage`, `FournisseurDetails`, `CommandeList`), dates (`Perimes`, `HistoriqueAchats`, `StockUGReportShadcn`, `InventaireFilters`, `InventaireAudit`, `StatistiquesFournisseur`), selects (`StockAnalysisFilters`, `AnalyseABC`, `AnalyseMargesProduit`, `AnalyseTemporelle`, `MergeCommandesModal`, `TransferCommandeModal`, `SuggestionCommandeModal`, `EtatsInventaire`, `InventaireMergeModal`), fichiers cachés (`CommandeForm`).
+- **Boutons icône seuls** : `aria-label` sur tri asc/desc, suppression lignes, export/impression/refresh, +/− quantités, détails, pointage/échéancier (`InventaireDataTab`, `InventaireListTable`, `InventaireProductSearch`, `StockUGReportShadcn`, `HistoriqueAchats`, `StockAnalysis`, `Vitrine`, `FinanceFournisseurModal`, `FournisseursList`, `FournisseurDetails`, `SupplierDashboard`, `ProductDetailPanel`, `BulkActionsBar`, `ReapproRayon` transfert par ligne, `CatalogDCI`).
+- **États accessibles** : `aria-pressed` sur les tuiles/pills de sélection de `EtatsInventaire` et le toggle visibilité publique de `Vitrine` ; `role="button"` + `tabIndex` + Enter/Espace sur le span « détails mouvements » de `ProductTabsContent` ; `role="checkbox"`/`aria-checked` sur lignes de tableaux sélectionnables (`CommandeDetails`, `SuggestionCommandeModal`).
+- **Modales custom** : `role="dialog"`/`aria-modal`/`aria-label` vérifiés ou ajoutés (`InventaireProductSearch` lot modal, `InventaireMergeModal`, `StockHealthSettingsModal`) ; backdrop `aria-hidden="true"` dans `InteractionsManager` (le dialogue reste exposé).
+
+### Fichiers modifiés (zone 2)
+
+- `ui/Checkbox.tsx`
+- `products/` : `ProductFilters`, `ProductTable`, `ProductTabsContent`, `BulkActionsBar`, `ProductDetailPanel`, `modals/StockAdjustmentModal`
+- `stock/` : `Cadencier`, `ReapproRayon`, `ReapproHistory`, `StockAnalysisFilters`, `StockAnalysisTable`, `StockHealthDashboard`, `StockHealthSettingsModal`
+- `inventaire/` : `InventaireFilters`, `InventaireListTable`, `audit/InventaireAudit`, `editor/InventaireDataTab`, `editor/InventaireEditor`, `editor/InventaireProductSearch`, `modals/InventaireMergeModal`
+- `Commandes/` : `CommandeDetails`, `CommandeForm`, `CommandeList`, `CommandeProductRow`, `CommandeProductTable`, `CommandeProductToolbar`, `MergeCommandesModal`, `TransferCommandeModal`, `SuggestionCommandeModal`, `ReconditionnementModal`, `DataMatrixScanBar`
+- `fournisseurs/` : `FournisseurDetails`, `FournisseursList`, `SupplierDashboard`
+- `adjustments/` : `AjustementsFilters`
+- Racine : `AnalyseABC`, `AnalyseMargesProduit`, `AnalyseTemporelle`, `CatalogDCI`, `CatalogDCIAddModal`, `EcheancierFournisseursModal`, `EtatsInventaire`, `FinanceFournisseurModal`, `HistoriqueAchats`, `ImportDCIPage`, `InteractionsManager`, `Perimes`, `PointageReleveModal`, `ProduitShadcn`, `SimplePrintLabelsModal`, `StatistiquesFournisseur`, `StockAnalysis`, `StockUGReportShadcn`, `Transformations`, `Vitrine`
+
+`ProduitFormModal.tsx` **non modifié** (déjà traité séparément).
+
+### Vérifications
+
+- Re-scan zone 2 : checkboxes, inputs `placeholder`-only, boutons icône, dates, modales — conformes ou corrigés.
+- `npm run build` : à lancer par l'agent principal (exécution shell non autorisée dans le sous-agent).
+
+---
+
+## 2026-09-16 — Passe accessibilité Zone 1 (ventes / caisse / facturation / clients / créances / avoirs / promis / fidélité)
+
+### ♿ Accessibilité
+
+Audit + correctifs ciblés dans `frontend/src/components/` (zone 1 uniquement) — aucun changement de layout ni de style :
+
+- **Modales** : `role="dialog"`, `aria-modal="true"`, `aria-label`/`aria-labelledby` vérifiés ou ajoutés ; fermeture par `Escape` ajoutée sur les `<dialog>` natifs de `HistoriqueClotures.tsx` (détail clôture + détail session) ; backdrops cliquables marqués `aria-hidden="true"`.
+- **Éléments cliquables non-boutons** : `role="button"`/`role="switch"`, `tabIndex={0}`, gestion Enter/Espace (`preventDefault` sur Espace) sur lignes de tableau cliquables (`ClassementVendeurs`, `PromisTable`, `TableCartRow`, cartes vendeurs), options de listes déroulantes custom passées en `role="option"`/`role="listbox"` (`ClientCreditForm`, `LoyaltyPage`).
+- **Boutons icône seuls** : `aria-label` ajouté (clés i18n existantes uniquement) — voir/modifier/valider/supprimer lignes (`AvoirsTable`, `AvoirsDetails`, `ClientCreditsList`), refresh (`JournalCaisseFilters`, `AvoirsFilters`), envoi Telegram (`HistoriqueVentes`), impression (`HistoriqueClotures`), ajout/suppression (`RecapClient`, `ClientCreditForm`, `LoyaltyPage`), collapse headers (`Ventes`, `Avoirs`, `Promis` + `aria-expanded`), scan ordonnance (`facturation/ActionButtons`).
+- **Labels de formulaires** : `htmlFor`/`id` associés sur montants/motif/description (`CashMovementModal`), billetage (`CashBreakdownModal` via `aria-label` par coupure), dates/caissier/poste (`HistoriqueClotures`, `JournalCaisseFilters`, `HistoriqueVentes`, `AvoirsFilters`, `PromisFilters`, `SmsModal`), client/type fidélité (`LoyaltyPage`), tickets (`RecapClient`), heures (`TrancheHoraireStats`), mois/année classement (`ClassementVendeurs`), poste caisse (`CaisseHeader`), montant paiement (`caisse/PaymentModal`, `facturation/PaymentModal`).
+
+### Fichiers modifiés (zone 1)
+
+- `avoirs/AvoirsDetails.tsx`, `avoirs/AvoirsFilters.tsx`, `avoirs/AvoirsForm.tsx`, `avoirs/AvoirsTable.tsx`
+- `avoirs-client/ClientCreditForm.tsx`, `avoirs-client/ClientCreditsList.tsx`
+- `caisse/CaisseHeader.tsx`, `caisse/CashBreakdownModal.tsx`, `caisse/JournalCaisseFilters.tsx`, `caisse/PaymentModal.tsx`
+- `creances/CreancesFilters.tsx` (`aria-expanded`/`aria-haspopup` sur le menu impression)
+- `facturation/` : `ActionButtons`, `AlertMessageModal`, `AyantDroitSection`, `ClientCreateModal`, `ClientSection`, `DatamatrixScanField`, `FacturationNotifications`, `PaymentModal`, `PendingSalesDrawer`, `PrescriptionScannerModal`, `SidebarCartRow`, `StockResolutionModal`, `TableCartRow`, `TotalsSection`
+- `loyalty/LoyaltyPage.tsx`
+- `promis/PromisFilters.tsx`, `promis/PromisTable.tsx`, `promis/modals/SmsModal.tsx`
+- `sales/TrancheHoraireStats.tsx`
+- Racine : `CashMovementModal.tsx`, `HistoriqueClotures.tsx`, `HistoriqueVentes.tsx`, `ClassementVendeurs.tsx`, `RecapClient.tsx`, `Promis.tsx`, `Ventes.tsx`, `Avoirs.tsx`
+
+### Vérifications
+
+- Re-scan zone 1 : overlays `fixed inset-0`, éléments cliquables, boutons icône, labels — conformes ou corrigés.
+- `npm run build` : à lancer par l'agent principal (exécution shell non autorisée dans le sous-agent).
+
+---
 
 ### 🐛 Correctif
 
@@ -47,15 +374,17 @@ Les 4 champs CIP doivent être vides ou contenir exactement **7 ou 13 chiffres**
 - **Colonne Fournisseur** ajoutée sur les deux onglets :
   - *Résumé par jour* : agrégation passée de `(jour)` à `(jour, fournisseur)` — chaque ligne affiche le nom du fournisseur (icône Truck + nom tronqué, `—` si aucun).
   - *Détails par produit* : agrégation passée à `(produit, fournisseur)` — une ligne par couple produit/fournisseur.
+- **Colonne N° Facture** : `StringAgg('numero_facture')` côté backend — les numéros de facture des commandes agrégées sont listés (séparés par virgule, tooltip `title` si tronqué).
 - **Date courte** : `formatDate` (dd/mm/yyyy) remplace `formatDateLong` dans le tableau résumé.
-- **Export Excel** : colonne Fournisseur ajoutée aux deux onglets.
+- **Largeurs de colonnes uniformisées** : `w-24` date, `w-36` nb commandes (le header « NOMBRE DE COMMANDES » était tronqué), `w-40` total, colonnes Fournisseur/N° Facture flexibles.
+- **Export Excel** : colonnes Fournisseur et N° Facture ajoutées aux deux onglets.
 - **UI/UX** : spinner de chargement remplacé par `SkeletonTable`, état vide remplacé par `EmptyState` (composants standardisés), clés de lignes corrigées (`date+fournisseur` / `produit+fournisseur`).
 
 ### Fichiers modifiés
 
 - `backend/api/views/historique_achats.py` — groupement `values('jour','fournisseur_id','fournisseur__name')` et `values('produit_*','commande__fournisseur_*')`
 - `components/HistoriqueAchats.tsx`
-- `public/locales/fr/orders.json`, `public/locales/en/orders.json` — clé `history.columns.supplier`
+- `public/locales/fr/orders.json`, `public/locales/en/orders.json` — clés `history.columns.supplier`, `history.columns.invoice_number`
 
 ### Vérifications
 

@@ -48,6 +48,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                         <input
                             type="text"
                             placeholder={t('ajustements.filters.search_placeholder')}
+                            aria-label={t('ajustements.filters.search_label')}
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
                             className="w-full h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
@@ -64,6 +65,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                     <LocalizedDateInput
                         value={dateStart}
                         onChange={(e) => onDateStartChange(e.target.value)}
+                        aria-label={t('ajustements.filters.date_start')}
                         className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-mono text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                     />
                 </div>
@@ -75,6 +77,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                     <LocalizedDateInput
                         value={dateEnd}
                         onChange={(e) => onDateEndChange(e.target.value)}
+                        aria-label={t('ajustements.filters.date_end')}
                         className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-mono text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                     />
                 </div>
@@ -87,6 +90,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                     <select
                         value={filterReasonType}
                         onChange={(e) => onReasonTypeChange(e.target.value)}
+                        aria-label={t('ajustements.filters.reason_label')}
                         className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                     >
                         <option value="">{t('ajustements.filters.all_reasons')}</option>

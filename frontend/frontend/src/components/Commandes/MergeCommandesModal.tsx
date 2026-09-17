@@ -124,6 +124,7 @@ export default function MergeCommandesModal({
                                     value={mergeTargetOrderId?.toString() ?? ''}
                                     onChange={(e) => setMergeTargetOrderId(e.target.value ? parseInt(e.target.value, 10) : null)}
                                     className="w-full h-10 text-sm"
+                                    aria-label={t('orders:merge_modal.supplier_label')}
                                 >
                                     <option value="">{t('orders:merge_modal.select_main')}</option>
                                     {mergeOrdersDetails.map(order => (

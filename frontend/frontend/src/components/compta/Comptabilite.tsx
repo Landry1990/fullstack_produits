@@ -110,8 +110,9 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                     {/* Exercice Selector */}
                     <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
                         <Calendar className="size-4 text-blue-500" />
-                        <select 
+                        <select
                             className="bg-transparent border-none focus:ring-0 text-sm font-medium text-slate-700 cursor-pointer"
+                            aria-label={t('exercice.label')}
                             value={currentExercice?.id || ''}
                             onChange={(e) => handleExerciceChange(e.target.value)}
                         >
@@ -125,16 +126,18 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
 
                     {/* Date Range Picker */}
                     <div className="flex items-center gap-2 bg-slate-50 rounded-xl border border-slate-200 px-3 py-2">
-                        <LocalizedDateInput 
+                        <LocalizedDateInput
                             className="bg-transparent border-none focus:ring-0 text-sm p-1 w-32 text-slate-700"
                             value={dateRange.start}
                             onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
+                            aria-label={t('common:from', 'Du')}
                         />
-                        <div className="w-px h-4 bg-slate-300"></div>
-                        <LocalizedDateInput 
+                        <div className="w-px h-4 bg-slate-300" aria-hidden="true"></div>
+                        <LocalizedDateInput
                             className="bg-transparent border-none focus:ring-0 text-sm p-1 w-32 text-slate-700"
                             value={dateRange.end}
                             onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
+                            aria-label={t('common:to', 'Au')}
                         />
                     </div>
                 </div>
@@ -389,9 +392,10 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
                 <h3 className="font-bold text-base text-slate-800">{t('ledger.title')}</h3>
                 <div className="relative">
                     <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         placeholder={t('ledger.search_placeholder')}
+                        aria-label={t('ledger.search_placeholder')}
                         className="h-9 bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all w-64"
                         value={search}
                         onChange={(e) => {
@@ -648,6 +652,7 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
                     <input
                         type="text"
                         placeholder={t('plan.search_placeholder')}
+                        aria-label={t('plan.search_placeholder')}
                         className="h-9 w-full pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -655,6 +660,7 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
                 </div>
                 <select
                     className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                    aria-label={t('plan.filter_all_types')}
                     value={filterType}
                     onChange={e => setFilterType(e.target.value)}
                 >
@@ -699,6 +705,7 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
                                         onClick={() => openEdit(c)}
                                         className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
                                         title={t('plan.edit_title')}
+                                        aria-label={t('plan.edit_title')}
                                     >
                                         <FileText className="size-3.5 text-blue-500" />
                                     </button>
@@ -706,6 +713,7 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
                                         onClick={() => setConfirmDelete(c)}
                                         className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
                                         title={t('plan.delete_title')}
+                                        aria-label={t('plan.delete_title')}
                                     >
                                         <ArrowDownRight className="size-3.5 text-red-500" />
                                     </button>
@@ -726,17 +734,23 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
             {/* Modal ajout / modification */}
             {modalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200">
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="plan-modal-title"
+                    >
                         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="font-bold text-slate-800">
+                            <h3 id="plan-modal-title" className="font-bold text-slate-800">
                                 {editTarget ? t('plan.modal.edit') : t('plan.modal.new')}
                             </h3>
-                            <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">✕</button>
+                            <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors" aria-label={t('common:close')}>✕</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-5 space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t('plan.modal.number_label')}</label>
+                                <label htmlFor="plan-numero" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t('plan.modal.number_label')}</label>
                                 <input
+                                    id="plan-numero"
                                     type="text"
                                     className="h-10 w-full px-3 rounded-xl border border-slate-200 font-mono text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all disabled:bg-slate-50 disabled:text-slate-400"
                                     placeholder={t('plan.modal.number_placeholder')}
@@ -748,8 +762,9 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
                                 {editTarget && <p className="text-[10px] text-slate-400 mt-1">{t('plan.modal.number_locked')}</p>}
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t('plan.modal.label_label')}</label>
+                                <label htmlFor="plan-libelle" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t('plan.modal.label_label')}</label>
                                 <input
+                                    id="plan-libelle"
                                     type="text"
                                     className="h-10 w-full px-3 rounded-xl border border-slate-200 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                                     placeholder={t('plan.modal.label_placeholder')}
@@ -759,8 +774,9 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t('plan.modal.type_label')}</label>
+                                <label htmlFor="plan-type" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t('plan.modal.type_label')}</label>
                                 <select
+                                    id="plan-type"
                                     className="h-10 w-full px-3 rounded-xl border border-slate-200 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                                     value={form.type}
                                     onChange={e => setForm({ ...form, type: e.target.value as Compte['type'] })}
@@ -803,12 +819,17 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
             {/* Modal confirmation suppression */}
             {confirmDelete && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-red-200 p-6 text-center space-y-4">
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-red-200 p-6 text-center space-y-4"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="plan-delete-title"
+                    >
                         <div className="size-12 bg-red-50 rounded-full flex items-center justify-center mx-auto">
-                            <ArrowDownRight className="size-6 text-red-500" />
+                            <ArrowDownRight className="size-6 text-red-500" aria-hidden="true" />
                         </div>
                         <div>
-                            <p className="font-bold text-slate-800">{t('plan.delete.title')}</p>
+                            <p id="plan-delete-title" className="font-bold text-slate-800">{t('plan.delete.title')}</p>
                             <p className="text-sm text-slate-500 mt-1">
                                 <span className="font-mono font-bold">{confirmDelete.numero}</span> — {confirmDelete.libelle}
                             </p>
@@ -1015,6 +1036,7 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                             key={cat.id}
                             type="button"
                             onClick={() => setFormData({...formData, typeCharge: cat.compte})}
+                            aria-pressed={formData.typeCharge === cat.compte}
                             className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left group
                                 ${formData.typeCharge === cat.compte 
                                     ? 'border-blue-500 bg-blue-50 shadow-sm' 
@@ -1036,8 +1058,9 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                         
                         {formData.typeCharge === 'autre' && (
                             <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 mb-4 animate-fade-in">
-                                <label className="block text-xs font-bold text-amber-600 uppercase tracking-wide mb-2">{t('charges_simple.select_account')}</label>
-                                <select 
+                                <label htmlFor="charge-account-select" className="block text-xs font-bold text-amber-600 uppercase tracking-wide mb-2">{t('charges_simple.select_account')}</label>
+                                <select
+                                    id="charge-account-select"
                                     className="h-10 w-full px-3 rounded-xl border border-amber-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all appearance-none"
                                     value={formData.comptePersonnalise}
                                     onChange={(e) => setFormData({...formData, comptePersonnalise: e.target.value})}
@@ -1053,8 +1076,9 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="col-span-2 md:col-span-1">
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges_simple.payment_method')}</label>
-                                <select 
+                                <label htmlFor="charge-payment-method" className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges_simple.payment_method')}</label>
+                                <select
+                                    id="charge-payment-method"
                                     className="h-10 w-full px-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                                     value={formData.modePaiement}
                                     onChange={(e) => setFormData({...formData, modePaiement: e.target.value})}
@@ -1065,8 +1089,9 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                                 </select>
                             </div>
                             <div className="col-span-2 md:col-span-1">
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges.date')}</label>
-                                <LocalizedDateInput 
+                                <label htmlFor="charge-date" className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges.date')}</label>
+                                <LocalizedDateInput
+                                    id="charge-date"
                                     className="h-10 w-full px-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                                     value={formData.date}
                                     onChange={(e) => setFormData({...formData, date: e.target.value})}
@@ -1076,9 +1101,10 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges_simple.label')}</label>
-                            <input 
-                                type="text" 
+                            <label htmlFor="charge-label" className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges_simple.label')}</label>
+                            <input
+                                id="charge-label"
+                                type="text"
                                 placeholder={t('charges_simple.label_placeholder')}
                                 className="h-10 w-full px-4 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                                 value={formData.libelle}
@@ -1088,10 +1114,11 @@ function ChargesTab({ actions, comptes, journaux, t }: ChargesTabProps) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges_simple.amount')}</label>
+                            <label htmlFor="charge-amount" className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">{t('charges_simple.amount')}</label>
                             <div className="relative">
-                                <input 
-                                    type="number" 
+                                <input
+                                    id="charge-amount"
+                                    type="number"
                                     placeholder={t('charges_simple.amount_placeholder')}
                                     className="w-full px-4 py-4 pr-16 rounded-xl border border-slate-200 bg-white text-2xl font-bold text-blue-600 text-right focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                                     value={formData.montant}

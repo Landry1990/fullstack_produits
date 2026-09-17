@@ -1,4 +1,5 @@
 
+from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import Count, DecimalField, F, Sum, Value
 from django.db.models.functions import Coalesce, TruncDate
 from rest_framework import viewsets
@@ -50,6 +51,7 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
             jour=TruncDate('date')
         ).values('jour', 'fournisseur_id', 'fournisseur__name').annotate(
             nb_commandes=Count('id', distinct=True),
+            numeros_facture=StringAgg('numero_facture', delimiter=', ', distinct=True, ordering='numero_facture'),
             total_achat=Coalesce(Sum(
                 F('produits__quantity') * F('produits__price'),
                 output_field=DecimalField()
@@ -76,6 +78,7 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
                     'date': stat['jour'],
                     'fournisseur_id': stat['fournisseur_id'],
                     'fournisseur_name': stat['fournisseur__name'] or '',
+                    'numeros_facture': stat['numeros_facture'] or '',
                     'nb_commandes': stat['nb_commandes'],
                     'total_achat': stat['total_achat'] or 0,
                 })
@@ -92,6 +95,7 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
                 'date': stat['jour'],
                 'fournisseur_id': stat['fournisseur_id'],
                 'fournisseur_name': stat['fournisseur__name'] or '',
+                'numeros_facture': stat['numeros_facture'] or '',
                 'nb_commandes': stat['nb_commandes'],
                 'total_achat': stat['total_achat'] or 0,
             })
@@ -131,6 +135,7 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
             'commande__fournisseur_id',
             'commande__fournisseur__name',
         ).annotate(
+            numeros_facture=StringAgg('commande__numero_facture', delimiter=', ', distinct=True, ordering='commande__numero_facture'),
             total_quantite=Sum('quantity'),
             total_achat=Coalesce(Sum(F('quantity') * F('price'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
             nb_commandes=Count('commande_id', distinct=True)

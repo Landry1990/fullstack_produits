@@ -40,7 +40,7 @@ export default function FacturationNotifications({
             <h3 className="font-bold">{t('common:error')}</h3>
             <div className="text-xs">{error}</div>
           </div>
-          <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0" onClick={() => setError(null)}>✕</Button>
+          <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0" onClick={() => setError(null)} aria-label={t('common:close')}>✕</Button>
         </div>
       )}
 
@@ -53,7 +53,7 @@ export default function FacturationNotifications({
               <h3 className="font-bold">{t('facturation:sale_recorded')}</h3>
               <div className="text-xs">{t('facturation:invoice')} <span className="font-mono font-bold">{successInfo.numero_facture}</span> • {Math.round(Number(successInfo.total_ttc))} F</div>
             </div>
-            <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 self-start" onClick={() => setSuccessInfo(null)}>✕</Button>
+            <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 self-start" onClick={() => setSuccessInfo(null)} aria-label={t('common:close')}>✕</Button>
           </div>
 
           <div className="flex flex-wrap gap-2 w-full justify-end mt-1">

@@ -174,6 +174,7 @@ export default function TransferCommandeModal({
                             value={transferTargetFournisseur}
                             onChange={(e) => handleSupplierChange(e.target.value)}
                             className="w-full h-10 text-sm"
+                            aria-label={t('orders:transfer_modal.supplier_label')}
                         >
                             <option value="">{t('orders:transfer_modal.select_supplier')}</option>
                             {fournisseurs.reduce<JSX.Element[]>((acc, f) => {

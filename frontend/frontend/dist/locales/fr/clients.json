@@ -9,7 +9,8 @@
     "filters": {
         "search_placeholder": "Rechercher par nom, téléphone, matricule...",
         "show_inactive": "Afficher inactifs",
-        "hide_inactive": "Masquer inactifs"
+        "hide_inactive": "Masquer inactifs",
+        "type_all": "Tous"
     },
     "fields": {
         "name": "Nom Complet",
@@ -107,6 +108,7 @@
     "messages": {
         "create_success": "Client créé avec succès",
         "update_success": "Client mis à jour avec succès",
+        "merge_success": "Clients fusionnés avec succès",
         "delete_success": "Client supprimé avec succès",
         "bulk_delete_success": "{{count}} clients supprimés",
         "error_fetch": "Erreur lors du chargement des clients",
@@ -123,6 +125,12 @@
         "select_client_hint": "Sélectionnez un client pour voir ses détails.",
         "select_client_empty": "Sélectionnez un client",
         "select_client_empty_desc": "Consultez les détails financiers, l'historique d'achat et gérez les bénéficiaires en un clic."
+    },
+    "merge": {
+        "title": "Doublon détecté",
+        "description": "Un ou plusieurs clients semblent identiques. Vous pouvez fusionner les informations dans un client existant ou créer un nouveau client.",
+        "match": "correspondance",
+        "keep_new": "Créer quand même"
     },
     "status": {
         "inactive": "INACTIF"

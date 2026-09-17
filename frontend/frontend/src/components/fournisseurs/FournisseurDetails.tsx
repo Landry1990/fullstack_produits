@@ -52,10 +52,10 @@ export default function FournisseurDetails({ hook }: Props) {
             </div>
          </div>
          <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="size-9 text-slate-500" onClick={actions.openEditModal} title={t('providers:details.edit')}>
+            <Button variant="ghost" size="icon" className="size-9 text-slate-500" onClick={actions.openEditModal} title={t('providers:details.edit')} aria-label={t('providers:details.edit')}>
               <Pencil className="size-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="size-9 text-slate-500 hover:text-red-600 hover:bg-red-50" onClick={actions.handleDeleteFournisseur} title={t('providers:details.delete')}>
+            <Button variant="ghost" size="icon" className="size-9 text-slate-500 hover:text-red-600 hover:bg-red-50" onClick={actions.handleDeleteFournisseur} title={t('providers:details.delete')} aria-label={t('providers:details.delete')}>
               <Trash2 className="size-4" />
             </Button>
             <Button
@@ -64,6 +64,7 @@ export default function FournisseurDetails({ hook }: Props) {
               className={cn("size-9", selectedFournisseur.is_active === false ? 'text-amber-600 bg-amber-50' : 'text-slate-500')}
               onClick={actions.handleToggleActive}
               title={selectedFournisseur.is_active === false ? t('providers:details.reactivate') : t('providers:details.hide')}
+              aria-label={selectedFournisseur.is_active === false ? t('providers:details.reactivate') : t('providers:details.hide')}
             >
               {selectedFournisseur.is_active === false ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
             </Button>
@@ -186,6 +187,7 @@ export default function FournisseurDetails({ hook }: Props) {
                     <input
                       type="text"
                       placeholder={t('providers:catalogue.search_placeholder')}
+                      aria-label={t('providers:catalogue.search_placeholder')}
                       className="w-full pl-9 h-9 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                       value={catalogueSearch}
                       onChange={(e) => state.setCatalogueSearch(e.target.value)}

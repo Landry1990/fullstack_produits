@@ -415,6 +415,7 @@ export default function CategoryManager({
                       className="inline-flex items-center justify-center size-7 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
                       onClick={() => openPrintModal(-1, t('stock:organisation.category_manager.no_rayon'))}
                       title={t('stock:organisation.category_manager.print_no_rayon_title')}
+                      aria-label={t('stock:organisation.category_manager.print_no_rayon_title')}
                     >
                       <Printer size={16} />
                     </button>
@@ -424,6 +425,7 @@ export default function CategoryManager({
                      className="inline-flex items-center justify-center size-7 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                      onClick={handleDeleteAll}
                      title={t('stock:organisation.category_manager.delete_all_btn', { type })}
+                     aria-label={t('stock:organisation.category_manager.delete_all_btn', { type })}
                    >
                      <Trash2 size={16} />
                    </button>
@@ -435,6 +437,7 @@ export default function CategoryManager({
                      setEntries([{ id: generateUUID(), name: '', description: '', parent: '' }]);
                      setIsModalOpen(true);
                    }}
+                   aria-label={t('stock:organisation.category_manager.new_title', { type })}
                  >
                    <Plus size={18} />
                  </button>
@@ -445,6 +448,7 @@ export default function CategoryManager({
               <input
                 type="text"
                 placeholder={t('stock:organisation.category_manager.search', { type })}
+                aria-label={t('stock:organisation.category_manager.search', { type })}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 h-8 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
            </div>
@@ -473,8 +477,9 @@ export default function CategoryManager({
                       type="button"
                       onClick={() => setSelectedCategory(cat)}
                       className="flex-1 flex items-center gap-3 overflow-hidden p-3 text-left bg-transparent"
+                      aria-pressed={selectedCategory?.id === cat.id}
                     >
-                       <LayoutGrid size={16} className={selectedCategory?.id === cat.id ? 'text-white' : 'text-slate-400'} />
+                       <LayoutGrid size={16} className={selectedCategory?.id === cat.id ? 'text-white' : 'text-slate-400'} aria-hidden="true" />
                        <span className="font-medium truncate">{getCategoryName(cat)}</span>
                     </button>
                     <div className={`flex gap-1 items-center p-3 transition-opacity ${selectedCategory?.id === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
@@ -483,6 +488,7 @@ export default function CategoryManager({
                             className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-white/70 hover:bg-white/20' : 'text-blue-500 hover:bg-blue-50'}`}
                             onClick={(e) => { e.stopPropagation(); openPrintModal(cat.id, getCategoryName(cat)); }}
                             title={t('stock:organisation.category_manager.print_stock_title')}
+                            aria-label={t('stock:organisation.category_manager.print_stock_title')}
                           >
                             <Printer size={12} />
                           </button>
@@ -491,6 +497,7 @@ export default function CategoryManager({
                          className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-white/70 hover:bg-white/20' : 'text-purple-500 hover:bg-purple-50'}`}
                          onClick={(e) => { e.stopPropagation(); setOrganizerTarget({id: cat.id, name: getCategoryName(cat)}); setIsOrganizerOpen(true); }}
                          title={t('stock:organisation.smart_organizer.title')}
+                         aria-label={t('stock:organisation.smart_organizer.title')}
                        >
                          <Sparkles size={12} />
                        </button>
@@ -507,6 +514,7 @@ export default function CategoryManager({
                            }]);
                            setIsModalOpen(true);
                          }}
+                         aria-label={t('stock:organisation.category_manager.edit_title', { type })}
                        >
                          <Pencil size={12} />
                        </button>
@@ -514,6 +522,7 @@ export default function CategoryManager({
                          className={`inline-flex items-center justify-center size-7 rounded-md transition-colors ${selectedCategory?.id === cat.id ? 'text-red-300 hover:bg-white/20 hover:text-red-200' : 'text-slate-300 hover:bg-red-50 hover:text-red-500'}`}
                          onClick={(e) => { e.stopPropagation(); handleDelete(cat.id, getCategoryName(cat)); }}
                          title={t('products:category.move_to_trash')}
+                         aria-label={t('products:category.move_to_trash')}
                        >
                          <Trash2 size={12} />
                        </button>
@@ -535,6 +544,7 @@ export default function CategoryManager({
                             type="button"
                             onClick={() => setSelectedCategory(child)}
                             className="flex-1 flex items-center min-w-0 p-2 text-left bg-transparent"
+                            aria-pressed={selectedCategory?.id === child.id}
                           >
                             <span className="truncate">↳ {getCategoryName(child)}</span>
                           </button>
@@ -543,6 +553,7 @@ export default function CategoryManager({
                                 <button
                                   className="inline-flex items-center justify-center size-6 rounded-md text-blue-500 hover:bg-blue-50 transition-colors"
                                   onClick={(e) => { e.stopPropagation(); openPrintModal(child.id, getCategoryName(child)); }}
+                                  aria-label={t('stock:organisation.category_manager.print_stock_title')}
                                 >
                                   <Printer size={10} />
                                 </button>
@@ -550,6 +561,7 @@ export default function CategoryManager({
                              <button
                                className="inline-flex items-center justify-center size-6 rounded-md text-purple-500 hover:bg-purple-50 transition-colors"
                                onClick={(e) => { e.stopPropagation(); setOrganizerTarget({id: child.id, name: getCategoryName(child)}); setIsOrganizerOpen(true); }}
+                               aria-label={t('stock:organisation.smart_organizer.title')}
                              >
                                <Sparkles size={10} />
                              </button>
@@ -557,6 +569,7 @@ export default function CategoryManager({
                                className="inline-flex items-center justify-center size-6 rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
                                onClick={(e) => { e.stopPropagation(); handleDelete(child.id, getCategoryName(child)); }}
                                title={t('products:category.move_to_trash')}
+                               aria-label={t('products:category.move_to_trash')}
                              >
                                <Trash2 size={10} />
                              </button>
@@ -609,6 +622,7 @@ export default function CategoryManager({
                         <button
                            onClick={() => handleDelete(selectedCategory.id, getCategoryName(selectedCategory))}
                            className="inline-flex items-center justify-center size-9 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-xl transition-colors"
+                           aria-label={t('products:category.move_to_trash')}
                         >
                            <Trash2 size={18} />
                         </button>
@@ -664,6 +678,7 @@ export default function CategoryManager({
                                             onClick={() => handleRemoveProduct(p)}
                                             className="inline-flex items-center justify-center size-7 rounded-full text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                                             title={t('stock:organisation.category_manager.remove_product_title')}
+                                            aria-label={t('stock:organisation.category_manager.remove_product_title')}
                                           >
                                              ✕
                                           </button>
@@ -713,7 +728,7 @@ export default function CategoryManager({
            {entries.map((entry, idx) => (
               <div key={entry.id} className="space-y-3 p-4 rounded-xl border border-slate-100 bg-slate-50/50">
                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <label htmlFor={`cat-entry-name-${entry.id}`} className="block text-xs font-bold uppercase tracking-wider text-slate-400">
                        {t('stock:organisation.category_manager.name_label', { type })}
                        {!editingCategory && entries.length > 1 && (
                          <span className="ml-1 text-slate-300 normal-case font-normal">#{idx + 1}</span>
@@ -725,12 +740,14 @@ export default function CategoryManager({
                          className="inline-flex items-center justify-center size-6 rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
                          onClick={() => setEntries(prev => prev.filter((_, i) => i !== idx))}
                          title={t('stock:organisation.category_manager.remove_entry')}
+                         aria-label={t('stock:organisation.category_manager.remove_entry')}
                        >
                          ✕
                        </button>
                     )}
                  </div>
                  <Input
+                    id={`cat-entry-name-${entry.id}`}
                     type="text"
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 h-12 text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                     value={entry.name}
@@ -742,8 +759,9 @@ export default function CategoryManager({
 
                  {hasHierarchy && (
                     <div>
-                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.parent_label')}</label>
+                       <label htmlFor={`cat-entry-parent-${entry.id}`} className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.parent_label')}</label>
                        <select
+                         id={`cat-entry-parent-${entry.id}`}
                          className="w-full rounded-xl border border-slate-200 bg-white h-12 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                          value={entry.parent}
                          onChange={e => setEntries(prev => prev.map((en, i) => i === idx ? { ...en, parent: e.target.value } : en))}
@@ -758,8 +776,9 @@ export default function CategoryManager({
 
                  {hasDescription && (
                     <div>
-                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.description_label')}</label>
+                       <label htmlFor={`cat-entry-desc-${entry.id}`} className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.description_label')}</label>
                        <Textarea
+                         id={`cat-entry-desc-${entry.id}`}
                          className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 resize-none"
                          value={entry.description}
                          onChange={e => setEntries(prev => prev.map((en, i) => i === idx ? { ...en, description: e.target.value } : en))}
@@ -807,6 +826,7 @@ export default function CategoryManager({
               <input
                 type="text"
                 placeholder={t('stock:organisation.category_manager.search_products_placeholder')}
+                aria-label={t('stock:organisation.category_manager.search_products_placeholder')}
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 h-14 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={productSearchTerm}
                 onChange={e => handleSearchProducts(e.target.value)}
@@ -832,6 +852,7 @@ export default function CategoryManager({
                            <button
                              className="inline-flex items-center justify-center size-8 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
                              onClick={() => handleAddProduct(p)}
+                             aria-label={`${t('common:add')} ${p.name}`}
                            >
                              <Plus size={16} />
                            </button>

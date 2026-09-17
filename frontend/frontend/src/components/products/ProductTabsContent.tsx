@@ -322,6 +322,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                                             onClick={() => saveEdit(lot.id)}
                                             disabled={saving}
                                             title={t('caisse:actions.save')}
+                                            aria-label={t('caisse:actions.save')}
                                         ><Check className="size-3.5" /></Button>
                                         <Button
                                             variant="ghost" size="sm"
@@ -329,6 +330,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                                             onClick={cancelEdit}
                                             disabled={saving}
                                             title={t('caisse:actions.cancel')}
+                                            aria-label={t('caisse:actions.cancel')}
                                         ><X className="size-3.5" /></Button>
                                     </div>
                                 ) : (
@@ -337,6 +339,7 @@ const LotsTabContent = ({ lots, produitId, t }: { lots: StockLot[]; produitId: n
                                         className="size-7 p-0 text-slate-400 hover:text-indigo-600"
                                         onClick={() => startEdit(lot)}
                                         title={t('caisse:actions.edit_lot_expiry')}
+                                        aria-label={t('caisse:actions.edit_lot_expiry')}
                                     ><Pencil className="size-3" /></Button>
                                 )}
                             </TableCell>
@@ -495,6 +498,8 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                                         {(item.facture || item.commande || item.avoir) && (
                                             <span
                                                 className="text-indigo-600 cursor-pointer hover:text-indigo-800"
+                                                role="button"
+                                                tabIndex={0}
                                                 title={
                                                     item.facture
                                                         ? t('products:detail.movements.view_invoice')
@@ -502,7 +507,21 @@ const MovementsTabContent = ({ stockHistory, loadingHistory, onMovementClick, pr
                                                             ? t('products:detail.movements.view_avoir', { defaultValue: 'Voir l\'avoir' })
                                                             : t('products:detail.movements.view_order')
                                                 }
+                                                aria-label={
+                                                    item.facture
+                                                        ? t('products:detail.movements.view_invoice')
+                                                        : item.avoir
+                                                            ? t('products:detail.movements.view_avoir', { defaultValue: 'Voir l\'avoir' })
+                                                            : t('products:detail.movements.view_order')
+                                                }
                                                 onClick={(e) => { e.stopPropagation(); onMovementClick(item); }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        onMovementClick(item);
+                                                    }
+                                                }}
                                             >🔍</span>
                                         )}
                                         <span className="truncate">{cleanedLibelle}</span>

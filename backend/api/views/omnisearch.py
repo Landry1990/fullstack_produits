@@ -1,6 +1,6 @@
 from django.core.cache import cache
 from django.db.models import Count, DecimalField, F, OuterRef, Q, Subquery, Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Lower
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -85,7 +85,7 @@ class GlobalSearchView(APIView):
                 Subquery(current_debt_subquery, output_field=DecimalField()),
                 Value(0, output_field=DecimalField())
             )
-        ).prefetch_related('ayants_droit')[:limit]
+        ).prefetch_related('ayants_droit').order_by(Lower('name'))[:limit]
 
         # 3. FACTURES (Ventes)
         factures = Facture.objects.filter(
@@ -130,7 +130,7 @@ class GlobalSearchView(APIView):
         fournisseurs = Fournisseur.objects.filter(
             Q(name__icontains=query) |
             Q(phone__icontains=query)
-        )[:limit]
+        ).order_by(Lower('name'))[:limit]
 
         response_data = {
             'produits': ProduitListSerializer(produits, many=True).data,

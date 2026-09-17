@@ -53,6 +53,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
           <input
             type="text"
             placeholder={t('products:filters.search_placeholder')}
+            aria-label={t('products:filters.search_placeholder')}
             className="w-full bg-base-200 border border-base-300 focus:border-primary rounded-lg text-sm pl-10 h-10 px-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

@@ -10,6 +10,8 @@ interface CheckboxProps {
   onChange?: (checked: boolean) => void;
   /** Optional label text */
   label?: string;
+  /** Accessible name for icon-only checkboxes */
+  'aria-label'?: string;
   /** Whether the checkbox is disabled */
   disabled?: boolean;
   /** Additional CSS classes for the container */
@@ -29,6 +31,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   indeterminate = false,
   onChange,
   label,
+  'aria-label': ariaLabel,
   disabled = false,
   className = '',
   color = 'primary',
@@ -65,6 +68,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
       }}
       role="checkbox"
       aria-checked={indeterminate ? 'mixed' : checked}
+      aria-label={ariaLabel ?? label}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={(e) => {
         if (e.key === ' ' || e.key === 'Enter') {

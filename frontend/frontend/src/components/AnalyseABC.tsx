@@ -77,6 +77,7 @@ function AbcFilterBar({
         className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
         value={periode}
         onChange={(e) => onPeriodeChange(Number(e.target.value))}
+        aria-label={t('common:period')}
       >
         <option value={3}>{t('stock:abc.filters.months_3')}</option>
         <option value={6}>{t('stock:abc.filters.months_6')}</option>
@@ -87,6 +88,7 @@ function AbcFilterBar({
         className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
         value={rayonId}
         onChange={(e) => onRayonChange(e.target.value)}
+        aria-label={t('common:rayon')}
       >
         <option value="">{t('stock:abc.filters.all_rayons')}</option>
         {rayons.map(r => (
@@ -98,6 +100,7 @@ function AbcFilterBar({
         className="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
         value={fournisseurId}
         onChange={(e) => onFournisseurChange(e.target.value)}
+        aria-label={t('common:supplier')}
       >
         <option value="">{t('stock:abc.filters.all_suppliers')}</option>
         {fournisseurs.map(f => (

@@ -268,6 +268,8 @@
         "logic_or": "OU",
         "value_placeholder": "Valeur...",
         "no_value": "Aucune valeur",
+        "operator_label": "Opérateur",
+        "remove_condition": "Supprimer la condition",
         "operators": {
             "isnull": "Vide",
             "notnull": "Non vide"

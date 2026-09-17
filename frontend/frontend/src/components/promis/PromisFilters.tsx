@@ -25,11 +25,12 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
         <div className="flex flex-col lg:flex-row gap-4 items-end">
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
+                    <label htmlFor="promis-search" className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
                         <Search className="size-3.5" />
                         {t('common:search')}
                     </label>
                     <input
+                        id="promis-search"
                         type="text"
                         placeholder={t('common:search')}
                         value={searchQuery}
@@ -41,11 +42,12 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
+                    <label htmlFor="promis-status" className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
                         <Filter className="size-3.5" />
                         {t('stock:promis.status_all')}
                     </label>
                     <select
+                        id="promis-status"
                         className={`
                             w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm
                             focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20

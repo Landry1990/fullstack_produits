@@ -80,10 +80,11 @@ export default function UserHeader() {
         <div className="flex items-center gap-2">
           
           {/* Notifications / Messages Bell */}
-          <button 
+          <button
             onClick={() => setIsMessagingOpen(true)}
             className="relative p-2 rounded-full hover:bg-emerald-50 transition-colors"
             title={t('common:messaging')}
+            aria-label={t('common:messaging')}
           >
             <Bell size={16} className="text-slate-500" />
             {unreadCount > 0 && (
@@ -94,10 +95,11 @@ export default function UserHeader() {
           </button>
 
           {/* Feedback Button */}
-          <button 
+          <button
             onClick={() => setIsFeedbackOpen(true)}
             className="p-2 rounded-full hover:bg-emerald-50 transition-colors"
             title={t('common:feedback')}
+            aria-label={t('common:feedback')}
           >
             <MessageCircle size={16} className="text-slate-500" />
           </button>
@@ -112,6 +114,7 @@ export default function UserHeader() {
                   : 'text-slate-400 hover:text-slate-700'
               }`}
               title={t('common:french')}
+              aria-pressed={i18n.language === 'fr' || i18n.language.startsWith('fr')}
             >
               FR
             </button>
@@ -123,6 +126,7 @@ export default function UserHeader() {
                   : 'text-slate-400 hover:text-slate-700'
               }`}
               title={t('common:english')}
+              aria-pressed={i18n.language === 'en' || i18n.language.startsWith('en')}
             >
               EN
             </button>
@@ -131,14 +135,16 @@ export default function UserHeader() {
           <div className="h-6 w-[1px] bg-gray-300 mx-0.5"></div>
 
           {/* User Profile Area */}
-          <div 
-            className="relative"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMenuOpen(!isMenuOpen);
-            }}
-          >
-            <button className="flex items-center gap-2 px-1.5 py-0.5 rounded-lg hover:bg-slate-100 transition-all group">
+          <div className="relative">
+            <button
+              className="flex items-center gap-2 px-1.5 py-0.5 rounded-lg hover:bg-slate-100 transition-all group"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+              aria-expanded={isMenuOpen}
+              aria-haspopup="true"
+            >
               <div className="size-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-gray-200 overflow-hidden">
                 {user.username.charAt(0).toUpperCase()}
               </div>

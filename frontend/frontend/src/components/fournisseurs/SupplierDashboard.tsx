@@ -149,7 +149,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                 <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('providers:dashboard.charts.evolution_subtitle')}</p>
               </div>
             </div>
-            <button onClick={() => refresh()} className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-40 hover:opacity-100 transition-opacity">
+            <button onClick={() => refresh()} className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-40 hover:opacity-100 transition-opacity" aria-label={t('common:refresh')}>
                <RefreshCw className="size-3" />
             </button>
           </div>
@@ -319,7 +319,7 @@ export default function SupplierDashboard({ onViewAllDeadlines }: SupplierDashbo
                     </span>
                   </td>
                   <td className="pr-6 text-right">
-                    <button className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="inline-flex items-center justify-center size-7 rounded-full text-base-content/60 hover:bg-base-200 opacity-0 group-hover:opacity-100 transition-opacity" aria-label={t('providers:dashboard.deadlines.view_all')}>
                       <ArrowUpRight className="size-4" />
                     </button>
                   </td>

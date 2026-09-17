@@ -430,6 +430,7 @@ export default function ProduitShadcn() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                 <Input
                   placeholder={t('products:filters.search_placeholder')}
+                  aria-label={t('products:filters.search_placeholder')}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -439,11 +440,11 @@ export default function ProduitShadcn() {
 
               <div className="flex flex-wrap items-center gap-3 mt-3">
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600">
-                  <Checkbox size="sm" checked={showInStockOnly} onChange={v => setShowInStockOnly(v)} />
+                  <Checkbox size="sm" checked={showInStockOnly} onChange={v => setShowInStockOnly(v)} aria-label={t('products:filters.in_stock_only', { defaultValue: 'En stock uniquement' })} />
                   {t('products:filters.in_stock_only', { defaultValue: 'En stock uniquement' })}
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600">
-                  <Checkbox size="sm" checked={showInactive} onChange={v => setShowInactive(v)} />
+                  <Checkbox size="sm" checked={showInactive} onChange={v => setShowInactive(v)} aria-label={t('products:filters.show_inactive', { defaultValue: 'Afficher inactifs' })} />
                   {t('products:filters.show_inactive', { defaultValue: 'Afficher inactifs' })}
                 </label>
                 {(filterRayon || filterFournisseur || showInactive || showInStockOnly) && (
@@ -469,7 +470,7 @@ export default function ProduitShadcn() {
               {/* Table Header */}
               <div className="shrink-0 px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <Checkbox size="sm" checked={isAllSelected} indeterminate={isPartial} onChange={() => setSelectedIds(prev => prev.length === produits.length ? [] : produits.map(p => p.id))} />
+                  <Checkbox size="sm" checked={isAllSelected} indeterminate={isPartial} onChange={() => setSelectedIds(prev => prev.length === produits.length ? [] : produits.map(p => p.id))} aria-label={t('products:table.select_all')} />
                   <span>{t('products:table.cip')}</span>
                   <span className="ml-6">{t('products:table.product', { defaultValue: 'Produit' })}</span>
                 </div>
@@ -634,13 +635,13 @@ export default function ProduitShadcn() {
                         {t('products:actions.adjust_stock', { defaultValue: 'Stock' })}
                       </Button>
                       {selectedProduit.has_reserve_storage && (selectedProduit.stock_reserve ?? 0) > 0 && (
-                        <Button variant="outline" size="sm" onClick={() => handleTransferToRayon(selectedProduit)} disabled={transferLoading} leftIcon={<Truck className="size-4" />} title={t('products:actions.refill_rayon', { defaultValue: 'R\u00e9approvisionner rayon' })} />
+                        <Button variant="outline" size="sm" onClick={() => handleTransferToRayon(selectedProduit)} disabled={transferLoading} leftIcon={<Truck className="size-4" />} title={t('products:actions.refill_rayon', { defaultValue: 'R\u00e9approvisionner rayon' })} aria-label={t('products:actions.refill_rayon', { defaultValue: 'R\u00e9approvisionner rayon' })} />
                       )}
-                      <Button variant="outline" size="sm" onClick={() => handleGenerateLabels(selectedProduit)} leftIcon={<Tags className="size-4" />} title={t('products:actions.labels', { defaultValue: '\u00c9tiquettes' })} />
+                      <Button variant="outline" size="sm" onClick={() => handleGenerateLabels(selectedProduit)} leftIcon={<Tags className="size-4" />} title={t('products:actions.labels', { defaultValue: '\u00c9tiquettes' })} aria-label={t('products:actions.labels', { defaultValue: '\u00c9tiquettes' })} />
                       <Button variant="outline" size="sm" onClick={() => handleOpenEdit(selectedProduit)} title={t('common:actions.edit', { defaultValue: 'Modifier' })}>
                         {t('common:actions.edit', { defaultValue: 'Modifier' })}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleToggleActive(selectedProduit)} title={selectedProduit.is_active === false ? t('products:actions.reactivate', { defaultValue: 'R\u00e9activer' }) : t('products:actions.deactivate', { defaultValue: 'D\u00e9sactiver' })}>
+                      <Button variant="ghost" size="sm" onClick={() => handleToggleActive(selectedProduit)} title={selectedProduit.is_active === false ? t('products:actions.reactivate', { defaultValue: 'R\u00e9activer' }) : t('products:actions.deactivate', { defaultValue: 'D\u00e9sactiver' })} aria-label={selectedProduit.is_active === false ? t('products:actions.reactivate', { defaultValue: 'R\u00e9activer' }) : t('products:actions.deactivate', { defaultValue: 'D\u00e9sactiver' })} aria-pressed={selectedProduit.is_active !== false}>
                         {selectedProduit.is_active === false ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                       </Button>
                       <Button variant="danger" size="sm" onClick={() => handleDelete(selectedProduit)}>

@@ -62,6 +62,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     <input
                         type="text"
                         placeholder={t('inventaire.filters.search_placeholder')}
+                        aria-label={t('inventaire.filters.search_placeholder')}
                         className="w-full h-10 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-colors"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -74,12 +75,14 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     <LocalizedDateInput
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
+                        aria-label={t('common:from')}
                         className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-slate-700"
                     />
                     <span className="text-slate-300">-</span>
                     <LocalizedDateInput
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
+                        aria-label={t('common:to')}
                         className="bg-transparent border-none text-sm focus:ring-0 px-2 outline-none text-slate-700"
                     />
                 </div>
@@ -96,6 +99,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
+                            aria-label={t('inventaire.filters.status_all')}
                             className="w-full h-9 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         >
                             <option value="">{t('inventaire.filters.status_all')}</option>
@@ -112,6 +116,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         <select
                             value={creatorFilter || ''}
                             onChange={(e) => setCreatorFilter(e.target.value)}
+                            aria-label={t('inventaire.filters.creators_all')}
                             className="w-full h-9 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         >
                             <option value="">{t('inventaire.filters.creators_all')}</option>
@@ -131,6 +136,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         <select
                             value={ordering}
                             onChange={(e) => setOrdering(e.target.value)}
+                            aria-label={t('inventaire.detail.sort.title')}
                             className="w-full h-9 pl-10 pr-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         >
                             <option value="-date">{t('inventaire.filters.sort_date_desc')}</option>
@@ -152,6 +158,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             onClick={onDeleteDrafts}
                             className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                             title={t('inventaire.filters.delete_drafts')}
+                            aria-label={t('inventaire.filters.delete_drafts')}
                         >
                             <Trash2 className="size-5" />
                         </button>
@@ -162,6 +169,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         onClick={onRefresh}
                         className="inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
                         title={t('common:refresh')}
+                        aria-label={t('common:refresh')}
                     >
                         <RefreshCw className="size-5" />
                     </button>

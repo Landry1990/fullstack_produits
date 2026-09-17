@@ -203,6 +203,7 @@ export default function EtatsInventaire() {
                     <button
                       key={o.value}
                       type="button"
+                      aria-pressed={active}
                       onClick={() => setGroupBy(o.value)}
                       className={cn(
                         'flex flex-col gap-1.5 p-3 rounded-xl border-2 text-left transition-all duration-150',
@@ -243,6 +244,7 @@ export default function EtatsInventaire() {
                     <button
                       key={o.value}
                       type="button"
+                      aria-pressed={active}
                       onClick={() => setSource(o.value)}
                       className={cn(
                         'flex items-start gap-2.5 p-3 rounded-xl border-2 text-left transition-all duration-150',
@@ -281,6 +283,7 @@ export default function EtatsInventaire() {
               <Select
                 size="sm"
                 label={t('stock:etats.filter_by_entity', { entity: entityLabel })}
+                aria-label={t('stock:etats.filter_by_entity', { entity: entityLabel })}
                 value={selectedEntity ?? ''}
                 onChange={(e) => setSelectedEntity(e.target.value ? Number(e.target.value) : null)}
                 disabled={loadingEntities}
@@ -303,6 +306,7 @@ export default function EtatsInventaire() {
                       <button
                         key={o.value}
                         type="button"
+                        aria-pressed={active}
                         onClick={() => setStockFilter(o.value)}
                         className={cn(
                           'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150',
@@ -328,6 +332,7 @@ export default function EtatsInventaire() {
                         <button
                           key={o.value}
                           type="button"
+                          aria-pressed={active}
                           onClick={() => setStockLocation(o.value)}
                           className={cn(
                             'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150',

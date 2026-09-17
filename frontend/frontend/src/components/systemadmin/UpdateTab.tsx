@@ -254,8 +254,9 @@ export function UpdateTab({
               {/* Heure */}
               {autoUpdateEnabled && (
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700">{t('update_time_label')}</label>
+                  <label htmlFor="update-time-input" className="text-sm text-gray-700">{t('update_time_label')}</label>
                   <input
+                    id="update-time-input"
                     type="time"
                     value={updateTime}
                     onChange={(e) => setUpdateTime(e.target.value)}

@@ -256,6 +256,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         <input
                             type="file"
                             accept=".csv"
+                            aria-label={t('inventaire.detail.import_csv_title')}
                             className="hidden"
                             ref={fileInputRef}
                             onChange={(e) => {
@@ -312,6 +313,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all disabled:bg-slate-50 disabled:text-slate-400 text-slate-700"
                         value={dateInventaire}
                         onChange={e => setDateInventaire(e.target.value)}
+                        aria-label={t('inventaire.detail.date')}
                         disabled={isReadOnly}
                         onBlur={handleSaveHeader}
                     />
@@ -322,6 +324,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         type="text"
                         className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all disabled:bg-slate-50 disabled:text-slate-400 text-slate-700"
                         placeholder={t('inventaire.detail.placeholder_desc')}
+                        aria-label={t('inventaire.detail.description')}
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                         disabled={isReadOnly}

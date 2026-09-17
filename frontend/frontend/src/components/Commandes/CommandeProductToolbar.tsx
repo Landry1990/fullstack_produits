@@ -47,6 +47,7 @@ export function CommandeProductToolbar({
                         <Input
                             type="text"
                             placeholder={t('orders:product_table.search_placeholder')}
+                            aria-label={t('orders:product_table.search_placeholder')}
                             className="w-40 h-7 pl-7 text-xs"
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}

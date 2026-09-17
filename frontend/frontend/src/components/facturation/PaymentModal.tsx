@@ -240,8 +240,9 @@ export default function PaymentModal({
                             )}
 
                         <div className="w-full">
-                            <label className="block py-1 text-xs uppercase font-bold text-slate-500">{t('facturation:payment.amount_label')}</label>
+                            <label htmlFor="facturation-payment-amount-patient" className="block py-1 text-xs uppercase font-bold text-slate-500">{t('facturation:payment.amount_label')}</label>
                             <input
+                                id="facturation-payment-amount-patient"
                                 type="number"
                                 readOnly
                                 title={t('facturation:payment.part_patient_locked')}
@@ -330,8 +331,9 @@ export default function PaymentModal({
                   )}
 
                   <div className="w-full">
-                    <label className="block py-1 text-xs uppercase font-bold text-slate-500">{t('facturation:payment.amount_label')}</label>
+                    <label htmlFor="facturation-payment-amount" className="block py-1 text-xs uppercase font-bold text-slate-500">{t('facturation:payment.amount_label')}</label>
                     <input
+                      id="facturation-payment-amount"
                       ref={paymentInputRef}
                       type="number"
                       step="0.01"

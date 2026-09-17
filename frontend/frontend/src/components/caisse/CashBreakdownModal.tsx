@@ -179,6 +179,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
           inputMode="numeric"
           placeholder="0"
           data-billetage="1"
+          aria-label={`${t('journal.closing.breakdown.bills', { defaultValue: 'Billets' })} ${fmt(valeur)}`}
           className="h-9 w-full px-1 rounded-md border border-slate-200 bg-slate-50 text-center text-sm font-mono font-bold text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
           value={qte}
           onChange={(e) => handleCountChange(key, e.target.value)}
@@ -208,6 +209,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
           inputMode="numeric"
           placeholder="0"
           data-billetage="1"
+          aria-label={`${t('journal.closing.breakdown.coins', { defaultValue: 'Pièces' })} ${fmt(valeur)}`}
           className="h-9 w-full px-1 rounded-md border border-slate-200 bg-slate-50 text-center text-sm font-mono font-bold text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
           value={qte}
           onChange={(e) => handleCountChange(key, e.target.value)}
@@ -297,6 +299,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
                   inputMode="decimal"
                   placeholder="0"
                   data-billetage="1"
+                  aria-label={t('journal.closing.breakdown.orange_money', { defaultValue: 'Orange Money' })}
                   className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-right text-sm font-mono font-bold text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
                   value={omAmount}
                   onChange={(e) =>
@@ -316,6 +319,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
                   inputMode="decimal"
                   placeholder="0"
                   data-billetage="1"
+                  aria-label={t('journal.closing.breakdown.mtn_momo', { defaultValue: 'MTN MoMo' })}
                   className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-right text-sm font-mono font-bold text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
                   value={momoAmount}
                   onChange={(e) =>

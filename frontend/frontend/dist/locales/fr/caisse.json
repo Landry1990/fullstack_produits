@@ -481,6 +481,7 @@
         "no_points": "Aucun point de vente disponible.",
         "create_hint": "Créez-en un dans Paramètres > Points de vente.",
         "cancel": "Annuler",
+        "quit": "Quitter la facturation",
         "opened_by": "Ouvert par {{name}}",
         "your_post": "Votre poste actif",
         "active_title": "Actif",

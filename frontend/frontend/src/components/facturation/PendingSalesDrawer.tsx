@@ -170,6 +170,7 @@ export default function PendingSalesDrawer({
                           size="sm"
                           className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-50 border-none transition-colors"
                           title={t('common:delete')}
+                          aria-label={t('common:delete')}
                         >
                           <X className="size-4" />
                         </Button>

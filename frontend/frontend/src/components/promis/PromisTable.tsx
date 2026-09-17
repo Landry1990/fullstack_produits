@@ -332,6 +332,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                             <TableRow
                                 key={p.id}
                                 onClick={() => onView(p)}
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                                        e.preventDefault();
+                                        onView(p);
+                                    }
+                                }}
                                 className={cn(
                                     'border-b border-slate-100 transition-colors hover:bg-slate-50/80 cursor-pointer',
                                     isSelected && 'bg-emerald-50/40'

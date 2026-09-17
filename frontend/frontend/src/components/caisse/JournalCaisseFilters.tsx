@@ -42,6 +42,7 @@ export default function JournalCaisseFilters({ state }: Props) {
           <div className="relative sm:col-span-2 xl:col-span-3 2xl:w-56">
             <input
               type="text"
+              aria-label={t('search_placeholder')}
               placeholder={t('search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -53,6 +54,7 @@ export default function JournalCaisseFilters({ state }: Props) {
           {/* Mode filter */}
           <div className="w-full xl:col-span-2 2xl:w-auto">
             <select
+              aria-label={t('all_modes')}
               value={filterMode}
               onChange={(e) => setFilterMode(e.target.value)}
               className="w-full sm:w-auto h-9 px-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
@@ -67,6 +69,7 @@ export default function JournalCaisseFilters({ state }: Props) {
           {/* Cashier filter */}
           <div className="w-full xl:col-span-2 2xl:w-auto">
             <select
+              aria-label={t('all_cashiers')}
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
               className="w-full sm:w-auto h-9 px-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
@@ -83,7 +86,9 @@ export default function JournalCaisseFilters({ state }: Props) {
           {/* Date Pickers */}
           <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg p-0.5 w-full sm:col-span-2 xl:col-span-5 2xl:w-auto">
             <div className="flex flex-1 min-w-0 items-center px-2 py-1 gap-1">
+              <label htmlFor="journal-date-debut" className="sr-only">{t('date_start')}</label>
               <DatePicker
+                id="journal-date-debut"
                 selected={dateDebut}
                 onChange={(date: Date | null) => setDateDebut(date)}
                 showTimeInput
@@ -95,7 +100,9 @@ export default function JournalCaisseFilters({ state }: Props) {
                 isClearable
               />
               <span className="text-slate-300 text-[10px]">→</span>
+              <label htmlFor="journal-date-fin" className="sr-only">{t('date_end')}</label>
               <DatePicker
+                id="journal-date-fin"
                 selected={dateFin}
                 onChange={(date: Date | null) => setDateFin(date)}
                 showTimeInput
@@ -133,6 +140,7 @@ export default function JournalCaisseFilters({ state }: Props) {
               disabled={loading}
               className="h-7 w-7 p-0"
               title={t('refresh')}
+              aria-label={t('refresh')}
             >
               {loading ? <div className="animate-spin rounded-full size-3.5 border-b-2 border-emerald-600" /> : <RefreshCw className="size-3.5 text-slate-500" />}
             </Button>

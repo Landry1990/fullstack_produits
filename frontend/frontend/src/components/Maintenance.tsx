@@ -713,7 +713,15 @@ export default function Maintenance() {
                           <span className="font-semibold text-sm">{cat.label}</span>
                           <Badge variant="secondary" className="text-xs">{availableKeys.length}</Badge>
                         </div>
-                        {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center"
+                          onClick={(e) => { e.stopPropagation(); toggleExpandCategory(catKey); }}
+                          aria-expanded={isExpanded}
+                          aria-label={isExpanded ? t('common:hide_header') : t('common:show_header')}
+                        >
+                          {isExpanded ? <ChevronUp className="size-4" aria-hidden="true" /> : <ChevronDown className="size-4" aria-hidden="true" />}
+                        </button>
                       </div>
 
                       {/* Category items */}
@@ -789,16 +797,18 @@ export default function Maintenance() {
                 {t('period_title')}
               </h2>
               <div className="mb-2">
-                <label className="block"><span className="text-xs text-slate-600">{t('date_from')}</span></label>
+                <label htmlFor="purge-date-from" className="block"><span className="text-xs text-slate-600">{t('date_from')}</span></label>
                 <LocalizedDateInput
+                  id="purge-date-from"
                   className="h-9 text-sm"
                   value={dateFrom}
                   onChange={e => { setDateFrom(e.target.value); setPreview(null); setPurgeResults(null); }}
                 />
               </div>
               <div>
-                <label className="block"><span className="text-xs text-slate-600">{t('date_to')}</span></label>
+                <label htmlFor="purge-date-to" className="block"><span className="text-xs text-slate-600">{t('date_to')}</span></label>
                 <LocalizedDateInput
+                  id="purge-date-to"
                   className="h-9 text-sm"
                   value={dateTo}
                   onChange={e => { setDateTo(e.target.value); setPreview(null); setPurgeResults(null); }}
@@ -1069,10 +1079,11 @@ export default function Maintenance() {
                   </div>
 
                   <div>
-                    <label className="block py-1">
+                    <label htmlFor="backup-scheduled-time" className="block py-1">
                       <span className="text-xs text-slate-600">{t('scheduled_time')}</span>
                     </label>
-                    <Input 
+                    <Input
+                      id="backup-scheduled-time"
                       type="time"
                       lang={getLocale()}
                       className="h-9 text-sm w-full" 
@@ -1082,11 +1093,12 @@ export default function Maintenance() {
                   </div>
 
                   <div>
-                    <label className="block py-1">
+                    <label htmlFor="backup-secondary-path" className="block py-1">
                       <span className="text-xs text-slate-600">{t('secondary_path')}</span>
                     </label>
-                    <Input 
-                      type="text" 
+                    <Input
+                      id="backup-secondary-path"
+                      type="text"
                       className="h-9 text-sm w-full"
                       disableUppercase
                       placeholder="/mnt/backups"
@@ -1399,10 +1411,11 @@ export default function Maintenance() {
           </div>
 
           <div className="mb-4">
-            <label className="block">
+            <label htmlFor="purge-password" className="block">
               <span className="text-sm font-semibold text-slate-700">{t('password_label')}</span>
             </label>
             <Input
+              id="purge-password"
               type="password"
               placeholder={t('placeholders.enter_password')}
               value={password}
@@ -1451,10 +1464,11 @@ export default function Maintenance() {
           </DialogHeader>
 
           <div className="mb-4">
-            <label className="block">
+            <label htmlFor="restore-password" className="block">
               <span className="text-sm font-semibold text-slate-700">{t('password_label')}</span>
             </label>
             <Input
+              id="restore-password"
               type="password"
               className="border-red-300"
               placeholder={t('placeholders.password_required')}
@@ -1508,10 +1522,11 @@ export default function Maintenance() {
           </DialogHeader>
 
           <div className="mb-4">
-            <label className="block">
+            <label htmlFor="purge-produits-password" className="block">
               <span className="text-sm font-semibold text-slate-700">Confirmez votre mot de passe</span>
             </label>
             <Input
+              id="purge-produits-password"
               type="password"
               placeholder={t('maintenance:admin_password_placeholder')}
               value={purgePassword}
@@ -1562,10 +1577,11 @@ export default function Maintenance() {
           </DialogHeader>
 
           <div className="mb-4">
-            <label className="block">
+            <label htmlFor="update-admin-password" className="block">
               <span className="text-sm font-semibold text-slate-700">Confirmez votre mot de passe admin</span>
             </label>
             <Input
+              id="update-admin-password"
               type="password"
               placeholder={t('maintenance:admin_password_placeholder')}
               value={updatePassword}

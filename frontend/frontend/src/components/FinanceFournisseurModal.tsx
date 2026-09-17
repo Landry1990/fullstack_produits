@@ -527,6 +527,7 @@ export default function FinanceFournisseurModal({
                               size="sm"
                               onClick={() => handleDelete(paiement.id)}
                               className="text-error hover:bg-red-50 hover:text-red-600 h-8 w-8 p-0"
+                              aria-label={t('common:delete')}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

@@ -320,6 +320,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                               className="size-4 rounded border-slate-300 accent-emerald-600 focus:ring-emerald-500 cursor-pointer" 
                               checked={isPointed}
                               onChange={() => {}} // Handle on TR click
+                              aria-label={`Sélectionner relevé du ${formatDateLong(new Date(f.date_cloture))}`}
                             />
                           </td>
                           <td>

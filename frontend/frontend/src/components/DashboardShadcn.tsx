@@ -254,6 +254,7 @@ export default function DashboardShadcn() {
                 className="rounded-xl"
                 aria-expanded={menuOpen}
                 aria-haspopup="menu"
+                aria-label={t('actions.title')}
               >
                 <MoreHorizontal className="size-5 text-slate-500" />
               </Button>
@@ -316,6 +317,7 @@ export default function DashboardShadcn() {
                   <TabsTrigger
                     key={key}
                     value={key}
+                    aria-label={label}
                     className={cn(
                       "flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900",
                       "text-sm font-medium text-slate-500 transition-all"

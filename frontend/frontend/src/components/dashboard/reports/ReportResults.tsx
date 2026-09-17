@@ -196,6 +196,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                             onClick={() => setMargeFilter(f)}
                                             variant={margeFilter === f ? 'default' : 'outline'}
                                             size="sm"
+                                            aria-pressed={margeFilter === f}
                                             className={`h-7 px-3 rounded-full font-bold uppercase tracking-wider text-[10px] ${
                                                 margeFilter === f
                                                     ? f === 'negative' ? 'bg-red-500 hover:bg-red-600' : f === 'low' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'

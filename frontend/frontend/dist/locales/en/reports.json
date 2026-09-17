@@ -266,6 +266,8 @@
         "logic_or": "OR",
         "value_placeholder": "Value...",
         "no_value": "No value",
+        "operator_label": "Operator",
+        "remove_condition": "Remove condition",
         "operators": {
             "isnull": "Empty",
             "notnull": "Not empty"

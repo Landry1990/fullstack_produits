@@ -67,8 +67,10 @@ export function CaisseTicketPreviewModal({
     if (clientName) url += `?client_name=${encodeURIComponent(clientName)}`
     // Synchronisation d'auth dans localStorage avant ouverture pour permettre `noopener`.
     preparePrintAuthSync()
-    const printWindow = window.open(url, '_blank', 'noopener,noreferrer')
-    if (!printWindow) {
+    const printWindow = window.open(url, '_blank')
+    if (printWindow) {
+      printWindow.opener = null
+    } else {
       gooeyToast.error(t('common:popup_blocked'))
     }
   }, [ticket, t])
@@ -79,7 +81,8 @@ export function CaisseTicketPreviewModal({
     // Synchronisation d'auth dans localStorage avant ouverture pour permettre `noopener`.
     preparePrintAuthSync()
     // Ouvrir la fenêtre AVANT l'appel async pour éviter le blocage des popups.
-    const printWindow = window.open('about:blank', '_blank', 'noopener,noreferrer')
+    const printWindow = window.open('about:blank', '_blank')
+    if (printWindow) printWindow.opener = null
     try {
       await api.patch(`factures/${pendingFacture.id}/`,
         { client_name_override: upperName }
