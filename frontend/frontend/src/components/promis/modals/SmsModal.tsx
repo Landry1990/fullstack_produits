@@ -66,13 +66,14 @@ export const SmsModal: React.FC<SmsModalProps> = ({
         >
             <form onSubmit={handleSendSms} className="space-y-5">
                 <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-slate-500 mb-1">
+                    <label htmlFor="sms-number" className="block text-sm font-medium text-slate-500 mb-1">
                         <span className="flex items-center gap-2">
                             <Phone className="size-4" />
                             {t('stock:promis.modal.sms_number')}
                         </span>
                     </label>
                     <input
+                        id="sms-number"
                         type="text"
                         className="h-10 w-full rounded-xl border border-slate-200 bg-slate-100 px-3 text-sm font-mono text-slate-400 cursor-default"
                         value={promis?.client_phone_display || ''}
@@ -81,10 +82,11 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                 </div>
                 
                 <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-slate-500 mb-1">
+                    <label htmlFor="sms-message" className="block text-sm font-medium text-slate-500 mb-1">
                         {t('stock:promis.modal.sms_message')}
                     </label>
                     <textarea
+                        id="sms-message"
                         className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all h-32 resize-none"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}

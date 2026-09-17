@@ -306,6 +306,7 @@ export default function ReapproRayon() {
               <input
                 type="text"
                 placeholder={t('common:search_product_placeholder')}
+                aria-label={t('common:search_product_placeholder')}
                 className="h-11 w-full pl-11 pr-4 bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-sm font-bold text-slate-700 focus:outline-none transition-all"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
@@ -313,6 +314,7 @@ export default function ReapproRayon() {
             </div>
             <select
               className="h-11 px-3 bg-white border border-slate-200 focus:border-emerald-500 focus:outline-none rounded-xl text-sm font-bold text-slate-700 min-w-[200px]"
+              aria-label={t('common:all_rayons')}
               value={selectedRayon}
               onChange={(e) => { setSelectedRayon(e.target.value); setPage(1); }}
             >
@@ -377,6 +379,7 @@ export default function ReapproRayon() {
                         indeterminate={selectedIds.size > 0 && selectedIds.size < products.length}
                         onChange={toggleSelectAll}
                         size="sm"
+                        aria-label={t('stock:cadencier.select_all')}
                     />
                 </th>
                 <th className="text-[10px] font-black uppercase tracking-widest text-slate-400 py-3 text-left">{t('stock:reappro.columns.product')}</th>
@@ -426,6 +429,7 @@ export default function ReapproRayon() {
                             checked={isSelected}
                             onChange={() => toggleSelect(p.id)}
                             size="sm"
+                            aria-label={`Sélectionner ${p.name ?? p.id}`}
                         />
                       </td>
                       <td className="py-3">
@@ -485,6 +489,7 @@ export default function ReapproRayon() {
                             } disabled:opacity-30`}
                             onClick={() => handleTransfer(p)}
                             disabled={suggest <= 0}
+                            aria-label={t('stock:reappro.transfer')}
                         >
                             <Truck className="size-4 transition-transform group-hover/btn:translate-x-1" />
                             <span className="hidden xl:inline">{t('stock:reappro.transfer')}</span>

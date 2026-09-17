@@ -13,6 +13,7 @@
         "plan": "Chart of Accounts"
     },
     "exercice": {
+      "label": "Fiscal year",
       "closed": "CLOSED"
     },
     "dashboard": {

@@ -47,6 +47,15 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
     <div
       className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 cursor-pointer"
       onClick={() => navigate('/app/challenges')}
+      role="button"
+      tabIndex={0}
+      aria-label={item.nom}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigate('/app/challenges');
+        }
+      }}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">

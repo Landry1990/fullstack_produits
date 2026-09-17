@@ -113,6 +113,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
             type="button"
             onClick={onClear}
             className="size-7 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+            aria-label={t('common:remove')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -141,6 +142,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
           type="text"
           className="w-full pl-10 h-12 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
           placeholder={placeholderText}
+          aria-label={label}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
@@ -525,6 +527,7 @@ const Transformations: React.FC = () => {
               type="text"
               className="h-8 w-56 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-xs text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
               placeholder={t('common:search', { defaultValue: 'Rechercher...' })}
+              aria-label={t('common:search', { defaultValue: 'Rechercher...' })}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -757,6 +760,7 @@ const Transformations: React.FC = () => {
               step="0.01"
               className="w-full h-12 rounded-xl border-2 border-slate-200 bg-slate-50 text-lg font-black text-center focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all" 
               placeholder={t('stock:transformations.modal_relation.ratio_placeholder')}
+              aria-label={t('transformations.modal_relation.ratio_label')}
               value={ratioValue}
               onChange={e => setRatioValue(e.target.value)}
               required
@@ -839,6 +843,7 @@ const Transformations: React.FC = () => {
                   type="number" 
                   className="w-full h-14 rounded-xl border-2 border-slate-200 bg-slate-50 text-2xl font-black text-center focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   min="1"
+                  aria-label={t('transformations.modal_transform.qty_to_transform')}
                   value={transformationData.quantite}
                   onChange={e => setTransformationData({...transformationData, quantite: normalizeNumberInput(e.target.value)})}
                   required
@@ -912,6 +917,7 @@ const Transformations: React.FC = () => {
                             <Checkbox
                               checked={currentQty > 0}
                               onChange={() => toggleManualLot(lot.lot_id, lot.quantity_remaining, currentQty)}
+                              aria-label={`Sélectionner lot ${lot.lot}`}
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
@@ -928,6 +934,7 @@ const Transformations: React.FC = () => {
                               type="number"
                               min={0}
                               max={lot.quantity_remaining}
+                              aria-label={`Quantité lot ${lot.lot}`}
                               value={currentQty}
                               disabled={currentQty <= 0}
                               onChange={(e) => {

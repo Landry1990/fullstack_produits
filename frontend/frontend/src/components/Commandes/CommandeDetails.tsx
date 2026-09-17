@@ -446,6 +446,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
               <Input
                 type="text"
                 placeholder={t('orders:product_table.search_placeholder', 'Rechercher un produit...')}
+                aria-label={t('orders:product_table.search_placeholder', 'Rechercher un produit...')}
                 className="w-full sm:w-64 pl-8 h-9"
                 value={searchDetailQuery}
                 onChange={(e) => setSearchDetailQuery(e.target.value)}
@@ -474,6 +475,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                   <TableHead className="w-12 px-3 py-2 text-center">
                     <Checkbox
                       checked={selectedRows.size === selectedCommande.produits.length && selectedCommande.produits.length > 0}
+                      aria-label={t('common:maintenance.select_all')}
                       onCheckedChange={() => {
                         if (selectedRows.size === selectedCommande.produits.length) {
                           setSelectedRows(new Set());
@@ -527,6 +529,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                             checked={selectedRows.has(p.originalIndex)}
                             onCheckedChange={() => toggleRowSelection(p.originalIndex)}
                             onClick={(e) => e.stopPropagation()}
+                            aria-label={p.produitName}
                           />
                         </TableCell>
                         <TableCell className={cn("px-3 py-2 text-sm font-medium", isDeleted ? 'italic text-slate-400' : 'text-slate-800')}>
@@ -550,6 +553,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                             <Input
                               type="text"
                               className="w-24 font-mono text-xs h-7"
+                              aria-label={t('orders:product_table.headers.lot')}
                               value={editLotValues.lot}
                               onChange={e => setEditLotValues(v => ({ ...v, lot: e.target.value }))}
                               autoFocus
@@ -560,6 +564,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                           {editingLotId === p.id ? (
                             <LocalizedDateInput
                               className="w-32 text-xs h-7"
+                              aria-label={t('orders:product_table.headers.exp_date')}
                               value={editLotValues.date_expiration}
                               onChange={e => setEditLotValues(v => ({ ...v, date_expiration: e.target.value }))}
                             />

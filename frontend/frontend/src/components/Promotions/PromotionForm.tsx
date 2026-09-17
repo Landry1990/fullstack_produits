@@ -198,18 +198,23 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
+            <div
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="promotion-form-title"
+            >
                 {/* Header */}
                 <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <h2 id="promotion-form-title" className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                             {initialData ? <Tag className="text-emerald-600" /> : <Plus className="text-emerald-600" />}
                             {initialData ? t('promotions:form.title_edit') : t('promotions:form.title_new')}
                         </h2>
                         <p className="text-sm text-slate-500">{t('promotions:form.subtitle')}</p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={onClose} className="size-10 rounded-full">
-                        <X size={24} />
+                    <Button variant="ghost" size="icon" onClick={onClose} className="size-10 rounded-full" aria-label={t('common:close')}>
+                        <X size={24} aria-hidden="true" />
                     </Button>
                 </div>
                 
@@ -222,8 +227,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                     <ShoppingBag size={14} /> {t('promotions:form.general_info')}
                                 </h3>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.pack_name')}</label>
+                                    <label htmlFor="promo-pack-name" className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.pack_name')}</label>
                                     <input
+                                        id="promo-pack-name"
                                         type="text"
                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                                         value={name}
@@ -234,16 +240,16 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2 text-emerald-600">
+                                        <label htmlFor="promo-start-date" className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2 text-emerald-600">
                                             <Calendar size={14} /> {t('promotions:form.start_date')}
                                         </label>
-                                        <LocalizedDateInput  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={startDate} onChange={e => setStartDate(e.target.value)} required />
+                                        <LocalizedDateInput id="promo-start-date" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={startDate} onChange={e => setStartDate(e.target.value)} required />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2 text-red-500">
+                                        <label htmlFor="promo-end-date" className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2 text-red-500">
                                             <Calendar size={14} /> {t('promotions:form.end_date')}
                                         </label>
-                                        <LocalizedDateInput  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                                        <LocalizedDateInput id="promo-end-date" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all" value={endDate} onChange={e => setEndDate(e.target.value)} />
                                     </div>
                                 </div>
                             </div>
@@ -254,8 +260,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                             <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
                                 <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider">{t('promotions:form.type_value')}</h3>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.promo_type')}</label>
+                                    <label htmlFor="promo-type" className="block text-sm font-semibold text-slate-700 mb-1">{t('promotions:form.promo_type')}</label>
                                     <select
+                                        id="promo-type"
                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                                         value={discountType}
                                         onChange={e => setDiscountType(e.target.value as DiscountType)}
@@ -269,11 +276,12 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
 
                                 {(discountType === DiscountType.PERCENTAGE || discountType === DiscountType.FIXED_AMOUNT || discountType === DiscountType.BUNDLE) && (
                                     <div className="bg-white p-3 rounded-lg border border-slate-200">
-                                        <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                        <label htmlFor="promo-value" className="block text-xs font-bold uppercase text-slate-500 mb-1">
                                             {discountType === DiscountType.BUNDLE ? t('promotions:form.labels.pack_price') : t('promotions:form.labels.discount_value')}
                                         </label>
                                         <div className="relative">
                                             <input
+                                                id="promo-value"
                                                 type="number"
                                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-2xl font-black text-emerald-600 h-14 focus:outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all"
                                                 value={value}
@@ -292,15 +300,15 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 {discountType === DiscountType.BUY_X_GET_Y && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div className="bg-white p-2 rounded-lg border border-slate-200">
-                                            <label className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.buy')}</label>
-                                            <input type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold focus:outline-none focus:border-emerald-300" value={buyQuantity} onChange={e => {
+                                            <label htmlFor="promo-buy-qty" className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.buy')}</label>
+                                            <input id="promo-buy-qty" type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold focus:outline-none focus:border-emerald-300" value={buyQuantity} onChange={e => {
                                                 const parsed = e.target.value ? Number(e.target.value) : undefined;
                                                 setBuyQuantity(prev => (parsed !== undefined && !Number.isNaN(parsed) && parsed > 0 ? parsed : prev));
                                             }} min="1" />
                                         </div>
                                         <div className="bg-white p-2 rounded-lg border border-slate-200">
-                                            <label className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.get')}</label>
-                                            <input type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-emerald-600 focus:outline-none focus:border-emerald-300" value={getQuantity} onChange={e => {
+                                            <label htmlFor="promo-get-qty" className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.get')}</label>
+                                            <input id="promo-get-qty" type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-emerald-600 focus:outline-none focus:border-emerald-300" value={getQuantity} onChange={e => {
                                                 const parsed = e.target.value ? Number(e.target.value) : undefined;
                                                 setGetQuantity(prev => (parsed !== undefined && !Number.isNaN(parsed) && parsed >= 0 ? parsed : prev));
                                             }} />
@@ -388,9 +396,11 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                                 size="icon"
                                                                 className="size-7"
                                                                 onClick={() => updateProductQuantity(p.id, Math.max(1, (p.quantity || 1) - 1))}
-                                                            ><Minus size={12} /></Button>
+                                                                aria-label={t('common:decrease')}
+                                                            ><Minus size={12} aria-hidden="true" /></Button>
                                                             <input
                                                                 type="number"
+                                                                aria-label={`${t('promotions:form.products.table.qty')} — ${p.name}`}
                                                                 className="w-12 text-center bg-transparent border-none font-bold text-sm text-slate-700 focus:outline-none"
                                                                 value={p.quantity || 1}
                                                                 onChange={(e) => {
@@ -407,7 +417,8 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                                 size="icon"
                                                                 className="size-7"
                                                                 onClick={() => updateProductQuantity(p.id, (p.quantity || 1) + 1)}
-                                                            ><Plus size={12} /></Button>
+                                                                aria-label={t('common:increase')}
+                                                            ><Plus size={12} aria-hidden="true" /></Button>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -432,8 +443,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                         size="icon"
                                                         onClick={() => removeProduct(p.id)}
                                                         className="size-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                                        aria-label={`${t('common:remove')} ${p.name}`}
                                                     >
-                                                        <Trash2 size={18} />
+                                                        <Trash2 size={18} aria-hidden="true" />
                                                     </Button>
                                                 </td>
                                             </tr>

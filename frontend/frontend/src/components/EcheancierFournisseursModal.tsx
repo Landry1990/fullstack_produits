@@ -172,12 +172,14 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onPointer
               icon={<Search className="h-4 w-4" />}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
+              aria-label={t('providers:schedule.search_placeholder')}
             />
             <Select
               size="sm"
               containerClassName="w-full sm:w-48"
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
+              aria-label={t('providers:schedule.status_all')}
             >
               <option value="TOUS">{t('providers:schedule.status_all')}</option>
               <option value="EN RETARD">{t('providers:schedule.status_late')}</option>

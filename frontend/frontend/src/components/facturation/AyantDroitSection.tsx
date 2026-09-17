@@ -94,7 +94,7 @@ export default function AyantDroitSection({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-1">
-        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider py-0">
+        <label htmlFor="ayant-droit-select" className="text-xs font-semibold text-slate-400 uppercase tracking-wider py-0">
           {t('facturation:client.ayant_droit.label')}
         </label>
         {ayantsDroitList.length > 0 && !showNewAyantDroit && (
@@ -116,6 +116,7 @@ export default function AyantDroitSection({
           <input
             ref={nomRef}
             type="text"
+            aria-label={t('facturation:client.ayant_droit.name_placeholder')}
             value={ayantDroitNom}
             onChange={(e) => {
               setAyantDroitNom(e.target.value.toUpperCase())
@@ -129,6 +130,7 @@ export default function AyantDroitSection({
           <input
             ref={matriculeRef}
             type="text"
+            aria-label={t('facturation:client.ayant_droit.matricule_placeholder')}
             value={ayantDroitMatricule}
             onChange={(e) => setAyantDroitMatricule(e.target.value.toUpperCase())}
             onKeyDown={(e) => handleInputKeyDown(e, societeRef)}
@@ -140,6 +142,7 @@ export default function AyantDroitSection({
           <input
             ref={societeRef}
             type="text"
+            aria-label={t('facturation:client.ayant_droit.societe_placeholder')}
             value={ayantDroitSociete}
             onChange={(e) => setAyantDroitSociete(e.target.value.toUpperCase())}
             placeholder={t('facturation:client.ayant_droit.societe_placeholder')}
@@ -164,6 +167,7 @@ export default function AyantDroitSection({
         <div className="space-y-2">
           <div className="flex gap-2">
             <select
+              id="ayant-droit-select"
               value={selectedAyantDroit !== null ? String(selectedAyantDroit) : ''}
               onChange={(e) => handleSelectFromList(e.target.value ? Number(e.target.value) : null)}
               className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"

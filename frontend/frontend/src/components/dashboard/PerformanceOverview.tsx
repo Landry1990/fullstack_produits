@@ -417,7 +417,13 @@ export default function PerformanceOverview({
                   <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => navigate(`/app/produits?search=${encodeURIComponent(item.name)}`)}>
                     <td className="px-5 py-2.5 text-slate-400 font-black text-xs">{idx + 1}</td>
                     <td className="px-3 py-2.5">
-                      <div className="font-bold text-slate-800 text-xs leading-tight">{item.name}</div>
+                      <Link
+                        to={`/app/produits?search=${encodeURIComponent(item.name)}`}
+                        className="font-bold text-slate-800 text-xs leading-tight hover:underline focus-visible:outline-none focus-visible:underline rounded-sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {item.name}
+                      </Link>
                       {item.cip && <div className="text-[10px] text-slate-400 font-mono">{item.cip}</div>}
                     </td>
                     <td className="px-3 py-2.5 text-center">

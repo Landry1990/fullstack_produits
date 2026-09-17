@@ -35,6 +35,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
                     <Search className="size-4 text-slate-400 shrink-0" />
                     <input
                         type="text"
+                        aria-label={t('common:search')}
                         placeholder={t('stock:avoirs.search_placeholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -45,6 +46,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
 
             <div className="md:col-span-3">
                 <select
+                    aria-label={t('common:all_statuses', { defaultValue: 'Tous statuts' })}
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className={`h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none ${statusFilter === '' ? 'text-slate-400' : 'text-slate-900'}`}
@@ -57,6 +59,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
 
             <div className="md:col-span-3">
                 <select
+                    aria-label={t('common:all_types', { defaultValue: 'Tous types' })}
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
                     className={`h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:outline-none ${typeFilter === '' ? 'text-slate-400' : 'text-slate-900'}`}
@@ -77,6 +80,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
                     size="icon"
                     onClick={onRefresh}
                     title={t('common:refresh')}
+                    aria-label={t('common:refresh')}
                     className="h-9 w-9 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                 >
                     <RotateCcw className="size-4 text-emerald-600" />

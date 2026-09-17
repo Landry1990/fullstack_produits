@@ -173,10 +173,11 @@ export default function RecapClient() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
           {/* Nom client (optionnel) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            <label htmlFor="recap-client-name" className="block text-xs font-semibold text-slate-600 mb-1.5">
               {t('recap:form.client_name')}
             </label>
             <Input
+              id="recap-client-name"
               type="text"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
@@ -187,12 +188,13 @@ export default function RecapClient() {
 
           {/* Saisie numéros de tickets */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            <label htmlFor="recap-ticket-number" className="block text-xs font-semibold text-slate-600 mb-1.5">
               {t('recap:form.ticket_numbers')} <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center gap-2">
               <Input
                 ref={inputRef}
+                id="recap-ticket-number"
                 type="text"
                 value={currentInput}
                 onChange={(e) => setCurrentInput(e.target.value)}
@@ -208,6 +210,7 @@ export default function RecapClient() {
                 className="h-10 px-3"
                 onClick={addNumero}
                 disabled={!currentInput.trim()}
+                aria-label={t('common:add')}
               >
                 <Plus className="size-4" />
               </Button>
@@ -235,7 +238,7 @@ export default function RecapClient() {
                     {status === 'not_found' && <span className="size-2 rounded-full bg-red-500" />}
                     {num}
                     {status === 'cancelled' && <span className="text-[9px] font-sans no-underline">{t('recap:status.cancelled')}</span>}
-                    <button onClick={() => removeNumero(idx)} className="text-slate-400 hover:text-red-500 ml-1 no-underline">
+                    <button onClick={() => removeNumero(idx)} className="text-slate-400 hover:text-red-500 ml-1 no-underline" aria-label={`${t('common:remove')} ${num}`}>
                       <X className="size-3" />
                     </button>
                   </Badge>

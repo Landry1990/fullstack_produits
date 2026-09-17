@@ -113,11 +113,12 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                             {t('manager_dashboard.settings.subtitle', 'Automatisez et personnalisez le calcul de vos cibles de vente.')}
                         </p>
                     </div>
-                    <Button 
+                    <Button
                         onClick={onClose}
                         variant="ghost" size="icon" className="rounded-full hover:rotate-90 transition-transform text-base-content/60 hover:text-base-content"
+                        aria-label={t('common:close')}
                     >
-                        <X className="size-5" />
+                        <X className="size-5" aria-hidden="true" />
                     </Button>
                 </div>
 
@@ -136,13 +137,14 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                     ) : (
                         <>
                             {/* Mode Selection */}
-                            <div className="space-y-4">
-                                <label className="text-sm font-bold text-base-content/60 uppercase tracking-wider block">
+                            <div className="space-y-4" role="group" aria-labelledby="objectives-mode-label">
+                                <span id="objectives-mode-label" className="text-sm font-bold text-base-content/60 uppercase tracking-wider block">
                                     {t('manager_dashboard.settings.mode_label')}
-                                </label>
+                                </span>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <button
                                         type="button"
+                                        aria-pressed={config.mode === 'MANUEL'}
                                         onClick={() => setConfig({ ...config, mode: 'MANUEL' })}
                                         className={`p-4 rounded-xl border-2 text-left transition-all ${
                                             config.mode === 'MANUEL' 
@@ -157,6 +159,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
 
                                     <button
                                         type="button"
+                                        aria-pressed={config.mode === 'FIXE'}
                                         onClick={() => setConfig({ ...config, mode: 'FIXE' })}
                                         className={`p-4 rounded-xl border-2 text-left transition-all ${
                                             config.mode === 'FIXE' 
@@ -171,6 +174,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
 
                                     <button
                                         type="button"
+                                        aria-pressed={config.mode === 'DYNAMIQUE'}
                                         onClick={() => setConfig({ ...config, mode: 'DYNAMIQUE' })}
                                         className={`p-4 rounded-xl border-2 text-left transition-all ${
                                             config.mode === 'DYNAMIQUE' 
@@ -191,12 +195,13 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                     <div className="space-y-6 animate-in slide-in-from-top-2 fade-in">
                                         {/* Objectif de marge mensuelle */}
                                         <div className="flex flex-col gap-1">
-                                            <label className="flex flex-col">
+                                            <label htmlFor="objectif-marge-mensuelle" className="flex flex-col">
                                                 <span className="text-sm font-bold">{t('manager_dashboard.settings.fixed.monthly_margin_label')}</span>
                                             </label>
                                             <div className="flex">
-                                                <input 
-                                                    type="number" 
+                                                <input
+                                                    id="objectif-marge-mensuelle"
+                                                    type="number"
                                                     className="w-full bg-base-100 rounded-l-lg rounded-r-none border border-base-300 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                                     value={config.marge_objectif_mensuel}
                                                     onChange={e => setConfig({...config, marge_objectif_mensuel: normalizeNumberInput(e.target.value)})}
@@ -211,12 +216,13 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                         {/* Coefficient multiplicateur */}
                                         <div className="grid sm:grid-cols-2 gap-6">
                                             <div className="flex flex-col gap-1">
-                                                <label className="flex flex-col">
+                                                <label htmlFor="objectif-coefficient" className="flex flex-col">
                                                     <span className="text-sm font-bold">{t('manager_dashboard.settings.fixed.coefficient_label')}</span>
                                                 </label>
                                                 <div className="flex">
-                                                    <input 
-                                                        type="number" 
+                                                    <input
+                                                        id="objectif-coefficient"
+                                                        type="number"
                                                         step="0.01"
                                                         min="1.01"
                                                         max="10"
@@ -232,10 +238,11 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                             </div>
 
                                             <div className="flex flex-col gap-1">
-                                                <label className="flex flex-col">
+                                                <label htmlFor="objectif-jours-semaine" className="flex flex-col">
                                                     <span className="text-sm font-bold">{t('manager_dashboard.settings.fixed.days_per_week')}</span>
                                                 </label>
-                                                <select 
+                                                <select
+                                                    id="objectif-jours-semaine"
                                                     className="w-full bg-base-100 rounded-lg border border-base-300 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                                     value={config.jours_ouverts_semaine}
                                                     onChange={e => setConfig({...config, jours_ouverts_semaine: normalizeNumberInput(e.target.value)})}
@@ -265,12 +272,13 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
 
                                 {config.mode === 'DYNAMIQUE' && (
                                     <div className="flex flex-col gap-1 max-w-xs animate-in slide-in-from-top-2 fade-in">
-                                        <label className="flex flex-col">
+                                        <label htmlFor="objectif-croissance" className="flex flex-col">
                                             <span className="text-sm font-bold">{t('manager_dashboard.settings.dynamic.growth_label')}</span>
                                         </label>
                                         <div className="flex">
-                                            <input 
-                                                type="number" 
+                                            <input
+                                                id="objectif-croissance"
+                                                type="number"
                                                 step="0.1"
                                                 className="w-full bg-base-100 rounded-l-lg rounded-r-none border border-base-300 h-10 text-sm px-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                                                 value={config.pourcentage_croissance}

@@ -340,7 +340,12 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
                   )}
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity rounded-lg"
+                onClick={(e) => { e.stopPropagation(); onEdit(p.code, obj ?? undefined); }}
+              >
                 {t('manager_dashboard.modify', 'Modifier')}
               </Button>
             </div>
@@ -441,8 +446,8 @@ function HeaderShadcn({
         <Button variant="ghost" size="icon" onClick={onOpenSettings} className="h-10 w-10 rounded-xl" aria-label={t('common:settings')}>
           <Settings className="size-5 text-slate-500" />
         </Button>
-        <Button onClick={onOpenObjective} className="gap-2 rounded-xl px-3 lg:px-4">
-          <PlusCircle className="size-5" />
+        <Button onClick={onOpenObjective} className="gap-2 rounded-xl px-3 lg:px-4" aria-label={t('manager_dashboard.set_objective', 'Fixer un Objectif')}>
+          <PlusCircle className="size-5" aria-hidden="true" />
           <span className="hidden sm:inline">{t('manager_dashboard.set_objective', 'Fixer un Objectif')}</span>
         </Button>
       </div>
@@ -535,7 +540,7 @@ export default function DashboardManagerShadcn() {
 
           <div className="space-y-5 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">{t('manager_dashboard.period_label', 'Période')}</label>
+              <span className="block text-sm font-semibold text-slate-700">{t('manager_dashboard.period_label', 'Période')}</span>
               <Tabs value={editingObjectif.periode} onValueChange={(v) => setEditingObjectif({ ...editingObjectif, periode: v })}>
                 <TabsList className="grid w-full grid-cols-3 rounded-xl bg-slate-100 p-1">
                   <TabsTrigger value="JOUR" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
@@ -552,8 +557,9 @@ export default function DashboardManagerShadcn() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">{t('manager_dashboard.amount_label', 'Montant Objectif (F)')}</label>
+              <label htmlFor="objective-amount" className="text-sm font-semibold text-slate-700">{t('manager_dashboard.amount_label', 'Montant Objectif (F)')}</label>
               <input
+                id="objective-amount"
                 type="number"
                 className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium shadow-sm transition-all placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
                 placeholder="500000"

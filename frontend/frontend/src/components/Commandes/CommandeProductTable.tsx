@@ -125,6 +125,7 @@ export default function CommandeProductTable({
                                     <Checkbox
                                         checked={selectedRows.size === commandeProduits.length && commandeProduits.length > 0}
                                         onCheckedChange={() => toggleAllRows()}
+                                        aria-label={t('common:maintenance.select_all')}
                                     />
                                 </TableHead>
                                 <TableHead className="bg-slate-100 pl-2 font-bold min-w-[260px] w-full whitespace-nowrap">{t('orders:product_table.headers.product')}</TableHead>

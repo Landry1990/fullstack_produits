@@ -392,16 +392,16 @@ export default function Perimes() {
         <div className="flex items-center gap-2 lg:gap-3">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
             <TabsList className="bg-slate-100">
-              <TabsTrigger value="dashboard" className="gap-1.5 text-xs">
-                <BarChart2 className="size-3.5" />
+              <TabsTrigger value="dashboard" className="gap-1.5 text-xs" aria-label={t('perimes.tabs.dashboard')}>
+                <BarChart2 className="size-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline font-semibold">{t('perimes.tabs.dashboard')}</span>
               </TabsTrigger>
-              <TabsTrigger value="list" className="gap-1.5 text-xs">
-                <List className="size-3.5" />
+              <TabsTrigger value="list" className="gap-1.5 text-xs" aria-label={t('perimes.tabs.list')}>
+                <List className="size-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline font-semibold">{t('perimes.tabs.list')}</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-1.5 text-xs">
-                <History className="size-3.5" />
+              <TabsTrigger value="history" className="gap-1.5 text-xs" aria-label={t('perimes.tabs.history')}>
+                <History className="size-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline font-semibold">{t('perimes.tabs.history')}</span>
               </TabsTrigger>
             </TabsList>
@@ -412,8 +412,10 @@ export default function Perimes() {
             onClick={() => { fetchLots(); fetchStats() }}
             disabled={loading || loadingStats}
             className="gap-2"
+            aria-label={t('common:refresh')}
+            aria-busy={loading || loadingStats}
           >
-            <RefreshCw className={cn("size-4", (loading || loadingStats) && "animate-spin")} />
+            <RefreshCw className={cn("size-4", (loading || loadingStats) && "animate-spin")} aria-hidden="true" />
             <span className="hidden sm:inline">{t('common:refresh')}</span>
           </Button>
         </div>
@@ -612,6 +614,7 @@ export default function Perimes() {
                              {!showExpiredOnly && (
                                <select
                                  className="rounded-lg border border-slate-200 bg-white h-7 px-2 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-red-400 transition-all"
+                                 aria-label={t('common:filters')}
                                  value={filterDays}
                                  onChange={(e) => setFilterDays(parseInt(e.target.value))}
                                >
@@ -646,6 +649,7 @@ export default function Perimes() {
                           checked={selectedLotIds.size === lots.filter(l => l.quantity_remaining > 0).length && lots.filter(l => l.quantity_remaining > 0).length > 0}
                           onCheckedChange={toggleAllSelection}
                           className="data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
+                          aria-label={t('stock:cadencier.select_all')}
                         />
                       </TableHead>
                       <TableHead className="py-3 px-4 text-left">{t('perimes.table.product')}</TableHead>
@@ -666,6 +670,7 @@ export default function Perimes() {
                             onCheckedChange={() => toggleLotSelection(lot.id)}
                             disabled={lot.quantity_remaining <= 0}
                             className="data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
+                            aria-label={`Sélectionner ${lot.produit_nom}`}
                           />
                         </TableCell>
                         <TableCell className="py-2.5 px-4">
@@ -727,6 +732,7 @@ export default function Perimes() {
                         <span className="text-[10px] font-bold text-slate-400 uppercase pl-1">{t('common:from')}</span>
                         <LocalizedDateInput
                             className="h-9 w-auto"
+                            aria-label={t('common:from')}
                             value={dateDebut}
                             onChange={(e) => setDateDebut(e.target.value)}
                         />
@@ -735,6 +741,7 @@ export default function Perimes() {
                         <span className="text-[10px] font-bold text-slate-400 uppercase pl-1">{t('common:to')}</span>
                         <LocalizedDateInput
                             className="h-9 w-auto"
+                            aria-label={t('common:to')}
                             value={dateFin}
                             onChange={(e) => setDateFin(e.target.value)}
                         />

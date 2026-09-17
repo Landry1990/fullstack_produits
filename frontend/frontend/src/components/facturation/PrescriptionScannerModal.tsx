@@ -268,7 +268,16 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
               {!preview && !showCamera && (
                 <div
                   className="flex-1 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-4 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t('facturation:prescription_scanner.click_browse')}
                   onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
                 >
                   <div className="p-4 bg-emerald-50 rounded-full text-emerald-600">
                     <Upload className="size-8" />
@@ -296,10 +305,10 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                     className="size-full object-cover"
                   />
                   <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-3">
-                    <button className="inline-flex items-center justify-center size-14 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-colors" onClick={capturePhoto}>
+                    <button aria-label={t('facturation:prescription_scanner.use_camera')} className="inline-flex items-center justify-center size-14 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-colors" onClick={capturePhoto}>
                       <div className="size-4 rounded-full border-2 border-white" />
                     </button>
-                    <button className="inline-flex items-center justify-center size-12 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors" onClick={stopCamera}>
+                    <button aria-label={t('common:close')} className="inline-flex items-center justify-center size-12 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors" onClick={stopCamera}>
                       <Trash2 className="size-5" />
                     </button>
                   </div>
@@ -310,7 +319,7 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
                 <div className="relative flex-1 rounded-2xl overflow-hidden group shadow-lg bg-slate-200">
                   <img src={preview} alt="Scan preview" className="size-full object-contain" />
                   <div className="absolute top-4 right-4 flex gap-2">
-                    <button className="inline-flex items-center justify-center size-9 rounded-full bg-red-600 text-white shadow-lg hover:bg-red-700 transition-colors" onClick={reset}>
+                    <button aria-label={t('common:delete')} className="inline-flex items-center justify-center size-9 rounded-full bg-red-600 text-white shadow-lg hover:bg-red-700 transition-colors" onClick={reset}>
                       <Trash2 className="size-4" />
                     </button>
                   </div>
@@ -419,12 +428,13 @@ const PrescriptionScannerModal: React.FC<PrescriptionScannerModalProps> = ({
         </div>
       </div>
 
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileChange} 
-        accept="image/*" 
-        className="hidden" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        aria-label={t('facturation:prescription_scanner.click_browse')}
+        className="hidden"
       />
       <canvas ref={canvasRef} className="hidden" />
     </PremiumModal>

@@ -96,8 +96,9 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('movement_modal.amount')}</label>
+          <label htmlFor="movement-amount" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('movement_modal.amount')}</label>
           <input
+            id="movement-amount"
             type="number"
             placeholder={t('movement_modal.amount_placeholder')}
             className="w-full h-12 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all font-bold"
@@ -109,8 +110,9 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('movement_modal.reason')}</label>
+          <label htmlFor="movement-reason" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('movement_modal.reason')}</label>
           <input
+            id="movement-reason"
             type="text"
             placeholder={t('movement_modal.reason_placeholder')}
             className="w-full h-12 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
@@ -121,8 +123,9 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('movement_modal.description')}</label>
+          <label htmlFor="movement-description" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('movement_modal.description')}</label>
           <textarea
+            id="movement-description"
             className="w-full h-24 px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 resize-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
             placeholder={t('movement_modal.description_placeholder')}
             value={description}

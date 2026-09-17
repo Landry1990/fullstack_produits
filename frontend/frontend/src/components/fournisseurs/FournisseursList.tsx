@@ -118,13 +118,15 @@ export default function FournisseursList({ hook }: Props) {
                     className={cn("size-9", showInactive ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500')}
                     onClick={() => state.setShowInactive(!showInactive)}
                     title={showInactive ? t('providers:hide_inactive') : t('providers:show_inactive')}
+                    aria-label={showInactive ? t('providers:hide_inactive') : t('providers:show_inactive')}
+                    aria-pressed={showInactive}
                   >
                     {showInactive ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                   </Button>
-                  <Button variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => state.setIsEcheancierModalOpen(true)} title={t('providers:schedule_btn')}>
+                  <Button variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => state.setIsEcheancierModalOpen(true)} title={t('providers:schedule_btn')} aria-label={t('providers:schedule_btn')}>
                     <Calendar className="size-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => state.setIsPointageModalOpen(true)} title={t('providers:pointage_btn')}>
+                  <Button variant="ghost" size="icon" className="size-9 text-slate-500" onClick={() => state.setIsPointageModalOpen(true)} title={t('providers:pointage_btn')} aria-label={t('providers:pointage_btn')}>
                     <CheckSquare className="size-4" />
                   </Button>
                 </div>
@@ -150,7 +152,7 @@ export default function FournisseursList({ hook }: Props) {
               />
             </div>
             {!selectedIds.length && (
-              <Button size="icon" className="h-9 w-9 bg-emerald-600 hover:bg-emerald-700" onClick={actions.openAddModal} title={t('providers:new_provider')}>
+              <Button size="icon" className="h-9 w-9 bg-emerald-600 hover:bg-emerald-700" onClick={actions.openAddModal} title={t('providers:new_provider')} aria-label={t('providers:new_provider')}>
                 <UserPlus className="size-4" />
               </Button>
             )}

@@ -45,6 +45,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                         `}
                         value={selectedFournisseur}
                         onChange={(e) => onFournisseurChange(e.target.value)}
+                        aria-label={t('stock:analyse.filters.supplier')}
                     >
                         <option value="">{t('stock:analyse.filters.all_suppliers')}</option>
                         {fournisseurs.map(f => (
@@ -66,6 +67,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                                        transition-all cursor-pointer"
                             value={unsoldDays}
                             onChange={(e) => onUnsoldDaysChange(Number(e.target.value))}
+                            aria-label={t('stock:analyse.filters.days_threshold')}
                         >
                             <option value={30}>30 {t('stock:analyse.days')}</option>
                             <option value={60}>60 {t('stock:analyse.days')}</option>

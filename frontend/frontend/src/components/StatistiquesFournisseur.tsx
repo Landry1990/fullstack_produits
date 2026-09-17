@@ -232,6 +232,7 @@ export default function StatistiquesFournisseur() {
                 className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                 value={dateDebut}
                 onChange={(e) => setDateDebut(e.target.value)}
+                aria-label={t('filters.from')}
                 />
             </div>
             <div className="flex flex-col gap-1 w-full sm:w-40">
@@ -241,6 +242,7 @@ export default function StatistiquesFournisseur() {
                 className="w-full rounded-lg border border-base-300 bg-base-100 h-9 text-xs px-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                 value={dateFin}
                 onChange={(e) => setDateFin(e.target.value)}
+                aria-label={t('filters.to')}
                 />
             </div>
             <Button 
@@ -594,6 +596,7 @@ export default function StatistiquesFournisseur() {
               <form onSubmit={handlePaiementSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
                 <Select
                   label={t('payments_tab.filters.supplier')}
+                  aria-label={t('payments_tab.filters.supplier')}
                   size="sm"
                   value={paiementFournisseurFilter}
                   onChange={(e) => { setPaiementFournisseurFilter(e.target.value); setPaiementPage(1); }}
@@ -605,6 +608,7 @@ export default function StatistiquesFournisseur() {
                 </Select>
                 <Select
                   label={t('payments_tab.filters.mode')}
+                  aria-label={t('payments_tab.filters.mode')}
                   size="sm"
                   value={paiementModeFilter}
                   onChange={(e) => { setPaiementModeFilter(e.target.value); setPaiementPage(1); }}
@@ -616,22 +620,31 @@ export default function StatistiquesFournisseur() {
                   <option value="AVOIR">{t('payments_tab.modes.AVOIR')}</option>
                   <option value="AUTRE">{t('payments_tab.modes.AUTRE')}</option>
                 </Select>
-                <LocalizedDateInput
-                  label={t('payments_tab.filters.from')}
-                  size="sm"
-                  
-                  value={paiementDateDebut}
-                  onChange={(e) => { setPaiementDateDebut(e.target.value); setPaiementPage(1); }}
-                />
-                <LocalizedDateInput
-                  label={t('payments_tab.filters.to')}
-                  size="sm"
-                  
-                  value={paiementDateFin}
-                  onChange={(e) => { setPaiementDateFin(e.target.value); setPaiementPage(1); }}
-                />
+                <div className="w-full">
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    {t('payments_tab.filters.from')}
+                  </label>
+                  <LocalizedDateInput
+                    aria-label={t('payments_tab.filters.from')}
+                    className="w-full rounded-lg border border-slate-300 bg-white h-9 text-xs px-3 outline-none hover:border-slate-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                    value={paiementDateDebut}
+                    onChange={(e) => { setPaiementDateDebut(e.target.value); setPaiementPage(1); }}
+                  />
+                </div>
+                <div className="w-full">
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    {t('payments_tab.filters.to')}
+                  </label>
+                  <LocalizedDateInput
+                    aria-label={t('payments_tab.filters.to')}
+                    className="w-full rounded-lg border border-slate-300 bg-white h-9 text-xs px-3 outline-none hover:border-slate-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 transition-all"
+                    value={paiementDateFin}
+                    onChange={(e) => { setPaiementDateFin(e.target.value); setPaiementPage(1); }}
+                  />
+                </div>
                 <Input
                   label={t('payments_tab.filters.search')}
+                  aria-label={t('payments_tab.filters.search')}
                   type="search"
                   size="sm"
                   value={paiementSearch}

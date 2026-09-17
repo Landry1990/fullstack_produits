@@ -9,7 +9,8 @@
     "filters": {
         "search_placeholder": "Search by name, phone, ID...",
         "show_inactive": "Show inactive",
-        "hide_inactive": "Hide inactive"
+        "hide_inactive": "Hide inactive",
+        "type_all": "All"
     },
     "fields": {
         "name": "Full Name",
@@ -102,6 +103,7 @@
     "messages": {
         "create_success": "Customer created successfully",
         "update_success": "Customer updated successfully",
+        "merge_success": "Customers merged successfully",
         "delete_success": "Customer deleted successfully",
         "bulk_delete_success": "{{count}} customers deleted",
         "error_fetch": "Error loading customers",
@@ -118,6 +120,12 @@
         "select_client_hint": "Select a customer to view details.",
         "select_client_empty": "Select a customer",
         "select_client_empty_desc": "View financial details, purchase history, and manage beneficiaries in one click."
+    },
+    "merge": {
+        "title": "Duplicate detected",
+        "description": "One or more customers seem identical. You can merge information into an existing customer or create a new one.",
+        "match": "match",
+        "keep_new": "Create anyway"
     },
     "status": {
         "inactive": "INACTIVE"

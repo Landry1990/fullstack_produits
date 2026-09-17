@@ -251,13 +251,13 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 p-6 flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                <LocalizedDateInput value={dateRange.debut} onChange={(e) => setDateRange({ ...dateRange, debut: e.target.value })} className="h-9" />
+                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                <LocalizedDateInput value={dateRange.debut} onChange={(e) => setDateRange({ ...dateRange, debut: e.target.value })} className="h-9" aria-label={t('common:from')} />
               </div>
               <span className="text-muted-foreground font-medium text-sm">{t('divers.to_date')}</span>
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                <LocalizedDateInput value={dateRange.fin} onChange={(e) => setDateRange({ ...dateRange, fin: e.target.value })} className="h-9" />
+                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                <LocalizedDateInput value={dateRange.fin} onChange={(e) => setDateRange({ ...dateRange, fin: e.target.value })} className="h-9" aria-label={t('common:to')} />
               </div>
               <Button onClick={handleFilter} variant="outline" className="gap-2 ml-auto border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800">
                 <Filter className="h-4 w-4" />
@@ -325,6 +325,15 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                           key={day.date}
                           className="cursor-pointer hover:bg-emerald-50/50 transition-colors"
                           onClick={() => handleViewDetail(day.date)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleViewDetail(day.date);
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-label={`${t('common:details')} ${formatDateLong(day.date)}`}
                         >
                           <TableCell className="font-medium">
                             {formatDateLong(day.date)}
@@ -334,8 +343,8 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
                           <TableCell className="text-right">{day.nb_factures}</TableCell>
                           <TableCell className="text-right font-bold text-emerald-600">{day.total_ca.toLocaleString()} {t('divers.currency')}</TableCell>
                           <TableCell className="text-center">
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleViewDetail(day.date); }} className="text-emerald-600 h-8 w-8 p-0">
-                              <Eye className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleViewDetail(day.date); }} className="text-emerald-600 h-8 w-8 p-0" aria-label={t('common:details')}>
+                              <Eye className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -423,10 +432,10 @@ const GestionDivers: React.FC<{ defaultTab?: 'ca' | 'commandes' | 'stock' }> = (
             <div className="flex items-center gap-4 flex-wrap">
               <span className="text-sm font-medium">{t('divers.valuation_method')}</span>
               <div className="flex gap-2">
-                <Button variant={valorisation === 'ACHAT' ? 'primary' : 'outline'} size="sm" onClick={() => setValorisation('ACHAT')}>
+                <Button variant={valorisation === 'ACHAT' ? 'primary' : 'outline'} size="sm" onClick={() => setValorisation('ACHAT')} aria-pressed={valorisation === 'ACHAT'}>
                   {t('divers.purchase_cost')}
                 </Button>
-                <Button variant={valorisation === 'VENTE' ? 'primary' : 'outline'} size="sm" onClick={() => setValorisation('VENTE')}>
+                <Button variant={valorisation === 'VENTE' ? 'primary' : 'outline'} size="sm" onClick={() => setValorisation('VENTE')} aria-pressed={valorisation === 'VENTE'}>
                   {t('divers.selling_price')}
                 </Button>
               </div>

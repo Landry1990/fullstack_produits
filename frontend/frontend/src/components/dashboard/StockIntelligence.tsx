@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type KeyboardEvent } from 'react';
 import { 
   ShoppingBag, 
   Archive, 
@@ -99,6 +99,14 @@ export default function StockIntelligence({
 }: StockIntelligenceProps) {
   const navigate = useNavigate();
 
+  // Permet d'activer les entêtes de cartes navigables au clavier (Enter/Espace)
+  const handleNavKeyDown = (e: KeyboardEvent, path: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      navigate(path);
+    }
+  };
+
   const DORMANT_DAYS = 90;
   const [dormantItems, setDormantItems] = useState<DormantItem[]>([]);
   const [dormantTotal, setDormantTotal] = useState(0);
@@ -137,6 +145,9 @@ export default function StockIntelligence({
               <div
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => navigate('/app/perimes')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => handleNavKeyDown(e, '/app/perimes')}
               >
                 <div className="p-2 bg-red-50 text-red-500 rounded-lg">
                   <CalendarDays className="size-5" />
@@ -282,6 +293,9 @@ export default function StockIntelligence({
               <div
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => navigate('/app/stock-analysis?tab=overstock')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => handleNavKeyDown(e, '/app/stock-analysis?tab=overstock')}
               >
                 <div className="p-2 bg-amber-50 text-amber-500 rounded-lg">
                   <TrendingUp className="size-5" />
@@ -346,6 +360,9 @@ export default function StockIntelligence({
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
                 onClick={() => navigate('/app/promis')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => handleNavKeyDown(e, '/app/promis')}
               >
                 <div className="flex items-center gap-2">
                   <ShoppingBag className="size-5 text-emerald-600" />
@@ -386,6 +403,9 @@ export default function StockIntelligence({
               <div
                 className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
                 onClick={() => navigate('/app/reappro-rayon')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => handleNavKeyDown(e, '/app/reappro-rayon')}
               >
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-cyan-100 text-cyan-600 rounded-lg">
@@ -434,6 +454,9 @@ export default function StockIntelligence({
               <div
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => navigate('/app/stock-analysis?tab=shortage')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => handleNavKeyDown(e, '/app/stock-analysis?tab=shortage')}
               >
                 <div className="p-2 bg-amber-50 text-amber-500 rounded-lg">
                   <Package className="size-5" />

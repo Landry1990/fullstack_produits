@@ -76,6 +76,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                     onClick={() => setIsQuickCreateOpen(true)}
                     className="shrink-0 size-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors"
                     title={t('inventaire.detail.quick_create_product')}
+                    aria-label={t('inventaire.detail.quick_create_product')}
                 >
                     <Plus className="size-4" />
                 </button>

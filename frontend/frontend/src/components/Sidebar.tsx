@@ -564,6 +564,7 @@ export default function Sidebar() {
         onClick={toggleSidebar}
         className="fixed top-3 left-3 z-50 lg:hidden size-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition-colors"
         aria-label={t('sidebar:toggle_menu')}
+        aria-expanded={isOpen}
       >
         {isOpen ? <X className="size-5" /> : <Menu className="size-5" />}
       </button>
@@ -573,6 +574,7 @@ export default function Sidebar() {
         <div
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={closeSidebar}
+          aria-hidden="true"
         />
       )}
 

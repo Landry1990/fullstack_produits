@@ -60,6 +60,13 @@ export default React.memo(function SidebarCartRow({
   return (
     <div
       onClick={() => onSelectLine?.(index)}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault()
+          onSelectLine?.(index)
+        }
+      }}
       className={`group relative flex flex-col p-3 border-b border-slate-100 transition-all duration-200 cursor-pointer
         ${index === selectedIndex ? 'bg-emerald-50 border-l-4 border-l-emerald-500' : 'hover:bg-slate-50'}
         ${isReturn ? 'bg-red-50' : ''}
@@ -89,6 +96,7 @@ export default React.memo(function SidebarCartRow({
              variant="ghost"
              size="icon"
              onClick={(e) => { e.stopPropagation(); removeLigne(ligne.lineId); }}
+             aria-label={t('facturation:cart.actions.remove')}
              className="size-7 text-slate-300 hover:text-red-500 hover:bg-red-50 lg:opacity-0 lg:group-hover:opacity-100 transition-all"
            >
              <X className="size-4" />
@@ -107,6 +115,7 @@ export default React.memo(function SidebarCartRow({
              }}
              type="text"
              inputMode="numeric"
+             aria-label={t('facturation:cart.headers.qty')}
              value={localQty}
              onChange={(e) => handleQtyChange(e.target.value)}
              onBlur={handleQtySubmit}
@@ -129,6 +138,7 @@ export default React.memo(function SidebarCartRow({
               <input
                  type="text"
                  inputMode="decimal"
+                 aria-label={t('facturation:cart.headers.price')}
                  value={localPrice}
                  onChange={(e) => setLocalPrice(e.target.value.replace(/[^0-9.]/g, ''))}
                  onBlur={handlePriceSubmit}
@@ -150,6 +160,7 @@ export default React.memo(function SidebarCartRow({
               <input
                  type="text"
                  inputMode="decimal"
+                 aria-label={t('facturation:cart.headers.discount')}
                  value={localRemise}
                  onChange={(e) => setLocalRemise(e.target.value.replace(/[^0-9.]/g, ''))}
                  onBlur={handleRemiseSubmit}

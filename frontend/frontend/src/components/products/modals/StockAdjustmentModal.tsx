@@ -153,6 +153,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               {!form.new_lot_number && lots.length > 0 && (
                 <Select
                   label={t('products:adjustment.lot_concerned')}
+                  aria-label={t('products:adjustment.lot_concerned')}
                   value={form.stock_lot_id || ''}
                   onChange={(e) => setForm((prev) => ({ ...prev, stock_lot_id: e.target.value }))}
                 >
@@ -255,6 +256,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           {/* Reason selector */}
           <Select
             label={t('products:adjustment.reason_type')}
+            aria-label={t('products:adjustment.reason_type')}
             value={form.reason_type}
             onChange={(e) => setForm((prev) => ({ ...prev, reason_type: e.target.value }))}
             required

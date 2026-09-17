@@ -150,22 +150,28 @@ class SaleFinalizer:
 
         if centralized:
             # Notifier la caisse centralisée en temps réel via WebSocket
-            try:
-                from channels.layers import get_channel_layer
-                from asgiref.sync import async_to_sync
-                channel_layer = get_channel_layer()
-                if channel_layer:
-                    async_to_sync(channel_layer.group_send)(
-                        'caisse_centralisee',
-                        {
-                            'type': 'facture_update',
-                            'action': 'created',
-                            'facture_id': facture.id,
-                            'poste_caisse_id': getattr(facture, 'poste_caisse_id', None),
-                        }
-                    )
-            except Exception as ws_err:
-                logger.warning(f"WebSocket broadcast caisse échoué: {ws_err}")
+            facture_id = facture.id
+            poste_caisse_id = getattr(facture, 'poste_caisse_id', None)
+
+            def notify_caisse():
+                try:
+                    from channels.layers import get_channel_layer
+                    from asgiref.sync import async_to_sync
+                    channel_layer = get_channel_layer()
+                    if channel_layer:
+                        async_to_sync(channel_layer.group_send)(
+                            'caisse_centralisee',
+                            {
+                                'type': 'facture_update',
+                                'action': 'created',
+                                'facture_id': facture_id,
+                                'poste_caisse_id': poste_caisse_id,
+                            }
+                        )
+                except Exception as ws_err:
+                    logger.warning(f"WebSocket broadcast caisse échoué: {ws_err}")
+
+            transaction.on_commit(notify_caisse)
 
         # 11. Payments (direct mode only)
         if not centralized and paiements_data:

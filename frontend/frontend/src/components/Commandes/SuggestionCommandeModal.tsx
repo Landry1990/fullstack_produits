@@ -336,6 +336,7 @@ export default function SuggestionCommandeModal({
                       className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
                       value={suggestionParams.fournisseurId}
                       onChange={(e) => setSuggestionParams(prev => ({ ...prev, fournisseurId: e.target.value }))}
+                      aria-label={t('orders:suggestion_modal.supplier_label')}
                     >
                       <option value="">{t('orders:suggestion_modal.all_suppliers')}</option>
                       {fournisseurs.map(f => (
@@ -359,6 +360,7 @@ export default function SuggestionCommandeModal({
                           className="flex-1 h-10 px-3 rounded-l-lg border border-slate-300 border-r-0 bg-white text-sm text-slate-800"
                           value={suggestionParams.budgetMax}
                           onChange={(e) => setSuggestionParams(prev => ({ ...prev, budgetMax: e.target.value }))}
+                          aria-label={t('orders:suggestion_modal.budget_label')}
                         />
                         <span className="h-10 px-3 flex items-center bg-slate-100 border border-slate-300 rounded-r-lg text-sm font-semibold text-slate-500">
                           {t('common:currency_symbol', 'F')}
@@ -403,6 +405,7 @@ export default function SuggestionCommandeModal({
                           className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800"
                           value={suggestionParams.dateDebut}
                           onChange={(e) => setSuggestionParams(prev => ({ ...prev, dateDebut: e.target.value }))}
+                          aria-label={t('orders:suggestion_modal.date_from')}
                         />
                       </div>
                       <div className="space-y-1">
@@ -412,6 +415,7 @@ export default function SuggestionCommandeModal({
                           className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800"
                           value={suggestionParams.dateFin}
                           onChange={(e) => setSuggestionParams(prev => ({ ...prev, dateFin: e.target.value }))}
+                          aria-label={t('orders:suggestion_modal.date_to')}
                         />
                       </div>
                     </div>
@@ -443,6 +447,7 @@ export default function SuggestionCommandeModal({
                           type="number"
                           className="w-10 bg-transparent border-none text-right text-xs font-bold text-emerald-700 h-7"
                           value={suggestionParams.periode}
+                          aria-label={t('orders:suggestion_modal.period_label')}
                           min={1}
                           max={365}
                           onChange={(e) => setSuggestionParams(prev => ({ ...prev, periode: parseInt(e.target.value) || 0 }))}
@@ -488,6 +493,7 @@ export default function SuggestionCommandeModal({
                         <TableHead className="px-3 py-3 w-10">
                           <Checkbox
                             checked={selectedSuggestions.size === suggestions.length && suggestions.length > 0}
+                            aria-label={t('common:maintenance.select_all')}
                             onCheckedChange={() => {
                               if (selectedSuggestions.size === suggestions.length) setSelectedSuggestions(new Set())
                               else setSelectedSuggestions(new Set(suggestions.map((_, i) => i)))
@@ -529,6 +535,7 @@ export default function SuggestionCommandeModal({
                               checked={selectedSuggestions.has(index)}
                               onClick={(e) => e.stopPropagation()}
                               onCheckedChange={() => toggleSuggestionSelection(index)}
+                              aria-label={item.produit_nom}
                             />
                           </TableCell>
                           <TableCell className="px-3 py-2.5">

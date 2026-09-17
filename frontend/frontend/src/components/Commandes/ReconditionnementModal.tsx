@@ -263,6 +263,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
                           checked={state.selected}
                           onChange={() => toggleSelected(tr.relation_id)}
                           className="mt-1 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                          aria-label={`${tr.source_name} → ${tr.destination_name}`}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 text-sm">
@@ -288,6 +289,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
                               type="number"
                               min={0}
                               max={tr.qty_transformable}
+                              aria-label={t('orders:product_table.headers.qty')}
                               value={state.quantite}
                               onChange={(e) =>
                                 updateQuantite(

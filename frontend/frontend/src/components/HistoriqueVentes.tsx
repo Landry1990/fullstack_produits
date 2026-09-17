@@ -183,12 +183,13 @@ const HistoriqueVentes = () => {
 
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-4 bg-slate-50/50 p-3 sm:p-4 rounded-xl border border-slate-100">
           <div className="w-full sm:min-w-[200px] sm:flex-1">
-            <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">
+            <label htmlFor="ventes-date-debut" className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">
               {t('start_date')}
             </label>
             <div className="relative">
               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <LocalizedDateInput
+                id="ventes-date-debut"
                 className="w-full h-10 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 value={dateDebut}
                 onChange={(e) => { setDateDebut(e.target.value); setCurrentPage(1); }}
@@ -196,12 +197,13 @@ const HistoriqueVentes = () => {
             </div>
           </div>
           <div className="w-full sm:min-w-[200px] sm:flex-1">
-            <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">
+            <label htmlFor="ventes-date-fin" className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1.5">
               {t('end_date')}
             </label>
             <div className="relative">
               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <LocalizedDateInput
+                id="ventes-date-fin"
                 className="w-full h-10 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 value={dateFin}
                 onChange={(e) => { setDateFin(e.target.value); setCurrentPage(1); }}
@@ -285,6 +287,7 @@ const HistoriqueVentes = () => {
                           onClick={() => handleSendTelegramFlash(row)}
                           disabled={sendingTelegram !== null}
                           title={t('common:telegram.send_report')}
+                          aria-label={t('common:telegram.send_report')}
                         >
                           {sendingTelegram === row.date ? (
                             <Loader2 className="size-4 animate-spin" />

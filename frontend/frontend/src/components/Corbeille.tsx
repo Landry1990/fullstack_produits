@@ -222,12 +222,12 @@ export default function Corbeille() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="p-2 h-9 w-9" onClick={fetchData} disabled={loading} title={t('actions.refresh')}>
-              {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-primary rounded-full animate-spin" /> : <RotateCcw className="size-4" />}
+            <Button variant="ghost" size="sm" className="p-2 h-9 w-9" onClick={fetchData} disabled={loading} title={t('actions.refresh')} aria-label={t('actions.refresh')} aria-busy={loading}>
+              {loading ? <span className="inline-block size-4 border-2 border-base-300 border-t-primary rounded-full animate-spin" aria-hidden="true" /> : <RotateCcw className="size-4" aria-hidden="true" />}
             </Button>
             {(data?.total ?? 0) > 0 && (
-              <Button variant="danger" size="sm" onClick={handleEmptyTrash} disabled={actionLoading}>
-                <Trash2 className="size-3.5 mr-1.5" />
+              <Button variant="danger" size="sm" onClick={handleEmptyTrash} disabled={actionLoading} aria-label={t('actions.empty_all')}>
+                <Trash2 className="size-3.5 mr-1.5" aria-hidden="true" />
                 <span className="hidden sm:inline">{t('actions.empty_all')}</span>
               </Button>
             )}
@@ -239,24 +239,25 @@ export default function Corbeille() {
       <div className="bg-base-100 border-b border-base-200 px-6 py-3 flex flex-wrap items-center gap-3 shrink-0">
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground z-10" aria-hidden="true" />
           <Input
             type="text"
             placeholder={t('search_placeholder')}
+            aria-label={t('search_placeholder')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="pl-9 pr-8 h-9 text-sm"
           />
           {searchQuery && (
-            <Button variant="ghost" size="sm" className="absolute right-0 top-0 h-9 w-8 p-0" onClick={() => setSearchQuery('')}>
-              <X className="size-3.5" />
+            <Button variant="ghost" size="sm" className="absolute right-0 top-0 h-9 w-8 p-0" onClick={() => setSearchQuery('')} aria-label={t('common:clear', 'Effacer')}>
+              <X className="size-3.5" aria-hidden="true" />
             </Button>
           )}
         </div>
 
         {/* Type filter */}
         <div className="w-40 shrink-0">
-          <Select size="sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeKey)}>
+          <Select size="sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeKey)} aria-label={t('common:filter')}>
             {TYPE_CONFIG.map(c => (
               <option key={c.key} value={c.key}>{c.label}</option>
             ))}
@@ -266,13 +267,14 @@ export default function Corbeille() {
         {/* Select all */}
         {allItems.length > 0 && (
           <div className="flex items-center gap-1.5 cursor-pointer select-none" onClick={selectAll}>
-            <Checkbox 
+            <Checkbox
               checked={selectedIds.size === allItems.length && allItems.length > 0}
               indeterminate={selectedIds.size > 0 && selectedIds.size < allItems.length}
-              onChange={selectAll} 
+              onChange={selectAll}
               size="sm"
+              aria-label={selectedIds.size > 0 ? t('actions.selected', { count: selectedIds.size }) : t('common:select_all')}
             />
-            <span className="text-xs font-medium text-base-content/70">
+            <span className="text-xs font-medium text-base-content/70" aria-hidden="true">
               {selectedIds.size > 0 ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? 's' : ''}` : 'Tout sélectionner'}
             </span>
           </div>
@@ -282,8 +284,8 @@ export default function Corbeille() {
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
         {loading && (
-          <div className="flex items-center justify-center py-20">
-            <span className="inline-block size-8 border-2 border-base-300 border-t-primary rounded-full animate-spin" />
+          <div className="flex items-center justify-center py-20" role="status" aria-busy="true" aria-label={t('common:loading', 'Chargement')}>
+            <span className="inline-block size-8 border-2 border-base-300 border-t-primary rounded-full animate-spin" aria-hidden="true" />
           </div>
         )}
 
@@ -354,8 +356,9 @@ export default function Corbeille() {
                           onClick={e => { e.stopPropagation(); handleRestore([{ model: item.type, id: item.id }]); }}
                           disabled={actionLoading}
                           title={t('actions.restore')}
+                          aria-label={t('actions.restore')}
                         >
-                          <ArrowUpFromLine className="size-4" />
+                          <ArrowUpFromLine className="size-4" aria-hidden="true" />
                         </Button>
                         <Button
                           size="sm"
@@ -364,11 +367,12 @@ export default function Corbeille() {
                           onClick={e => { e.stopPropagation(); handlePurge([{ model: item.type, id: item.id }]); }}
                           disabled={actionLoading}
                           title={t('actions.delete_permanently')}
+                          aria-label={t('actions.delete_permanently')}
                         >
-                          <Trash2 className="size-4" />
+                          <Trash2 className="size-4" aria-hidden="true" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={e => { e.stopPropagation(); setExpandedId(isExp ? null : key); }}>
-                          {isExp ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={e => { e.stopPropagation(); setExpandedId(isExp ? null : key); }} aria-expanded={isExp} aria-label={t('common:details')}>
+                          {isExp ? <ChevronUp className="size-4" aria-hidden="true" /> : <ChevronDown className="size-4" aria-hidden="true" />}
                         </Button>
                       </div>
                     </div>

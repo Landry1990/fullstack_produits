@@ -486,6 +486,7 @@
         "no_points": "No point of sale available.",
         "create_hint": "Create one in Settings > Points of sale.",
         "cancel": "Cancel",
+        "quit": "Leave billing",
         "opened_by": "Opened by {{name}}",
         "your_post": "Your active post",
         "active_title": "Point of sale active",

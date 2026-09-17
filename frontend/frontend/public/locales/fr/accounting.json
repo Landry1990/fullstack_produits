@@ -13,6 +13,7 @@
         "plan": "Plan Comptable"
     },
     "exercice": {
+        "label": "Exercice",
         "closed": "CLÔTURÉ"
     },
     "dashboard": {

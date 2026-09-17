@@ -75,6 +75,7 @@ export default function CatalogDCI() {
             <input
               type="text"
               placeholder={t('products:dci.search_placeholder')}
+              aria-label={t('products:dci.search_placeholder')}
               className="w-full pl-12 rounded-2xl bg-base-200/50 border-none h-10 text-sm px-4 outline-none focus:ring-2 ring-primary/20 transition-all"
               value={searchTerm}
               onChange={(e) => {
@@ -190,6 +191,7 @@ export default function CatalogDCI() {
                           <Button
                             variant="ghost" size="sm" className="h-6 px-2 text-xs text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                             title={t('products:actions.remove_dci')}
+                            aria-label={t('products:actions.remove_dci')}
                             disabled={deletingProductId === p.id}
                             onClick={(e) => {
                               e.stopPropagation();

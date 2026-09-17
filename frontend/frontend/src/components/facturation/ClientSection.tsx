@@ -252,7 +252,7 @@ export default function ClientSection({
   return (
     <div className="w-full p-3 md:p-4">
       <div className="flex items-center justify-between mb-2">
-        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider py-0">{t('facturation:client.label')}</label>
+        <label htmlFor="facturation-client-input" className="text-xs font-semibold text-slate-400 uppercase tracking-wider py-0">{t('facturation:client.label')}</label>
         <Button
           type="button"
           variant="ghost"
@@ -273,6 +273,7 @@ export default function ClientSection({
       {useManualClient ? (
         <input
           type="text"
+          aria-label={t('facturation:client.label')}
           value={manualClientName}
           onChange={(e) => setManualClientName(e.target.value)}
           onKeyDown={(e) => {
@@ -288,7 +289,12 @@ export default function ClientSection({
         <div ref={clientSearchRef} className="relative">
           <input
             ref={inputRef}
+            id="facturation-client-input"
             type="text"
+            role="combobox"
+            aria-expanded={showClientDropdown}
+            aria-controls="facturation-client-listbox"
+            aria-activedescendant={highlightedIndex >= 0 ? `client-option-${highlightedIndex}` : undefined}
             value={clientSearch || (selectedClientData ? selectedClientData.name : '')}
             onChange={(e) => {
               setClientSearch(e.target.value)
@@ -318,6 +324,7 @@ export default function ClientSection({
               }}
               className="absolute right-1 top-1/2 -translate-y-1/2 size-6 text-slate-400 hover:text-red-500 hover:bg-red-50"
               title={t('facturation:client.clear_tooltip')}
+              aria-label={t('facturation:client.clear_tooltip')}
             >
               <X className="size-3.5" />
             </Button>
@@ -325,7 +332,7 @@ export default function ClientSection({
 
           {/* Dropdown des résultats */}
           {showClientDropdown && (clientSearch || !selectedClient) && (
-            <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 max-h-60 overflow-auto">
+            <div id="facturation-client-listbox" role="listbox" className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 max-h-60 overflow-auto">
               {clientSearch.trim().length === 0 && recentItems.length > 0 && (
                 <>
                   <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 border-y border-slate-200">
@@ -334,6 +341,8 @@ export default function ClientSection({
                   {recentItems.map((r, idx) => (
                     <div
                       key={`recent-${r.type}-${r.id}`}
+                      role="option"
+                      aria-selected={false}
                       onClick={() => {
                         if (r.type === 'client') {
                           const client = clients.find(c => c.id === r.id)
@@ -379,6 +388,8 @@ export default function ClientSection({
                         )}
                         <div
                           id={`client-option-${index}`}
+                          role="option"
+                          aria-selected={index === highlightedIndex}
                           onClick={() => {
                             if (item.type === 'client') {
                               handleSelectClient(item.data)

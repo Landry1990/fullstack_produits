@@ -60,6 +60,7 @@ export function CaisseHeader({
               <span className="text-xs font-bold uppercase tracking-wider">{t('poste_label')}</span>
             </div>
             <select
+              aria-label={t('poste_label')}
               className="h-8 px-2 rounded-md bg-white border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-emerald-300"
               value={selectedPosteCaisseId}
               onChange={(e) => onPosteCaisseChange(e.target.value)}

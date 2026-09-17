@@ -13,7 +13,7 @@ from django.db.models import (
     Sum,
     Value,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Lower
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
@@ -28,6 +28,7 @@ from ..pagination import StandardResultsSetPagination
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..serializers import AyantDroitSerializer, ClientSerializer, DepotClientSerializer
 from ..serializers_optimized import ClientDetailSerializer, ClientListSerializer
+from ..services.client_merger import find_duplicate_candidates, merge_clients
 
 
 class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
@@ -74,7 +75,7 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
             ).values('total_debt')[:1],
             output_field=DecimalField()
         )
-    ).order_by('name')
+    ).order_by(Lower('name'))
     serializer_class = ClientSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
@@ -472,6 +473,39 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
         ClientDebtCache.set_client_debt(client.id, result)
         
         return Response(result)
+
+    @action(detail=False, methods=['post'])
+    def check_duplicates(self, request):
+        """Recherche les clients déjà existants susceptibles d'être des doublons."""
+        name = request.data.get('name', '')
+        phone = request.data.get('phone', '')
+        exclude_id = request.data.get('exclude_id')
+
+        try:
+            candidates = find_duplicate_candidates(name, phone, exclude_id)
+            return Response({'candidates': candidates})
+        except Exception as e:
+            return Response({'detail': str(e)}, status=500)
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def merge(self, request, pk=None):
+        """Fusionne le client source (pk) dans le client cible (target_id)."""
+        target_id = request.data.get('target_id')
+        if not target_id:
+            return Response({'detail': 'target_id requis.'}, status=400)
+
+        try:
+            target, result = merge_clients(pk, target_id)
+            self._invalidate_cache()
+            serializer = ClientDetailSerializer(target)
+            return Response({**result, 'client': serializer.data})
+        except Client.DoesNotExist:
+            return Response({'detail': 'Client source ou cible introuvable.'}, status=404)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=400)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=500)
 
 class AyantDroitViewSet(viewsets.ModelViewSet):
     """API endpoint for ayants droit."""

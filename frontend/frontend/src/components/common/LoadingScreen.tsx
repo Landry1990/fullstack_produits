@@ -30,10 +30,12 @@ export function LoadingScreen({
                     ? 'fixed inset-0 bg-slate-50/80 backdrop-blur-sm z-50'
                     : 'w-full h-full min-h-[160px]'
             } ${className}`}
+            role="status"
+            aria-busy="true"
         >
             <Card className="border-slate-200 shadow-lg">
                 <CardContent className="flex flex-col items-center gap-4 p-8">
-                    <Loader2 className={`${sizeClasses[size]} animate-spin text-emerald-600`} />
+                    <Loader2 className={`${sizeClasses[size]} animate-spin text-emerald-600`} aria-hidden="true" />
                     <p className="text-sm font-black uppercase tracking-widest text-slate-500 animate-pulse">
                         {message || t('loading')}
                     </p>

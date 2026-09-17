@@ -223,6 +223,7 @@ export const ClientCreditsList: React.FC<ClientCreditsListProps> = ({
                                                 className="text-slate-600 hover:text-emerald-600 hover:bg-emerald-50"
                                                 onClick={() => onView(credit)}
                                                 title={t('list.view')}
+                                                aria-label={t('list.view')}
                                             >
                                                 <Eye className="size-4" />
                                             </Button>

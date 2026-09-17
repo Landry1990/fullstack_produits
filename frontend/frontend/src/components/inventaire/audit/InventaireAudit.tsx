@@ -173,12 +173,14 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                 className="h-8 bg-transparent text-sm text-slate-700 outline-none"
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
+                                aria-label={t('common:from')}
                             />
                             <span className="text-slate-300">→</span>
                             <LocalizedDateInput
                                 className="h-8 bg-transparent text-sm text-slate-700 outline-none"
                                 value={endDate}
                                 onChange={e => setEndDate(e.target.value)}
+                                aria-label={t('common:to')}
                             />
                         </div>
                     </div>

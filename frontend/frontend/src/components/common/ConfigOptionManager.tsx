@@ -141,6 +141,7 @@ export default function ConfigOptionManager({
                   <input
                     type="text"
                     placeholder={t('common:actions.search')}
+                    aria-label={t('common:actions.search')}
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 h-11 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
@@ -148,13 +149,14 @@ export default function ConfigOptionManager({
                </div>
                <button
                  className="inline-flex items-center gap-2 px-6 h-11 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
+                 aria-label={t('common:actions.add')}
                  onClick={() => {
                    setEditingOption(null);
                    setFormData({ code: '', label: '', value: '', order: 0, is_active: true });
                    setIsModalOpen(true);
                  }}
                >
-                 <Plus size={18} />
+                 <Plus size={18} aria-hidden="true" />
                  <span className="hidden sm:inline">{t('common:actions.add')}</span>
                </button>
             </div>
@@ -191,6 +193,7 @@ export default function ConfigOptionManager({
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                            <button
                              className="inline-flex items-center justify-center size-7 rounded-md text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                             aria-label={`${t('common:actions.edit')} ${option.label}`}
                              onClick={() => {
                                setEditingOption(option);
                                setFormData({
@@ -207,9 +210,10 @@ export default function ConfigOptionManager({
                            </button>
                            <button
                              className="inline-flex items-center justify-center size-7 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                             aria-label={`${t('common:actions.delete')} ${option.label}`}
                              onClick={() => handleDelete(option.id)}
                            >
-                             <Trash2 size={14} />
+                             <Trash2 size={14} aria-hidden="true" />
                            </button>
                         </div>
                      </div>
@@ -245,8 +249,9 @@ export default function ConfigOptionManager({
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="col-span-2 sm:col-span-1">
-                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.code_label')}</label>
+                 <label htmlFor="config-option-code" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.code_label')}</label>
                  <input
+                   id="config-option-code"
                    type="text"
                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-mono uppercase text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-60"
                    value={formData.code}
@@ -257,8 +262,9 @@ export default function ConfigOptionManager({
                  />
               </div>
               <div className="col-span-2 sm:col-span-1">
-                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.order_label')}</label>
+                 <label htmlFor="config-option-order" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.category_manager.order_label')}</label>
                  <input
+                   id="config-option-order"
                    type="number"
                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                    value={formData.order}
@@ -272,8 +278,9 @@ export default function ConfigOptionManager({
            </div>
 
            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.label_label')}</label>
+              <label htmlFor="config-option-label" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.label_label')}</label>
               <input
+                id="config-option-label"
                 type="text"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formData.label}
@@ -284,8 +291,9 @@ export default function ConfigOptionManager({
            </div>
 
            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.value_label')}</label>
+              <label htmlFor="config-option-value" className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t('stock:organisation.config_option_manager.value_label')}</label>
               <input
+                id="config-option-value"
                 type="text"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 h-12 text-sm font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formData.value}

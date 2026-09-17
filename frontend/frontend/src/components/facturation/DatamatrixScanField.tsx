@@ -45,6 +45,7 @@ export default function DatamatrixScanField({
                 <input
                     ref={inputRef}
                     type="text"
+                    aria-label={t('facturation:datamatrix.placeholder')}
                     className={`w-full pl-10 pr-4 text-sm h-11 rounded-xl border outline-none transition-all font-mono placeholder:text-slate-400 text-slate-700 ${border} ${bg}`}
                     placeholder={t('facturation:datamatrix.placeholder')}
                     value={value}

@@ -720,17 +720,17 @@ export default function GestionUtilisateurs() {
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       {user.profile?.can_cash_out && (
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200" title={t('permissions.cash_out')}>
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200" title={t('permissions.cash_out')} role="img" aria-label={t('permissions.cash_out')}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </div>
                       )}
                       {user.profile?.can_sell_negative_stock && (
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200" title={t('permissions.negative_stock')}>
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200" title={t('permissions.negative_stock')} role="img" aria-label={t('permissions.negative_stock')}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         </div>
                       )}
                       {user.profile?.can_validate_sales && (
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200" title={t('permissions.can_validate_sales')}>
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200" title={t('permissions.can_validate_sales')} role="img" aria-label={t('permissions.can_validate_sales')}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </div>
                       )}
@@ -763,15 +763,20 @@ export default function GestionUtilisateurs() {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white w-11/12 max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200">
+          <div
+            className="bg-white w-11/12 max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-modal-title"
+          >
             <div className="p-6 pb-2 border-b border-slate-100 flex justify-between items-center bg-white flex-none">
-              <h3 className="font-bold text-xl flex items-center gap-2 text-slate-800">
+              <h3 id="user-modal-title" className="font-bold text-xl flex items-center gap-2 text-slate-800">
                 <div className="size-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 </div>
                 {editingUser ? t('modal.edit_title') : t('modal.new_title')}
               </h3>
-              <button className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-colors" onClick={() => setModalOpen(false)}>✕</button>
+              <button className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-colors" onClick={() => setModalOpen(false)} aria-label={t('common:close')}>✕</button>
             </div>
             
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
@@ -817,10 +822,11 @@ export default function GestionUtilisateurs() {
                     placeholder={editingUser ? t('form.password_placeholder_edit') : ''}
                   />
                   <div className="flex flex-col gap-1 w-full">
-                    <label className="flex flex-col gap-0.5 pt-0 px-1">
+                    <label htmlFor="user-role-select" className="flex flex-col gap-0.5 pt-0 px-1">
                       <span className="font-bold text-slate-400 uppercase text-[10px] tracking-wider">{t('form.role')}</span>
                     </label>
-                    <select 
+                    <select
+                      id="user-role-select"
                       className="w-full rounded-xl border border-slate-200 bg-white h-10 px-3 text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                       value={formData.role}
                       onChange={e => handleRoleChange(e.target.value)}
@@ -840,8 +846,9 @@ export default function GestionUtilisateurs() {
                       <span className="font-bold text-xs uppercase tracking-wider text-blue-600">{t('form.copy_permissions', 'Copier les droits d\'un utilisateur')}</span>
                     </div>
                     <div className="flex gap-2">
-                      <select 
+                      <select
                         className="flex-1 rounded-xl border border-slate-200 bg-white h-10 px-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+                        aria-label={t('form.copy_permissions', 'Copier les droits d\'un utilisateur')}
                         value={copyFromUserId}
                         onChange={e => setCopyFromUserId(e.target.value ? Number(e.target.value) : '')}
                       >
@@ -1016,11 +1023,12 @@ export default function GestionUtilisateurs() {
                       </div>
 
                       <div className="flex flex-col gap-1 px-2 mt-1">
-                        <label className="flex flex-col gap-0.5 py-1">
+                        <label htmlFor="max-discount-rate" className="flex flex-col gap-0.5 py-1">
                           <span className="text-[10px] font-bold text-slate-400">{t('form.max_discount')}</span>
                         </label>
-                        <input 
-                          type="number" 
+                        <input
+                          id="max-discount-rate"
+                          type="number"
                           className="w-full rounded-xl border border-slate-200 bg-white h-8 px-3 text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" 
                           value={formData.max_discount_rate}
                           onChange={e => setFormData({...formData, max_discount_rate: parseInt(e.target.value) || 0})}

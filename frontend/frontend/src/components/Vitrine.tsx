@@ -109,6 +109,7 @@ function GestionVitrine({
           <Input
             type="text"
             placeholder={t('gestion.search_placeholder')}
+            aria-label={t('gestion.search_placeholder')}
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -181,6 +182,7 @@ function GestionVitrine({
                     checked={isAllSelected}
                     onChange={handleSelectAll}
                     disabled={isLoading || products.length === 0}
+                    aria-label={t('common:maintenance.select_all')}
                   />
                 </TableHead>
                 <TableHead className="w-[30%] px-3 py-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">{t('gestion.table.product')}</TableHead>
@@ -225,6 +227,7 @@ function GestionVitrine({
                       <Checkbox
                         checked={selectedIds.has(product.id)}
                         onChange={() => toggleSelection(product.id)}
+                        aria-label={`Sélectionner ${product.name}`}
                       />
                     </TableCell>
                     <TableCell className="px-3 py-2">
@@ -257,6 +260,7 @@ function GestionVitrine({
                           type="number"
                           className="h-8 w-24 lg:w-32 rounded-md border border-base-300 bg-base-100 px-2 text-sm font-mono focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                           placeholder={product.selling_price?.toString()}
+                          aria-label={t('gestion.table.public_price')}
                           defaultValue={product.public_price || ''}
                           onBlur={(e) => {
                             const val = e.target.value
@@ -272,6 +276,9 @@ function GestionVitrine({
                     <TableCell className="px-3 py-2 text-center">
                       <button
                         onClick={() => toggleVisibility.mutate(product.id)}
+                        role="switch"
+                        aria-checked={product.is_public}
+                        aria-label={t('gestion.table.online')}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                           product.is_public ? 'bg-emerald-500' : 'bg-base-300'
                         }`}
@@ -401,6 +408,7 @@ function SimulateurClient() {
           <Input
             type="text"
             placeholder={t('simulateur.search_placeholder')}
+            aria-label={t('simulateur.search_placeholder')}
             className="text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -542,6 +550,7 @@ function SimulateurClient() {
                         size="sm"
                         className="h-7 w-7 p-0 min-w-0"
                         onClick={() => updateQuantity(item.id, -1)}
+                        aria-label={t('common:remove', { defaultValue: 'Diminuer' })}
                       >
                         −
                       </Button>
@@ -551,6 +560,7 @@ function SimulateurClient() {
                         size="sm"
                         className="h-7 w-7 p-0 min-w-0"
                         onClick={() => updateQuantity(item.id, +1)}
+                        aria-label={t('common:add', { defaultValue: 'Augmenter' })}
                       >
                         +
                       </Button>
@@ -560,6 +570,7 @@ function SimulateurClient() {
                       size="sm"
                       onClick={() => removeFromCart(item.id)}
                       className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-error hover:bg-red-50 shrink-0"
+                      aria-label={t('common:remove')}
                     >
                       <Trash2 className="size-4" />
                     </Button>

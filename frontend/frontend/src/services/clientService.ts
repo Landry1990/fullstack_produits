@@ -3,6 +3,7 @@ import type { Client, AyantDroit } from '../types';
 
 export interface ClientFilters {
     search?: string;
+    client_type?: 'PARTICULIER' | 'PROFESSIONNEL';
     page?: number;
     page_size?: number;
 }
@@ -126,6 +127,16 @@ const clientService = {
 
     updateAlerte: async (id: number, data: { message_alerte: string; blocking_alerte: boolean }): Promise<unknown> => {
         const response = await api.patch(`clients/${id}/update_alerte/`, data);
+        return response.data;
+    },
+
+    checkDuplicates: async (data: { name?: string; phone?: string; exclude_id?: number }): Promise<{ candidates: Array<{ id: number; name: string; client_type: string; phone: string | null; score: number }> }> => {
+        const response = await api.post('clients/check_duplicates/', data);
+        return response.data;
+    },
+
+    merge: async (sourceId: number, targetId: number): Promise<unknown> => {
+        const response = await api.post(`clients/${sourceId}/merge/`, { target_id: targetId });
         return response.data;
     },
 };

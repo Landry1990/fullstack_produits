@@ -139,6 +139,7 @@ export default function ReapproHistory() {
           <Input
             type="text"
             placeholder={t('stock:reappro.search_placeholder')}
+            aria-label={t('stock:reappro.search_placeholder')}
             icon={<Search className="size-4" />}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

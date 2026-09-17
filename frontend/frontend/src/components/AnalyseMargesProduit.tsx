@@ -45,6 +45,7 @@ export default function AnalyseMargesProduit() {
           size="sm"
           value={periode}
           onChange={(e) => setPeriode(e.target.value as Periode)}
+          aria-label={t('common:period', 'Période')}
         >
           <option value="mois">{t('common:period.month', 'Ce mois')}</option>
           <option value="trimestre">{t('common:period.quarter', 'Trimestre')}</option>

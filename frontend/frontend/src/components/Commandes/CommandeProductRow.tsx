@@ -108,6 +108,7 @@ export function CommandeProductRow({
                     <Checkbox
                         checked={selectedRows.has(index)}
                         onCheckedChange={() => toggleRowSelection(index)}
+                        aria-label={produitName}
                     />
                 </TableCell>
 
@@ -174,6 +175,7 @@ export function CommandeProductRow({
                         type="text"
                         data-row={index}
                         data-field="quantity"
+                        aria-label={t('orders:product_table.headers.qty')}
                         value={p.quantity}
                         onChange={(e) => updateCommandeProduitField(index, 'quantity', e.target.value)}
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, 0)}
@@ -192,6 +194,7 @@ export function CommandeProductRow({
                         inputMode="numeric"
                         data-row={index}
                         data-field="unites_gratuites"
+                        aria-label={t('orders:product_table.headers.ug')}
                         value={p.unites_gratuites || 0}
                         onChange={(e) => {
                             const val = e.target.value;
@@ -216,6 +219,7 @@ export function CommandeProductRow({
                             type="text"
                             data-row={index}
                             data-field="prix_euro"
+                            aria-label={t('orders:product_table.headers.dev_price')}
                             value={p.prix_euro || ''}
                             onChange={(e) => updateCommandeProduitField(index, 'prix_euro', e.target.value)}
                             onFocus={handleSelectAll}
@@ -232,6 +236,7 @@ export function CommandeProductRow({
                         type="text"
                         data-row={index}
                         data-field="price"
+                        aria-label={t('orders:product_table.headers.buy_price_ht')}
                         value={p.price}
                         onChange={(e) => updateCommandeProduitField(index, 'price', e.target.value)}
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 3 : 2))}
@@ -258,6 +263,7 @@ export function CommandeProductRow({
                         type="text"
                         data-row={index}
                         data-field="tva"
+                        aria-label={t('orders:product_table.headers.tva')}
                         value={p.tva || ''}
                         onChange={(e) => updateCommandeProduitField(index, 'tva', e.target.value)}
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 4 : 3))}
@@ -278,6 +284,7 @@ export function CommandeProductRow({
                             type="text"
                             data-row={index}
                             data-field="marge"
+                            aria-label={t('orders:product_table.headers.margin')}
                             value={margeDisplayValue}
                             onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 5 : 4))}
@@ -302,6 +309,7 @@ export function CommandeProductRow({
                         type="text"
                         data-row={index}
                         data-field="selling_price"
+                        aria-label={t('orders:product_table.headers.sell_price')}
                         value={p.selling_price}
                         onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 6 : 5))}
@@ -320,6 +328,7 @@ export function CommandeProductRow({
                         type="text"
                         data-row={index}
                         data-field="lot"
+                        aria-label={t('orders:product_table.headers.lot')}
                         value={p.lot || ''}
                         onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
                         onKeyDown={(e) => handleTableFieldKeyDown(e, index, (commandeType === 'DIR' ? 7 : 6))}
@@ -338,6 +347,7 @@ export function CommandeProductRow({
                         type="text"
                         data-row={index}
                         data-field="date_expiration"
+                        aria-label={t('orders:product_table.headers.exp_date')}
                         value={p.date_expiration || ''}
                         onChange={(e) => {
                             updateCommandeProduitField(index, 'date_expiration', normalizeExpiryMMYY(e.target.value));
