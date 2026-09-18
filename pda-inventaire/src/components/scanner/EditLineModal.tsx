@@ -11,8 +11,7 @@ interface EditLine {
   id: number;
   produit: number;
   produit_nom?: string;
-  produit_name?: string;
-  quantite_comptee: number;
+  quantite_physique: number;
 }
 
 interface EditLineModalProps {
@@ -46,7 +45,7 @@ export default function EditLineModal({
     <View style={styles.editCard}>
       <Text style={styles.editTitle}>Modifier la quantité</Text>
       <Text style={styles.editProductName}>
-        {line.produit_nom || line.produit_name || `Produit #${line.produit}`}
+        {line.produit_nom || `Produit #${line.produit}`}
       </Text>
 
       <View style={styles.quantityRow}>

@@ -26,12 +26,16 @@ export interface Produit {
 
 export interface Inventaire {
     id: number;
-    reference: string;
-    date_debut: string;
-    date_fin: string | null;
-    statut: 'EN_COURS' | 'TERMINE' | 'VALIDE';
+    reference: string | null;
+    date: string;
+    created_at?: string;
+    updated_at?: string;
+    status: 'EN_COURS' | 'VALIDEE';
     created_by: number;
-    lignes_count: number;
+    created_by_name?: string;
+    lignes_count?: number;
+    lignes?: LigneInventaire[];
+    description?: string;
 }
 
 export interface LigneInventaire {
@@ -39,19 +43,20 @@ export interface LigneInventaire {
     inventaire: number;
     produit: number;
     produit_nom?: string;
-    produit_name?: string;
     produit_cip?: string;
-    quantite_theorique: number;
-    quantite_comptee: number;
-    ecart: number;
+    stock_theorique?: number;
+    quantite_physique: number;
+    ecart?: number;
+    stock_lot?: number;
     lot_numero?: string;
-    lot_expiration?: string;
+    lot_expiration?: string | null;
     scanned_at?: string;
 }
 
 export interface CreateLigneInventaire {
     produit: number;
-    quantite_comptee: number;
+    quantite_physique: number;
+    stock_lot?: number;
     lot_numero?: string;
     lot_expiration?: string;
 }
@@ -97,10 +102,10 @@ class InventaireService {
     /**
      * Modifier une ligne d'inventaire
      */
-    async updateLigne(inventaireId: number, ligneId: number, quantite_comptee: number): Promise<LigneInventaire> {
+    async updateLigne(inventaireId: number, ligneId: number, quantite_physique: number): Promise<LigneInventaire> {
         const response = await api.patch<LigneInventaire>(
             `/api/lignes-inventaire/${ligneId}/`,
-            { quantite_comptee }
+            { quantite_physique }
         );
         return response.data;
     }

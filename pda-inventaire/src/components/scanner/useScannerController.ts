@@ -102,8 +102,8 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
         produit: l.produitId,
         produit_nom: l.produitNom,
         produit_cip: l.produitCip,
-        quantite_theorique: 0,
-        quantite_comptee: l.quantiteComptee,
+        stock_theorique: 0,
+        quantite_physique: l.quantiteComptee,
         ecart: 0,
         scanned_at: l.scannedAt,
         details: { isOffline: true }
@@ -295,6 +295,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
           },
           qty,
           inventaire,
+          lot?.id,
           lot?.lot,
           lot?.date_expiration || undefined
         );
@@ -320,6 +321,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
           { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || scannedProduct.cip2 || scannedProduct.cip3 || scannedProduct.cip4 || undefined },
           newQty,
           inventaire,
+          undefined,
           newLotNumber || undefined,
           newLotExpiration || undefined
         );
@@ -367,7 +369,7 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
 
   const handleEditLine = (ligne: DisplayLigne) => {
     setEditingLine(ligne);
-    setEditQuantity(String(ligne.quantite_comptee));
+    setEditQuantity(String(ligne.quantite_physique));
     Vibration.vibrate(50);
   };
 

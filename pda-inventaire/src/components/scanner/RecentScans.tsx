@@ -6,8 +6,7 @@ interface RecentLine {
   tempId?: string;
   produit: number;
   produit_nom?: string;
-  produit_name?: string;
-  quantite_comptee: number;
+  quantite_physique: number;
   details?: { isOffline?: boolean };
 }
 
@@ -45,9 +44,9 @@ export default function RecentScans({
         >
           <Text style={styles.recentName} numberOfLines={1}>
             {item.details?.isOffline ? '* ' : ''}
-            {item.produit_nom || item.produit_name || `Produit #${item.produit}`}
+            {item.produit_nom || `Produit #${item.produit}`}
           </Text>
-          <Text style={styles.recentQty}>{item.quantite_comptee}</Text>
+          <Text style={styles.recentQty}>{item.quantite_physique}</Text>
         </TouchableOpacity>
         {onRemove && (
           <TouchableOpacity
@@ -81,7 +80,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#2d2d44',
-    height: 220,
+    flex: 1,
+    minHeight: 160,
   },
   recentTitle: {
     color: '#ccc',
