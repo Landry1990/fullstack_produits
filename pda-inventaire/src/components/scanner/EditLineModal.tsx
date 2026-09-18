@@ -5,7 +5,11 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface EditLine {
   id: number;
@@ -31,6 +35,8 @@ export default function EditLineModal({
   onCancel,
   loading,
 }: EditLineModalProps) {
+  const insets = useSafeAreaInsets();
+
   const decrease = () => {
     const current = parseInt(quantity || '0', 10);
     setQuantity(String(Math.max(0, current - 1)));
@@ -42,136 +48,147 @@ export default function EditLineModal({
   };
 
   return (
-    <View style={styles.editCard}>
-      <Text style={styles.editTitle}>Modifier la quantité</Text>
-      <Text style={styles.editProductName}>
-        {line.produit_nom || `Produit #${line.produit}`}
-      </Text>
+    <Modal visible transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
+      <KeyboardAvoidingView
+        style={[styles.overlay, { paddingTop: Math.max(insets.top, 16), paddingBottom: Math.max(insets.bottom, 16) }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.card}>
+          <Text style={styles.title}>Modifier la quantité</Text>
+          <Text style={styles.productName} numberOfLines={2}>
+            {line.produit_nom || `Produit #${line.produit}`}
+          </Text>
 
-      <View style={styles.quantityRow}>
-        <TouchableOpacity style={styles.qtyBtn} onPress={decrease}>
-          <Text style={styles.qtyBtnText}>−</Text>
-        </TouchableOpacity>
+          <View style={styles.quantityRow}>
+            <TouchableOpacity style={styles.qtyBtn} onPress={decrease} disabled={loading}>
+              <Text style={styles.qtyBtnText}>−</Text>
+            </TouchableOpacity>
+            <TextInput
+              style={styles.qtyInput}
+              value={quantity}
+              onChangeText={setQuantity}
+              keyboardType="number-pad"
+              selectTextOnFocus
+              autoFocus
+            />
+            <TouchableOpacity style={styles.qtyBtn} onPress={increase} disabled={loading}>
+              <Text style={styles.qtyBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
 
-        <TextInput
-          style={styles.qtyInput}
-          value={quantity}
-          onChangeText={setQuantity}
-          keyboardType="number-pad"
-          selectTextOnFocus
-        />
-
-        <TouchableOpacity style={styles.qtyBtn} onPress={increase}>
-          <Text style={styles.qtyBtnText}>+</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-          <Text style={styles.cancelBtnText}>Annuler</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.validateBtn, loading && styles.btnDisabled]}
-          onPress={onSave}
-          disabled={loading}
-        >
-          <Text style={styles.validateBtnText}>Enregistrer</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} disabled={loading}>
+              <Text style={styles.cancelBtnText}>Annuler</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.validateBtn, loading && styles.disabled]}
+              onPress={onSave}
+              disabled={loading}
+            >
+              <Text style={styles.validateBtnText}>{loading ? 'Enregistrement...' : 'Valider'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  editCard: {
-    backgroundColor: '#1a1a2e',
-    margin: 16,
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 2,
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(2, 6, 23, 0.82)',
+  },
+  card: {
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+    backgroundColor: '#111827',
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1,
     borderColor: '#f59e0b',
   },
-  editTitle: {
-    color: '#f59e0b',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
+  title: {
+    color: '#fbbf24',
+    fontSize: 21,
+    fontWeight: '800',
     textAlign: 'center',
   },
-  editProductName: {
+  productName: {
     color: '#fff',
-    fontSize: 18,
-    marginBottom: 20,
+    fontSize: 17,
+    fontWeight: '700',
     textAlign: 'center',
-    fontWeight: '500',
+    marginTop: 10,
   },
   quantityRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginVertical: 24,
+    gap: 12,
   },
   qtyBtn: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#2d2d44',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#334155',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#4b4b6a',
+    borderColor: '#64748b',
   },
   qtyBtnText: {
     color: '#fff',
-    fontSize: 32,
-    fontWeight: '300',
+    fontSize: 30,
+    fontWeight: '400',
   },
   qtyInput: {
-    width: 120,
+    width: 118,
     height: 64,
-    backgroundColor: '#0f0f1a',
-    borderRadius: 16,
-    marginHorizontal: 16,
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
     color: '#fff',
-    fontSize: 32,
+    fontSize: 30,
     textAlign: 'center',
-    fontWeight: 'bold',
-    borderWidth: 1,
-    borderColor: '#2d2d44',
+    fontWeight: '800',
+    borderWidth: 2,
+    borderColor: '#3b82f6',
   },
   actions: {
     flexDirection: 'row',
-    gap: 16,
-    marginTop: 8,
+    gap: 10,
   },
   cancelBtn: {
     flex: 1,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: '#2d2d44',
+    minHeight: 52,
+    borderRadius: 11,
+    backgroundColor: '#334155',
+    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4b4b6a',
   },
   cancelBtnText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   validateBtn: {
     flex: 2,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: '#22c55e',
+    minHeight: 52,
+    borderRadius: 11,
+    backgroundColor: '#16a34a',
+    justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
   },
   validateBtnText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '800',
   },
-  btnDisabled: {
+  disabled: {
     opacity: 0.6,
   },
 });

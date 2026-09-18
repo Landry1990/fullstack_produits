@@ -48,9 +48,11 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
         produit: { id: number; name: string; cip1?: string },
         quantite: number,
         inventaire: { id: number; reference?: string | null },
+        stockTheorique: number,
         stockLotId?: number,
         lotNumero?: string,
-        lotExpiration?: string
+        lotExpiration?: string,
+        replaceExisting = false
     ) => {
         try {
             // Rechercher une ligne existante pour ce produit + lot
@@ -64,9 +66,19 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
             );
 
             if (matching) {
-                const newQty = matching.quantiteComptee + quantite;
-                await localStorageService.updateLigne(matching.tempId, newQty);
-                const updated: OfflineLigne = { ...matching, quantiteComptee: newQty };
+                const newQty = replaceExisting ? quantite : matching.quantiteComptee + quantite;
+                await localStorageService.updateLigne(
+                    matching.tempId,
+                    newQty,
+                    stockTheorique,
+                    replaceExisting ? 'replace' : matching.syncMode
+                );
+                const updated: OfflineLigne = {
+                    ...matching,
+                    quantiteComptee: newQty,
+                    stockTheorique,
+                    syncMode: replaceExisting ? 'replace' : matching.syncMode,
+                };
                 setOfflineLignes(prev => prev.map(l =>
                     l.tempId === matching.tempId ? updated : l
                 ));
@@ -77,9 +89,11 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
                 { id: inventaire.id, reference: inventaire.reference || '', date: '', status: 'EN_COURS', created_by: 0 } as Inventaire,
                 produit,
                 quantite,
+                stockTheorique,
                 stockLotId,
                 lotNumero,
-                lotExpiration
+                lotExpiration,
+                replaceExisting ? 'replace' : 'add'
             );
             setOfflineLignes(prev => [...prev, ligne]);
             return ligne;
@@ -104,6 +118,7 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
                 stock_lot: l.stockLotId,
                 lot_numero: l.lotNumero,
                 lot_expiration: l.lotExpiration,
+                mode: l.syncMode || 'add',
             }));
 
             const result = await inventaireService.bulkImport(inventaireId, lignesPayload);

@@ -2,6 +2,42 @@
 
 ---
 
+## 2026-09-18 — 📦 PDA : comptage multi-lots éditable après scan
+
+### Fonctionnalité
+
+Le scan d'un produit ouvre désormais une fenêtre de comptage inspirée du modal
+Inventaire Web. Les lots actifs sont chargés depuis le serveur et chaque stock
+physique peut être contrôlé ou corrigé avant son ajout au comptage.
+
+### Changements
+
+- `pda-inventaire/src/components/scanner/ProductCard.tsx` : transformation en
+  modal plein écran adapté au PDA, affichant produit, CIP, stock global, lots,
+  expiration, stock théorique, quantité physique éditable et écart coloré.
+- `pda-inventaire/src/components/scanner/useScannerController.ts` : chargement
+  des lots après scan, préremplissage selon le type d'inventaire, sauvegarde de
+  tous les lots et prise en charge des quantités nulles.
+- `pda-inventaire/src/services/inventaire.ts` : chargement des lots actifs et
+  ajout du mode bulk `add`/`replace`.
+- `pda-inventaire/src/services/localStorage.ts` et `src/hooks/useOfflineSync.ts` :
+  conservation hors ligne du stock théorique et du mode de synchronisation.
+- `backend/api/views/stocks/inventaire/bulk.py` : ajout rétrocompatible du mode
+  optionnel `replace`. Sans ce mode, le comportement historique d'addition est
+  strictement conservé. Le stock théorique tient compte du type RAYON, RESERVE
+  ou GLOBAL.
+- `backend/api/tests/test_stock_inventory.py` : couverture du remplacement et
+  de la compatibilité du mode d'addition historique.
+
+### Vérifications
+
+- `npx tsc --noEmit` dans `pda-inventaire` : propre (0 erreur).
+- Tests backend ciblés `bulk replace` + `bulk add` : 2 tests réussis.
+- Recherche des anciens champs API PDA : aucune occurrence.
+- `git diff --check` : propre (hors avertissements de conversion LF/CRLF).
+
+---
+
 ## 2026-09-17 — 📱 PDA : alignement contrat API backend + Safe Area
 
 ### Contexte
