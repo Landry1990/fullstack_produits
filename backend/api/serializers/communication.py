@@ -1,7 +1,12 @@
 """
 Serializers pour la communication (SMS, WhatsApp, Telegram, messages internes).
 """
+from pathlib import Path
+
+from django.db.models import Q
+from PIL import Image, UnidentifiedImageError
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from ..models import (
     InternalMessage,
@@ -73,6 +78,7 @@ class RuptureFournisseurSerializer(serializers.ModelSerializer):
 
 
 class InternalMessageSerializer(serializers.ModelSerializer):
+    attachment = serializers.FileField(write_only=True, required=False, allow_null=True)
     sender_name = serializers.CharField(source='sender.username', read_only=True)
     recipient_name = serializers.SerializerMethodField()
     is_read = serializers.SerializerMethodField()
@@ -83,12 +89,76 @@ class InternalMessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InternalMessage
-        fields = '__all__'
-        read_only_fields = ['sender', 'created_at', 'read_by', 'archived_by']
+        fields = [
+            'id', 'sender', 'sender_name', 'recipient', 'recipient_name', 'content',
+            'attachment', 'attachment_url', 'read_by', 'is_read', 'is_archived',
+            'parent', 'parent_content', 'parent_sender_name', 'created_at',
+        ]
+        read_only_fields = ['sender', 'created_at', 'read_by']
+
+    def validate_attachment(self, attachment):
+        allowed_types = {
+            '.jpg': {'image/jpeg'},
+            '.jpeg': {'image/jpeg'},
+            '.png': {'image/png'},
+            '.webp': {'image/webp'},
+            '.pdf': {'application/pdf'},
+        }
+        extension = Path(attachment.name).suffix.lower()
+        if extension not in allowed_types:
+            raise serializers.ValidationError('Format non autorisé. Utilisez PDF, JPG, PNG ou WebP.')
+        if attachment.content_type not in allowed_types[extension]:
+            raise serializers.ValidationError('Le type du fichier ne correspond pas à son extension.')
+        if attachment.size > 10 * 1024 * 1024:
+            raise serializers.ValidationError('La pièce jointe ne doit pas dépasser 10 Mo.')
+
+        position = attachment.tell()
+        try:
+            attachment.seek(0)
+            if extension == '.pdf':
+                if attachment.read(5) != b'%PDF-':
+                    raise serializers.ValidationError('Le contenu du fichier ne correspond pas à son format.')
+                attachment.seek(max(0, attachment.size - 1024))
+                if b'%%EOF' not in attachment.read():
+                    raise serializers.ValidationError('Le contenu du fichier ne correspond pas à son format.')
+            else:
+                expected_format = {'.jpg': 'JPEG', '.jpeg': 'JPEG', '.png': 'PNG', '.webp': 'WEBP'}[extension]
+                try:
+                    image = Image.open(attachment)
+                    image.verify()
+                except (UnidentifiedImageError, OSError, SyntaxError, ValueError):
+                    raise serializers.ValidationError('Le contenu du fichier ne correspond pas à son format.')
+                if image.format != expected_format:
+                    raise serializers.ValidationError('Le contenu du fichier ne correspond pas à son format.')
+        finally:
+            attachment.seek(position)
+        return attachment
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+        recipient = attrs.get('recipient')
+        parent = attrs.get('parent')
+
+        if user and recipient is None and not user.is_staff:
+            raise serializers.ValidationError({'recipient': 'Seul un administrateur peut envoyer un message à tous.'})
+
+        if user and parent:
+            if not InternalMessage.objects.filter(
+                Q(pk=parent.pk),
+                Q(sender=user) | Q(recipient=user) | Q(recipient__isnull=True),
+            ).exists():
+                raise serializers.ValidationError({'parent': 'Vous ne pouvez pas répondre à ce message.'})
+
+            expected_recipient_id = parent.sender_id if parent.sender_id != user.id else parent.recipient_id
+            if expected_recipient_id is not None and recipient and recipient.id != expected_recipient_id:
+                raise serializers.ValidationError({'recipient': 'Le destinataire doit appartenir à la conversation d’origine.'})
+
+        return attrs
 
     def get_attachment_url(self, obj):
         if obj.attachment:
-            return obj.attachment.url
+            return reverse('internalmessage-attachment', kwargs={'pk': obj.pk}, request=self.context.get('request'))
         return None
 
     def get_recipient_name(self, obj):

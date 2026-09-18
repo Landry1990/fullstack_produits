@@ -88,7 +88,7 @@ export default function UserHeader() {
           >
             <Bell size={16} className="text-slate-500" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold size-5 flex items-center justify-center rounded-full animate-pulse">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold min-w-5 h-5 px-1 flex items-center justify-center rounded-full">
                 {unreadCount}
               </span>
             )}
