@@ -100,6 +100,7 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
       {scannedProduct ? (
         <ProductCard
           product={scannedProduct}
+          inventoryType={inventaire.inventory_type}
           quantity={quantity}
           setQuantity={setQuantity}
           lotQuantities={lotQuantities}

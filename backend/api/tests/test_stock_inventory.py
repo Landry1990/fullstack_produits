@@ -249,3 +249,58 @@ class StockInventoryTest(TestCase):
         # Verifier que l'inventaire n'a pas ete valide
         inv = Inventaire.objects.get(id=inv_id)
         self.assertEqual(inv.status, Inventaire.Status.EN_COURS)
+
+    def test_bulk_replace_overwrites_existing_lot_quantity(self):
+        inventaire = Inventaire.objects.create(created_by=self.user)
+        ligne = LigneInventaire.objects.create(
+            inventaire=inventaire,
+            produit=self.p1,
+            stock_lot=self.lot1,
+            stock_theorique=50,
+            quantite_physique=40,
+        )
+
+        response = self.client.post(
+            reverse('inventaire-bulk-lignes', args=[inventaire.id]),
+            {
+                'lignes': [{
+                    'produit': self.p1.id,
+                    'stock_lot': self.lot1.id,
+                    'quantite_physique': 47,
+                    'mode': 'replace',
+                }]
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        ligne.refresh_from_db()
+        self.assertEqual(ligne.quantite_physique, 47)
+        self.assertEqual(ligne.ecart, -3)
+
+    def test_bulk_default_mode_still_adds_existing_lot_quantity(self):
+        inventaire = Inventaire.objects.create(created_by=self.user)
+        ligne = LigneInventaire.objects.create(
+            inventaire=inventaire,
+            produit=self.p1,
+            stock_lot=self.lot1,
+            stock_theorique=50,
+            quantite_physique=40,
+        )
+
+        response = self.client.post(
+            reverse('inventaire-bulk-lignes', args=[inventaire.id]),
+            {
+                'lignes': [{
+                    'produit': self.p1.id,
+                    'stock_lot': self.lot1.id,
+                    'quantite_physique': 7,
+                }]
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        ligne.refresh_from_db()
+        self.assertEqual(ligne.quantite_physique, 47)
+        self.assertEqual(ligne.ecart, -3)

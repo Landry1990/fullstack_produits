@@ -10,9 +10,11 @@ export interface OfflineLigne {
     produitNom: string;
     produitCip: string;
     quantiteComptee: number;
+    stockTheorique: number;
     stockLotId?: number;
     lotNumero?: string;
     lotExpiration?: string;
+    syncMode?: 'add' | 'replace';
     scannedAt: string;
     synced: boolean;
 }
@@ -25,9 +27,11 @@ class LocalStorageService {
         inventaire: Inventaire,
         produit: { id: number; name: string; cip1?: string },
         quantite: number,
+        stockTheorique: number,
         stockLotId?: number,
         lotNumero?: string,
-        lotExpiration?: string
+        lotExpiration?: string,
+        syncMode: 'add' | 'replace' = 'add'
     ): Promise<OfflineLigne> {
         const ligne: OfflineLigne = {
             tempId: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
@@ -36,9 +40,11 @@ class LocalStorageService {
             produitNom: produit.name,
             produitCip: produit.cip1 || '',
             quantiteComptee: quantite,
+            stockTheorique,
             stockLotId: stockLotId,
             lotNumero: lotNumero,
             lotExpiration: lotExpiration,
+            syncMode,
             scannedAt: new Date().toISOString(),
             synced: false,
         };
@@ -111,10 +117,22 @@ class LocalStorageService {
     /**
      * Mettre à jour la quantité d'une ligne locale
      */
-    async updateLigne(tempId: string, newQuantity: number): Promise<void> {
+    async updateLigne(
+        tempId: string,
+        newQuantity: number,
+        stockTheorique?: number,
+        syncMode?: 'add' | 'replace'
+    ): Promise<void> {
         const lignes = await this.getOfflineLignes();
         const updated = lignes.map(l =>
-            l.tempId === tempId ? { ...l, quantiteComptee: newQuantity } : l
+            l.tempId === tempId
+                ? {
+                    ...l,
+                    quantiteComptee: newQuantity,
+                    stockTheorique: stockTheorique ?? l.stockTheorique,
+                    syncMode: syncMode ?? l.syncMode,
+                }
+                : l
         );
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     }
