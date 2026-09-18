@@ -119,10 +119,10 @@ export default function ScannerInput({
 
 const styles = StyleSheet.create({
   scannerContainer: {
-    flex: 1,
     justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingTop: Platform.OS === 'web' ? 24 : 80,
+    paddingTop: 24,
+    paddingBottom: 16,
     paddingHorizontal: 24,
   },
   scanTitle: {

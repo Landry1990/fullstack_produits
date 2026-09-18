@@ -23,8 +23,8 @@ class ExportService {
             const headers = ['CIP', 'Produit', 'Quantité Comptée', 'Date Scan'];
             const rows = lignes.map(ligne => {
                 const cip = ligne.produit_cip || '';
-                const nom = (ligne.produit_nom || ligne.produit_name || `Produit #${ligne.produit}`).replace(/"/g, '""');
-                const qte = ligne.quantite_comptee;
+                const nom = (ligne.produit_nom || `Produit #${ligne.produit}`).replace(/"/g, '""');
+                const qte = ligne.quantite_physique;
                 const date = ligne.scanned_at || new Date().toISOString();
 
                 return `"${cip}","${nom}",${qte},"${date}"`;

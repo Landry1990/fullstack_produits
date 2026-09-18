@@ -47,7 +47,8 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
     const saveOffline = useCallback(async (
         produit: { id: number; name: string; cip1?: string },
         quantite: number,
-        inventaire: { id: number; reference?: string },
+        inventaire: { id: number; reference?: string | null },
+        stockLotId?: number,
         lotNumero?: string,
         lotExpiration?: string
     ) => {
@@ -56,6 +57,7 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
             const existingLignes = await localStorageService.getLignesByInventaire(inventaire.id);
             const matching = existingLignes.find(l =>
                 l.produitId === produit.id &&
+                l.stockLotId === (stockLotId ?? undefined) &&
                 l.lotNumero === (lotNumero ?? undefined) &&
                 l.lotExpiration === (lotExpiration ?? undefined) &&
                 !l.synced
@@ -72,9 +74,10 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
             }
 
             const ligne = await localStorageService.saveLigneLocally(
-                { id: inventaire.id, reference: inventaire.reference || '', date_debut: '', date_fin: null, statut: 'EN_COURS', created_by: 0, lignes_count: 0 } as Inventaire,
+                { id: inventaire.id, reference: inventaire.reference || '', date: '', status: 'EN_COURS', created_by: 0 } as Inventaire,
                 produit,
                 quantite,
+                stockLotId,
                 lotNumero,
                 lotExpiration
             );
@@ -97,7 +100,8 @@ export function useOfflineSync({ inventaireId, onSyncComplete }: UseOfflineSyncO
             // Préparer toutes les lignes pour un seul envoi groupé
             const lignesPayload = offlineLignes.map(l => ({
                 produit: l.produitId,
-                quantite_comptee: l.quantiteComptee,
+                quantite_physique: l.quantiteComptee,
+                stock_lot: l.stockLotId,
                 lot_numero: l.lotNumero,
                 lot_expiration: l.lotExpiration,
             }));

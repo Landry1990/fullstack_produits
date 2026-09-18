@@ -10,6 +10,7 @@ export interface OfflineLigne {
     produitNom: string;
     produitCip: string;
     quantiteComptee: number;
+    stockLotId?: number;
     lotNumero?: string;
     lotExpiration?: string;
     scannedAt: string;
@@ -24,6 +25,7 @@ class LocalStorageService {
         inventaire: Inventaire,
         produit: { id: number; name: string; cip1?: string },
         quantite: number,
+        stockLotId?: number,
         lotNumero?: string,
         lotExpiration?: string
     ): Promise<OfflineLigne> {
@@ -34,6 +36,7 @@ class LocalStorageService {
             produitNom: produit.name,
             produitCip: produit.cip1 || '',
             quantiteComptee: quantite,
+            stockLotId: stockLotId,
             lotNumero: lotNumero,
             lotExpiration: lotExpiration,
             scannedAt: new Date().toISOString(),

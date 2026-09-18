@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Inventaire } from '../services/inventaire';
 
 import { useScannerController } from '../components/scanner/useScannerController';
@@ -22,6 +23,7 @@ interface ScannerScreenProps {
 }
 
 export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps) {
+  const insets = useSafeAreaInsets();
   const {
     scanInputRef,
     scannedProduct,
@@ -63,17 +65,13 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
   } = useScannerController(inventaire, onBack);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: Math.min(insets.bottom, 24) }]}>
       <Header
-        reference={inventaire.reference}
+        reference={inventaire.reference || inventaire.description || `Inventaire #${inventaire.id}`}
         isOnline={isOnline}
         offlineCount={offlineCount}
         onBack={handleBack}
         onExport={handleExport}
-        onToggleContinuous={toggleContinuousMode}
-        onToggleRapid={toggleRapidMode}
-        continuousScanMode={continuousScanMode}
-        rapidCountMode={rapidCountMode}
         keyboardEnabled={isKeyboardEnabled}
         onToggleKeyboard={toggleKeyboard}
         count={lignes.length}
@@ -97,13 +95,6 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
         isOnline={isOnline}
         syncing={syncing}
         onSync={handleFinishAndSync}
-      />
-
-      <ScanModeToggles
-        continuousScanMode={continuousScanMode}
-        rapidCountMode={rapidCountMode}
-        onToggleContinuous={toggleContinuousMode}
-        onToggleRapid={toggleRapidMode}
       />
 
       {scannedProduct ? (
@@ -131,6 +122,13 @@ export default function ScannerScreen({ inventaire, onBack }: ScannerScreenProps
           isKeyboardEnabled={isKeyboardEnabled}
         />
       )}
+
+      <ScanModeToggles
+        continuousScanMode={continuousScanMode}
+        rapidCountMode={rapidCountMode}
+        onToggleContinuous={toggleContinuousMode}
+        onToggleRapid={toggleRapidMode}
+      />
 
       {editingLine && (
         <EditLineModal
