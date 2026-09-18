@@ -208,15 +208,27 @@ def _process_bulk_line(
                 raise ValueError(f"Date invalide pour le lot {data['lot_numero']}")
 
     # Déterminer le stock théorique
-    stock_theorique = target_lot.quantity_remaining if target_lot else produit.stock
+    if target_lot:
+        if inventaire.inventory_type == Inventaire.TypeStock.RESERVE:
+            stock_theorique = target_lot.quantity_reserved or 0
+        elif inventaire.inventory_type == Inventaire.TypeStock.GLOBAL:
+            stock_theorique = (target_lot.quantity_remaining or 0) + (target_lot.quantity_reserved or 0)
+        else:
+            stock_theorique = target_lot.quantity_remaining
+    else:
+        stock_theorique = produit.stock
     qte_saisie = int(data.get('quantite_physique', data.get('quantite_comptee', stock_theorique)))
+    replace_quantity = data.get('mode') == 'replace'
 
     # --- MERGE IN BULK ---
     lot_id = target_lot.id if target_lot else None
     merge_key = (p_id, lot_id)
 
     if merge_key in lignes_finales:
-        lignes_finales[merge_key].quantite_physique += qte_saisie
+        if replace_quantity:
+            lignes_finales[merge_key].quantite_physique = qte_saisie
+        else:
+            lignes_finales[merge_key].quantite_physique += qte_saisie
         # l'écart sera calculé lors du save() ou manuellement
         lignes_finales[merge_key].ecart = (
             lignes_finales[merge_key].quantite_physique - stock_theorique
@@ -229,7 +241,10 @@ def _process_bulk_line(
         ).first()
 
         if existing_in_db:
-            existing_in_db.quantite_physique += qte_saisie
+            if replace_quantity:
+                existing_in_db.quantite_physique = qte_saisie
+            else:
+                existing_in_db.quantite_physique += qte_saisie
             existing_in_db.ecart = existing_in_db.quantite_physique - stock_theorique
             existing_in_db.save()
             return 1

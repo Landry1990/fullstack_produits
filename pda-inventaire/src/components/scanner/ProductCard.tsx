@@ -6,12 +6,22 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Produit, StockLot } from '../../services/inventaire';
+
+const normalizeExpiryMMYY = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+};
 
 interface ProductCardProps {
   product: Produit;
+  inventoryType?: 'GLOBAL' | 'RAYON' | 'RESERVE';
   quantity: string;
   setQuantity: (value: string) => void;
   lotQuantities: { [key: string]: string };
@@ -27,6 +37,7 @@ interface ProductCardProps {
 
 export default function ProductCard({
   product,
+  inventoryType = 'RAYON',
   quantity,
   setQuantity,
   lotQuantities,
@@ -39,58 +50,72 @@ export default function ProductCard({
   onCancel,
   loading,
 }: ProductCardProps) {
+  const insets = useSafeAreaInsets();
+  const lots = product.stock_lots || [];
+
   const handleLotQtyChange = (lotId: string | number, value: string) => {
     setLotQuantities((prev) => ({ ...prev, [String(lotId)]: value }));
   };
 
-  const renderLotItem = ({ item }: { item: StockLot }) => (
-    <View style={styles.lotItem}>
-      <View style={styles.lotInfo}>
-        <Text style={styles.lotLabel}>
-          Lot: <Text style={styles.lotValue}>{item.lot}</Text>
-        </Text>
-        <Text style={styles.lotExp}>Exp: {item.date_expiration || 'N/A'}</Text>
-        <Text style={styles.lotStock}>Théorique: {item.quantity_remaining}</Text>
-      </View>
-      <View style={styles.lotQtyContainer}>
-        <TextInput
-          style={styles.lotQtyInput}
-          value={lotQuantities[item.id] || ''}
-          onChangeText={(val) => handleLotQtyChange(item.id, val)}
-          placeholder="0"
-          placeholderTextColor="#444"
-          keyboardType="number-pad"
-          selectTextOnFocus
-        />
-      </View>
-    </View>
-  );
+  const renderLotItem = ({ item }: { item: StockLot }) => {
+    const theoretical = inventoryType === 'RESERVE'
+      ? item.quantity_reserved || 0
+      : inventoryType === 'GLOBAL'
+        ? item.quantity_remaining + (item.quantity_reserved || 0)
+        : item.quantity_remaining;
+    const physical = Number(lotQuantities[String(item.id)] || 0);
+    const difference = physical - theoretical;
 
-  const ListFooter = () => (
+    return (
+      <View style={styles.lotItem}>
+        <View style={styles.lotInfo}>
+          <Text style={styles.lotValue}>{item.lot || `Lot #${item.id}`}</Text>
+          <Text style={styles.lotMeta}>Exp. {item.date_expiration || 'Non renseignée'}</Text>
+          <Text style={styles.lotTheoretical}>Stock théorique : {theoretical}</Text>
+        </View>
+        <View style={styles.quantityBlock}>
+          <Text style={styles.quantityLabel}>Stock compté</Text>
+          <TextInput
+            style={styles.lotQtyInput}
+            value={lotQuantities[String(item.id)] ?? ''}
+            onChangeText={(value) => handleLotQtyChange(item.id, value)}
+            placeholder="0"
+            placeholderTextColor="#64748b"
+            keyboardType="number-pad"
+            selectTextOnFocus
+          />
+          <Text style={[styles.difference, difference === 0 ? styles.neutral : difference > 0 ? styles.positive : styles.negative]}>
+            Écart {difference > 0 ? '+' : ''}{difference}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  const listFooter = product.use_lot_management ? (
     <View style={styles.newLotSection}>
-      <Text style={styles.newLotTitle}>Nouveau Lot / Sans Lot</Text>
+      <Text style={styles.sectionTitle}>Nouveau lot</Text>
+      <TextInput
+        style={styles.fullInput}
+        placeholder="Numéro du lot"
+        placeholderTextColor="#64748b"
+        value={newLotNumber}
+        onChangeText={setNewLotNumber}
+      />
       <View style={styles.newLotRow}>
         <TextInput
-          style={[styles.lotInput, { flex: 2 }]}
-          placeholder="Numéro de Lot"
-          placeholderTextColor="#666"
-          value={newLotNumber}
-          onChangeText={setNewLotNumber}
-        />
-        <TextInput
-          style={[styles.lotInput, { flex: 2 }]}
-          placeholder="Expiration (AAAA-MM-JJ)"
-          placeholderTextColor="#666"
+          style={styles.dateInput}
+          placeholder="Péremption MM/YY"
+          placeholderTextColor="#64748b"
           value={newLotExpiration}
-          onChangeText={setNewLotExpiration}
+          onChangeText={(value) => setNewLotExpiration(normalizeExpiryMMYY(value))}
+          keyboardType="number-pad"
+          maxLength={5}
         />
         <TextInput
-          style={[
-            styles.lotInput,
-            { flex: 1, backgroundColor: '#2d2d44', color: '#fff', fontWeight: 'bold' },
-          ]}
+          style={styles.newQtyInput}
           placeholder="Qté"
-          placeholderTextColor="#888"
+          placeholderTextColor="#64748b"
           value={quantity}
           onChangeText={setQuantity}
           keyboardType="number-pad"
@@ -98,183 +123,330 @@ export default function ProductCard({
         />
       </View>
     </View>
+  ) : (
+    <View style={styles.singleCountSection}>
+      <View>
+        <Text style={styles.quantityLabel}>Stock théorique</Text>
+        <Text style={styles.singleTheoretical}>{product.stock}</Text>
+      </View>
+      <View style={styles.singleQuantityBlock}>
+        <Text style={styles.quantityLabel}>Stock compté</Text>
+        <TextInput
+          style={styles.singleQtyInput}
+          value={quantity}
+          onChangeText={setQuantity}
+          keyboardType="number-pad"
+          selectTextOnFocus
+          autoFocus
+        />
+        <Text style={[styles.difference, Number(quantity || 0) - product.stock === 0 ? styles.neutral : Number(quantity || 0) - product.stock > 0 ? styles.positive : styles.negative]}>
+          Écart {Number(quantity || 0) - product.stock > 0 ? '+' : ''}{Number(quantity || 0) - product.stock}
+        </Text>
+      </View>
+    </View>
   );
 
   return (
-    <View style={styles.productCard}>
-      <Text style={styles.productName}>{product.name}</Text>
-      <View style={styles.productMeta}>
-        <Text style={styles.productCip}>CIP: {product.cip1 || '-'}</Text>
-        <View style={styles.stockBadge}>
-          <Text style={styles.stockBadgeText}>Stock: {product.stock}</Text>
+    <Modal visible transparent animationType="slide" onRequestClose={onCancel} statusBarTranslucent>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={[styles.modal, { marginTop: Math.max(insets.top, 16), marginBottom: Math.max(insets.bottom, 16) }]}>
+          <View style={styles.header}>
+            <View style={styles.headerText}>
+              <Text style={styles.title} numberOfLines={2}>{product.name}</Text>
+              <Text style={styles.subtitle}>CIP : {product.cip1 || product.cip2 || product.cip3 || product.cip4 || 'Non renseigné'}</Text>
+            </View>
+            <View style={styles.stockBadge}>
+              <Text style={styles.stockBadgeLabel}>Stock global</Text>
+              <Text style={styles.stockBadgeValue}>{product.stock}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.instructions}>
+            {product.use_lot_management
+              ? 'Vérifiez et modifiez le stock compté pour chaque lot.'
+              : 'Vérifiez et modifiez le stock compté.'}
+          </Text>
+
+          <FlatList
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            data={lots}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={renderLotItem}
+            ListEmptyComponent={product.use_lot_management ? (
+              <Text style={styles.emptyLots}>Aucun lot actif. Ajoutez un nouveau lot ci-dessous.</Text>
+            ) : null}
+            ListFooterComponent={listFooter}
+            keyboardShouldPersistTaps="always"
+            removeClippedSubviews={false}
+          />
+
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} disabled={loading}>
+              <Text style={styles.cancelBtnText}>Annuler</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.validateBtn, loading && styles.disabled]} onPress={onValidate} disabled={loading}>
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.validateBtnText}>Ajouter au comptage</Text>}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-
-      <FlatList
-        style={styles.lotScroll}
-        data={product.stock_lots || []}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={renderLotItem}
-        ListFooterComponent={<ListFooter />}
-      />
-
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-          <Text style={styles.cancelBtnText}>Annuler</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.validateBtn, loading && styles.btnDisabled]}
-          onPress={onValidate}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.validateBtnText}>Sauvegarder</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  productCard: {
-    backgroundColor: '#1e1e35',
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 0,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#4f46e5',
+  overlay: {
     flex: 1,
-    minHeight: 0,
+    backgroundColor: 'rgba(2, 6, 23, 0.82)',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
   },
-  productName: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 5,
+  modal: {
+    flex: 1,
+    maxHeight: 720,
+    backgroundColor: '#111827',
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#334155',
   },
-  productMeta: {
+  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    padding: 18,
+    backgroundColor: '#1e293b',
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
   },
-  productCip: {
-    color: '#888',
-    fontSize: 14,
+  headerText: {
+    flex: 1,
+    marginRight: 12,
+  },
+  title: {
+    color: '#f8fafc',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  subtitle: {
+    color: '#94a3b8',
+    fontSize: 13,
+    marginTop: 5,
   },
   stockBadge: {
-    backgroundColor: '#2d2d44',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    minWidth: 72,
+    padding: 9,
+    borderRadius: 10,
+    backgroundColor: '#0f172a',
+    alignItems: 'center',
   },
-  stockBadgeText: {
-    color: '#4f46e5',
-    fontWeight: 'bold',
-    fontSize: 12,
+  stockBadgeLabel: {
+    color: '#94a3b8',
+    fontSize: 9,
   },
-  lotScroll: {
-    maxHeight: 300,
-    marginBottom: 15,
+  stockBadgeValue: {
+    color: '#93c5fd',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  instructions: {
+    color: '#cbd5e1',
+    fontSize: 13,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    backgroundColor: '#172033',
+  },
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 14,
   },
   lotItem: {
     flexDirection: 'row',
-    backgroundColor: '#151525',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 8,
     alignItems: 'center',
+    padding: 14,
+    marginBottom: 10,
+    borderRadius: 12,
+    backgroundColor: '#1e293b',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#334155',
   },
   lotInfo: {
     flex: 1,
+    marginRight: 12,
   },
-  lotLabel: { color: '#ccc', fontSize: 13 },
-  lotValue: { color: '#fff', fontWeight: 'bold' },
-  lotExp: { color: '#888', fontSize: 11 },
-  lotStock: { color: '#4f46e5', fontSize: 11, marginTop: 2 },
-  lotQtyContainer: {
-    width: 70,
-    marginLeft: 10,
+  lotValue: {
+    color: '#f8fafc',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  lotMeta: {
+    color: '#94a3b8',
+    fontSize: 11,
+    marginTop: 4,
+  },
+  lotTheoretical: {
+    color: '#93c5fd',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  quantityBlock: {
+    width: 108,
+    alignItems: 'center',
+  },
+  quantityLabel: {
+    color: '#94a3b8',
+    fontSize: 10,
+    fontWeight: '600',
+    marginBottom: 5,
   },
   lotQtyInput: {
-    backgroundColor: '#2d2d44',
+    width: '100%',
+    minHeight: 48,
+    backgroundColor: '#0f172a',
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#3b82f6',
     color: '#fff',
     textAlign: 'center',
-    padding: 10,
-    borderRadius: 8,
-    fontWeight: 'bold',
-    fontSize: 18,
-    borderWidth: 1,
-    borderColor: '#4f46e5',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  difference: {
+    fontSize: 11,
+    fontWeight: '800',
+    marginTop: 5,
+  },
+  neutral: {
+    color: '#94a3b8',
+  },
+  positive: {
+    color: '#4ade80',
+  },
+  negative: {
+    color: '#f87171',
+  },
+  emptyLots: {
+    color: '#cbd5e1',
+    textAlign: 'center',
+    paddingVertical: 22,
   },
   newLotSection: {
-    marginTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#333',
-    paddingTop: 15,
-    paddingBottom: 10,
+    borderTopColor: '#334155',
+    marginTop: 4,
+    paddingTop: 14,
   },
-  newLotTitle: {
-    color: '#aaa',
+  sectionTitle: {
+    color: '#f8fafc',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 10,
+  },
+  fullInput: {
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: 9,
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#475569',
+    color: '#fff',
+    marginBottom: 8,
   },
   newLotRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  lotInput: {
+  dateInput: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
-    borderRadius: 12,
-    padding: 16,
-    color: '#fff',
-    fontSize: 16,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: 9,
+    backgroundColor: '#0f172a',
     borderWidth: 1,
-    borderColor: '#2d2d44',
-    minHeight: 56,
+    borderColor: '#475569',
+    color: '#fff',
+  },
+  newQtyInput: {
+    width: 78,
+    minHeight: 48,
+    borderRadius: 9,
+    backgroundColor: '#0f172a',
+    borderWidth: 2,
+    borderColor: '#3b82f6',
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  singleCountSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 30,
+    paddingHorizontal: 10,
+  },
+  singleTheoretical: {
+    color: '#93c5fd',
+    fontSize: 30,
+    fontWeight: '800',
+  },
+  singleQuantityBlock: {
+    width: 140,
+    alignItems: 'center',
+  },
+  singleQtyInput: {
+    width: '100%',
+    minHeight: 64,
+    borderRadius: 12,
+    backgroundColor: '#0f172a',
+    borderWidth: 2,
+    borderColor: '#3b82f6',
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 28,
+    fontWeight: '800',
   },
   actions: {
     flexDirection: 'row',
-    gap: 16,
-    marginTop: 8,
+    gap: 10,
+    padding: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#334155',
+    backgroundColor: '#1e293b',
   },
   cancelBtn: {
     flex: 1,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: '#2d2d44',
+    minHeight: 52,
+    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4b4b6a',
+    borderRadius: 11,
+    backgroundColor: '#334155',
   },
   cancelBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#f8fafc',
+    fontSize: 15,
+    fontWeight: '700',
   },
   validateBtn: {
     flex: 2,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: '#22c55e',
+    minHeight: 52,
+    justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
+    borderRadius: 11,
+    backgroundColor: '#16a34a',
   },
   validateBtnText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '800',
   },
-  btnDisabled: {
+  disabled: {
     opacity: 0.6,
   },
 });

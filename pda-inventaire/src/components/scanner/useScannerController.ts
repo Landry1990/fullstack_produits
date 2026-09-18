@@ -11,6 +11,15 @@ export interface DisplayLigne extends LigneInventaire {
   details?: { isOffline: boolean };
 }
 
+const expiryMMYYToISO = (value: string) => {
+  const match = value.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);
+  if (!match) return null;
+  const month = Number(match[1]);
+  const year = 2000 + Number(match[2]);
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+};
+
 export function useScannerController(inventaire: Inventaire, onBack: () => void) {
   const [scannedProduct, setScannedProduct] = useState<Produit | null>(null);
   const [quantity, setQuantity] = useState('1');
@@ -102,9 +111,9 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
         produit: l.produitId,
         produit_nom: l.produitNom,
         produit_cip: l.produitCip,
-        stock_theorique: 0,
+        stock_theorique: l.stockTheorique ?? 0,
         quantite_physique: l.quantiteComptee,
-        ecart: 0,
+        ecart: l.quantiteComptee - (l.stockTheorique ?? 0),
         scanned_at: l.scannedAt,
         details: { isOffline: true }
       }));
@@ -189,7 +198,8 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       await saveOffline(
         { id: product.id, name: product.name, cip1: product.cip1 || product.cip2 || product.cip3 || product.cip4 || undefined },
         qty,
-        inventaire
+        inventaire,
+        product.stock
       );
 
       setLastSavedProduct(`${product.name} (Qté: ${qty})`);
@@ -226,7 +236,8 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
           await saveOffline(
             { id: product.id, name: product.name, cip1: product.cip1 || product.cip2 || product.cip3 || product.cip4 || undefined },
             1,
-            inventaire
+            inventaire,
+            product.stock
           );
           setLastSavedProduct(`${product.name} (Qté: 1)`);
           await playSound('success');
@@ -238,8 +249,25 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
           return;
         }
 
-        setScannedProduct(product);
-        setQuantity(rapidCountMode ? '1' : '');
+        let selectedProduct = product;
+        if (product.use_lot_management) {
+          const lots = isOnline
+            ? await produitService.getLots(product.id, inventaire.inventory_type)
+            : product.stock_lots || [];
+          selectedProduct = { ...product, stock_lots: lots };
+          const initialQuantities: { [key: string]: string } = {};
+          lots.forEach(lot => {
+            const theoretical = inventaire.inventory_type === 'RESERVE'
+              ? lot.quantity_reserved || 0
+              : inventaire.inventory_type === 'GLOBAL'
+                ? lot.quantity_remaining + (lot.quantity_reserved || 0)
+                : lot.quantity_remaining;
+            initialQuantities[String(lot.id)] = String(theoretical);
+          });
+          setLotQuantities(initialQuantities);
+        }
+        setScannedProduct(selectedProduct);
+        setQuantity(rapidCountMode ? '1' : product.use_lot_management ? '' : String(product.stock));
         setScanInput('');
         await playSound('success');
         Vibration.vibrate(50);
@@ -280,12 +308,18 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
 
       const existingLotEntries = Object.entries(lotQuantities).filter(([_, qty]) => {
         const q = parseInt(qty, 10);
-        return !isNaN(q) && q > 0;
+        return !isNaN(q) && q >= 0;
       });
 
       await Promise.all(existingLotEntries.map(async ([lotId, qtyStr]) => {
         const qty = parseInt(qtyStr, 10);
         const lot = scannedProduct.stock_lots?.find(l => String(l.id) === lotId);
+
+        const theoretical = inventaire.inventory_type === 'RESERVE'
+          ? lot?.quantity_reserved || 0
+          : inventaire.inventory_type === 'GLOBAL'
+            ? (lot?.quantity_remaining || 0) + (lot?.quantity_reserved || 0)
+            : lot?.quantity_remaining || 0;
 
         await saveOffline(
           {
@@ -295,24 +329,32 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
           },
           qty,
           inventaire,
+          theoretical,
           lot?.id,
           lot?.lot,
-          lot?.date_expiration || undefined
+          lot?.date_expiration || undefined,
+          true
         );
       }));
       savedCount = existingLotEntries.length;
 
       const newQty = parseInt(quantity, 10);
-      if (!scannedProduct.use_lot_management && !isNaN(newQty) && newQty > 0) {
+      if (!scannedProduct.use_lot_management && !isNaN(newQty) && newQty >= 0) {
         await saveOffline(
           { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || scannedProduct.cip2 || scannedProduct.cip3 || scannedProduct.cip4 || undefined },
           newQty,
-          inventaire
+          inventaire,
+          scannedProduct.stock,
+          undefined,
+          undefined,
+          undefined,
+          true
         );
         savedCount++;
-      } else if (scannedProduct.use_lot_management && !isNaN(newQty) && newQty > 0) {
-        if (newLotExpiration && !/^\d{4}-\d{2}-\d{2}$/.test(newLotExpiration)) {
-          Alert.alert('Format Date Invalide', 'Veuillez utiliser le format AAAA-MM-JJ (ex: 2026-12-31)');
+      } else if (scannedProduct.use_lot_management && !isNaN(newQty) && newQty >= 0 && newLotNumber.trim()) {
+        const expirationISO = newLotExpiration ? expiryMMYYToISO(newLotExpiration) : undefined;
+        if (newLotExpiration && !expirationISO) {
+          Alert.alert('Date invalide', 'Veuillez utiliser le format MM/YY avec un mois valide (ex. 12/27).');
           setLoading(false);
           return;
         }
@@ -321,9 +363,11 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
           { id: scannedProduct.id, name: scannedProduct.name, cip1: scannedProduct.cip1 || scannedProduct.cip2 || scannedProduct.cip3 || scannedProduct.cip4 || undefined },
           newQty,
           inventaire,
+          0,
           undefined,
-          newLotNumber || undefined,
-          newLotExpiration || undefined
+          newLotNumber.trim(),
+          expirationISO || undefined,
+          true
         );
         savedCount++;
       }
@@ -399,16 +443,25 @@ export function useScannerController(inventaire: Inventaire, onBack: () => void)
       const isOffline = editingLine.id < 0 || editingLine.details?.isOffline;
 
       if (isOffline) {
-        if (editingLine.tempId) {
-          await updateOffline(editingLine.tempId, qty);
-        } else {
+        if (!editingLine.tempId) {
           Alert.alert('Erreur', 'Ligne locale non trouvée');
+          return;
         }
+        await updateOffline(editingLine.tempId, qty);
+        setLignes(prev => prev.map(line =>
+          line.tempId === editingLine.tempId
+            ? {
+                ...line,
+                quantite_physique: qty,
+                ecart: qty - (line.stock_theorique ?? 0),
+              }
+            : line
+        ));
       } else {
-        await inventaireService.updateLigne(inventaire.id, editingLine.id, qty);
+        const updated = await inventaireService.updateLigne(inventaire.id, editingLine.id, qty);
+        setLignes(prev => prev.map(line => line.id === editingLine.id ? { ...line, ...updated } : line));
       }
 
-      await loadLignes();
       setEditingLine(null);
       setEditQuantity('');
       Vibration.vibrate([0, 50, 50, 50]);

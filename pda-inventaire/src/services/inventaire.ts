@@ -7,6 +7,7 @@ export interface StockLot {
     lot: string;
     date_expiration: string | null;
     quantity_remaining: number;
+    quantity_reserved?: number;
 }
 
 export interface Produit {
@@ -31,6 +32,7 @@ export interface Inventaire {
     created_at?: string;
     updated_at?: string;
     status: 'EN_COURS' | 'VALIDEE';
+    inventory_type?: 'GLOBAL' | 'RAYON' | 'RESERVE';
     created_by: number;
     created_by_name?: string;
     lignes_count?: number;
@@ -59,6 +61,7 @@ export interface CreateLigneInventaire {
     stock_lot?: number;
     lot_numero?: string;
     lot_expiration?: string;
+    mode?: 'add' | 'replace';
 }
 
 class InventaireService {
@@ -162,6 +165,14 @@ class ProduitService {
     /**
      * Télécharger le catalogue complet par pages (max 500/page)
      */
+    async getLots(produitId: number, inventoryType: Inventaire['inventory_type'] = 'RAYON'): Promise<StockLot[]> {
+        const stockFilter = inventoryType === 'RESERVE' ? 'quantity_reserved_gt' : 'quantity_remaining_gt';
+        const response = await api.get<PaginatedResponse<StockLot> | StockLot[]>(
+            `/api/stock-lots/?produit=${produitId}&${stockFilter}=0`
+        );
+        return Array.isArray(response.data) ? response.data : response.data.results;
+    }
+
     async downloadCatalog(): Promise<Produit[]> {
         const all: Produit[] = [];
         let page = 1;
