@@ -85,9 +85,10 @@ class AuthService {
             }
 
             const user = JSON.parse(userJson) as User;
+            await api.get('/api/users/me/');
             return { isAuthenticated: true, user, token };
-        } catch (error) {
-            console.error('Erreur vérification auth:', error);
+        } catch {
+            await this.logout();
             return { isAuthenticated: false, user: null, token: null };
         }
     }

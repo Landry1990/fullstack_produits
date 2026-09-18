@@ -14,10 +14,6 @@ interface HeaderProps {
   offlineCount: number;
   onBack: () => void;
   onExport: () => void;
-  onToggleContinuous: () => void;
-  onToggleRapid: () => void;
-  continuousScanMode: boolean;
-  rapidCountMode: boolean;
   keyboardEnabled?: boolean;
   onToggleKeyboard?: () => void;
   count?: number;
@@ -29,83 +25,49 @@ export default function Header({
   offlineCount,
   onBack,
   onExport,
-  onToggleContinuous,
-  onToggleRapid,
-  continuousScanMode,
-  rapidCountMode,
   keyboardEnabled,
   onToggleKeyboard,
   count,
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
+  const topInset = Platform.OS === 'web' ? 8 : Math.min(insets.top, 32);
 
   return (
-    <View
-      style={[
-        styles.header,
-        { paddingTop: Platform.OS === 'web' ? 0 : insets.top },
-      ]}
-    >
-      <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-        <Text style={styles.backBtnText}>Terminer</Text>
-      </TouchableOpacity>
-
-      <View style={styles.headerTitles}>
-        <Text style={styles.headerTitle}>{reference}</Text>
-        <View
-          style={[
-            styles.statusBadge,
-            isOnline ? styles.statusOnline : styles.statusOffline,
-          ]}
-        >
-          <Text style={styles.statusText}>{isOnline ? 'EN LIGNE' : 'HORS LIGNE'}</Text>
-        </View>
-      </View>
-
-      <View style={styles.headerRight}>
-        {/* Mode Scan Continu */}
-        <TouchableOpacity
-          onPress={onToggleContinuous}
-          style={[styles.modeBtn, continuousScanMode && styles.modeBtnActive]}
-        >
-          <Text style={styles.modeBtnText}>CONT</Text>
+    <View style={[styles.header, { paddingTop: topInset }]}> 
+      <View style={styles.topRow}>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+          <Text style={styles.backBtnText}>Terminer</Text>
         </TouchableOpacity>
-
-        {/* Mode Rapide (+1) */}
-        <TouchableOpacity
-          onPress={onToggleRapid}
-          style={[styles.modeBtn, rapidCountMode && styles.modeBtnActive]}
-        >
-          <Text style={styles.modeBtnText}>+1</Text>
-        </TouchableOpacity>
-
-        {onToggleKeyboard && (
-          <TouchableOpacity
-            onPress={onToggleKeyboard}
-            style={[
-              styles.exportBtn,
-              { marginRight: 8, backgroundColor: keyboardEnabled ? '#4f46e5' : '#2d2d44' },
-            ]}
-          >
-            <Text style={styles.exportBtnText}>KBD</Text>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity onPress={onExport} style={styles.exportBtn}>
-          <Text style={styles.exportBtnText}>CSV</Text>
-        </TouchableOpacity>
-
+        <Text style={styles.headerTitle} numberOfLines={1}>{reference}</Text>
         {typeof count === 'number' && (
           <View style={styles.counter}>
             <Text style={styles.counterText}>{count}</Text>
           </View>
         )}
+      </View>
 
-        {offlineCount > 0 && (
-          <View style={styles.offlineBadge}>
-            <Text style={styles.offlineBadgeText}>{offlineCount}</Text>
-          </View>
-        )}
+      <View style={styles.bottomRow}>
+        <View style={[styles.statusBadge, isOnline ? styles.statusOnline : styles.statusOffline]}>
+          <Text style={styles.statusText}>{isOnline ? 'EN LIGNE' : 'HORS LIGNE'}</Text>
+        </View>
+        <View style={styles.headerRight}>
+          {onToggleKeyboard && (
+            <TouchableOpacity
+              onPress={onToggleKeyboard}
+              style={[styles.actionBtn, keyboardEnabled && styles.actionBtnActive]}
+            >
+              <Text style={styles.actionBtnText}>Clavier</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={onExport} style={styles.actionBtn}>
+            <Text style={styles.actionBtnText}>CSV</Text>
+          </TouchableOpacity>
+          {offlineCount > 0 && (
+            <View style={styles.offlineBadge}>
+              <Text style={styles.offlineBadgeText}>{offlineCount} attente</Text>
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -113,112 +75,104 @@ export default function Header({
 
 const styles = StyleSheet.create({
   header: {
+    backgroundColor: '#1a1a2e',
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+  },
+  topRow: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bottomRow: {
+    minHeight: 36,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1a1a2e',
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'web' ? 10 : 14,
-    minHeight: 56,
   },
   backBtn: {
-    padding: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingRight: 12,
   },
   backBtnText: {
-    color: '#4f46e5',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  headerTitles: {
-    flex: 1,
-    marginLeft: 8,
+    color: '#818cf8',
+    fontSize: 15,
+    fontWeight: '700',
   },
   headerTitle: {
+    flex: 1,
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginHorizontal: 8,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    minWidth: 70,
-    maxWidth: 90,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    minWidth: 76,
     alignItems: 'center',
   },
   statusOnline: {
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    backgroundColor: '#15803d',
   },
   statusOffline: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    borderWidth: 1,
-    borderColor: '#ef4444',
+    backgroundColor: '#b91c1c',
   },
   statusText: {
-    fontSize: 9,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '800',
     color: '#fff',
-    textAlign: 'center',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 8,
+    gap: 8,
   },
-  modeBtn: {
-    padding: 8,
+  actionBtn: {
+    minHeight: 36,
+    minWidth: 58,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#2d2d44',
     borderRadius: 8,
-    marginRight: 8,
     borderWidth: 1,
     borderColor: '#4b4b6a',
-    minWidth: 44,
-    alignItems: 'center',
   },
-  modeBtnActive: {
-    backgroundColor: '#22c55e',
-    borderColor: '#22c55e',
+  actionBtnActive: {
+    backgroundColor: '#4f46e5',
+    borderColor: '#818cf8',
   },
-  modeBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  exportBtn: {
-    padding: 8,
-    backgroundColor: '#2d2d44',
-    borderRadius: 8,
-    marginRight: 8,
-    minWidth: 44,
-    alignItems: 'center',
-  },
-  exportBtnText: {
+  actionBtnText: {
     fontSize: 12,
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   offlineBadge: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: '#b45309',
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 7,
+    borderRadius: 12,
   },
   offlineBadgeText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
+    fontWeight: '700',
+    fontSize: 11,
   },
   counter: {
+    minWidth: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#4f46e5',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 18,
   },
   counterText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: 14,
   },
 });

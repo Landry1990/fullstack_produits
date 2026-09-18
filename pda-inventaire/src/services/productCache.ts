@@ -1,8 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Produit } from './inventaire';
 
-const PRODUCTS_CACHE_KEY = 'pda_cached_products';
 const PRODUCTS_CACHE_DATE_KEY = 'pda_cached_products_date';
+// Ancien stockage AsyncStorage — trop volumineux (> 2 Mo, erreur CursorWindow Android)
+const LEGACY_PRODUCTS_CACHE_KEY = 'pda_cached_products';
+const CACHE_FILE = `${FileSystem.documentDirectory}pda_products_cache.json`;
 
 export interface CachedProduct {
     id: number;
@@ -22,8 +25,14 @@ export interface CachedProduct {
 class ProductCacheService {
     async getAll(): Promise<CachedProduct[]> {
         try {
-            const data = await AsyncStorage.getItem(PRODUCTS_CACHE_KEY);
-            return data ? JSON.parse(data) : [];
+            const info = await FileSystem.getInfoAsync(CACHE_FILE);
+            if (info.exists) {
+                const data = await FileSystem.readAsStringAsync(CACHE_FILE);
+                return JSON.parse(data);
+            }
+            // Migration : ancien stockage AsyncStorage (échoue silencieusement si > 2 Mo)
+            const legacy = await AsyncStorage.getItem(LEGACY_PRODUCTS_CACHE_KEY);
+            return legacy ? JSON.parse(legacy) : [];
         } catch (error) {
             console.error('Erreur lecture cache produits:', error);
             return [];
@@ -32,8 +41,9 @@ class ProductCacheService {
 
     async saveAll(produits: CachedProduct[]): Promise<void> {
         try {
-            await AsyncStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(produits));
+            await FileSystem.writeAsStringAsync(CACHE_FILE, JSON.stringify(produits));
             await AsyncStorage.setItem(PRODUCTS_CACHE_DATE_KEY, new Date().toISOString());
+            await AsyncStorage.removeItem(LEGACY_PRODUCTS_CACHE_KEY).catch(() => {});
         } catch (error) {
             console.error('Erreur sauvegarde cache produits:', error);
             throw error;
@@ -42,8 +52,9 @@ class ProductCacheService {
 
     async clear(): Promise<void> {
         try {
-            await AsyncStorage.removeItem(PRODUCTS_CACHE_KEY);
+            await FileSystem.deleteAsync(CACHE_FILE, { idempotent: true });
             await AsyncStorage.removeItem(PRODUCTS_CACHE_DATE_KEY);
+            await AsyncStorage.removeItem(LEGACY_PRODUCTS_CACHE_KEY).catch(() => {});
         } catch (error) {
             console.error('Erreur nettoyage cache produits:', error);
         }

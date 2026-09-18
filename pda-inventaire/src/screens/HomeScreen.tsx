@@ -11,6 +11,7 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { inventaireService } from '../services/inventaire';
 import { produitService } from '../services/inventaire';
 import { productCacheService } from '../services/productCache';
@@ -29,6 +30,7 @@ const generateDefaultReference = () => {
 };
 
 export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenProps) {
+  const insets = useSafeAreaInsets();
   const [inventaires, setInventaires] = useState<Inventaire[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,11 +52,14 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
         inventaireService.getInventaires(),
         authService.getUser(),
       ]);
-      setInventaires(invData.filter(i => i.statut === 'EN_COURS'));
+      setInventaires(invData.filter(i => i.status === 'EN_COURS'));
       setUser(userData);
-    } catch (error) {
-      console.error('Erreur chargement:', error);
-      Alert.alert('Erreur', 'Impossible de charger les inventaires');
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } }).response?.status;
+      if (status !== 401) {
+        console.error('Erreur chargement:', error);
+        Alert.alert('Erreur', 'Impossible de charger les inventaires');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -138,20 +143,40 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
     setShowCreateModal(true);
   };
 
-  const renderItem = ({ item }: { item: Inventaire }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => onSelectInventaire(item)}
-    >
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{item.reference}</Text>
-        <Text style={styles.badgeText}>{item.lignes_count} lignes</Text>
-      </View>
-      <Text style={styles.cardDate}>
-        {new Date(item.date_debut).toLocaleDateString('fr-FR')}
-      </Text>
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }: { item: Inventaire }) => {
+    const lignesCount = item.lignes_count ?? item.lignes?.length ?? 0;
+    const ecart = item.lignes?.reduce((total, ligne) => total + Number(ligne.ecart ?? 0), 0) ?? 0;
+    const createdAt = new Date(item.created_at || item.date);
+    const title = item.reference || item.description?.trim() || `Inventaire #${item.id}`;
+
+    return (
+      <TouchableOpacity style={styles.card} onPress={() => onSelectInventaire(item)}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle} numberOfLines={1}>{title}</Text>
+          <View style={styles.statusPill}>
+            <Text style={styles.statusPillText}>EN COURS</Text>
+          </View>
+        </View>
+        {item.description?.trim() && item.description.trim() !== title && (
+          <Text style={styles.cardDescription} numberOfLines={1}>{item.description.trim()}</Text>
+        )}
+        <View style={styles.cardMetrics}>
+          <View>
+            <Text style={styles.metricLabel}>Créé le</Text>
+            <Text style={styles.metricValue}>
+              {createdAt.toLocaleDateString('fr-FR')} à {createdAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+          </View>
+          <View style={styles.metricRight}>
+            <Text style={styles.metricLabel}>{lignesCount} ligne{lignesCount > 1 ? 's' : ''}</Text>
+            <Text style={[styles.ecartValue, ecart === 0 ? styles.ecartNeutral : ecart > 0 ? styles.ecartPositive : styles.ecartNegative]}>
+              Écart {ecart > 0 ? '+' : ''}{ecart}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const filteredInventaires = inventaires.filter(i => {
     if (filter === 'MINE' && user) {
@@ -172,7 +197,7 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <View>
           <Text style={styles.greeting}>Bonjour,</Text>
           <Text style={styles.username}>{user?.username || 'Utilisateur'}</Text>
@@ -314,7 +339,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 48,
     paddingBottom: 20,
     backgroundColor: '#1a1a2e',
   },
@@ -357,18 +381,59 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   cardTitle: {
+    flex: 1,
     color: '#fff',
     fontSize: 17,
+    fontWeight: '700',
+    marginRight: 12,
+  },
+  statusPill: {
+    backgroundColor: 'rgba(59, 130, 246, 0.18)',
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  statusPillText: {
+    color: '#93c5fd',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  cardDescription: {
+    color: '#cbd5e1',
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  cardMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 10,
+  },
+  metricRight: {
+    alignItems: 'flex-end',
+  },
+  metricLabel: {
+    color: '#94a3b8',
+    fontSize: 11,
+    marginBottom: 3,
+  },
+  metricValue: {
+    color: '#e2e8f0',
+    fontSize: 13,
     fontWeight: '600',
   },
-  badgeText: {
-    color: '#818cf8',
-    fontSize: 13,
-    fontWeight: '500',
+  ecartValue: {
+    fontSize: 14,
+    fontWeight: '800',
   },
-  cardDate: {
-    color: '#666',
-    fontSize: 13,
+  ecartNeutral: {
+    color: '#94a3b8',
+  },
+  ecartPositive: {
+    color: '#22c55e',
+  },
+  ecartNegative: {
+    color: '#f87171',
   },
   empty: {
     flex: 1,

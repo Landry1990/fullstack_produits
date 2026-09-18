@@ -2,6 +2,61 @@
 
 ---
 
+## 2026-09-17 — 📱 PDA : alignement contrat API backend + Safe Area
+
+### Contexte
+
+Après le retour au commit `9a4049f1`, le PDA utilisait encore les anciens noms de
+champs API (`statut`, `date_debut`, `quantite_comptee`, `quantite_theorique`,
+`produit_name`) alors que le backend expose désormais `status`, `date`,
+`quantite_physique`, `stock_theorique`, `produit_nom`. Sans alignement, le filtrage
+des inventaires, l'affichage des lignes, l'édition et l'export étaient cassés.
+
+### Changements
+
+- `src/services/inventaire.ts` : interfaces `Inventaire` (`date`, `status:
+  'EN_COURS' | 'VALIDEE'`), `LigneInventaire` (`stock_theorique`,
+  `quantite_physique`, `produit_nom`, `stock_lot`, `lot_numero`,
+  `lot_expiration`), `CreateLigneInventaire` et payload `updateLigne` alignés.
+- `src/services/localStorage.ts` : `OfflineLigne` gagne `stockLotId`;
+  `saveLigneLocally` accepte l'ID de lot existant.
+- `src/hooks/useOfflineSync.ts` : payload bulk en `quantite_physique` +
+  `stock_lot`; stub `Inventaire` aligné; `saveOffline` accepte `stockLotId`.
+- `src/components/scanner/useScannerController.ts` : mapping lignes offline vers
+  `stock_theorique`/`quantite_physique`; passage de `lot.id` (stock_lot) lors de
+  la sauvegarde d'un lot existant.
+- `src/components/scanner/RecentScans.tsx`, `EditLineModal.tsx`,
+  `src/services/export.ts` : renommage `quantite_comptee` → `quantite_physique`,
+  `produit_name` → `produit_nom`.
+- `src/screens/HomeScreen.tsx` : filtre `status === 'EN_COURS'`, affichage
+  `item.date`, fallback `lignes?.length` pour le compteur.
+
+### Safe Area (déjà présent dans HEAD)
+
+`index.ts` (`SafeAreaProvider`), `Header.tsx` et `HomeScreen.tsx`
+(`useSafeAreaInsets`) corrigent le `paddingTop` fixe de 48px incompatible avec
+`edgeToEdgeEnabled` sur Android.
+
+### Vérifications
+
+- `grep` : plus aucune occurrence des anciens champs dans `pda-inventaire/src`.
+- `npx tsc --noEmit` dans `pda-inventaire` : propre (0 erreur).
+
+### Correctifs complémentaires (tests sur appareil)
+
+- `src/config/index.ts` + `.env.example` : `API_BASE_URL` pointe sur `http://<ip>`
+  (nginx port 80 qui proxifie `/api/`) au lieu de `:8000` — le port 8000 n'est pas
+  exposé par Docker.
+- `src/services/productCache.ts` : le catalogue produits dépassait ~2 Mo dans une
+  valeur AsyncStorage → erreur Android `Row too big to fit into CursorWindow` à la
+  connexion. Le catalogue est désormais stocké en fichier
+  (`documentDirectory/pda_products_cache.json`) via `expo-file-system/legacy`,
+  sans limite de taille ; la date du cache reste dans AsyncStorage et l'ancienne
+  clé est nettoyée automatiquement. Validé sur appareil : connexion et
+  téléchargement du catalogue OK.
+
+---
+
 ## 2026-09-17 — 🔄 Retour au commit 9a4049f1 + diagnostic régression perçue
 
 ### Contexte
