@@ -358,8 +358,7 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     return `
       <tr>
         <td>
-          <div class="product-name">${nom}</div>
-          ${lot ? `<div class="product-lot">LOT: ${lot}${exp ? `&nbsp;&nbsp;|&nbsp;&nbsp;EXP: ${exp}` : ''}</div>` : ''}
+          <div class="product-line"><span class="product-name">${nom}</span>${lot ? `<span class="product-lot">LOT: ${lot}${exp ? `&nbsp;|&nbsp;EXP: ${exp}` : ''}</span>` : ''}</div>
         </td>
         <td class="text-center">${cip}</td>
         <td class="text-center">${stockAvant > 0 ? stockAvant : 0}</td>
@@ -398,8 +397,9 @@ export function buildReceptionPrintHtml(commande: Commande, companyInfo: { name?
     table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 9pt; }
     th { background: ${tableHeaderBg}; color: ${primaryColor}; font-weight: 600; text-transform: uppercase; font-size: 8pt; padding: 8px 6px; border-top: ${tableBorder}; border-bottom: ${tableBorder}; text-align: left; }
     td { padding: 8px 6px; border-bottom: ${rowBorder}; vertical-align: top; }
+    .product-line { line-height: 1.25; }
     .product-name { font-weight: 500; color: ${primaryColor}; }
-    .product-lot { font-size: 8pt; color: ${lightColor}; margin-top: 2px; }
+    .product-lot { margin-left: 6px; font-size: 7pt; color: ${lightColor}; white-space: nowrap; }
     .tva { font-size: 7pt; color: ${lightColor}; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }

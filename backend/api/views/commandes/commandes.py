@@ -30,7 +30,7 @@ from ...serializers_optimized import (
 )
 from .bulk_actions_mixin import CommandeBulkActionsMixin
 from .cloture_mixin import CommandeClotureMixin
-from .pdf_generation import generate_reception_pdf, generate_labels_pdf
+from .pdf_generation import generate_labels_pdf
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -199,18 +199,6 @@ class CommandeViewSet(
             instance.save(update_fields=['is_active', 'deleted_by', 'deleted_at'])
             self._invalidate_cache()
 
-
-
-
-    @action(detail=True, methods=['get'])
-    def imprimer_reception(self, request, pk=None):
-        """Génère un PDF pour le bon de réception d'une commande."""
-        commande = self.get_object()
-
-        if commande.status != Commande.Status.CLOTUREE:
-            return Response({'detail': 'Le bon de réception ne peut être généré que pour une commande clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        return generate_reception_pdf(commande)
 
     @action(detail=True, methods=['get'])
     def imprimer_etiquettes(self, request, pk=None):
