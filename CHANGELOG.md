@@ -2,6 +2,231 @@
 
 ---
 
+## 2026-09-18 — 🧹 Suppression du bon de réception PDF backend obsolète
+
+### Nettoyage
+
+- Suppression de l'action API `imprimer_reception` du `CommandeViewSet` actif.
+- Suppression du générateur ReportLab `generate_reception_pdf` et de son code
+  d'en-tête/pied de page devenu inutilisé.
+- Nettoyage des imports ReportLab associés.
+- Conservation intégrale de `generate_labels_pdf` et de l'action
+  `imprimer_etiquettes`, toujours utilisées pour les étiquettes produits.
+- Le bon de réception reste généré exclusivement côté frontend par
+  `buildReceptionPrintHtml`.
+
+### Vérifications
+
+- `python manage.py check` dans Docker : propre.
+- Imports du `CommandeViewSet` et du générateur d'étiquettes : valides.
+- Aucune référence active restante à l'ancien générateur dans `backend/api/` hors
+  copies historiques imbriquées et non importées déjà signalées dans le projet.
+- `git diff --check` ciblé : propre.
+
+### Fichiers modifiés
+
+- `backend/api/views/commandes/commandes.py`
+- `backend/api/views/commandes/pdf_generation.py`
+
+---
+
+## 2026-09-18 — 📄 Bon de réception plus compact
+
+### Présentation
+
+- Lot et date d'expiration affichés à la suite de la désignation du produit sur la
+  même ligne lorsque l'espace disponible le permet.
+- Métadonnées de lot conservées dans un style secondaire compact et insécable.
+- Retour à la ligne naturel conservé pour les désignations longues afin d'éviter tout
+  chevauchement avec la colonne CIP.
+- Réduction de la hauteur courante des lignes pour augmenter le nombre d'articles par page.
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+- `npm run build` : réussi, avertissements de chunks préexistants uniquement.
+- `git diff --check` ciblé : propre.
+
+### Fichier modifié
+
+- `frontend/frontend/src/utils/print/printHelpers.ts`
+
+---
+
+## 2026-09-18 — 🔎 Messagerie paginée, recherchable et mise en cache
+
+### Backend
+
+- Ajout des boîtes serveur `received`, `sent`, `archived` et `all`, cette dernière
+  restant strictement réservée au staff.
+- Recherche composable sur le contenu, l'expéditeur et le destinataire.
+- Filtres serveur par présence de pièce jointe et par état non-lu dans les reçus.
+- Pagination DRF réelle avec total, pages et ordre antéchronologique.
+- Suppression de `archived_by` des réponses API et validation de la cohérence entre
+  le parent d'une réponse et son destinataire.
+
+### Frontend
+
+- Remplacement du chargement fixe de 500 messages par une pagination de 20 éléments.
+- Ajout d'une recherche debouncée, des filtres non-lus et pièces jointes et des
+  contrôles précédent/suivant.
+- Cache React Query séparé par boîte, page, recherche et filtres.
+- Cache longue durée distinct pour les modèles et les utilisateurs.
+- Invalidation automatique après lecture, archivage, envoi et gestion des modèles.
+- Totaux serveur pour les non-lus et la supervision.
+- États de chargement, rafraîchissement, erreur avec nouvelle tentative et liste vide.
+- Badge d'en-tête rendu plus lisible et animation permanente supprimée.
+
+### Contrôle et corrections
+
+- Contrôle indépendant du contrat backend/frontend et des clés de cache.
+- Suppression du maintien des données précédentes entre deux boîtes pour éviter
+  l'affichage transitoire d'un message de supervision dans une autre liste.
+- Réinitialisation du détail lors d'un changement de recherche ou de filtre.
+- Filtre non-lu limité à la boîte de réception.
+
+### Vérifications
+
+- Tests backend messagerie : **32 tests réussis** dans Docker avec création et
+  destruction normales de la base de test.
+- `npx tsc --noEmit` : propre.
+- `npm run build` : réussi, avertissements de chunks préexistants uniquement.
+- `git diff --check` : propre hors avertissements LF/CRLF.
+
+### Déploiement
+
+- Versions des phases 1 à 3 déployées localement via `deploy.ps1 -Target all`.
+- Frontend nginx et backend confirmés actifs ; `http://localhost/` répond 200.
+
+### Fichiers principaux
+
+- `backend/api/serializers/communication.py`
+- `backend/api/views/communication.py`
+- `backend/api/tests/test_internal_messaging_security.py`
+- `frontend/frontend/src/services/communicationService.ts`
+- `frontend/frontend/src/components/common/UserHeader.tsx`
+- `frontend/frontend/src/components/common/messaging/`
+- `frontend/frontend/public/locales/fr/messaging.json`
+- `frontend/frontend/public/locales/en/messaging.json`
+- `AUDIT_MESSAGERIE.md`
+
+---
+
+## 2026-09-18 — 💬 Refonte sécurisée de la messagerie interne
+
+### Backend et pièces jointes
+
+- Validation réelle des JPEG, PNG et WebP avec Pillow et contrôle structurel des PDF.
+- Champ d'upload rendu accessible uniquement en écriture afin de ne jamais exposer
+  directement le chemin `/media/` dans une réponse API.
+- Nouvel endpoint authentifié `internal-messages/<id>/attachment/`, limité aux
+  participants du message, aux destinataires des diffusions et au staff.
+- Téléchargement en streaming avec type MIME et nom de fichier contrôlés.
+
+### Refonte frontend
+
+- `MessagingModal.tsx` réduit à un point d'entrée léger ; logique répartie dans le
+  nouveau module `components/common/messaging/`.
+- Nouvelle interface maître-détail responsive : navigation, liste compacte, détail,
+  composition, réponses, modèles et supervision.
+- Utilisation des composants shadcn existants (`Button`, `Select`, `Textarea`,
+  `Badge`, `Skeleton`, `EmptyState`, `Dialog`).
+- Filtrage des messages par identifiants utilisateur plutôt que par noms.
+- Contrat TypeScript nettoyé et réponses paginées typées.
+- Prévention des doubles envois, états de chargement et actions toujours accessibles.
+- Réponses aux diffusions envoyées en privé à leur expéditeur.
+- Pièces jointes téléchargées par Axios avec le jeton d'authentification, puis
+  affichées comme image ou ouvertes comme document PDF.
+- Traductions françaises et anglaises complétées avec parité vérifiée.
+
+### Contrôle indépendant
+
+- Premier contrôle : détection et correction de deux fuites/ruptures critiques liées
+  aux médias, de la réponse aux diffusions et de l'affichage des PDF.
+- Second contrôle ciblé : **PASS**, aucun blocage critique ou élevé restant.
+
+### Vérifications
+
+- Tests backend de sécurité messagerie : **19 tests réussis**.
+- `npx tsc --noEmit` : propre.
+- `npm run build` : réussi ; avertissements de chunks préexistants uniquement.
+- `git diff --check` : propre hors avertissements LF/CRLF.
+
+### Fichiers principaux
+
+- `backend/api/serializers/communication.py`
+- `backend/api/views/communication.py`
+- `backend/api/tests/test_internal_messaging_security.py`
+- `frontend/frontend/src/services/communicationService.ts`
+- `frontend/frontend/src/components/common/MessagingModal.tsx`
+- `frontend/frontend/src/components/common/messaging/`
+- `frontend/frontend/public/locales/fr/messaging.json`
+- `frontend/frontend/public/locales/en/messaging.json`
+- `AUDIT_MESSAGERIE.md`
+
+---
+
+## 2026-09-18 — 🔒 Sécurisation initiale de la messagerie interne
+
+### Sécurité
+
+- Modification et suppression physique des messages existants réservées au staff ; les
+  utilisateurs conservent l'archivage individuel sans pouvoir altérer ou effacer un message.
+- Diffusions générales réservées au staff.
+- Réponses refusées lorsque le message parent n'est pas accessible à l'utilisateur.
+- Marquage comme lu de son propre message interdit.
+- Modèles globaux lisibles par les utilisateurs authentifiés mais modifiables uniquement
+  par le staff ; actions d'administration masquées côté frontend pour les autres comptes.
+- Pièces jointes limitées à 10 Mo et aux formats PDF, JPEG, PNG et WebP, avec contrôle
+  de cohérence entre extension et type MIME déclaré.
+
+### Compatibilité frontend
+
+- Sélection d'un destinataire obligatoire pour les comptes non administrateurs.
+- Option de diffusion générale conservée uniquement pour le staff.
+- Formats et limite des pièces jointes indiqués dans le sélecteur de fichiers.
+- Nouvelles chaînes ajoutées en français et en anglais.
+
+### Tests et vérifications
+
+- Nouvelle suite `test_internal_messaging_security.py` : **14 tests réussis**.
+- `npx tsc --noEmit` : propre.
+- `npm run build` : réussi, avec uniquement les avertissements de chunks préexistants.
+
+### Fichiers modifiés
+
+- `backend/api/serializers/communication.py`
+- `backend/api/views/communication.py`
+- `backend/api/tests/test_internal_messaging_security.py`
+- `frontend/frontend/src/components/common/MessagingModal.tsx`
+- `frontend/frontend/public/locales/fr/messaging.json`
+- `frontend/frontend/public/locales/en/messaging.json`
+- `AUDIT_MESSAGERIE.md`
+
+---
+
+## 2026-09-18 — 📋 Audit et plan de suivi de la messagerie interne
+
+### Documentation
+
+Création d'un document de suivi complet pour la sécurisation, la fiabilité et la
+refonte UI/UX de la messagerie interne, sans modification du comportement actuel.
+
+### Contenu
+
+- Cartographie de l'architecture backend et frontend existante.
+- Risques prioritaires : permissions objet, validation des réponses, modèles et pièces jointes.
+- Recommandations de performance : pagination, cache et temps réel Channels.
+- Proposition d'une interface shadcn/ui alignée avec le design Zenith.
+- Checklists d'accessibilité, d'internationalisation, de tests et de décisions métier.
+- Plan d'implémentation progressif en cinq phases avec niveaux de risque.
+
+### Fichier ajouté
+
+- `AUDIT_MESSAGERIE.md`
+
+---
+
 ## 2026-09-18 — 📦 PDA : comptage multi-lots éditable après scan
 
 ### Fonctionnalité

@@ -1,85 +1,89 @@
-# Spécification — PDA multi-pharmacies
+# Spécification — PDA itinérant, une pharmacie à la fois
 
 ## 1. Objectif
 
-Permettre d’utiliser un même APK PDA dans plusieurs pharmacies sans reconstruire
-l’application et sans modifier manuellement un fichier `.env`.
+Permettre d’utiliser un même APK PDA successivement dans plusieurs pharmacies,
+sans reconstruire l’application et sans modifier un fichier `.env`.
 
-L’opérateur choisit ou renseigne le serveur de la pharmacie avant de se connecter.
-Le PDA charge ensuite les utilisateurs, inventaires, produits et lots depuis ce serveur.
+Le fonctionnement est volontairement séquentiel : le PDA ne conserve les données que
+d’une seule pharmacie active. Avant de passer à une autre pharmacie, l’opérateur doit
+synchroniser l’inventaire puis réinitialiser les données locales.
 
-La priorité absolue est d’empêcher tout mélange de données entre deux pharmacies.
+## 2. Principe retenu
 
-## 2. Périmètre
+```text
+Pharmacie A
+  → renseigner le serveur
+  → se connecter
+  → télécharger le catalogue
+  → réaliser et synchroniser l’inventaire
+  → réinitialiser le PDA
+
+Pharmacie B
+  → renseigner le nouveau serveur
+  → se connecter
+  → télécharger le nouveau catalogue
+  → réaliser et synchroniser l’inventaire
+```
+
+Le PDA ne doit jamais conserver simultanément plusieurs tokens, catalogues ou files de
+synchronisation provenant de pharmacies différentes.
+
+## 3. Périmètre
 
 La fonctionnalité comprend :
 
-- la saisie et la mémorisation de l’adresse du serveur ;
-- le test de disponibilité du serveur ;
-- la récupération des utilisateurs actifs ;
-- l’authentification sur le serveur sélectionné ;
-- le changement de pharmacie ;
-- le cloisonnement des tokens, catalogues et lignes hors ligne ;
-- la reprise d’un inventaire sur le serveur auquel il appartient ;
-- la gestion claire des erreurs réseau et d’authentification.
+- la saisie de l’adresse IP ou de l’URL du serveur actif ;
+- la normalisation et le test de cette adresse ;
+- la récupération des utilisateurs actifs du serveur ;
+- l’authentification ;
+- le téléchargement du catalogue produits ;
+- le travail en ligne ou hors ligne pour la pharmacie active ;
+- la synchronisation obligatoire avant changement de pharmacie ;
+- une fonction « Réinitialiser le PDA » ;
+- la suppression contrôlée des données locales ;
+- le retour à l’écran de saisie du serveur après réinitialisation.
 
 La fonctionnalité ne comprend pas :
 
-- la découverte automatique des serveurs sur le réseau local ;
-- la synchronisation d’un inventaire entre deux pharmacies ;
-- la fusion de catalogues provenant de serveurs différents ;
-- l’administration des pharmacies depuis le PDA.
+- la conservation simultanée de plusieurs pharmacies ;
+- une liste de profils de pharmacies avec plusieurs caches ;
+- la découverte automatique des serveurs du réseau ;
+- la synchronisation entre deux pharmacies ;
+- la fusion de catalogues ou d’inventaires.
 
-## 3. Parcours utilisateur
-
-### 3.1 Premier démarrage
+## 4. Premier démarrage
 
 1. Afficher l’écran « Serveur de la pharmacie ».
-2. L’utilisateur renseigne une adresse IP ou une URL.
+2. L’utilisateur saisit une IP ou une URL.
 3. Le PDA normalise l’adresse.
 4. L’utilisateur appuie sur « Tester et continuer ».
 5. Le PDA appelle `GET /api/health/`.
-6. Si le serveur répond, il est mémorisé et devient le serveur actif.
+6. Si le serveur répond, l’adresse devient le serveur actif.
 7. Le PDA charge les utilisateurs avec `GET /api/users/login_options/`.
-8. L’utilisateur choisit son compte, saisit son mot de passe et se connecte.
+8. L’utilisateur choisit son compte et saisit son mot de passe.
+9. Après connexion, l’accueil affiche les inventaires de ce serveur.
+10. L’utilisateur télécharge le catalogue de cette pharmacie.
 
-### 3.2 Démarrages suivants
+## 5. Démarrage normal
 
-1. Restaurer le dernier serveur utilisé.
-2. Tester sa disponibilité.
-3. Vérifier le token correspondant à ce serveur avec `GET /api/users/me/`.
-4. Si le token est valide, ouvrir l’accueil.
-5. Sinon, afficher la connexion du serveur actif.
+Tant que le PDA n’a pas été réinitialisé :
 
-### 3.3 Changement de pharmacie
+1. restaurer l’adresse du serveur actif ;
+2. valider le token via `GET /api/users/me/` ;
+3. ouvrir l’accueil si le token est valide ;
+4. revenir à la connexion si le token est invalide ;
+5. conserver le catalogue et les lignes hors ligne de la pharmacie active.
 
-Un bouton « Changer de serveur » doit être disponible :
+## 6. Écran serveur
 
-- sur l’écran de connexion ;
-- depuis l’accueil, après confirmation si des lignes ne sont pas synchronisées.
+### Champs
 
-Lors du changement :
-
-1. vérifier les lignes hors ligne du serveur actuel ;
-2. empêcher le changement silencieux si des données restent à synchroniser ;
-3. proposer de rester, de synchroniser ou de changer en conservant les données localement ;
-4. sélectionner ou ajouter un autre serveur ;
-5. charger uniquement les données de ce serveur.
-
-## 4. Interface
-
-### 4.1 Écran de sélection du serveur
-
-Champs et actions :
-
-- nom facultatif de la pharmacie ;
 - adresse IP ou URL ;
-- bouton « Tester et continuer » ;
-- liste des serveurs récemment utilisés ;
-- action de modification d’un serveur ;
-- action de suppression avec confirmation.
+- nom facultatif de la pharmacie, uniquement pour l’affichage ;
+- bouton « Tester et continuer ».
 
-Exemples acceptés :
+### Exemples acceptés
 
 ```text
 192.168.1.181
@@ -87,222 +91,248 @@ http://192.168.1.181
 https://pharmacie.exemple.com
 ```
 
-Normalisation :
+### Normalisation
 
 - ajouter `http://` si aucun protocole n’est fourni ;
 - retirer les `/` finaux ;
-- ne pas ajouter `:8000` par défaut ;
-- utiliser nginx sur les ports standards 80/443 ;
-- accepter un port explicite uniquement s’il est saisi par l’utilisateur.
-
-### 4.2 Connexion
-
-Afficher :
-
-- le nom du serveur actif ;
-- son adresse ;
-- la liste des utilisateurs actifs ;
-- le mot de passe ;
-- « Se connecter » ;
-- « Changer de serveur ».
-
-L’endpoint public utilisé pour les utilisateurs est :
-
-```text
-GET /api/users/login_options/
-```
-
-### 4.3 Accueil
-
-Afficher le serveur ou la pharmacie active dans le header afin que l’opérateur sache
-toujours où les données seront envoyées.
-
-## 5. Modèle local
-
-### 5.1 Serveur enregistré
-
-```ts
-interface PharmacyServer {
-  id: string;
-  name: string;
-  baseUrl: string;
-  normalizedOrigin: string;
-  lastUsedAt: string;
-}
-```
-
-`id` doit être dérivé de l’origine normalisée ou être un UUID stable.
-
-### 5.2 Clés globales
-
-```text
-pda_servers
-pda_active_server_id
-```
-
-### 5.3 Clés cloisonnées
-
-Toutes les données propres à une pharmacie doivent intégrer `serverId` :
-
-```text
-pda:<serverId>:auth_token
-pda:<serverId>:user_info
-pda:<serverId>:products_cache_date
-pda:<serverId>:offline_inventory_lines
-```
-
-Le fichier catalogue doit également être séparé :
-
-```text
-pda_products_<serverId>.json
-```
-
-## 6. Configuration dynamique Axios
-
-L’instance Axios ne doit plus dépendre uniquement d’une constante évaluée au démarrage.
-
-Le gestionnaire de serveurs doit fournir :
-
-```ts
-getActiveServer(): Promise<PharmacyServer | null>
-setActiveServer(serverId: string): Promise<void>
-normalizeServerUrl(input: string): string
-testServer(baseUrl: string): Promise<ServerTestResult>
-```
-
-Avant chaque requête :
-
-1. résoudre le serveur actif ;
-2. appliquer son `baseUrl` à Axios ;
-3. lire le token associé à son `serverId` ;
-4. ajouter `Authorization: Token <token>`.
-
-Une requête ne doit jamais réutiliser le token d’un autre serveur.
+- ne pas ajouter `:8000` automatiquement ;
+- utiliser nginx sur le port 80 ou 443 ;
+- conserver un port uniquement s’il est explicitement saisi ;
+- n’accepter que les protocoles `http` et `https`.
 
 ## 7. Test du serveur
 
-Le test appelle :
+Requête :
 
 ```text
 GET <baseUrl>/api/health/
 ```
 
-Résultat attendu : HTTP 200.
+Résultat attendu : HTTP 200 dans un délai maximal d’environ 5 secondes.
 
-Erreurs utilisateur :
+Messages :
 
-- délai dépassé : « Serveur inaccessible. Vérifiez le réseau et l’adresse. » ;
-- DNS/IP invalide : « Adresse du serveur invalide. » ;
-- réponse non compatible : « Ce serveur n’est pas un serveur Zenith compatible. » ;
-- HTTPS invalide : message spécifique au certificat.
+- adresse incorrecte : « Adresse du serveur invalide. » ;
+- serveur inaccessible : « Vérifiez l’adresse et le réseau Wi-Fi. » ;
+- délai dépassé : « Le serveur ne répond pas. » ;
+- serveur non compatible : « Ce serveur n’est pas un serveur Zenith compatible. ».
 
-Le test doit avoir un délai court, par exemple 5 secondes.
+Une adresse ne doit pas être activée silencieusement si le test échoue.
 
-## 8. Authentification
+## 8. Connexion
 
-Chaque serveur possède son propre token et son propre utilisateur local.
+L’écran affiche :
 
-Le PDA doit :
+- le nom facultatif de la pharmacie ;
+- l’adresse du serveur actif ;
+- les utilisateurs actifs ;
+- le mot de passe ;
+- « Se connecter » ;
+- « Modifier le serveur » uniquement si aucune donnée locale n’est en attente.
 
-- valider le token au démarrage avec `/api/users/me/` ;
-- supprimer uniquement le token du serveur actif en cas de 401 ;
-- revenir à la connexion sans écran rouge Expo ;
-- ne pas effacer les tokens des autres pharmacies ;
-- ne jamais stocker le mot de passe.
+Endpoint des utilisateurs :
 
-### Contrainte actuelle
+```text
+GET /api/users/login_options/
+```
 
-Le backend révoque le token précédent à chaque nouvelle connexion d’un même utilisateur.
-Un compte utilisé simultanément sur le Web et le PDA peut donc provoquer des 401.
+Le mot de passe ne doit jamais être conservé localement.
 
-Recommandation : créer un compte terminal dédié par pharmacie, par exemple :
+### Contrainte d’authentification actuelle
+
+Le backend révoque l’ancien token lorsqu’un même utilisateur se reconnecte. Utiliser
+simultanément `admin` sur le Web et le PDA peut donc provoquer un `401` sur le PDA.
+
+Recommandation : créer un compte terminal dédié dans chaque pharmacie :
 
 ```text
 pda-inventaire
 ```
 
-Une évolution séparée vers des tokens multi-appareils pourra être étudiée ultérieurement.
+## 9. Configuration dynamique de l’API
 
-## 9. Catalogue produits
+L’instance Axios doit utiliser l’adresse enregistrée à l’exécution et non uniquement
+`EXPO_PUBLIC_API_BASE_URL`.
 
-Le catalogue téléchargé appartient exclusivement au serveur actif.
+Service prévu :
 
-Au changement de serveur :
+```ts
+interface ActiveServer {
+  name?: string;
+  baseUrl: string;
+}
 
-- ne jamais lire le fichier catalogue d’un autre serveur ;
-- afficher le nombre de produits du serveur actif uniquement ;
-- autoriser un téléchargement indépendant pour chaque pharmacie ;
-- conserver les autres catalogues pour un retour ultérieur ;
-- prévoir une action de nettoyage par serveur.
+normalizeServerUrl(input: string): string
+getActiveServer(): Promise<ActiveServer | null>
+setActiveServer(server: ActiveServer): Promise<void>
+testServer(baseUrl: string): Promise<boolean>
+clearActiveServer(): Promise<void>
+```
 
-## 10. Inventaires et mode hors ligne
+Avant chaque requête :
 
-Chaque ligne locale doit conserver :
+1. récupérer le serveur actif ;
+2. appliquer son `baseUrl` à Axios ;
+3. lire le token courant ;
+4. ajouter `Authorization: Token <token>` si disponible.
 
-- `serverId` ;
-- `inventaireId` ;
+## 10. Données locales de la pharmacie active
+
+Une seule copie de chaque donnée est conservée :
+
+```text
+pda_active_server
+pda_auth_token
+pda_user_info
+pda_products_cache_date
+pda_products_cache.json
+pda_offline_lignes
+```
+
+Ces données appartiennent toutes au serveur actif. Elles doivent être supprimées lors
+de la réinitialisation, uniquement après contrôle des synchronisations en attente.
+
+## 11. Fin d’inventaire
+
+Avant de quitter une pharmacie :
+
+1. sauvegarder le produit actuellement affiché ;
+2. envoyer les lignes locales via le bulk ;
+3. vérifier la réponse du serveur ;
+4. confirmer que le compteur de lignes en attente vaut zéro ;
+5. revenir à l’accueil ;
+6. utiliser « Réinitialiser le PDA ».
+
+La validation définitive de l’inventaire et l’ajustement du stock peuvent rester sous le
+contrôle de l’application Web.
+
+## 12. Réinitialiser le PDA
+
+### Emplacement
+
+Ajouter une action « Réinitialiser le PDA » sur l’accueil, visuellement distincte de la
+déconnexion simple.
+
+### Protection obligatoire
+
+Avant toute suppression :
+
+```text
+if (offlineCount > 0) {
+  bloquer la réinitialisation
+}
+```
+
+Message :
+
+```text
+Réinitialisation impossible
+2 lignes restent à envoyer au serveur.
+Synchronisez l’inventaire avant de changer de pharmacie.
+```
+
+### Confirmation
+
+Si aucune ligne n’est en attente :
+
+```text
+Réinitialiser le PDA ?
+
+Le catalogue, la session et les données locales de cette pharmacie seront supprimés.
+Les données déjà envoyées au serveur resteront disponibles.
+
+[Annuler] [Réinitialiser]
+```
+
+### Données supprimées
+
+- token d’authentification ;
+- utilisateur local ;
+- adresse et nom du serveur ;
+- fichier catalogue produits ;
+- date et compteur du catalogue ;
+- lignes locales déjà synchronisées ;
+- état temporaire du scanner ;
+- éventuels caches applicatifs liés à la pharmacie.
+
+### Résultat
+
+Après suppression :
+
+1. remettre l’état React à zéro ;
+2. afficher l’écran « Serveur de la pharmacie » ;
+3. ne lancer aucune requête vers l’ancien serveur ;
+4. demander la nouvelle adresse.
+
+## 13. Données hors ligne
+
+Chaque ligne locale conserve au minimum :
+
+- inventaire ;
 - produit ;
 - lot ;
 - stock théorique ;
 - quantité physique ;
-- mode de synchronisation ;
-- date de scan.
+- mode `add` ou `replace` ;
+- date du scan ;
+- état de synchronisation.
 
-Avant toute synchronisation :
+La réinitialisation est interdite tant qu’une ligne non synchronisée existe. Il n’est donc
+pas nécessaire de gérer plusieurs files locales séparées par pharmacie.
 
-1. vérifier que le serveur actif correspond au `serverId` de la ligne ;
-2. refuser l’envoi en cas de différence ;
-3. ne jamais supposer que deux inventaires ayant le même ID appartiennent à la même pharmacie.
+## 14. Catalogue produits
 
-## 11. Migration des données existantes
+- Un seul catalogue est conservé.
+- Il correspond toujours au serveur actif.
+- Le téléchargement d’un nouveau catalogue n’est possible qu’après activation d’un serveur.
+- La réinitialisation supprime le fichier catalogue.
+- La pharmacie suivante doit télécharger son propre catalogue.
+- Aucun produit de la pharmacie précédente ne doit rester disponible après réinitialisation.
 
-À la première version multi-pharmacies :
+## 15. Gestion des erreurs
 
-1. lire l’ancienne URL issue de `EXPO_PUBLIC_API_BASE_URL` ;
-2. créer automatiquement un serveur « Serveur existant » ;
-3. affecter l’ancien token, utilisateur, catalogue et lignes hors ligne à ce serveur ;
-4. marquer la migration comme terminée ;
-5. ne pas supprimer les anciennes clés avant validation de la migration.
+### Serveur momentanément indisponible
 
-La migration doit être idempotente.
-
-## 12. Sécurité
-
-- N’accepter que `http` et `https`.
-- Refuser les schémas comme `file:`, `javascript:` ou autres.
-- Ne jamais afficher ou journaliser les tokens.
-- Ne jamais inclure les mots de passe dans les logs.
-- Préférer HTTPS hors réseau local sécurisé.
-- Afficher clairement le serveur actif avant une synchronisation bulk.
-- Demander confirmation avant la suppression d’un serveur contenant des données hors ligne.
-
-## 13. Gestion des erreurs
-
-### Serveur indisponible
-
-- conserver les scans localement ;
+- conserver les scans ;
 - afficher « Hors ligne » ;
-- ne pas supprimer la configuration ;
-- proposer « Réessayer ».
+- proposer de réessayer ;
+- ne pas proposer la réinitialisation si des lignes restent en attente.
 
 ### Token invalide
 
-- supprimer le token du serveur concerné uniquement ;
-- conserver le catalogue et les lignes hors ligne ;
-- revenir à la connexion de ce serveur.
+- supprimer le token et l’utilisateur ;
+- conserver le serveur, le catalogue et les scans ;
+- revenir à la connexion du même serveur ;
+- ne pas afficher d’écran rouge Expo pour un `401` attendu.
 
-### Changement d’adresse
+### Réinitialisation incomplète
 
-Si l’adresse d’un serveur enregistré est modifiée, la traiter comme un nouveau serveur,
-sauf confirmation explicite que les deux adresses représentent la même pharmacie.
+Si une suppression locale échoue :
 
-## 14. Fichiers prévus
+- ne pas afficher l’écran du nouveau serveur comme si tout était propre ;
+- signaler l’erreur ;
+- permettre de réessayer ;
+- journaliser uniquement les informations techniques non sensibles.
+
+## 16. Sécurité
+
+- Ne jamais stocker le mot de passe.
+- Ne jamais afficher ou journaliser le token.
+- Refuser les protocoles autres que `http` et `https`.
+- Préférer HTTPS hors réseau local sécurisé.
+- Toujours afficher la pharmacie ou le serveur actif.
+- Demander confirmation avant la réinitialisation.
+- Ne jamais autoriser la suppression de scans non synchronisés.
+- Après réinitialisation, vérifier que le catalogue précédent est réellement absent.
+
+## 17. Fichiers prévus
 
 Création probable :
 
 ```text
 src/services/serverConfig.ts
 src/screens/ServerSelectionScreen.tsx
+src/services/appReset.ts
 ```
 
 Adaptations probables :
@@ -318,56 +348,59 @@ src/screens/LoginScreen.tsx
 src/screens/HomeScreen.tsx
 ```
 
-## 15. Plan d’implémentation
+## 18. Plan d’implémentation
 
 ### Étape 1 — Serveur dynamique
 
-- modèle `PharmacyServer` ;
-- normalisation URL ;
-- persistance des serveurs ;
-- serveur actif ;
-- test `/api/health/`.
+- créer le stockage du serveur actif ;
+- normaliser les URL ;
+- tester `/api/health/` ;
+- rendre `baseURL` Axios dynamique.
 
-### Étape 2 — Connexion
+### Étape 2 — Connexion au serveur actif
 
-- écran serveur ;
-- baseURL Axios dynamique ;
-- récupération de `login_options` ;
-- token cloisonné.
+- créer l’écran de saisie du serveur ;
+- charger `login_options` ;
+- afficher l’utilisateur et le mot de passe ;
+- valider le token au démarrage.
 
-### Étape 3 — Données locales
+### Étape 3 — Réinitialisation sûre
 
-- catalogue par serveur ;
-- lignes hors ligne par serveur ;
-- migration des données existantes.
+- calculer le nombre de lignes non synchronisées ;
+- bloquer si ce nombre est supérieur à zéro ;
+- demander une double confirmation claire ;
+- supprimer session, catalogue, serveur et stockage local ;
+- revenir à l’écran serveur.
 
-### Étape 4 — Sécurité UX
+### Étape 4 — Migration de l’installation actuelle
 
-- changement de serveur ;
-- avertissement si scans en attente ;
-- affichage permanent de la pharmacie active ;
-- gestion des erreurs.
+- utiliser provisoirement `EXPO_PUBLIC_API_BASE_URL` comme serveur initial ;
+- mémoriser cette adresse au premier démarrage ;
+- conserver le token, le catalogue et les lignes actuelles ;
+- ne demander une nouvelle adresse qu’après réinitialisation.
 
 ### Étape 5 — Vérification
 
-- tests unitaires de normalisation ;
-- tests de changement de serveur ;
-- test de séparation des tokens ;
-- test de séparation des catalogues ;
-- test de séparation des lignes hors ligne ;
-- test de migration ;
-- test réel avec deux serveurs.
+- tests de normalisation d’adresse ;
+- test d’un serveur inaccessible ;
+- test de chargement des utilisateurs ;
+- test de blocage avec lignes en attente ;
+- test de réinitialisation sans ligne en attente ;
+- vérification de suppression du catalogue et du token ;
+- test réel complet Pharmacie A → réinitialisation → Pharmacie B.
 
-## 16. Critères d’acceptation
+## 19. Critères d’acceptation
 
-- Une seule APK fonctionne avec plusieurs pharmacies.
+- Une seule APK fonctionne successivement dans plusieurs pharmacies.
+- Une seule pharmacie est active à la fois.
 - L’adresse peut être saisie sans protocole.
-- Un serveur inaccessible ne peut pas être activé silencieusement.
-- Les utilisateurs proviennent du serveur sélectionné.
-- Les identifiants sont envoyés uniquement au serveur actif.
-- Les produits d’une pharmacie n’apparaissent jamais dans une autre.
-- Les lignes hors ligne ne peuvent pas être envoyées au mauvais serveur.
-- Le changement de serveur ne supprime pas les données des autres pharmacies.
-- Un token 401 ramène proprement à la connexion.
-- Le serveur actif est clairement visible.
-- La migration des installations existantes ne perd aucune donnée.
+- Le serveur est testé avant activation.
+- Les utilisateurs proviennent du serveur actif.
+- Le PDA ne stocke jamais le mot de passe.
+- La réinitialisation est impossible avec des lignes non synchronisées.
+- Une confirmation est obligatoire avant suppression.
+- Le catalogue et la session sont supprimés après confirmation.
+- Les données déjà synchronisées restent disponibles sur le serveur.
+- Après réinitialisation, aucune donnée de la pharmacie précédente n’est visible.
+- Le PDA revient automatiquement à la saisie du nouveau serveur.
+- La pharmacie suivante peut charger ses utilisateurs et son catalogue.

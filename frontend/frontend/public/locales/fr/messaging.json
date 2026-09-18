@@ -1,6 +1,8 @@
 {
   "title": "Messagerie Interne",
   "subtitle": "Communiquez avec vos collègues",
+  "nav_label": "Navigation de la messagerie",
+  "zoom_image": "Image agrandie",
   "tabs": {
     "received": "Reçus",
     "sent": "Envoyés",
@@ -12,7 +14,28 @@
   "received": {
     "title": "Messages reçus",
     "empty": "Aucun message reçu",
-    "broadcast": "TOUS"
+    "broadcast": "TOUS",
+    "broadcast_label": "Tous les utilisateurs"
+  },
+  "detail": {
+    "title": "Détail du message",
+    "select_message": "Sélectionnez un message pour l'afficher",
+    "back": "Retour à la liste",
+    "from": "De :",
+    "to": "À :",
+    "view_attachment": "Voir l’image jointe",
+    "open_document": "Ouvrir le document joint",
+    "loading_attachment": "Chargement de la pièce jointe…",
+    "attachment_error": "Impossible de charger la pièce jointe",
+    "attachment_alt": "Pièce jointe"
+  },
+  "list": {
+    "unread_count": "{{count}} non lu(s)"
+  },
+  "supervision": {
+    "title": "Supervision – Tous les messages",
+    "message_count": "{{count}} message(s) supervisé(s)",
+    "total": "{{count}} message(s) au total"
   },
   "sent": {
     "title": "Messages envoyés",
@@ -24,11 +47,14 @@
     "manage": "Gérer",
     "add": "Nouveau modèle",
     "edit": "Modifier le modèle",
+    "delete": "Supprimer le modèle",
     "delete_confirm": "Supprimer ce modèle ?",
     "success_deleted": "Modèle supprimé",
     "success_saved": "Modèle enregistré",
     "placeholder_title": "Titre du modèle",
-    "placeholder_content": "Contenu du modèle..."
+    "placeholder_content": "Contenu du modèle...",
+    "use": "Utiliser",
+    "empty": "Aucun modèle de message"
   },
   "messages": {
     "archived": "Message archivé",
@@ -39,6 +65,13 @@
     "archive": "Archiver"
   },
   "reply_to": "En réponse à {{name}} :",
+  "search_placeholder": "Rechercher…",
+  "filter_attachment": "Pièce jointe",
+  "filter_unread": "Non lus",
+  "load_error": "Impossible de charger les messages",
+  "retry": "Réessayer",
+  "refreshing": "Actualisation…",
+  "messages_label": "messages",
   "new_badge": "NOUVEAU",
   "read_by_none": "Personne n'a encore lu",
   "read_by_count": "Lu par {{count}} personne(s)",
@@ -51,9 +84,16 @@
     "title": "Nouveau message",
     "recipient": "Destinataire",
     "all": "Tous les utilisateurs",
+    "select_recipient": "Sélectionnez un destinataire",
+    "attachment_help": "Joindre un PDF ou une image (10 Mo maximum)",
     "content": "Message",
     "placeholder": "Écrivez votre message ici...",
     "send": "Envoyer",
+    "sending": "Envoi...",
+    "replying_to": "Réponse à {{name}}",
+    "cancel_reply": "Annuler la réponse",
+    "remove_attachment": "Retirer la pièce jointe",
+    "attachment_too_large": "La pièce jointe ne doit pas dépasser 10 Mo",
     "success_sent": "Message envoyé !",
     "error_sent": "Échec de l'envoi",
     "new_notification": "Vous avez reçu un nouveau message interne !",

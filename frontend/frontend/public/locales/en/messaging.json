@@ -1,6 +1,8 @@
 {
   "title": "Internal Messaging",
   "subtitle": "Communicate with your colleagues",
+  "nav_label": "Messaging navigation",
+  "zoom_image": "Enlarged image",
   "tabs": {
     "received": "Inbox",
     "sent": "Sent",
@@ -12,7 +14,28 @@
   "received": {
     "title": "Received messages",
     "empty": "No messages received",
-    "broadcast": "ALL"
+    "broadcast": "ALL",
+    "broadcast_label": "All users"
+  },
+  "detail": {
+    "title": "Message details",
+    "select_message": "Select a message to display",
+    "back": "Back to list",
+    "from": "From:",
+    "to": "To:",
+    "view_attachment": "View attached image",
+    "open_document": "Open attached document",
+    "loading_attachment": "Loading attachment…",
+    "attachment_error": "Unable to load attachment",
+    "attachment_alt": "Attachment"
+  },
+  "list": {
+    "unread_count": "{{count}} unread"
+  },
+  "supervision": {
+    "title": "Supervision – All messages",
+    "message_count": "{{count}} supervised message(s)",
+    "total": "{{count}} message(s) total"
   },
   "sent": {
     "title": "Sent messages",
@@ -24,11 +47,14 @@
     "manage": "Manage",
     "add": "New template",
     "edit": "Edit template",
+    "delete": "Delete template",
     "delete_confirm": "Delete this template?",
     "success_deleted": "Template deleted",
     "success_saved": "Template saved",
     "placeholder_title": "Template title",
-    "placeholder_content": "Template content..."
+    "placeholder_content": "Template content...",
+    "use": "Use",
+    "empty": "No message templates"
   },
   "messages": {
     "archived": "Message archived",
@@ -39,6 +65,13 @@
     "archive": "Archive"
   },
   "reply_to": "In reply to {{name}}:",
+  "search_placeholder": "Search…",
+  "filter_attachment": "Attachment",
+  "filter_unread": "Unread",
+  "load_error": "Unable to load messages",
+  "retry": "Retry",
+  "refreshing": "Refreshing…",
+  "messages_label": "messages",
   "new_badge": "NEW",
   "read_by_none": "Nobody has read it yet",
   "read_by_count": "Read by {{count}} person(s)",
@@ -51,9 +84,16 @@
     "title": "New message",
     "recipient": "Recipient",
     "all": "All users",
+    "select_recipient": "Select a recipient",
+    "attachment_help": "Attach a PDF or image (10 MB maximum)",
     "content": "Message",
     "placeholder": "Write your message here...",
     "send": "Send",
+    "sending": "Sending...",
+    "replying_to": "Reply to {{name}}",
+    "cancel_reply": "Cancel reply",
+    "remove_attachment": "Remove attachment",
+    "attachment_too_large": "Attachment must not exceed 10 MB",
     "success_sent": "Message sent!",
     "error_sent": "Send failed",
     "new_notification": "You have a new internal message!",
