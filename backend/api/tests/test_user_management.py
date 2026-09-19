@@ -182,6 +182,27 @@ class UserManagementTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(User.objects.filter(id=user.id).exists())
 
+    def test_superuser_cannot_be_deleted(self):
+        """Un superuser ne peut pas être supprimé via l'API."""
+        other_admin = self.factory.create_superuser(
+            username='other_admin', email='other@test.com', password='OtherPass55!'
+        )
+        url = reverse('user-detail', args=[other_admin.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(User.objects.filter(id=other_admin.id).exists())
+
+    def test_superuser_cannot_be_deactivated(self):
+        """Un superuser ne peut pas être désactivé via PATCH is_active=False."""
+        other_admin = self.factory.create_superuser(
+            username='other_admin2', email='other2@test.com', password='OtherPass66!'
+        )
+        url = reverse('user-detail', args=[other_admin.id])
+        response = self.client.patch(url, {'is_active': False}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        other_admin.refresh_from_db()
+        self.assertTrue(other_admin.is_active)
+
     # --- Endpoints utilitaires ---
 
     def test_login_options_public(self):
