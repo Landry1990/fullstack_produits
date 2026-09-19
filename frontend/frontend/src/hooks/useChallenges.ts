@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 import api from '../services/api';
 import { challengesService } from '../services/challengesService';
-import type { Challenge, ChallengeListParams } from '../types';
+import type { Challenge, ChallengeListParams, ChallengePayload } from '../types';
 
 export const CHALLENGES_KEY = 'challenges';
 
@@ -29,24 +29,30 @@ export const useChallengeClassement = (id: number | null) =>
 
 interface SaveArgs {
     id?: number;
-    data: Partial<Challenge>;
+    data: ChallengePayload;
+    sudoPassword?: string;
 }
 
 export const useSaveChallenge = () => {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data }: SaveArgs) =>
-            id ? challengesService.update(id, data) : challengesService.create(data),
+        mutationFn: ({ id, data, sudoPassword }: SaveArgs) =>
+            id ? challengesService.update(id, data, sudoPassword) : challengesService.create(data, sudoPassword),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: [CHALLENGES_KEY] });
         },
     });
 };
 
+interface DeleteArgs {
+    id: number;
+    sudoPassword?: string;
+}
+
 export const useDeleteChallenge = () => {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => challengesService.delete(id),
+        mutationFn: ({ id, sudoPassword }: DeleteArgs) => challengesService.delete(id, sudoPassword),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: [CHALLENGES_KEY] });
         },

@@ -37,6 +37,8 @@ interface User {
     can_cancel_promis?: boolean;
     can_manage_perimes?: boolean;
     can_manage_avoirs?: boolean;
+    can_create_client_credit?: boolean;
+    can_manage_challenges?: boolean;
     can_validate_zero_amount?: boolean;
     can_validate_sales?: boolean;
     can_modify_price?: boolean;
@@ -164,7 +166,7 @@ export default function GestionUtilisateurs() {
   const { data: menuData } = useMenuHierarchy();
   const MENU_HIERARCHY = menuData?.hierarchy ?? MENU_HIERARCHY_FALLBACK;
   const getAllMenuKeys = () => getAllMenuKeysFromHierarchy(MENU_HIERARCHY);
-  const getMenuLabel = (key: string, tFn: (key: string, options?: { defaultValue: string }) => string) => getMenuLabelFromHierarchy(MENU_HIERARCHY, key, tFn);
+  const getMenuLabel = (key: string, tFn: (key: string, options?: { defaultValue?: string }) => string) => getMenuLabelFromHierarchy(MENU_HIERARCHY, key, tFn);
   const confirm = useConfirm();
   const [users, setUsers] = useState<User[]>([]);
   const [, setLoading] = useState(true);
@@ -207,6 +209,8 @@ export default function GestionUtilisateurs() {
     can_cancel_promis: false,
     can_manage_perimes: false,
     can_manage_avoirs: false,
+    can_create_client_credit: false,
+    can_manage_challenges: false,
     can_validate_zero_amount: false,
     can_validate_sales: false,
     can_modify_price: false,
@@ -261,6 +265,8 @@ export default function GestionUtilisateurs() {
       can_cancel_promis: sourceUser.profile?.can_cancel_promis || false,
       can_manage_perimes: sourceUser.profile?.can_manage_perimes || false,
       can_manage_avoirs: sourceUser.profile?.can_manage_avoirs || false,
+      can_create_client_credit: sourceUser.profile?.can_create_client_credit || false,
+      can_manage_challenges: sourceUser.profile?.can_manage_challenges || false,
       can_validate_zero_amount: sourceUser.profile?.can_validate_zero_amount || false,
       can_validate_sales: sourceUser.profile?.can_validate_sales || false,
       can_modify_price: sourceUser.profile?.can_modify_price || false,
@@ -292,6 +298,8 @@ export default function GestionUtilisateurs() {
       updates.can_cancel_promis = true;
       updates.can_manage_perimes = true;
       updates.can_manage_avoirs = true;
+      updates.can_create_client_credit = true;
+      updates.can_manage_challenges = true;
       updates.can_validate_zero_amount = true;
       updates.can_validate_sales = true;
       updates.can_modify_price = true;
@@ -314,6 +322,8 @@ export default function GestionUtilisateurs() {
       updates.can_generate_coupon = false;
       updates.can_modify_invoice = true;
       updates.can_validate_sales = false;
+      updates.can_create_client_credit = false;
+      updates.can_manage_challenges = false;
       updates.can_view_cash_totals = false;
       if (!preserveMenus) updates.allowed_menus = ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'];
     } else if (role === 'VENDEUR') {
@@ -331,6 +341,8 @@ export default function GestionUtilisateurs() {
       updates.can_cancel_promis = false;
       updates.can_manage_perimes = false;
       updates.can_manage_avoirs = false;
+      updates.can_create_client_credit = false;
+      updates.can_manage_challenges = false;
       updates.can_validate_zero_amount = false;
       updates.can_validate_sales = false;
       updates.can_modify_price = false;
@@ -354,6 +366,8 @@ export default function GestionUtilisateurs() {
       updates.can_cancel_promis = false;
       updates.can_manage_perimes = false;
       updates.can_manage_avoirs = false;
+      updates.can_create_client_credit = false;
+      updates.can_manage_challenges = false;
       updates.can_validate_zero_amount = false;
       updates.can_validate_sales = false;
       updates.can_modify_price = false;
@@ -398,6 +412,8 @@ export default function GestionUtilisateurs() {
         can_cancel_promis: user.profile?.can_cancel_promis || false,
         can_manage_perimes: user.profile?.can_manage_perimes || false,
         can_manage_avoirs: user.profile?.can_manage_avoirs || false,
+        can_create_client_credit: user.profile?.can_create_client_credit || false,
+        can_manage_challenges: user.profile?.can_manage_challenges || false,
         can_validate_zero_amount: user.profile?.can_validate_zero_amount || false,
         can_validate_sales: user.profile?.can_validate_sales || false,
         can_modify_price: user.profile?.can_modify_price || false,
@@ -432,6 +448,8 @@ export default function GestionUtilisateurs() {
         can_cancel_promis: false,
         can_manage_perimes: false,
         can_manage_avoirs: false,
+        can_create_client_credit: false,
+        can_manage_challenges: false,
         can_validate_zero_amount: false,
         can_validate_sales: false,
         can_modify_price: false,
@@ -556,6 +574,8 @@ export default function GestionUtilisateurs() {
           can_cancel_promis: formData.can_cancel_promis,
           can_manage_perimes: formData.can_manage_perimes,
           can_manage_avoirs: formData.can_manage_avoirs,
+          can_create_client_credit: formData.can_create_client_credit,
+          can_manage_challenges: formData.can_manage_challenges,
           can_validate_zero_amount: formData.can_validate_zero_amount,
           can_validate_sales: formData.can_validate_sales,
           can_modify_price: formData.can_modify_price,
@@ -1084,6 +1104,16 @@ export default function GestionUtilisateurs() {
                         size="xs" color="warning"
                         checked={formData.can_manage_avoirs} onChange={checked => setFormData({...formData, can_manage_avoirs: checked})}
                         label={t('permissions.manage_avoirs')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="warning"
+                        checked={formData.can_create_client_credit} onChange={checked => setFormData({...formData, can_create_client_credit: checked})}
+                        label={t('permissions.create_client_credit')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
+                      />
+                      <Checkbox 
+                        size="xs" color="warning"
+                        checked={formData.can_manage_challenges} onChange={checked => setFormData({...formData, can_manage_challenges: checked})}
+                        label={t('permissions.manage_challenges')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
                       />
                       <Checkbox 
                         size="xs" color="warning"

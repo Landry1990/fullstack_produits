@@ -47,6 +47,7 @@ import {
 import type { Challenge, ChallengeListParams } from '../../types';
 import ChallengeFormModal from './ChallengeFormModal';
 import ChallengeClassement from './ChallengeClassement';
+import SudoValidationModal from '../common/SudoValidationModal';
 
 const PAGE_SIZE = 25;
 
@@ -78,6 +79,7 @@ const ChallengesPage: React.FC = () => {
 
     // Delete confirm dialog state
     const [deleteTarget, setDeleteTarget] = useState<Challenge | null>(null);
+    const [deleteSudoOpen, setDeleteSudoOpen] = useState(false);
 
     const queryParams = useMemo<ChallengeListParams>(() => {
         const params: ChallengeListParams = { page, page_size: PAGE_SIZE };
@@ -131,12 +133,19 @@ const ChallengesPage: React.FC = () => {
 
     const confirmDelete = async () => {
         if (!deleteTarget) return;
+        setDeleteSudoOpen(true);
+    };
+
+    const handleDeleteSudoValidate = async (_validatorId: number, password: string) => {
+        if (!deleteTarget) return;
         try {
-            await deleteMutation.mutateAsync(deleteTarget.id);
+            await deleteMutation.mutateAsync({ id: deleteTarget.id, sudoPassword: password });
             gooeyToast.success(t('challenges:messages.deleted'));
             setDeleteTarget(null);
+            setDeleteSudoOpen(false);
         } catch (err) {
             logger.error('ChallengesPage: delete error', err);
+            setDeleteSudoOpen(false);
             gooeyToast.error(t('challenges:messages.error_deleting'));
         }
     };
@@ -519,6 +528,19 @@ const ChallengesPage: React.FC = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <SudoValidationModal
+                isOpen={deleteSudoOpen}
+                onClose={() => {
+                    setDeleteSudoOpen(false);
+                    setDeleteTarget(null);
+                }}
+                onValidate={handleDeleteSudoValidate}
+                saving={deleteMutation.isPending}
+                permission="can_manage_challenges"
+                title={t('challenges:form.sudo_title_delete')}
+                message={t('challenges:form.sudo_message_delete')}
+            />
         </div>
     );
 };
