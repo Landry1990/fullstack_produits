@@ -1,8 +1,10 @@
-from rest_framework import viewsets, filters
+from rest_framework import status, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+
+from ..sudo_utils import validate_sudo_mode
 from django.db.models import Sum, Count, F, DecimalField, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -35,6 +37,46 @@ class ChallengeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        _validation_user, error_response = validate_sudo_mode(
+            request, permission_attr='can_manage_challenges'
+        )
+        if error_response:
+            return error_response
+        # Nettoie le mot de passe sudo avant sérialisation
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        data.pop('sudo_password', None)
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        _validation_user, error_response = validate_sudo_mode(
+            request, permission_attr='can_manage_challenges'
+        )
+        if error_response:
+            return error_response
+        instance = self.get_object()
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        data.pop('sudo_password', None)
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        _validation_user, error_response = validate_sudo_mode(
+            request, permission_attr='can_manage_challenges'
+        )
+        if error_response:
+            return error_response
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=['get'])
     def classement(self, request, pk=None):

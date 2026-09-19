@@ -76,6 +76,7 @@ class UserManagementTest(TestCase):
                 'can_do_returns': True,
                 'can_cash_out': True,
                 'can_cancel_invoice': False,
+                'can_create_client_credit': True,
             }
         }
         response = self.client.post(url, data, format='json')
@@ -86,6 +87,7 @@ class UserManagementTest(TestCase):
         self.assertTrue(user.profile.can_do_returns)
         self.assertTrue(user.profile.can_cash_out)
         self.assertFalse(user.profile.can_cancel_invoice)
+        self.assertTrue(user.profile.can_create_client_credit)
 
     def test_create_user_duplicate_password_rejected(self):
         """Deux utilisateurs ne peuvent pas avoir le même mot de passe."""
@@ -126,6 +128,20 @@ class UserManagementTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         user.refresh_from_db()
         self.assertEqual(user.profile.role, 'PHARMACIEN')
+
+    def test_update_user_can_create_client_credit(self):
+        """Mise à jour de la permission can_create_client_credit via le profil."""
+        user = User.objects.create_user(username='credit_user', password='CreditPass99')
+        self.assertFalse(user.profile.can_create_client_credit)
+
+        url = reverse('user-detail', args=[user.id])
+        response = self.client.patch(url, {
+            'profile': {'can_create_client_credit': True}
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        self.assertTrue(user.profile.can_create_client_credit)
+        self.assertIn('can_create_client_credit', response.data.get('profile', {}))
 
     def test_update_user_without_changing_password(self):
         """PATCH sans mot de passe ne doit pas changer le mot de passe."""

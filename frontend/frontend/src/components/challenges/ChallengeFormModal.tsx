@@ -25,7 +25,8 @@ import {
     useChallengeProductSearch,
     useChallengeUsers,
 } from '../../hooks/useChallenges';
-import type { Challenge, ChallengeTypeObjectif, ChallengeMode, ChallengeSourceProduits } from '../../types';
+import SudoValidationModal from '../common/SudoValidationModal';
+import type { Challenge, ChallengeTypeObjectif, ChallengeMode, ChallengeSourceProduits, ChallengePayload } from '../../types';
 
 interface Props {
     isOpen: boolean;
@@ -96,6 +97,8 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
     const [activeTab, setActiveTab] = useState<string>('general');
     const [productSearch, setProductSearch] = useState('');
     const [showProductDropdown, setShowProductDropdown] = useState(false);
+    const [sudoOpen, setSudoOpen] = useState(false);
+    const [pendingPayload, setPendingPayload] = useState<ChallengePayload | null>(null);
     const productDropdownRef = useRef<HTMLDivElement>(null);
 
     const saveMutation = useSaveChallenge();
@@ -311,7 +314,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                 }))
             : [];
 
-        const payload: Partial<Challenge> & { equipes_data?: EquipeForm[]; point_tiers_data?: typeof pointTiersData } = {
+        const payload: ChallengePayload = {
             nom: form.nom.trim(),
             description: form.description.trim(),
             date_debut: form.date_debut || undefined,
@@ -332,17 +335,28 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
             point_tiers_data: pointTiersData,
         };
 
+        setPendingPayload(payload);
+        setSudoOpen(true);
+    };
+
+    const handleSudoValidate = async (_validatorId: number, password: string) => {
+        if (!pendingPayload) return;
         try {
             await saveMutation.mutateAsync({
                 id: challenge?.id,
-                data: payload,
+                data: pendingPayload,
+                sudoPassword: password,
             });
+            setPendingPayload(null);
+            setSudoOpen(false);
             gooeyToast.success(
                 isEdit ? t('challenges:messages.updated') : t('challenges:messages.created')
             );
             onClose();
         } catch (err) {
             logger.error('ChallengeFormModal: save error', err);
+            setPendingPayload(null);
+            setSudoOpen(false);
             gooeyToast.error(
                 isEdit ? t('challenges:messages.error_updating') : t('challenges:messages.error_creating')
             );
@@ -355,7 +369,8 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <>
+            <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
@@ -1019,6 +1034,20 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                 </form>
             </DialogContent>
         </Dialog>
+
+        <SudoValidationModal
+            isOpen={sudoOpen}
+            onClose={() => {
+                setSudoOpen(false);
+                setPendingPayload(null);
+            }}
+            onValidate={handleSudoValidate}
+            saving={saveMutation.isPending}
+            permission="can_manage_challenges"
+            title={isEdit ? t('challenges:form.sudo_title_edit') : t('challenges:form.sudo_title_create')}
+            message={t('challenges:form.sudo_message')}
+        />
+        </>
     );
 };
 

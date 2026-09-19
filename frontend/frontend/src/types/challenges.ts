@@ -103,3 +103,8 @@ export interface ChallengeListResponse {
     previous: string | null;
     results: Challenge[];
 }
+
+export type ChallengePayload = Partial<Challenge> & {
+    equipes_data?: { nom: string; membres: number[] }[];
+    point_tiers_data?: { mois_max: number; points: number }[];
+};

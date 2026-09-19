@@ -2,25 +2,103 @@
 
 ---
 
-## 2026-09-19 — 🟠 Badge stock faible étendu en facturation
+## 2026-09-19 — 🔐 Permissions utilisateurs et sécurisation des challenges
 
-### Facturation
+### Diagnostic
 
-- Le badge « Stock faible » existant apparaît désormais pour tout produit dont le
-  stock minimum auto-calculé est strictement positif et dont le stock courant est
-  inférieur ou égal à ce seuil.
-- Les stocks nuls ou négatifs sont maintenant inclus dans cette indication, en plus
-  de leur traitement habituel de rupture ou de vente en stock négatif.
+- La permission `can_create_client_credit` existait sur le modèle `Profile` mais
+  n'était pas exposée dans le serializer utilisateur ni dans l'interface de gestion
+  des droits : les administrateurs ne pouvaient pas l'attribuer.
+- La permission `can_manage_challenges` était exposée côté API mais pas dans
+  `GestionUtilisateurs`, et `ChallengeViewSet` n'appliquait que `IsAuthenticated` :
+  tout utilisateur authentifié pouvait créer, modifier ou supprimer un challenge.
+- Le frontend `ChallengeFormModal` et la page `ChallengesPage` enregistraient les
+  modifications directement sans demander de confirmation sudo.
+
+### Correction
+
+- Ajout de `can_create_client_credit` dans `ProfileSerializer`, y compris en
+  création et mise à jour, pour qu'elle soit lisible et écrivable via l'API.
+- Ajout des cases `can_create_client_credit` et `can_manage_challenges` dans
+  `GestionUtilisateurs`, avec mise à jour du state initial, des presets de rôles,
+  de la copie de permissions, du payload soumis et des traductions `fr`/`en`.
+- Sécurisation de `ChallengeViewSet.create/update/destroy` via
+  `validate_sudo_mode(permission_attr='can_manage_challenges')` et nettoyage du
+  champ `sudo_password` avant sérialisation.
+- Intégration de `SudoValidationModal` dans `ChallengeFormModal` et
+  `ChallengesPage` : création, modification et suppression de challenge requièrent
+  un mot de passe unique (pas de sélection d'utilisateur), envoyé comme
+  `sudo_password` au backend.
+- Ajout du type `ChallengePayload` et mise à jour de `challengesService` et
+  `useChallenges` pour transporter le mot de passe sudo.
 
 ### Vérifications
 
-- `npx tsc --noEmit` : propre.
-- `npm run build` : réussi, avertissements de chunks préexistants uniquement.
-- `git diff --check` ciblé : propre.
+- Tests backend : `api.tests.test_user_management` (23 tests) et
+  `api.tests.test_challenges` (14 tests) passent.
+- Validation frontend TypeScript : `npx tsc --noEmit` OK.
+- Build frontend : `npm run build` OK.
 
-### Fichier modifié
+### Fichiers modifiés
 
-- `frontend/frontend/src/components/common/ProductSearch/index.tsx`
+- `backend/api/serializers/users.py`
+- `backend/api/views/challenges.py`
+- `backend/api/tests/test_user_management.py`
+- `backend/api/tests/test_challenges.py`
+- `frontend/frontend/src/components/GestionUtilisateurs.tsx`
+- `frontend/frontend/src/components/challenges/ChallengeFormModal.tsx`
+- `frontend/frontend/src/components/challenges/ChallengesPage.tsx`
+- `frontend/frontend/src/hooks/useChallenges.ts`
+- `frontend/frontend/src/services/challengesService.ts`
+- `frontend/frontend/src/types/challenges.ts`
+- `frontend/frontend/public/locales/fr/users.json`
+- `frontend/frontend/public/locales/en/users.json`
+- `frontend/frontend/public/locales/fr/challenges.json`
+- `frontend/frontend/public/locales/en/challenges.json`
+
+---
+
+## 2026-09-19 — 📊 Fiabilisation des stocks minimum et maximum automatiques
+
+### Diagnostic
+
+- Le recalcul mensuel était actif, avec une dernière exécution enregistrée le 12 septembre 2026.
+- Les signaux après vente étaient importés uniquement par le worker portant le scheduler,
+  donc absents des autres workers Uvicorn.
+- 38 produits vendus présentaient un écart avec la formule actuelle, dont 11 avec
+  des seuils encore nuls.
+
+### Correction
+
+- Enregistrement des signaux de seuils et d'invalidation de cache dans chaque worker
+  via `ApiConfig.ready()`.
+- Recalcul déclenché uniquement lors du passage d'une facture à `VAL` ou `PAY`, et
+  seulement après validation du commit PostgreSQL.
+- Suppression du recalcul prématuré lors de la création des lignes de brouillon.
+- Recalcul après suppression d'une ligne uniquement si la facture est validée ou payée.
+- Retour du nombre de produits mis à jour par la tâche mensuelle.
+- Réactivation des signaux existants d'invalidation des caches produit et dashboard.
+
+### Remise à niveau des données
+
+- Recalcul global exécuté sur les données locales : **205 produits mis à jour**.
+- **207 produits actifs vendus** disposent désormais de seuils positifs.
+- Contrôle après recalcul : **0 écart** avec la formule active.
+- `last_stock_analytics_run` actualisé au 19 septembre 2026.
+
+### Vérifications
+
+- Nouvelle suite d'automatisation des seuils : validation après commit, absence de
+  recalcul sur une sauvegarde sans changement de statut et invalidation mensuelle.
+- Tests automatisation + facturation : **33 tests réussis**.
+- `test_sale_finalizer.py` n'a pas été exécuté car `pytest` n'est pas installé dans
+  le conteneur actuel ; cette limitation de l'environnement est préexistante.
+
+### Fichiers modifiés
+
+- `backend/api/apps.py`
+- `backend/api/signals_stock_levels.py`
+- `backend/api/tests/test_stock_level_automation.py`
 
 ---
 
