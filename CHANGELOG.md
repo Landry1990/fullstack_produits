@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-09-19 — 🧩 Regroupement de la gestion des utilisateurs et des sessions
+
+### Changements
+
+- Nouvelle page `UtilisateursPage` avec deux onglets racine : *Utilisateurs*
+  (gestion des comptes) et *Sessions* (sessions utilisateurs).
+- La route `/app/utilisateurs` affiche l'onglet *Utilisateurs* ;
+  `/app/user-sessions` affiche la même page avec l'onglet *Sessions* pré-ouvert.
+- L'entrée *Sessions utilisateurs* est retirée de la sidebar (regroupée sous
+  *Utilisateurs*).
+- Traductions `fr`/`en` ajoutées (`page_tabs.users`, `page_tabs.sessions`).
+
+### Vérifications
+
+- `npx tsc --noEmit` OK.
+- `npm run build` OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/UtilisateursPage.tsx` (nouveau)
+- `frontend/frontend/src/routes.tsx`
+- `frontend/frontend/src/components/Sidebar.tsx`
+- `frontend/frontend/public/locales/fr/users.json`
+- `frontend/frontend/public/locales/en/users.json`
+
+---
+
 ## 2026-09-19 — 🛡️ Protection des superutilisateurs contre la suppression/désactivation
 
 ### Changements

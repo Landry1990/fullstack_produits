@@ -6,6 +6,10 @@
         "active": "Active",
         "trash": "Trash"
     },
+    "page_tabs": {
+        "users": "Users",
+        "sessions": "Sessions"
+    },
     "actions": {
         "create": "New User",
         "edit": "Edit",
