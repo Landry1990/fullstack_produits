@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-09-19 — 🛡️ Protection des superutilisateurs contre la suppression/désactivation
+
+### Changements
+
+- Frontend : le bouton *Désactiver* n'est plus affiché pour les superusers dans
+  `GestionUtilisateurs`.
+- Backend : `UserViewSet.destroy` refuse de supprimer un superuser (403).
+- Backend : `UserViewSet.partial_update` refuse `is_active=False` sur un
+  superuser (403).
+- Tests ajoutés : `test_superuser_cannot_be_deleted`,
+  `test_superuser_cannot_be_deactivated`.
+
+### Vérifications
+
+- `npx tsc --noEmit` OK.
+- `npm run build` OK.
+- `api.tests.test_user_management` : 25 tests OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/GestionUtilisateurs.tsx`
+- `backend/api/views/users.py`
+- `backend/api/tests/test_user_management.py`
+
+---
+
 ## 2026-09-19 — 🎨 Layout masonry pour les menus de la gestion des droits
 
 ### Correction

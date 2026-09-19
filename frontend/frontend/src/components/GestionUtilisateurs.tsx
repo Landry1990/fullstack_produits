@@ -623,7 +623,7 @@ export default function GestionUtilisateurs() {
                   <Button variant="ghost" size="sm" leftIcon={<Pencil className="h-4 w-4" />} onClick={() => handleOpenModal(user)}>
                     {t('actions.edit')}
                   </Button>
-                  {currentUser?.username !== user.username && (
+                  {currentUser?.username !== user.username && !user.is_superuser && (
                     <Button variant="ghost" size="sm" leftIcon={<Trash2 className="h-4 w-4" />} className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(user.id, user.username)}>
                       {t('actions.deactivate', 'Désactiver')}
                     </Button>
