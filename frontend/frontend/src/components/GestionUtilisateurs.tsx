@@ -757,7 +757,7 @@ export default function GestionUtilisateurs() {
                   <div className="flex items-center gap-2 border-l-2 border-secondary pl-3 bg-secondary/10 py-1 rounded-r-lg">
                     <h4 className="font-bold text-xs uppercase tracking-widest text-secondary">{t('modal.authorized_menus')}</h4>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="columns-1 md:columns-2 lg:columns-3 gap-4">
                     {MENU_HIERARCHY.map(menu => {
                       const allowedSet = new Set(formData.allowed_menus);
                       const parentLabel = t(menu.labelKey);
@@ -769,7 +769,7 @@ export default function GestionUtilisateurs() {
                           key={menu.key}
                           variant="default"
                           padding="sm"
-                          className={`self-start ${menu.submenus && menu.submenus.length > 0 ? 'flex flex-col' : ''}`}
+                          className={`mb-4 break-inside-avoid ${menu.submenus && menu.submenus.length > 0 ? 'flex flex-col' : ''}`}
                         >
                           <div className="bg-base-200/50 p-3 flex-none border-b border-base-200 rounded-t-lg">
                             <Checkbox
