@@ -16,11 +16,13 @@
 ### Correction
 
 - Lors de l'édition d'un superuser, toutes les permissions sont maintenant
-  affichées comme activées et `max_discount_rate` est forcé à 100.
+  affichées comme activées, tous les menus comme autorisés et
+  `max_discount_rate` est forcé à 100.
 - Un bandeau informatif est affiché dans l'onglet *Permissions* pour indiquer
   que le superutilisateur possède implicitement tous les droits.
-- Les cases à cocher et le champ `max_discount_rate` sont désactivés pour un
-  superuser, puisque ces valeurs sont ignorées par le backend.
+- Les cases à cocher des permissions, les menus et le champ
+  `max_discount_rate` sont désactivés pour un superuser, puisque ces valeurs
+  sont ignorées par le backend.
 - Traductions `fr`/`en` ajoutées.
 
 ### Vérifications
