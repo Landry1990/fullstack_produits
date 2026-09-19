@@ -56,7 +56,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   '/app/user-sessions': () => import('./UserSessionsShadcn'),
   '/app/guide-financier': () => import('./GuideFinancier'),
   '/app/aide-formation': () => import('./HelpTraining'),
-  '/app/utilisateurs': () => import('./GestionUtilisateurs'),
+  '/app/utilisateurs': () => import('./users/GestionUtilisateurs'),
   '/app/planning-operateurs': () => import('./PlanningOperateurs'),
   '/app/pharmacy-settings': () => import('./settings/PharmacySettingsForm'),
   '/app/maintenance': () => import('./Maintenance'),
