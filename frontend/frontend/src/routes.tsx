@@ -94,10 +94,10 @@ const GestionDivers = lazyWithRetry(() => import('./components/divers/GestionDiv
 const ClassementVendeurs = lazyWithRetry(() => import('./components/ClassementVendeurs'));
 const AnalyseTemporelle = lazyWithRetry(() => import('./components/AnalyseTemporelle'));
 const StockUGReport = lazyWithRetry(() => import('./components/StockUGReportShadcn'));
-const UserSessions = lazyWithRetry(() => import('./components/UserSessionsShadcn'));
+const UtilisateursPage = lazyWithRetry(() => import('./components/UtilisateursPage'));
 const GuideFinancier = lazyWithRetry(() => import('./components/GuideFinancier'));
 const HelpTraining = lazyWithRetry(() => import('./components/HelpTraining'));
-const GestionUtilisateurs = lazyWithRetry(() => import('./components/GestionUtilisateurs'));
+const UtilisateursSessionsPage = () => <UtilisateursPage defaultTab="sessions" />;
 const PharmacySettingsForm = lazyWithRetry(() => import('./components/settings/PharmacySettingsForm'));
 const Maintenance = lazyWithRetry(() => import('./components/Maintenance'));
 const Corbeille = lazyWithRetry(() => import('./components/Corbeille'));
@@ -232,10 +232,10 @@ export const router = createBrowserRouter([
           { path: 'aide-formation', ...perm('aide_formation', HelpTraining) },
 
           // ── Admin only ──
-          { path: 'utilisateurs', ...admin(GestionUtilisateurs) },
+          { path: 'utilisateurs', ...admin(UtilisateursPage) },
           { path: 'planning-operateurs', ...perm('utilisateurs', PlanningOperateurs) },
           { path: 'rapport-equipes', ...perm('manager_sidebar', TeamReportsPage) },
-          { path: 'user-sessions', ...admin(UserSessions) },
+          { path: 'user-sessions', ...admin(UtilisateursSessionsPage) },
           { path: 'journal-audit', ...admin(JournalAudit) },
           { path: 'import-dci', ...admin(ImportDCIPage) },
           { path: 'maintenance', ...perm('maintenance', Maintenance) },
