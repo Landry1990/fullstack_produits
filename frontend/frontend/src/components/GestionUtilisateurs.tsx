@@ -765,7 +765,12 @@ export default function GestionUtilisateurs() {
                       const indeterminate = !isParentChecked && menu.submenus?.some(sub => allowedSet.has(sub.key));
 
                       return (
-                        <Card key={menu.key} variant="default" padding="sm" className={`${menu.submenus && menu.submenus.length > 0 ? 'flex flex-col h-full' : ''}`}>
+                        <Card
+                          key={menu.key}
+                          variant="default"
+                          padding="sm"
+                          className={`self-start ${menu.submenus && menu.submenus.length > 0 ? 'flex flex-col' : ''}`}
+                        >
                           <div className="bg-base-200/50 p-3 flex-none border-b border-base-200 rounded-t-lg">
                             <Checkbox
                               checked={isParentChecked || indeterminate}
@@ -774,7 +779,7 @@ export default function GestionUtilisateurs() {
                               label={parentLabel}
                             />
                           </div>
-                          
+
                           {menu.submenus && menu.submenus.length > 0 && (
                             <div className="p-3 grid grid-cols-1 gap-1.5 flex-1">
                               {menu.submenus.map(sub => {
