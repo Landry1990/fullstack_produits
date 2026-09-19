@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-09-19 — 🎨 Layout masonry pour les menus de la gestion des droits
+
+### Correction
+
+- L'onglet *Menus* de `GestionUtilisateurs` utilise maintenant un layout en
+  colonnes CSS (`columns-*` + `break-inside-avoid`) au lieu d'une grille à
+  hauteur de ligne fixe. Les cartes remontent pour combler les vides, ce qui
+  réduit la hauteur du modal.
+
+### Vérifications
+
+- `npx tsc --noEmit` OK.
+- `npm run build` OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/GestionUtilisateurs.tsx`
+
+---
+
 ## 2026-09-19 — 🐞 Affichage des droits pour un superutilisateur
 
 ### Diagnostic
