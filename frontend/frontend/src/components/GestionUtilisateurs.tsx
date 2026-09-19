@@ -343,8 +343,9 @@ export default function GestionUtilisateurs() {
         ...buildInitialPermissions('VENDEUR'),
       };
       if (user.is_superuser) {
-        // A superuser implicitly has all permissions regardless of Profile flags;
-        // reflect that in the form so the checkboxes are not left empty.
+        // A superuser implicitly has all menus and permissions regardless of
+        // Profile flags; reflect that in the form so nothing is left unchecked.
+        base.allowed_menus = getAllMenuKeys();
         PERMISSIONS_META.forEach(p => {
           base[p.key] = true;
         });
