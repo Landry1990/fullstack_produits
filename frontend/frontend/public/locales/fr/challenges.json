@@ -49,6 +49,11 @@
         "produits": "Produits concernés",
         "produits_search_placeholder": "Rechercher un produit...",
         "create_btn": "Créer le challenge",
+        "sudo_title_create": "Confirmation — Création de challenge",
+        "sudo_title_edit": "Confirmation — Modification de challenge",
+        "sudo_title_delete": "Confirmation — Suppression de challenge",
+        "sudo_message": "La gestion des challenges requiert une validation par mot de passe.",
+        "sudo_message_delete": "La suppression d'un challenge requiert une validation par mot de passe.",
         "errors": {
             "nom_required": "Le nom est obligatoire.",
             "date_order": "La date de fin doit être postérieure à la date de début.",

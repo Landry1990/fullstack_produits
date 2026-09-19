@@ -150,6 +150,123 @@ class ChallengeCreationTests(ChallengeBaseSetup, APITestCase):
         eq1.refresh_from_db()
         self.assertEqual(eq1.membres.count(), 2)
 
+    def test_create_challenge_with_sudo_password(self):
+        """A user without direct permission can create a challenge via sudo password."""
+        manager = TestDataFactory.create_user(username='manager', password='ManagerPass1')
+        manager.profile.can_manage_challenges = True
+        manager.profile.save()
+
+        noperm = TestDataFactory.create_user(username='noperm', password='NoPermPass1')
+        noperm.profile.can_manage_challenges = False
+        noperm.profile.save()
+
+        payload = {
+            'nom': 'Challenge Sudo',
+            'date_debut': self.date_debut.isoformat(),
+            'date_fin': self.date_fin.isoformat(),
+            'statut': 'ENC',
+            'type_objectif': 'CA',
+            'mode': 'INDIVIDUEL',
+            'all_users': True,
+        }
+
+        # User with permission can create without sudo password
+        self.client.force_authenticate(user=manager)
+        resp = self.client.post('/api/challenges/', payload, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # User without permission cannot create without sudo password
+        self.client.force_authenticate(user=noperm)
+        resp = self.client.post('/api/challenges/', payload, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+        # User without permission can create with valid sudo password from manager
+        resp = self.client.post('/api/challenges/', {**payload, 'sudo_password': 'ManagerPass1'}, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resp.data['nom'], 'Challenge Sudo')
+
+        # Invalid sudo password is rejected
+        resp = self.client.post('/api/challenges/', {**payload, 'sudo_password': 'wrongpass'}, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_challenge_with_sudo_password(self):
+        """A user without direct permission can update a challenge via sudo password."""
+        challenge = Challenge.objects.create(
+            nom='Challenge To Update', date_debut=self.date_debut, date_fin=self.date_fin,
+            statut='ENC', type_objectif='CA', mode='INDIVIDUEL', all_users=True,
+            created_by=self.user,
+        )
+        manager = TestDataFactory.create_user(username='manager2', password='ManagerPass2')
+        manager.profile.can_manage_challenges = True
+        manager.profile.save()
+
+        noperm = TestDataFactory.create_user(username='noperm2', password='NoPermPass2')
+        noperm.profile.can_manage_challenges = False
+        noperm.profile.save()
+
+        payload = {'nom': 'Challenge Updated'}
+
+        # User with permission can update without sudo password
+        self.client.force_authenticate(user=manager)
+        resp = self.client.patch(f'/api/challenges/{challenge.id}/', payload, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['nom'], 'Challenge Updated')
+
+        # User without permission cannot update without sudo password
+        challenge.nom = 'Challenge To Update'
+        challenge.save()
+        self.client.force_authenticate(user=noperm)
+        resp = self.client.patch(f'/api/challenges/{challenge.id}/', payload, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+        # User without permission can update with valid sudo password
+        resp = self.client.patch(
+            f'/api/challenges/{challenge.id}/',
+            {**payload, 'sudo_password': 'ManagerPass2'},
+            format='json'
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data['nom'], 'Challenge Updated')
+
+    def test_delete_challenge_with_sudo_password(self):
+        """A user without direct permission can delete a challenge via sudo password."""
+        challenge = Challenge.objects.create(
+            nom='Challenge To Delete', date_debut=self.date_debut, date_fin=self.date_fin,
+            statut='ENC', type_objectif='CA', mode='INDIVIDUEL', all_users=True,
+            created_by=self.user,
+        )
+        manager = TestDataFactory.create_user(username='manager3', password='ManagerPass3')
+        manager.profile.can_manage_challenges = True
+        manager.profile.save()
+
+        noperm = TestDataFactory.create_user(username='noperm3', password='NoPermPass3')
+        noperm.profile.can_manage_challenges = False
+        noperm.profile.save()
+
+        # User with permission can delete without sudo password
+        self.client.force_authenticate(user=manager)
+        resp = self.client.delete(f'/api/challenges/{challenge.id}/')
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        # User without permission cannot delete without sudo password
+        challenge = Challenge.objects.create(
+            nom='Challenge To Delete 2', date_debut=self.date_debut, date_fin=self.date_fin,
+            statut='ENC', type_objectif='CA', mode='INDIVIDUEL', all_users=True,
+            created_by=self.user,
+        )
+        self.client.force_authenticate(user=noperm)
+        resp = self.client.delete(f'/api/challenges/{challenge.id}/')
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+        # User without permission can delete with valid sudo password
+        resp = self.client.delete(
+            f'/api/challenges/{challenge.id}/',
+            data={'sudo_password': 'ManagerPass3'},
+            format='json'
+        )
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Challenge.objects.filter(id=challenge.id).exists())
+
     def test_update_challenge_replaces_tiers(self):
         """Updating point_tiers_data should sync tiers by mois_max."""
         challenge = Challenge.objects.create(

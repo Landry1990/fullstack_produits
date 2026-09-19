@@ -88,6 +88,8 @@
         "close_commande": "Clôturer Commande",
         "manage_perimes": "Gérer Périmés",
         "manage_avoirs": "Gérer Avoirs",
+        "create_client_credit": "Créer Avoirs Clients",
+        "manage_challenges": "Gérer Challenges",
         "validate_zero_amount": "Autoriser ventes à 0F",
         "can_validate_sales": "Valider les ventes",
         "view_cash_sessions": "Voir les sessions de caisse",
