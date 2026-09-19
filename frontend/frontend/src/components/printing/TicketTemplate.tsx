@@ -95,7 +95,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
         <h2 className="mb-1 text-sm font-bold uppercase leading-none tracking-tight">
             {settings.pharmacy_name || t('ticket.invoice')}
         </h2>
-        <div className="mx-auto mb-2 w-2/3 border-b border-black/25"></div>
+        <div className="mb-2 border-b border-black/25" style={{ width: '66.666%', marginLeft: 'auto', marginRight: 'auto' }}></div>
         <div className="text-[9px] leading-tight">
             {settings.address && <p className="mb-1 font-medium">{settings.address}</p>}
             <div className="font-mono text-[8px]">
@@ -104,6 +104,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
                {settings.niu && <div>{t('invoice.niu')}: {settings.niu}</div>}
                {settings.registre_commerce && <div>{t('invoice.rc')}: {settings.registre_commerce}</div>}
             </div>
+            {settings.receipt_header && <p className="mt-1 whitespace-pre-line">{settings.receipt_header}</p>}
         </div>
       </div>
 
@@ -265,8 +266,7 @@ export const TicketTemplate = ({ ticket, settings, ref }: TicketTemplateProps) =
       {/* FOOTER */}
       <div className="mt-4 text-center">
         <div className="mb-3 border-t border-black/20 pt-3">
-            <p className="mb-1 text-[10px] font-medium uppercase">{settings.ticket_footer_message || t('ticket.visit_thanks')}</p>
-            <p className="text-[9px] italic">{t('ticket.see_you_soon_pharmacy')}</p>
+            <p className="text-[10px] font-medium whitespace-pre-line">{settings.ticket_footer_message || t('ticket.visit_thanks')}</p>
         </div>
         
         {showBarcode && (

@@ -97,6 +97,9 @@ class InternalMessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['sender', 'created_at', 'read_by']
 
     def validate_attachment(self, attachment):
+        if attachment is None:
+            return None
+
         allowed_types = {
             '.jpg': {'image/jpeg'},
             '.jpeg': {'image/jpeg'},

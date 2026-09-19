@@ -54,7 +54,7 @@ export default function UserHeader() {
   // Polling for unread messages
   useEffect(() => {
     fetchUnread();
-    const interval = setInterval(fetchUnread, 30000); // Check every 30 seconds
+    const interval = setInterval(fetchUnread, 5000); // Check every 5 seconds
     return () => clearInterval(interval);
   }, [user, fetchUnread]);
 

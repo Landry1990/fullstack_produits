@@ -88,6 +88,18 @@ class InternalMessagingSecurityTests(APITestCase):
         message.refresh_from_db()
         self.assertEqual(message.content, 'Original')
 
+    def test_message_without_attachment_accepts_explicit_null(self):
+        self.authenticate(self.sender)
+
+        response = self.client.post(
+            '/api/internal-messages/',
+            {'recipient': self.recipient.id, 'content': 'Sans fichier', 'attachment': None},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(InternalMessage.objects.get(pk=response.data['id']).attachment.name)
+
     def test_regular_user_cannot_broadcast(self):
         self.authenticate(self.sender)
 

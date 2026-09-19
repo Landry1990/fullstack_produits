@@ -58,7 +58,8 @@ export function useMessaging({ enabled, currentUser, filters }: UseMessagingOpti
       return response.data;
     },
     enabled: enabled && filters.box !== null,
-    staleTime: 1000 * 60,
+    refetchInterval: enabled ? 5000 : false,
+    staleTime: 5000,
   });
 
   const templatesQuery = useQuery({
@@ -209,8 +210,8 @@ export function useUnreadMessageCount(enabled: boolean) {
       return response.data.count ?? 0;
     },
     enabled,
-    refetchInterval: 30000,
-    staleTime: 1000 * 30,
+    refetchInterval: 5000,
+    staleTime: 5000,
   });
 }
 
