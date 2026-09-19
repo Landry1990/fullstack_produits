@@ -90,6 +90,7 @@
         "manage_avoirs": "Manage Credits",
         "create_client_credit": "Create Client Credits",
         "manage_challenges": "Manage Challenges",
+        "is_terminal_account": "Terminal account (sales POS)",
         "validate_zero_amount": "Allow 0F sales",
         "can_validate_sales": "Validate sales",
         "view_cash_sessions": "View cash sessions",

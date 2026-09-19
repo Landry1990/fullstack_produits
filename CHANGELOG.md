@@ -2,6 +2,45 @@
 
 ---
 
+## 2026-09-19 — 🛠️ Refactor des permissions utilisateurs + comptes terminaux
+
+### Diagnostic
+
+- La permission `is_terminal_account` existait sur le modèle `Profile` et était
+  déjà gérée par le serializer, mais elle n'était pas visible dans
+  `GestionUtilisateurs`.
+- Les permissions étaient déclarées à plus de cinq endroits différents
+  (state initial, copie, presets de rôle, édition, payload, rendu UI), ce qui
+  multipliait le risque d'oublis et de divergence frontend/backend.
+
+### Correction
+
+- Ajout de la case `is_terminal_account` dans `GestionUtilisateurs` avec
+  traductions `fr`/`en`.
+- Introduction d'une liste canonique `PERMISSIONS_META` qui centralise : clé,
+  clé de traduction, groupe d'affichage, couleur et valeurs par défaut pour
+  chaque rôle.
+- Génération dynamique du state initial, de la copie de permissions, des presets
+  de rôle, de l'initialisation édition/nouveau, du payload API et des cases à
+  cocher dans `GestionUtilisateurs`.
+- Conservation du comportement existant (valeurs par défaut historiques pour
+  `can_view_cash_totals` à la création d'un vendeur, menus par rôle, etc.).
+
+### Vérifications
+
+- `npx tsc --noEmit` OK.
+- `npm run build` OK.
+- `api.tests.test_user_management` : 23 tests OK.
+- `api.tests.test_challenges` : 14 tests OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/GestionUtilisateurs.tsx`
+- `frontend/frontend/public/locales/fr/users.json`
+- `frontend/frontend/public/locales/en/users.json`
+
+---
+
 ## 2026-09-19 — 🔐 Permissions utilisateurs et sécurisation des challenges
 
 ### Diagnostic
