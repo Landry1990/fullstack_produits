@@ -12,6 +12,9 @@
 - Un superuser créé via `createsuperuser` (ou dont le profil gardait les valeurs
   par défaut) apparaissait donc avec presque aucune case cochée, ce qui était
   trompeur.
+- Dans l'onglet *Menus*, les cartes de menus sans sous-menus étaient étirées à
+  la hauteur des cartes les plus hautes de la même rangée, créant de grands
+  espaces vides.
 
 ### Correction
 
@@ -23,6 +26,8 @@
 - Les cases à cocher des permissions, les menus et le champ
   `max_discount_rate` sont désactivés pour un superuser, puisque ces valeurs
   sont ignorées par le backend.
+- Ajout de `self-start` sur les cartes de menus pour éviter l'étirement
+  vertical des cartes sans sous-menus.
 - Traductions `fr`/`en` ajoutées.
 
 ### Vérifications
