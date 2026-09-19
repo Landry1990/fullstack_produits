@@ -9,7 +9,14 @@ import { useMenuHierarchy, getAllMenuKeysFromHierarchy, getMenuLabel as getMenuL
 import PasswordConfirmModal from './PasswordConfirmModal';
 import { Checkbox } from './ui/Checkbox';
 import { Input } from './ui/Input';
-import { Mail, User, Lock, Copy } from 'lucide-react';
+import { Label } from './ui/Label';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Card } from './ui/Card';
+import { Select } from './ui/Select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/Dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
+import { UserPlus, Pencil, Trash2, Save, X, Lock, User, Mail, Copy, Coins, Zap, CheckCircle, Info } from 'lucide-react';
 import { logger } from '../utils/logger'
 
 
@@ -500,354 +507,352 @@ export default function GestionUtilisateurs() {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-slate-800">{t('title')}</h1>
-          <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-bold">
+          <Badge variant="ghost" size="md">
             {users.filter(u => u.is_active).length} {t('tabs.active', 'Actifs')}
-          </span>
+          </Badge>
         </div>
-        <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm" onClick={() => handleOpenModal()}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+        <Button leftIcon={<UserPlus className="h-5 w-5" />} onClick={() => handleOpenModal()}>
           {t('new_user')}
-        </button>
+        </Button>
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-sm">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase tracking-widest text-slate-400">
-              <th className="px-4 py-3 text-left">{t('table.user')}</th>
-              <th className="px-4 py-3 text-left">{t('table.role_access')}</th>
-              <th className="px-4 py-3 text-left">{t('table.special_permissions')}</th>
-              <th className="px-4 py-3 text-right">{t('table.actions')}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {users.reduce<React.JSX.Element[]>((acc, user) => {
-              if (!user.is_active) return acc;
-              acc.push(
-                <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="inline-flex items-center justify-center">
-                        <div className="text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm bg-slate-700">
-                          {user.username.charAt(0).toUpperCase()}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-bold flex items-center gap-2 text-slate-800">
-                          {user.username}
-                        </div>
-                        <div className="text-sm text-slate-400">{user.first_name} {user.last_name}</div>
-                        <div className="text-xs text-slate-400">{user.email}</div>
-                      </div>
+      <div className="grid grid-cols-1 gap-4">
+        {users.reduce<React.JSX.Element[]>((acc, user) => {
+          if (!user.is_active) return acc;
+          acc.push(
+            <Card key={user.id} variant="default" padding="md">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm bg-slate-700 shrink-0">
+                    {user.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold flex items-center gap-2 text-slate-800 truncate">
+                      {user.username}
                     </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                        user.is_superuser ? 'bg-blue-100 text-blue-700' : 
-                        user.profile?.role === 'COMPTABLE' ? 'bg-purple-100 text-purple-700' :
-                        user.profile?.role === 'CAISSIER' ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {user.is_superuser 
-                          ? t('badges.pharmacist') 
-                          : user.profile?.role === 'COMPTABLE'
-                              ? t('roles.accountant', 'COMPTABLE')
-                          : user.profile?.role === 'CAISSIER' 
-                              ? t('roles.cashier') 
-                              : t('roles.seller')}
-                      </span>
-                      <div className="flex flex-wrap gap-1 mt-1 max-w-md">
-                        {user.is_superuser ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">{t('badges.full_access')}</span>
-                        ) : (() => {
-                          const allowedMenus = user.profile?.allowed_menus || [];
-                          const allKeys = getAllMenuKeys();
-                          // If they have all keys (or all but a few), show full access
-                          const isFullAccess = allowedMenus.length >= allKeys.length - 2;
-                          
-                          if (isFullAccess && allowedMenus.length > 0) {
-                            return (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
-                                {t('badges.full_access', 'Accès complet')}
-                              </span>
-                            );
-                          }
-                          
-                          const limit = 4;
-                          const visibleMenus = allowedMenus.slice(0, limit);
-                          const hiddenCount = allowedMenus.length - limit;
-                          
-                          return (
-                            <>
-                              {visibleMenus.map(menu => (
-                                <span key={menu} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                  {getMenuLabel(menu, t)}
-                                </span>
-                              ))}
-                              {hiddenCount > 0 && (
-                                <span 
-                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300 cursor-help"
-                                  title={allowedMenus.slice(limit).map(m => getMenuLabel(m, t)).join(', ')}
-                                >
-                                  +{hiddenCount} {t('common:others', 'autres')}
-                                </span>
-                              )}
-                              {allowedMenus.length === 0 && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-500 border border-red-100">
-                                  {t('badges.no_access')}
-                                </span>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      {user.profile?.can_cash_out && (
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200" title={t('permissions.cash_out')} role="img" aria-label={t('permissions.cash_out')}>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                      )}
-                      {user.profile?.can_sell_negative_stock && (
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200" title={t('permissions.negative_stock')} role="img" aria-label={t('permissions.negative_stock')}>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        </div>
-                      )}
-                      {user.profile?.can_validate_sales && (
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200" title={t('permissions.can_validate_sales')} role="img" aria-label={t('permissions.can_validate_sales')}>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-slate-500 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors"
-                      onClick={() => handleOpenModal(user)}
-                    >
-                      {t('actions.edit')}
-                    </button>
-                    {currentUser?.username !== user.username && (
-                      <button
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
-                        onClick={() => handleDeleteUser(user.id, user.username)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        {t('actions.deactivate', 'Désactiver')}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-              return acc;
-            }, [])}
-          </tbody>
-        </table>
-      </div>
-
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div
-            className="bg-white w-11/12 max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="user-modal-title"
-          >
-            <div className="p-6 pb-2 border-b border-slate-100 flex justify-between items-center bg-white flex-none">
-              <h3 id="user-modal-title" className="font-bold text-xl flex items-center gap-2 text-slate-800">
-                <div className="size-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                </div>
-                {editingUser ? t('modal.edit_title') : t('modal.new_title')}
-              </h3>
-              <button className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-colors" onClick={() => setModalOpen(false)} aria-label={t('common:close')}>✕</button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 border-l-2 border-blue-500 pl-3 bg-blue-50 py-1 rounded-r-lg">
-                  <h4 className="font-bold text-xs uppercase tracking-widest text-blue-600">{t('modal.basic_info')}</h4>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input 
-                    label={t('form.username')}
-                    icon={<User size={16} />}
-                    value={formData.username}
-                    onChange={e => setFormData({...formData, username: e.target.value})}
-                    required
-                  />
-                  <Input 
-                    label={t('form.email')}
-                    type="email"
-                    icon={<Mail size={16} />}
-                    value={formData.email}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
-                  />
-                  <Input 
-                    label={t('form.first_name')}
-                    value={formData.first_name}
-                    onChange={e => setFormData({...formData, first_name: e.target.value})}
-                  />
-                  <Input 
-                    label={t('form.last_name')}
-                    value={formData.last_name}
-                    onChange={e => setFormData({...formData, last_name: e.target.value})}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input 
-                    label={t('form.password')}
-                    type="password"
-                    icon={<Lock size={16} />}
-                    value={formData.password}
-                    onChange={e => setFormData({...formData, password: e.target.value})}
-                    placeholder={editingUser ? t('form.password_placeholder_edit') : ''}
-                  />
-                  <div className="flex flex-col gap-1 w-full">
-                    <label htmlFor="user-role-select" className="flex flex-col gap-0.5 pt-0 px-1">
-                      <span className="font-bold text-slate-400 uppercase text-[10px] tracking-wider">{t('form.role')}</span>
-                    </label>
-                    <select
-                      id="user-role-select"
-                      className="w-full rounded-xl border border-slate-200 bg-white h-10 px-3 text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-                      value={formData.role}
-                      onChange={e => handleRoleChange(e.target.value)}
-                    >
-                      {ROLES.map(role => (
-                        <option key={role.value} value={role.value}>{t(role.labelKey)}</option>
-                      ))}
-                    </select>
+                    <div className="text-sm text-slate-400">{user.first_name} {user.last_name}</div>
+                    <div className="text-xs text-slate-400">{user.email}</div>
                   </div>
                 </div>
 
-                {/* Copy permissions from existing user - only when creating new user */}
-                {!editingUser && (
-                  <div className="flex flex-col gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                    <div className="flex items-center gap-2">
-                      <Copy className="size-4 text-blue-600" />
-                      <span className="font-bold text-xs uppercase tracking-wider text-blue-600">{t('form.copy_permissions', 'Copier les droits d\'un utilisateur')}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <select
-                        className="flex-1 rounded-xl border border-slate-200 bg-white h-10 px-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-                        aria-label={t('form.copy_permissions', 'Copier les droits d\'un utilisateur')}
-                        value={copyFromUserId}
-                        onChange={e => setCopyFromUserId(e.target.value ? Number(e.target.value) : '')}
-                      >
-                        <option value="">{t('form.select_user', 'Sélectionner un utilisateur...')}</option>
-                        {users.flatMap(user => user.is_active ? [(
-                          <option key={user.id} value={String(user.id)}>
-                            {user.username} ({user.profile?.role || (user.is_superuser ? 'PHARMACIEN' : 'VENDEUR')})
-                          </option>
-                        )] : [])}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyPermissions(copyFromUserId)}
-                        disabled={!copyFromUserId}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Copy className="size-4" />
-                        {t('form.copy_btn', 'Copier')}
-                      </button>
-                    </div>
-                    <p className="text-xs text-slate-400 italic">
-                      {t('form.copy_help', 'Copie tous les droits, menus autorisés et permissions spéciales de l\'utilisateur sélectionné.')}
-                    </p>
+                <div className="flex flex-col gap-2 md:w-72">
+                  <Badge variant={user.is_superuser ? 'primary' : user.profile?.role === 'COMPTABLE' ? 'secondary' : user.profile?.role === 'CAISSIER' ? 'accent' : 'ghost'} size="sm">
+                    {user.is_superuser 
+                      ? t('badges.pharmacist') 
+                      : user.profile?.role === 'COMPTABLE'
+                          ? t('roles.accountant', 'COMPTABLE')
+                      : user.profile?.role === 'CAISSIER' 
+                          ? t('roles.cashier') 
+                          : t('roles.seller')}
+                  </Badge>
+                  <div className="flex flex-wrap gap-1">
+                    {user.is_superuser ? (
+                      <Badge variant="primary" size="sm">{t('badges.full_access')}</Badge>
+                    ) : (() => {
+                      const allowedMenus = user.profile?.allowed_menus || [];
+                      const allKeys = getAllMenuKeys();
+                      // If they have all keys (or all but a few), show full access
+                      const isFullAccess = allowedMenus.length >= allKeys.length - 2;
+                      
+                      if (isFullAccess && allowedMenus.length > 0) {
+                        return (
+                          <Badge variant="primary" size="sm">
+                            {t('badges.full_access', 'Accès complet')}
+                          </Badge>
+                        );
+                      }
+                      
+                      const limit = 4;
+                      const visibleMenus = allowedMenus.slice(0, limit);
+                      const hiddenCount = allowedMenus.length - limit;
+                      
+                      return (
+                        <>
+                          {visibleMenus.map(menu => (
+                            <Badge key={menu} variant="outline" size="sm">
+                              {getMenuLabel(menu, t)}
+                            </Badge>
+                          ))}
+                          {hiddenCount > 0 && (
+                            <Badge 
+                              variant="ghost" 
+                              size="sm"
+                              title={allowedMenus.slice(limit).map(m => getMenuLabel(m, t)).join(', ')}
+                            >
+                              +{hiddenCount} {t('common:others', 'autres')}
+                            </Badge>
+                          )}
+                          {allowedMenus.length === 0 && (
+                            <Badge variant="error" size="sm">{t('badges.no_access')}</Badge>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
-                )}
+                </div>
+
+                <div className="flex gap-2">
+                  {user.profile?.can_cash_out && (
+                    <Badge variant="success" size="sm" title={t('permissions.cash_out')} aria-label={t('permissions.cash_out')}>
+                      <Coins className="h-3 w-3" />
+                    </Badge>
+                  )}
+                  {user.profile?.can_sell_negative_stock && (
+                    <Badge variant="warning" size="sm" title={t('permissions.negative_stock')} aria-label={t('permissions.negative_stock')}>
+                      <Zap className="h-3 w-3" />
+                    </Badge>
+                  )}
+                  {user.profile?.can_validate_sales && (
+                    <Badge variant="primary" size="sm" title={t('permissions.can_validate_sales')} aria-label={t('permissions.can_validate_sales')}>
+                      <CheckCircle className="h-3 w-3" />
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-2 md:ml-auto">
+                  <Button variant="ghost" size="sm" leftIcon={<Pencil className="h-4 w-4" />} onClick={() => handleOpenModal(user)}>
+                    {t('actions.edit')}
+                  </Button>
+                  {currentUser?.username !== user.username && (
+                    <Button variant="ghost" size="sm" leftIcon={<Trash2 className="h-4 w-4" />} className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(user.id, user.username)}>
+                      {t('actions.deactivate', 'Désactiver')}
+                    </Button>
+                  )}
+                </div>
               </div>
+            </Card>
+          );
+          return acc;
+        }, [])}
+      </div>
 
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] p-0 grid-rows-[auto_1fr]">
+          <DialogHeader className="p-6 pb-2 border-b border-base-200">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <User className="h-5 w-5" />
+              </div>
+              {editingUser ? t('modal.edit_title') : t('modal.new_title')}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="flex flex-col min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
+              <Tabs defaultValue="informations" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="informations">{t('modal.tabs.information')}</TabsTrigger>
+                  <TabsTrigger value="menus">{t('modal.tabs.menus')}</TabsTrigger>
+                  <TabsTrigger value="permissions">{t('modal.tabs.permissions')}</TabsTrigger>
+                </TabsList>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 border-l-2 border-purple-500 pl-3 bg-purple-50 py-1 rounded-r-lg">
-                  <h4 className="font-bold text-xs uppercase tracking-widest text-purple-600">{t('modal.authorized_menus')}</h4>
-                </div>
+                <TabsContent value="informations" className="space-y-6">
+                  <Card variant="bordered" padding="md">
+                    <div className="flex items-center gap-2 mb-4 border-l-2 border-primary pl-3">
+                      <h4 className="font-bold text-xs uppercase tracking-widest text-primary">{t('modal.basic_info')}</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input 
+                        label={t('form.username')}
+                        icon={<User size={16} />}
+                        value={formData.username}
+                        onChange={e => setFormData({...formData, username: e.target.value})}
+                        required
+                      />
+                      <Input 
+                        label={t('form.email')}
+                        type="email"
+                        icon={<Mail size={16} />}
+                        value={formData.email}
+                        onChange={e => setFormData({...formData, email: e.target.value})}
+                      />
+                      <Input 
+                        label={t('form.first_name')}
+                        value={formData.first_name}
+                        onChange={e => setFormData({...formData, first_name: e.target.value})}
+                      />
+                      <Input 
+                        label={t('form.last_name')}
+                        value={formData.last_name}
+                        onChange={e => setFormData({...formData, last_name: e.target.value})}
+                      />
+                    </div>
+                  </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {MENU_HIERARCHY.map(menu => {
+                  <Card variant="bordered" padding="md">
+                    <div className="flex items-center gap-2 mb-4 border-l-2 border-primary pl-3">
+                      <h4 className="font-bold text-xs uppercase tracking-widest text-primary">{t('form.role')}</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input 
+                        label={t('form.password')}
+                        type="password"
+                        icon={<Lock size={16} />}
+                        value={formData.password}
+                        onChange={e => setFormData({...formData, password: e.target.value})}
+                        placeholder={editingUser ? t('form.password_placeholder_edit') : ''}
+                      />
+                      <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="user-role-select">{t('form.role')}</Label>
+                        <Select
+                          id="user-role-select"
+                          value={formData.role}
+                          onChange={e => handleRoleChange(e.target.value)}
+                        >
+                          {ROLES.map(role => (
+                            <option key={role.value} value={role.value}>{t(role.labelKey)}</option>
+                          ))}
+                        </Select>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {!editingUser && (
+                    <Card variant="default" padding="md" className="bg-primary/5 border-primary/20">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Copy className="h-4 w-4 text-primary" />
+                        <h4 className="font-bold text-xs uppercase tracking-wider text-primary">{t('form.copy_permissions', 'Copier les droits d\'un utilisateur')}</h4>
+                      </div>
+                      <div className="flex gap-2">
+                        <Select
+                          aria-label={t('form.copy_permissions', 'Copier les droits d\'un utilisateur')}
+                          value={copyFromUserId}
+                          onChange={e => setCopyFromUserId(e.target.value ? Number(e.target.value) : '')}
+                          containerClassName="flex-1"
+                        >
+                          <option value="">{t('form.select_user', 'Sélectionner un utilisateur...')}</option>
+                          {users.flatMap(user => user.is_active ? [(
+                            <option key={user.id} value={String(user.id)}>
+                              {user.username} ({user.profile?.role || (user.is_superuser ? 'PHARMACIEN' : 'VENDEUR')})
+                            </option>
+                          )] : [])}
+                        </Select>
+                        <Button
+                          type="button"
+                          onClick={() => handleCopyPermissions(copyFromUserId)}
+                          disabled={!copyFromUserId}
+                          leftIcon={<Copy className="h-4 w-4" />}
+                        >
+                          {t('form.copy_btn', 'Copier')}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-base-content/60 mt-2 italic">
+                        {t('form.copy_help', 'Copie tous les droits, menus autorisés et permissions spéciales de l\'utilisateur sélectionné.')}
+                      </p>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="menus" className="space-y-4">
+                  <div className="flex items-center gap-2 border-l-2 border-secondary pl-3 bg-secondary/10 py-1 rounded-r-lg">
+                    <h4 className="font-bold text-xs uppercase tracking-widest text-secondary">{t('modal.authorized_menus')}</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {MENU_HIERARCHY.map(menu => {
                       const allowedSet = new Set(formData.allowed_menus);
                       const parentLabel = t(menu.labelKey);
                       const isParentChecked = allowedSet.has(menu.key);
                       const indeterminate = !isParentChecked && menu.submenus?.some(sub => allowedSet.has(sub.key));
 
                       return (
-                        <div key={menu.key} className={`bg-slate-50 rounded-xl border border-slate-200 overflow-hidden ${menu.submenus && menu.submenus.length > 0 ? 'flex flex-col h-full' : ''}`}>
-                           <div className="bg-slate-100 p-3 flex-none border-b border-slate-200">
-                             <label className="flex items-center cursor-pointer gap-3">
-                               <input 
-                                 type="checkbox" 
-                                 className="size-4 rounded border-slate-300 accent-blue-600 shrink-0 cursor-pointer"
-                                 checked={isParentChecked || indeterminate}
-                                 onChange={() => handleMenuToggle(menu.key, menu.submenus)}
-                                 disabled={formData.is_superuser}
-                               />
-                               <span className={`font-bold text-sm select-none ${formData.is_superuser ? 'text-slate-400' : 'text-slate-700'}`}>{parentLabel}</span>
-                             </label>
-                           </div>
-                           
-                           {menu.submenus && menu.submenus.length > 0 && (
-                               <div className="p-3 grid grid-cols-1 gap-1.5 flex-1 bg-white">
-                                  {menu.submenus.map(sub => {
-                                     const subLabel = t(sub.labelKey);
-                                     return (
-                                        <div key={sub.key} className="flex items-start transition-all py-0.5 group">
-                                          <Checkbox 
-                                            size="xs"
-                                            color="primary"
-                                            checked={allowedSet.has(sub.key) || allowedSet.has(menu.key)}
-                                            onChange={() => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
-                                            disabled={formData.is_superuser}
-                                            label={subLabel}
-                                          />
-                                        </div>
-                                     );
-                                  })}
-                               </div>
-                           )}
-                        </div>
-                   )})}
-                </div>
-                {formData.is_superuser && (
-                  <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm italic flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 size-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>{t('modal.admin_note')}</span>
+                        <Card key={menu.key} variant="default" padding="sm" className={`${menu.submenus && menu.submenus.length > 0 ? 'flex flex-col h-full' : ''}`}>
+                          <div className="bg-base-200/50 p-3 flex-none border-b border-base-200 rounded-t-lg">
+                            <Checkbox
+                              checked={isParentChecked || indeterminate}
+                              onChange={() => handleMenuToggle(menu.key, menu.submenus)}
+                              disabled={formData.is_superuser}
+                              label={parentLabel}
+                            />
+                          </div>
+                          
+                          {menu.submenus && menu.submenus.length > 0 && (
+                            <div className="p-3 grid grid-cols-1 gap-1.5 flex-1">
+                              {menu.submenus.map(sub => {
+                                const subLabel = t(sub.labelKey);
+                                return (
+                                  <div key={sub.key} className="flex items-start transition-all py-0.5 group">
+                                    <Checkbox 
+                                      size="xs"
+                                      color="primary"
+                                      checked={allowedSet.has(sub.key) || allowedSet.has(menu.key)}
+                                      onChange={() => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
+                                      disabled={formData.is_superuser}
+                                      label={subLabel}
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </Card>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 border-l-2 border-emerald-500 pl-3 bg-emerald-50 py-1 rounded-r-lg">
-                      <h4 className="font-bold text-xs uppercase tracking-widest text-emerald-600">{t('modal.special_permissions')}</h4>
+                  {formData.is_superuser && (
+                    <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm italic flex items-center gap-2">
+                      <Info className="h-4 w-4 shrink-0" />
+                      <span>{t('modal.admin_note')}</span>
                     </div>
+                  )}
+                </TabsContent>
 
-                    <div className="grid grid-cols-1 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                      {PERMISSIONS_META.filter(p => p.group === 'operations').map(p => {
-                        if (p.key === 'can_cash_out') {
-                          return (
-                            <label key={p.key} className="flex cursor-pointer justify-start gap-4 p-2 bg-white rounded-lg border border-slate-200 hover:border-emerald-300 transition-all shadow-sm group">
-                              <input
-                                type="checkbox"
-                                className="size-4 rounded border-slate-300 accent-emerald-500 cursor-pointer"
-                                checked={formData[p.key]}
-                                onChange={e => setFormData({ ...formData, [p.key]: e.target.checked })}
-                                disabled={formData.is_superuser || formData.role === 'VENDEUR'}
-                              />
-                              <div className="flex flex-col">
-                                <span className="font-bold text-xs group-hover:text-emerald-600 transition-colors">{t(p.labelKey)}</span>
-                                {p.descKey && <span className="text-[10px] opacity-60 leading-none mt-0.5">{t(p.descKey)}</span>}
+                <TabsContent value="permissions" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card variant="default" padding="md">
+                      <div className="flex items-center gap-2 mb-4 border-l-2 border-success pl-3 bg-success/10 py-1 rounded-r-lg">
+                        <h4 className="font-bold text-xs uppercase tracking-widest text-success">{t('modal.special_permissions')}</h4>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3">
+                        {PERMISSIONS_META.filter(p => p.group === 'operations').map(p => {
+                          if (p.key === 'can_cash_out') {
+                            return (
+                              <div key={p.key} className="flex cursor-pointer justify-start gap-4 p-2 bg-base-100 rounded-lg border border-base-300 hover:border-success/50 transition-all shadow-sm group">
+                                <Checkbox
+                                  checked={formData[p.key]}
+                                  onChange={checked => setFormData({ ...formData, [p.key]: checked })}
+                                  disabled={formData.is_superuser || formData.role === 'VENDEUR'}
+                                  color="success"
+                                  size="sm"
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-xs group-hover:text-success transition-colors">{t(p.labelKey)}</span>
+                                  {p.descKey && <span className="text-[10px] opacity-60 leading-none mt-0.5">{t(p.descKey)}</span>}
+                                </div>
                               </div>
-                            </label>
+                            );
+                          }
+                          return (
+                            <Checkbox
+                              key={p.key}
+                              size="xs"
+                              color={checkboxColor(p.color)}
+                              checked={formData[p.key]}
+                              onChange={checked => setFormData({ ...formData, [p.key]: checked })}
+                              label={t(p.labelKey)}
+                              className={permissionClass(p.color)}
+                            />
                           );
-                        }
-                        return (
+                        })}
+
+                        <div className="flex flex-col gap-1 px-2 mt-1">
+                          <Label htmlFor="max-discount-rate">{t('form.max_discount')}</Label>
+                          <Input
+                            id="max-discount-rate"
+                            type="number"
+                            value={formData.max_discount_rate}
+                            onChange={e => setFormData({...formData, max_discount_rate: parseInt(e.target.value) || 0})}
+                            size="sm"
+                          />
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card variant="default" padding="md">
+                      <div className="flex items-center gap-2 mb-4 border-l-2 border-error pl-3 bg-error/10 py-1 rounded-r-lg">
+                        <h4 className="font-bold text-xs uppercase tracking-widest text-error">{t('modal.security_sudo')}</h4>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {PERMISSIONS_META.filter(p => p.group === 'sudo').map(p => (
                           <Checkbox
                             key={p.key}
                             size="xs"
@@ -857,53 +862,25 @@ export default function GestionUtilisateurs() {
                             label={t(p.labelKey)}
                             className={permissionClass(p.color)}
                           />
-                        );
-                      })}
-
-                      <div className="flex flex-col gap-1 px-2 mt-1">
-                        <label htmlFor="max-discount-rate" className="flex flex-col gap-0.5 py-1">
-                          <span className="text-[10px] font-bold text-slate-400">{t('form.max_discount')}</span>
-                        </label>
-                        <input
-                          id="max-discount-rate"
-                          type="number"
-                          className="w-full rounded-xl border border-slate-200 bg-white h-8 px-3 text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                          value={formData.max_discount_rate}
-                          onChange={e => setFormData({...formData, max_discount_rate: parseInt(e.target.value) || 0})}
-                        />
+                        ))}
                       </div>
-                    </div>
+                    </Card>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 border-l-2 border-red-500 pl-3 bg-red-50 py-1 rounded-r-lg">
-                      <h4 className="font-bold text-xs uppercase tracking-widest text-red-500">{t('modal.security_sudo')}</h4>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                      {PERMISSIONS_META.filter(p => p.group === 'sudo').map(p => (
-                        <Checkbox
-                          key={p.key}
-                          size="xs"
-                          color={checkboxColor(p.color)}
-                          checked={formData[p.key]}
-                          onChange={checked => setFormData({ ...formData, [p.key]: checked })}
-                          label={t(p.labelKey)}
-                          className={permissionClass(p.color)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-              </div>
-            </form>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3 flex-none">
-              <button type="button" className="inline-flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors" onClick={() => setModalOpen(false)}>{t('common:cancel')}</button>
-              <button type="submit" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} className="inline-flex items-center gap-1.5 px-10 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200">{t('common:save')}</button>
+                </TabsContent>
+              </Tabs>
             </div>
-          </div>
-        </div>
-      )}
+
+            <DialogFooter className="p-4 border-t border-base-200">
+              <Button type="button" variant="ghost" onClick={() => setModalOpen(false)} leftIcon={<X className="h-4 w-4" />}>
+                {t('common:cancel')}
+              </Button>
+              <Button type="submit" leftIcon={<Save className="h-4 w-4" />}>
+                {t('common:save')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <PasswordConfirmModal
         isOpen={isPasswordModalOpen}

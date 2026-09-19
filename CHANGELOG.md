@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-09-19 — 🎨 Migration de `GestionUtilisateurs` vers shadcn/ui
+
+### Objectif
+
+- Remplacer les éléments graphiques maison (modale en `<div>` brute, table HTML
+  native, inputs natifs, checkboxes inline, sélecteurs natifs) par les
+  composants `shadcn/ui` du projet.
+- Conserver intégralement la logique métier, le state, les handlers, les types,
+  `PERMISSIONS_META` et les appels API.
+
+### Changements
+
+- Page liste : remplacement de la `<table>` par une grille de `Card`, utilisation
+  de `Button` pour les actions, de `Badge` pour le rôle, les menus autorisés et
+  les permissions spéciales, et des icônes `lucide-react` à la place des SVG
+  inline.
+- Modale création/édition : remplacement de la modale maison par `Dialog` +
+  `DialogContent` + `DialogHeader`/`DialogTitle` + `DialogFooter`.
+- Organisation du contenu de la modale en trois onglets `Tabs` :
+  *Informations*, *Menus* et *Permissions*.
+- Remplacement des `<select>` natifs par le composant `Select` et des `<input>`
+  basiques par `Input` + `Label`.
+- Utilisation de `Card` pour encadrer les groupes de permissions et les blocs
+  d'informations.
+- Conservation du champ `max_discount_rate`, du sélecteur "Copier les droits"
+  et du flux de désactivation via `useConfirm` puis `PasswordConfirmModal`.
+
+### Vérifications
+
+- `npx tsc --noEmit` : à lancer (agent en arrière-plan, commande non exécutée
+  automatiquement).
+- `npm run build` : à lancer.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/GestionUtilisateurs.tsx`
+- `frontend/frontend/public/locales/fr/users.json`
+- `frontend/frontend/public/locales/en/users.json`
+
+---
+
 ## 2026-09-19 — 🛠️ Refactor des permissions utilisateurs + comptes terminaux
 
 ### Diagnostic

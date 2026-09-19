@@ -68,7 +68,12 @@
         "authorized_menus": "Menus Autorisés",
         "admin_note": "Un administrateur a accès à tous les menus par défaut.",
         "special_permissions": "Permissions Spéciales & Ventes",
-        "security_sudo": "Sécurité & Sudo"
+        "security_sudo": "Sécurité & Sudo",
+        "tabs": {
+            "information": "Informations",
+            "menus": "Menus",
+            "permissions": "Permissions"
+        }
     },
     "permissions": {
         "cash_out": "Peut Encaisser",
