@@ -108,7 +108,7 @@ export default defineConfig({
           // Caisse & cash register
           'feature-caisse': ['./src/components/CaisseCentralisee', './src/components/JournalCaisse'],
           // Settings & admin
-          'feature-settings': ['./src/components/settings/PharmacySettingsForm', './src/components/GestionUtilisateurs', './src/components/SystemAdmin'],
+          'feature-settings': ['./src/components/settings/PharmacySettingsForm', './src/components/users/GestionUtilisateurs', './src/components/SystemAdmin'],
           // Dashboard
           'feature-dashboard': ['./src/components/DashboardManagerShadcn', './src/components/DashboardShadcn'],
           // Produits & facturation (pages principales mais lazy-loaded)
