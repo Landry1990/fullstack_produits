@@ -1,7 +1,8 @@
 import useOmnisearch from '../../hooks/useOmnisearch';
 import OmnisearchResults from '../omnisearch/OmnisearchResults';
 import OmnisearchPreview from '../omnisearch/OmnisearchPreview';
-import { Command, CommandInput, CommandSeparator } from '../shadcn/command';
+import { Command } from '../shadcn/command';
+import { Command as CommandPrimitive } from 'cmdk';
 import { Dialog, DialogContent, DialogTitle } from '../shadcn/dialog';
 import { Badge } from '../shadcn/badge';
 import { Search } from 'lucide-react';
@@ -42,23 +43,26 @@ export default function Omnisearch() {
           onValueChange={setActiveValue}
           className="flex flex-col h-full w-full rounded-none bg-white"
         >
-          <div className="flex items-center border-b border-slate-200 px-6" cmdk-input-wrapper="">
-            <Search className="mr-3 size-5 shrink-0 text-slate-400" />
-            <CommandInput
-              value={search}
-              onValueChange={setSearch}
-              autoFocus
-              placeholder={t('omnisearch.placeholder', 'Rechercher (produits, clients, navigation) …')}
-              className="h-16 px-0 text-lg border-0 focus-visible:ring-0"
-            />
-            <Badge variant="outline" className="ml-3 shrink-0 text-[10px] font-bold tracking-wider text-slate-400">
-              ESC
-            </Badge>
+          <div className="px-4 pt-4 pb-3">
+            <div
+              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 transition-all focus-within:border-blue-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10"
+              cmdk-input-wrapper=""
+            >
+              <Search className="size-4.5 shrink-0 text-slate-400" />
+              <CommandPrimitive.Input
+                value={search}
+                onValueChange={setSearch}
+                autoFocus
+                placeholder={t('omnisearch.placeholder', 'Rechercher (produits, clients, navigation) …')}
+                className="h-12 w-full bg-transparent text-base text-slate-800 outline-none placeholder:text-slate-400"
+              />
+              <Badge variant="outline" className="shrink-0 text-[10px] font-bold tracking-wider text-slate-400">
+                ESC
+              </Badge>
+            </div>
           </div>
 
-          <CommandSeparator />
-
-          <div className="flex min-h-[320px] max-h-[65vh]">
+          <div className="flex min-h-[320px] max-h-[65vh] border-t border-slate-100">
             <div className="w-full md:w-[60%] flex flex-col border-r border-slate-200">
               <OmnisearchResults
                 search={search}
