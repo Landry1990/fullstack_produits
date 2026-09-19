@@ -73,7 +73,8 @@
             "information": "Information",
             "menus": "Menus",
             "permissions": "Permissions"
-        }
+        },
+        "superuser_permissions_note": "The superuser implicitly has all permissions."
     },
     "permissions": {
         "cash_out": "Can Cash Out",
