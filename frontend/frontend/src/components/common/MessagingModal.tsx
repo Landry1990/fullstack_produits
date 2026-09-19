@@ -27,6 +27,7 @@ export default function MessagingModal({ isOpen, onClose, currentUser, onMessage
       subtitle={t('subtitle')}
       icon={<MessageSquare className="text-blue-600" />}
       maxWidth="max-w-5xl"
+      className="h-[calc(100dvh-2rem)] md:h-[min(760px,90vh)]"
     >
       <MessagingCenter currentUser={currentUser} isOpen={isOpen} onMessageRead={onMessageRead} />
     </PremiumModal>,

@@ -2,6 +2,152 @@
 
 ---
 
+## 2026-09-19 — 🟠 Badge stock faible étendu en facturation
+
+### Facturation
+
+- Le badge « Stock faible » existant apparaît désormais pour tout produit dont le
+  stock minimum auto-calculé est strictement positif et dont le stock courant est
+  inférieur ou égal à ce seuil.
+- Les stocks nuls ou négatifs sont maintenant inclus dans cette indication, en plus
+  de leur traitement habituel de rupture ou de vente en stock négatif.
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+- `npm run build` : réussi, avertissements de chunks préexistants uniquement.
+- `git diff --check` ciblé : propre.
+
+### Fichier modifié
+
+- `frontend/frontend/src/components/common/ProductSearch/index.tsx`
+
+---
+
+## 2026-09-19 — 🧾 Ticket de Caisse centrale aligné sur les paramètres
+
+### Diagnostic
+
+- Les coordonnées affichées provenaient bien de `PharmacySettings` et correspondaient
+  aux valeurs actuellement enregistrées en base.
+- Le nom de pharmacie provient de la licence et remplace volontairement le nom par défaut.
+- Le champ configurable `receipt_header` n'était jamais rendu sur le ticket.
+- Les textes « À bientôt dans votre pharmacie » et « ZENITH POS SYSTEM » étaient fixes.
+
+### Correction
+
+- Affichage du champ configurable d'en-tête sous les coordonnées de la pharmacie.
+- Conservation des retours à la ligne dans l'en-tête et le pied configurables.
+- Suppression du message secondaire codé en dur ; signature fixe `ZENITH POS SYSTEM` conservée à la demande.
+- Centrage robuste du trait sous le nom avec largeur et marges automatiques explicites,
+  y compris dans le document imprimé.
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+- `npm run build` : réussi, avertissements de chunks préexistants uniquement.
+- `git diff --check` ciblé : propre.
+
+### Fichier modifié
+
+- `frontend/frontend/src/components/printing/TicketTemplate.tsx`
+
+---
+
+## 2026-09-19 — ⚡ Réception plus rapide des messages internes
+
+### Temps de rafraîchissement
+
+- Compteur global des messages non lus interrogé toutes les 5 secondes au lieu de 30.
+- Liste active du modal rafraîchie toutes les 5 secondes uniquement lorsque la
+  messagerie est ouverte.
+- Seule la page paginée active est rechargée ; utilisateurs et modèles restent en cache.
+- Le rafraîchissement au retour de focus React Query reste conservé.
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+- `npm run build` : réussi, avertissements de chunks préexistants uniquement.
+- `git diff --check` ciblé : propre.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/common/UserHeader.tsx`
+- `frontend/frontend/src/components/common/messaging/useMessaging.ts`
+
+---
+
+## 2026-09-19 — 🪟 Dimensions stables du modal de messagerie
+
+### UI/UX
+
+- Hauteur du modal de messagerie fixée indépendamment de l'onglet actif.
+- Hauteur mobile adaptée à la fenêtre visible avec `100dvh` et marges conservées.
+- Hauteur desktop plafonnée à 760 px ou 90 % de la hauteur de l'écran.
+- Le contenu interne continue de défiler sans redimensionner la fenêtre.
+
+### Vérifications
+
+- `npx tsc --noEmit` : propre.
+- `npm run build` : réussi, avertissements de chunks préexistants uniquement.
+- `git diff --check` ciblé : propre.
+
+### Fichier modifié
+
+- `frontend/frontend/src/components/common/MessagingModal.tsx`
+
+---
+
+## 2026-09-19 — 🐛 Correction de l'envoi des messages sans pièce jointe
+
+### Problème
+
+Le frontend envoyait explicitement `attachment: null` lorsqu'aucun fichier n'était
+joint. Le validateur backend tentait alors d'accéder au nom de ce fichier nul et
+retournait une erreur HTTP 500.
+
+### Correction
+
+- Le validateur de pièce jointe accepte désormais immédiatement la valeur `null`.
+- Ajout d'un test reproduisant exactement le payload JSON envoyé par le frontend.
+
+### Vérifications
+
+- Suite de sécurité messagerie : **33 tests réussis**.
+- Base de test créée et détruite normalement.
+
+### Fichiers modifiés
+
+- `backend/api/serializers/communication.py`
+- `backend/api/tests/test_internal_messaging_security.py`
+
+---
+
+## 2026-09-19 — 🧹 Suppression des copies backend imbriquées
+
+### Nettoyage structurel
+
+- Suppression complète du dossier dupliqué `backend/api/api/` après confirmation
+  explicite, soit **1 708 fichiers suivis par Git** répartis sur plusieurs niveaux
+  `api/api/api`.
+- Ces copies historiques n'étaient référencées par aucun import `api.api` et ne
+  participaient ni au chargement Django, ni aux migrations actives.
+- Le package actif `backend/api/` et ses migrations ont été intégralement conservés.
+
+### Vérifications
+
+- Dossier `backend/api/api/` absent après suppression.
+- `python manage.py check` : propre.
+- Plan des migrations `api` actif et complet jusqu'à `0254`.
+- Tests commandes, clôture et messagerie : **41 tests réussis**.
+- Base de test créée et détruite normalement.
+
+### Fichiers supprimés
+
+- `backend/api/api/` et l'ensemble de ses sous-dossiers dupliqués.
+
+---
+
 ## 2026-09-18 — 🧹 Suppression du bon de réception PDF backend obsolète
 
 ### Nettoyage
