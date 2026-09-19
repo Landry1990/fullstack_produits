@@ -66,6 +66,29 @@ export default function OmnisearchResults({
     'flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100 text-slate-800 aria-selected:bg-blue-50 aria-selected:text-blue-600 transition-all group';
   const itemClassNav =
     'flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100 text-slate-800 aria-selected:bg-blue-50/50 aria-selected:text-blue-600 transition-all opacity-80 aria-selected:opacity-100';
+  const tileClass =
+    'flex flex-col items-start gap-2.5 p-3 rounded-xl border border-slate-200/80 bg-white cursor-pointer aria-selected:border-blue-300 aria-selected:bg-blue-50/70 aria-selected:shadow-sm transition-all';
+  const chipClass = 'size-8 rounded-lg flex items-center justify-center shrink-0';
+  const navChip = 'size-7 rounded-lg flex items-center justify-center mr-3 shrink-0 transition-colors';
+
+  const quickActions = [
+    { action: 'NEW_SALE', value: 'action-new-sale', icon: Zap, chip: 'bg-amber-100 text-amber-600', label: t('omnisearch.actions.new_sale'), desc: t('omnisearch.actions.new_sale_desc') },
+    { action: 'NEW_PRODUCT', value: 'action-new-product', icon: PlusCircle, chip: 'bg-cyan-100 text-cyan-600', label: t('omnisearch.actions.new_product'), desc: t('omnisearch.actions.new_product_desc') },
+    { action: 'NEW_CLIENT', value: 'action-new-client', icon: Users, chip: 'bg-emerald-100 text-emerald-600', label: t('omnisearch.actions.new_client'), desc: t('omnisearch.actions.new_client_desc') },
+    { action: 'NEW_ORDER', value: 'action-new-order', icon: ShoppingCart, chip: 'bg-indigo-100 text-indigo-600', label: t('omnisearch.actions.new_order'), desc: t('omnisearch.actions.new_order_desc') },
+    { action: 'OPEN_PRODUCTS', value: 'action-open-products', icon: Package, chip: 'bg-blue-100 text-blue-600', label: t('omnisearch.actions.open_products'), desc: t('omnisearch.actions.open_products_desc') },
+    { action: 'OPEN_PERIMES', value: 'action-open-perimes', icon: AlertTriangle, chip: 'bg-red-100 text-red-600', label: t('omnisearch.actions.open_perimes'), desc: t('omnisearch.actions.open_perimes_desc') },
+    { action: 'OPEN_CADENCIER', value: 'action-open-cadencier', icon: TrendingUp, chip: 'bg-orange-100 text-orange-600', label: t('omnisearch.actions.open_cadencier'), desc: t('omnisearch.actions.open_cadencier_desc') },
+  ];
+
+  const navLinks = [
+    { path: '/app/rapports-mensuels', value: 'nav-rapport-mensuel', icon: BarChart3, chip: 'bg-emerald-50 text-emerald-500 group-aria-selected:bg-emerald-100', label: t('omnisearch.nav.monthly_report') },
+    { path: '/app/facturation', value: 'nav-facturation', icon: WalletCards, chip: 'bg-blue-50 text-blue-500 group-aria-selected:bg-blue-100', label: t('omnisearch.nav.billing') },
+    { path: '/app/ventes', value: 'nav-ventes', icon: FileText, chip: 'bg-violet-50 text-violet-500 group-aria-selected:bg-violet-100', label: t('omnisearch.nav.sales_list') },
+    { path: '/app/journal-caisse', value: 'nav-journal-caisse', icon: ClipboardList, chip: 'bg-amber-50 text-amber-500 group-aria-selected:bg-amber-100', label: t('omnisearch.nav.cash_journal') },
+    { path: '/app/clients', value: 'nav-clients', icon: Users, chip: 'bg-cyan-50 text-cyan-500 group-aria-selected:bg-cyan-100', label: t('omnisearch.nav.clients') },
+    { path: '/app/dashboard', value: 'nav-dashboard', icon: LayoutDashboard, chip: 'bg-slate-100 text-slate-500 group-aria-selected:bg-slate-200', label: t('omnisearch.nav.dashboard') },
+  ];
 
   return (
     <CommandList className="flex-1 overflow-y-auto p-2 cmdk-list">
@@ -82,37 +105,22 @@ export default function OmnisearchResults({
 
       {!search && (<>
         <CommandGroup
-          heading={t('omnisearch.groups.actions', '⚡ Actions Rapides')}
+          heading={t('omnisearch.groups.actions', 'Actions Rapides')}
           className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
-          <CommandItem onSelect={() => onSelectAction('NEW_SALE')} value="action-new-sale" className={itemClass}>
-            <Zap className="size-4 mr-3 text-amber-500 group-aria-selected:scale-110 transition-transform" />
-            <span className="font-bold">{t('omnisearch.actions.new_sale')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('NEW_PRODUCT')} value="action-new-product" className={itemClass}>
-            <PlusCircle className="size-4 mr-3 text-cyan-500 group-aria-selected:scale-110 transition-transform" />
-            <span className="font-bold">{t('omnisearch.actions.new_product')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('NEW_CLIENT')} value="action-new-client" className={itemClass}>
-            <PlusCircle className="size-4 mr-3 text-emerald-600 group-aria-selected:scale-110 transition-transform" />
-            <span className="font-bold">{t('omnisearch.actions.new_client')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('NEW_ORDER')} value="action-new-order" className={itemClass}>
-            <ShoppingCart className="size-4 mr-3 text-indigo-500 group-aria-selected:scale-110 transition-transform" />
-            <span className="font-bold">{t('omnisearch.actions.new_order')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('OPEN_PRODUCTS')} value="action-open-products" className={itemClass}>
-            <Package className="size-4 mr-3 text-emerald-500 group-aria-selected:scale-110 transition-transform" />
-            <span className="font-bold">{t('omnisearch.actions.open_products', 'Liste de Produits')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('OPEN_PERIMES')} value="action-open-perimes" className={itemClass}>
-            <AlertTriangle className="size-4 mr-3 text-red-500 group-aria-selected:scale-110 transition-transform" />
-            <span className="font-bold">{t('omnisearch.actions.open_perimes', 'Produits périmés')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectAction('OPEN_CADENCIER')} value="action-open-cadencier" className={itemClass}>
-            <TrendingUp className="size-4 mr-3 text-emerald-500 group-aria-selected:scale-110 transition-transform" />
-            <span className="font-bold">{t('omnisearch.actions.open_cadencier', 'Cadencier')}</span>
-          </CommandItem>
+          <div className="grid grid-cols-2 gap-2 px-1 pb-1">
+            {quickActions.map(({ action, value, icon: Icon, chip, label, desc }) => (
+              <CommandItem key={value} value={value} onSelect={() => onSelectAction(action)} className={tileClass}>
+                <div className={`${chipClass} ${chip}`}>
+                  <Icon className="size-4" />
+                </div>
+                <div className="flex flex-col items-start gap-0.5">
+                  <span className="text-xs font-bold text-slate-700 leading-tight">{label}</span>
+                  <span className="text-[10px] font-medium text-slate-400 leading-tight">{desc}</span>
+                </div>
+              </CommandItem>
+            ))}
+          </div>
         </CommandGroup>
         <CommandSeparator />
       </>)}
@@ -122,30 +130,14 @@ export default function OmnisearchResults({
           heading={t('omnisearch.groups.navigation')}
           className="text-[10px] font-black text-slate-400 pt-4 pb-1 px-3 uppercase tracking-[0.15em]"
         >
-          <CommandItem onSelect={() => onSelectLink('/app/rapports-mensuels')} value="nav-rapport-mensuel" className={itemClassNav}>
-            <BarChart3 className="size-4 mr-3 text-emerald-500" />
-            <span className="font-medium">{t('omnisearch.nav.monthly_report')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectLink('/app/facturation')} value="nav-facturation" className={itemClassNav}>
-            <WalletCards className="size-4 mr-3" />
-            <span className="font-medium">{t('omnisearch.nav.billing')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectLink('/app/ventes')} value="nav-ventes" className={itemClassNav}>
-            <FileText className="size-4 mr-3" />
-            <span className="font-medium">{t('omnisearch.nav.sales_list')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectLink('/app/journal-caisse')} value="nav-journal-caisse" className={itemClassNav}>
-            <ClipboardList className="size-4 mr-3" />
-            <span className="font-medium">{t('omnisearch.nav.cash_journal')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectLink('/app/clients')} value="nav-clients" className={itemClassNav}>
-            <Users className="size-4 mr-3" />
-            <span className="font-medium">{t('omnisearch.nav.clients')}</span>
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectLink('/app/dashboard')} value="nav-dashboard" className={itemClassNav}>
-            <LayoutDashboard className="size-4 mr-3" />
-            <span className="font-medium">{t('omnisearch.nav.dashboard')}</span>
-          </CommandItem>
+          {navLinks.map(({ path, value, icon: Icon, chip, label }) => (
+            <CommandItem key={value} value={value} onSelect={() => onSelectLink(path)} className={itemClassNav}>
+              <div className={`${navChip} ${chip}`}>
+                <Icon className="size-3.5" />
+              </div>
+              <span className="font-medium">{label}</span>
+            </CommandItem>
+          ))}
         </CommandGroup>
         <CommandSeparator />
       </>)}
