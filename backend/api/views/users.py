@@ -226,6 +226,14 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
                     {'detail': 'Seul un superuser peut modifier le flag is_superuser.'},
                     status=status.HTTP_403_FORBIDDEN
                 )
+        # Sécurité : un superuser ne peut pas être désactivé via l'API
+        if request.data.get('is_active') is False:
+            target = self.get_object()
+            if target.is_superuser:
+                return Response(
+                    {'detail': 'Un superutilisateur ne peut pas être désactivé.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
         response = super().partial_update(request, *args, **kwargs)
         return response
     
@@ -285,6 +293,11 @@ class UserViewSet(BaseViewSetConfig, viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.is_superuser:
+            return Response(
+                {'detail': 'Un superutilisateur ne peut pas être supprimé.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         user_id = instance.id
         username = instance.username
         
