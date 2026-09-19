@@ -73,7 +73,8 @@
             "information": "Informations",
             "menus": "Menus",
             "permissions": "Permissions"
-        }
+        },
+        "superuser_permissions_note": "Le superutilisateur possède implicitement tous les droits."
     },
     "permissions": {
         "cash_out": "Peut Encaisser",
