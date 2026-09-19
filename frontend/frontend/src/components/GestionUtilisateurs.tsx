@@ -24,31 +24,53 @@ interface User {
   profile: {
     role: string;
     allowed_menus: string[];
-    can_do_returns?: boolean;
-    can_sell_negative_stock?: boolean;
-    can_cash_out?: boolean;
-    can_delete_product?: boolean;
-    can_adjust_stock?: boolean;
-    can_delete_fournisseur?: boolean;
-    can_delete_commande?: boolean;
-    can_close_commande?: boolean;
-    can_generate_coupon?: boolean;
-    can_cancel_invoice?: boolean;
-    can_cancel_promis?: boolean;
-    can_manage_perimes?: boolean;
-    can_manage_avoirs?: boolean;
-    can_create_client_credit?: boolean;
-    can_manage_challenges?: boolean;
-    can_validate_zero_amount?: boolean;
-    can_validate_sales?: boolean;
-    can_modify_price?: boolean;
-    can_do_remise?: boolean;
-    can_modify_invoice?: boolean;
-    can_view_cash_sessions?: boolean;
-    can_view_cash_totals?: boolean;
     max_discount_rate?: string | number;
-  };
+  } & Partial<Record<PermissionKey, boolean>>;
 }
+
+const PERMISSIONS_META = [
+  { key: 'can_cash_out', labelKey: 'permissions.cash_out', descKey: 'permissions.cash_out_desc', group: 'operations', color: 'emerald' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: true, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_do_returns', labelKey: 'permissions.returns', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_sell_negative_stock', labelKey: 'permissions.negative_stock', group: 'operations', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_modify_price', labelKey: 'permissions.modify_price', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_do_remise', labelKey: 'permissions.modify_remise', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_generate_coupon', labelKey: 'permissions.generate_coupon', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_modify_invoice', labelKey: 'permissions.modify_invoice', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: true, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_view_cash_sessions', labelKey: 'permissions.view_cash_sessions', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_view_cash_totals', labelKey: 'permissions.view_cash_totals', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: true } },
+  { key: 'can_validate_sales', labelKey: 'permissions.can_validate_sales', group: 'operations', roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'is_terminal_account', labelKey: 'permissions.is_terminal_account', group: 'operations', roleDefaults: { PHARMACIEN: false, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_validate_zero_amount', labelKey: 'permissions.validate_zero_amount', group: 'sudo', color: 'error' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_cancel_invoice', labelKey: 'permissions.cancel_invoice', group: 'sudo', color: 'error' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_cancel_promis', labelKey: 'permissions.cancel_promis', group: 'sudo', color: 'error' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_delete_product', labelKey: 'permissions.delete_product', group: 'sudo', color: 'error' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_delete_fournisseur', labelKey: 'permissions.delete_fournisseur', group: 'sudo', color: 'error' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_adjust_stock', labelKey: 'permissions.adjust_stock', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_manage_perimes', labelKey: 'permissions.manage_perimes', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_manage_avoirs', labelKey: 'permissions.manage_avoirs', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_create_client_credit', labelKey: 'permissions.create_client_credit', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_manage_challenges', labelKey: 'permissions.manage_challenges', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_delete_commande', labelKey: 'permissions.delete_commande', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+  { key: 'can_close_commande', labelKey: 'permissions.close_commande', group: 'sudo', color: 'warning' as const, roleDefaults: { PHARMACIEN: true, CAISSIER: false, VENDEUR: false, COMPTABLE: false } },
+] as const;
+
+type PermissionKey = typeof PERMISSIONS_META[number]['key'];
+type Role = 'PHARMACIEN' | 'CAISSIER' | 'VENDEUR' | 'COMPTABLE';
+
+const permissionClass = (color?: 'emerald' | 'warning' | 'error') => {
+  const base = 'p-2 bg-white rounded-lg border';
+  switch (color) {
+    case 'emerald': return `${base} border-slate-200 text-emerald-600 font-medium`;
+    case 'warning': return `${base} border-amber-100 text-amber-600 font-medium`;
+    case 'error': return `${base} border-red-100 text-red-500 font-medium`;
+    default: return `${base} border-slate-200`;
+  }
+};
+
+const checkboxColor = (color?: 'emerald' | 'warning' | 'error') => {
+  if (color === 'emerald') return 'success';
+  return color;
+};
 
 const MENU_HIERARCHY_FALLBACK: MenuItem[] = [
   { key: 'dashboard', labelKey: 'sidebar:dashboard' },
@@ -186,7 +208,23 @@ export default function GestionUtilisateurs() {
   // (composant Corbeille.tsx + endpoint /api/corbeille/). Plus d'onglet local ici.
 
   // Form State
-  const [formData, setFormData] = useState({
+  type FormData = {
+    username: string;
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    role: Role | string;
+    is_superuser: boolean;
+    is_active: boolean;
+    allowed_menus: string[];
+    max_discount_rate: number;
+  } & Record<PermissionKey, boolean>;
+
+  const buildInitialPermissions = (role: Role): Record<PermissionKey, boolean> =>
+    Object.fromEntries(PERMISSIONS_META.map(p => [p.key, p.roleDefaults[role]])) as Record<PermissionKey, boolean>;
+
+  const INITIAL_FORM_DATA: FormData = {
     username: '',
     email: '',
     password: '',
@@ -195,31 +233,14 @@ export default function GestionUtilisateurs() {
     role: 'VENDEUR',
     is_superuser: false,
     is_active: true,
-    allowed_menus: [] as string[],
-    can_do_returns: false,
-    can_sell_negative_stock: false,
-    can_cash_out: false,
-    can_delete_product: false,
-    can_adjust_stock: false,
-    can_delete_fournisseur: false,
-    can_delete_commande: false,
-    can_close_commande: false,
-    can_generate_coupon: false,
-    can_cancel_invoice: false,
-    can_cancel_promis: false,
-    can_manage_perimes: false,
-    can_manage_avoirs: false,
-    can_create_client_credit: false,
-    can_manage_challenges: false,
-    can_validate_zero_amount: false,
-    can_validate_sales: false,
-    can_modify_price: false,
-    can_do_remise: false,
-    can_modify_invoice: false,
-    can_view_cash_sessions: false,
-    can_view_cash_totals: true,
+    allowed_menus: ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'],
+    ...buildInitialPermissions('VENDEUR'),
     max_discount_rate: 0,
-  });
+  };
+  // Preserve the legacy default: new sellers can see cash journal totals.
+  INITIAL_FORM_DATA.can_view_cash_totals = true;
+
+  const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
 
   useEffect(() => {
     fetchUsers();
@@ -247,135 +268,47 @@ export default function GestionUtilisateurs() {
 
     const role = sourceUser.profile?.role || (sourceUser.is_superuser ? 'PHARMACIEN' : 'VENDEUR');
 
-    setFormData(prev => ({
-      ...prev,
-      role: role,
-      is_superuser: sourceUser.is_superuser,
-      allowed_menus: sourceUser.profile?.allowed_menus || [],
-      can_do_returns: sourceUser.profile?.can_do_returns || false,
-      can_sell_negative_stock: sourceUser.profile?.can_sell_negative_stock || false,
-      can_cash_out: sourceUser.profile?.can_cash_out ?? false,
-      can_delete_product: sourceUser.profile?.can_delete_product || false,
-      can_adjust_stock: sourceUser.profile?.can_adjust_stock || false,
-      can_delete_fournisseur: sourceUser.profile?.can_delete_fournisseur || false,
-      can_delete_commande: sourceUser.profile?.can_delete_commande || false,
-      can_close_commande: sourceUser.profile?.can_close_commande || false,
-      can_generate_coupon: sourceUser.profile?.can_generate_coupon || false,
-      can_cancel_invoice: sourceUser.profile?.can_cancel_invoice || false,
-      can_cancel_promis: sourceUser.profile?.can_cancel_promis || false,
-      can_manage_perimes: sourceUser.profile?.can_manage_perimes || false,
-      can_manage_avoirs: sourceUser.profile?.can_manage_avoirs || false,
-      can_create_client_credit: sourceUser.profile?.can_create_client_credit || false,
-      can_manage_challenges: sourceUser.profile?.can_manage_challenges || false,
-      can_validate_zero_amount: sourceUser.profile?.can_validate_zero_amount || false,
-      can_validate_sales: sourceUser.profile?.can_validate_sales || false,
-      can_modify_price: sourceUser.profile?.can_modify_price || false,
-      can_do_remise: sourceUser.profile?.can_do_remise || false,
-      can_modify_invoice: sourceUser.profile?.can_modify_invoice || false,
-      can_view_cash_sessions: sourceUser.profile?.can_view_cash_sessions || false,
-      can_view_cash_totals: sourceUser.profile?.can_view_cash_totals ?? true,
-      max_discount_rate: Number(sourceUser.profile?.max_discount_rate || 0),
-    }));
+    setFormData(prev => {
+      const updates: Partial<FormData> = {
+        role,
+        is_superuser: sourceUser.is_superuser,
+        allowed_menus: sourceUser.profile?.allowed_menus || [],
+        max_discount_rate: Number(sourceUser.profile?.max_discount_rate || 0),
+      };
+      PERMISSIONS_META.forEach(p => {
+        (updates as Record<string, boolean>)[p.key] = sourceUser.profile?.[p.key] || false;
+      });
+      // Preserve the legacy copy default for cash totals.
+      updates.can_view_cash_totals = sourceUser.profile?.can_view_cash_totals ?? true;
+      return { ...prev, ...updates };
+    });
 
     gooeyToast.success(t('messages.permissions_copied', { username: sourceUser.username, defaultValue: `Droits copiés de ${sourceUser.username}` }));
   };
 
-  const handleRoleChange = (role: string, preserveMenus: boolean = false) => {
-    const updates: Record<string, unknown> = { role };
+  const ROLE_MENU_DEFAULTS: Record<Role, string[]> = {
+    PHARMACIEN: [], // placeholder, filled dynamically below
+    CAISSIER: ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'],
+    VENDEUR: ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'],
+    COMPTABLE: ['compta', 'compta_dashboard', 'compta_grand_livre', 'compta_balance', 'compta_resultat', 'compta_charges', 'compta_plan'],
+  };
 
-    if (role === 'PHARMACIEN') {
-      updates.is_superuser = true;
-      updates.can_cash_out = true;
-      updates.can_do_returns = true;
-      updates.can_sell_negative_stock = true;
-      updates.can_delete_product = true;
-      updates.can_adjust_stock = true;
-      updates.can_delete_fournisseur = true;
-      updates.can_delete_commande = true;
-      updates.can_close_commande = true;
-      updates.can_generate_coupon = true;
-      updates.can_cancel_invoice = true;
-      updates.can_cancel_promis = true;
-      updates.can_manage_perimes = true;
-      updates.can_manage_avoirs = true;
-      updates.can_create_client_credit = true;
-      updates.can_manage_challenges = true;
-      updates.can_validate_zero_amount = true;
-      updates.can_validate_sales = true;
-      updates.can_modify_price = true;
-      updates.can_do_remise = true;
-      updates.can_modify_invoice = true;
-      updates.can_view_cash_sessions = true;
-      updates.can_view_cash_totals = true;
-      updates.max_discount_rate = 100;
-      if (!preserveMenus) updates.allowed_menus = getAllMenuKeys();
-    } else if (role === 'CAISSIER') {
-      updates.is_superuser = false;
-      updates.can_cash_out = true;
-      updates.can_do_returns = false;
-      updates.can_sell_negative_stock = false;
-      updates.can_delete_product = false;
-      updates.can_adjust_stock = false;
-      updates.can_delete_fournisseur = false;
-      updates.can_delete_commande = false;
-      updates.can_close_commande = false;
-      updates.can_generate_coupon = false;
-      updates.can_modify_invoice = true;
-      updates.can_validate_sales = false;
-      updates.can_create_client_credit = false;
-      updates.can_manage_challenges = false;
-      updates.can_view_cash_totals = false;
-      if (!preserveMenus) updates.allowed_menus = ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'];
-    } else if (role === 'VENDEUR') {
-      updates.is_superuser = false;
-      updates.can_cash_out = false;
-      updates.can_do_returns = false;
-      updates.can_sell_negative_stock = false;
-      updates.can_delete_product = false;
-      updates.can_adjust_stock = false;
-      updates.can_delete_fournisseur = false;
-      updates.can_delete_commande = false;
-      updates.can_close_commande = false;
-      updates.can_generate_coupon = false;
-      updates.can_cancel_invoice = false;
-      updates.can_cancel_promis = false;
-      updates.can_manage_perimes = false;
-      updates.can_manage_avoirs = false;
-      updates.can_create_client_credit = false;
-      updates.can_manage_challenges = false;
-      updates.can_validate_zero_amount = false;
-      updates.can_validate_sales = false;
-      updates.can_modify_price = false;
-      updates.can_do_remise = false;
-      updates.can_modify_invoice = false;
-      updates.can_view_cash_totals = false;
-      updates.max_discount_rate = 0;
-      if (!preserveMenus) updates.allowed_menus = ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'];
-    } else if (role === 'COMPTABLE') {
-      updates.is_superuser = false;
-      updates.can_cash_out = false;
-      updates.can_do_returns = false;
-      updates.can_sell_negative_stock = false;
-      updates.can_delete_product = false;
-      updates.can_adjust_stock = false;
-      updates.can_delete_fournisseur = false;
-      updates.can_delete_commande = false;
-      updates.can_close_commande = false;
-      updates.can_generate_coupon = false;
-      updates.can_cancel_invoice = false;
-      updates.can_cancel_promis = false;
-      updates.can_manage_perimes = false;
-      updates.can_manage_avoirs = false;
-      updates.can_create_client_credit = false;
-      updates.can_manage_challenges = false;
-      updates.can_validate_zero_amount = false;
-      updates.can_validate_sales = false;
-      updates.can_modify_price = false;
-      updates.can_do_remise = false;
-      updates.can_modify_invoice = false;
-      updates.can_view_cash_totals = true;
-      updates.max_discount_rate = 0;
-      if (!preserveMenus) updates.allowed_menus = ['compta', 'compta_dashboard', 'compta_grand_livre', 'compta_balance', 'compta_resultat', 'compta_charges', 'compta_plan'];
+  const handleRoleChange = (role: string, preserveMenus: boolean = false) => {
+    if (!['PHARMACIEN', 'CAISSIER', 'VENDEUR', 'COMPTABLE'].includes(role)) return;
+
+    const typedRole = role as Role;
+    const updates: Partial<FormData> = {
+      role: typedRole,
+      is_superuser: typedRole === 'PHARMACIEN',
+      max_discount_rate: typedRole === 'PHARMACIEN' ? 100 : 0,
+    };
+
+    PERMISSIONS_META.forEach(p => {
+      (updates as Record<string, boolean>)[p.key] = p.roleDefaults[typedRole];
+    });
+
+    if (!preserveMenus) {
+      updates.allowed_menus = typedRole === 'PHARMACIEN' ? getAllMenuKeys() : ROLE_MENU_DEFAULTS[typedRole];
     }
 
     setFormData(prev => ({ ...prev, ...updates }));
@@ -389,7 +322,7 @@ export default function GestionUtilisateurs() {
       setEditingUser(user);
       const adminKeys = ['utilisateurs', 'user_sessions', 'audit', 'import_dci', 'maintenance', 'corbeille'];
       const cleanedMenus = (user.profile?.allowed_menus || []).filter(k => !adminKeys.includes(k));
-      setFormData({
+      const base: FormData = {
         username: user.username,
         email: user.email,
         password: '',
@@ -399,66 +332,18 @@ export default function GestionUtilisateurs() {
         is_superuser: user.is_superuser,
         is_active: user.is_active,
         allowed_menus: cleanedMenus,
-        can_do_returns: user.profile?.can_do_returns || false,
-        can_sell_negative_stock: user.profile?.can_sell_negative_stock || false,
-        can_cash_out: user.profile?.can_cash_out ?? false,
-        can_delete_product: user.profile?.can_delete_product || false,
-        can_adjust_stock: user.profile?.can_adjust_stock || false,
-        can_delete_fournisseur: user.profile?.can_delete_fournisseur || false,
-        can_delete_commande: user.profile?.can_delete_commande || false,
-        can_close_commande: user.profile?.can_close_commande || false,
-        can_generate_coupon: user.profile?.can_generate_coupon || false,
-        can_cancel_invoice: user.profile?.can_cancel_invoice || false,
-        can_cancel_promis: user.profile?.can_cancel_promis || false,
-        can_manage_perimes: user.profile?.can_manage_perimes || false,
-        can_manage_avoirs: user.profile?.can_manage_avoirs || false,
-        can_create_client_credit: user.profile?.can_create_client_credit || false,
-        can_manage_challenges: user.profile?.can_manage_challenges || false,
-        can_validate_zero_amount: user.profile?.can_validate_zero_amount || false,
-        can_validate_sales: user.profile?.can_validate_sales || false,
-        can_modify_price: user.profile?.can_modify_price || false,
-        can_do_remise: user.profile?.can_do_remise || false,
-        can_modify_invoice: user.profile?.can_modify_invoice || false,
-        can_view_cash_sessions: user.profile?.can_view_cash_sessions || false,
-        can_view_cash_totals: user.profile?.can_view_cash_totals ?? true,
         max_discount_rate: Number(user.profile?.max_discount_rate || 0),
+        ...buildInitialPermissions('VENDEUR'),
+      };
+      PERMISSIONS_META.forEach(p => {
+        base[p.key] = user.profile?.[p.key] || false;
       });
+      // Preserve legacy default for cash totals when not explicitly set.
+      base.can_view_cash_totals = user.profile?.can_view_cash_totals ?? true;
+      setFormData(base);
     } else {
       setEditingUser(null);
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        first_name: '',
-        last_name: '',
-        role: 'VENDEUR',
-        is_superuser: false,
-        is_active: true,
-        allowed_menus: ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'],
-        can_do_returns: false,
-        can_sell_negative_stock: false,
-        can_cash_out: false,
-        can_delete_product: false,
-        can_adjust_stock: false,
-        can_delete_fournisseur: false,
-        can_delete_commande: false,
-        can_close_commande: false,
-        can_generate_coupon: false,
-        can_cancel_invoice: false,
-        can_cancel_promis: false,
-        can_manage_perimes: false,
-        can_manage_avoirs: false,
-        can_create_client_credit: false,
-        can_manage_challenges: false,
-        can_validate_zero_amount: false,
-        can_validate_sales: false,
-        can_modify_price: false,
-        can_do_remise: false,
-        can_modify_invoice: false,
-        can_view_cash_sessions: false,
-        can_view_cash_totals: true,
-        max_discount_rate: 0,
-      });
+      setFormData(INITIAL_FORM_DATA);
     }
     setModalOpen(true);
   };
@@ -552,39 +437,22 @@ export default function GestionUtilisateurs() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const profilePayload: Record<string, unknown> = {
+        role: formData.role,
+        allowed_menus: formData.allowed_menus,
+        max_discount_rate: formData.max_discount_rate,
+      };
+      PERMISSIONS_META.forEach(p => {
+        profilePayload[p.key] = formData[p.key];
+      });
+
       const payload: Record<string, unknown> & { profile: Record<string, unknown> } = {
         username: formData.username,
         email: formData.email,
         first_name: formData.first_name,
         last_name: formData.last_name,
         is_active: formData.is_active,
-        profile: {
-          role: formData.role,
-          allowed_menus: formData.allowed_menus,
-          can_do_returns: formData.can_do_returns,
-          can_sell_negative_stock: formData.can_sell_negative_stock,
-          can_cash_out: formData.can_cash_out,
-          can_delete_product: formData.can_delete_product,
-          can_adjust_stock: formData.can_adjust_stock,
-          can_delete_fournisseur: formData.can_delete_fournisseur,
-          can_delete_commande: formData.can_delete_commande,
-          can_close_commande: formData.can_close_commande,
-          can_generate_coupon: formData.can_generate_coupon,
-          can_cancel_invoice: formData.can_cancel_invoice,
-          can_cancel_promis: formData.can_cancel_promis,
-          can_manage_perimes: formData.can_manage_perimes,
-          can_manage_avoirs: formData.can_manage_avoirs,
-          can_create_client_credit: formData.can_create_client_credit,
-          can_manage_challenges: formData.can_manage_challenges,
-          can_validate_zero_amount: formData.can_validate_zero_amount,
-          can_validate_sales: formData.can_validate_sales,
-          can_modify_price: formData.can_modify_price,
-          can_do_remise: formData.can_do_remise,
-          can_modify_invoice: formData.can_modify_invoice,
-          can_view_cash_sessions: formData.can_view_cash_sessions,
-          can_view_cash_totals: formData.can_view_cash_totals,
-          max_discount_rate: formData.max_discount_rate
-        }
+        profile: profilePayload,
       };
       
       if (formData.password) {
@@ -959,88 +827,38 @@ export default function GestionUtilisateurs() {
                     <div className="flex items-center gap-2 border-l-2 border-emerald-500 pl-3 bg-emerald-50 py-1 rounded-r-lg">
                       <h4 className="font-bold text-xs uppercase tracking-widest text-emerald-600">{t('modal.special_permissions')}</h4>
                     </div>
-                    
-                    <div className="grid grid-cols-1 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                      <label className="flex cursor-pointer justify-start gap-4 p-2 bg-white rounded-lg border border-slate-200 hover:border-emerald-300 transition-all shadow-sm group">
-                        <input 
-                          type="checkbox" 
-                          className="size-4 rounded border-slate-300 accent-emerald-500 cursor-pointer"
-                          checked={formData.can_cash_out}
-                          onChange={e => setFormData({...formData, can_cash_out: e.target.checked})}
-                          disabled={formData.is_superuser || formData.role === 'VENDEUR'}
-                        />
-                        <div className="flex flex-col">
-                          <span className="font-bold text-xs group-hover:text-emerald-600 transition-colors">{t('permissions.cash_out')}</span>
-                          <span className="text-[10px] opacity-60 leading-none mt-0.5">{t('permissions.cash_out_desc')}</span>
-                        </div>
-                      </label>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <Checkbox 
-                          size="xs"
-                          checked={formData.can_do_returns} 
-                          onChange={checked => setFormData({...formData, can_do_returns: checked})} 
-                          label={t('permissions.returns')} 
-                          className="p-2 bg-white rounded-lg border border-slate-200"
-                        />
-                        <Checkbox 
-                          size="xs"
-                          color="warning"
-                          checked={formData.can_sell_negative_stock} 
-                          onChange={checked => setFormData({...formData, can_sell_negative_stock: checked})} 
-                          label={t('permissions.negative_stock')} 
-                          className="p-2 bg-white rounded-lg border border-slate-200 text-amber-600 font-bold"
-                        />
-                        <Checkbox
-                          size="xs"
-                          checked={formData.can_modify_price}
-                          onChange={checked => setFormData({...formData, can_modify_price: checked})}
-                          label={t('permissions.modify_price')}
-                          className="p-2 bg-white rounded-lg border border-slate-200"
-                        />
-                        <Checkbox
-                          size="xs"
-                          checked={formData.can_do_remise}
-                          onChange={checked => setFormData({...formData, can_do_remise: checked})}
-                          label={t('permissions.modify_remise')}
-                          className="p-2 bg-white rounded-lg border border-slate-200"
-                        />
-                        <Checkbox 
-                          size="xs"
-                          checked={formData.can_generate_coupon} 
-                          onChange={checked => setFormData({...formData, can_generate_coupon: checked})} 
-                          label={t('permissions.generate_coupon')} 
-                          className="p-2 bg-white rounded-lg border border-slate-200"
-                        />
-                        <Checkbox 
-                          size="xs"
-                          checked={formData.can_modify_invoice} 
-                          onChange={checked => setFormData({...formData, can_modify_invoice: checked})} 
-                          label={t('permissions.modify_invoice')} 
-                          className="p-2 bg-white rounded-lg border border-slate-200"
-                        />
-                        <Checkbox
-                          size="xs"
-                          checked={formData.can_view_cash_sessions}
-                          onChange={checked => setFormData({...formData, can_view_cash_sessions: checked})}
-                          label={t('permissions.view_cash_sessions', 'Voir les sessions de caisse')}
-                          className="p-2 bg-white rounded-lg border border-slate-200"
-                        />
-                        <Checkbox
-                          size="xs"
-                          checked={formData.can_view_cash_totals}
-                          onChange={checked => setFormData({...formData, can_view_cash_totals: checked})}
-                          label={t('permissions.view_cash_totals', 'Voir les totaux du journal de caisse')}
-                          className="p-2 bg-white rounded-lg border border-slate-200"
-                        />
-                        <Checkbox 
-                          size="xs"
-                          checked={formData.can_validate_sales} 
-                          onChange={checked => setFormData({...formData, can_validate_sales: checked})} 
-                          label={t('permissions.can_validate_sales')} 
-                          className="p-2 bg-white rounded-lg border border-slate-200"
-                        />
-                      </div>
+                    <div className="grid grid-cols-1 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                      {PERMISSIONS_META.filter(p => p.group === 'operations').map(p => {
+                        if (p.key === 'can_cash_out') {
+                          return (
+                            <label key={p.key} className="flex cursor-pointer justify-start gap-4 p-2 bg-white rounded-lg border border-slate-200 hover:border-emerald-300 transition-all shadow-sm group">
+                              <input
+                                type="checkbox"
+                                className="size-4 rounded border-slate-300 accent-emerald-500 cursor-pointer"
+                                checked={formData[p.key]}
+                                onChange={e => setFormData({ ...formData, [p.key]: e.target.checked })}
+                                disabled={formData.is_superuser || formData.role === 'VENDEUR'}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-bold text-xs group-hover:text-emerald-600 transition-colors">{t(p.labelKey)}</span>
+                                {p.descKey && <span className="text-[10px] opacity-60 leading-none mt-0.5">{t(p.descKey)}</span>}
+                              </div>
+                            </label>
+                          );
+                        }
+                        return (
+                          <Checkbox
+                            key={p.key}
+                            size="xs"
+                            color={checkboxColor(p.color)}
+                            checked={formData[p.key]}
+                            onChange={checked => setFormData({ ...formData, [p.key]: checked })}
+                            label={t(p.labelKey)}
+                            className={permissionClass(p.color)}
+                          />
+                        );
+                      })}
 
                       <div className="flex flex-col gap-1 px-2 mt-1">
                         <label htmlFor="max-discount-rate" className="flex flex-col gap-0.5 py-1">
@@ -1049,7 +867,7 @@ export default function GestionUtilisateurs() {
                         <input
                           id="max-discount-rate"
                           type="number"
-                          className="w-full rounded-xl border border-slate-200 bg-white h-8 px-3 text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" 
+                          className="w-full rounded-xl border border-slate-200 bg-white h-8 px-3 text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                           value={formData.max_discount_rate}
                           onChange={e => setFormData({...formData, max_discount_rate: parseInt(e.target.value) || 0})}
                         />
@@ -1063,68 +881,17 @@ export default function GestionUtilisateurs() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                      <Checkbox 
-                        size="xs" color="error"
-                        checked={formData.can_validate_zero_amount}
-                        onChange={checked => setFormData({...formData, can_validate_zero_amount: checked})}
-                        label={t('permissions.validate_zero_amount', 'Autoriser ventes à 0F')}
-                        className="p-2 bg-white rounded-lg border border-red-100 text-red-500 font-bold"
-                      />
-                      <Checkbox 
-                        size="xs" color="error"
-                        checked={formData.can_cancel_invoice} onChange={checked => setFormData({...formData, can_cancel_invoice: checked})}
-                        label={t('permissions.cancel_invoice')} className="p-2 bg-white rounded-lg border border-red-100 text-red-500 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="error"
-                        checked={formData.can_cancel_promis} onChange={checked => setFormData({...formData, can_cancel_promis: checked})}
-                        label={t('permissions.cancel_promis')} className="p-2 bg-white rounded-lg border border-red-100 text-red-500 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="error"
-                        checked={formData.can_delete_product} onChange={checked => setFormData({...formData, can_delete_product: checked})}
-                        label={t('permissions.delete_product')} className="p-2 bg-white rounded-lg border border-red-100 text-red-500 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="error"
-                        checked={formData.can_delete_fournisseur} onChange={checked => setFormData({...formData, can_delete_fournisseur: checked})}
-                        label={t('permissions.delete_fournisseur')} className="p-2 bg-white rounded-lg border border-red-100 text-red-500 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="warning"
-                        checked={formData.can_adjust_stock} onChange={checked => setFormData({...formData, can_adjust_stock: checked})}
-                        label={t('permissions.adjust_stock')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="warning"
-                        checked={formData.can_manage_perimes} onChange={checked => setFormData({...formData, can_manage_perimes: checked})}
-                        label={t('permissions.manage_perimes')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="warning"
-                        checked={formData.can_manage_avoirs} onChange={checked => setFormData({...formData, can_manage_avoirs: checked})}
-                        label={t('permissions.manage_avoirs')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="warning"
-                        checked={formData.can_create_client_credit} onChange={checked => setFormData({...formData, can_create_client_credit: checked})}
-                        label={t('permissions.create_client_credit')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="warning"
-                        checked={formData.can_manage_challenges} onChange={checked => setFormData({...formData, can_manage_challenges: checked})}
-                        label={t('permissions.manage_challenges')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="warning"
-                        checked={formData.can_delete_commande} onChange={checked => setFormData({...formData, can_delete_commande: checked})}
-                        label={t('permissions.delete_commande')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
-                      />
-                      <Checkbox 
-                        size="xs" color="warning"
-                        checked={formData.can_close_commande} onChange={checked => setFormData({...formData, can_close_commande: checked})}
-                        label={t('permissions.close_commande')} className="p-2 bg-white rounded-lg border border-amber-100 text-amber-600 font-medium"
-                      />
+                      {PERMISSIONS_META.filter(p => p.group === 'sudo').map(p => (
+                        <Checkbox
+                          key={p.key}
+                          size="xs"
+                          color={checkboxColor(p.color)}
+                          checked={formData[p.key]}
+                          onChange={checked => setFormData({ ...formData, [p.key]: checked })}
+                          label={t(p.labelKey)}
+                          className={permissionClass(p.color)}
+                        />
+                      ))}
                     </div>
                   </div>
               </div>
