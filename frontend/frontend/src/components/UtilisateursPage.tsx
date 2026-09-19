@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
 import { Users, Clock } from 'lucide-react';
-import GestionUtilisateurs from './GestionUtilisateurs';
+import GestionUtilisateurs from './users/GestionUtilisateurs';
 import UserSessions from './UserSessionsShadcn';
 
 interface UtilisateursPageProps {

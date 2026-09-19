@@ -2,6 +2,80 @@
 
 ---
 
+## 2026-09-19 — ♻️ Refactor de la Gestion des Utilisateurs
+
+### Changements
+
+- `GestionUtilisateurs.tsx` (918 lignes) découpé en modules sans changement de
+  comportement :
+  - `components/users/GestionUtilisateurs.tsx` — orchestrateur (liste, fetch,
+    sudo, submit) ~215 lignes.
+  - `components/users/UserListItem.tsx` — carte utilisateur (avatar, badges
+    rôle/menus/permissions, actions).
+  - `components/users/UserFormDialog.tsx` — dialog + onglets + footer.
+  - `components/users/tabs/` — `UserInfoTab`, `UserMenusTab`,
+    `UserPermissionsTab`.
+  - `components/users/usersMeta.ts` — `PERMISSIONS_META`, `ROLES`,
+    `ROLE_MENU_DEFAULTS`, types `ManagedUser`/`UserFormData`, helpers.
+  - `components/users/menuHierarchyFallback.ts` — fallback de hiérarchie de
+    menus (avec note de sync backend).
+  - `hooks/useUserForm.ts` — état du formulaire, presets de rôle, toggles
+    menus/sous-menus, copie de droits, init création/édition.
+- Les clés de menus réservées aux admins ne sont plus hardcodées : elles
+  proviennent de `adminOnlyKeys` retourné par l'API `menu-hierarchy/`
+  (fallback conservé).
+- Imports mis à jour : `UtilisateursPage.tsx`, `Sidebar.tsx` (prefetch),
+  `vite.config.ts` (manualChunks `feature-settings`).
+
+### Vérifications
+
+- `npx tsc --noEmit` OK.
+- `npm run build` OK.
+- `api.tests.test_user_management` : 25 tests OK.
+- Diff complet relu : logique identique (payload API, copie de droits,
+  presets de rôle, toggles menus, sudo/désactivation, refresh session
+  utilisateur courant).
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/GestionUtilisateurs.tsx` (supprimé,
+  déplacé sous `components/users/`)
+- `frontend/frontend/src/components/users/*` (nouveaux fichiers)
+- `frontend/frontend/src/hooks/useUserForm.ts` (nouveau)
+- `frontend/frontend/src/components/UtilisateursPage.tsx`
+- `frontend/frontend/src/components/Sidebar.tsx`
+- `frontend/frontend/vite.config.ts`
+
+---
+
+## 2026-09-19 — 🖨️ Bon de réception : totaux en ligne + en-tête pharmacie
+
+### Changements
+
+- Les totaux du bon de réception (`TOTAL HT`, `TOTAL TVA`, `Total TTC`,
+  `Marge obtenue`) sont affichés sur une seule ligne horizontale pour
+  gagner de la place ; contour pointillé du bloc supprimé.
+- L'en-tête du document charge désormais les informations renseignées dans
+  *Paramètres → Infos pharmacie* (nom, adresse, tél, NIU, RC) au lieu de
+  valeurs `N/A` codées en dur ; fallback licence conservé si aucune
+  adresse.
+- Pied de page renommé : `Logiciel de Gestion Zenith Pharma - Document
+  Interne` (remplace « Antigravity POS »).
+
+### Vérifications
+
+- `npx tsc --noEmit` OK.
+- `npm run build` OK.
+- Déployé en dev (frontend nginx) — changements non encore commités au
+  moment de l'entrée.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/utils/print/printHelpers.ts`
+- `frontend/frontend/src/hooks/useCommandeActions.ts`
+
+---
+
 ## 2026-09-19 — 🎨 Refonte visuelle de l'Omnisearch
 
 ### Changements
