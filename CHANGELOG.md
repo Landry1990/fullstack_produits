@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-09-19 — 🎨 Refonte visuelle de l'Omnisearch
+
+### Changements
+
+- Les *Actions Rapides* ne sont plus une liste plate : elles sont affichées en
+  grille de tuiles colorées (2 colonnes), chacune avec une pastille d'icône
+  colorée, un titre et une courte description.
+- La *Navigation Rapide* utilise désormais des pastilles d'icônes colorées par
+  destination (au lieu d'icônes grises uniformes).
+- Panneau d'aperçu vide repensé : icône en dégradé bleu/indigo, typographie
+  allégée et rappel des raccourcis clavier.
+- Ajout d'un pied de palette avec les raccourcis clavier (↑↓ naviguer,
+  ↵ ouvrir, esc fermer).
+- Panneau d'aperçu avec un léger dégradé de fond.
+- Titres de groupes nettoyés (emojis retirés des traductions de groupes).
+- Nouvelles traductions `fr`/`en` : `omnisearch.hints.*` et descriptions
+  `omnisearch.actions.*_desc`.
+
+### Vérifications
+
+- `npx tsc --noEmit` OK.
+- `npm run build` OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/omnisearch/OmnisearchResults.tsx`
+- `frontend/frontend/src/components/omnisearch/OmnisearchPreview.tsx`
+- `frontend/frontend/src/components/common/Omnisearch.tsx`
+- `frontend/frontend/public/locales/fr/common.json`
+- `frontend/frontend/public/locales/en/common.json`
+
+---
+
 ## 2026-09-19 — 🧩 Regroupement de la gestion des utilisateurs et des sessions
 
 ### Changements
