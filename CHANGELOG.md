@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-09-19 — 🐞 Affichage des droits pour un superutilisateur
+
+### Diagnostic
+
+- Un compte `is_superuser` a accès à toutes les permissions côté backend, mais
+  `GestionUtilisateurs` affichait les cases à cocher selon les valeurs
+  effectivement enregistrées dans `Profile`.
+- Un superuser créé via `createsuperuser` (ou dont le profil gardait les valeurs
+  par défaut) apparaissait donc avec presque aucune case cochée, ce qui était
+  trompeur.
+
+### Correction
+
+- Lors de l'édition d'un superuser, toutes les permissions sont maintenant
+  affichées comme activées et `max_discount_rate` est forcé à 100.
+- Un bandeau informatif est affiché dans l'onglet *Permissions* pour indiquer
+  que le superutilisateur possède implicitement tous les droits.
+- Les cases à cocher et le champ `max_discount_rate` sont désactivés pour un
+  superuser, puisque ces valeurs sont ignorées par le backend.
+- Traductions `fr`/`en` ajoutées.
+
+### Vérifications
+
+- `npx tsc --noEmit` OK.
+- `npm run build` OK.
+
+### Fichiers modifiés
+
+- `frontend/frontend/src/components/GestionUtilisateurs.tsx`
+- `frontend/frontend/public/locales/fr/users.json`
+- `frontend/frontend/public/locales/en/users.json`
+
+---
+
 ## 2026-09-19 — 🎨 Migration de `GestionUtilisateurs` vers shadcn/ui
 
 ### Objectif

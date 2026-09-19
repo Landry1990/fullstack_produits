@@ -342,11 +342,20 @@ export default function GestionUtilisateurs() {
         max_discount_rate: Number(user.profile?.max_discount_rate || 0),
         ...buildInitialPermissions('VENDEUR'),
       };
-      PERMISSIONS_META.forEach(p => {
-        base[p.key] = user.profile?.[p.key] || false;
-      });
-      // Preserve legacy default for cash totals when not explicitly set.
-      base.can_view_cash_totals = user.profile?.can_view_cash_totals ?? true;
+      if (user.is_superuser) {
+        // A superuser implicitly has all permissions regardless of Profile flags;
+        // reflect that in the form so the checkboxes are not left empty.
+        PERMISSIONS_META.forEach(p => {
+          base[p.key] = true;
+        });
+        base.max_discount_rate = 100;
+      } else {
+        PERMISSIONS_META.forEach(p => {
+          base[p.key] = user.profile?.[p.key] || false;
+        });
+        // Preserve legacy default for cash totals when not explicitly set.
+        base.can_view_cash_totals = user.profile?.can_view_cash_totals ?? true;
+      }
       setFormData(base);
     } else {
       setEditingUser(null);
@@ -797,6 +806,12 @@ export default function GestionUtilisateurs() {
                 </TabsContent>
 
                 <TabsContent value="permissions" className="space-y-4">
+                  {formData.is_superuser && (
+                    <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm italic flex items-center gap-2">
+                      <Info className="h-4 w-4 shrink-0" />
+                      <span>{t('modal.superuser_permissions_note', 'Le superutilisateur possède implicitement tous les droits.')}</span>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card variant="default" padding="md">
                       <div className="flex items-center gap-2 mb-4 border-l-2 border-success pl-3 bg-success/10 py-1 rounded-r-lg">
@@ -830,6 +845,7 @@ export default function GestionUtilisateurs() {
                               onChange={checked => setFormData({ ...formData, [p.key]: checked })}
                               label={t(p.labelKey)}
                               className={permissionClass(p.color)}
+                              disabled={formData.is_superuser}
                             />
                           );
                         })}
@@ -842,6 +858,7 @@ export default function GestionUtilisateurs() {
                             value={formData.max_discount_rate}
                             onChange={e => setFormData({...formData, max_discount_rate: parseInt(e.target.value) || 0})}
                             size="sm"
+                            disabled={formData.is_superuser}
                           />
                         </div>
                       </div>
@@ -861,6 +878,7 @@ export default function GestionUtilisateurs() {
                             onChange={checked => setFormData({ ...formData, [p.key]: checked })}
                             label={t(p.labelKey)}
                             className={permissionClass(p.color)}
+                            disabled={formData.is_superuser}
                           />
                         ))}
                       </div>
