@@ -370,12 +370,18 @@ function FournisseurPreview({ data, t }: { data?: Fournisseur; t: TFunction }) {
 /* ==================== EMPTY PREVIEW ==================== */
 function EmptyPreview({ t }: { t: TFunction }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-300 grayscale scale-95 transition-all">
-      <div className="size-24 rounded-full border-4 border-dashed border-slate-500/30 flex items-center justify-center mb-4">
-        <LayoutDashboard className="size-12" />
+    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+      <div className="size-20 rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 border border-blue-200/60 flex items-center justify-center mb-5 shadow-sm">
+        <LayoutDashboard className="size-9 text-indigo-400" />
       </div>
-      <h4 className="text-lg font-black tracking-tighter uppercase italic">{t('omnisearch.preview.title')}</h4>
-      <p className="text-xs font-bold max-w-xs mt-1 italic">{t('omnisearch.preview.subtitle')}</p>
+      <h4 className="text-base font-black tracking-tight text-slate-600">{t('omnisearch.preview.title')}</h4>
+      <p className="text-xs font-medium text-slate-400 max-w-[220px] mt-1.5 leading-relaxed">{t('omnisearch.preview.subtitle')}</p>
+      <div className="mt-6 flex items-center gap-2 text-[10px] font-semibold text-slate-400">
+        <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">↑↓</kbd>
+        <span>{t('omnisearch.hints.navigate', 'Naviguer')}</span>
+        <kbd className="ml-2 rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">↵</kbd>
+        <span>{t('omnisearch.hints.open', 'Ouvrir')}</span>
+      </div>
     </div>
   );
 }

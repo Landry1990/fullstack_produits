@@ -78,9 +78,24 @@ export default function Omnisearch() {
               />
             </div>
 
-            <div className="hidden md:flex md:w-[40%] bg-slate-50/50 flex-col overflow-y-auto">
+            <div className="hidden md:flex md:w-[40%] bg-gradient-to-b from-slate-50 to-indigo-50/40 flex-col overflow-y-auto">
               <OmnisearchPreview selectedItem={selectedItem} />
             </div>
+          </div>
+
+          <div className="flex items-center gap-5 border-t border-slate-200 bg-slate-50/80 px-6 py-2.5 text-[10px] font-semibold text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">↑↓</kbd>
+              {t('omnisearch.hints.navigate', 'Naviguer')}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">↵</kbd>
+              {t('omnisearch.hints.open', 'Ouvrir')}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">esc</kbd>
+              {t('omnisearch.hints.close', 'Fermer')}
+            </span>
           </div>
         </Command>
       </DialogContent>
