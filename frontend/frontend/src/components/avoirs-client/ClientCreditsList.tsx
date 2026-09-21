@@ -160,13 +160,13 @@ export const ClientCreditsList: React.FC<ClientCreditsListProps> = ({
                     <Table className="w-full table-fixed text-sm">
                         <TableHeader>
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                <TableHead className="w-32 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.number')}</TableHead>
-                                <TableHead className="w-28 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.date')}</TableHead>
-                                <TableHead className="w-44 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.client')}</TableHead>
-                                <TableHead className="w-32 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.invoice')}</TableHead>
-                                <TableHead className="w-40 px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.amount')}</TableHead>
-                                <TableHead className="w-32 px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.status')}</TableHead>
-                                <TableHead className="w-28 px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">{t('list.columns.actions')}</TableHead>
+                                <TableHead className="w-32 px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('list.columns.number')}</TableHead>
+                                <TableHead className="w-28 px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('list.columns.date')}</TableHead>
+                                <TableHead className="w-44 px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('list.columns.client')}</TableHead>
+                                <TableHead className="w-32 px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('list.columns.invoice')}</TableHead>
+                                <TableHead className="w-40 px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">{t('list.columns.amount')}</TableHead>
+                                <TableHead className="w-32 px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">{t('list.columns.status')}</TableHead>
+                                <TableHead className="w-28 px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">{t('list.columns.actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

@@ -55,7 +55,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
     };
 
     return (
-        <div data-theme="light" className="bg-base-100 p-8 max-w-[210mm] mx-auto text-base-content font-sans text-[11px] leading-tight shadow-none print:shadow-none print:max-w-none print:w-full relative">
+        <div data-theme="light" className="bg-base-100 p-8 max-w-[210mm] mx-auto text-base-content font-sans text-label leading-tight shadow-none print:shadow-none print:max-w-none print:w-full relative">
             
             {/* Header Section */}
             <div className="flex justify-between items-start mb-10 border-b-2 border-slate-900 pb-6">
@@ -67,7 +67,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                         <div className="whitespace-pre-line leading-tight italic">{settings.address}</div>
                         <div className="flex flex-col gap-1 mt-3 font-bold text-base-content/90">
                             {settings.phone && <div className="flex items-center gap-2"><span>Tél : {settings.phone}</span></div>}
-                            <div className="flex items-center gap-2 uppercase text-[10px]">
+                            <div className="flex items-center gap-2 uppercase text-caption">
                                 {settings.niu && <span>NIU : {settings.niu}</span>}
                                 {settings.registre_commerce && <span>| RC : {settings.registre_commerce}</span>}
                             </div>
@@ -79,10 +79,10 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     <div className="border-4 border-slate-900 text-base-content px-8 py-3 rounded-sm text-2xl font-black mb-3 inline-block uppercase tracking-widest">
                         {t('stock_valuation.recap_title')}
                     </div>
-                    <div className="text-base-content/40 font-black text-[11px] uppercase tracking-widest">
+                    <div className="text-base-content/40 font-black text-label uppercase tracking-widest">
                         {docTitle}
                     </div>
-                    <div className="text-base-content/60 font-bold text-[10px] mt-2 uppercase">
+                    <div className="text-base-content/60 font-bold text-caption mt-2 uppercase">
                          {formatDate(data.date)}
                     </div>
                 </div>
@@ -95,7 +95,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     <div className="absolute bottom-0 left-0 size-24 bg-primary/5 rounded-full -ml-12 -mb-12"></div>
                     
                     <div className="relative z-10">
-                        <div className="text-[10px] uppercase font-black text-base-content/50 tracking-[0.3em] mb-4">{t('stock_valuation.valuation_method')}</div>
+                        <div className="text-caption uppercase font-black text-base-content/50 tracking-[0.3em] mb-4">{t('stock_valuation.valuation_method')}</div>
                         <div className="flex items-center gap-4">
                             <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,7 +109,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     </div>
 
                     <div className="text-right relative z-10">
-                        <div className="text-[10px] uppercase font-black text-primary tracking-[0.3em] mb-2">{t('stock_valuation.total_general')}</div>
+                        <div className="text-caption uppercase font-black text-primary tracking-[0.3em] mb-2">{t('stock_valuation.total_general')}</div>
                         <div className="text-5xl font-black text-base-content tracking-tighter tabular-nums leading-none">
                             {formatCurrency(data.total_ttc)}
                         </div>
@@ -122,20 +122,20 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                 <div className="space-y-6">
                     <h2 className="text-sm font-black text-base-content uppercase tracking-widest border-b-2 border-slate-900 pb-2 flex justify-between items-center">
                         <span>{t('monthly_report.total_ca')}</span>
-                        <span className="text-[10px] text-slate-300 font-bold">{t('total_general')}</span>
+                        <span className="text-caption text-slate-300 font-bold">{t('total_general')}</span>
                     </h2>
                     
                     <div className="space-y-3">
                         <div className="flex justify-between items-center px-4 py-4 bg-base-100 border border-slate-100 rounded-2xl shadow-sm">
-                            <span className="text-[11px] font-black uppercase text-base-content/50 tracking-widest">{t('stock_valuation.ht_total')}</span>
+                            <span className="text-label font-black uppercase text-base-content/50 tracking-widest">{t('stock_valuation.ht_total')}</span>
                             <span className="text-lg font-black text-base-content">{formatCurrency(data.total_ht)}</span>
                         </div>
                         <div className="flex justify-between items-center px-4 py-4 bg-base-100 border border-slate-100 rounded-2xl shadow-sm">
-                            <span className="text-[11px] font-black uppercase text-base-content/50 tracking-widest">{t('stock_valuation.tva_total')}</span>
+                            <span className="text-label font-black uppercase text-base-content/50 tracking-widest">{t('stock_valuation.tva_total')}</span>
                             <span className="text-lg font-black text-base-content">{formatCurrency(data.total_tva)}</span>
                         </div>
                         <div className="flex justify-between items-center px-4 py-5 bg-primary text-white rounded-2xl shadow-md ring-4 ring-primary/10">
-                            <span className="text-[11px] font-black uppercase tracking-widest">{t('stock_valuation.recap_title')} {data.is_pmp ? 'PMP' : 'TTC'}</span>
+                            <span className="text-label font-black uppercase tracking-widest">{t('stock_valuation.recap_title')} {data.is_pmp ? 'PMP' : 'TTC'}</span>
                             <span className="text-xl font-black tabular-nums">{formatCurrency(data.total_ttc)}</span>
                         </div>
                     </div>
@@ -149,14 +149,14 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     <div className="bg-base-100 border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
                         <table className="w-full text-center border-collapse">
                             <thead>
-                                <tr className="bg-base-200 text-[9px] uppercase font-black text-base-content/50 border-b border-slate-100">
+                                <tr className="bg-base-200 text-micro uppercase font-black text-base-content/50 border-b border-slate-100">
                                     <th className="py-4 px-2">{t('stock_valuation.tva_table_rate')}</th>
                                     <th className="py-4 px-2">{t('stock_valuation.tva_table_base')}</th>
                                     <th className="py-4 px-2">{t('stock_valuation.tva_table_tva')}</th>
                                     <th className="py-4 px-2">{t('stock_valuation.tva_table_total')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="text-[11px]">
+                            <tbody className="text-label">
                                 {data.tva_breakdown.map((item) => (
                                     <tr key={`tva-${item.rate}`} className="border-b border-slate-50 last:border-0">
                                         <td className="py-4 px-2 font-black text-primary bg-primary/5">{item.rate}%</td>
@@ -176,20 +176,20 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                 <div className="mt-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <h2 className="text-sm font-black text-base-content uppercase tracking-widest border-b-2 border-slate-900 pb-2 mb-6 flex justify-between items-center">
                         <span>{t('stock_valuation.tva_breakdown_title')} – {getGroupLabel()}</span>
-                        <span className="text-[10px] text-slate-300 font-bold">{data.group_breakdown.length} {t('common.categories', 'Catégories')}</span>
+                        <span className="text-caption text-slate-300 font-bold">{data.group_breakdown.length} {t('common.categories', 'Catégories')}</span>
                     </h2>
                     
                     <div className="bg-base-100 border-2 border-slate-100 rounded-3xl overflow-hidden shadow-sm">
                         <table className="w-full border-collapse">
                             <thead>
-                                <tr className="bg-slate-900 text-white text-[9px] uppercase font-black tracking-widest">
+                                <tr className="bg-slate-900 text-white text-micro uppercase font-black tracking-widest">
                                     <th className="py-4 px-6 text-left">{t('stock_valuation.category_header')} ({getGroupLabel()})</th>
                                     <th className="py-4 px-4 text-right">{t('stock_valuation.tva_table_base')}</th>
                                     <th className="py-4 px-4 text-right">{t('stock_valuation.tva_table_tva')}</th>
                                     <th className="py-4 px-6 text-right">{t('stock_valuation.tva_table_total')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="text-[11px]">
+                            <tbody className="text-label">
                                 {data.group_breakdown.map((item, idx) => (
                                     <tr key={item.name} className={`border-b border-slate-50 last:border-0 hover:bg-base-200/50 transition-colors ${idx % 2 === 1 ? 'bg-base-200/20' : ''}`}>
                                         <td className="py-4 px-6 text-left font-black text-base-content">
@@ -203,7 +203,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                                     </tr>
                                 ))}
                                 <tr className="bg-base-200/50 font-black">
-                                    <td className="py-4 px-6 text-left uppercase text-[9px] tracking-widest text-base-content/50">Total Reconstitué</td>
+                                    <td className="py-4 px-6 text-left uppercase text-micro tracking-widest text-base-content/50">Total Reconstitué</td>
                                     <td className="py-4 px-4 text-right tabular-nums">{formatNumber(data.total_ht, 0)}</td>
                                     <td className="py-4 px-4 text-right tabular-nums">{formatNumber(data.total_tva, 0)}</td>
                                     <td className="py-4 px-6 text-right tabular-nums text-lg text-primary">{formatNumber(data.total_ttc, 0)}</td>
@@ -220,9 +220,9 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="size-1.5 rounded-full bg-primary"></div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-base-content">{t('stock_valuation.note_title')}</span>
+                            <span className="text-caption font-black uppercase tracking-widest text-base-content">{t('stock_valuation.note_title')}</span>
                         </div>
-                        <p className="text-[11px] leading-relaxed italic pr-12">
+                        <p className="text-label leading-relaxed italic pr-12">
                             {data.is_pmp 
                                 ? t('stock_valuation.note_body_pmp', { date: formatDate(data.date) })
                                 : t('stock_valuation.note_body_vente', { date: formatDate(data.date) })
@@ -233,8 +233,8 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
                     </div>
                     
                     <div className="w-64 text-center">
-                        <div className="text-[9px] uppercase font-black tracking-[0.2em] mb-4">{t('stock_valuation.stamp_placeholder')}</div>
-                        <div className="h-28 border-2 border-dashed border-base-300 rounded-3xl flex items-center justify-center italic text-[9px] text-slate-300">
+                        <div className="text-micro uppercase font-black tracking-[0.2em] mb-4">{t('stock_valuation.stamp_placeholder')}</div>
+                        <div className="h-28 border-2 border-dashed border-base-300 rounded-3xl flex items-center justify-center italic text-micro text-slate-300">
                             ---
                         </div>
                     </div>
@@ -242,7 +242,7 @@ const StockValuationTemplate: React.FC<StockValuationTemplateProps> = ({ setting
             </div>
 
             {/* Footer */}
-            <div className="mt-10 pt-4 border-t border-slate-50 text-center text-[9px] text-slate-300 uppercase font-black tracking-[0.3em]">
+            <div className="mt-10 pt-4 border-t border-slate-50 text-center text-micro text-slate-300 uppercase font-black tracking-[0.3em]">
                 {settings.pharmacy_name} · {t('stock_valuation.footer_label')} · ZENITH
             </div>
         </div>

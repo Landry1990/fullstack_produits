@@ -64,7 +64,7 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
       <div className="h-screen flex items-center justify-center bg-base-100">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="size-8 animate-spin text-primary" />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-base-content/40">
+          <p className="text-caption font-black uppercase tracking-[0.2em] text-base-content/40">
             Redirection vers la page de licence...
           </p>
         </div>
@@ -80,17 +80,17 @@ function BackendHealthCheck({ children }: { children: React.ReactNode }) {
       <div className="h-screen flex items-center justify-center bg-base-100">
         <div className="flex flex-col items-center gap-4 max-w-md px-4">
           <span className="text-4xl text-red-500">⚠️</span>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 animate-pulse">
+          <p className="text-caption font-black uppercase tracking-[0.2em] text-red-500 animate-pulse">
             Connexion impossible
           </p>
-          <p className="text-[10px] text-base-content/50 text-center">
+          <p className="text-caption text-base-content/50 text-center">
             Le serveur backend ne répond pas après {MAX_ATTEMPTS} tentatives.
           </p>
           <div className="flex flex-col gap-2 text-center">
-            <p className="text-[10px] text-base-content/30">
+            <p className="text-caption text-base-content/30">
               Vérifiez que :
             </p>
-            <ul className="text-[10px] text-base-content/40 list-disc list-inside text-left">
+            <ul className="text-caption text-base-content/40 list-disc list-inside text-left">
               <li>Le backend est démarré (docker compose up)</li>
               <li>La licence est valide</li>
               <li>La base de données est accessible</li>

@@ -117,7 +117,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                         <Database className="h-4 w-4" />
                                         {t('inventaire.merge_btn')}
                                         {listLogic.selectedInventaireIds.size > 0 && (
-                                            <span className="ml-1.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+                                            <span className="ml-1.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-caption font-bold bg-slate-200 text-slate-700">
                                                 {listLogic.selectedInventaireIds.size}
                                             </span>
                                         )}

@@ -14,6 +14,7 @@ interface PaginationProps {
   className?: string;
 }
 
+/** @deprecated Utiliser l'équivalent shadcn dans components/shadcn/ — conservé pour compatibilité */
 const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
@@ -28,8 +29,8 @@ const Pagination: React.FC<PaginationProps> = ({
   const { t } = useTranslation(['common']);
 
   return (
-    <div className={`p-4 border-t border-base-200 flex items-center justify-between bg-base-100/50 ${className}`}>
-        <div className="text-sm text-base-content/60">
+    <div className={`p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 ${className}`}>
+        <div className="text-sm text-slate-500 dark:text-slate-400">
             {t('common:pagination_info', { 
                 defaultValue: `Page ${currentPage} sur ${totalPages} (${totalItems} ${label || t('common:items', { defaultValue: 'éléments' })})`,
                 page: currentPage,

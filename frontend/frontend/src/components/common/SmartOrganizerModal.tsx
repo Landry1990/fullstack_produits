@@ -200,7 +200,7 @@ const ProductRow = ({ index, style, data }: ListChildComponentProps<ProductListD
                 }`}
             >
                 <div className="flex items-center gap-2 min-w-0">
-                    {excluded && <span className="shrink-0 text-[9px] font-bold text-red-400 uppercase tracking-wider">{excludedLabel}</span>}
+                    {excluded && <span className="shrink-0 text-micro font-bold text-red-400 uppercase tracking-wider">{excludedLabel}</span>}
                     <span className={`font-medium truncate ${excluded ? 'text-red-400 line-through' : 'text-slate-700'}`}>
                         {p.name}
                     </span>
@@ -537,16 +537,16 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                             <div className="flex flex-col min-h-0 flex-1">
                                 <div className="flex justify-between items-center p-4 pb-2 border-b border-slate-100 shrink-0 gap-2 flex-wrap">
                                     <div className="flex items-center gap-2" aria-live="polite" aria-atomic="true">
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-caption font-bold">
                                             {t('stock:organisation.smart_organizer.products_found', { count: finalProducts.length })}
                                         </span>
                                         {excludedIds.size > 0 && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-caption font-bold">
                                                 {excludedIds.size} {t('stock:organisation.smart_organizer.excluded')}
                                             </span>
                                         )}
                                         {isComputing && (
-                                            <span className="inline-flex items-center gap-1 text-[10px] text-slate-400">
+                                            <span className="inline-flex items-center gap-1 text-caption text-slate-400">
                                                 <Loader2 className="size-3 animate-spin" />
                                                 {t('stock:organisation.smart_organizer.computing_preview')}
                                             </span>
@@ -558,7 +558,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                                                 <button
                                                     onClick={handleExcludeAll}
                                                     disabled={finalProducts.length === 0}
-                                                    className="text-[10px] text-red-600 hover:text-red-800 font-medium underline underline-offset-2 transition-colors disabled:opacity-40"
+                                                    className="text-caption text-red-600 hover:text-red-800 font-medium underline underline-offset-2 transition-colors disabled:opacity-40"
                                                     aria-label={t('stock:organisation.smart_organizer.exclude_all')}
                                                 >
                                                     {t('stock:organisation.smart_organizer.exclude_all')}
@@ -566,7 +566,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                                                 <button
                                                     onClick={handleIncludeAll}
                                                     disabled={excludedIds.size === 0}
-                                                    className="text-[10px] text-emerald-600 hover:text-emerald-800 font-medium underline underline-offset-2 transition-colors disabled:opacity-40"
+                                                    className="text-caption text-emerald-600 hover:text-emerald-800 font-medium underline underline-offset-2 transition-colors disabled:opacity-40"
                                                     aria-label={t('stock:organisation.smart_organizer.include_all')}
                                                 >
                                                     {t('stock:organisation.smart_organizer.include_all')}
@@ -574,7 +574,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                                                 <button
                                                     onClick={handleInvert}
                                                     disabled={filteredProducts.length === 0}
-                                                    className="text-[10px] text-purple-600 hover:text-purple-800 font-medium underline underline-offset-2 transition-colors disabled:opacity-40"
+                                                    className="text-caption text-purple-600 hover:text-purple-800 font-medium underline underline-offset-2 transition-colors disabled:opacity-40"
                                                     aria-label={t('stock:organisation.smart_organizer.invert_selection')}
                                                 >
                                                     {t('stock:organisation.smart_organizer.invert_selection')}
@@ -582,7 +582,7 @@ export default function SmartOrganizerModal({ isOpen, onClose, targetCategory, o
                                             </>
                                         )}
                                         <span
-                                            className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold"
+                                            className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-caption font-bold"
                                             title={t('stock:organisation.smart_organizer.preview_hint')}
                                         >
                                             {t('stock:organisation.smart_organizer.preview')}

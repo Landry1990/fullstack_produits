@@ -493,7 +493,7 @@ function StatCard({ label, value, loading, icon, sub, accent }: { label: string;
     <div className={`p-5 rounded-2xl border transition-colors ${isError ? 'border-error/10 bg-error/[0.02]' : 'border-base-200 bg-base-100'}`}>
       <div className="flex items-center gap-3 mb-2">
         <span className={isError ? 'text-error opacity-60' : 'text-primary opacity-60'}>{icon}</span>
-        <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">{label}</span>
+        <span className="text-caption font-bold uppercase tracking-widest opacity-40">{label}</span>
       </div>
       <div className="text-3xl font-black tracking-tight">
         {loading ? <Skeleton className="h-9 w-20" /> : value}

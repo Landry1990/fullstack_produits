@@ -165,14 +165,14 @@ export default function MergeCommandesModal({
                                                 `}
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    {isTarget && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700">{t('orders:merge_modal.main_badge')}</span>}
+                                                    {isTarget && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-caption font-bold bg-indigo-100 text-indigo-700">{t('orders:merge_modal.main_badge')}</span>}
                                                     <span className="font-medium">{t('orders:merge_modal.order_label', { id: order.id })}</span>
                                                     <span className="text-slate-500">
                                                         ({fournisseurs.find(f => f.id === order.fournisseur)?.name})
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">{t('orders:merge_modal.products_badge', { count: order.produits?.length || 0 })}</span>
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-caption font-bold bg-slate-100 text-slate-600">{t('orders:merge_modal.products_badge', { count: order.produits?.length || 0 })}</span>
                                                     <span className="font-bold">{formatCurrency(Number(order.total))}</span>
                                                 </div>
                                             </div>

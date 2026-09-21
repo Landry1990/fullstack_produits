@@ -66,10 +66,10 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
           <div className="min-w-0">
             <h4 className="text-sm font-bold text-slate-900 truncate">{item.nom}</h4>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <Badge variant="outline" className="text-[10px] font-semibold">
+              <Badge variant="outline" className="text-caption font-semibold">
                 {item.type_objectif_display}
               </Badge>
-              <Badge variant="secondary" className="text-[10px] font-semibold gap-1">
+              <Badge variant="secondary" className="text-caption font-semibold gap-1">
                 {item.mode === 'EQUIPES' ? <Users className="size-2.5" /> : <User className="size-2.5" />}
                 {item.mode_display}
               </Badge>
@@ -78,7 +78,7 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
         </div>
         <div className="shrink-0 text-right">
           {isEnded ? (
-            <Badge variant="outline" className="text-[10px] text-slate-500">
+            <Badge variant="outline" className="text-caption text-slate-500">
               {t('dashboard.manager_dashboard.challenges_ended', 'Terminé')}
             </Badge>
           ) : (
@@ -110,20 +110,20 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
 
       {/* Top 3 */}
       <div className="mt-4">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+        <p className="text-caption font-bold uppercase tracking-widest text-slate-400 mb-2">
           {t('dashboard.manager_dashboard.challenges_top3', 'Top 3')}
         </p>
         {item.top3.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow className="border-slate-100 hover:bg-transparent">
-                <TableHead className="h-7 py-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-8">
+                <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 w-8">
                   {t('dashboard.manager_dashboard.challenges_rank', 'Rang')}
                 </TableHead>
-                <TableHead className="h-7 py-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400">
                   {t('dashboard.manager_dashboard.challenges_participant', 'Participant')}
                 </TableHead>
-                <TableHead className="h-7 py-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-right">
+                <TableHead className="h-7 py-1 px-2 text-caption font-bold uppercase tracking-wider text-slate-400 text-right">
                   {t('dashboard.manager_dashboard.challenges_value', 'Valeur')}
                 </TableHead>
               </TableRow>
@@ -132,7 +132,7 @@ function ChallengeCard({ item, currencySymbol }: { item: ChallengeSummaryItem; c
               {item.top3.map((entry) => (
                 <TableRow key={entry.rang} className="border-slate-50">
                   <TableCell className="py-1.5 px-2">
-                    <span className={`inline-flex items-center justify-center size-5 rounded-full text-[10px] font-bold ${
+                    <span className={`inline-flex items-center justify-center size-5 rounded-full text-caption font-bold ${
                       entry.rang === 1 ? 'bg-amber-100 text-amber-700'
                       : entry.rang === 2 ? 'bg-slate-100 text-slate-600'
                       : 'bg-orange-50 text-orange-700'

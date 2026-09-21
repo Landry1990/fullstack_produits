@@ -295,7 +295,7 @@ export default function StockUGReportShadcn() {
                 <kpi.icon className="size-6" />
               </div>
               <div>
-                <p className="text-[10px] font-black text-base-content/40 tracking-wider uppercase">{kpi.title}</p>
+                <p className="text-caption font-black text-base-content/40 tracking-wider uppercase">{kpi.title}</p>
                 <p className={`text-2xl font-black tracking-tight ${kpi.color}`}>
                   {loading ? '…' : (kpi.isCurrency ? kpi.value : formatNumber(kpi.value as number))}
                 </p>
@@ -463,19 +463,19 @@ export default function StockUGReportShadcn() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <Card variant="default" className="p-3">
-                  <p className="text-[10px] font-black text-base-content/40 uppercase">{t('stock:rapport_ug.table.received_ug')}</p>
+                  <p className="text-caption font-black text-base-content/40 uppercase">{t('stock:rapport_ug.table.received_ug')}</p>
                   <p className="text-xl font-black text-base-content">{formatNumber(selectedSupplier.total_ug)}</p>
                 </Card>
                 <Card variant="default" className="p-3">
-                  <p className="text-[10px] font-black text-base-content/40 uppercase">{t('stock:rapport_ug.table.remaining_stock')}</p>
+                  <p className="text-caption font-black text-base-content/40 uppercase">{t('stock:rapport_ug.table.remaining_stock')}</p>
                   <p className="text-xl font-black text-emerald-600">{formatNumber(selectedSupplier.total_ug_restantes)}</p>
                 </Card>
                 <Card variant="default" className="p-3">
-                  <p className="text-[10px] font-black text-base-content/40 uppercase">{t('stock:rapport_ug.stats.estimated_value')}</p>
+                  <p className="text-caption font-black text-base-content/40 uppercase">{t('stock:rapport_ug.stats.estimated_value')}</p>
                   <p className="text-xl font-black text-base-content">{formatCurrency(selectedSupplier.total_valeur)}</p>
                 </Card>
                 <Card variant="default" className="p-3">
-                  <p className="text-[10px] font-black text-base-content/40 uppercase">{t('stock:rapport_ug.table.remaining_value')}</p>
+                  <p className="text-caption font-black text-base-content/40 uppercase">{t('stock:rapport_ug.table.remaining_value')}</p>
                   <p className="text-xl font-black text-blue-600">{formatCurrency(selectedSupplier.total_valeur_restante)}</p>
                 </Card>
               </div>

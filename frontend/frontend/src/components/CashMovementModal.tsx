@@ -3,6 +3,7 @@ import api from '../services/api'
 import { useTranslation } from 'react-i18next'
 import { normalizeNumberInput } from '../utils/formatters'
 import PremiumModal from './common/PremiumModal'
+import { ErrorState } from './ui/ErrorState'
 import { logger } from '../utils/logger'
 
 interface CashMovementModalProps {
@@ -133,12 +134,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
           ></textarea>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-3 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span>{error}</span>
-          </div>
-        )}
+        <ErrorState error={error} compact />
 
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" className="inline-flex items-center justify-center h-9 px-6 rounded-xl text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors" onClick={onClose} disabled={loading}>

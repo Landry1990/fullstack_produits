@@ -24,11 +24,13 @@ import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
 import Pagination from '../ui/Pagination';
+import { PageContainer } from '../ui/PageContainer';
 import { LocalizedDateInput } from '../LocalizedDateInput';
+import i18n from '../../i18n';
 
-const amountFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
-const formatFCFA = (amount: number) => amountFormatter.format(amount) + ' F';
-const formatAmount = (amount: number) => amountFormatter.format(amount);
+const amountFormatter = () => new Intl.NumberFormat(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 });
+const formatFCFA = (amount: number) => amountFormatter().format(amount) + ' F';
+const formatAmount = (amount: number) => amountFormatter().format(amount);
 
 interface ComptabiliteProps {
     defaultTab?: string;
@@ -92,7 +94,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
     }, [exercices, setCurrentExercice, setDateRange]);
 
     return (
-        <div className="bg-slate-50 p-4 md:p-8 animate-fade-in">
+        <PageContainer variant="dense" className="bg-slate-50 p-4 md:p-8 animate-fade-in">
             {/* Header */}
             <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-8 gap-6">
                 <div>
@@ -209,7 +211,7 @@ export default function Comptabilite({ defaultTab = 'dashboard' }: ComptabiliteP
                 </div>
 
             )}
-        </div>
+        </PageContainer>
     );
 }
 
@@ -226,9 +228,9 @@ function DashboardTab({ resultat, actions, t }: DashboardTabProps) {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3 animate-fade-in">
             {/* KPI Card 1 - Revenue */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 border-t-4 border-t-emerald-500 shadow-sm">
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1 truncate">{t('dashboard.revenue')}</p>
+                <p className="text-slate-400 text-caption font-bold uppercase tracking-wide mb-1 truncate">{t('dashboard.revenue')}</p>
                 <h3 className="text-lg font-black text-emerald-600">{formatFCFA(resultat?.total_produits || 0)}</h3>
-                <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-400">
+                <div className="mt-1 flex items-center gap-1 text-caption text-emerald-400">
                     <ArrowUpRight className="size-3" />
                     <span className="truncate">{t('kpi.revenue_label')}</span>
                 </div>
@@ -236,9 +238,9 @@ function DashboardTab({ resultat, actions, t }: DashboardTabProps) {
 
             {/* KPI Card 2 - Stock */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 border-t-4 border-t-emerald-500 shadow-sm">
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1 truncate">{t('kpi.stock_value_label')}</p>
+                <p className="text-slate-400 text-caption font-bold uppercase tracking-wide mb-1 truncate">{t('kpi.stock_value_label')}</p>
                 <h3 className="text-lg font-black text-emerald-600">{formatFCFA(resultat?.valeur_stock || 0)}</h3>
-                <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-400">
+                <div className="mt-1 flex items-center gap-1 text-caption text-emerald-400">
                     <BookOpen className="size-3" />
                     <span className="truncate">{t('kpi.stock_variation_label')}</span>
                 </div>
@@ -246,9 +248,9 @@ function DashboardTab({ resultat, actions, t }: DashboardTabProps) {
 
             {/* KPI Card 3 - Expenses */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 border-t-4 border-t-emerald-500 shadow-sm">
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1 truncate">{t('dashboard.expenses')}</p>
+                <p className="text-slate-400 text-caption font-bold uppercase tracking-wide mb-1 truncate">{t('dashboard.expenses')}</p>
                 <h3 className="text-lg font-black text-emerald-600">{formatFCFA(resultat?.total_charges || 0)}</h3>
-                <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-400">
+                <div className="mt-1 flex items-center gap-1 text-caption text-emerald-400">
                     <ArrowDownRight className="size-3" />
                     <span className="truncate">{t('kpi.expenses_label')}</span>
                 </div>
@@ -256,14 +258,14 @@ function DashboardTab({ resultat, actions, t }: DashboardTabProps) {
 
             {/* Performance Card */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 border-t-4 border-t-emerald-500 shadow-sm">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide mb-2 truncate">{t('performance.title')}</p>
+                <p className="text-caption text-slate-400 font-bold uppercase tracking-wide mb-2 truncate">{t('performance.title')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="bg-emerald-50 p-2 rounded-lg border border-emerald-100">
-                        <p className="text-[10px] text-emerald-600 font-medium truncate">{t('performance.produits_label')}</p>
+                        <p className="text-caption text-emerald-600 font-medium truncate">{t('performance.produits_label')}</p>
                         <p className="text-sm font-bold text-emerald-600">{formatFCFA(resultat?.total_produits || 0)}</p>
                     </div>
                     <div className="bg-red-50 p-2 rounded-lg border border-red-100">
-                        <p className="text-[10px] text-red-500 font-medium truncate">{t('performance.charges_label')}</p>
+                        <p className="text-caption text-red-500 font-medium truncate">{t('performance.charges_label')}</p>
                         <p className="text-sm font-bold text-red-500">{formatFCFA(resultat?.total_charges || 0)}</p>
                     </div>
                 </div>
@@ -272,12 +274,12 @@ function DashboardTab({ resultat, actions, t }: DashboardTabProps) {
             {/* Net Result Card */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 border-t-4 border-t-emerald-500 shadow-sm flex flex-col justify-between">
                 <div>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1 truncate">{t('dashboard.net_result')}</p>
+                    <p className="text-slate-400 text-caption font-bold uppercase tracking-wide mb-1 truncate">{t('dashboard.net_result')}</p>
                     <h3 className="text-lg font-black text-emerald-600">
                         {formatFCFA(resultat?.resultat_net || 0)}
                     </h3>
                 </div>
-                <span className={`mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${
+                <span className={`mt-1 px-2 py-0.5 rounded-full text-caption font-bold w-fit ${
                     resultat?.resultat_net >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                 }`}>
                     {resultat?.resultat_net >= 0 ? t('dashboard.profit') : t('dashboard.loss')}
@@ -326,7 +328,7 @@ function AchatsTab({ ecritures, count, page, setPage, locale, t }: AchatsTabProp
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-separate border-spacing-0">
                     <thead>
-                        <tr className="bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        <tr className="bg-slate-50 text-label font-black uppercase tracking-widest text-slate-400">
                             <th className="px-4 py-3 border-b border-slate-200">{t('ledger.cols.date')}</th>
                             <th className="px-4 py-3 border-b border-slate-200">{t('ledger.cols.ref')}</th>
                             <th className="px-4 py-3 border-b border-slate-200">{t('ledger.cols.label')}</th>
@@ -408,7 +410,7 @@ function GrandLivreTab({ ecritures, count, page, setPage, search, setSearch, loc
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-separate border-spacing-0">
                     <thead>
-                        <tr className="bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        <tr className="bg-slate-50 text-label font-black uppercase tracking-widest text-slate-400">
                             <th className="px-4 py-3 border-b border-slate-200">{t('ledger.cols.date')}</th>
                             <th className="px-4 py-3 border-b border-slate-200">{t('ledger.cols.journal')}</th>
                             <th className="px-4 py-3 border-b border-slate-200">{t('ledger.cols.ref')}</th>
@@ -485,7 +487,7 @@ function BalanceTab({ balance, t }: BalanceTabProps) {
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-separate border-spacing-0">
                     <thead>
-                        <tr className="bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        <tr className="bg-slate-50 text-label font-black uppercase tracking-widest text-slate-400">
                             <th className="px-4 py-3 border-b border-slate-200">{t('balance.cols.account')}</th>
                             <th className="px-4 py-3 border-b border-slate-200">{t('balance.cols.label')}</th>
                             <th className="px-4 py-3 border-b border-slate-200 text-right">{t('balance.cols.debit_mov')}</th>
@@ -698,7 +700,7 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
                                 <div className="min-w-0">
                                     <p className="font-mono text-base font-bold text-slate-800">{c.numero}</p>
                                     <p className="text-xs text-slate-400 truncate">{c.libelle}</p>
-                                    {!c.is_active && <span className="text-[10px] text-red-500 font-bold">{t('plan.inactive')}</span>}
+                                    {!c.is_active && <span className="text-caption text-red-500 font-bold">{t('plan.inactive')}</span>}
                                 </div>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
                                     <button
@@ -759,7 +761,7 @@ function PlanTab({ comptes, actions, t }: PlanTabProps) {
                                     required
                                     disabled={!!editTarget}
                                 />
-                                {editTarget && <p className="text-[10px] text-slate-400 mt-1">{t('plan.modal.number_locked')}</p>}
+                                {editTarget && <p className="text-caption text-slate-400 mt-1">{t('plan.modal.number_locked')}</p>}
                             </div>
                             <div>
                                 <label htmlFor="plan-libelle" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t('plan.modal.label_label')}</label>

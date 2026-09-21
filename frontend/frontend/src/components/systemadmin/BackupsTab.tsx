@@ -510,7 +510,7 @@ export function BackupsTab({
                       )}
                     </div>
                     {backup.checksum && (
-                      <p className="text-[10px] text-gray-300 font-mono mt-0.5 truncate max-w-xs">{backup.checksum}</p>
+                      <p className="text-caption text-gray-300 font-mono mt-0.5 truncate max-w-xs">{backup.checksum}</p>
                     )}
                   </div>
                 </div>
@@ -547,7 +547,7 @@ export function BackupsTab({
           </div>
           {restoreError && <p className="text-xs">{restoreError}</p>}
           {restoreOutput && (
-            <pre className="mt-2 p-2 bg-gray-100 rounded text-[11px] overflow-auto max-h-40 whitespace-pre-wrap">{restoreOutput}</pre>
+            <pre className="mt-2 p-2 bg-gray-100 rounded text-label overflow-auto max-h-40 whitespace-pre-wrap">{restoreOutput}</pre>
           )}
         </div>
       )}

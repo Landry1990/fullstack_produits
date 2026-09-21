@@ -28,6 +28,8 @@
     "ticket_preview": "Aperçu du Ticket",
     "refund_title": "Remboursement / Annulation",
     "actions": {
+        "new_sale": "Nouvelle vente",
+        "new_sale_short": "Vente",
         "generate_report": "Générer le rapport",
         "print_ticket": "Imprimer Ticket",
         "print_invoice": "Imprimer Facture",

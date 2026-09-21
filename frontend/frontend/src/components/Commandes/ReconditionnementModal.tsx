@@ -271,7 +271,7 @@ const ReconditionnementModal: React.FC<ReconditionnementModalProps> = ({
                             <ArrowRight className="size-3.5 text-slate-400 shrink-0" />
                             <span className="font-bold text-emerald-600 truncate">{tr.destination_name}</span>
                           </div>
-                          <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                          <div className="text-label text-slate-400 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
                             <span>
                               {t('orders:reconditionnement.received', { defaultValue: 'Reçu' })}: {tr.qty_recue}
                             </span>

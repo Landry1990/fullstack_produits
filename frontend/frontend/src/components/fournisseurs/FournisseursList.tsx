@@ -68,7 +68,7 @@ export default function FournisseursList({ hook }: Props) {
                   </div>
                   {isOpen && (
                   <ul className="absolute z-[100] p-2 shadow-xl bg-white rounded-lg w-52 border border-slate-200 mt-1">
-                    <li className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    <li className="px-3 py-1.5 text-caption font-semibold uppercase tracking-wider text-slate-500">
                       {t('common:bulk_actions', { defaultValue: 'Actions Groupées' })}
                     </li>
                     <li>
@@ -108,7 +108,7 @@ export default function FournisseursList({ hook }: Props) {
                   </div>
                   <div>
                     <h2 className="font-bold text-base text-slate-800 leading-none">{t('providers:title')}</h2>
-                    <Badge variant="secondary" className="text-[10px] mt-1">{totalCount}</Badge>
+                    <Badge variant="secondary" className="text-caption mt-1">{totalCount}</Badge>
                   </div>
                 </div>
                 <div className="flex gap-1 items-center">
@@ -215,12 +215,12 @@ export default function FournisseursList({ hook }: Props) {
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {fournisseur.phone ? (
-                       <div className="flex items-center gap-1 text-[10px] text-slate-500 font-mono">
+                       <div className="flex items-center gap-1 text-caption text-slate-500 font-mono">
                          <Phone className="size-3" />
                          {fournisseur.phone}
                        </div>
                     ) : (
-                      <span className="text-[10px] text-slate-400 italic">{t('common:no_phone', { defaultValue: 'Aucun numéro' })}</span>
+                      <span className="text-caption text-slate-400 italic">{t('common:no_phone', { defaultValue: 'Aucun numéro' })}</span>
                     )}
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export default function FournisseursList({ hook }: Props) {
                 {/* Balance Badge */}
                 {solde !== 0 && (
                   <div className="ml-2 text-right">
-                    <Badge variant="outline" className={cn("text-[10px] font-semibold font-mono px-2 py-0.5",
+                    <Badge variant="outline" className={cn("text-caption font-semibold font-mono px-2 py-0.5",
                       solde > 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200')}>
                       {formatCurrency(solde)}
                     </Badge>

@@ -328,7 +328,7 @@ export default function ModuleFinancier() {
                         })}
                       </tbody>
                     </table>
-                    <p className="text-[10px] mt-4 italic text-slate-400">
+                    <p className="text-caption mt-4 italic text-slate-400">
                       {t('variance.high_margin_note')}
                     </p>
                   </div>

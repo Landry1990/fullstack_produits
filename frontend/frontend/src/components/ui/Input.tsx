@@ -15,6 +15,8 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
 
 /**
  * Premium Input component with refined borders, focus states, and icon support.
+ *
+ * @deprecated Utiliser l'équivalent shadcn dans components/shadcn/ — conservé pour compatibilité
  */
 export const Input: React.FC<InputProps> = ({
   label,
@@ -47,13 +49,13 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className={`w-full ${containerClassName}`}>
       {label && (
-        <label htmlFor={inputId} className="block text-[10px] font-semibold text-base-content/60 uppercase tracking-wider mb-1.5">
+        <label htmlFor={inputId} className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
           {label}
         </label>
       )}
       <div className="relative group">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50 group-focus-within:text-indigo-500 transition-colors">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors">
             {icon}
           </div>
         )}
@@ -65,9 +67,9 @@ export const Input: React.FC<InputProps> = ({
             w-full rounded-lg border transition-all duration-200 outline-none
             ${sizeClasses}
             ${icon ? 'pl-10' : ''}
-            ${error ? 'border-red-300 text-error focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-base-300 text-base-content focus:border-primary focus:ring-2 focus:ring-primary/20'}
-            bg-base-100 hover:border-base-300
-            placeholder:text-base-content/40
+            ${error ? 'border-red-300 text-red-600 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'}
+            bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600
+            placeholder:text-slate-400 dark:placeholder:text-slate-500
             ${isText ? 'uppercase' : ''}
             ${className}
           `}
@@ -75,7 +77,7 @@ export const Input: React.FC<InputProps> = ({
         />
       </div>
       {error && (
-        <p className="text-xs text-error mt-1 font-medium">{error}</p>
+        <p className="text-xs text-red-600 mt-1 font-medium">{error}</p>
       )}
     </div>
   );

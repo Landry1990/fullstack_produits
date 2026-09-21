@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import ProtectedError
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
@@ -52,7 +52,7 @@ class CorbeilleViewSet(ViewSet):
     POST /api/corbeille/purge/     → permanently delete {model, ids}
     POST /api/corbeille/empty/     → permanently delete ALL trashed items
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def list(self, request):
         """Return all soft-deleted items grouped by model."""
@@ -100,7 +100,7 @@ class CorbeilleViewSet(ViewSet):
             })
 
         # Fournisseurs inactifs
-        for f in Fournisseur.objects.filter(is_active=False).select_related('deleted_by'):
+        for f in Fournisseur.objects.filter(is_active=False).select_related('deleted_by').order_by('-deleted_at')[:200]:
             items['fournisseurs'].append({
                 'id': f.id,
                 'name': f.name,
@@ -186,7 +186,7 @@ class CorbeilleViewSet(ViewSet):
             })
 
         # Utilisateurs inactifs
-        for u in User.objects.filter(is_active=False).order_by('-date_joined')[:100]:
+        for u in User.objects.filter(is_active=False, is_superuser=False).order_by('-date_joined')[:100]:
             items['users'].append({
                 'id': u.id,
                 'name': u.username,
@@ -268,6 +268,7 @@ class CorbeilleViewSet(ViewSet):
             with transaction.atomic():
                 qs = Model.objects.filter(id__in=ids, is_active=False)
                 if model_key == 'user':
+                    qs = qs.filter(is_superuser=False)
                     names = list(qs.values_list('username', flat=True))
                 elif model_key == 'facture':
                     names = list(qs.values_list('numero_facture', flat=True))
@@ -318,6 +319,8 @@ class CorbeilleViewSet(ViewSet):
         for model_key, Model in MODEL_MAP.items():
             try:
                 qs = Model.objects.filter(is_active=False)
+                if model_key == 'user':
+                    qs = qs.filter(is_superuser=False)
                 count = qs.count()
                 if count > 0:
                     qs.delete()

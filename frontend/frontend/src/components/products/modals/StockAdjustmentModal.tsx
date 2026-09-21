@@ -111,14 +111,14 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           {/* Current stock display */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-center">
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+              <span className="text-caption font-semibold text-slate-500 uppercase tracking-wider">
                 {selectedProduit?.has_reserve_storage ? 'Rayon' : 'Stock actuel'}
               </span>
               <div className="text-2xl font-bold text-slate-800">{selectedProduit?.stock ?? 0}</div>
             </div>
             {selectedProduit?.has_reserve_storage && (
               <div className="bg-indigo-50 rounded-xl border border-indigo-100 p-3 text-center">
-                <span className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wider">Réserve</span>
+                <span className="text-caption font-semibold text-indigo-500 uppercase tracking-wider">Réserve</span>
                 <div className="text-2xl font-bold text-indigo-700">{selectedProduit?.stock_reserve ?? 0}</div>
               </div>
             )}

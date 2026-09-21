@@ -250,7 +250,7 @@ export function CouponDetailsModal({
             <div className="text-left space-y-2 text-xs text-slate-700">
               <div className="flex justify-between">
                 <span>{t('coupons.headers.status')}:</span>
-                <span className={`inline-flex items-center px-2 h-5 text-[10px] rounded font-semibold ${
+                <span className={`inline-flex items-center px-2 h-5 text-caption rounded font-semibold ${
                   coupon.status === 'ACTIF' ? 'bg-emerald-100 text-emerald-700' :
                   coupon.status === 'UTILISE' ? 'bg-slate-100 text-slate-700' : 'bg-slate-50 text-slate-500'
                 }`}>
@@ -261,7 +261,7 @@ export function CouponDetailsModal({
               <div className="border-t border-slate-200 my-1"></div>
 
               <div className="bg-white p-2 rounded border border-slate-200 space-y-1">
-                <div className="font-bold text-[10px] uppercase text-slate-500 mb-1">{t('coupons.creation')}</div>
+                <div className="font-bold text-caption uppercase text-slate-500 mb-1">{t('coupons.creation')}</div>
                 <div className="flex justify-between">
                   <span>{t('coupons.generated_by')}</span>
                   <span className="font-medium">{coupon.cree_par_nom || t('coupons.system')}</span>
@@ -274,7 +274,7 @@ export function CouponDetailsModal({
 
               {coupon.status === 'UTILISE' && (
                 <div className="bg-emerald-50 p-2 rounded border border-emerald-100 space-y-1">
-                  <div className="font-bold text-[10px] uppercase text-emerald-600 text-slate-500 mb-1">{t('coupons.headers.usage')}</div>
+                  <div className="font-bold text-caption uppercase text-emerald-600 text-slate-500 mb-1">{t('coupons.headers.usage')}</div>
                   <div className="flex justify-between">
                     <span>{t('coupons.used_by')}</span>
                     <span className="font-medium">{coupon.utilise_par_nom || t('coupons.na')}</span>
@@ -290,7 +290,7 @@ export function CouponDetailsModal({
 
               {coupon.notes && (
                 <div className="mt-2 p-2 bg-white rounded italic border border-slate-200 text-slate-600">
-                  <span className="font-bold not-italic text-slate-500 block text-[10px] mb-1">{t('coupons.notes_label')}:</span>
+                  <span className="font-bold not-italic text-slate-500 block text-caption mb-1">{t('coupons.notes_label')}:</span>
                   "{coupon.notes}"
                 </div>
               )}

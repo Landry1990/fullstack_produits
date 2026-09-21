@@ -127,7 +127,7 @@ function KPIsShadcn({ kpis }: { kpis: { jour: KPIData; semaine: KPIData; mois: K
                     <span className={`text-2xl lg:text-3xl font-bold tracking-tight ${isSuccess ? 'text-emerald-600' : 'text-slate-900'}`}>
                       {fmt(data.actual)}
                     </span>
-                    <Badge variant={isSuccess ? 'default' : item.badgeVariant} className="text-[10px] lg:text-xs">
+                    <Badge variant={isSuccess ? 'default' : item.badgeVariant} className="text-caption lg:text-xs">
                       {Math.round(data.rate)}%
                     </Badge>
                   </div>
@@ -226,7 +226,7 @@ function AlertsShadcn({ alerts }: { alerts?: DashboardAlert[] }) {
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 {t('manager_dashboard.alerts_title', 'Alertes Intelligentes')}
                 {criticalCount > 0 && (
-                  <span className="inline-flex items-center justify-center size-5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                  <span className="inline-flex items-center justify-center size-5 rounded-full bg-red-500 text-white text-caption font-bold">
                     {criticalCount}
                   </span>
                 )}
@@ -329,12 +329,12 @@ function ObjectivesShadcn({ currentObj, onEdit, onRefresh }: { currentObj: { jou
                     {obj ? fmt(Number(obj.marge_objectif)) : t('manager_dashboard.not_defined', 'Non défini')}
                   </div>
                   {obj && Number(obj.ca_objectif) > 0 && (
-                    <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                    <div className="text-caption text-slate-400 font-medium mt-0.5">
                       {t('manager_dashboard.ca_target_display', 'CA cible : {{value}}', { value: fmt(Number(obj.ca_objectif)) })}
                     </div>
                   )}
                   {obj && obj.date_debut && (
-                    <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                    <div className="text-caption text-slate-400 font-medium mt-0.5">
                       {t('manager_dashboard.since_date', 'Depuis le {{date}}', { date: formatDate(obj.date_debut) })}
                     </div>
                   )}

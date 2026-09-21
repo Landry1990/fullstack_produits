@@ -41,7 +41,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
             <div className="flex-1 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
                 {/* Search */}
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                    <label className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                         <Search className="size-3" /> {t('ajustements.filters.search_label')}
                     </label>
                     <div className="relative group">
@@ -59,7 +59,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
 
                 {/* Dates */}
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                    <label className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                         <Calendar className="size-3" /> {t('ajustements.filters.date_start')}
                     </label>
                     <LocalizedDateInput
@@ -71,7 +71,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                    <label className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                         <Calendar className="size-3" /> {t('ajustements.filters.date_end')}
                     </label>
                     <LocalizedDateInput
@@ -84,7 +84,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
 
                 {/* Motif */}
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                    <label className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                         <Filter className="size-3" /> {t('ajustements.filters.reason_label')}
                     </label>
                     <select

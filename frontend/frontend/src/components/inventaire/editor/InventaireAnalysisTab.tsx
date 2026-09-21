@@ -50,7 +50,7 @@ const StatsList = memo(({ title, data, type, t }: StatsListProps) => {
                                 </div>
                                 <div className="max-w-[150px] md:max-w-xs">
                                     <div className="font-bold text-sm text-slate-700 group-hover:text-emerald-600 transition-colors truncate">{p.produit_nom}</div>
-                                    <div className={`text-[10px] font-bold uppercase tracking-tight mt-0.5 ${colorClass}`}>
+                                    <div className={`text-caption font-bold uppercase tracking-tight mt-0.5 ${colorClass}`}>
                                         {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short')}
                                     </div>
                                 </div>
@@ -86,7 +86,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
         setSendingTelegram(true);
         try {
             await api.post('telegram/rapport-inventaire/', inventaireId ? { inventaire_id: inventaireId } : {});
-            gooeyToast.success(t('common:telegram.send_success'), { icon: <Send className="h-4 w-4 text-[#229ED9]" /> });
+            gooeyToast.success(t('common:telegram.send_success'), { icon: <Send className="h-4 w-4 text-brand-telegram" /> });
         } catch (err: unknown) {
             gooeyToast.error(err?.response?.data?.message || t('common:telegram.send_error'));
         } finally {
@@ -124,13 +124,13 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                     </button>
                     <button
                         type="button"
-                        className="inline-flex items-center justify-center h-10 px-8 rounded-xl gap-2 text-sm font-bold text-[#229ED9] border border-[#229ED9]/30 hover:bg-[#229ED9]/10 hover:border-[#229ED9] transition-all disabled:opacity-60"
+                        className="inline-flex items-center justify-center h-10 px-8 rounded-xl gap-2 text-sm font-bold text-brand-telegram border border-brand-telegram/30 hover:bg-brand-telegram/10 hover:border-brand-telegram transition-all disabled:opacity-60"
                         onClick={handleSendTelegram}
                         disabled={sendingTelegram}
                         title={t('common:telegram.inventory_report')}
                     >
                         {sendingTelegram
-                            ? <div className="animate-spin rounded-full size-4 border-b-2 border-[#229ED9]"></div>
+                            ? <div className="animate-spin rounded-full size-4 border-b-2 border-brand-telegram"></div>
                             : (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.67l-2.93-.918c-.638-.196-.65-.638.136-.943l11.434-4.41c.53-.194.995.131.822.943z"/>

@@ -207,7 +207,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 )}
                                 <TableCell className="px-3 py-2">
                                     <div className="font-semibold text-slate-900 truncate text-sm" title={item.name}>{item.name}</div>
-                                    <div className="text-[10px] text-slate-500 mt-0.5">
+                                    <div className="text-caption text-slate-500 mt-0.5">
                                         CIP: {item.cip || item.id}
                                     </div>
                                 </TableCell>
@@ -243,7 +243,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                     <>
                                         <TableCell className="px-3 py-2 text-center font-mono text-xs text-slate-700">
                                             {Number(item.rotation || 0).toFixed(0)}
-                                            <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_month')}</span>
+                                            <span className="text-caption text-slate-400 ml-1">/ {t('stock:analyse.per_month')}</span>
                                         </TableCell>
                                         <TableCell className="px-3 py-2 text-center font-semibold text-slate-700 text-sm">
                                             {item.threshold}
@@ -259,7 +259,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                     <>
                                         <TableCell className="px-3 py-2 text-center font-mono text-xs text-slate-700">
                                             {item.avg_daily_sales ? Math.ceil(item.avg_daily_sales * 30) : 0}
-                                            <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_month')}</span>
+                                            <span className="text-caption text-slate-400 ml-1">/ {t('stock:analyse.per_month')}</span>
                                         </TableCell>
                                         <TableCell className="px-3 py-2 text-center font-semibold text-sm">
                                             <span className={`text-xs ${

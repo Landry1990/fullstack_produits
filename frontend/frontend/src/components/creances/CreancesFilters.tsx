@@ -56,7 +56,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Client Selector */}
                     <div className="space-y-2">
-                        <label htmlFor="creances-client-filter" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
+                        <label htmlFor="creances-client-filter" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                             <Users className="size-3.5" /> {t('creances:filters.client_label')}
                         </label>
                         {selectedClient ? (
@@ -89,7 +89,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
 
                     {/* Date Ranges */}
                     <div className="space-y-2">
-                        <label htmlFor="creances-date-debut" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
+                        <label htmlFor="creances-date-debut" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                             <Calendar className="size-3.5" /> {t('creances:filters.start_date')}
                         </label>
                         <LocalizedDateInput
@@ -101,7 +101,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                        <label htmlFor="creances-date-fin" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
+                        <label htmlFor="creances-date-fin" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                             <Calendar className="size-3.5" /> {t('creances:filters.end_date')}
                         </label>
                         <LocalizedDateInput
@@ -114,7 +114,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
 
                     {/* Status Toggle */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
+                        <label className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 ml-1">
                             <History className="size-3.5" /> {t('creances:history_toggle')}
                         </label>
                         <div
@@ -130,10 +130,10 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                                 }
                             }}
                         >
-                            <div className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${!showHistory ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-500'}`}>
+                            <div className={`flex-1 text-center py-1.5 rounded-lg text-caption font-black uppercase transition-all ${!showHistory ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-500'}`}>
                                 {t('creances:invoice_list.pending_badge')}
                             </div>
-                            <div className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${showHistory ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-500'}`}>
+                            <div className={`flex-1 text-center py-1.5 rounded-lg text-caption font-black uppercase transition-all ${showHistory ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-500'}`}>
                                 {t('creances:history_toggle')}
                             </div>
                         </div>
@@ -144,14 +144,14 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                 <div className="flex flex-row xl:flex-col justify-end gap-3 shrink-0 pt-4 xl:pt-0 xl:pl-6 xl:border-l border-slate-200">
                     <button
                         onClick={onRefresh}
-                        className={`inline-flex items-center justify-center h-10 px-6 rounded-xl gap-2 shadow-md transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px] ${loading ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-emerald-600 text-white shadow-emerald-200 hover:bg-emerald-700'}`}
+                        className={`inline-flex items-center justify-center h-10 px-6 rounded-xl gap-2 shadow-md transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-caption ${loading ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-emerald-600 text-white shadow-emerald-200 hover:bg-emerald-700'}`}
                     >
                         {loading ? <div className="animate-spin rounded-full size-4 border-b-2 border-slate-400"></div> : <Search className="size-4" />}
                         {t('creances:filters.search')}
                     </button>
                     <button
                         onClick={onExportExcel}
-                        className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-emerald-100 text-emerald-700 gap-2 shadow-sm transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px] hover:bg-emerald-200"
+                        className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-emerald-100 text-emerald-700 gap-2 shadow-sm transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-caption hover:bg-emerald-200"
                     >
                         <FileSpreadsheet className="size-4" />
                         Export Excel
@@ -162,7 +162,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                                 onClick={() => setShowPrintMenu(!showPrintMenu)}
                                 aria-expanded={showPrintMenu}
                                 aria-haspopup="true"
-                                className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-slate-700 text-white gap-2 shadow-md shadow-slate-200 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px] hover:bg-slate-800"
+                                className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-slate-700 text-white gap-2 shadow-md shadow-slate-200 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-caption hover:bg-slate-800"
                             >
                                 <Printer className="size-4" />
                                 {t('creances:print_statement')}
@@ -177,7 +177,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                                         <FileText className="size-5 text-slate-600 mt-0.5 shrink-0" />
                                         <div>
                                             <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_simple', { defaultValue: 'Relevé simple' })}</div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5">{t('creances:print_statement_simple_desc', { defaultValue: 'Liste des factures avec montants' })}</div>
+                                            <div className="text-caption text-slate-500 mt-0.5">{t('creances:print_statement_simple_desc', { defaultValue: 'Liste des factures avec montants' })}</div>
                                         </div>
                                     </button>
                                     <div className="border-t border-slate-100" />
@@ -188,7 +188,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                                         <List className="size-5 text-emerald-600 mt-0.5 shrink-0" />
                                         <div>
                                             <div className="font-bold text-sm text-slate-800">{t('creances:print_statement_detailed', { defaultValue: 'Relevé détaillé' })}</div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5">{t('creances:print_statement_detailed_desc', { defaultValue: 'Factures avec détail des produits' })}</div>
+                                            <div className="text-caption text-slate-500 mt-0.5">{t('creances:print_statement_detailed_desc', { defaultValue: 'Factures avec détail des produits' })}</div>
                                         </div>
                                     </button>
                                 </div>

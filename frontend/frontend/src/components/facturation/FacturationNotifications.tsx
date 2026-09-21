@@ -34,7 +34,7 @@ export default function FacturationNotifications({
     <div className="fixed top-0 right-0 z-[100] mt-16 mr-4 flex flex-col items-end gap-2">
       {/* Notification d'Erreur */}
       {error && (
-        <div role="alert" className="flex items-start gap-3 p-4 rounded-lg bg-[#fee2e2] text-[#7f1d1d] dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-lg max-w-md animate-in fade-in slide-in-from-right-5 duration-300">
+        <div role="alert" className="flex items-start gap-3 p-4 rounded-lg bg-error-soft text-error-strong dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-lg max-w-md animate-in fade-in slide-in-from-right-5 duration-300">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <div>
             <h3 className="font-bold">{t('common:error')}</h3>
@@ -46,7 +46,7 @@ export default function FacturationNotifications({
 
       {/* Notification de Succès */}
       {successInfo && (
-        <div role="alert" className="flex items-start gap-3 p-4 rounded-lg bg-[#dcfce7] text-[#14532d] dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-lg max-w-lg flex-col items-start gap-2 animate-in fade-in slide-in-from-right-5 duration-300">
+        <div role="alert" className="flex items-start gap-3 p-4 rounded-lg bg-success-soft text-success-strong dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-lg max-w-lg flex-col items-start gap-2 animate-in fade-in slide-in-from-right-5 duration-300">
           <div className="flex items-center gap-2 w-full">
             <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <div className="flex-1">

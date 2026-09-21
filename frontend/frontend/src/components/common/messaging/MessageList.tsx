@@ -52,7 +52,7 @@ export function MessageRow({ message: m, variant, selected, onSelect }: MessageR
             <span className={`font-semibold text-sm truncate ${unread ? 'text-slate-900' : 'text-slate-700'}`}>
               {variant === 'sent' ? m.recipient_name : m.sender_name}
             </span>
-            <span className="text-[10px] text-slate-400 flex items-center gap-1 shrink-0">
+            <span className="text-caption text-slate-400 flex items-center gap-1 shrink-0">
               <Clock size={10} aria-hidden />
               {formatDateTime(m.created_at)}
             </span>

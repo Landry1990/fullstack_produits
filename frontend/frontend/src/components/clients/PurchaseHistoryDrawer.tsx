@@ -215,25 +215,25 @@ export default function PurchaseHistoryDrawer({
               {/* KPI Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">
+                  <div className="flex items-center gap-1.5 text-caption font-black uppercase tracking-widest text-indigo-400 mb-1">
                     <ShoppingBag className="size-3" />{t('clients:history.total_visits', 'Visites')}
                   </div>
                   <div className="text-2xl font-black text-indigo-700">{data.total_factures}</div>
                 </div>
                 <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">
+                  <div className="flex items-center gap-1.5 text-caption font-black uppercase tracking-widest text-emerald-400 mb-1">
                     <Wallet className="size-3" />{t('clients:history.total_ca', 'CA Total')}
                   </div>
                   <div className="text-2xl font-black text-emerald-700">{formatCurrency(data.total_ca ?? 0)}</div>
                 </div>
                 <div className="bg-sky-50 border border-sky-100 rounded-2xl p-4">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-sky-400 mb-1">
+                  <div className="flex items-center gap-1.5 text-caption font-black uppercase tracking-widest text-sky-400 mb-1">
                     <TrendingUp className="size-3" />{t('clients:history.avg_basket', 'Panier Moyen')}
                   </div>
                   <div className="text-2xl font-black text-sky-700">{formatCurrency(data.avg_basket ?? 0)}</div>
                 </div>
                 <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-amber-400 mb-1">
+                  <div className="flex items-center gap-1.5 text-caption font-black uppercase tracking-widest text-amber-400 mb-1">
                     <Clock className="size-3" />{t('clients:history.frequency', 'Fréquence')}
                   </div>
                   <div className="text-2xl font-black text-amber-700">
@@ -267,12 +267,12 @@ export default function PurchaseHistoryDrawer({
                   <div className="space-y-2">
                     {data.top_products.map((p, i) => (
                       <div key={p.nom} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                        <span className={`size-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${i === 0 ? 'bg-amber-400 text-white' : i === 1 ? 'bg-slate-300 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                        <span className={`size-6 rounded-lg flex items-center justify-center text-caption font-black shrink-0 ${i === 0 ? 'bg-amber-400 text-white' : i === 1 ? 'bg-slate-300 text-white' : 'bg-slate-100 text-slate-500'}`}>
                           {i + 1}
                         </span>
                         <span className="flex-1 text-xs font-semibold text-slate-700 truncate">{p.nom}</span>
                         <span className="text-xs font-black text-indigo-600 shrink-0">×{p.quantite}</span>
-                        <span className="text-[10px] font-bold text-slate-400 shrink-0">{formatCurrency(p.total)}</span>
+                        <span className="text-caption font-bold text-slate-400 shrink-0">{formatCurrency(p.total)}</span>
                       </div>
                     ))}
                   </div>
@@ -302,8 +302,8 @@ export default function PurchaseHistoryDrawer({
                     ))}
                   </div>
                   <div className="flex justify-between mt-1 px-1">
-                    <span className="text-[9px] text-slate-300 font-bold">{data.ca_12_mois[0]?.mois}</span>
-                    <span className="text-[9px] text-slate-300 font-bold">{data.ca_12_mois[data.ca_12_mois.length - 1]?.mois}</span>
+                    <span className="text-micro text-slate-300 font-bold">{data.ca_12_mois[0]?.mois}</span>
+                    <span className="text-micro text-slate-300 font-bold">{data.ca_12_mois[data.ca_12_mois.length - 1]?.mois}</span>
                   </div>
                 </div>
               )}
@@ -335,7 +335,7 @@ export default function PurchaseHistoryDrawer({
                       </div>
                       <div>
                         <div className="text-sm font-black text-slate-800">{t('clients:history.invoice_no', { no: facture.numero_facture })}</div>
-                        <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                        <div className="text-caption font-bold text-slate-400 flex items-center gap-1">
                           <CalendarDays className="size-3" /> {formatDateFr(facture.date)}
                         </div>
                       </div>
@@ -343,7 +343,7 @@ export default function PurchaseHistoryDrawer({
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <div className="text-sm font-black text-slate-800">{formatCurrency(facture.total_ttc)}</div>
-                        <div className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded leading-none mt-0.5 ${facture.status === 'VAL' || facture.status === 'VALIDEE' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                        <div className={`text-micro font-black uppercase px-1.5 py-0.5 rounded leading-none mt-0.5 ${facture.status === 'VAL' || facture.status === 'VALIDEE' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
                           {facture.status === 'VAL' || facture.status === 'VALIDEE' ? t('clients:history.status_validee') : facture.status}
                         </div>
                       </div>
@@ -357,9 +357,9 @@ export default function PurchaseHistoryDrawer({
                         <table className="w-full text-xs">
                           <thead className="bg-slate-50">
                             <tr>
-                              <th className="py-2 px-3 text-[9px] uppercase font-black tracking-widest text-slate-400 text-left">{t('common:product')}</th>
-                              <th className="py-2 px-3 text-[9px] uppercase font-black tracking-widest text-slate-400 text-center">{t('clients:history.quantity_short')}</th>
-                              <th className="py-2 px-3 text-[9px] uppercase font-black tracking-widest text-slate-400 text-right">{t('common:total')}</th>
+                              <th className="py-2 px-3 text-micro uppercase font-black tracking-widest text-slate-400 text-left">{t('common:product')}</th>
+                              <th className="py-2 px-3 text-micro uppercase font-black tracking-widest text-slate-400 text-center">{t('clients:history.quantity_short')}</th>
+                              <th className="py-2 px-3 text-micro uppercase font-black tracking-widest text-slate-400 text-right">{t('common:total')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -367,7 +367,7 @@ export default function PurchaseHistoryDrawer({
                               <tr key={prod.nom} className="border-t border-slate-100 hover:bg-slate-50">
                                 <td className="py-2 px-3">
                                   <div className="font-semibold text-slate-700 truncate">{prod.nom}</div>
-                                  <div className="text-[9px] text-slate-400 font-mono">{prod.prix_unitaire} {t('clients:units.per_unit')}</div>
+                                  <div className="text-micro text-slate-400 font-mono">{prod.prix_unitaire} {t('clients:units.per_unit')}</div>
                                 </td>
                                 <td className="py-2 px-3 text-center font-black text-slate-600">×{prod.quantite}</td>
                                 <td className="py-2 px-3 text-right font-black text-slate-700">{formatCurrency(prod.total)}</td>

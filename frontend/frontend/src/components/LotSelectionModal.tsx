@@ -6,6 +6,7 @@ import { formatDate } from '../utils/dateUtils'
 import type { ProduitModel, LotAllocation } from '../types'
 import { sortLotsByFEFO, allocateLotsFEFO } from '../utils/fefo'
 import PremiumModal from './common/PremiumModal'
+import { ErrorState } from './ui/ErrorState'
 
 type LotSelectionModalProps = {
   isOpen: boolean
@@ -109,9 +110,7 @@ export default function LotSelectionModal({
             <span className="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
           </div>
         ) : error ? (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl flex items-center gap-2">
-            <span className="font-medium">{error}</span>
-          </div>
+          <ErrorState error={error} compact />
         ) : (
           <>
             {/* Option Auto / FEFO */}

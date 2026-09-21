@@ -300,14 +300,14 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 {discountType === DiscountType.BUY_X_GET_Y && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div className="bg-white p-2 rounded-lg border border-slate-200">
-                                            <label htmlFor="promo-buy-qty" className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.buy')}</label>
+                                            <label htmlFor="promo-buy-qty" className="block text-caption font-bold uppercase text-slate-500">{t('promotions:form.labels.buy')}</label>
                                             <input id="promo-buy-qty" type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold focus:outline-none focus:border-emerald-300" value={buyQuantity} onChange={e => {
                                                 const parsed = e.target.value ? Number(e.target.value) : undefined;
                                                 setBuyQuantity(prev => (parsed !== undefined && !Number.isNaN(parsed) && parsed > 0 ? parsed : prev));
                                             }} min="1" />
                                         </div>
                                         <div className="bg-white p-2 rounded-lg border border-slate-200">
-                                            <label htmlFor="promo-get-qty" className="block text-[10px] font-bold uppercase text-slate-500">{t('promotions:form.labels.get')}</label>
+                                            <label htmlFor="promo-get-qty" className="block text-caption font-bold uppercase text-slate-500">{t('promotions:form.labels.get')}</label>
                                             <input id="promo-get-qty" type="number" className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-bold text-emerald-600 focus:outline-none focus:border-emerald-300" value={getQuantity} onChange={e => {
                                                 const parsed = e.target.value ? Number(e.target.value) : undefined;
                                                 setGetQuantity(prev => (parsed !== undefined && !Number.isNaN(parsed) && parsed >= 0 ? parsed : prev));
@@ -350,7 +350,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                         <div className="mt-6 border border-slate-200 rounded-2xl overflow-hidden overflow-x-auto shadow-sm bg-white">
                             <table className="w-full text-sm">
                                 <thead className="bg-slate-50 border-b border-slate-100">
-                                    <tr className="text-slate-500 uppercase text-[10px] tracking-widest">
+                                    <tr className="text-slate-500 uppercase text-caption tracking-widest">
                                         <th className="py-3 px-4 text-left">{t('promotions:form.products.table.product')}</th>
                                         <th className="py-3 px-4 text-center">{t('promotions:form.products.table.stock')}</th>
                                         <th className="py-3 px-4 text-center w-32">{t('promotions:form.products.table.qty')}</th>
@@ -380,7 +380,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                             >
                                                 <td className="py-3 px-4">
                                                     <div className="font-semibold text-slate-800">{p.name}</div>
-                                                    <div className="text-[10px] font-mono text-slate-400">{p.cip1 ? String(p.cip1) : '#'+p.id}</div>
+                                                    <div className="text-caption font-mono text-slate-400">{p.cip1 ? String(p.cip1) : '#'+p.id}</div>
                                                 </td>
                                                 <td className="py-3 px-4 text-center">
                                                     <span className={cn("font-bold", p.stock !== undefined && p.stock <= 0 ? 'text-red-500' : 'text-emerald-600')}>

@@ -52,7 +52,7 @@ const InfoRow: React.FC<{
     <div className="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
         <div className="mt-0.5 text-slate-400 shrink-0">{icon}</div>
         <div className="flex-1 min-w-0">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
+            <div className="text-label font-semibold uppercase tracking-wider text-slate-400">{label}</div>
             <div className={cn('text-sm text-slate-800 font-medium mt-0.5 break-words', mono && 'font-mono')}>
                 {children}
             </div>

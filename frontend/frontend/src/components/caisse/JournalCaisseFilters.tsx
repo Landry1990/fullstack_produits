@@ -99,7 +99,7 @@ export default function JournalCaisseFilters({ state }: Props) {
                 className="w-full min-w-0 text-xs bg-transparent focus:outline-none cursor-pointer pr-6 font-medium text-slate-700"
                 isClearable
               />
-              <span className="text-slate-300 text-[10px]">→</span>
+              <span className="text-slate-300 text-caption">→</span>
               <label htmlFor="journal-date-fin" className="sr-only">{t('date_end')}</label>
               <DatePicker
                 id="journal-date-fin"

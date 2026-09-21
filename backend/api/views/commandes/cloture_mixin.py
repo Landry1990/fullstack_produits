@@ -451,17 +451,21 @@ class CommandeClotureMixin:
                     # 2.6 Invalider le cache
                     cache.delete('dashboard_stats')
 
-                    # 2.7 Log d'audit
-                    for p in produits_to_update:
-                        log_audit(
-                            user=request.user,
-                            action=AuditLog.Action.UPDATE,
-                            model_name='Produit',
-                            object_id=str(p.id),
-                            description=f"Stock/PMP mis à jour via clôture commande #{commande.id}",
-                            details={'stock': str(p.stock), 'pmp': str(p.pmp)},
-                            request=request
-                        )
+                    # 2.7 Log d'audit — un seul log de synthèse par clôture
+                    # (une commande peut contenir des centaines de lignes)
+                    log_audit(
+                        user=request.user,
+                        action=AuditLog.Action.ORDER_RECEIVE,
+                        model_name='Commande',
+                        object_id=str(commande.id),
+                        description=f"Réception commande #{commande.id} : {len(produits_to_update)} produit(s) mis à jour (stock/PMP), {len(lots_to_create)} lot(s) créé(s)",
+                        details={
+                            'produits_count': len(produits_to_update),
+                            'lots_count': len(lots_to_create),
+                            'produit_ids': [p.id for p in produits_to_update][:50],
+                        },
+                        request=request
+                    )
 
                     business_logger.info(
                         f"[COMMANDE] Cloture OK #{commande.id} | "

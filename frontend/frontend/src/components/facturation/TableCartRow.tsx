@@ -82,7 +82,7 @@ export default React.memo(function TableCartRow({
           <div className="flex items-center gap-2">
             <span className="truncate text-slate-800" title={`${t('facturation:cart.headers.total')} ${formatCurrency(normalizeNumberInput(ligne.total_ligne))}`}>{ligne.produit.name}</span>
             {ligne.isPromis && (
-              <Badge variant="secondary" className="text-[10px] h-5 bg-amber-100 text-amber-700 border-amber-200 animate-pulse shrink-0">
+              <Badge variant="secondary" className="text-caption h-5 bg-amber-100 text-amber-700 border-amber-200 animate-pulse shrink-0">
                 {t('facturation:cart_extra.promis')}
               </Badge>
             )}
@@ -90,20 +90,20 @@ export default React.memo(function TableCartRow({
           {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75 text-red-500">{t('facturation:cart.product_status.deleted')}</span>}
           {ligne.produit.is_chronic && (
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="default" className="text-[10px] h-5 bg-emerald-100 text-emerald-700 border-emerald-200 gap-1">
+              <Badge variant="default" className="text-caption h-5 bg-emerald-100 text-emerald-700 border-emerald-200 gap-1">
                <span>{t('facturation:cart.product_status.chronic')}</span>
               </Badge>
               <div className="flex items-center gap-1 border border-emerald-200 rounded px-1.5 bg-emerald-50">
-                <span className="text-[10px] text-emerald-600">{t('facturation:cart.product_status.treatment')}</span>
+                <span className="text-caption text-emerald-600">{t('facturation:cart.product_status.treatment')}</span>
                 <input
                    type="number"
                    aria-label={t('facturation:cart.product_status.treatment')}
-                   className="w-8 bg-transparent text-[10px] font-semibold text-emerald-700 outline-none"
+                   className="w-8 bg-transparent text-caption font-semibold text-emerald-700 outline-none"
                    value={ligne.treatment_duration_days || ''}
                    onChange={(e) => updateTreatmentDuration?.(ligne.lineId, normalizeNumberInput(e.target.value) || 0)}
                    min={1}
                 />
-                <span className="text-[10px] text-emerald-600">{t('facturation:cart.product_status.days_unit')}</span>
+                <span className="text-caption text-emerald-600">{t('facturation:cart.product_status.days_unit')}</span>
               </div>
             </div>
           )}
@@ -199,9 +199,9 @@ export default React.memo(function TableCartRow({
           variant="ghost"
           size="icon"
           onClick={() => removeLigne(ligne.lineId)}
+          aria-label={t('facturation:cart.actions.remove')}
           className="size-7 text-slate-300 hover:text-red-500 hover:bg-red-50 sm:opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          <span className="sr-only">{t('facturation:cart.actions.remove')}</span>
           <Trash2 className="size-3.5" />
         </Button>
       </TableCell>

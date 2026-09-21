@@ -185,21 +185,21 @@ const LicenceScreen = () => {
                                 <div className="flex items-center gap-3">
                                     <Hospital className="size-5 text-base-content/60" />
                                     <div>
-                                        <p className="text-[10px] text-base-content/60 uppercase font-bold">{t('licence.pharmacy')}</p>
+                                        <p className="text-caption text-base-content/60 uppercase font-bold">{t('licence.pharmacy')}</p>
                                         <p className="text-white text-sm">{previewData.pharmacie_nom}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <UserCheck className="size-5 text-base-content/60" />
                                     <div>
-                                        <p className="text-[10px] text-base-content/60 uppercase font-bold">{t('licence.pharmacist')}</p>
+                                        <p className="text-caption text-base-content/60 uppercase font-bold">{t('licence.pharmacist')}</p>
                                         <p className="text-white text-sm">{previewData.pharmacien_nom}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <ShieldAlert className="size-5 text-base-content/60" />
                                     <div>
-                                        <p className="text-[10px] text-base-content/60 uppercase font-bold">{t('licence.plan')}</p>
+                                        <p className="text-caption text-base-content/60 uppercase font-bold">{t('licence.plan')}</p>
                                         <p className={`text-sm font-bold ${previewData.plan === 'PREMIUM' ? 'text-amber-400' : 'text-blue-400'}`}>
                                             {previewData.plan}
                                         </p>
@@ -208,7 +208,7 @@ const LicenceScreen = () => {
                                 <div className="flex items-center gap-3">
                                     <Calendar className="size-5 text-base-content/60" />
                                     <div>
-                                        <p className="text-[10px] text-base-content/60 uppercase font-bold">{t('licence.expires')}</p>
+                                        <p className="text-caption text-base-content/60 uppercase font-bold">{t('licence.expires')}</p>
                                         <p className="text-white text-sm">
                                             {new Date(previewData.exp * 1000).toLocaleDateString()}
                                         </p>
@@ -261,7 +261,7 @@ const LicenceScreen = () => {
                                     className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 transition-colors"
                                     autoComplete="off"
                                 />
-                                <p className="text-[10px] text-slate-500 mt-1">
+                                <p className="text-caption text-slate-500 mt-1">
                                     {t('licence.sudo_hint', { defaultValue: "Mot de passe admin OU code journalier fourni par le support" })}
                                 </p>
                             </div>

@@ -195,6 +195,7 @@ function LabelPreview({
   barcodeType: 'CODE128' | 'DATAMATRIX'
   t: TFunction
 }) {
+  const { i18n } = useTranslation()
   const isEnabled = (key: string) => fields.find(f => f.key === key)?.enabled ?? false
   const isCompact = format === '30x15'
 
@@ -337,7 +338,7 @@ function LabelPreview({
             flexShrink: 0,
             textAlign: 'right',
           }}>
-            {label.sellingPrice.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}{t('common:currency_symbol', { defaultValue: 'F' })}
+            {label.sellingPrice.toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 })}{t('common:currency_symbol', { defaultValue: 'F' })}
           </div>
         )}
       </div>
@@ -408,7 +409,7 @@ export default function SimplePrintLabelsModal({
   selectedRows,
   onClose,
 }: SimplePrintLabelsModalProps) {
-  const { t } = useTranslation(['labels', 'common'])
+  const { t, i18n } = useTranslation(['labels', 'common'])
   const { settings: pharmacySettings } = usePharmacySettings()
 
   // Initialize and merge fields with current language
@@ -565,7 +566,7 @@ export default function SimplePrintLabelsModal({
       const dateEntree = (() => {
         try {
           const d = new Date(refDate)
-          return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+          return d.toLocaleDateString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })
         } catch {
           return ''
         }
@@ -707,7 +708,7 @@ export default function SimplePrintLabelsModal({
         leftRows.push(`<div style="font-size:${isCompact ? '3.5pt' : '4pt'};color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${txt}</div>`)
       }
 
-      const priceVal = label.sellingPrice.toLocaleString('fr-FR', { maximumFractionDigits: 0 })
+      const priceVal = label.sellingPrice.toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 })
       const priceFontSize = priceVal.length > 7
         ? (isCompact ? '5.5pt' : '6.5pt')
         : priceVal.length > 5
@@ -953,7 +954,7 @@ ${labelsHTML}
 
           {showConfig && (
             <div className="border-t border-base-200 p-3 space-y-0.5 bg-base-50/50">
-              <div className="text-[10px] text-base-content/40 font-medium mb-2 flex items-center gap-1">
+              <div className="text-caption text-base-content/40 font-medium mb-2 flex items-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
                 {t('drag_info')}
               </div>
@@ -990,7 +991,7 @@ ${labelsHTML}
                   <span className={`text-sm font-medium select-none flex-1 ${field.enabled ? 'text-base-content' : 'text-base-content/50'}`}>
                     {field.label}
                   </span>
-                  <span className="text-[10px] text-base-content/25 font-mono shrink-0">{index + 1}</span>
+                  <span className="text-caption text-base-content/25 font-mono shrink-0">{index + 1}</span>
                 </div>
               ))}
               
@@ -1043,7 +1044,7 @@ ${labelsHTML}
               />
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-bold block whitespace-normal leading-tight">{t('qty.by_unit')}</span>
-                <p className="text-[10px] text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.received_desc', { defaultValue: 'Total unités + gratuits' })}</p>
+                <p className="text-caption text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.received_desc', { defaultValue: 'Total unités + gratuits' })}</p>
               </div>
             </label>
 
@@ -1057,7 +1058,7 @@ ${labelsHTML}
               />
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-bold block whitespace-normal leading-tight">{t('qty.fixed')}</span>
-                <p className="text-[10px] text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.fixed_desc', { defaultValue: 'Nombre identique par produit' })}</p>
+                <p className="text-caption text-base-content/50 mt-0.5 leading-snug whitespace-normal">{t('qty.fixed_desc', { defaultValue: 'Nombre identique par produit' })}</p>
               </div>
             </label>
           </div>
@@ -1102,7 +1103,7 @@ ${labelsHTML}
               <label className="text-xs font-bold uppercase tracking-wider text-base-content/40">
                 {t('preview')} ({labelsData.length})
               </label>
-              <Badge variant="outline" size="sm" className="text-[10px] text-base-content/50">Zoom 200%</Badge>
+              <Badge variant="outline" size="sm" className="text-caption text-base-content/50">Zoom 200%</Badge>
             </div>
             
             <div className="bg-base-300/30 rounded-2xl p-6 max-h-[400px] overflow-y-auto custom-scrollbar border border-base-content/5">

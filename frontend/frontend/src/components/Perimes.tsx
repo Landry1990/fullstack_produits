@@ -377,7 +377,7 @@ export default function Perimes() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden max-w-[1600px] mx-auto w-full">
       {/* Header */}
       <div className="flex items-center justify-between px-3 lg:px-6 py-2 lg:py-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-30 shrink-0">
         <div className="flex items-center gap-2 lg:gap-4">
@@ -386,7 +386,7 @@ export default function Perimes() {
           </div>
           <div>
             <h1 className="text-base lg:text-xl font-bold tracking-tight text-slate-800">{t('perimes.title')}</h1>
-            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest hidden lg:block">{t('perimes.subtitle')}</p>
+            <p className="text-label font-medium text-slate-400 uppercase tracking-widest hidden lg:block">{t('perimes.subtitle')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 lg:gap-3">
@@ -518,12 +518,12 @@ export default function Perimes() {
                         <Table className="w-full text-sm">
                           <TableHeader>
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
-                              <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.product')}</TableHead>
-                              <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.lot')}</TableHead>
-                              <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.expiration')}</TableHead>
-                              <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.qty')}</TableHead>
-                              <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.value_cost')}</TableHead>
-                              <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.table.value_sale')}</TableHead>
+                              <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.table.product')}</TableHead>
+                              <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.table.lot')}</TableHead>
+                              <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.table.expiration')}</TableHead>
+                              <TableHead className="text-right px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.table.qty')}</TableHead>
+                              <TableHead className="text-right px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.table.value_cost')}</TableHead>
+                              <TableHead className="text-right px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.table.value_sale')}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -601,7 +601,7 @@ export default function Perimes() {
                         </div>
                         <div className="flex gap-3 items-center">
                            <div className="flex items-center gap-2 bg-slate-50 p-1 px-3 rounded-xl border border-slate-200">
-                             <span className="text-[10px] font-bold text-slate-400 uppercase">{t('common:filters')}</span>
+                             <span className="text-caption font-bold text-slate-400 uppercase">{t('common:filters')}</span>
                              <div className="h-4 w-px bg-slate-200 mx-1"></div>
                              <label className="flex items-center gap-2 cursor-pointer">
                                <Checkbox
@@ -609,11 +609,11 @@ export default function Perimes() {
                                  onCheckedChange={(checked) => setShowExpiredOnly(checked === true)}
                                  className="data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
                                />
-                               <span className="text-[11px] font-semibold text-slate-500">{t('stock:perimes.show_expired_only')}</span>
+                               <span className="text-label font-semibold text-slate-500">{t('stock:perimes.show_expired_only')}</span>
                              </label>
                              {!showExpiredOnly && (
                                <select
-                                 className="rounded-lg border border-slate-200 bg-white h-7 px-2 text-[11px] font-bold text-slate-700 focus:outline-none focus:border-red-400 transition-all"
+                                 className="rounded-lg border border-slate-200 bg-white h-7 px-2 text-label font-bold text-slate-700 focus:outline-none focus:border-red-400 transition-all"
                                  aria-label={t('common:filters')}
                                  value={filterDays}
                                  onChange={(e) => setFilterDays(parseInt(e.target.value))}
@@ -643,7 +643,7 @@ export default function Perimes() {
               ) : (
                 <Table className="w-full text-xs">
                   <TableHeader className="bg-slate-50 sticky top-0 z-30 border-b border-slate-100">
-                    <TableRow className="text-slate-400 uppercase text-[10px] tracking-widest font-black hover:bg-slate-50">
+                    <TableRow className="text-slate-400 uppercase text-caption tracking-widest font-black hover:bg-slate-50">
                       <TableHead className="py-3 px-4 w-12 text-center">
                         <Checkbox
                           checked={selectedLotIds.size === lots.filter(l => l.quantity_remaining > 0).length && lots.filter(l => l.quantity_remaining > 0).length > 0}
@@ -675,9 +675,9 @@ export default function Perimes() {
                         </TableCell>
                         <TableCell className="py-2.5 px-4">
                           <div className="font-bold text-sm text-slate-800">{lot.produit_nom}</div>
-                          <div className="text-[10px] font-mono text-slate-400">#{lot.produit}</div>
+                          <div className="text-caption font-mono text-slate-400">#{lot.produit}</div>
                         </TableCell>
-                        <TableCell className="py-2.5 px-4 text-center font-mono text-[11px] font-bold text-slate-500">
+                        <TableCell className="py-2.5 px-4 text-center font-mono text-label font-bold text-slate-500">
                           {lot.lot || '-'}
                         </TableCell>
                         <TableCell className="py-2.5 px-4 text-center">
@@ -710,7 +710,7 @@ export default function Perimes() {
                               {t('perimes.table.exit_btn')}
                             </Button>
                           ) : (
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1">
+                            <span className="text-caption font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1">
                               <Check className="size-3" />
                               {t('perimes.table.sorti')}
                             </span>
@@ -729,7 +729,7 @@ export default function Perimes() {
              <div className="flex flex-wrap gap-2 lg:gap-4 items-center justify-between bg-slate-50 p-3 lg:p-4 rounded-xl border border-slate-200">
                 <div className="flex flex-wrap gap-2 lg:gap-4 items-center">
                     <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase pl-1">{t('common:from')}</span>
+                        <span className="text-caption font-bold text-slate-400 uppercase pl-1">{t('common:from')}</span>
                         <LocalizedDateInput
                             className="h-9 w-auto"
                             aria-label={t('common:from')}
@@ -738,7 +738,7 @@ export default function Perimes() {
                         />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase pl-1">{t('common:to')}</span>
+                        <span className="text-caption font-bold text-slate-400 uppercase pl-1">{t('common:to')}</span>
                         <LocalizedDateInput
                             className="h-9 w-auto"
                             aria-label={t('common:to')}
@@ -797,13 +797,13 @@ export default function Perimes() {
                    <Table className="w-full text-sm">
                      <TableHeader>
                        <TableRow className="bg-slate-50 hover:bg-slate-50">
-                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.date')}</TableHead>
-                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.product')}</TableHead>
-                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.lot')}</TableHead>
-                         <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.qty')}</TableHead>
-                         <TableHead className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.value')}</TableHead>
-                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.user')}</TableHead>
-                         <TableHead className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.details')}</TableHead>
+                         <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.date')}</TableHead>
+                         <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.product')}</TableHead>
+                         <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.lot')}</TableHead>
+                         <TableHead className="text-right px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.qty')}</TableHead>
+                         <TableHead className="text-right px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.value')}</TableHead>
+                         <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.user')}</TableHead>
+                         <TableHead className="text-left px-4 py-3 text-caption font-black uppercase tracking-widest text-slate-400">{t('perimes.history.table.details')}</TableHead>
                        </TableRow>
                      </TableHeader>
                      <TableBody>
@@ -812,9 +812,9 @@ export default function Perimes() {
                            <TableCell className="text-xs px-4 py-2.5 text-slate-500">{formatDate(adj.created_at)}</TableCell>
                            <TableCell className="px-4 py-2.5">
                              <div className="font-bold text-xs text-slate-800">{adj.produit_name}</div>
-                             <div className="text-[10px] text-slate-400 font-mono">{adj.produit_cip}</div>
+                             <div className="text-caption text-slate-400 font-mono">{adj.produit_cip}</div>
                            </TableCell>
-                           <TableCell className="font-mono text-[11px] px-4 py-2.5 text-slate-500">{adj.lot_number || '-'}</TableCell>
+                           <TableCell className="font-mono text-label px-4 py-2.5 text-slate-500">{adj.lot_number || '-'}</TableCell>
                            <TableCell className="text-right font-bold text-red-500 px-4 py-2.5">{adj.quantity_change}</TableCell>
                            <TableCell className="text-right font-bold px-4 py-2.5 text-slate-700">{formatCurrency(adj.valorisation)}</TableCell>
                            <TableCell className="text-xs px-4 py-2.5 text-slate-500">{adj.user_name}</TableCell>

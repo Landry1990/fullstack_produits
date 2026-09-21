@@ -152,7 +152,7 @@ export default function UserHeader() {
                 <p className="text-sm font-semibold text-slate-700 leading-none mb-1">
                   {user.username}
                 </p>
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">
+                <p className="text-caption uppercase tracking-wider text-slate-400 font-medium">
                   {user.is_superuser ? t('sidebar:roles.pharmacist') : t('sidebar:roles.user')}
                 </p>
               </div>

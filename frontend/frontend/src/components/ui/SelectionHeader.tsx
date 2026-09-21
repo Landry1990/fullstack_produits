@@ -12,6 +12,7 @@ interface SelectionHeaderProps {
   children: React.ReactNode;
 }
 
+/** @deprecated Utiliser l'équivalent shadcn dans components/shadcn/ — conservé pour compatibilité */
 const SelectionHeader: React.FC<SelectionHeaderProps> = ({
   selectedCount,
   onClear,
@@ -35,7 +36,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
   }, [isOpen]);
 
   return (
-    <th colSpan={colSpan} className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 py-3">
+    <th colSpan={colSpan} className="sticky top-0 z-30 bg-slate-100 dark:bg-slate-800 opacity-100 border-b border-slate-200 dark:border-slate-700 py-3">
       <div className="flex items-center justify-between w-full h-8">
         {selectedCount > 0 ? (
           <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2 duration-200">
@@ -46,7 +47,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
                 <Badge variant="primary" size="sm">{selectedCount}</Badge>
               </Button>
               {isOpen && (
-                <ul className="absolute z-[50] p-2 shadow-2xl bg-base-100 rounded-xl w-60 border border-base-200 mt-2">
+                <ul className="absolute z-[50] p-2 shadow-2xl bg-white dark:bg-slate-900 rounded-xl w-60 border border-slate-200 dark:border-slate-700 mt-2">
                   {actions}
                 </ul>
               )}
@@ -54,7 +55,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
             <Button 
               variant="ghost" size="sm"
               onClick={onClear}
-              className="text-base-content/60 hover:text-base-content"
+              className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             >
               <X className="size-4" />
               {t('common:actions.cancel', { defaultValue: 'Annuler' })}

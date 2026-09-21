@@ -93,7 +93,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         {data.vendeur[0]?.toUpperCase() ?? '?'}
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('vendeur.my_dashboard')}</p>
+                        <p className="text-caption font-black uppercase tracking-widest text-slate-400">{t('vendeur.my_dashboard')}</p>
                         <p className="text-lg font-black text-slate-800 leading-tight">{data.vendeur}</p>
                     </div>
                 </div>
@@ -130,12 +130,12 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                     <div className="flex items-end justify-between mb-2">
                         <div>
                             <p className="text-2xl font-black text-slate-800">{formatCurrencyLocal(data.ca_jour)}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">{t('vendeur.on_estimated', { value: formatCurrencyLocal(data.objectif_jour_perso) })}</p>
+                            <p className="text-caption text-slate-400 font-medium">{t('vendeur.on_estimated', { value: formatCurrencyLocal(data.objectif_jour_perso) })}</p>
                         </div>
                         <div className="text-right">
                             <p className="text-xs font-bold text-slate-400">{t('vendeur.sales_count', { count: data.nb_jour })}</p>
                             {data.panier_jour > 0 && (
-                                <p className="text-[10px] text-slate-300">moy. {formatCurrencyLocal(data.panier_jour)}</p>
+                                <p className="text-caption text-slate-300">moy. {formatCurrencyLocal(data.panier_jour)}</p>
                             )}
                         </div>
                     </div>
@@ -184,9 +184,9 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         <div className={`inline-flex p-1.5 rounded-lg ${kpi.bg} mb-2`}>
                             <kpi.icon className={`size-3.5 ${kpi.color}`} />
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{kpi.label}</p>
+                        <p className="text-caption font-black uppercase tracking-widest text-slate-400 mb-0.5">{kpi.label}</p>
                         {kpi.custom ?? <p className="text-xl font-black text-slate-800">{kpi.value}</p>}
-                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">{kpi.sub}</p>
+                        <p className="text-caption text-slate-400 font-medium mt-0.5">{kpi.sub}</p>
                     </div>
                 ))}
             </div>
@@ -196,9 +196,9 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <Zap className="size-3.5 text-indigo-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('vendeur.last_7_days')}</span>
+                        <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('vendeur.last_7_days')}</span>
                     </div>
-                    {lastRefresh && <span className="text-[9px] text-slate-300 font-medium">{t('vendeur.updated_ago', { time: lastRefresh })}</span>}
+                    {lastRefresh && <span className="text-micro text-slate-300 font-medium">{t('vendeur.updated_ago', { time: lastRefresh })}</span>}
                 </div>
                 <ResponsiveContainer width="100%" height={100}>
                     <BarChart data={data.sparkline} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -230,7 +230,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                 <div className="flex justify-around mt-1">
                     {data.sparkline.map((d, _i) => (
                         <div key={d.label} className="flex flex-col items-center">
-                            <span className={`text-[9px] font-black ${d.is_today ? 'text-indigo-600' : 'text-slate-300'}`}>
+                            <span className={`text-micro font-black ${d.is_today ? 'text-indigo-600' : 'text-slate-300'}`}>
                                 {d.nb > 0 ? d.nb : ''}
                             </span>
                         </div>
@@ -243,7 +243,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                 <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
                         <Star className="size-3.5 text-amber-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('vendeur.top_products_month')}</span>
+                        <span className="text-caption font-black uppercase tracking-widest text-slate-400">{t('vendeur.top_products_month')}</span>
                     </div>
                     <div className="divide-y divide-slate-100">
                         {data.top_produits.map((p, i) => {
@@ -262,7 +262,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                                     </div>
                                     <div className="text-right shrink-0">
                                         <p className="text-xs font-black text-slate-700">{formatCurrencyLocal(p.revenue)}</p>
-                                        <p className="text-[9px] text-slate-400">{t('vendeur.units_count', { count: p.qty })}</p>
+                                        <p className="text-micro text-slate-400">{t('vendeur.units_count', { count: p.qty })}</p>
                                     </div>
                                 </div>
                             );
@@ -279,7 +279,7 @@ export default function DashboardVendeur({ formatCurrencyLocal }: { formatCurren
                         <p className="text-xs font-black text-slate-600">
                             {t('vendeur.last_sale')} · <span className="text-indigo-600">{data.derniere_vente.numero}</span>
                         </p>
-                        <p className="text-[10px] text-slate-400 font-medium">
+                        <p className="text-caption text-slate-400 font-medium">
                             {formatDistanceToNow(parseISO(data.derniere_vente.date), { addSuffix: true, locale: dateLocale })}
                         </p>
                     </div>

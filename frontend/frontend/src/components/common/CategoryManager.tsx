@@ -3,7 +3,7 @@ import api from '../../services/api';
 import { 
   Sparkles, Pencil, Trash2, Plus, 
   Search, Package, LayoutGrid, Printer,
-  Download
+  Download, Loader2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '../shadcn/input';
@@ -71,6 +71,7 @@ export default function CategoryManager({
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [entries, setEntries] = useState<Array<{ id: string; name: string; description: string; parent: string }>>([{ id: generateUUID(), name: '', description: '', parent: '' }]);
   
@@ -179,6 +180,7 @@ export default function CategoryManager({
 
     const basePath = apiPath.replace(/^\/api\//, '');
 
+    setSaving(true);
     try {
       if (editingCategory) {
         // Single edit
@@ -240,6 +242,8 @@ export default function CategoryManager({
       setIsModalOpen(false);
     } catch {
       gooeyToast.error(t('common:messages.error_saving'));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -802,7 +806,8 @@ export default function CategoryManager({
 
            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
               <button type="button" className="inline-flex items-center h-9 px-5 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors" onClick={() => setIsModalOpen(false)}>{t('stock:organisation.category_manager.cancel')}</button>
-              <button type="submit" className="inline-flex items-center justify-center h-9 px-8 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm">
+              <button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 h-9 px-8 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                 {saving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
                  {editingCategory
                    ? t('stock:organisation.category_manager.save')
                    : t('stock:organisation.category_manager.save_all', { count: entries.filter(e => e.name.trim()).length || entries.length })}

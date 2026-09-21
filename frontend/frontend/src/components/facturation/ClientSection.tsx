@@ -335,7 +335,7 @@ export default function ClientSection({
             <div id="facturation-client-listbox" role="listbox" className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 max-h-60 overflow-auto">
               {clientSearch.trim().length === 0 && recentItems.length > 0 && (
                 <>
-                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 border-y border-slate-200">
+                  <div className="px-3 py-1 text-caption font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 border-y border-slate-200">
                     {t('facturation:client.recent_label')}
                   </div>
                   {recentItems.map((r, idx) => (
@@ -366,8 +366,8 @@ export default function ClientSection({
                             <span className="text-xs text-slate-400 uppercase">{r.matricule}</span>
                           </div>
                           <div className="flex justify-between items-center mt-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase">{r.societe || '—'}</span>
-                            <span className="text-[10px] text-emerald-600 font-medium uppercase">{r.client_name}</span>
+                            <span className="text-caption text-slate-500 uppercase">{r.societe || '—'}</span>
+                            <span className="text-caption text-emerald-600 font-medium uppercase">{r.client_name}</span>
                           </div>
                         </div>
                       )}
@@ -382,7 +382,7 @@ export default function ClientSection({
                     return (
                       <React.Fragment key={item.type === 'client' ? `client-${item.data.id}` : `ad-${item.data.id ?? item.data.nom}`}>
                         {isFirstAyant && (
-                          <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
+                          <div className="px-3 py-1 text-caption font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
                             {t('facturation:client.ayant_droit.label')}
                           </div>
                         )}
@@ -416,8 +416,8 @@ export default function ClientSection({
                                 <span className="text-xs text-slate-400 uppercase"><HighlightText text={item.data.matricule || ''} query={clientSearch} /></span>
                               </div>
                               <div className="flex justify-between items-center mt-0.5">
-                                <span className="text-[10px] text-slate-500 uppercase"><HighlightText text={item.data.societe || '—'} query={clientSearch} /></span>
-                                <span className="text-[10px] text-emerald-600 font-medium uppercase"><HighlightText text={item.data.client_name || ''} query={clientSearch} /></span>
+                                <span className="text-caption text-slate-500 uppercase"><HighlightText text={item.data.societe || '—'} query={clientSearch} /></span>
+                                <span className="text-caption text-emerald-600 font-medium uppercase"><HighlightText text={item.data.client_name || ''} query={clientSearch} /></span>
                               </div>
                             </div>
                           )}
@@ -427,7 +427,7 @@ export default function ClientSection({
                   })}
                   {ayantDroitSearchLoading && (
                     <>
-                      <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
+                      <div className="px-3 py-1 text-caption font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
                         {t('facturation:client.ayant_droit.label')}
                       </div>
                       {[1, 2, 3].map((n) => (
@@ -447,7 +447,7 @@ export default function ClientSection({
                 </>
               ) : ayantDroitSearchLoading ? (
                 <>
-                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
+                  <div className="px-3 py-1 text-caption font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
                     {t('facturation:client.ayant_droit.label')}
                   </div>
                   {[1, 2, 3].map((n) => (

@@ -149,7 +149,7 @@ export default function AyantDroitSection({
             className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:bg-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
           />
           {duplicate && (
-            <div className="col-span-full text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded px-2 py-1">
+            <div className="col-span-full text-caption text-amber-600 bg-amber-50 border border-amber-100 rounded px-2 py-1">
               {t('facturation:client.ayant_droit.duplicate_warning')} : {duplicate.nom} ({duplicate.matricule})
             </div>
           )}
@@ -157,7 +157,7 @@ export default function AyantDroitSection({
             <button
               type="button"
               onClick={() => setShowNewAyantDroit(false)}
-              className="text-[10px] text-slate-500 hover:text-emerald-600 underline col-span-full"
+              className="text-caption text-slate-500 hover:text-emerald-600 underline col-span-full"
             >
               {t('facturation:client.ayant_droit.existing_button')}
             </button>

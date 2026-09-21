@@ -187,9 +187,9 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
                           <td className="font-medium">{ligne.produit_nom}</td>
                           <td className="text-right">{ligne.quantite}</td>
                           <td>
-                              {ligne.surveillance_category === 'RENFORCEE' && <Badge variant="error" size="sm" className="h-4 px-1 text-[9px]">{t('modal.surveillance_renforcee')}</Badge>}
-                              {ligne.surveillance_category === 'STANDARD' && <Badge variant="warning" size="sm" className="h-4 px-1 text-[9px]">{t('modal.surveillance_standard')}</Badge>}
-                              {(!ligne.surveillance_category || ligne.surveillance_category === 'NONE') && <Badge variant="ghost" size="sm" className="h-4 px-1 text-[9px]">{t('modal.surveillance_ordonnance')}</Badge>}
+                              {ligne.surveillance_category === 'RENFORCEE' && <Badge variant="error" size="sm" className="h-4 px-1 text-micro">{t('modal.surveillance_renforcee')}</Badge>}
+                              {ligne.surveillance_category === 'STANDARD' && <Badge variant="warning" size="sm" className="h-4 px-1 text-micro">{t('modal.surveillance_standard')}</Badge>}
+                              {(!ligne.surveillance_category || ligne.surveillance_category === 'NONE') && <Badge variant="ghost" size="sm" className="h-4 px-1 text-micro">{t('modal.surveillance_ordonnance')}</Badge>}
                           </td>
                       </tr>
                   ))}

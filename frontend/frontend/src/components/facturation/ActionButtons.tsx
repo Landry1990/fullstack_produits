@@ -105,7 +105,7 @@ function SidebarActions({
           )}
           <span className="text-sm xl:text-base font-bold uppercase tracking-wider">{t('facturation:actions.pay')}</span>
         </div>
-        <kbd className="absolute right-3 px-1.5 py-0.5 bg-emerald-700 rounded text-[10px] font-mono text-white/80">F9</kbd>
+        <kbd className="absolute right-3 px-1.5 py-0.5 bg-emerald-700 rounded text-caption font-mono text-white/80">F9</kbd>
       </Button>
 
       {/* Cancel Button */}
@@ -197,7 +197,7 @@ function FooterActions({
               <Pause className="size-4" />
               <span className="text-xs uppercase font-semibold">{t('facturation:actions.suspend_short')}</span>
               <div className="ml-auto flex gap-1">
-                  <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-mono text-slate-600">F7</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-micro font-mono text-slate-600">F7</kbd>
               </div>
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -206,7 +206,7 @@ function FooterActions({
             >
               <X className="size-4" />
               <span className="text-xs uppercase font-semibold">{t('facturation:actions.cancel')}</span>
-              <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-mono text-slate-600 ml-auto">Esc</kbd>
+              <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-micro font-mono text-slate-600 ml-auto">Esc</kbd>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -224,7 +224,7 @@ function FooterActions({
             <CreditCard className="size-4 sm:size-5" />
           )}
           <span className="font-bold text-xs sm:text-base uppercase tracking-wider">{t('facturation:actions.pay')}</span>
-          <kbd className="hidden sm:flex px-2 py-0.5 bg-emerald-700 rounded text-[10px] font-mono text-white/80">F9</kbd>
+          <kbd className="hidden sm:flex px-2 py-0.5 bg-emerald-700 rounded text-caption font-mono text-white/80">F9</kbd>
         </Button>
       </div>
     </div>

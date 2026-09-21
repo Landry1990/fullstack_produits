@@ -220,11 +220,11 @@ export default function CommandeForm({
                         ? t('orders:form.edit_title', { id: selectedCommande.numero_facture || selectedCommande.id })
                         : t('orders:form.new_title')}
                   </h3>
-                  <div className="hidden 2xl:flex gap-4 text-xs text-slate-400 mt-0.5">
-                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">F2</kbd> {t('orders:form.shortcuts.search')}</span>
-                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">F4</kbd> {t('orders:form.shortcuts.provider')}</span>
-                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">Ctrl+A</kbd> {t('orders:form.shortcuts.select_all')}</span>
-                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-sans border border-slate-200">Shift+Entrée</kbd> {t('orders:product_details')}</span>
+                  <div className="hidden 2xl:flex gap-4 text-xs text-slate-500 mt-0.5">
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-caption font-sans border border-slate-200">F2</kbd> {t('orders:form.shortcuts.search')}</span>
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-caption font-sans border border-slate-200">F4</kbd> {t('orders:form.shortcuts.provider')}</span>
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-caption font-sans border border-slate-200">Ctrl+A</kbd> {t('orders:form.shortcuts.select_all')}</span>
+                    <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-caption font-sans border border-slate-200">Shift+Entrée</kbd> {t('orders:product_details')}</span>
                   </div>
                 </div>
             </div>
@@ -257,7 +257,7 @@ export default function CommandeForm({
                 <div className="flex flex-wrap items-end gap-2">
                   {/* Fournisseur */}
                   <div className="flex-1 min-w-[150px]">
-                    <label htmlFor="fournisseur-select" className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    <label htmlFor="fournisseur-select" className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1">
                       {t('orders:form.provider_label')}
                     </label>
                     <Select
@@ -275,7 +275,7 @@ export default function CommandeForm({
 
                   {/* Facture */}
                   <div className="w-32">
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">{t('orders:form.invoice_label')}</label>
+                    <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1">{t('orders:form.invoice_label')}</label>
                     <Input
                       type="text"
                       placeholder={t('orders:form.invoice_placeholder')}
@@ -301,7 +301,7 @@ export default function CommandeForm({
                     </div>
                     {isMiseEnPlace && (
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-semibold text-indigo-600 uppercase">
+                        <span className="text-caption font-semibold text-indigo-600 uppercase">
                           {t('orders:form.delai_negocie_label')}
                         </span>
                         <Input
@@ -336,11 +336,11 @@ export default function CommandeForm({
                   {commandeType === 'DIR' && (
                     <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-semibold text-blue-600 uppercase">{t('orders:form.rate_short')}</span>
+                        <span className="text-caption font-semibold text-blue-600 uppercase">{t('orders:form.rate_short')}</span>
                         <Input type="number" step="0.001" className="w-20 h-7 text-sm px-2" value={tauxChange} onChange={(e) => setTauxChange(e.target.value)} aria-label={t('orders:form.rate_short')} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-semibold text-blue-600 uppercase">{t('orders:form.coeff_short')}</span>
+                        <span className="text-caption font-semibold text-blue-600 uppercase">{t('orders:form.coeff_short')}</span>
                         <Input type="number" step="0.01" className="w-14 h-7 text-sm px-2" value={fraisCoefficient} onChange={(e) => setFraisCoefficient(e.target.value)} aria-label={t('orders:form.coefficient')} />
                       </div>
                     </div>
@@ -441,40 +441,40 @@ export default function CommandeForm({
                 <div className="flex flex-wrap gap-2 items-center">
                     {/* PRIX A HT */}
                     <div className="hidden md:flex flex-col items-end">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:price_purchase_ht')}</span>
+                        <span className="text-caption uppercase font-bold text-slate-500 -mb-1">{t('orders:price_purchase_ht')}</span>
                         <span className="text-sm font-bold text-slate-700">{formatCurrency(orderTotals?.totalBuyHT || 0)}</span>
                     </div>
 
                     {/* TVA A */}
                     <div className="hidden md:flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:price_tva')}</span>
+                        <span className="text-caption uppercase font-bold text-slate-500 -mb-1">{t('orders:price_tva')}</span>
                         <span className="text-sm font-bold text-slate-500">{formatCurrency(orderTotals?.totalBuyTVA || 0)}</span>
                     </div>
 
                     {/* PRIX A TTC */}
                     <div className="flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:price_purchase_ttc')}</span>
+                        <span className="text-caption uppercase font-bold text-slate-500 -mb-1">{t('orders:price_purchase_ttc')}</span>
                         <span className="text-base font-black leading-none text-slate-800">{formatCurrency(orderTotals?.totalBuyTTC || 0)}</span>
                     </div>
 
                     {/* PRIX V TTC */}
                     <div className="flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-emerald-600 -mb-1">{t('orders:price_selling_ttc')}</span>
+                        <span className="text-caption uppercase font-bold text-emerald-600 -mb-1">{t('orders:price_selling_ttc')}</span>
                         <span className="text-base font-black leading-none text-emerald-600">{formatCurrency(orderTotals?.totalTTC || 0)}</span>
                     </div>
 
                     {/* MARGE */}
                     <div className="hidden sm:flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:margin')}</span>
+                        <span className="text-caption uppercase font-bold text-slate-500 -mb-1">{t('orders:margin')}</span>
                         <span className={cn("text-sm font-bold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>{formatCurrency(orderTotals?.totalMarginValue || 0)}</span>
                     </div>
 
                     {/* COEFF */}
                     <div className="hidden lg:flex flex-col items-end border-l pl-2 border-slate-200">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 -mb-1">{t('orders:form.coeff_label')}</span>
+                        <span className="text-caption uppercase font-bold text-slate-500 -mb-1">{t('orders:form.coeff_label')}</span>
                         <div className="flex items-baseline gap-1">
                             <span className={cn("text-sm font-bold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-600' : 'text-amber-600')}>x{orderTotals?.globalMargin || '1.00'}</span>
-                            <span className={cn("text-[10px] font-semibold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-500' : 'text-amber-500')}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
+                            <span className={cn("text-caption font-semibold", (Number(orderTotals?.globalMargin || 0)) >= 1.34 ? 'text-emerald-500' : 'text-amber-500')}>({orderTotals?.globalMarginPercent || '0.00'}%)</span>
                         </div>
                     </div>
                 </div>

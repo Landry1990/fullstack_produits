@@ -132,7 +132,7 @@ function AbcProductTable({ produits }: AbcProductTableProps) {
       <div className="overflow-auto h-full">
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
-            <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-[0.12em]">
+            <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-[0.12em]">
               <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.product')}</th>
               <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.cip')}</th>
               <th className="sticky top-0 bg-slate-50 py-3 text-left border-b border-slate-200">{t('stock:abc.table.rayon')}</th>
@@ -157,7 +157,7 @@ function AbcProductTable({ produits }: AbcProductTableProps) {
                 <tr key={p.id} className={`hover:bg-blue-50/30 transition-colors ${p.en_rupture ? 'bg-red-50/50' : ''}`}>
                   <td className="py-2.5 pl-6 font-medium text-slate-700">
                     {p.nom}
-                    {p.en_rupture && <span className="inline-flex items-center ml-2 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">{t('stock:abc.table.shortage_badge')}</span>}
+                    {p.en_rupture && <span className="inline-flex items-center ml-2 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-caption font-bold">{t('stock:abc.table.shortage_badge')}</span>}
                   </td>
                   <td className="py-2.5 font-mono text-xs text-slate-400">{p.cip}</td>
                   <td className="py-2.5 text-sm text-slate-600">{p.rayon}</td>

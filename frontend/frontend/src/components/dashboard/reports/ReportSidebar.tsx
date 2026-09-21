@@ -91,7 +91,7 @@ export const ReportSidebar: React.FC<ReportSidebarProps> = ({ selectedQuery, onS
                             <div className={`font-bold text-sm truncate ${selectedQuery?.id === query.id ? 'text-emerald-600' : 'text-slate-800'}`}>
                                 {t(`queries.${query.id}.name`, { defaultValue: query.name })}
                             </div>
-                            <div className="text-[10px] text-slate-500 font-medium line-clamp-2 mt-0.5 leading-tight">
+                            <div className="text-caption text-slate-500 font-medium line-clamp-2 mt-0.5 leading-tight">
                                 {t(`queries.${query.id}.description`, { defaultValue: query.description || '' })}
                             </div>
                         </div>

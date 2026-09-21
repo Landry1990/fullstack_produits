@@ -115,7 +115,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex flex-col">
                                     <span className={`font-semibold text-slate-800 flex items-center gap-2`}>
-                                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
+                                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-caption font-bold uppercase tracking-wider border
                                             ${inv.inventory_type === 'GLOBAL' ? 'bg-slate-100 text-slate-600 border-slate-200' :
                                               inv.inventory_type === 'RESERVE' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                                               'bg-blue-50 text-blue-600 border-blue-200'}`}>
@@ -133,7 +133,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                             </td>
                             <td className="px-6 py-4 max-w-xs truncate font-medium text-slate-700">
                                 {inv.description || t('inventaire.list.no_description', '-')}
-                                <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                                <div className="text-caption text-slate-400 mt-1 flex items-center gap-1">
                                     <History className="h-3 w-3" />
                                     {t('inventaire.list.created_by_prefix')} {inv.created_by_name || '-'}
                                 </div>

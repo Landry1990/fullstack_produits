@@ -5,7 +5,7 @@ import api from '../services/api';
 import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } from '../types';
 import { useTVA } from '../hooks/useTVA';
 import {
-  X, Package, Hash, Layers, DollarSign, AlertTriangle, AlertCircle, Loader2, Save
+  X, Package, Hash, Layers, DollarSign, AlertTriangle, Loader2, Save
 } from 'lucide-react';
 import { gooeyToast } from 'goey-toast';
 import { normalizeNumberInput } from '../utils/formatters';
@@ -16,6 +16,7 @@ import { Input } from './shadcn/input';
 import { LocalizedDateInput } from './LocalizedDateInput';
 import { Select } from './ui/Select';
 import { Checkbox } from './shadcn/checkbox';
+import { ErrorState } from './ui/ErrorState';
 
 const EMPTY_ARRAY: unknown[] = [];
 
@@ -352,26 +353,25 @@ export default function ProduitFormModal({
 
         <form className="p-4 space-y-4" onSubmit={handleSubmit}>
           {error && (
-            <div role="alert" ref={(el) => el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })} className="scroll-mt-16 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-red-700 text-sm">
-              <AlertCircle className="size-5 shrink-0" />
-              <span>{error}</span>
+            <div ref={(el) => el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })} className="scroll-mt-16">
+              <ErrorState error={error} compact />
             </div>
           )}
 
           {/* Section: Identification */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
+            <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
               <Hash size={12} /> Identification
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div className="md:col-span-2">
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.name')}</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.name')}</label>
                 <Input type="text" className={inputBase} aria-label={t('products:form.name')} value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required autoFocus />
               </div>
               <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {CIP_FIELDS.map((field) => (
                   <div key={field}>
-                    <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t(`products:form.${field}`)}</label>
+                    <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t(`products:form.${field}`)}</label>
                     <Input
                       className={`${inputBase} font-mono ${cipErrors[field] ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                       maxLength={13}
@@ -387,7 +387,7 @@ export default function ProduitFormModal({
                       onBlur={() => handleCipBlur(field)}
                     />
                     {cipErrors[field] && (
-                      <p className="mt-1 text-[10px] font-semibold text-red-500">{t('products:form.cip_invalid')}</p>
+                      <p className="mt-1 text-caption font-semibold text-red-500">{t('products:form.cip_invalid')}</p>
                     )}
                   </div>
                 ))}
@@ -397,18 +397,18 @@ export default function ProduitFormModal({
 
           {/* Section: Stock & Localisation */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
+            <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
               <Layers size={12} /> Stock & Localisation
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               {!isEditMode && (
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.initial_stock')}</label>
+                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.initial_stock')}</label>
                   <Input type="number" className={inputBase} aria-label={t('products:form.initial_stock')} value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} min={0} step={1} required />
                 </div>
               )}
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon')}</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon')}</label>
                 <Select className={selectBase} aria-label={t('products:form.rayon')} value={form.rayon} onChange={(e) => setForm((f) => ({ ...f, rayon: e.target.value }))}>
                   <option value="">{t('products:form.select_rayon')}</option>
                   {rayons.flatMap(parent => {
@@ -427,15 +427,15 @@ export default function ProduitFormModal({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.alert')}</label>
+                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.alert')}</label>
                   <Input type="number" className={inputSm} aria-label={t('products:form.alert')} value={form.stock_alert} onChange={(e) => setForm((p) => ({ ...p, stock_alert: e.target.value }))} min={0} step={1} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.min')}</label>
+                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.min')}</label>
                   <Input type="number" className={inputSm} aria-label={t('products:form.min')} value={form.stock_minimum} onChange={(e) => setForm((p) => ({ ...p, stock_minimum: e.target.value }))} min={0} step={1} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.max')}</label>
+                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.max')}</label>
                   <Input type="number" className={inputSm} aria-label={t('products:form.max')} value={form.stock_maximum} onChange={(e) => setForm((p) => ({ ...p, stock_maximum: e.target.value }))} min={0} step={1} />
                 </div>
               </div>
@@ -444,19 +444,19 @@ export default function ProduitFormModal({
 
           {/* Section: Classification */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
+            <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
               <Layers size={12} /> Classification
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.forme')}</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.forme')}</label>
                 <Select className={selectBase} aria-label={t('products:form.forme')} value={form.forme} onChange={(e) => setForm((p) => ({ ...p, forme: e.target.value }))}>
                   <option value="">-</option>
                   {formes.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
                 </Select>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.groupe')}</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.groupe')}</label>
                 <Select className={selectBase} aria-label={t('products:form.groupe')} value={form.groupe} onChange={(e) => setForm((p) => ({ ...p, groupe: e.target.value }))}>
                   <option value="">-</option>
                   {groupes.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
@@ -467,19 +467,19 @@ export default function ProduitFormModal({
 
           {/* Section: Tarification */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
+            <h4 className="text-caption font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5">
               <DollarSign size={12} /> Tarification
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cost_price')} (HT)</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.cost_price')} (HT)</label>
                 <div className="flex">
                   <Input type="number" className={`${inputBase} rounded-r-none border-r-0`} aria-label={t('products:form.cost_price')} value={form.cost_price} onChange={(e) => handleCostPriceChange(e.target.value)} step="0.01" required />
                   <span className="px-3 flex items-center bg-slate-100 border border-slate-200 border-l-0 rounded-r-lg text-slate-500 text-sm font-medium">F</span>
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_coeff')}</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_coeff')}</label>
                 <Input
                   type="number"
                   className={`${inputBase} font-bold ${coefMultiplicateur < 1 ? 'text-red-600' : 'text-indigo-600'}`}
@@ -493,17 +493,17 @@ export default function ProduitFormModal({
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.selling_price')} (TTC)</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.selling_price')} (TTC)</label>
                 <div className="flex">
                   <Input type="number" className={`${inputBase} rounded-r-none border-r-0 font-semibold text-indigo-600`} aria-label={t('products:form.selling_price')} value={form.selling_price} onChange={(e) => setForm((p) => ({ ...p, selling_price: e.target.value }))} step="0.01" required />
                   <span className="px-3 flex items-center bg-slate-100 border border-slate-200 border-l-0 rounded-r-lg text-slate-500 text-sm font-medium">F</span>
                 </div>
                 {sellingPriceHT > 0 && (
-                  <p className="text-[10px] text-slate-400 mt-1">HT : {sellingPriceHT.toFixed(2)} F</p>
+                  <p className="text-caption text-slate-400 mt-1">HT : {sellingPriceHT.toFixed(2)} F</p>
                 )}
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.tva')}</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.tva')}</label>
                 <Select className={selectSm} aria-label={t('products:form.tva')} value={form.tva} onChange={(e) => handleTvaChange(e.target.value)} disabled={loadingTVA}>
                   {tvaList.map((t) => (
                     <option key={t.id} value={t.taux}>{t.taux}% {t.libelle ? `(${t.libelle})` : ''}</option>
@@ -511,11 +511,11 @@ export default function ProduitFormModal({
                 </Select>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:marge_ht_label')}</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:marge_ht_label')}</label>
                 <div className={`${inputSm} flex items-center justify-center font-bold ${margeHT < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{margeHT.toFixed(2)} F</div>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_percent')}</label>
+                <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.margin_percent')}</label>
                 <div className={`${inputSm} flex items-center justify-center font-bold ${pourcMarge < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{pourcMarge.toFixed(1)}%</div>
               </div>
             </div>
@@ -526,7 +526,7 @@ export default function ProduitFormModal({
               </div>
             )}
             <div className="mt-3">
-              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.expiration_date')}</label>
+              <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.expiration_date')}</label>
               <LocalizedDateInput  className={`${inputBase} md:w-1/4`} aria-label={t('products:form.expiration_date')} value={form.expire_date} onChange={(e) => setForm((p) => ({ ...p, expire_date: e.target.value }))} />
             </div>
           </div>
@@ -550,7 +550,7 @@ export default function ProduitFormModal({
               <Checkbox checked={form.use_lot_management} onCheckedChange={(checked) => setForm((p) => ({ ...p, use_lot_management: !!checked }))} onClick={(e) => e.stopPropagation()} tabIndex={-1} aria-hidden="true" />
               <div>
                 <span className="text-sm font-medium text-slate-800">{t('products:form.lot_management')}</span>
-                <p className="text-[10px] text-slate-400">{t('products:form.lot_management_desc')}</p>
+                <p className="text-caption text-slate-400">{t('products:form.lot_management_desc')}</p>
               </div>
             </div>
             <div
@@ -570,14 +570,14 @@ export default function ProduitFormModal({
               <Checkbox checked={form.requires_prescription} onCheckedChange={(checked) => setForm(p => ({ ...p, requires_prescription: !!checked }))} onClick={(e) => e.stopPropagation()} tabIndex={-1} aria-hidden="true" />
               <div>
                 <span className="text-sm font-medium text-slate-800">{t('products:form.requires_prescription')}</span>
-                <p className="text-[10px] text-slate-400">{t('products:form.prescription_desc')}</p>
+                <p className="text-caption text-slate-400">{t('products:form.prescription_desc')}</p>
               </div>
             </div>
           </div>
 
           {/* Section: Alerte comptoir */}
           <div className="bg-red-50 rounded-lg border border-red-100 p-3">
-            <label className="block text-[10px] font-semibold text-red-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <label className="block text-caption font-semibold text-red-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
               <AlertTriangle size={12} /> {t('products:counter_alert_message')}
             </label>
             <textarea
@@ -587,7 +587,7 @@ export default function ProduitFormModal({
               value={form.message_alerte || ''}
               onChange={(e) => setForm((p) => ({ ...p, message_alerte: e.target.value }))}
             />
-            <p className="text-[10px] text-slate-400 mt-1">{t('products:counter_alert_description')}</p>
+            <p className="text-caption text-slate-400 mt-1">{t('products:counter_alert_description')}</p>
           </div>
 
           {/* Section: Réserve */}
@@ -597,7 +597,7 @@ export default function ProduitFormModal({
                 <Layers className="text-indigo-600 size-4" />
                 <div>
                   <h4 className="text-sm font-semibold text-indigo-600">{t('products:form.reserve_title')}</h4>
-                  <p className="text-[10px] text-indigo-400 font-medium">{t('products:form.reserve_desc')}</p>
+                  <p className="text-caption text-indigo-400 font-medium">{t('products:form.reserve_desc')}</p>
                 </div>
               </div>
               <Checkbox checked={form.has_reserve_storage} aria-label={t('products:form.reserve_title')} onCheckedChange={(checked) => {
@@ -608,12 +608,12 @@ export default function ProduitFormModal({
             {form.has_reserve_storage && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon_capacity')}</label>
+                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon_capacity')}</label>
                   <Input type="number" className={inputBase} aria-label={t('products:form.rayon_capacity')} placeholder={t('products:form.placeholder_capacity')} value={form.capacite_rayon} onChange={(e) => setForm(p => ({ ...p, capacite_rayon: e.target.value }))} />
                   <p className="text-xs text-slate-400 mt-1">{t('products:form.capacity_desc')}</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon_reorder_threshold')}</label>
+                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.rayon_reorder_threshold')}</label>
                   <Input type="number" className={inputBase} aria-label={t('products:form.rayon_reorder_threshold')} placeholder={t('products:form.placeholder_reorder')} value={form.min_rayon} onChange={(e) => setForm(p => ({ ...p, min_rayon: e.target.value }))} />
                   <p className="text-xs text-slate-400 mt-1">{t('products:form.reorder_desc')}</p>
                 </div>
@@ -646,7 +646,7 @@ export default function ProduitFormModal({
               </div>
               {form.is_chronic && (
                 <div className="w-full md:w-48">
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.treatment_duration')}</label>
+                  <label className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('products:form.treatment_duration')}</label>
                   <div className="flex">
                     <Input type="number" className={`${inputSm} rounded-r-none border-r-0`} aria-label={t('products:form.treatment_duration')} value={form.default_treatment_days} onChange={(e) => setForm((p) => ({ ...p, default_treatment_days: e.target.value }))} min={1} />
                     <span className="px-3 flex items-center bg-slate-100 border border-slate-200 border-l-0 rounded-r-lg text-slate-500 text-xs font-medium">{t('common:days')}</span>

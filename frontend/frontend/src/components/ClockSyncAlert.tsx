@@ -84,7 +84,7 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
             <p className="text-sm font-bold text-amber-900">
               {t('clock_sync.title', { defaultValue: 'Horloge désynchronisée' })}
             </p>
-            <p className="text-[11px] text-amber-700">
+            <p className="text-label text-amber-700">
               {t('clock_sync.subtitle', { defaultValue: 'Décalage détecté avec le serveur' })}
             </p>
           </div>
@@ -111,14 +111,14 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
           {/* Heures */}
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-xl bg-slate-50 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-slate-400">
                 <Clock className="size-3" />
                 {t('clock_sync.server', { defaultValue: 'Serveur' })}
               </div>
               <p className="text-sm font-bold text-slate-700 tabular-nums">{formatTime(serverTime)}</p>
             </div>
             <div className="rounded-xl bg-slate-50 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-slate-400">
                 <Clock className="size-3" />
                 {t('clock_sync.local', { defaultValue: 'Ce poste' })}
               </div>
@@ -127,7 +127,7 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
           </div>
 
           {/* Message d'explication */}
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-label text-slate-500 leading-relaxed">
             {isAhead
               ? t('clock_sync.ahead_msg', {
                   defaultValue: "L'horloge de ce poste est en avance. Cela peut causer des erreurs dans les factures, tickets et rapports."
@@ -150,7 +150,7 @@ Write-Host "Horloge synchronisee." -ForegroundColor Green
                 : t('clock_sync.copy_script', { defaultValue: 'Copier le script de synchro' })
               }
             </button>
-            <p className="text-[10px] text-slate-400 text-center leading-tight">
+            <p className="text-caption text-slate-400 text-center leading-tight">
               {t('clock_sync.script_hint', {
                 defaultValue: "À exécuter en tant qu'administrateur (PowerShell)"
               })}

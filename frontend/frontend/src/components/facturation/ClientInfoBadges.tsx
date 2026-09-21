@@ -17,18 +17,18 @@ export default function ClientInfoBadges({ client, onApplyReward }: ClientInfoBa
       {/* Type client PRO */}
       {client.client_type === 'PROFESSIONNEL' && (
         <div className="mt-2 px-3 py-2 bg-blue-50 rounded-lg flex justify-between items-center border border-blue-100">
-          <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-1">
+          <span className="text-caption font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-1">
             <Briefcase className="size-3" />
             {t('facturation:client.professional_badge')}
           </span>
-          <Badge variant="secondary" className="h-5 text-[10px] bg-blue-100 text-blue-700 border-blue-200 font-bold">{client.client_type}</Badge>
+          <Badge variant="secondary" className="h-5 text-caption bg-blue-100 text-blue-700 border-blue-200 font-bold">{client.client_type}</Badge>
         </div>
       )}
 
       {/* Solde dépôt */}
       {client.client_type === 'PARTICULIER' && (client.is_deposit_enabled || parseFloat(client.solde_depot || '0') > 0) && (
         <div className="mt-2 px-3 py-2 bg-emerald-50 rounded-lg flex justify-between items-center border border-emerald-100">
-          <span className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider flex items-center gap-1">
+          <span className="text-caption font-semibold text-emerald-600 uppercase tracking-wider flex items-center gap-1">
             <Wallet className="size-3" />
             {t('facturation:client.solde_depot_label')}
           </span>
@@ -39,7 +39,7 @@ export default function ClientInfoBadges({ client, onApplyReward }: ClientInfoBa
       {/* Points de Fidélité */}
       {client.client_type === 'PARTICULIER' && client.is_loyalty_member && (
         <div className="mt-2 px-3 py-2 bg-violet-50 rounded-lg flex justify-between items-center border border-violet-100">
-          <span className="text-[10px] font-semibold text-violet-600 uppercase tracking-wider flex items-center gap-1">
+          <span className="text-caption font-semibold text-violet-600 uppercase tracking-wider flex items-center gap-1">
             <Star className="size-3" />
             {t('facturation:client.label')} {t('facturation:client.loyalty_label')}
           </span>
@@ -51,13 +51,13 @@ export default function ClientInfoBadges({ client, onApplyReward }: ClientInfoBa
       {parseFloat(client.pending_discount || '0') > 0 && (
         <div className="mt-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200 flex flex-col gap-1.5">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider flex items-center gap-1">
+            <span className="text-caption font-semibold text-amber-700 uppercase tracking-wider flex items-center gap-1">
               <Star className="size-3 fill-amber-500 text-amber-500" />
               {t('facturation:client.reward_label')}
             </span>
-            <Badge variant="secondary" className="h-5 text-[10px] bg-amber-100 text-amber-700 border-amber-200 font-bold">-{client.pending_discount}%</Badge>
+            <Badge variant="secondary" className="h-5 text-caption bg-amber-100 text-amber-700 border-amber-200 font-bold">-{client.pending_discount}%</Badge>
           </div>
-          <div className="text-[10px] text-amber-600/80 italic">
+          <div className="text-caption text-amber-600/80 italic">
             {t('facturation:client.pending_reward', { discount: client.pending_discount })}
           </div>
           <Button

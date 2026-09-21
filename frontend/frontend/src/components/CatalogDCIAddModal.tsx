@@ -188,7 +188,7 @@ export default function CatalogDCIAddModal({
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs opacity-60">
                       <span>{prod.forme_name || 'Forme inconnue'}</span>
-                      <Badge variant={prod.stock > 0 ? 'success' : 'error'} size="sm" className="h-4 px-1 text-[9px]">
+                      <Badge variant={prod.stock > 0 ? 'success' : 'error'} size="sm" className="h-4 px-1 text-micro">
                         {prod.stock} en stock
                       </Badge>
                       <span className="font-bold text-primary">{prod.selling_price} F</span>

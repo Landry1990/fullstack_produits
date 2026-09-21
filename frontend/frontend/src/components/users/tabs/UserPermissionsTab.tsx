@@ -43,7 +43,7 @@ export default function UserPermissionsTab({ form }: Props) {
                     />
                     <div className="flex flex-col">
                       <span className="font-bold text-xs group-hover:text-success transition-colors">{t(p.labelKey)}</span>
-                      {p.descKey && <span className="text-[10px] opacity-60 leading-none mt-0.5">{t(p.descKey)}</span>}
+                      {p.descKey && <span className="text-caption opacity-60 leading-none mt-0.5">{t(p.descKey)}</span>}
                     </div>
                   </div>
                 );

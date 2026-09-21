@@ -41,48 +41,49 @@ interface CorbeilleData {
 
 type TypeKey = 'all' | TrashedItem['type'];
 
-const TYPE_CONFIG: { key: TypeKey; label: string; icon: React.ReactNode; color: string; bg: string }[] = [
-  { key: 'all', label: 'Tous', icon: <Archive className="size-3.5" />, color: 'text-slate-600', bg: 'bg-slate-50' },
-  { key: 'produit', label: 'Produits', icon: <Package className="size-3.5" />, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { key: 'client', label: 'Clients', icon: <Users className="size-3.5" />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { key: 'fournisseur', label: 'Fournisseurs', icon: <Truck className="size-3.5" />, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { key: 'commande', label: 'Commandes', icon: <ShoppingCart className="size-3.5" />, color: 'text-primary', bg: 'bg-primary/10' },
-  { key: 'avoir', label: 'Avoirs', icon: <CreditCard className="size-3.5" />, color: 'text-rose-600', bg: 'bg-rose-50' },
-  { key: 'promis', label: 'Promis', icon: <Clock className="size-3.5" />, color: 'text-purple-600', bg: 'bg-purple-50' },
-  { key: 'inventaire', label: 'Inventaires', icon: <ClipboardList className="size-3.5" />, color: 'text-teal-600', bg: 'bg-teal-50' },
-  { key: 'facture', label: 'Factures', icon: <Receipt className="size-3.5" />, color: 'text-orange-600', bg: 'bg-orange-50' },
-  { key: 'user', label: 'Utilisateurs', icon: <Users className="size-3.5" />, color: 'text-slate-500', bg: 'bg-slate-50' },
+const TYPE_CONFIG: { key: TypeKey; labelKey: string; icon: React.ReactNode; color: string; bg: string }[] = [
+  { key: 'all', labelKey: 'tabs.all', icon: <Archive className="size-3.5" />, color: 'text-slate-600', bg: 'bg-slate-50' },
+  { key: 'produit', labelKey: 'tabs.produits', icon: <Package className="size-3.5" />, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { key: 'client', labelKey: 'tabs.clients', icon: <Users className="size-3.5" />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { key: 'fournisseur', labelKey: 'tabs.fournisseurs', icon: <Truck className="size-3.5" />, color: 'text-amber-600', bg: 'bg-amber-50' },
+  { key: 'commande', labelKey: 'tabs.commandes', icon: <ShoppingCart className="size-3.5" />, color: 'text-primary', bg: 'bg-primary/10' },
+  { key: 'avoir', labelKey: 'tabs.avoirs', icon: <CreditCard className="size-3.5" />, color: 'text-rose-600', bg: 'bg-rose-50' },
+  { key: 'promis', labelKey: 'tabs.promis', icon: <Clock className="size-3.5" />, color: 'text-purple-600', bg: 'bg-purple-50' },
+  { key: 'inventaire', labelKey: 'tabs.inventaires', icon: <ClipboardList className="size-3.5" />, color: 'text-teal-600', bg: 'bg-teal-50' },
+  { key: 'facture', labelKey: 'tabs.factures', icon: <Receipt className="size-3.5" />, color: 'text-orange-600', bg: 'bg-orange-50' },
+  { key: 'user', labelKey: 'tabs.users', icon: <Users className="size-3.5" />, color: 'text-slate-500', bg: 'bg-slate-50' },
 ];
 
-function groupByDate(items: TrashedItem[]) {
+function groupByDate(items: TrashedItem[], labels: { today: string; yesterday: string; thisWeek: string; older: string }) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
   const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
 
-  const groups: Record<string, TrashedItem[]> = { 'Aujourd\'hui': [], 'Hier': [], 'Cette semaine': [], 'Plus ancien': [] };
+  const groups: Record<string, TrashedItem[]> = { [labels.today]: [], [labels.yesterday]: [], [labels.thisWeek]: [], [labels.older]: [] };
 
   items.forEach(item => {
     const d = item.deleted_at ? new Date(item.deleted_at) : new Date();
     d.setHours(0, 0, 0, 0);
-    if (d.getTime() === today.getTime()) groups["Aujourd'hui"].push(item);
-    else if (d.getTime() === yesterday.getTime()) groups["Hier"].push(item);
-    else if (d >= weekAgo) groups["Cette semaine"].push(item);
-    else groups["Plus ancien"].push(item);
+    if (d.getTime() === today.getTime()) groups[labels.today].push(item);
+    else if (d.getTime() === yesterday.getTime()) groups[labels.yesterday].push(item);
+    else if (d >= weekAgo) groups[labels.thisWeek].push(item);
+    else groups[labels.older].push(item);
   });
 
   return Object.entries(groups).filter(([, v]) => v.length > 0);
 }
 
 
-function formatDateTime(dateStr: string | null) {
+function formatDateTime(dateStr: string | null, locale: string = 'fr-FR') {
   if (!dateStr) return '';
   try {
-    return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   } catch { return ''; }
 }
 
 export default function Corbeille() {
-  const { t } = useTranslation('corbeille');
+  const { t, i18n } = useTranslation('corbeille');
   const confirm = useConfirm();
   const [data, setData] = useState<CorbeilleData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +119,12 @@ export default function Corbeille() {
     return items.filter(i => i.name.toLowerCase().includes(q) || i.type.toLowerCase().includes(q));
   }, [data, typeFilter, searchQuery]);
 
-  const grouped = useMemo(() => groupByDate(allItems), [allItems]);
+  const grouped = useMemo(() => groupByDate(allItems, {
+    today: t('date_groups.today'),
+    yesterday: t('date_groups.yesterday'),
+    thisWeek: t('date_groups.this_week'),
+    older: t('date_groups.older'),
+  }), [allItems, t]);
 
   const toggleSelect = (key: string) => {
     setSelectedIds(prev => {
@@ -208,7 +214,7 @@ export default function Corbeille() {
 
 
   return (
-    <div className="h-full bg-base-200 flex flex-col">
+    <div className="h-full bg-base-200 flex flex-col max-w-[1600px] mx-auto w-full">
       {/* Header */}
       <div className="bg-base-100 border-b border-base-200 px-6 py-4 shrink-0">
         <div className="flex items-center justify-between">
@@ -218,7 +224,7 @@ export default function Corbeille() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-base-content tracking-tight">{t('title')}</h1>
-              <p className="text-xs text-base-content/40">{data?.total ?? 0} élément{data && data.total > 1 ? 's' : ''} en suppression</p>
+              <p className="text-xs text-base-content/40">{t('subtitle_count', { count: data?.total ?? 0 })}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -259,7 +265,7 @@ export default function Corbeille() {
         <div className="w-40 shrink-0">
           <Select size="sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeKey)} aria-label={t('common:filter')}>
             {TYPE_CONFIG.map(c => (
-              <option key={c.key} value={c.key}>{c.label}</option>
+              <option key={c.key} value={c.key}>{t(c.labelKey)}</option>
             ))}
           </Select>
         </div>
@@ -275,7 +281,7 @@ export default function Corbeille() {
               aria-label={selectedIds.size > 0 ? t('actions.selected', { count: selectedIds.size }) : t('common:select_all')}
             />
             <span className="text-xs font-medium text-base-content/70" aria-hidden="true">
-              {selectedIds.size > 0 ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? 's' : ''}` : 'Tout sélectionner'}
+              {selectedIds.size > 0 ? t('actions.selected', { count: selectedIds.size }) : t('actions.select_all')}
             </span>
           </div>
         )}
@@ -302,9 +308,9 @@ export default function Corbeille() {
         {!loading && grouped.map(([section, items]) => (
           <div key={section} className="mb-6">
             <div className="flex items-center gap-2 mb-3 sticky top-0 bg-base-200 py-1 z-10">
-              <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{section}</span>
+              <span className="text-caption font-black uppercase tracking-widest text-base-content/40">{section}</span>
               <div className="flex-1 h-px bg-base-300" />
-              <span className="text-[10px] font-bold text-base-content/30">{items.length}</span>
+              <span className="text-caption font-bold text-base-content/30">{items.length}</span>
             </div>
             <div className="space-y-2">
               {items.map(item => {
@@ -325,25 +331,25 @@ export default function Corbeille() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-base-content truncate">{item.name}</span>
-                          <Badge variant="outline" size="sm" className={cfg.color}>{cfg.label}</Badge>
+                          <Badge variant="outline" size="sm" className={cfg.color}>{t(`badges.${item.type}`)}</Badge>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[10px] text-muted-foreground flex items-center gap-1" title={formatDateTime(item.deleted_at)}>
-                            <Clock className="size-3" />{formatDateTime(item.deleted_at)}
+                          <span className="text-caption text-muted-foreground flex items-center gap-1" title={formatDateTime(item.deleted_at, i18n.language)}>
+                            <Clock className="size-3" />{formatDateTime(item.deleted_at, i18n.language)}
                           </span>
                           {item.deleted_by && (
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <span className="text-caption text-muted-foreground flex items-center gap-1">
                               <UserIcon className="size-3" />{item.deleted_by}
                             </span>
                           )}
                           {item.type === 'produit' && (
-                            <span className="text-[10px] text-muted-foreground">{t('stock_label')} {Number(item.details.stock ?? 0)}</span>
+                            <span className="text-caption text-muted-foreground">{t('stock_label')} {Number(item.details.stock ?? 0)}</span>
                           )}
                           {item.type === 'facture' && (
-                            <span className="text-[10px] text-muted-foreground">{Number(item.details.total ?? 0).toLocaleString('fr-FR')} FCFA</span>
+                            <span className="text-caption text-muted-foreground">{Number(item.details.total ?? 0).toLocaleString('fr-FR')} FCFA</span>
                           )}
                           {item.type === 'client' && item.details.phone ? (
-                            <span className="text-[10px] text-muted-foreground">{String(item.details.phone)}</span>
+                            <span className="text-caption text-muted-foreground">{String(item.details.phone)}</span>
                           ) : null}
                         </div>
                       </div>
@@ -384,7 +390,7 @@ export default function Corbeille() {
                             if (v === null || v === undefined || v === '') return null;
                             return (
                               <Card key={k} padding="sm" variant="bordered" className="bg-base-200/50">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-base-content/40">{k.replace(/_/g, ' ')}</p>
+                                <p className="text-caption font-bold uppercase tracking-wider text-base-content/40">{k.replace(/_/g, ' ')}</p>
                                 <p className="text-xs text-base-content font-medium truncate">{String(v)}</p>
                               </Card>
                             );
@@ -404,7 +410,7 @@ export default function Corbeille() {
       {selectedIds.size > 0 && (
         <div className="shrink-0 bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between">
           <span className="text-sm font-medium text-slate-700">
-            {selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
+            {t('actions.selected', { count: selectedIds.size })}
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -414,7 +420,7 @@ export default function Corbeille() {
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               <ArrowUpFromLine className="size-3.5 mr-1.5" />
-              Restaurer
+              {t('actions.restore')}
             </Button>
             <Button
               size="sm"
@@ -423,7 +429,7 @@ export default function Corbeille() {
               disabled={actionLoading}
             >
               <Trash2 className="size-3.5 mr-1.5" />
-              Supprimer
+              {t('actions.delete_permanently')}
             </Button>
           </div>
         </div>

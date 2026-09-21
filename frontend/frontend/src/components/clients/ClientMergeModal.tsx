@@ -66,7 +66,7 @@ export default function ClientMergeModal({
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-slate-800 text-sm truncate pr-2">{candidate.name}</span>
                 <Badge variant="outline" className={cn(
-                  "text-[10px] uppercase tracking-wide",
+                  "text-caption uppercase tracking-wide",
                   candidate.client_type === 'PROFESSIONNEL' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-slate-100 text-slate-500 border-slate-200'
                 )}>
                   {candidate.client_type === 'PROFESSIONNEL' ? t('clients:types.pro_short') : t('clients:types.part_short')}

@@ -201,12 +201,12 @@ export default function InteractionsManager() {
       {/* Stats interactions */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="p-4 rounded-2xl border border-base-200 bg-base-100">
-          <div className="text-[10px] font-bold uppercase tracking-widest opacity-40">Total</div>
+          <div className="text-caption font-bold uppercase tracking-widest opacity-40">Total</div>
           <div className="text-2xl font-black">{stats?.total ?? '-'}</div>
         </div>
         {(['CONTRE_INDIQUE', 'DECONSEILLE', 'A_PRENDRE_EN_COMPTE', 'PRECAUTION'] as const).map(g => (
           <div key={g} className="p-4 rounded-2xl border border-base-200 bg-base-100">
-            <div className="text-[10px] font-bold uppercase tracking-widest opacity-40">{GRAVITY_LABELS[g]}</div>
+            <div className="text-caption font-bold uppercase tracking-widest opacity-40">{GRAVITY_LABELS[g]}</div>
             <div className="text-2xl font-black">{stats?.by_gravity?.[g] ?? 0}</div>
           </div>
         ))}

@@ -444,7 +444,7 @@ export default function Sidebar() {
               </div>
               <ul className="absolute left-full top-0 z-[100] p-2 shadow-2xl shadow-black/20 bg-slate-900 border border-slate-700 rounded-2xl w-52 ml-3 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200">
                 <li className="px-3 py-2 border-b border-slate-800 mb-1">
-                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">{item.label}</span>
+                  <span className="text-label font-bold text-emerald-400 uppercase tracking-wider">{item.label}</span>
                 </li>
                 {item.submenus?.map((sub) => (
                   <li key={sub.path}>
@@ -509,7 +509,7 @@ export default function Sidebar() {
                       >
                         <span className="truncate">{sub.label}</span>
                         {sub.key === 'inventaire_reappro' && reapproStats && reapproStats.product_count > 0 && (
-                          <span className="ml-2 shrink-0 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          <span className="ml-2 shrink-0 bg-red-500 text-white text-caption font-bold px-2 py-0.5 rounded-full">
                             {reapproStats.product_count}
                           </span>
                         )}
@@ -592,7 +592,7 @@ export default function Sidebar() {
               <h1 className="text-sm font-black text-white tracking-widest uppercase leading-none truncate">
                 {licence?.pharmacie_nom || 'Zenith'}
               </h1>
-              <p className="text-[9px] font-bold text-primary uppercase tracking-[0.2em] mt-0.5 truncate">
+              <p className="text-micro font-bold text-primary uppercase tracking-[0.2em] mt-0.5 truncate">
                 {licence?.pharmacien_nom || t('app_subtitle')}
               </p>
             </div>
@@ -625,7 +625,7 @@ export default function Sidebar() {
             <div className="px-3">
               {menuGroups.map((group) => (
                 <div key={group.category}>
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-300 px-1 mt-3 mb-2 border-b border-slate-700/50 pb-1">
+                  <h3 className="text-caption font-bold uppercase tracking-wider text-slate-300 px-1 mt-3 mb-2 border-b border-slate-700/50 pb-1">
                     {t(`sidebar:categories.${group.category}`)}
                   </h3>
                   <ul className="bg-slate-800/50 rounded-xl p-1.5 flex flex-col gap-1">
@@ -641,8 +641,8 @@ export default function Sidebar() {
         <div className="shrink-0 px-4 py-4 border-t border-white/10">
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-primary shadow-[0_0_6px] shadow-primary/50"></div>
-            <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider truncate">Zenith OS</span>
-            <span className="text-[9px] text-white/30 font-mono ml-auto" title={formatVersion()}>{formatVersion().split('.').slice(0,2).join('.')}</span>
+            <span className="text-caption font-semibold text-white/40 uppercase tracking-wider truncate">Zenith OS</span>
+            <span className="text-micro text-white/30 font-mono ml-auto" title={formatVersion()}>{formatVersion().split('.').slice(0,2).join('.')}</span>
           </div>
         </div>
       </aside>

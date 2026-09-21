@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Save, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/Dialog';
@@ -18,11 +18,21 @@ interface Props {
   users: ManagedUser[];
   menuHierarchy: MenuItem[];
   form: UserForm;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.FormEvent) => void | Promise<void>;
 }
 
 export default function UserFormDialog({ open, onOpenChange, editingUser, users, menuHierarchy, form, onSubmit }: Props) {
   const { t } = useTranslation(['users', 'sidebar', 'common']);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    setIsSubmitting(true);
+    try {
+      await onSubmit(e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -36,7 +46,7 @@ export default function UserFormDialog({ open, onOpenChange, editingUser, users,
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="flex flex-col min-h-0 overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-6 min-h-0">
             <Tabs defaultValue="informations" className="w-full">
               <TabsList className="mb-4">
@@ -63,7 +73,7 @@ export default function UserFormDialog({ open, onOpenChange, editingUser, users,
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} leftIcon={<X className="h-4 w-4" />}>
               {t('common:cancel')}
             </Button>
-            <Button type="submit" leftIcon={<Save className="h-4 w-4" />}>
+            <Button type="submit" isLoading={isSubmitting} leftIcon={<Save className="h-4 w-4" />}>
               {t('common:save')}
             </Button>
           </DialogFooter>

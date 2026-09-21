@@ -82,7 +82,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
             <div className="sm:w-56 shrink-0 bg-emerald-600 rounded-xl p-3 text-white relative overflow-hidden border border-emerald-700">
                 <div className="flex items-center gap-2 mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-300 shrink-0"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">{t('performance.best_cashier')}</span>
+                    <span className="text-caption font-black uppercase tracking-widest opacity-80">{t('performance.best_cashier')}</span>
                 </div>
                 <div className="flex items-center gap-2 mb-3">
                     <div className="bg-white/20 text-white rounded-lg size-9 flex items-center justify-center text-sm font-black border border-white/40 shrink-0">
@@ -90,20 +90,20 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                     </div>
                     <div className="min-w-0">
                         <div className="text-sm font-black leading-tight truncate">{winner.full_name}</div>
-                        <div className="text-white/60 text-[10px] font-bold">@{winner.username}</div>
+                        <div className="text-white/60 text-caption font-bold">@{winner.username}</div>
                     </div>
                 </div>
                 <div className="space-y-1.5 border-t border-white/20 pt-2">
                     <div className="flex justify-between items-center">
-                        <span className="text-white/70 text-[10px] font-bold uppercase tracking-wide">{t('performance.rigor_score')}</span>
+                        <span className="text-white/70 text-caption font-bold uppercase tracking-wide">{t('performance.rigor_score')}</span>
                         <span className="text-sm font-black text-yellow-300">{formatCurrency(winner.moyenne_ecart_absolu)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-white/70 text-[10px] font-bold uppercase tracking-wide">{t('performance.avg_trend')}</span>
+                        <span className="text-white/70 text-caption font-bold uppercase tracking-wide">{t('performance.avg_trend')}</span>
                         <span className="text-xs font-black">{winner.moyenne_ecart_algebrique > 0 ? '+' : ''}{formatCurrency(winner.moyenne_ecart_algebrique)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-white/70 text-[10px] font-bold uppercase tracking-wide">{t('performance.total_closures')}</span>
+                        <span className="text-white/70 text-caption font-bold uppercase tracking-wide">{t('performance.total_closures')}</span>
                         <span className="text-sm font-black">{winner.nombre_clotures}</span>
                     </div>
                 </div>
@@ -116,17 +116,17 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         {t('performance.ranking_title')}
                     </h3>
-                    <span className="text-[10px] font-bold opacity-40 bg-base-200 px-2 py-0.5 rounded-full">Top {performances.length}</span>
+                    <span className="text-caption font-bold opacity-40 bg-base-200 px-2 py-0.5 rounded-full">Top {performances.length}</span>
                 </div>
                 <div className="overflow-x-auto flex-1">
                     <table className="w-full border-collapse text-xs">
                         <thead>
                             <tr className="bg-base-200/40">
-                                <th className="text-[10px] uppercase font-black text-base-content/40 px-3 py-2 tracking-widest">{t('table.rank')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 px-3 py-2 tracking-widest">{t('table.operator')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 text-center px-3 py-2 tracking-widest">{t('table.closures')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-3 py-2 tracking-widest">{t('table.avg_gap')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-3 py-2 tracking-widest">{t('table.trend')}</th>
+                                <th className="text-caption uppercase font-black text-base-content/40 px-3 py-2 tracking-widest">{t('table.rank')}</th>
+                                <th className="text-caption uppercase font-black text-base-content/40 px-3 py-2 tracking-widest">{t('table.operator')}</th>
+                                <th className="text-caption uppercase font-black text-base-content/40 text-center px-3 py-2 tracking-widest">{t('table.closures')}</th>
+                                <th className="text-caption uppercase font-black text-base-content/40 text-right px-3 py-2 tracking-widest">{t('table.avg_gap')}</th>
+                                <th className="text-caption uppercase font-black text-base-content/40 text-right px-3 py-2 tracking-widest">{t('table.trend')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -145,7 +145,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                                     </td>
                                     <td className="px-3 py-2">
                                         <div className="font-bold text-xs text-base-content group-hover:text-primary transition-colors leading-tight">{perf.full_name}</div>
-                                        <div className="text-[10px] font-bold text-base-content/30 uppercase tracking-tighter">@{perf.username}</div>
+                                        <div className="text-caption font-bold text-base-content/30 uppercase tracking-tighter">@{perf.username}</div>
                                     </td>
                                     <td className="px-3 py-2 text-center">
                                         <span className="font-black text-xs text-base-content/80">{perf.nombre_clotures}</span>
@@ -154,7 +154,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year, user
                                         <span className="font-black text-xs text-primary bg-primary/5 rounded px-2 py-0.5">{formatCurrency(perf.moyenne_ecart_absolu)}</span>
                                     </td>
                                     <td className="px-3 py-2 text-right">
-                                        <span className={`text-[11px] font-black inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded ${
+                                        <span className={`text-label font-black inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded ${
                                             perf.moyenne_ecart_algebrique > 0 ? 'bg-success/10 text-success'
                                             : perf.moyenne_ecart_algebrique < 0 ? 'bg-error/10 text-error'
                                             : 'bg-base-200 text-base-content/30'

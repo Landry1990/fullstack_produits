@@ -25,6 +25,8 @@ interface CheckboxProps {
 /**
  * Premium Checkbox component using Lucide icons.
  * Replaces native checkboxes for a more consistent and polished look.
+ *
+ * @deprecated Utiliser l'équivalent shadcn dans components/shadcn/ — conservé pour compatibilité
  */
 export const Checkbox: React.FC<CheckboxProps> = ({
   checked = false,
@@ -52,16 +54,16 @@ export const Checkbox: React.FC<CheckboxProps> = ({
 
   // Map theme colors to CSS classes
   const colorClass = {
-    primary: 'text-primary',
-    success: 'text-success',
-    warning: 'text-warning',
-    error: 'text-error',
-    base: 'text-base-content/40'
+    primary: 'text-emerald-600',
+    success: 'text-green-600',
+    warning: 'text-amber-500',
+    error: 'text-red-600',
+    base: 'text-slate-400 dark:text-slate-500'
   }[color];
 
   return (
     <div
-      className={`inline-flex items-center gap-2 transition-all ${disabled ? 'text-base-content/50 cursor-not-allowed' : 'cursor-pointer active:scale-95'} ${className}`}
+      className={`inline-flex items-center gap-2 transition-all ${disabled ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'cursor-pointer active:scale-95'} ${className}`}
       onClick={(e) => {
         e.stopPropagation();
         handleChange(e);
@@ -83,10 +85,10 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         ) : checked ? (
           <CheckSquare size={iconSize} className={colorClass} strokeWidth={2.5} />
         ) : (
-          <Square size={iconSize} className="text-gray-200 hover:text-base-content/40 transition-colors" strokeWidth={2} />
+          <Square size={iconSize} className="text-slate-300 dark:text-slate-600 hover:text-slate-400 dark:hover:text-slate-500 transition-colors" strokeWidth={2} />
         )}
       </div>
-      {label && <span className="text-sm font-medium select-none text-base-content/70">{label}</span>}
+      {label && <span className="text-sm font-medium select-none text-slate-600 dark:text-slate-300">{label}</span>}
     </div>
   );
 };

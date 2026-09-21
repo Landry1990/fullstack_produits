@@ -43,7 +43,7 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
         if (!selectedFacture) return null;
         return (
             <>
-                <li className="text-[10px] font-medium text-slate-500 px-4 py-2 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</li>
+                <li className="text-caption font-medium text-slate-500 px-4 py-2 uppercase tracking-widest">{t('common:single_selection', { defaultValue: 'Sélection' })}</li>
                 <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onView(selectedFacture)} className="gap-3 py-3"><Eye className="size-4 text-slate-500" />{t('common:details')}</a></li>
                 <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onPrint(selectedFacture)} className="gap-3 py-3"><Printer className="size-4 text-emerald-600" />{t('sales:print.a4')}</a></li>
                 <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3"><Receipt className="size-4 text-emerald-600" />{t('sales:print.ticket')}</a></li>
@@ -65,7 +65,7 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
     }
     return (
         <>
-            <li className="text-[10px] font-medium text-slate-500 px-4 py-2 uppercase tracking-widest">{t('common:bulk_actions')}</li>
+            <li className="text-caption font-medium text-slate-500 px-4 py-2 uppercase tracking-widest">{t('common:bulk_actions')}</li>
             <li><a role="menuitem" tabIndex={0} onKeyDown={handleMenuKeyDown} onClick={onBulkDelete} className="gap-3 py-3 text-red-600 hover:bg-red-50 font-bold"><Trash2 className="size-4" />{t('sales:confirm_bulk_delete', { count: selectedIds.length })}</a></li>
         </>
     );
@@ -278,7 +278,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                             {facture.ayant_droit_details?.nom || facture.client_name || facture.client_name_override || t('common:passerby_client')}
                                         </div>
                                         {facture.ayant_droit_details && (
-                                            <div className="text-[10px] text-slate-500 uppercase font-black tracking-tight leading-none mt-0.5">
+                                            <div className="text-caption text-slate-500 uppercase font-black tracking-tight leading-none mt-0.5">
                                                 {facture.client_name}
                                             </div>
                                         )}

@@ -216,7 +216,7 @@ export const OpenCashSessionModal: React.FC<OpenCashSessionModalProps> = ({
                     placeholder="0"
                   />
                 </div>
-                <label className="block py-0 text-[10px] text-slate-400 mt-1">
+                <label className="block py-0 text-caption text-slate-400 mt-1">
                   {t('cash_session.amount_hint', { defaultValue: 'Laisser vide si pas de fond initial' })}
                 </label>
               </div>

@@ -3,7 +3,7 @@ from decimal import Decimal
 from io import BytesIO
 
 import openpyxl
-from django.db.models import DecimalField, F, Sum, Value
+from django.db.models import DecimalField, ExpressionWrapper, F, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.utils import timezone
@@ -25,6 +25,7 @@ from api.models import (
     CommandeProduit,
     Facture,
     FactureProduit,
+    FactureProduitAllocation,
     MouvementStock,
     Produit,
     StockLot,
@@ -50,18 +51,36 @@ class RapportInventoryMixin:
         except ValueError:
             return Response({'error': 'Format de date invalide'}, status=status.HTTP_400_BAD_REQUEST)
 
+        today = timezone.localtime(timezone.now()).date()
+        if date_debut > date_fin:
+            return Response({'error': 'La date de début doit être antérieure ou égale à la date de fin'}, status=status.HTTP_400_BAD_REQUEST)
+        if date_fin > today:
+            return Response({'error': 'La date de fin ne peut pas être dans le futur'}, status=status.HTTP_400_BAD_REQUEST)
+        if (date_fin - date_debut).days > 731:
+            return Response({'error': 'La période ne peut pas dépasser 2 ans'}, status=status.HTTP_400_BAD_REQUEST)
+
         stock_totals = Produit.objects.filter(stock__gt=0).aggregate(
             total_cost=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
             total_ttc=Coalesce(Sum(F('stock') * F('selling_price'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
         )
         current_stock_cost = stock_totals['total_cost']
         current_stock_ttc = stock_totals['total_ttc']
-        today = timezone.localtime(timezone.now()).date()
-        
-        ventes_ca = Facture.objects.filter(date__date__gte=date_debut, status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('date')).values('jour').annotate(ca_net=Sum('total_ttc')).order_by('-jour')
-        ventes_details = FactureProduit.objects.filter(facture__date__date__gte=date_debut, facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('facture__date')).values('jour').annotate(ventes_ttc_brut=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), cout_ventes=Sum(F('quantity') * F('produit__pmp'), output_field=DecimalField())).order_by('-jour')
-        achats = CommandeProduit.objects.filter(commande__date_cloture__date__gte=date_debut, commande__status='CLOT').annotate(jour=local_trunc_date('commande__date_cloture')).values('jour').annotate(achats_cout=Sum((F('quantity') + F('unites_gratuites')) * F('price_cost'), output_field=DecimalField()), achats_ttc_virtuel=Sum((F('quantity') + F('unites_gratuites')) * F('produit__selling_price'), output_field=DecimalField())).order_by('-jour')
-        
+
+        # NB : pas de borne `date__date__lte=date_fin` volontairement — la reconstruction
+        # part du stock courant et remonte le temps : les mouvements postérieurs à
+        # date_fin sont nécessaires pour reconstituer la valeur du stock à date_fin.
+        ventes_ca = Facture.objects.filter(is_active=True, date__date__gte=date_debut, status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('date')).values('jour').annotate(ca_net=Sum('total_ttc')).order_by('-jour')
+        # Coût historique des ventes : on préfère le coût réel des allocations de lots
+        # (cost_price figé au moment de la vente) ; repli sur le PMP actuel pour les
+        # lignes sans allocation (ventes anciennes ou manuelles).
+        alloc_cost_sq = FactureProduitAllocation.objects.filter(
+            facture_produit=OuterRef('pk')
+        ).values('facture_produit').annotate(
+            c=Sum(F('quantity') * F('cost_price'), output_field=DecimalField())
+        ).values('c')
+        ventes_details = FactureProduit.objects.filter(facture__is_active=True, facture__date__date__gte=date_debut, facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]).annotate(jour=local_trunc_date('facture__date')).values('jour').annotate(ventes_ttc_brut=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()), cout_ventes=Sum(Coalesce(Subquery(alloc_cost_sq, output_field=DecimalField()), ExpressionWrapper(F('quantity') * F('produit__pmp'), output_field=DecimalField()), output_field=DecimalField()))).order_by('-jour')
+        achats = CommandeProduit.objects.filter(commande__is_active=True, commande__date_cloture__date__gte=date_debut, commande__status='CLOT').annotate(jour=local_trunc_date('commande__date_cloture')).values('jour').annotate(achats_cout=Sum((F('quantity') + F('unites_gratuites')) * F('price_cost'), output_field=DecimalField()), achats_ttc_virtuel=Sum((F('quantity') + F('unites_gratuites')) * F('produit__selling_price'), output_field=DecimalField())).order_by('-jour')
+
         mouvements_map = {}
         for v in ventes_ca:
             d = v['jour']
@@ -104,14 +123,23 @@ class RapportInventoryMixin:
         except (ValueError, TypeError): return Response({'error': 'Paramètres invalides'}, status=status.HTTP_400_BAD_REQUEST)
 
         limit_date = (timezone.now() - timedelta(days=months*30)).date()
-        produits = Produit.objects.filter(stock__gt=0).select_related('rayon', 'fournisseur')
-        results = []
-        for p in produits:
-            valeur = (p.pmp or Decimal(0)) * p.stock
-            if valeur >= min_value and (not p.dernier_vente or p.dernier_vente < limit_date):
-                results.append({'id': p.id, 'name': p.name, 'cip': p.cip1, 'stock': p.stock, 'valeur': valeur, 'pmp': p.pmp, 'dernier_vente': p.dernier_vente, 'rayon': p.rayon.name if p.rayon else '', 'fournisseur': p.fournisseur.name if p.fournisseur else ''})
-
-        results.sort(key=lambda x: x['valeur'], reverse=True)
+        # Filtrage et tri en SQL : valeur du stock = stock * pmp, plus de vente depuis N mois
+        produits = (
+            Produit.objects
+            .filter(stock__gt=0, is_active=True)
+            .annotate(valeur_stock=ExpressionWrapper(
+                Coalesce(F('pmp'), Value(0, output_field=DecimalField())) * F('stock'),
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            ))
+            .filter(valeur_stock__gte=min_value)
+            .filter(Q(dernier_vente__isnull=True) | Q(dernier_vente__lt=limit_date))
+            .select_related('rayon', 'fournisseur')
+            .order_by('-valeur_stock')
+        )
+        results = [
+            {'id': p.id, 'name': p.name, 'cip': p.cip1, 'stock': p.stock, 'valeur': p.valeur_stock, 'pmp': p.pmp, 'dernier_vente': p.dernier_vente, 'rayon': p.rayon.name if p.rayon else '', 'fournisseur': p.fournisseur.name if p.fournisseur else ''}
+            for p in produits
+        ]
 
         if export_format == 'csv':
             import csv
@@ -141,7 +169,7 @@ class RapportInventoryMixin:
         try:
             from django.utils.dateparse import parse_date
             date_debut, date_fin = datetime.combine(parse_date(db_param), time.min), datetime.combine(parse_date(df_param), time.max)
-        except: return Response({'error': 'Date invalide'}, status=400)
+        except (ValueError, TypeError): return Response({'error': 'Date invalide'}, status=400)
 
         produits = Produit.objects.filter(is_active=True).only('id', 'name', 'cip1', 'stock', 'stock_reserve')
         stock_initial_dict = {item['produit_id']: item['total'] or 0 for item in MouvementStock.objects.filter(date__lt=date_debut).values('produit_id').annotate(total=Sum('quantite'))}
@@ -435,15 +463,18 @@ class RapportInventoryMixin:
         Méthode interne pour calculer les agrégats de valeur de stock pour les lots divers uniquement.
         """
         is_pmp = valorisation == 'ACHAT'
-        lots_divers = StockLot.objects.filter(is_divers=True, quantity_remaining__gt=0).select_related('produit', 'produit__rayon')
-        
+        # produit__isnull=False : un lot divers sans produit n'a pas de prix de vente ni de TVA
+        lots_divers = StockLot.objects.filter(is_divers=True, quantity_remaining__gt=0, produit__isnull=False).select_related('produit', 'produit__rayon')
+
         tva_map = {}
         rayon_map = {}
         total_ttc_global = Decimal(0)
         total_ht_global = Decimal(0)
         total_tva_global = Decimal(0)
-        
+
         for lot in lots_divers:
+            if not lot.produit:
+                continue
             qty = Decimal(str(lot.quantity_remaining))
             price_ttc = (lot.price_cost if is_pmp else lot.produit.selling_price) or Decimal(0)
             tva_rate = lot.produit.tva or Decimal(0)

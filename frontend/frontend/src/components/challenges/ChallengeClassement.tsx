@@ -92,7 +92,7 @@ const ChallengeClassement: React.FC<Props> = ({ challengeId }) => {
             {/* Challenge summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
-                    <span className="text-slate-500 block text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-slate-500 block text-caption font-bold uppercase tracking-wider">
                         {t('challenges:form.date_debut')}
                     </span>
                     <span className="font-medium text-sm">
@@ -102,7 +102,7 @@ const ChallengeClassement: React.FC<Props> = ({ challengeId }) => {
                     </span>
                 </div>
                 <div>
-                    <span className="text-slate-500 block text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-slate-500 block text-caption font-bold uppercase tracking-wider">
                         {t('challenges:form.date_fin')}
                     </span>
                     <span className="font-medium text-sm">
@@ -112,7 +112,7 @@ const ChallengeClassement: React.FC<Props> = ({ challengeId }) => {
                     </span>
                 </div>
                 <div>
-                    <span className="text-slate-500 block text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-slate-500 block text-caption font-bold uppercase tracking-wider">
                         {t('challenges:type_objectif')}
                     </span>
                     <span className="font-medium text-sm">
@@ -120,7 +120,7 @@ const ChallengeClassement: React.FC<Props> = ({ challengeId }) => {
                     </span>
                 </div>
                 <div>
-                    <span className="text-slate-500 block text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-slate-500 block text-caption font-bold uppercase tracking-wider">
                         {t('challenges:mode')}
                     </span>
                     <span className="font-medium text-sm">
@@ -139,34 +139,34 @@ const ChallengeClassement: React.FC<Props> = ({ challengeId }) => {
                     <Table className="w-full">
                         <TableHeader>
                             <TableRow className="bg-slate-50 hover:bg-slate-50 sticky top-0 z-10">
-                                <TableHead className="w-[8%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="w-[8%] px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:classement.rang')}
                                 </TableHead>
-                                <TableHead className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="px-4 py-3 text-left text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {isTeamMode
                                         ? t('challenges:classement_entity_equipe')
                                         : t('challenges:classement_entity_vendeur')}
                                 </TableHead>
-                                <TableHead className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:classement.nb_boites')}
                                 </TableHead>
-                                <TableHead className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:classement.ca')}
                                 </TableHead>
-                                <TableHead className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <TableHead className="px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">
                                     {t('challenges:classement.nb_ventes')}
                                 </TableHead>
                                 {typeObjectif === 'POINTS' && (
-                                    <TableHead className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-amber-600">
+                                    <TableHead className="px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-amber-600">
                                         {t('challenges:classement_points')}
                                     </TableHead>
                                 )}
                                 {hasObjectif && (
                                     <>
-                                        <TableHead className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                        <TableHead className="px-4 py-3 text-right text-caption font-bold uppercase tracking-wider text-slate-500">
                                             {t('challenges:classement_objectif')}
                                         </TableHead>
-                                        <TableHead className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                        <TableHead className="px-4 py-3 text-center text-caption font-bold uppercase tracking-wider text-slate-500">
                                             {t('challenges:classement_progression')}
                                         </TableHead>
                                     </>
@@ -247,7 +247,7 @@ const ChallengeClassement: React.FC<Props> = ({ challengeId }) => {
                                                             />
                                                         </div>
                                                         <div className="flex items-center gap-1">
-                                                            <span className="text-[10px] font-bold text-slate-600">
+                                                            <span className="text-caption font-bold text-slate-600">
                                                                 {(entry.progression ?? 0).toFixed(0)}%
                                                             </span>
                                                             {entry.atteint ? (

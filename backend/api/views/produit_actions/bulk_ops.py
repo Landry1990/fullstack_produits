@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -174,7 +175,7 @@ class ProduitBulkMixin:
             count = produits.count()
             
             with transaction.atomic():
-                produits.update(is_active=False)
+                produits.update(is_active=False, deleted_at=timezone.now(), deleted_by=request.user)
 
                 # Optional: suffix name for Corbeille
                 for p in produits:

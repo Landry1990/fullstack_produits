@@ -277,7 +277,7 @@ const OrdonnancierPage: React.FC = () => {
                                                         <span className="font-semibold text-slate-700">{ligne.produit_nom}</span>
                                                         <span className="text-slate-500">x{ligne.quantite}</span>
                                                         {ligne.surveillance_category !== 'NONE' && (
-                                                            <Badge variant="destructive" className={cn(ligne.surveillance_category !== 'RENFORCEE' && 'bg-amber-100 text-amber-700 border-transparent shadow-none text-[10px] h-5 px-1.5')}>
+                                                            <Badge variant="destructive" className={cn(ligne.surveillance_category !== 'RENFORCEE' && 'bg-amber-100 text-amber-700 border-transparent shadow-none text-caption h-5 px-1.5')}>
                                                                 {ligne.surveillance_category === 'RENFORCEE' ? t('table.surveillance_badges.renf') : t('table.surveillance_badges.std')}
                                                             </Badge>
                                                         )}

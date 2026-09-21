@@ -254,10 +254,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   <TableCell className="px-3 py-2">
                     <div className="font-bold text-sky-600">#{facture.numero_facture}</div>
                     {hasTiersPayant && (
-                      <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200 mt-1 text-[10px]">{t('table.tiers_payant')}</Badge>
+                      <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200 mt-1 text-caption">{t('table.tiers_payant')}</Badge>
                     )}
                     {couponPourCetteFacture && (
-                      <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 mt-1 text-[10px]">{t('table.coupon_applied')}</Badge>
+                      <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 mt-1 text-caption">{t('table.coupon_applied')}</Badge>
                     )}
                   </TableCell>
                   <TableCell className="px-3 py-2">
@@ -474,7 +474,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                           <TableCell className="px-3 py-2">
                             <div className="flex flex-col">
                               <span className="font-semibold text-slate-800">{name}</span>
-                              {p.lot && <span className="text-[10px] text-slate-400">Lot: {p.lot}</span>}
+                              {p.lot && <span className="text-caption text-slate-400">Lot: {p.lot}</span>}
                             </div>
                           </TableCell>
                           <TableCell className="px-3 py-2 text-center">

@@ -99,10 +99,10 @@ export const CouponPanel: React.FC<CouponPanelProps> = ({
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-white z-10 border-b border-slate-100">
               <tr>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 py-2 text-left">{t('coupons.headers.num_amount')}</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 py-2 text-left">{t('coupons.headers.creation')}</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 py-2 text-left">{t('coupons.headers.usage')}</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 py-2 text-center">{t('coupons.headers.status')}</th>
+                <th className="text-caption font-bold uppercase tracking-wider text-slate-500 px-2 py-2 text-left">{t('coupons.headers.num_amount')}</th>
+                <th className="text-caption font-bold uppercase tracking-wider text-slate-500 px-2 py-2 text-left">{t('coupons.headers.creation')}</th>
+                <th className="text-caption font-bold uppercase tracking-wider text-slate-500 px-2 py-2 text-left">{t('coupons.headers.usage')}</th>
+                <th className="text-caption font-bold uppercase tracking-wider text-slate-500 px-2 py-2 text-center">{t('coupons.headers.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -123,15 +123,15 @@ export const CouponPanel: React.FC<CouponPanelProps> = ({
                   }}
                 >
                   <td className="px-2 py-2">
-                    <div className="font-mono text-[10px] font-bold text-slate-700">#{coupon.numero}</div>
+                    <div className="font-mono text-caption font-bold text-slate-700">#{coupon.numero}</div>
                     <div className={cn(
-                      "font-bold text-[10px]",
+                      "font-bold text-caption",
                       coupon.status === 'ACTIF' ? 'text-emerald-600' : 'text-slate-400'
                     )}>
                       {Math.round(Number(coupon.montant))} F
                     </div>
                   </td>
-                  <td className="text-[10px] text-slate-500 px-2 py-2">
+                  <td className="text-caption text-slate-500 px-2 py-2">
                     <div className="font-medium text-slate-700 whitespace-nowrap">
                       {new Date(coupon.date_creation).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })} {new Date(coupon.date_creation).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                     </div>
@@ -139,7 +139,7 @@ export const CouponPanel: React.FC<CouponPanelProps> = ({
                       {t('coupons.by', { name: coupon.cree_par_nom || t('coupons.system') })}
                     </div>
                   </td>
-                  <td className="text-[10px] text-slate-500 px-2 py-2">
+                  <td className="text-caption text-slate-500 px-2 py-2">
                     {coupon.status === 'UTILISE' ? (
                       <>
                         <div className="font-medium text-slate-700 whitespace-nowrap">
@@ -153,7 +153,7 @@ export const CouponPanel: React.FC<CouponPanelProps> = ({
                   </td>
                   <td className="text-center px-2 py-2">
                     <Badge variant="default" className={cn(
-                      "text-[10px] font-bold px-1.5 py-0.5",
+                      "text-caption font-bold px-1.5 py-0.5",
                       coupon.status === 'ACTIF' && 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100',
                       coupon.status === 'UTILISE' && 'bg-slate-100 text-slate-500 hover:bg-slate-100',
                       coupon.status === 'EXPIRE' && 'bg-amber-100 text-amber-700 hover:bg-amber-100',
