@@ -69,7 +69,7 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
     const sortedGroups = Object.keys(data.groups).sort();
 
     return (
-        <div className="bg-white p-4 max-w-[210mm] mx-auto text-slate-900 font-sans text-[11px] leading-tight shadow-none print:shadow-none print:max-w-none print:w-full relative">
+        <div data-theme="light" className="bg-white p-4 max-w-[210mm] mx-auto text-slate-900 font-sans text-label leading-tight shadow-none print:shadow-none print:max-w-none print:w-full relative">
             <style>
                 {`
                 @media print {
@@ -124,7 +124,7 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                     <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 mb-1 leading-none">
                         {settings.pharmacy_name}
                     </h1>
-                    <div className="space-y-1 text-slate-900/60 max-w-sm text-[11px]">
+                    <div className="space-y-1 text-slate-900/60 max-w-sm text-label">
                         <div className="whitespace-pre-line leading-tight italic">{settings.address}</div>
                         <div className="flex flex-col gap-0.5 mt-2 font-bold text-slate-900/90">
                             {settings.phone && <div>{t('common:phone_short')}{settings.phone}</div>}
@@ -136,14 +136,14 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                     <div className="border-2 border-slate-900 text-slate-900 px-6 py-2 rounded-sm text-xl font-black mb-2 inline-block uppercase tracking-wider">
                         {data.title}
                     </div>
-                    <div className="text-slate-900/60 font-bold text-[10px] uppercase tracking-widest">
+                    <div className="text-slate-900/60 font-bold text-caption uppercase tracking-widest">
                         {t('common:printed_on')}{formatDate(data.date)}
                     </div>
                 </div>
             </div>
 
             {/* Sub-header info */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 mb-6 flex justify-between items-center text-[10px]">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 mb-6 flex justify-between items-center text-caption">
                 <div className="space-y-1">
                     {data.filter_name && (
                         <div>
@@ -167,14 +167,14 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                     <div key={groupName} className="group-block" style={{ pageBreakBefore: groupIdx > 0 ? 'auto' : 'avoid' }}>
                         <h2 className="group-title text-sm font-black text-slate-900 uppercase tracking-wider mb-2 border-l-4 border-emerald-500 pl-3 bg-slate-100 py-1.5 flex justify-between items-center">
                             <span>{groupName}</span>
-                            <span className="text-[10px] font-bold text-slate-900/50 normal-case pr-4">
+                            <span className="text-caption font-bold text-slate-900/50 normal-case pr-4">
                                 {data.groups[groupName].filter(i => !i.is_lot_line).length} {t('common:products')}
                             </span>
                         </h2>
 
                         <table className="w-full border-collapse">
                             <thead>
-                                <tr className="bg-slate-100/50 text-slate-900 border-b-2 border-slate-900 text-[9px] uppercase tracking-wider font-bold">
+                                <tr className="bg-slate-100/50 text-slate-900 border-b-2 border-slate-900 text-micro uppercase tracking-wider font-bold">
                                     <th className="py-2 px-2 text-left w-12">{t('common:id')}</th>
                                     <th className="py-2 px-2 text-left w-24">{t('common:cip')}</th>
                                     <th className="py-2 px-2 text-left">{t('common:designation')}</th>
@@ -196,7 +196,7 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
                                     )}
                                 </tr>
                             </thead>
-                            <tbody className="text-[10px]">
+                            <tbody className="text-caption">
                                 {data.groups[groupName].map((item) => (
                                     <tr key={item.id} className={`border-b border-slate-100 ${item.is_lot_line ? 'bg-slate-100/30' : ''}`}>
                                         <td className="py-1.5 px-2 font-mono text-slate-900/50">{item.id}</td>
@@ -253,7 +253,7 @@ const InventairePrintTemplate: React.FC<InventairePrintTemplateProps> = ({ setti
             )}
 
             {/* Legend / Info */}
-            <div className="mt-8 pt-4 border-t border-slate-300 grid grid-cols-2 gap-8 text-[9px]">
+            <div className="mt-8 pt-4 border-t border-slate-300 grid grid-cols-2 gap-8 text-micro">
                 <div className="italic text-slate-900/50">
                     {data.is_report 
                         ? t('stock:inventaire.print.report_legend')

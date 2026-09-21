@@ -355,7 +355,7 @@ const Cadencier: React.FC = () => {
                     <Boxes className="size-4" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                    <p className="text-caption font-medium text-slate-500 uppercase tracking-wide">
                       {t('stock:cadencier.total_products', 'Produits à commander')}
                     </p>
                     <p className="text-xl font-bold text-slate-900">{totalCount}</p>
@@ -370,7 +370,7 @@ const Cadencier: React.FC = () => {
                     <Calendar className="size-4" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                    <p className="text-caption font-medium text-slate-500 uppercase tracking-wide">
                       {t('stock:cadencier.total_ht', 'Montant total HT')}
                     </p>
                     <p className="text-xl font-bold text-slate-900">{formatCurrency(Math.round(totalHt))}</p>
@@ -386,7 +386,7 @@ const Cadencier: React.FC = () => {
                       <ShoppingCart className="size-4" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                      <p className="text-caption font-medium text-slate-500 uppercase tracking-wide">
                         {t('stock:cadencier.selection', 'Sélection')}
                       </p>
                       <p className="text-xl font-bold text-slate-900">
@@ -540,7 +540,7 @@ const Cadencier: React.FC = () => {
                           </TableCell>
                           <TableCell className="px-3 py-2">
                             <div className="font-semibold text-slate-900 truncate text-sm" title={item.produit_nom}>{item.produit_nom}</div>
-                            <div className="text-[10px] text-slate-500 mt-0.5">
+                            <div className="text-caption text-slate-500 mt-0.5">
                               CIP: {item.cip1 || '-'}
                               {item.rayon_nom && <span className="ml-2">· {item.rayon_nom}</span>}
                             </div>
@@ -556,7 +556,7 @@ const Cadencier: React.FC = () => {
                           </TableCell>
                           <TableCell className="px-3 py-2 text-center font-mono text-xs text-slate-700">
                             {Math.ceil(item.rotation_moyenne)}
-                            <span className="text-[10px] text-slate-400 ml-1">/ {t('stock:analyse.per_month', 'mois')}</span>
+                            <span className="text-caption text-slate-400 ml-1">/ {t('stock:analyse.per_month', 'mois')}</span>
                           </TableCell>
                           <TableCell className="px-3 py-2 text-center">
                             <span className={cn(
@@ -588,7 +588,7 @@ const Cadencier: React.FC = () => {
                               {item.fournisseur_nom || '-'}
                             </div>
                             {item.is_supplier_exclusive && (
-                              <Badge variant="outline" className="mt-0.5 text-[10px]">{t('stock:cadencier.exclusive', 'Exclusif')}</Badge>
+                              <Badge variant="outline" className="mt-0.5 text-caption">{t('stock:cadencier.exclusive', 'Exclusif')}</Badge>
                             )}
                           </TableCell>
                         </TableRow>

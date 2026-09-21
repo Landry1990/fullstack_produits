@@ -11,6 +11,7 @@ import PointageReleveModal from './PointageReleveModal';
 import SudoValidationModal from './common/SudoValidationModal';
 import SupplierDashboard from './fournisseurs/SupplierDashboard';
 import { Button } from './shadcn/button';
+import { ErrorState } from './ui/ErrorState';
 import { cn } from '../lib/utils';
 
 export default function Fournisseurs() {
@@ -31,12 +32,8 @@ export default function Fournisseurs() {
   };
   
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-slate-50">
-      {state.error && (
-        <div role="alert" className="mx-4 mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm shrink-0">
-          {state.error}
-        </div>
-      )}
+    <div className="flex flex-col h-full overflow-hidden bg-slate-50 max-w-[1600px] mx-auto w-full">
+      <ErrorState error={state.error} className="mx-4 mt-4 shrink-0" />
 
       {/* Header with Tabs */}
       <div className="px-6 py-4 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 bg-white">
@@ -45,8 +42,8 @@ export default function Fournisseurs() {
               <Building2 className="size-5 text-emerald-600" />
            </div>
            <div>
-              <h1 className="text-lg font-bold text-slate-800">Gestion Fournisseurs</h1>
-              <p className="text-xs text-slate-500 font-medium">Finance & Approvisionnement</p>
+              <h1 className="text-lg font-bold text-slate-800">{t('providers:title')}</h1>
+              <p className="text-xs text-slate-500 font-medium">{t('providers:subtitle')}</p>
            </div>
         </div>
 

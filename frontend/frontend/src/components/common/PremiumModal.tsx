@@ -1,5 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '../shadcn/dialog';
 
 interface PremiumModalProps {
   /** Whether the modal is visible */
@@ -32,10 +38,13 @@ interface PremiumModalProps {
 
 /**
  * PremiumModal — Composant modal premium réutilisable.
- * 
+ *
  * Design cohérent avec overlay sombre, header gradient, bouton fermeture,
  * et support clavier (Escape).
- * 
+ *
+ * Internals basés sur le composant Dialog (Radix) : focus trap, gestion
+ * d'Escape, aria et blocage du scroll body sont gérés nativement.
+ *
  * @example
  * <PremiumModal
  *   isOpen={isOpen}
@@ -65,67 +74,50 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation('common');
-  // Use refs so the effect listener always calls the latest handler
-  // without needing to re-subscribe on every render.
-  const onCloseRef = useRef(onClose);
-  const disableCloseRef = useRef(disableClose);
-
-  useEffect(() => {
-    onCloseRef.current = onClose;
-    disableCloseRef.current = disableClose;
-  });
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !disableCloseRef.current) {
-        onCloseRef.current();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    // Prevent body scroll when modal is open
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto"
-      onClick={() => !disableClose && onClose()}
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !disableClose) onClose();
+      }}
     >
-      <div
-        className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} overflow-hidden flex flex-col max-h-[90vh] ${className}`}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
+      <DialogContent
+        hideCloseButton
+        // aria-describedby optionnel : on fournit DialogDescription quand subtitle existe
+        aria-describedby={undefined}
+        onEscapeKeyDown={(e) => {
+          if (disableClose) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          if (disableClose) e.preventDefault();
+        }}
+        className={`p-0 gap-0 rounded-2xl sm:rounded-2xl border-0 shadow-2xl w-full ${maxWidth} overflow-hidden flex flex-col max-h-[90vh] bg-white dark:bg-slate-900 ${className}`}
       >
         {/* Header */}
-        <div className={`bg-gradient-to-r from-${gradientFrom} via-${gradientVia} to-${gradientTo} px-6 py-5 border-b border-slate-200 shrink-0`}>
+        <div className={`bg-gradient-to-r from-${gradientFrom} via-${gradientVia} to-${gradientTo} px-6 py-5 border-b border-slate-200 dark:border-slate-700 shrink-0`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               {icon && (
-                <div className="size-10 rounded-xl bg-white/50 flex items-center justify-center shrink-0">
+                <div className="size-10 rounded-xl bg-white/50 dark:bg-slate-800/50 flex items-center justify-center shrink-0">
                   {icon}
                 </div>
               )}
               <div className="min-w-0">
-                <h3 className="font-bold text-lg text-slate-800 truncate">{title}</h3>
-                {subtitle && <p className="text-xs text-slate-400 truncate">{subtitle}</p>}
+                <DialogTitle className="font-bold text-lg text-slate-800 dark:text-slate-100 truncate">
+                  {title}
+                </DialogTitle>
+                {subtitle && (
+                  <DialogDescription className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                    {subtitle}
+                  </DialogDescription>
+                )}
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center size-8 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={disableClose}
               aria-label={t('close')}
             >
@@ -143,12 +135,12 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
 
         {/* Footer (optional) */}
         {footer && (
-          <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 shrink-0">
+          <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 shrink-0">
             {footer}
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

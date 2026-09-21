@@ -242,7 +242,9 @@ class CommandeBulkActionsMixin:
                      continue
 
                 cmd.is_active = False
-                cmd.save(update_fields=['is_active'])
+                cmd.deleted_at = timezone.now()
+                cmd.deleted_by = request.user
+                cmd.save(update_fields=['is_active', 'deleted_at', 'deleted_by'])
                 deleted_ids.append(cmd.id)
 
             if not deleted_ids and total_deletable > 0:

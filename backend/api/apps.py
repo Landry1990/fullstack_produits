@@ -33,6 +33,6 @@ class ApiConfig(AppConfig):
         _tz.make_aware = _safe_make_aware
 
 
-        # Start the integrated background task runner for automated orders
+        from . import cache_invalidation, cache_signals, signals_stock_levels
         from .scheduler import start_background_tasks
         start_background_tasks()

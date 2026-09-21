@@ -212,7 +212,7 @@ export default function CommandeList({
       {/* Unified Filter/Sort Bar */}
       <div className="flex flex-wrap items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-2 mr-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('orders:list.sort_by')}:</span>
+          <span className="text-caption font-semibold uppercase tracking-wider text-slate-400">{t('orders:list.sort_by')}:</span>
           <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
             <Button
               variant="ghost"
@@ -368,7 +368,7 @@ export default function CommandeList({
 
                         <>
 
-                          <li className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          <li className="px-3 py-1.5 text-caption font-semibold uppercase tracking-wider text-slate-400">
 
                             {t('common:single_selection')}
 
@@ -436,7 +436,7 @@ export default function CommandeList({
 
                         <>
 
-                          <li className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          <li className="px-3 py-1.5 text-caption font-semibold uppercase tracking-wider text-slate-400">
 
                             {t('common:bulk_actions')}
 
@@ -480,38 +480,38 @@ export default function CommandeList({
 
                 ) : (
                   <>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('numero')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('numero'); } }}>
+                    <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('numero')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('numero'); } }}>
                       <div className="flex items-center gap-2">
                         {t('orders:list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left sticky top-0 z-30 bg-slate-50">
+                    <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-left sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.invoice_number')}
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('date')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('date'); } }}>
+                    <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('date')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('date'); } }}>
                       <div className="flex items-center gap-2">
                         {t('common:date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('fournisseur')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('fournisseur'); } }}>
+                    <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('fournisseur')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('fournisseur'); } }}>
                       <div className="flex items-center gap-2">
                         {t('common:supplier')} {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-center sticky top-0 z-30 bg-slate-50">
+                    <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-center sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.items')}
                     </TableHead>
 
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
+                    <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.ht')}
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
+                    <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.tva')}
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
+                    <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 text-right sticky top-0 z-30 bg-slate-50">
                       {t('orders:list.table.ttc')}
                     </TableHead>
-                    <TableHead className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('status')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('status'); } }}>
+                    <TableHead className="text-caption uppercase font-semibold tracking-wider text-slate-500 py-3 px-4 cursor-pointer hover:text-emerald-600 transition-colors sticky top-0 z-30 bg-slate-50" onClick={() => onSortChange('status')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSortChange('status'); } }}>
                       <div className="flex items-center gap-2 justify-center">
                         {t('common:us_title')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
@@ -595,7 +595,7 @@ export default function CommandeList({
                   <Badge
                     variant="outline"
                     className={cn(
-                      "text-[11px] font-semibold uppercase tracking-wider",
+                      "text-label font-semibold uppercase tracking-wider",
                       getStatusStyle(commande.status)
                     )}
                   >

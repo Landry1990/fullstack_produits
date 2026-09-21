@@ -240,19 +240,19 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
               'text-slate-800 font-bold'
             )}>{item.name}</div>
             {isLowStock && (
-              <Badge variant="secondary" className={cn("text-[10px] h-4 px-1 shrink-0", isActive ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-100 text-amber-700 border-amber-200')}>
+              <Badge variant="secondary" className={cn("text-caption h-4 px-1 shrink-0", isActive ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-100 text-amber-700 border-amber-200')}>
                 {t('facturation:search.low_stock_badge')}
               </Badge>
             )}
             {(item.active_promis_count ?? 0) > 0 && (
-              <Badge variant="secondary" className={cn("text-[10px] h-4 px-1 shrink-0", isActive ? 'bg-blue-400 text-white border-blue-300' : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse')}>
+              <Badge variant="secondary" className={cn("text-caption h-4 px-1 shrink-0", isActive ? 'bg-blue-400 text-white border-blue-300' : 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse')}>
                 PROMIS ({item.active_promis_count})
               </Badge>
             )}
           </div>
           {(item.cip1 || item.rayon_name) && (
             <div className={cn(
-              "text-[10px] flex gap-1.5 mt-0.5",
+              "text-caption flex gap-1.5 mt-0.5",
               isActive ? 'text-blue-100' : 'text-slate-400'
             )}>
               {item.cip1 && <span className={cn("font-mono px-1 rounded", isActive ? 'bg-white/20' : 'bg-slate-100')}>{item.cip1}</span>}
@@ -274,7 +274,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
           </div>
         </div>
         {!isBlocked && (
-          <Button variant="ghost" size="icon" className={cn("size-8 opacity-0 group-hover:opacity-100", isActive ? 'text-white hover:text-white hover:bg-blue-600' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100')}>
+          <Button variant="ghost" size="icon" aria-label={t('common:add')} className={cn("size-8 opacity-0 group-hover:opacity-100", isActive ? 'text-white hover:text-white hover:bg-blue-600' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100')}>
             <Plus className="size-4" />
           </Button>
         )}
@@ -302,7 +302,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             {formatCurrency(Number(pack.value))} • {pack.products_count || pack.pack_items?.length || '?'} {t('facturation:search.products_count')}
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 text-violet-600 hover:text-violet-700 hover:bg-violet-100">
+        <Button variant="ghost" size="icon" aria-label={t('common:add')} className="size-8 opacity-0 group-hover:opacity-100 text-violet-600 hover:text-violet-700 hover:bg-violet-100">
           <Plus className="size-4" />
         </Button>
       </div>
@@ -329,7 +329,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             {dci.produits_count ? `${dci.produits_count} ${t('facturation:search.dci_products_count')}` : ''}
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 text-amber-600 hover:text-amber-700 hover:bg-amber-100">
+        <Button variant="ghost" size="icon" aria-label={t('common:add')} className="size-8 opacity-0 group-hover:opacity-100 text-amber-600 hover:text-amber-700 hover:bg-amber-100">
           <Plus className="size-4" />
         </Button>
       </div>
@@ -338,7 +338,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   
   const renderSkeleton = () => (
     <div className="max-h-96 overflow-y-auto space-y-0.5 p-1">
-      <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
+      <div className="px-3 py-1 text-caption font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
         {t('facturation:search.tabs_products')}
       </div>
       {[1, 2, 3].map((n) => (
@@ -423,7 +423,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     if (searchMode === 'products' && !searchQuery && recentProducts.length > 0) {
       return (
         <div className="max-h-96 overflow-y-auto space-y-0.5 p-1">
-          <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 border-y border-slate-200">
+          <div className="px-3 py-1 text-caption font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 border-y border-slate-200">
             {t('facturation:search.recent_label')}
           </div>
           {recentProducts.map((item, idx) => renderProductItem(item, idx))}

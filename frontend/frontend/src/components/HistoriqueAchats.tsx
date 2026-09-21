@@ -228,7 +228,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   {forcedType === 'LOC' ? t('history.subtitle_local') : forcedType === 'DIR' ? t('history.subtitle_direct') : t('history.subtitle_daily')}
                 </span>
               </h1>
-              <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('history.results_found')}</p>
+              <p className="text-caption text-slate-400 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('history.results_found')}</p>
             </div>
 
             <div className="w-full max-w-full overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
@@ -350,7 +350,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   <Package className="size-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
+                  <p className="text-caption font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
                     {activeTab === 'summary' ? t('history.columns.nb_orders') : t('history.columns.nb_products', { defaultValue: 'Nombre de produits' })}
                   </p>
                   <p className="text-xl font-black text-slate-800 leading-none">{totalDisplayCount}</p>
@@ -363,7 +363,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                   <TrendingUp className="size-5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
+                  <p className="text-caption font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
                   <p className="text-xl font-black text-slate-800 leading-none">
                     {formatMoney(totalDisplayAmount)} <span className="text-xs font-bold text-slate-400 ml-0.5">{t('common:currency_symbol')}</span>
                   </p>
@@ -443,7 +443,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                             <span className="text-base font-black text-slate-800 group-hover:text-blue-600 transition-colors">
                               {formatMoney(normalizeNumber(summaryRow.total_achat))}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-400 ml-1">{t('common:currency_symbol')}</span>
+                            <span className="text-caption font-bold text-slate-400 ml-1">{t('common:currency_symbol')}</span>
                           </td>
                         </>
                       ) : (
@@ -477,7 +477,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                             <span className="text-sm font-black text-slate-800">
                               {formatMoney(normalizeNumber(detailRow.total_achat))}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-400 ml-1">{t('common:currency_symbol')}</span>
+                            <span className="text-caption font-bold text-slate-400 ml-1">{t('common:currency_symbol')}</span>
                           </td>
                         </>
                       )}
@@ -502,7 +502,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             {/* Pagination Component */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-5 px-2 shrink-0 no-print">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <div className="text-caption font-bold text-slate-400 uppercase tracking-widest">
                   {t('history.pagination.page')} {page} <span className="mx-1 text-slate-300">/</span> {totalPages}
                 </div>
                 <div className="flex gap-2">

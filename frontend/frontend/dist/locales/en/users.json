@@ -6,6 +6,10 @@
         "active": "Active",
         "trash": "Trash"
     },
+    "page_tabs": {
+        "users": "Users",
+        "sessions": "Sessions"
+    },
     "actions": {
         "create": "New User",
         "edit": "Edit",
@@ -68,7 +72,13 @@
         "authorized_menus": "Authorized Menus",
         "admin_note": "An administrator has access to all menus by default.",
         "special_permissions": "Special Permissions & Sales",
-        "security_sudo": "Security & Sudo"
+        "security_sudo": "Security & Sudo",
+        "tabs": {
+            "information": "Information",
+            "menus": "Menus",
+            "permissions": "Permissions"
+        },
+        "superuser_permissions_note": "The superuser implicitly has all permissions."
     },
     "permissions": {
         "cash_out": "Can Cash Out",
@@ -88,6 +98,9 @@
         "close_commande": "Close Order",
         "manage_perimes": "Manage Expired",
         "manage_avoirs": "Manage Credits",
+        "create_client_credit": "Create Client Credits",
+        "manage_challenges": "Manage Challenges",
+        "is_terminal_account": "Terminal account (sales POS)",
         "validate_zero_amount": "Allow 0F sales",
         "can_validate_sales": "Validate sales",
         "view_cash_sessions": "View cash sessions",

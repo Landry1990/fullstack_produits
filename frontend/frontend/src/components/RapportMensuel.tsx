@@ -414,7 +414,7 @@ export default function RapportMensuel() {
                 {rapport.achats_par_fournisseur.length > 0 ? (
                   <table className="w-full border-separate border-spacing-0 text-sm">
                     <thead>
-                      <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                      <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
                         <th className="py-3 pl-4 text-left border-b border-slate-200">{t('suppliers.name')}</th>
                         <th className="py-3 text-right border-b border-slate-200">{t('suppliers.orders')}</th>
                         <th className="py-3 text-right border-b border-slate-200 pr-4">{t('suppliers.amount')}</th>
@@ -499,7 +499,7 @@ export default function RapportMensuel() {
                   <div className="text-xs font-semibold text-slate-500 mb-2">{t('pro_clients.top_clients')}</div>
                   <table className="w-full border-separate border-spacing-0 text-xs">
                     <thead>
-                      <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <tr className="bg-slate-50 text-caption font-black text-slate-400 uppercase tracking-widest">
                         <th className="py-2 pl-3 text-left border-b border-slate-200">{t('free_units.product')}</th>
                         <th className="py-2 text-right border-b border-slate-200">{t('tva.ht')}</th>
                         <th className="py-2 text-right border-b border-slate-200 pr-3">{t('pro_clients.balance')}</th>
@@ -548,7 +548,7 @@ export default function RapportMensuel() {
                   <div className="text-xs font-semibold text-slate-500 mb-2">{t('free_units.top_products')}</div>
                   <table className="w-full border-separate border-spacing-0 text-xs">
                     <thead>
-                      <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <tr className="bg-slate-50 text-caption font-black text-slate-400 uppercase tracking-widest">
                         <th className="py-2 pl-3 text-left border-b border-slate-200">{t('free_units.product')}</th>
                         <th className="py-2 text-right border-b border-slate-200">{t('free_units.qty')}</th>
                         <th className="py-2 text-right border-b border-slate-200 pr-3">{t('free_units.value')}</th>
@@ -580,7 +580,7 @@ export default function RapportMensuel() {
                 {rapport.encaissements.length > 0 ? (
                   <table className="w-full border-separate border-spacing-0 text-sm">
                     <thead>
-                      <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                      <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
                         <th className="py-3 pl-4 text-left border-b border-slate-200">{t('encaissements.mode')}</th>
                         <th className="py-3 text-right border-b border-slate-200 pr-4">{t('encaissements.amount')}</th>
                       </tr>
@@ -615,7 +615,7 @@ export default function RapportMensuel() {
                       {(Number(rapport.ventes_credit) > 0 || Number(rapport.coupons_total) > 0 || Number(rapport.ca.part_assurance) > 0) && (
                         <>
                           <tr className="border-t border-slate-200">
-                            <td colSpan={2} className="py-1 pl-4 text-[10px] text-slate-400 uppercase tracking-tighter">
+                            <td colSpan={2} className="py-1 pl-4 text-caption text-slate-400 uppercase tracking-tighter">
                               {t('encaissements.non_cash_items', 'Eléments hors encaissement')}
                             </td>
                           </tr>
@@ -695,7 +695,7 @@ export default function RapportMensuel() {
               {rapport.mouvements_caisse?.liste && rapport.mouvements_caisse.liste.length > 0 ? (
                 <table className="w-full border-separate border-spacing-0 text-sm">
                   <thead>
-                    <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                    <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
                       <th className="py-3 pl-4 text-left border-b border-slate-200">{t('caisse_mvts.date')}</th>
                       <th className="py-3 text-left border-b border-slate-200">{t('caisse_mvts.type')}</th>
                       <th className="py-3 text-left border-b border-slate-200">{t('caisse_mvts.reason')}</th>
@@ -742,7 +742,7 @@ export default function RapportMensuel() {
               <div className="overflow-x-auto">
                 <table className="w-full border-separate border-spacing-0 text-sm">
                   <thead>
-                    <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                    <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
                       <th className="py-3 pl-4 text-left border-b border-slate-200">{t('tva.rate')}</th>
                       <th className="py-3 text-right border-b border-slate-200">{t('tva.ht')}</th>
                       <th className="py-3 text-right border-b border-slate-200">{t('tva.tax')}</th>

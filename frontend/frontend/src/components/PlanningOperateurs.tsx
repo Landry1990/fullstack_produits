@@ -786,7 +786,7 @@ function PlanningTab({ isAdmin }: { isAdmin: boolean }) {
                       key={day.toISOString()}
                       className={`px-1 py-2 whitespace-nowrap text-center text-xs font-semibold uppercase tracking-wide min-w-[40px] ${isWeekend ? 'text-red-400' : 'text-slate-500 dark:text-slate-400'}`}
                     >
-                      <div className="text-[10px] uppercase">{getWeekdayShort(day, locale)}</div>
+                      <div className="text-caption uppercase">{getWeekdayShort(day, locale)}</div>
                       <div className="text-sm">{day.getDate()}</div>
                     </th>
                   );

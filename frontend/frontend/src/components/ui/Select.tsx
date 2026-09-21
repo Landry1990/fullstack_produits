@@ -16,6 +16,8 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
 
 /**
  * Premium Select component with custom caret and matching Input styles.
+ *
+ * @deprecated Utiliser l'équivalent shadcn dans components/shadcn/ — conservé pour compatibilité
  */
 export const Select: React.FC<SelectProps> = ({
   label,
@@ -35,7 +37,7 @@ export const Select: React.FC<SelectProps> = ({
   return (
     <div className={`w-full ${containerClassName}`}>
       {label && (
-        <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+        <label className="block text-caption font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
           {label}
         </label>
       )}
@@ -44,15 +46,15 @@ export const Select: React.FC<SelectProps> = ({
           className={`
             w-full rounded-lg border transition-all duration-200 appearance-none outline-none
             ${sizeClasses}
-            ${error ? 'border-red-300 text-red-600 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-300 text-slate-800 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20'}
-            bg-white hover:border-slate-400
+            ${error ? 'border-red-300 text-red-600 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'}
+            bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600
             ${className}
           `}
           {...props}
         >
           {children}
         </select>
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500 group-focus-within:text-emerald-500 transition-colors">
           <ChevronDown size={14} strokeWidth={3} />
         </div>
       </div>

@@ -48,7 +48,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                         <div className="font-bold text-blue-900 tracking-tight">{t('creances:payment_modal.invoice_prefix')} {creance.numero_facture}</div>
                         <div className="text-blue-600/70 font-medium">{t('creances:payment_modal.by_client')} {creance.client_name}</div>
                         <div className="mt-2 flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase text-blue-400">{t('creances:payment_modal.remaining_balance')}</span>
+                            <span className="text-caption font-black uppercase text-blue-400">{t('creances:payment_modal.remaining_balance')}</span>
                             <span className="text-blue-900 font-black">{formatCurrency(remainingAmount)}</span>
                         </div>
                     </div>
@@ -57,7 +57,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                 <div className="space-y-4">
                     {/* Payment Mode */}
                     <div className="space-y-1.5">
-                        <label htmlFor="cp-payment-mode" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="cp-payment-mode" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <CreditCard className="size-3" /> {t('creances:payment_modal.payment_mode')}
                         </label>
                         <select
@@ -78,7 +78,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
 
                     {/* Amount */}
                     <div className="space-y-1.5">
-                        <label htmlFor="cp-amount" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="cp-amount" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <DollarSign className="size-3" /> {t('creances:payment_modal.amount_to_pay')}
                         </label>
                         <div className="relative group">
@@ -95,7 +95,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                         <div className="flex justify-end gap-2 mt-1">
                             <button
                                 onClick={() => form.setMontantPaiement(remainingAmount.toString())}
-                                className="text-emerald-600 hover:text-emerald-700 text-[10px] font-black uppercase"
+                                className="text-emerald-600 hover:text-emerald-700 text-caption font-black uppercase"
                             >
                                 {t('creances:payment_modal.pay_full')}
                             </button>
@@ -104,7 +104,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
 
                     {/* Reference */}
                     <div className="space-y-1.5">
-                        <label htmlFor="cp-reference" className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
+                        <label htmlFor="cp-reference" className="text-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 ml-1">
                             <Hash className="size-3" /> {t('creances:payment_modal.reference')}
                         </label>
                         <input

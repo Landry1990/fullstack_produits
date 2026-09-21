@@ -1,12 +1,12 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Printer } from 'lucide-react';
+import { X, Printer, Loader2 } from 'lucide-react';
 import type { Facture } from '../../../types';
 
 interface ClientNameModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (clientName: string) => void;
+    onConfirm: (clientName: string) => void | Promise<void>;
     facture: Facture | null;
 }
 
@@ -18,6 +18,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
 }) => {
     const { t } = useTranslation(['sales', 'common', 'clients']);
     const [clientNameInput, setClientNameInput] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (isOpen && facture) {
@@ -41,9 +42,14 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onConfirm(clientNameInput.trim());
+        setIsSubmitting(true);
+        try {
+            await onConfirm(clientNameInput.trim());
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (!isOpen || !facture) return null;
@@ -107,9 +113,10 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-sm"
+                            disabled={isSubmitting}
+                            className="px-6 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Printer className="size-4" />
+                            {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Printer className="size-4" />}
                             {t('common:print')}
                         </button>
                     </div>

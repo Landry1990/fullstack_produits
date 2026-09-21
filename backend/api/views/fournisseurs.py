@@ -355,7 +355,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                 fournisseurs = Fournisseur.objects.filter(id__in=ids)
                 names = list(fournisseurs.values_list('name', flat=True))
                 count = fournisseurs.count()
-                fournisseurs.update(is_active=False)
+                fournisseurs.update(is_active=False, deleted_at=timezone.now(), deleted_by=validation_user)
                 
                 log_audit(
                     user=validation_user,

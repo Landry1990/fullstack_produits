@@ -80,18 +80,18 @@ export default function FournisseurDetails({ hook }: Props) {
             </div>
             <div className="p-5 space-y-4">
               <div className="space-y-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('providers:details.contact_address')}</span>
+                <span className="text-caption font-semibold uppercase tracking-wider text-slate-400">{t('providers:details.contact_address')}</span>
                 <div className="text-sm text-slate-700 leading-relaxed">
                   {selectedFournisseur.address || t('providers:details.not_provided')}
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('providers:details.direct_line')}</span>
+                  <span className="text-caption font-semibold uppercase tracking-wider text-slate-400">{t('providers:details.direct_line')}</span>
                   <div className="text-sm font-mono font-medium text-slate-700">{selectedFournisseur.phone || '—'}</div>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t('providers:details.email')}</span>
+                  <span className="text-caption font-semibold uppercase tracking-wider text-slate-400">{t('providers:details.email')}</span>
                   <div className="text-sm text-slate-700 break-all">{selectedFournisseur.email || '—'}</div>
                 </div>
               </div>
@@ -119,7 +119,7 @@ export default function FournisseurDetails({ hook }: Props) {
             </div>
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{t('providers:details.debt_balance')}</div>
+                  <div className="text-caption font-semibold uppercase tracking-wider text-slate-400 mb-1">{t('providers:details.debt_balance')}</div>
                   <div className={cn("text-lg font-bold font-mono", solde > 0 ? 'text-red-600' : 'text-emerald-600')}>
                      {formatCurrency(solde)}
                   </div>
@@ -131,7 +131,7 @@ export default function FournisseurDetails({ hook }: Props) {
           </div>
 
           <div className="bg-slate-100 rounded-lg p-3 flex items-center justify-between border border-slate-200">
-            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{t('providers:details.internal_ref')}</span>
+            <span className="text-caption font-semibold text-slate-500 uppercase tracking-wider">{t('providers:details.internal_ref')}</span>
             <Badge variant="secondary" className="text-xs font-mono">#{selectedFournisseur.id}</Badge>
           </div>
 
@@ -159,7 +159,7 @@ export default function FournisseurDetails({ hook }: Props) {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800">{t('providers:details.product_catalogue')}</h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-label text-slate-500">
                     {catalogueLoading ? t('providers:details.loading') : t('providers:details.products_ordered_plural', { count: catalogue.length })}
                   </p>
                 </div>
@@ -211,20 +211,20 @@ export default function FournisseurDetails({ hook }: Props) {
                     <table className="min-w-full divide-y divide-slate-200">
                       <thead className="bg-slate-50">
                         <tr>
-                          <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.cip')}</th>
-                          <th className="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.product')}</th>
-                          <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.last_price')}</th>
-                          <th className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.last_order')}</th>
-                          <th className="px-3 py-2 text-right text-[10px] font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.margin')}</th>
-                          <th className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.total_qty')}</th>
-                          <th className="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.stock')}</th>
+                          <th className="px-3 py-2 text-left text-caption font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.cip')}</th>
+                          <th className="px-3 py-2 text-left text-caption font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.product')}</th>
+                          <th className="px-3 py-2 text-right text-caption font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.last_price')}</th>
+                          <th className="px-3 py-2 text-center text-caption font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.last_order')}</th>
+                          <th className="px-3 py-2 text-right text-caption font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.margin')}</th>
+                          <th className="px-3 py-2 text-center text-caption font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.total_qty')}</th>
+                          <th className="px-3 py-2 text-center text-caption font-semibold text-slate-500 uppercase">{t('providers:catalogue.headers.stock')}</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-slate-200">
                         {filteredCatalogue.map((item) => (
                           <tr key={item.produit_id} className="hover:bg-base-200 transition-colors">
                             <td className="px-3 py-2">
-                              <span className="font-mono text-[10px] bg-base-200 px-1.5 py-0.5 rounded text-base-content/70">
+                              <span className="font-mono text-caption bg-base-200 px-1.5 py-0.5 rounded text-base-content/70">
                                 {item.cip}
                               </span>
                             </td>
@@ -239,7 +239,7 @@ export default function FournisseurDetails({ hook }: Props) {
                               </span>
                             </td>
                             <td className="px-3 py-2 text-center">
-                              <span className="text-[10px] text-base-content/50">
+                              <span className="text-caption text-base-content/50">
                                 {item.derniere_commande
                                   ? new Date(item.derniere_commande).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' })
                                   : '-'
@@ -250,7 +250,7 @@ export default function FournisseurDetails({ hook }: Props) {
                               <span className={`text-xs font-medium ${item.marge >= 0 ? 'text-success' : 'text-error'}`}>
                                 {formatCurrency(item.marge)}
                               </span>
-                              <span className="text-[10px] text-base-content/50 ml-1">
+                              <span className="text-caption text-base-content/50 ml-1">
                                 ({item.marge_pourcent}%)
                               </span>
                             </td>

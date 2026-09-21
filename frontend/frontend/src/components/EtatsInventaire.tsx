@@ -176,7 +176,7 @@ export default function EtatsInventaire() {
         </div>
         <div>
           <h1 className="text-base lg:text-xl font-bold text-slate-800 tracking-tight">{t('stock:etats.title')}</h1>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest hidden lg:block">{t('stock:etats.subtitle')}</p>
+          <p className="text-label font-semibold text-slate-400 uppercase tracking-widest hidden lg:block">{t('stock:etats.subtitle')}</p>
         </div>
       </div>
 
@@ -193,7 +193,7 @@ export default function EtatsInventaire() {
                 <SlidersHorizontal className="size-4 text-slate-400" />
                 <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_grouping')}</CardTitle>
               </div>
-              <CardDescription className="text-[11px]">{t('stock:etats.card_grouping_desc')}</CardDescription>
+              <CardDescription className="text-label">{t('stock:etats.card_grouping_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -218,7 +218,7 @@ export default function EtatsInventaire() {
                       </div>
                       <div>
                         <p className={cn('text-xs font-semibold', active ? 'text-slate-800' : 'text-slate-700')}>{o.label}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5 leading-tight line-clamp-2">{o.desc}</p>
+                        <p className="text-caption text-slate-400 mt-0.5 leading-tight line-clamp-2">{o.desc}</p>
                       </div>
                     </button>
                   );
@@ -234,7 +234,7 @@ export default function EtatsInventaire() {
                 <Layers className="size-4 text-slate-400" />
                 <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_source')}</CardTitle>
               </div>
-              <CardDescription className="text-[11px]">{t('stock:etats.card_source_desc')}</CardDescription>
+              <CardDescription className="text-label">{t('stock:etats.card_source_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -259,7 +259,7 @@ export default function EtatsInventaire() {
                       </div>
                       <div className="min-w-0 pt-0.5">
                         <p className={cn('text-xs font-semibold', active ? 'text-slate-800' : 'text-slate-700')}>{o.label}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5 leading-tight line-clamp-2">{o.desc}</p>
+                        <p className="text-caption text-slate-400 mt-0.5 leading-tight line-clamp-2">{o.desc}</p>
                       </div>
                     </button>
                   );
@@ -275,7 +275,7 @@ export default function EtatsInventaire() {
                 <Package className="size-4 text-slate-400" />
                 <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">{t('stock:etats.card_filters')}</CardTitle>
               </div>
-              <CardDescription className="text-[11px]">{t('stock:etats.card_filters_desc')}</CardDescription>
+              <CardDescription className="text-label">{t('stock:etats.card_filters_desc')}</CardDescription>
             </CardHeader>
             <CardContent className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-4">
 
@@ -298,7 +298,7 @@ export default function EtatsInventaire() {
 
               {/* Filtre stock — chips */}
               <div className="space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.filter_stock_label')}</p>
+                <p className="text-caption font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.filter_stock_label')}</p>
                 <div className="flex flex-wrap gap-2">
                   {stockFilterOptions.map(o => {
                     const active = stockFilter === o.value;
@@ -324,7 +324,7 @@ export default function EtatsInventaire() {
               {/* Filtre emplacement — chips (uniquement en mode stock) */}
               {source === 'stock' && (
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.location_label')}</p>
+                  <p className="text-caption font-bold uppercase tracking-widest text-slate-400">{t('stock:etats.location_label')}</p>
                   <div className="flex flex-wrap gap-2">
                     {stockLocationOptions.map(o => {
                       const active = stockLocation === o.value;
@@ -421,7 +421,7 @@ export default function EtatsInventaire() {
           {/* Note info */}
           <div className="flex gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
             <Info className="size-4 text-blue-400 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-blue-600 leading-relaxed">
+            <p className="text-label text-blue-600 leading-relaxed">
               {t('stock:etats.export_info')}
             </p>
           </div>

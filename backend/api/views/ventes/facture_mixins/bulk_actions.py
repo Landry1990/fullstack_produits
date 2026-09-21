@@ -1,6 +1,7 @@
 import logging
 
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
@@ -64,7 +65,7 @@ class FactureBulkMixin:
             request=request
         )
 
-        factures_to_delete.update(is_active=False)
+        factures_to_delete.update(is_active=False, deleted_at=timezone.now(), deleted_by=request.user)
 
         return Response({
             'status': 'success',
@@ -94,7 +95,7 @@ class FactureBulkMixin:
                 request=request
             )
 
-            brouillons.update(is_active=False)
+            brouillons.update(is_active=False, deleted_at=timezone.now(), deleted_by=request.user)
 
         return Response({
             'status': 'success',

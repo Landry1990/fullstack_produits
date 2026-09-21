@@ -53,7 +53,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
   onConfirm,
   formatCurrency,
 }) => {
-  const { t } = useTranslation('caisse')
+  const { t, i18n } = useTranslation('caisse')
   const [counts, setCounts] = useState<Counts>(emptyCounts)
   const [omAmount, setOmAmount] = useState('')
   const [momoAmount, setMomoAmount] = useState('')
@@ -95,7 +95,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
   const fmt = (n: number) =>
     formatCurrency
       ? formatCurrency(Math.round(n))
-      : `${Math.round(n).toLocaleString('fr-FR')}`
+      : `${Math.round(n).toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR')}`
 
   const handleCountChange = (key: CountKey, raw: string) => {
     // N'autoriser que des entiers positifs
@@ -185,7 +185,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
           onChange={(e) => handleCountChange(key, e.target.value)}
           onKeyDown={handleEnterNext}
         />
-        <span className="text-[10px] font-semibold text-slate-400 tabular-nums leading-none min-h-[12px]">
+        <span className="text-caption font-semibold text-slate-400 tabular-nums leading-none min-h-[12px]">
           {lineTotal > 0 ? fmt(lineTotal) : '—'}
         </span>
       </div>
@@ -215,7 +215,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
           onChange={(e) => handleCountChange(key, e.target.value)}
           onKeyDown={handleEnterNext}
         />
-        <span className="text-[10px] font-semibold text-slate-400 tabular-nums leading-none min-h-[12px]">
+        <span className="text-caption font-semibold text-slate-400 tabular-nums leading-none min-h-[12px]">
           {lineTotal > 0 ? fmt(lineTotal) : '—'}
         </span>
       </div>
@@ -334,7 +334,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
           {/* === SOUS-TOTAUX === */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5">
-              <div className="text-[10px] font-bold uppercase text-slate-400">
+              <div className="text-caption font-bold uppercase text-slate-400">
                 {t('journal.closing.breakdown.cash_subtotal', {
                   defaultValue: 'Espèces',
                 })}
@@ -344,7 +344,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
               </div>
             </div>
             <div className="rounded-lg bg-orange-50 border border-orange-200 p-2.5">
-              <div className="text-[10px] font-bold uppercase text-orange-400">
+              <div className="text-caption font-bold uppercase text-orange-400">
                 {t('journal.closing.breakdown.mobile_subtotal', {
                   defaultValue: 'Mobile Money',
                 })}
@@ -359,7 +359,7 @@ export const CashBreakdownModal: React.FC<CashBreakdownModalProps> = ({
         {/* === TOTAL + ACTIONS === */}
         <DialogFooter className="p-5 pt-3 border-t border-slate-100 flex-col sm:flex-col gap-3">
           <div className="w-full rounded-xl bg-emerald-600 text-white p-3 flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100">
+            <span className="text-caption font-black uppercase tracking-widest text-emerald-100">
               {t('journal.closing.breakdown.grand_total', {
                 defaultValue: 'Total à reporter',
               })}

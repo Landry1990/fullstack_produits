@@ -12,6 +12,8 @@
     "subtitle": "Select a query, configure parameters and view results",
     "queries_title": "Query List",
     "execute": "Execute query",
+    "group_by_lot": "By batch",
+    "group_by_product": "⚠ By product",
     "copy": "Copy (Excel)",
     "params_title": "Parameters",
     "no_query_selected": "No query selected",

@@ -124,7 +124,7 @@ const BMICalculator: React.FC = () => {
           </div>
           <div>
             <h2 className="text-xl md:text-2xl font-black text-base-content dark:text-white tracking-tight">{t('bmi.title')}</h2>
-            <p className="text-base-content/60 dark:text-white/50 text-[10px] md:text-sm font-medium">{t('bmi.subtitle')}</p>
+            <p className="text-base-content/60 dark:text-white/50 text-caption md:text-sm font-medium">{t('bmi.subtitle')}</p>
           </div>
         </div>
 
@@ -153,7 +153,7 @@ const BMICalculator: React.FC = () => {
           {activeTab === 'adult' ? (
             <div className="space-y-4">
               <label className="block">
-                <span className="text-[10px] md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.weight')}</span>
+                <span className="text-caption md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.weight')}</span>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-base-content/30 group-focus-within:text-primary transition-colors">
                     <Scale className="size-4 md:w-5 md:h-5" />
@@ -170,7 +170,7 @@ const BMICalculator: React.FC = () => {
               </label>
 
               <label className="block">
-                <span className="text-[10px] md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.height')}</span>
+                <span className="text-caption md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.height')}</span>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-base-content/30 group-focus-within:text-primary transition-colors">
                     <Ruler className="size-4 md:w-5 md:h-5" />
@@ -189,7 +189,7 @@ const BMICalculator: React.FC = () => {
           ) : (
             <div className="space-y-4">
               <div className="block">
-                <label htmlFor="bmi-age" className="text-[10px] md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.age')}</label>
+                <label htmlFor="bmi-age" className="text-caption md:text-xs font-black text-base-content/50 uppercase tracking-widest mb-2 block">{t('bmi.age')}</label>
                 <div className="flex gap-2">
                   <div className="relative group flex-1">
                   <input
@@ -218,7 +218,7 @@ const BMICalculator: React.FC = () => {
 
           <div className="p-3 md:p-4 bg-base-200 border border-base-300 rounded-xl md:rounded-2xl flex gap-3">
             <Info className="size-4 md:w-5 md:h-5 text-primary shrink-0 mt-0.5" />
-            <p className="text-[10px] md:text-xs text-base-content/60 leading-relaxed">
+            <p className="text-caption md:text-xs text-base-content/60 leading-relaxed">
               {activeTab === 'adult' ? t('bmi.info_text') : t('bmi.child_info_text')}
             </p>
           </div>
@@ -230,7 +230,7 @@ const BMICalculator: React.FC = () => {
             result ? (
               <div className={`flex-1 rounded-2xl md:rounded-3xl border p-6 md:p-8 flex flex-col items-center justify-center text-center transition-all duration-500 shadow-lg ${result.color}`}>
                 <div className="text-5xl md:text-[64px] font-black leading-none mb-2 tracking-tighter">{result.value}</div>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-base-content/70">{t('bmi.your_bmi')}</div>
+                <div className="text-caption font-black uppercase tracking-[0.2em] mb-4 text-base-content/70">{t('bmi.your_bmi')}</div>
                 <div className="h-px w-10 md:w-12 bg-current text-base-content/20 mb-4 md:mb-6"></div>
                 <div className="text-lg md:text-xl font-bold mb-2 md:mb-3">{result.category}</div>
                 <p className="text-xs md:text-sm font-medium opacity-80 leading-relaxed max-w-[280px]">{result.description}</p>
@@ -261,7 +261,7 @@ const BMICalculator: React.FC = () => {
                 <div className="text-5xl md:text-[64px] font-black leading-none mb-2 tracking-tighter text-emerald-500">
                   {childWeightResult} <span className="text-2xl md:text-3xl">{t('bmi.unit_kg', 'kg')}</span>
                 </div>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-emerald-500/60">{t('bmi.estimated_weight')}</div>
+                <div className="text-caption font-black uppercase tracking-[0.2em] mb-4 text-emerald-500/60">{t('bmi.estimated_weight')}</div>
                 <div className="h-px w-10 md:w-12 bg-emerald-500/20 mb-4 md:mb-6"></div>
                 <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/10">
                   <p className="text-xs md:text-sm font-bold text-success">
@@ -280,15 +280,15 @@ const BMICalculator: React.FC = () => {
           {/* Reference Table (Only for Adult BMI) */}
           {activeTab === 'adult' && (
             <div className="pharma-card p-5 md:p-6">
-              <h3 className="text-[9px] md:text-[10px] font-black text-base-content/40 uppercase tracking-[0.2em] mb-3 md:mb-4">{t('bmi.oms_classification')}</h3>
+              <h3 className="text-micro md:text-caption font-black text-base-content/40 uppercase tracking-[0.2em] mb-3 md:mb-4">{t('bmi.oms_classification')}</h3>
               <div className="grid grid-cols-1 gap-1 md:gap-2">
                 {bmiRanges.map((range) => (
                   <div key={range.label} className="flex items-center justify-between p-2 md:p-2.5 rounded-lg md:rounded-xl hover:bg-base-200 transition-colors">
                     <div className="flex items-center gap-2 md:gap-3">
                       <div className={`size-1.5 md:w-2 md:h-2 rounded-full ${range.color}`}></div>
-                      <span className="text-[10px] md:text-xs font-semibold text-base-content/70">{range.text}</span>
+                      <span className="text-caption md:text-xs font-semibold text-base-content/70">{range.text}</span>
                     </div>
-                    <span className="text-[9px] md:text-[10px] font-black text-base-content/40 tabular-nums">{range.label}</span>
+                    <span className="text-micro md:text-caption font-black text-base-content/40 tabular-nums">{range.label}</span>
                   </div>
                 ))}
               </div>

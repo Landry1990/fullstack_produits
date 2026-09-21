@@ -43,7 +43,7 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
         if (!p) return null;
         return (
             <>
-                <li className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <li className="px-4 py-2 text-caption font-black uppercase tracking-widest text-slate-400">
                     {t('common:single_selection')}
                 </li>
                 {p.status === 'ATT' && (
@@ -85,7 +85,7 @@ const BulkActionsMenu: React.FC<BulkActionsMenuProps> = React.memo(({
     }
     return (
         <>
-            <li className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <li className="px-4 py-2 text-caption font-black uppercase tracking-widest text-slate-400">
                 {t('common:bulk_actions')}
             </li>
             <li>
@@ -358,7 +358,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                 <TableCell className="px-3 py-2">
                                     <div className="flex flex-col">
                                         <span className="font-semibold text-slate-900 text-sm">{format(new Date(p.date_promis), 'dd/MM/yyyy', { locale: currentLocale })}</span>
-                                        <span className="text-[10px] text-slate-500">{format(new Date(p.date_promis), 'HH:mm', { locale: currentLocale })}</span>
+                                        <span className="text-caption text-slate-500">{format(new Date(p.date_promis), 'HH:mm', { locale: currentLocale })}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell className="px-3 py-2">
@@ -371,7 +371,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                     <div className="truncate" title={p.produit_name}>
                                         <span className="font-semibold text-slate-900 text-sm">{p.produit_name}</span>
                                     </div>
-                                    {p.produit_cip && <div className="text-[10px] text-slate-500 font-mono mt-0.5">{p.produit_cip}</div>}
+                                    {p.produit_cip && <div className="text-caption text-slate-500 font-mono mt-0.5">{p.produit_cip}</div>}
                                 </TableCell>
                                 <TableCell className="px-3 py-2 text-center">
                                     <Badge variant="outline" className="font-mono text-xs">
@@ -384,7 +384,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                         {p.status_display}
                                     </Badge>
                                     {p.status === 'DEL' && p.date_livraison && (
-                                        <div className="text-[10px] text-emerald-600 mt-1">
+                                        <div className="text-caption text-emerald-600 mt-1">
                                             {t('stock:promis.messages.delivered_on', { date: format(new Date(p.date_livraison), 'dd/MM/yyyy', { locale: currentLocale }) })}
                                         </div>
                                     )}
@@ -421,7 +421,7 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="w-52">
-                                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-slate-400">
+                                                <DropdownMenuLabel className="text-caption uppercase tracking-widest text-slate-400">
                                                     {t('common:actions_title')}
                                                 </DropdownMenuLabel>
                                                 <DropdownMenuItem onClick={() => onView(p)} className="gap-2 cursor-pointer">
@@ -463,14 +463,14 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                         <DropdownMenuItem disabled className="gap-2 text-slate-400">
                                                             <Check className="size-4" />
                                                             {t('stock:promis.actions.deliver')}
-                                                            <span className="ml-auto text-[10px] text-slate-400">
+                                                            <span className="ml-auto text-caption text-slate-400">
                                                                 {p.status === 'DEL' ? t('stock:promis.actions.already_delivered') : t('stock:promis.actions.already_cancelled')}
                                                             </span>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem disabled className="gap-2 text-slate-400">
                                                             <X className="size-4" />
                                                             {t('stock:promis.actions.cancel')}
-                                                            <span className="ml-auto text-[10px] text-slate-400">
+                                                            <span className="ml-auto text-caption text-slate-400">
                                                                 {p.status === 'DEL' ? t('stock:promis.actions.already_delivered') : t('stock:promis.actions.already_cancelled')}
                                                             </span>
                                                         </DropdownMenuItem>

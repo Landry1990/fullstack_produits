@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LoadingScreen } from './common/LoadingScreen';
+import { ErrorState } from './ui/ErrorState';
 import { useCentreRapports } from '../hooks/useCentreRapports';
 import { ReportSidebar } from './dashboard/reports/ReportSidebar';
 import { ReportFilters } from './dashboard/reports/ReportFilters';
@@ -111,7 +112,7 @@ export default function CentreRapports() {
 
                 {/* Dashboard Area */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 custom-scrollbar bg-slate-100">
-                    <div className="max-w-7xl mx-auto space-y-6">
+                    <div className="max-w-[1600px] mx-auto space-y-6">
                         
                         {selectedQuery ? (
                             <>
@@ -142,7 +143,7 @@ export default function CentreRapports() {
                                                           !params.grouper_par ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-300'
                                                         }`}
                                                     >
-                                                        Par lot
+                                                        {t('group_by_lot')}
                                                     </button>
                                                     <button
                                                         onClick={() => actions.setParams({ ...params, grouper_par: 'produit' })}
@@ -150,7 +151,7 @@ export default function CentreRapports() {
                                                           params.grouper_par === 'produit' ? 'bg-red-500 text-white shadow' : 'text-slate-500 hover:bg-slate-300'
                                                         }`}
                                                     >
-                                                        ⚠ Par produit
+                                                        {t('group_by_product')}
                                                     </button>
                                                 </div>
                                             )}
@@ -231,14 +232,7 @@ export default function CentreRapports() {
                                 </div>
 
                                 {/* Error Alert */}
-                                {error && (
-                                    <div className="flex items-center gap-3 bg-red-500 text-white rounded-2xl shadow-sm px-5 py-4 animate-in zoom-in duration-300">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span className="font-bold">{error}</span>
-                                    </div>
-                                )}
+                                <ErrorState error={error} onRetry={() => actions.executeQuery()} />
 
                                 {/* Results Section */}
                                 <div className="flex-1 min-h-0 flex flex-col">

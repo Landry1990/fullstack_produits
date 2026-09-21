@@ -52,7 +52,7 @@ export const PromisQuickStats: React.FC<PromisQuickStatsProps> = ({ stats }) => 
                             {item.icon}
                         </div>
                         <div>
-                            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                            <p className="text-caption font-medium text-slate-500 uppercase tracking-wide">
                                 {item.title}
                             </p>
                             <p className={cn('text-xl font-bold text-slate-900', item.colorClass)}>{item.value}</p>

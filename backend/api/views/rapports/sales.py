@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from django.db.models import Count, DecimalField, F, Sum, Value
+from django.db.models import Count, DecimalField, Exists, F, OuterRef, Sum, Value
 from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponse
 from django.utils import timezone
@@ -10,7 +10,8 @@ from django.utils.formats import date_format
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.models import Facture, FactureProduit, FactureProduitAllocation, Fournisseur
+from api.audit_helpers import log_audit
+from api.models import AuditLog, Caisse, Facture, FactureProduit, FactureProduitAllocation, Fournisseur
 
 from .tz_utils import parse_api_datetime
 
@@ -37,11 +38,11 @@ class RapportSalesMixin:
         # ── 1 seule requête GROUP BY created_by ────────────────────────────
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        user_map = {u.id: (u.get_full_name() or u.username) for u in User.objects.all()}
 
-        rows = (
+        rows = list(
             Facture.objects
             .filter(
+                is_active=True,
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 date__gte=date_debut,
                 date__lt=date_fin,
@@ -53,6 +54,10 @@ class RapportSalesMixin:
             )
             .order_by('-chiffre_affaires')
         )
+
+        # Ne charger que les utilisateurs réellement présents dans les résultats
+        user_ids = {r['created_by_id'] for r in rows if r['created_by_id']}
+        user_map = {u.id: (u.get_full_name() or u.username) for u in User.objects.filter(id__in=user_ids)}
 
         results = []
         total_v, total_ca = 0, Decimal('0.00')
@@ -90,6 +95,7 @@ class RapportSalesMixin:
         rows = (
             Facture.objects
             .filter(
+                is_active=True,
                 date__range=(date_debut, date_fin),
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 client__isnull=False,
@@ -121,13 +127,27 @@ class RapportSalesMixin:
             response['Content-Disposition'] = 'attachment; filename="meilleurs_clients.csv"'; response.write('\ufeff'.encode('utf8'))
             writer = csv.writer(response, delimiter=';'); writer.writerow(['Rang', 'Client', 'Type', 'Nb Ventes', 'Chiffre Affaires', 'Panier Moyen'])
             for r in results: writer.writerow([r['rang'], r['client_name'], r['client_type'], r['nb_ventes'], str(r['chiffre_affaires']).replace('.', ','), str(r['panier_moyen']).replace('.', ',')])
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.EXPORT,
+                model_name='Rapport',
+                object_id='meilleurs_clients',
+                description="Export CSV du rapport Meilleurs clients",
+                details={'date_debut': db_str, 'date_fin': df_str},
+                request=request,
+            )
             return response
         return Response(results)
 
     @action(detail=False, methods=['get'])
     def produits_annules(self, request):
         db, df = request.query_params.get('date_debut'), request.query_params.get('date_fin')
-        qs = FactureProduit.objects.filter(facture__status=Facture.Status.ANNULEE).select_related('facture', 'produit', 'facture__cancelled_by').order_by('-facture__date_annulation')
+        # On exclut les factures en corbeille : une facture annulée puis supprimée
+        # ne doit plus apparaître dans ce rapport.
+        qs = FactureProduit.objects.filter(
+            facture__status=Facture.Status.ANNULEE,
+            facture__is_active=True,
+        ).select_related('facture', 'produit', 'facture__cancelled_by').order_by('-facture__date_annulation')
         if db: qs = qs.filter(facture__date_annulation__gte=db)
         if df: qs = qs.filter(facture__date_annulation__lte=df)
         
@@ -156,19 +176,22 @@ class RapportSalesMixin:
                 date_debut = timezone.make_aware(datetime(y, m, 1))
             else: date_debut = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             date_fin = (date_debut + timedelta(days=32)).replace(day=1)
-        except: return Response({'error': 'Format mois invalide'}, status=400)
-        
+        except (ValueError, TypeError): return Response({'error': 'Format mois invalide'}, status=400)
+
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        user_map = {u.id: (u.get_full_name() or u.username) for u in User.objects.all()}
 
-        rows = (
+        rows = list(
             Facture.objects
-            .filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], date__gte=date_debut, date__lt=date_fin)
+            .filter(is_active=True, status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], date__gte=date_debut, date__lt=date_fin)
             .values('created_by_id')
             .annotate(nbre_ventes=Count('id'), chiffre_affaires=Coalesce(Sum('total_ttc'), Value(0, output_field=DecimalField())))
             .order_by('-chiffre_affaires')
         )
+
+        # Ne charger que les utilisateurs présents dans les résultats
+        user_ids = {r['created_by_id'] for r in rows if r['created_by_id']}
+        user_map = {u.id: (u.get_full_name() or u.username) for u in User.objects.filter(id__in=user_ids)}
 
         results = []
         for i, row in enumerate(rows, 1):
@@ -187,15 +210,16 @@ class RapportSalesMixin:
         from django.contrib.auth import get_user_model
         User, now = get_user_model(), timezone.now()
 
-        # Fenêtre temporelle : 12 mois glissants
-        start = timezone.make_aware(datetime((now - timedelta(days=365)).year,
-                                             (now - timedelta(days=365)).month, 1))
+        # Fenêtre temporelle : 12 mois calendaires glissants (mois courant inclus)
+        start_month = (now.year * 12 + now.month - 1) - 11
+        start = timezone.make_aware(datetime(start_month // 12, start_month % 12 + 1, 1))
 
         # Sélectionner les vendeurs ciblés
         if vid_param == 'all':
             v_list = list(User.objects.filter(
                 id__in=Facture.objects.filter(
-                    date__gte=now - timedelta(days=365),
+                    is_active=True,
+                    date__gte=start,
                     created_by__isnull=False
                 ).values_list('created_by', flat=True).distinct()
             ))
@@ -211,6 +235,7 @@ class RapportSalesMixin:
         rows = (
             Facture.objects
             .filter(
+                is_active=True,
                 status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
                 date__gte=start,
                 created_by_id__in=vendeur_ids,
@@ -229,10 +254,11 @@ class RapportSalesMixin:
             key = (row['created_by_id'], row['mois'].strftime('%Y-%m'))
             ca_map[key] = float(row['ca'])
 
-        # Construire les 12 labels mois
+        # Construire les 12 labels de mois calendaires (remonte depuis le mois courant)
         m_labels = []
         for i in range(11, -1, -1):
-            d = now - timedelta(days=i * 30)
+            idx = (now.year * 12 + now.month - 1) - i
+            d = now.replace(year=idx // 12, month=idx % 12 + 1, day=1)
             m_labels.append({
                 'key': d.strftime('%Y-%m'),
                 'label': date_format(d, "M Y"),
@@ -268,14 +294,21 @@ class RapportSalesMixin:
         if date_debut is None or date_fin is None:
             return Response({'error': 'Dates invalides'}, status=400)
 
-        # Base QuerySet: Filtrage sur les factures validées/payées ayant au moins un paiement
-        # On utilise FactureProduitAllocation pour la précision des marges (prix d'achat réel du lot)
+        # Base QuerySet: Filtrage sur les factures validées/payées actives.
+        # On utilise FactureProduitAllocation pour la précision des marges (prix d'achat réel du lot).
+        # Une facture simplement VALIDEE doit avoir au moins un paiement complété :
+        # Exists évite le Count multi-valué qui dupliquait les lignes (qty/ca/marge gonflés).
+        paiement_complete = Caisse.objects.filter(
+            facture=OuterRef('facture_produit__facture'),
+            statut='completee',
+        )
         qs = FactureProduitAllocation.objects.annotate(
-            num_p=Count('facture_produit__facture__paiements')
+            has_paiement=Exists(paiement_complete)
         ).filter(
+            facture_produit__facture__is_active=True,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             facture_produit__facture__date__range=(date_debut, date_fin)
-        ).exclude(facture_produit__facture__status='VAL', num_p=0)
+        ).exclude(facture_produit__facture__status=Facture.Status.VALIDEE, has_paiement=False)
 
         if fid:
             qs = qs.filter(stock_lot__fournisseur_id=fid)
@@ -322,9 +355,6 @@ class RapportSalesMixin:
         Rapport détaillé des produits vendus par opérateur avec lots, dates de péremption,
         quantités, numéro de facture, remise et date de création.
         """
-        from django.contrib.auth import get_user_model
-        get_user_model()
-
         db_str = request.query_params.get('date_debut')
         df_str = request.query_params.get('date_fin')
         vendeur_id = request.query_params.get('vendeur_id')

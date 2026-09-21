@@ -113,7 +113,7 @@ export function MessageComposer({ users, isAdmin, state, dispatch, onCancel, onS
           )}
           <label
             htmlFor="messaging-content"
-            className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5"
+            className="block text-caption font-semibold text-slate-500 uppercase tracking-wider mb-1.5"
           >
             {t('new.content')}
           </label>

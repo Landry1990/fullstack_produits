@@ -9,6 +9,7 @@ import commandeService, { type SudoCredentials, type TransformationDisponible } 
 import { logger } from '../utils/logger';
 import { buildReceptionPrintHtml, writePrintDocument } from '../utils/print/printHelpers';
 import { useLicence } from '../context/LicenceContext';
+import { usePharmacySettings } from '../context/PharmacySettingsContext';
 interface UseCommandeActionsProps {
     fetchCommandes: () => Promise<void>;
     setSelectedCommande: (commande: Commande | null) => void;
@@ -158,6 +159,7 @@ export function useCommandeActions({
 
     const queryClient = useQueryClient();
     const { licence } = useLicence();
+    const { settings: pharmacySettings } = usePharmacySettings();
 
     const handleDeleteCommande = async (commande: Commande, sudoCredentials?: SudoCredentials) => {
         if (executingAction) return;
@@ -289,12 +291,15 @@ export function useCommandeActions({
         }
 
         try {
+            const addressLine = [pharmacySettings.address, pharmacySettings.city]
+                .filter(Boolean)
+                .join(', ');
             const companyInfo = {
-                name: licence?.pharmacie_nom,
-                address: licence?.pharmacien_nom ? `Pharmacien: ${licence.pharmacien_nom}` : undefined,
-                tel: 'N/A',
-                niu: 'N/A',
-                rc: 'N/A',
+                name: pharmacySettings.pharmacy_name || licence?.pharmacie_nom,
+                address: addressLine || (licence?.pharmacien_nom ? `Pharmacien: ${licence.pharmacien_nom}` : undefined),
+                tel: pharmacySettings.phone || 'N/A',
+                niu: pharmacySettings.niu || 'N/A',
+                rc: pharmacySettings.registre_commerce || 'N/A',
             };
 
             const html = buildReceptionPrintHtml(commande, companyInfo);

@@ -93,7 +93,7 @@ function ProductPreview({ data, t }: { data?: ProduitModel; t: TFunction }) {
       <div className="grid grid-cols-2 gap-4">
         <Card className="p-4 space-y-1">
           <CardContent className="p-0">
-            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <div className="flex items-center gap-1.5 text-caption font-black uppercase tracking-widest text-slate-500">
               <Layers className="size-3" /> {t('omnisearch.preview.stock_rayon')}
             </div>
             <div className={`text-2xl font-black ${isLowStock ? 'text-red-500' : 'text-slate-800'}`}>
@@ -103,7 +103,7 @@ function ProductPreview({ data, t }: { data?: ProduitModel; t: TFunction }) {
         </Card>
         <Card className="p-4 space-y-1">
           <CardContent className="p-0">
-            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <div className="flex items-center gap-1.5 text-caption font-black uppercase tracking-widest text-slate-500">
               <Layers className="size-3 text-slate-500" /> {t('omnisearch.preview.stock_reserve')}
             </div>
             <div className="text-2xl font-black text-slate-500">{data.stock_reserve || 0}</div>
@@ -111,7 +111,7 @@ function ProductPreview({ data, t }: { data?: ProduitModel; t: TFunction }) {
         </Card>
         <Card className="col-span-2 p-4 flex justify-between items-center">
           <CardContent className="p-0 space-y-1">
-            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <div className="flex items-center gap-1.5 text-caption font-black uppercase tracking-widest text-slate-500">
               <Calendar className="size-3" /> {t('omnisearch.preview.expiry')}
             </div>
             <div className="text-sm font-black italic">
@@ -126,7 +126,7 @@ function ProductPreview({ data, t }: { data?: ProduitModel; t: TFunction }) {
         </Card>
         <Card className="col-span-2 p-4 space-y-1 bg-indigo-50/50 border-indigo-200">
           <CardContent className="p-0">
-            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-500/40">
+            <div className="flex items-center gap-1.5 text-caption font-black uppercase tracking-widest text-indigo-500/40">
               <TrendingIcon className="size-3" /> {t('omnisearch.preview.last_purchase')}
             </div>
             <div className="flex justify-between items-baseline">
@@ -142,7 +142,7 @@ function ProductPreview({ data, t }: { data?: ProduitModel; t: TFunction }) {
       </div>
 
       <div className="mt-auto p-4 bg-blue-50/50 rounded-2xl border border-blue-200">
-        <p className="text-[10px] font-bold text-blue-500/60 uppercase tracking-tighter italic">{t('omnisearch.preview.manage_product')}</p>
+        <p className="text-caption font-bold text-blue-500/60 uppercase tracking-tighter italic">{t('omnisearch.preview.manage_product')}</p>
       </div>
     </div>
   );
@@ -174,7 +174,7 @@ function ClientPreview({ data, t }: { data?: Client; t: TFunction }) {
       <div className="grid grid-cols-1 gap-4">
         <Card className="p-5 flex items-center justify-between">
           <CardContent className="p-0 space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.loyalty_points')}</span>
+            <span className="text-caption font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.loyalty_points')}</span>
             <div className="text-3xl font-black text-indigo-500">{data.points_fidelite || 0}</div>
           </CardContent>
           <div className="p-3 bg-indigo-50 text-indigo-500 rounded-2xl">
@@ -183,7 +183,7 @@ function ClientPreview({ data, t }: { data?: Client; t: TFunction }) {
         </Card>
         <Card className="p-5 flex items-center justify-between">
           <CardContent className="p-0 space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.deposit_balance')}</span>
+            <span className="text-caption font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.deposit_balance')}</span>
             <div className="text-3xl font-black text-blue-600">
               {Number(data.solde_depot || 0).toLocaleString()} F
             </div>
@@ -196,12 +196,12 @@ function ClientPreview({ data, t }: { data?: Client; t: TFunction }) {
 
       <div className="space-y-4 pt-4 border-t border-slate-200">
         <div className="flex flex-col gap-1">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.contact')}</span>
+          <span className="text-micro font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.contact')}</span>
           <p className="text-sm font-bold truncate">{data.phone || '-'}</p>
           <p className="text-xs font-medium opacity-60 truncate">{data.email || ''}</p>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.address')}</span>
+          <span className="text-micro font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.address')}</span>
           <p className="text-xs font-bold leading-relaxed">{data.address || '-'}</p>
         </div>
       </div>
@@ -230,7 +230,7 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
         <div className="grid grid-cols-2 gap-4">
           <Card className="col-span-2 p-5 bg-blue-50/50 border-blue-200 flex items-center justify-between">
             <CardContent className="p-0 space-y-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-blue-500/40">{t('omnisearch.preview.total_amount')}</span>
+              <span className="text-caption font-black uppercase tracking-widest text-blue-500/40">{t('omnisearch.preview.total_amount')}</span>
               <div className="text-3xl font-black text-blue-600">{Number(data.total_ttc).toLocaleString()} F</div>
             </CardContent>
             <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
@@ -239,13 +239,13 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
           </Card>
           <Card className="p-4 space-y-1">
             <CardContent className="p-0">
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.status')}</div>
+              <div className="text-caption font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.status')}</div>
               <div className="text-sm font-bold uppercase">{data.status_display}</div>
             </CardContent>
           </Card>
           <Card className="p-4 space-y-1">
             <CardContent className="p-0">
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.date')}</div>
+              <div className="text-caption font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.date')}</div>
               <div className="text-sm font-bold tracking-tight">{formatDate(data.date)}</div>
             </CardContent>
           </Card>
@@ -253,7 +253,7 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
 
         {produitsDetails && produitsDetails.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
+            <h4 className="text-caption font-black uppercase tracking-[0.2em] text-slate-500 px-1">
               Produits ({produitsDetails.length})
             </h4>
             <div className="bg-slate-100/50 rounded-2xl overflow-hidden border border-slate-200">
@@ -261,18 +261,18 @@ function FacturePreview({ data, t }: { data?: Facture; t: TFunction }) {
                 <div key={p.nom} className="px-4 py-3 flex items-center justify-between border-b border-slate-200/50 last:border-0 hover:bg-slate-100/80 transition-colors">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-slate-800 line-clamp-1">{p.nom}</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{Number(p.prix).toLocaleString()} F / unité</span>
+                    <span className="text-caption font-bold text-slate-500 uppercase tracking-tight">{Number(p.prix).toLocaleString()} F / unité</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded flex items-center gap-1">
-                      <span className="text-[10px] font-black">X</span>
+                      <span className="text-caption font-black">X</span>
                       <span className="text-xs font-black">{p.quantite}</span>
                     </span>
                   </div>
                 </div>
               ))}
               {produitsDetails.length > 5 && (
-                <div className="px-4 py-2 text-center text-[10px] text-slate-500 font-bold italic">
+                <div className="px-4 py-2 text-center text-caption text-slate-500 font-bold italic">
                   ...et {produitsDetails.length - 5} article(s) supplémentaire(s)
                 </div>
               )}
@@ -305,19 +305,19 @@ function CommandePreview({ data, t }: { data?: Commande; t: TFunction }) {
         <div className="grid grid-cols-2 gap-4">
           <Card className="col-span-2 p-5 bg-amber-50/50 border-amber-200 flex items-center justify-between">
             <CardContent className="p-0 space-y-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-amber-500/40">{t('omnisearch.preview.total_amount')}</span>
+              <span className="text-caption font-black uppercase tracking-widest text-amber-500/40">{t('omnisearch.preview.total_amount')}</span>
               <div className="text-3xl font-black text-amber-500">{Number(data.total || 0).toLocaleString()} F</div>
             </CardContent>
           </Card>
           <Card className="p-4 space-y-1">
             <CardContent className="p-0">
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.status')}</div>
+              <div className="text-caption font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.status')}</div>
               <div className="text-xs font-bold uppercase">{data.status_display}</div>
             </CardContent>
           </Card>
           <Card className="p-4 space-y-1">
             <CardContent className="p-0">
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.items')}</div>
+              <div className="text-caption font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.items')}</div>
               <div className="text-xl font-black">{data.items_count || 0}</div>
             </CardContent>
           </Card>
@@ -326,7 +326,7 @@ function CommandePreview({ data, t }: { data?: Commande; t: TFunction }) {
         {produitsDetails && produitsDetails.length > 0 && (
           <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-200 text-center space-y-1">
             <p className="text-sm font-bold text-amber-600">{produitsDetails.length} article(s)</p>
-            <p className="text-[10px] text-slate-500 font-medium italic">Cliquez ou appuyez sur Entrée pour ouvrir le détail</p>
+            <p className="text-caption text-slate-500 font-medium italic">Cliquez ou appuyez sur Entrée pour ouvrir le détail</p>
           </div>
         )}
       </div>
@@ -354,12 +354,12 @@ function FournisseurPreview({ data, t }: { data?: Fournisseur; t: TFunction }) {
 
       <div className="space-y-6 pt-4 border-t border-slate-200">
         <div className="flex flex-col gap-1">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.contact')}</span>
+          <span className="text-micro font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.contact')}</span>
           <p className="text-sm font-bold">{data.phone || '-'}</p>
           <p className="text-xs font-medium opacity-60">{data.email || ''}</p>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('omnisearch.preview.address')}</span>
+          <span className="text-micro font-black uppercase tracking-widest text-slate-500">{t('omnisearch.preview.address')}</span>
           <p className="text-sm font-bold leading-relaxed">{data.address || '-'}</p>
         </div>
       </div>
@@ -375,8 +375,8 @@ function EmptyPreview({ t }: { t: TFunction }) {
         <LayoutDashboard className="size-9 text-indigo-400" />
       </div>
       <h4 className="text-base font-black tracking-tight text-slate-600">{t('omnisearch.preview.title')}</h4>
-      <p className="text-xs font-medium text-slate-400 max-w-[220px] mt-1.5 leading-relaxed">{t('omnisearch.preview.subtitle')}</p>
-      <div className="mt-6 flex items-center gap-2 text-[10px] font-semibold text-slate-400">
+      <p className="text-xs font-medium text-slate-500 max-w-[220px] mt-1.5 leading-relaxed">{t('omnisearch.preview.subtitle')}</p>
+      <div className="mt-6 flex items-center gap-2 text-caption font-semibold text-slate-500">
         <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">↑↓</kbd>
         <span>{t('omnisearch.hints.navigate', 'Naviguer')}</span>
         <kbd className="ml-2 rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono shadow-sm">↵</kbd>

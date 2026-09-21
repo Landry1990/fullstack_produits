@@ -10,10 +10,10 @@ export function NotificationsTab({ formData, handleChange, t, testingWhatsapp, t
       {/* Section: WhatsApp */}
       <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
         <div className="p-0">
-          <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-[#25D366]/5">
+          <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-brand-whatsapp/5">
             <h2 className="font-bold text-xl flex items-center gap-3">
-              <div className="p-2 bg-[#25D366]/20 rounded-lg">
-                <Smartphone className="h-5 w-5 text-[#25D366]" />
+              <div className="p-2 bg-brand-whatsapp/20 rounded-lg">
+                <Smartphone className="h-5 w-5 text-brand-whatsapp" />
               </div>
               {t('sections.whatsapp')}
             </h2>
@@ -93,10 +93,10 @@ export function NotificationsTab({ formData, handleChange, t, testingWhatsapp, t
       {/* Section: Telegram */}
       <div className="bg-white shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden rounded-2xl">
         <div className="p-0">
-          <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-[#229ED9]/5">
+          <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-brand-telegram/5">
             <h2 className="font-bold text-xl flex items-center gap-3">
-              <div className="p-2 bg-[#229ED9]/20 rounded-lg">
-                <Bell className="h-5 w-5 text-[#229ED9]" />
+              <div className="p-2 bg-brand-telegram/20 rounded-lg">
+                <Bell className="h-5 w-5 text-brand-telegram" />
               </div>
               {t('sections.telegram')}
             </h2>

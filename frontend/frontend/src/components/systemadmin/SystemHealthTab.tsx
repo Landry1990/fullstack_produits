@@ -6,6 +6,7 @@ import type { TFunction } from 'i18next';
 import type { SystemStatus } from './types';
 import { backupStatusColor } from './types';
 import { Skeleton } from '../ui/Skeleton';
+import { ErrorState } from '../ui/ErrorState';
 
 interface SystemHealthTabProps {
   systemStatus: SystemStatus | null;
@@ -86,7 +87,7 @@ export function SystemHealthTab({
                         <p className="text-xs text-gray-400 mt-0.5">{t('started_at')} {container.started_at}</p>
                       )}
                       {container.error && (
-                        <p className="text-xs text-red-400 mt-0.5">{container.error}</p>
+                        <ErrorState error={container.error} compact className="mt-0.5" />
                       )}
                     </div>
                   </div>

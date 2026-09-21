@@ -95,7 +95,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
             {/* Header KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-indigo-600 text-[10px] font-bold uppercase tracking-widest mb-1">
+                    <div className="flex items-center gap-2 text-indigo-600 text-caption font-bold uppercase tracking-widest mb-1">
                         <TrendingUp className="size-3" />
                         <span>{t('monthly_report.ca_ttc', 'CA TTC')}</span>
                     </div>
@@ -103,7 +103,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 </div>
                 
                 <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-emerald-600 text-[10px] font-bold uppercase tracking-widest mb-1">
+                    <div className="flex items-center gap-2 text-emerald-600 text-caption font-bold uppercase tracking-widest mb-1">
                         <DollarSign className="size-3" />
                         <span>{t('monthly_report.ca_ht', 'CA HT')}</span>
                     </div>
@@ -111,7 +111,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 </div>
 
                 <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-blue-600 text-[10px] font-bold uppercase tracking-widest mb-1">
+                    <div className="flex items-center gap-2 text-blue-600 text-caption font-bold uppercase tracking-widest mb-1">
                         <Calculator className="size-3" />
                         <span>{t('monthly_report.margin', 'Marge')} ({data.marge?.marge_pct || 0}%)</span>
                     </div>
@@ -119,7 +119,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 </div>
 
                 <div className="bg-slate-100 border border-slate-200 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">
+                    <div className="flex items-center gap-2 text-slate-400 text-caption font-bold uppercase tracking-widest mb-1">
                         <Package className="size-3" />
                         <span>{t('monthly_report.nb_sales', 'Nb Ventes')}</span>
                     </div>
@@ -127,12 +127,12 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                 </div>
 
                 <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-amber-600 text-[10px] font-bold uppercase tracking-widest mb-1">
+                    <div className="flex items-center gap-2 text-amber-600 text-caption font-bold uppercase tracking-widest mb-1">
                         <CreditCard className="size-3" />
                         <span>{t('monthly_report.receivables', 'Créances')}</span>
                     </div>
                     <div className="text-xl font-black text-amber-600">{formatMoney(data.creances?.total)}</div>
-                    <div className="text-[10px] font-bold text-amber-600/60 mt-0.5">{t('monthly_report.invoices', { count: data.creances?.nb_factures || 0 })}</div>
+                    <div className="text-caption font-bold text-amber-600/60 mt-0.5">{t('monthly_report.invoices', { count: data.creances?.nb_factures || 0 })}</div>
                 </div>
             </div>
 
@@ -255,7 +255,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                                 <span className="text-amber-600">{formatMoney(data.clients_professionnels.reste_a_payer)}</span>
                             </div>
                             <div className="mt-2 pt-2 border-t border-slate-200 flex justify-between items-center">
-                                <span className="text-[10px] font-black uppercase text-slate-300">{t('monthly_report.collection', 'Recouvrement')}</span>
+                                <span className="text-caption font-black uppercase text-slate-300">{t('monthly_report.collection', 'Recouvrement')}</span>
                                 <Badge variant="secondary" className="font-black">{data.clients_professionnels.taux_recouvrement_pct}%</Badge>
                             </div>
                         </div>
@@ -281,7 +281,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) =>
                                 <span className="text-slate-800">{data.unites_gratuites.quantite_totale}</span>
                             </div>
                             <div className="mt-2 pt-2 border-t border-slate-200 flex justify-between items-center text-xs">
-                                <span className="text-[10px] font-black uppercase text-slate-300">{t('monthly_report.ca_impact', 'Impact sur CA')}</span>
+                                <span className="text-caption font-black uppercase text-slate-300">{t('monthly_report.ca_impact', 'Impact sur CA')}</span>
                                 <Badge className="font-black">{data.unites_gratuites.pct_du_ca}%</Badge>
                             </div>
                         </div>

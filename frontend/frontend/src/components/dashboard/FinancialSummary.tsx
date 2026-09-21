@@ -43,7 +43,7 @@ export default function FinancialSummary({
                   </div>
                   <div>
                     <h2 className="text-sm font-bold text-base-content tracking-tight uppercase">{t('ug.title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t('ug.subtitle')}</p>
+                    <p className="text-caption font-bold text-base-content/50 uppercase tracking-widest">{t('ug.subtitle')}</p>
                   </div>
                 </div>
                 <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary/20 text-purple-700 h-6 px-3">
@@ -80,7 +80,7 @@ export default function FinancialSummary({
                     ))}
                     {ugStats.results.length > 0 && (
                       <tr className="bg-base-200 font-bold border-t border-base-200">
-                        <td className="py-2 pl-4 uppercase tracking-wider text-[10px] text-base-content/50">{t('ug.total')}</td>
+                        <td className="py-2 pl-4 uppercase tracking-wider text-caption text-base-content/50">{t('ug.total')}</td>
                         <td className="text-right py-2 text-purple-700 font-mono text-sm pr-2">
                           {formatCurrency(ugStats.results.reduce((sum: number, r: UgStatItem) => sum + r.valeur_acquise, 0))}
                         </td>
@@ -110,7 +110,7 @@ export default function FinancialSummary({
                   </div>
                   <div>
                     <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('debts.echeances_title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/50 uppercase tracking-widest">{t('debts.echeances_subtitle')}</p>
+                    <p className="text-caption font-bold text-base-content/50 uppercase tracking-widest">{t('debts.echeances_subtitle')}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -156,17 +156,17 @@ export default function FinancialSummary({
                           </td>
                           <td className="py-2 pr-4 text-center">
                             {isRetard ? (
-                              <span className="inline-flex items-center gap-1 bg-error/20 text-error px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-red-200">
+                              <span className="inline-flex items-center gap-1 bg-error/20 text-error px-2.5 py-1 rounded-full text-caption font-black uppercase tracking-wider border border-red-200">
                                 <Clock className="size-3" />
                                 {Math.abs(e.jours_restants)}{t('debts.days_overdue')}
                               </span>
                             ) : isAujourdhui ? (
-                              <span className="inline-flex items-center gap-1 bg-warning/20 text-warning px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-orange-200 animate-pulse">
+                              <span className="inline-flex items-center gap-1 bg-warning/20 text-warning px-2.5 py-1 rounded-full text-caption font-black uppercase tracking-wider border border-orange-200 animate-pulse">
                                 <AlertTriangle className="size-3" />
                                 {t('debts.today_badge')}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 bg-success/10 text-success px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-emerald-100">
+                              <span className="inline-flex items-center gap-1 bg-success/10 text-success px-2.5 py-1 rounded-full text-caption font-black uppercase tracking-wider border border-emerald-100">
                                 <CheckCircle2 className="size-3" />
                                 {e.jours_restants}{t('debts.days_remaining')}
                               </span>

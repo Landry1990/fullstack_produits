@@ -539,7 +539,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                         </p>
                                         <div className="mt-2 flex items-center gap-1.5">
                                             <Users className="size-3 text-slate-400" />
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                            <span className="text-caption font-bold text-slate-400 uppercase">
                                                 {t('challenges:mode_equipes')}
                                             </span>
                                         </div>
@@ -573,7 +573,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                         </p>
                                         <div className="mt-2 flex items-center gap-1.5">
                                             <Users className="size-3 text-slate-400" />
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                            <span className="text-caption font-bold text-slate-400 uppercase">
                                                 {t('challenges:type_boites_mode')}
                                             </span>
                                         </div>
@@ -607,7 +607,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                         </p>
                                         <div className="mt-2 flex items-center gap-1.5">
                                             <Users className="size-3 text-slate-400" />
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                            <span className="text-caption font-bold text-slate-400 uppercase">
                                                 {t('challenges:mode_equipes')}
                                             </span>
                                         </div>
@@ -631,7 +631,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                     min="0"
                                     step="any"
                                 />
-                                <p className="text-[10px] text-slate-400">
+                                <p className="text-caption text-slate-400">
                                     {t('challenges:objectif_valeur_hint')}
                                 </p>
                             </div>
@@ -673,7 +673,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                         className="h-11"
                                         min="1"
                                     />
-                                    <p className="text-[10px] text-slate-400">
+                                    <p className="text-caption text-slate-400">
                                         {t('challenges:peremption_mois_hint')}
                                     </p>
                                 </div>
@@ -688,7 +688,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                             <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
                                                 {t('challenges:point_tiers')}
                                             </label>
-                                            <p className="text-[10px] text-slate-400 mt-0.5">
+                                            <p className="text-caption text-slate-400 mt-0.5">
                                                 {t('challenges:point_tiers_hint')}
                                             </p>
                                         </div>
@@ -727,7 +727,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                                 className="h-9 pl-7"
                                                                 min="1"
                                                             />
-                                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">
+                                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-caption text-slate-400">
                                                                 {t('challenges:point_tier_mois_max')}
                                                             </span>
                                                         </div>
@@ -743,7 +743,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                                 className="h-9 pl-8"
                                                                 min="1"
                                                             />
-                                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">
+                                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-caption text-slate-400">
                                                                 {t('challenges:point_tier_points')}
                                                             </span>
                                                         </div>
@@ -979,7 +979,7 @@ const ChallengeFormModal: React.FC<Props> = ({ isOpen, onClose, challenge }) => 
                                                                 <div className="min-w-0">
                                                                     <div className="font-bold text-sm truncate">{p.name}</div>
                                                                     {p.cip1 && (
-                                                                        <div className="text-[10px] text-slate-400 font-bold">{p.cip1}</div>
+                                                                        <div className="text-caption text-slate-400 font-bold">{p.cip1}</div>
                                                                     )}
                                                                 </div>
                                                                 {already && <Check className="size-4 text-emerald-600 shrink-0" />}

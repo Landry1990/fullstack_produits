@@ -28,6 +28,8 @@
     "ticket_preview": "Ticket Preview",
     "refund_title": "Refund / Cancellation",
     "actions": {
+        "new_sale": "New Sale",
+        "new_sale_short": "Sale",
         "generate_report": "Generate report",
         "print_ticket": "Print Ticket",
         "print_invoice": "Print Invoice",

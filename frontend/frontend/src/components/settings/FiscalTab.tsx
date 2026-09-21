@@ -53,7 +53,7 @@ export function FiscalTab({ formData, handleChange, t, isMargeAdministree, isRee
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">{t('fiscal.acompte_title')}</h3>
             {isMargeAdministree && (
-              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{t('hints.disabled_marge')}</span>
+              <span className="text-caption font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{t('hints.disabled_marge')}</span>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -98,7 +98,7 @@ export function FiscalTab({ formData, handleChange, t, isMargeAdministree, isRee
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">{t('fiscal.precompte_title')}</h3>
             {isMargeAdministree && (
-              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{t('hints.disabled_marge')}</span>
+              <span className="text-caption font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{t('hints.disabled_marge')}</span>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -132,7 +132,7 @@ export function FiscalTab({ formData, handleChange, t, isMargeAdministree, isRee
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-bold text-sm text-slate-600 uppercase tracking-wide">{t('fiscal.marge_brute_title')}</h3>
             {!isMargeAdministree && (
-              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{t('hints.disabled_common')}</span>
+              <span className="text-caption font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{t('hints.disabled_common')}</span>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

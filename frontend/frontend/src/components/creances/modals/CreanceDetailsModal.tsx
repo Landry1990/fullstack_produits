@@ -47,17 +47,17 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                 {/* Facture Identity */}
                 <div className="flex flex-col md:flex-row gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 shadow-inner">
                     <div className="flex-1 space-y-1">
-                        <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t('creances:details_modal.invoice')}</div>
+                        <div className="text-caption font-black uppercase text-slate-400 tracking-widest">{t('creances:details_modal.invoice')}</div>
                         <div className="text-xl font-black text-emerald-600 tracking-tighter">{creance.numero_facture}</div>
                         <div className="text-sm font-bold text-slate-500">{t('creances:details_modal.issued_on')} {formatDate(creance.date)}</div>
                     </div>
                     <div className="flex-1 space-y-1 md:border-l md:pl-4 border-slate-200">
-                        <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t('creances:details_modal.client_beneficiary')}</div>
+                        <div className="text-caption font-black uppercase text-slate-400 tracking-widest">{t('creances:details_modal.client_beneficiary')}</div>
                         <div className="text-base font-bold text-slate-800">{creance.client_name}</div>
                         <div className="text-xs font-semibold text-slate-500">{creance.ayant_droit_details?.nom || t('creances:details_modal.no_beneficiary')}</div>
                     </div>
                     <div className="flex-1 space-y-1 md:border-l md:pl-4 border-slate-200">
-                        <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t('creances:details_modal.financial_summary')}</div>
+                        <div className="text-caption font-black uppercase text-slate-400 tracking-widest">{t('creances:details_modal.financial_summary')}</div>
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-slate-700">{t('creances:details_modal.total')}</span>
                             <span className="font-black text-slate-800">{formatCurrency(Math.round(parseFloat(creance.total_ttc)))}</span>
@@ -84,11 +84,11 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-slate-200">
-                                        <th className="text-[9px] font-black uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.date')}</th>
-                                        <th className="text-[9px] font-black uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.mode')}</th>
-                                        <th className="text-[9px] font-black uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.reference')}</th>
-                                        <th className="text-[9px] font-black uppercase text-slate-400 tracking-widest text-right px-4 py-3">{t('creances:details_modal.headers.amount')}</th>
-                                        <th className="text-[9px] font-black uppercase text-slate-400 tracking-widest text-center px-4 py-3">{t('creances:details_modal.headers.actions')}</th>
+                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.date')}</th>
+                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.mode')}</th>
+                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest px-4 py-3">{t('creances:details_modal.headers.reference')}</th>
+                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest text-right px-4 py-3">{t('creances:details_modal.headers.amount')}</th>
+                                        <th className="text-micro font-black uppercase text-slate-400 tracking-widest text-center px-4 py-3">{t('creances:details_modal.headers.actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm">

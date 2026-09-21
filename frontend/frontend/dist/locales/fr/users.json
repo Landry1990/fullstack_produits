@@ -6,6 +6,10 @@
         "active": "Actifs",
         "trash": "Corbeille"
     },
+    "page_tabs": {
+        "users": "Utilisateurs",
+        "sessions": "Sessions"
+    },
     "actions": {
         "create": "Nouvel Utilisateur",
         "edit": "Modifier",
@@ -68,7 +72,13 @@
         "authorized_menus": "Menus Autorisés",
         "admin_note": "Un administrateur a accès à tous les menus par défaut.",
         "special_permissions": "Permissions Spéciales & Ventes",
-        "security_sudo": "Sécurité & Sudo"
+        "security_sudo": "Sécurité & Sudo",
+        "tabs": {
+            "information": "Informations",
+            "menus": "Menus",
+            "permissions": "Permissions"
+        },
+        "superuser_permissions_note": "Le superutilisateur possède implicitement tous les droits."
     },
     "permissions": {
         "cash_out": "Peut Encaisser",
@@ -88,6 +98,9 @@
         "close_commande": "Clôturer Commande",
         "manage_perimes": "Gérer Périmés",
         "manage_avoirs": "Gérer Avoirs",
+        "create_client_credit": "Créer Avoirs Clients",
+        "manage_challenges": "Gérer Challenges",
+        "is_terminal_account": "Compte terminal (poste de vente)",
         "validate_zero_amount": "Autoriser ventes à 0F",
         "can_validate_sales": "Valider les ventes",
         "view_cash_sessions": "Voir les sessions de caisse",

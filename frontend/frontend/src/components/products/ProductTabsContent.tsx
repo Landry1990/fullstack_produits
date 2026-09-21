@@ -393,7 +393,7 @@ const StatsTabContent = ({ monthlyStats, t }: { monthlyStats: MonthlyStat[]; t: 
                     ))}
                 </TableBody>
             </Table>
-            <div className="mt-2 text-[10px] text-slate-400 flex justify-around">
+            <div className="mt-2 text-caption text-slate-400 flex justify-around">
                 <span>{t('products:detail.stats.legend_sold')}</span>
                 <span>{t('products:detail.stats.legend_ordered')}</span>
                 <span>{t('products:detail.stats.legend_count')}</span>
@@ -603,11 +603,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.rayon')}</TableCell>
-                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">{selectedProduit.rayon_name || '-'}</span></TableCell>
+                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-bold bg-blue-50 text-blue-600 border border-blue-100">{selectedProduit.rayon_name || '-'}</span></TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.provider')}</TableCell>
-                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">{selectedProduit.fournisseur_name || '-'}</span></TableCell>
+                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-bold bg-slate-100 text-slate-500 border border-slate-200">{selectedProduit.fournisseur_name || '-'}</span></TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.min_max')}</TableCell>
@@ -615,7 +615,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.alert_threshold')}</TableCell>
-                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100">{selectedProduit.stock_alert ?? 0}</span></TableCell>
+                <TableCell><span className="inline-flex items-center px-2 py-0.5 rounded-md text-caption font-bold bg-amber-50 text-amber-600 border border-amber-100">{selectedProduit.stock_alert ?? 0}</span></TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="w-1/3 font-bold text-sm text-slate-400 uppercase tracking-wider">{t('products:detail.general.expiration')}</TableCell>

@@ -97,7 +97,7 @@ export function CaisseHeader({
               <Lock className="size-4" />
               <span className="hidden sm:inline">{myActivePoste.nom} - {t('cash_session.close_short', { defaultValue: 'Fermer' })}</span>
               {myActivePoste.fond_de_caisse && (
-                <span className="text-[10px] opacity-80">({Number(myActivePoste.fond_de_caisse).toLocaleString()} F)</span>
+                <span className="text-caption opacity-80">({Number(myActivePoste.fond_de_caisse).toLocaleString()} F)</span>
               )}
             </button>
           ) : (

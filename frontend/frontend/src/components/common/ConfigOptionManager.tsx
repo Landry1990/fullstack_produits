@@ -3,7 +3,7 @@ import api from '../../services/api';
 import { 
   Plus, Pencil, Trash2, 
   Settings, Search, Hash, 
-  Type, CheckCircle2, XCircle
+  Type, CheckCircle2, XCircle, Loader2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { gooeyToast } from 'goey-toast';
@@ -52,6 +52,7 @@ export default function ConfigOptionManager({
     is_active: true 
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const fetchOptions = async () => {
     try {
@@ -80,6 +81,7 @@ export default function ConfigOptionManager({
       code: formData.code.toUpperCase().replace(/\s+/g, '_')
     };
 
+    setSaving(true);
     try {
       if (editingOption) {
         const { data: updated } = await api.put(`configuration-options/${editingOption.id}/`, payload);
@@ -94,6 +96,8 @@ export default function ConfigOptionManager({
     } catch (err: unknown) {
       const errorMsg = err.response?.data?.non_field_errors?.[0] || err.response?.data?.detail || t('common:messages.error_saving');
       gooeyToast.error(errorMsg);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -188,7 +192,7 @@ export default function ConfigOptionManager({
                            <div className={`p-2 rounded-xl ${option.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
                               {option.is_active ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
                            </div>
-                           <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono text-[10px] uppercase tracking-wider">{option.code}</div>
+                           <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono text-caption uppercase tracking-wider">{option.code}</div>
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                            <button
@@ -316,7 +320,8 @@ export default function ConfigOptionManager({
 
            <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
               <button type="button" className="inline-flex items-center h-9 px-5 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium transition-colors" onClick={() => setIsModalOpen(false)}>{t('common:actions.cancel')}</button>
-              <button type="submit" className="inline-flex items-center justify-center h-9 px-8 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm">
+              <button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 h-9 px-8 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                 {saving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
                  {editingOption ? t('stock:organisation.config_option_manager.update_btn') : t('stock:organisation.config_option_manager.save_btn')}
               </button>
            </div>

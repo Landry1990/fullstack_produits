@@ -16,6 +16,7 @@ import { PERMISSIONS_META, type ManagedUser } from './usersMeta';
 import { MENU_HIERARCHY_FALLBACK } from './menuHierarchyFallback';
 import UserListItem from './UserListItem';
 import UserFormDialog from './UserFormDialog';
+import { PageContainer } from '../ui/PageContainer';
 
 export default function GestionUtilisateurs() {
   const { t } = useTranslation(['users', 'sidebar', 'common']);
@@ -167,7 +168,7 @@ export default function GestionUtilisateurs() {
   }
 
   return (
-    <div className="p-6">
+    <PageContainer variant="dense" className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-slate-800">{t('title')}</h1>
@@ -211,6 +212,6 @@ export default function GestionUtilisateurs() {
         title={passwordModalConfig.title}
         message={passwordModalConfig.message}
       />
-    </div>
+    </PageContainer>
   );
 }

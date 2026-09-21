@@ -185,7 +185,7 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
                   )}
                 >
                   <span className="font-semibold">{cip.toUpperCase()}</span>
-                  <span className={cn("text-[10px]", selectedCip === cip ? "text-emerald-100" : "text-slate-500")}>
+                  <span className={cn("text-caption", selectedCip === cip ? "text-emerald-100" : "text-slate-500")}>
                     {t(`${cip}_desc`)}
                   </span>
                 </button>
@@ -240,7 +240,7 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
                 <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
                   <div className="bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 flex items-center gap-2 border-b border-slate-200">
                     <CheckCircle className="size-4 text-emerald-600" />
-                    {t('list.avec_cip')} <Badge variant="default" className="text-[10px] h-4 px-1.5">{preview.produits_avec_cip.length}</Badge>
+                    {t('list.avec_cip')} <Badge variant="default" className="text-caption h-4 px-1.5">{preview.produits_avec_cip.length}</Badge>
                   </div>
                   <div className="max-h-40 overflow-auto">
                     <Table className="w-full text-sm">
@@ -277,7 +277,7 @@ export const ExportCommandeModal: React.FC<ExportCommandeModalProps> = ({
                 <div className="border border-amber-200 rounded-xl overflow-hidden bg-white">
                   <div className="bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 flex items-center gap-2 border-b border-amber-100">
                     <AlertCircle className="size-4 text-amber-600" />
-                    {t('list.sans_cip')} <Badge variant="destructive" className="text-[10px] h-4 px-1.5">{preview.produits_sans_cip.length}</Badge>
+                    {t('list.sans_cip')} <Badge variant="destructive" className="text-caption h-4 px-1.5">{preview.produits_sans_cip.length}</Badge>
                   </div>
                   <div className="max-h-40 overflow-auto">
                     <Table className="w-full text-sm">

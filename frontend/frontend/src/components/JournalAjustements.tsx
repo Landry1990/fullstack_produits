@@ -34,7 +34,7 @@ export default function JournalAjustements() {
                                 <h1 className="text-lg lg:text-2xl font-black tracking-tight text-slate-800">
                                     {t('ajustements.title')}
                                 </h1>
-                                <p className="text-[10px] lg:text-xs font-semibold text-slate-400 uppercase tracking-widest hidden lg:block">
+                                <p className="text-caption lg:text-xs font-semibold text-slate-400 uppercase tracking-widest hidden lg:block">
                                     {t('ajustements.subtitle')}
                                 </p>
                             </div>

@@ -59,7 +59,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
     return (
         <div
             data-theme="light"
-            className="bg-white p-6 max-w-[210mm] mx-auto font-sans text-[11px] leading-tight text-gray-900 shadow-none print:shadow-none print:max-w-none print:w-full"
+            className="bg-white p-6 max-w-[210mm] mx-auto font-sans text-label leading-tight text-gray-900 shadow-none print:shadow-none print:max-w-none print:w-full"
         >
             {/* ── HEADER ── */}
             <div className="flex justify-between items-start mb-6 border-b-2 border-gray-900 pb-4">
@@ -69,7 +69,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
                     <h1 className="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1 leading-none">
                         {settings.pharmacy_name}
                     </h1>
-                    <div className="space-y-0.5 text-gray-500 text-[10px]">
+                    <div className="space-y-0.5 text-gray-500 text-caption">
                         {settings.address && (
                             <div className="whitespace-pre-line leading-tight italic">{settings.address}</div>
                         )}
@@ -89,7 +89,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
                     <div className="border-2 border-gray-900 text-gray-900 px-6 py-2 rounded-sm text-xl font-black mb-2 inline-block uppercase tracking-wider">
                         BON DE RETOUR
                     </div>
-                    <div className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">
+                    <div className="text-gray-400 font-bold text-caption uppercase tracking-widest">
                         Réf : {data.numero}
                     </div>
                 </div>
@@ -100,7 +100,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
 
                 {/* Fournisseur */}
                 <div className="bg-white p-4 rounded-xl border border-gray-100">
-                    <div className="text-[9px] uppercase tracking-widest font-black text-gray-400 mb-2 border-b border-gray-100 pb-1.5">
+                    <div className="text-micro uppercase tracking-widest font-black text-gray-400 mb-2 border-b border-gray-100 pb-1.5">
                         Fournisseur
                     </div>
                     <p className="font-bold text-gray-900 uppercase text-sm">{data.fournisseur_name}</p>
@@ -108,10 +108,10 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
 
                 {/* Détails avoir */}
                 <div className="bg-white p-4 rounded-xl border border-gray-100">
-                    <div className="text-[9px] uppercase tracking-widest font-black text-gray-400 mb-2 border-b border-gray-100 pb-1.5">
+                    <div className="text-micro uppercase tracking-widest font-black text-gray-400 mb-2 border-b border-gray-100 pb-1.5">
                         Détails
                     </div>
-                    <div className="space-y-1 text-[11px]">
+                    <div className="space-y-1 text-label">
                         <div className="flex justify-between">
                             <span className="text-gray-500">Date :</span>
                             <span className="font-bold">{formatDateFr(data.date)}</span>
@@ -146,7 +146,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
             <div className="flex-grow">
                 <table className="w-full mb-4 border-collapse">
                     <thead>
-                        <tr className="bg-gray-50 text-gray-700 border-b-2 border-gray-900 text-[9px] uppercase tracking-[0.1em]">
+                        <tr className="bg-gray-50 text-gray-700 border-b-2 border-gray-900 text-micro uppercase tracking-[0.1em]">
                             <th className="py-2.5 px-3 text-left font-black rounded-l">Désignation</th>
                             <th className="py-2.5 px-2 text-center font-black w-14">Lot / Exp</th>
                             <th className="py-2.5 px-2 text-left font-black w-32">Motif ligne</th>
@@ -155,7 +155,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
                             <th className="py-2.5 px-3 text-right font-black w-28 rounded-r">Total (FCFA)</th>
                         </tr>
                     </thead>
-                    <tbody className="text-[10px]">
+                    <tbody className="text-caption">
                         {data.lignes.map((ligne, _idx) => (
                             <tr key={ligne.produit_nom ?? `ligne-${ligne.produit_cip}-${ligne.lot}`} className="border-b border-gray-50 break-inside-avoid">
                                 <td className="py-2 px-3">
@@ -165,7 +165,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
                                     )}
                                 </td>
                                 <td className="py-2 px-2 text-center align-middle">
-                                    {ligne.lot && <div className="font-mono text-[9px] font-bold">{ligne.lot}</div>}
+                                    {ligne.lot && <div className="font-mono text-micro font-bold">{ligne.lot}</div>}
                                     {ligne.date_expiration && (
                                         <div className="text-[8px] text-gray-400">Exp : {formatExpiryDate(ligne.date_expiration)}</div>
                                     )}
@@ -173,7 +173,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
                                 </td>
                                 <td className="py-2 px-2 align-middle">
                                     {ligne.motif
-                                        ? <span className="text-[9px] italic text-gray-600">{ligne.motif}</span>
+                                        ? <span className="text-micro italic text-gray-600">{ligne.motif}</span>
                                         : <span className="text-gray-300">—</span>
                                     }
                                 </td>
@@ -186,7 +186,7 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
                 </table>
 
                 {/* Résumé lignes */}
-                <div className="px-3 py-2 bg-gray-50 rounded-lg flex justify-between items-center text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-4">
+                <div className="px-3 py-2 bg-gray-50 rounded-lg flex justify-between items-center text-micro uppercase font-bold text-gray-400 tracking-widest mb-4">
                     <div className="flex gap-6">
                         <span>Lignes : <span className="text-gray-700">{data.lignes.length}</span></span>
                         <span>Unités : <span className="text-gray-700">{totalQty}</span></span>
@@ -202,24 +202,24 @@ const AvoirPrintTemplate: React.FC<AvoirPrintTemplateProps> = ({ settings, data 
                 <div className="flex-1">
                     {data.observations && (
                         <div>
-                            <div className="text-[9px] uppercase tracking-widest font-black text-gray-400 mb-1">Observations</div>
-                            <p className="text-[10px] text-gray-600 italic leading-relaxed">{data.observations}</p>
+                            <div className="text-micro uppercase tracking-widest font-black text-gray-400 mb-1">Observations</div>
+                            <p className="text-caption text-gray-600 italic leading-relaxed">{data.observations}</p>
                         </div>
                     )}
                     <div className="mt-6">
-                        <div className="text-[9px] uppercase tracking-widest font-black text-gray-400 mb-1">Signature fournisseur</div>
+                        <div className="text-micro uppercase tracking-widest font-black text-gray-400 mb-1">Signature fournisseur</div>
                         <div className="border-b border-gray-300 h-10 w-40"></div>
                     </div>
                 </div>
 
                 {/* Total */}
                 <div className="min-w-[180px]">
-                    <div className="flex justify-between items-center py-1.5 border-b border-gray-100 text-[10px]">
+                    <div className="flex justify-between items-center py-1.5 border-b border-gray-100 text-caption">
                         <span className="text-gray-500 uppercase font-bold tracking-wider">Total HT</span>
                         <span className="font-black text-gray-900">{formatCurrency(totalHT)}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 mt-1 bg-gray-900 text-white px-3 rounded-lg">
-                        <span className="text-[10px] font-black uppercase tracking-wider">MONTANT AVOIR</span>
+                        <span className="text-caption font-black uppercase tracking-wider">MONTANT AVOIR</span>
                         <span className="font-black text-base">{formatCurrency(totalHT)}</span>
                     </div>
                 </div>

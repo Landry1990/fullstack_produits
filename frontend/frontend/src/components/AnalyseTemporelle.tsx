@@ -215,7 +215,7 @@ export default function AnalyseTemporelle() {
                   <div className="overflow-x-auto">
                     <table className="w-full border-separate border-spacing-0 text-sm">
                       <thead>
-                        <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                        <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
                           <th className="py-3 pl-4 text-left border-b border-slate-200">{t('stock:temporal_analysis.columns.day')}</th>
                           <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.avg_sales')}</th>
                           <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.avg_basket')}</th>
@@ -227,7 +227,7 @@ export default function AnalyseTemporelle() {
                           <tr key={day.day_number} className={`transition-colors ${day.is_best ? 'bg-emerald-50' : 'hover:bg-slate-50'}`}>
                             <td className="py-2.5 pl-4 flex items-center gap-2 font-medium text-slate-700">
                               {day.day}
-                              {day.is_best && <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Top</span>}
+                              {day.is_best && <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-caption font-bold">Top</span>}
                             </td>
                             <td className="py-2.5 text-right text-slate-600">{day.sales_count}</td>
                             <td className="py-2.5 text-right text-slate-600">{formatCurrency(Math.round(day.avg_basket))}</td>
@@ -301,7 +301,7 @@ export default function AnalyseTemporelle() {
                     <div className="overflow-x-auto border border-slate-200 rounded-xl">
                       <table className="w-full border-separate border-spacing-0 text-sm">
                         <thead>
-                          <tr className="bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                          <tr className="bg-slate-50 text-label font-black text-slate-400 uppercase tracking-widest">
                             <th className="py-3 pl-4 text-left border-b border-slate-200">{t('stock:temporal_analysis.columns.product')}</th>
                             <th className="py-3 text-left border-b border-slate-200">{t('stock:temporal_analysis.columns.peak_month')}</th>
                             <th className="py-3 text-right border-b border-slate-200">{t('stock:temporal_analysis.columns.peak_volume')}</th>

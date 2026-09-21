@@ -24,6 +24,7 @@
         "retry": "Réessayer"
     },
     "loading": "Chargement...",
+    "retry": "Réessayer",
     "today": "Aujourd'hui",
     "dashboard": "Tableau de bord",
     "name": "Nom",
@@ -404,13 +405,18 @@
         "placeholder": "Rechercher (produits, clients, navigation)...",
         "empty": "Aucun résultat trouvé.",
         "groups": {
-            "actions": "⚡ Actions Rapides",
-            "navigation": "📍 Navigation Rapide",
-            "products": "💊 Produits",
-            "clients": "👥 Clients",
-            "invoices": "📄 Factures / Ventes",
-            "procurements": "📦 Commandes Fournisseurs",
-            "suppliers": "🏭 Fournisseurs"
+            "actions": "Actions Rapides",
+            "navigation": "Navigation Rapide",
+            "products": "Produits",
+            "clients": "Clients",
+            "invoices": "Factures / Ventes",
+            "procurements": "Commandes Fournisseurs",
+            "suppliers": "Fournisseurs"
+        },
+        "hints": {
+            "navigate": "Naviguer",
+            "open": "Ouvrir",
+            "close": "Fermer"
         },
         "nav": {
             "monthly_report": "Rapport / Synthèse Mensuelle",
@@ -422,10 +428,19 @@
         },
         "actions": {
             "new_sale": "Nouvelle Vente",
+            "new_sale_desc": "Ouvrir la caisse",
             "new_product": "Créer un nouveau produit",
+            "new_product_desc": "Fiche produit",
             "new_client": "Ajouter un client",
+            "new_client_desc": "Fiche client",
             "new_order": "Créer une commande fournisseur",
-            "open_products": "Liste de Produits"
+            "new_order_desc": "Réapprovisionnement",
+            "open_products": "Liste de Produits",
+            "open_products_desc": "Catalogue complet",
+            "open_perimes": "Produits périmés",
+            "open_perimes_desc": "Stock à risque",
+            "open_cadencier": "Cadencier",
+            "open_cadencier_desc": "Suivi des échéances"
         },
         "preview": {
             "title": "God Mode Omnisearch",

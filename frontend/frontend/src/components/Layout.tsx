@@ -77,7 +77,7 @@ function LayoutContent() {
               {daysRemaining !== null && (
                 <Badge
                   variant={daysRemaining <= 7 ? 'destructive' : daysRemaining <= 30 ? 'default' : 'secondary'}
-                  className={`text-[10px] shrink-0 gap-1 ${daysRemaining > 30 ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' : ''}`}
+                  className={`text-caption shrink-0 gap-1 ${daysRemaining > 30 ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' : ''}`}
                 >
                   <Clock className="size-3" />
                   {t('dashboard:licence_days_remaining', { count: daysRemaining })}

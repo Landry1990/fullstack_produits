@@ -325,7 +325,7 @@ class ClientViewSet(SimpleListCacheMixin, OptimizedSerializerMixin, viewsets.Mod
             with transaction.atomic():
                 clients = Client.objects.filter(id__in=ids)
                 count = clients.count()
-                clients.update(is_active=False)
+                clients.update(is_active=False, deleted_at=timezone.now(), deleted_by=request.user)
                 
                 return Response({
                     'status': 'success',

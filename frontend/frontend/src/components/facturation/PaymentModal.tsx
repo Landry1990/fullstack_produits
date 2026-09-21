@@ -133,7 +133,7 @@ export default function PaymentModal({
 
                         if (soldeVal > 0 && amountToPay > soldeVal) {
                              return (
-                                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-amber-600 text-[10px] font-bold uppercase animate-pulse text-center flex items-center justify-center gap-1">
+                                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-amber-600 text-caption font-bold uppercase animate-pulse text-center flex items-center justify-center gap-1">
                                     <AlertTriangle className="size-4" />
                                     {t('facturation:client.insufficient_deposit_warning', { solde: soldeVal })}
                                 </div>
@@ -174,7 +174,7 @@ export default function PaymentModal({
                                     >
                                         <div className="flex flex-col items-start">
                                             <span className="font-bold text-xs uppercase">{poste.nom}</span>
-                                            <span className="text-[10px] opacity-70 flex items-center gap-1">
+                                            <span className="text-caption opacity-70 flex items-center gap-1">
                                                 <User className="size-2.5" />
                                                 {caissierName}
                                             </span>
@@ -184,7 +184,7 @@ export default function PaymentModal({
                             })}
                         </div>
                         {!selectedPosteVenteId && (
-                            <p className="text-[10px] text-red-600 font-medium mt-2 italic flex items-center gap-1">
+                            <p className="text-caption text-red-600 font-medium mt-2 italic flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                 </svg>
@@ -259,7 +259,7 @@ export default function PaymentModal({
                         <span className="text-lg font-bold text-blue-600">{formatCurrency(Math.round(totals.partAssurance))}</span>
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
-                        <span className="inline-flex items-center px-2 h-5 text-[10px] rounded bg-slate-100 text-slate-600 font-medium">{t('facturation:payment.en_compte_auto')}</span>
+                        <span className="inline-flex items-center px-2 h-5 text-caption rounded bg-slate-100 text-slate-600 font-medium">{t('facturation:payment.en_compte_auto')}</span>
                       </div>
                     </div>
                   </div>
@@ -291,10 +291,10 @@ export default function PaymentModal({
                               )}
                               <label className="block py-1 text-xs uppercase font-bold text-slate-500">{label}</label>
                               <div className="p-3 bg-white border border-slate-200 rounded-lg text-sm font-medium flex items-center gap-2">
-                                <span className="inline-flex items-center px-2 h-5 text-[10px] rounded bg-emerald-100 text-emerald-700 font-medium"></span>
+                                <span className="inline-flex items-center px-2 h-5 text-caption rounded bg-emerald-100 text-emerald-700 font-medium"></span>
                                 <span>{posteName}</span>
                                 {caissierName && (
-                                  <span className="text-[10px] text-slate-400 ml-auto font-normal flex items-center gap-1">
+                                  <span className="text-caption text-slate-400 ml-auto font-normal flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                       <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                                     </svg>

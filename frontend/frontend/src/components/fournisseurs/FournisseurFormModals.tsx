@@ -1,6 +1,6 @@
 import { useEffect, useId, isValidElement, cloneElement } from 'react';
 import type { ReactElement, ReactNode } from 'react';
-import { X, Plus, Save, Building2 } from 'lucide-react';
+import { X, Plus, Save, Building2, Loader2 } from 'lucide-react';
 import type { useFournisseurs } from '../../hooks/useFournisseurs';
 import type { Fournisseur } from '../../types';
 
@@ -91,7 +91,7 @@ export default function FournisseurFormModals({ hook }: Props) {
               <div>
                 <h2 className="text-lg font-bold text-base-content leading-tight">{title}</h2>
                 {isEdit && editingFournisseur && (
-                  <span className="text-[10px] text-base-content/50 font-medium">{editingFournisseur.name}</span>
+                  <span className="text-caption text-base-content/50 font-medium">{editingFournisseur.name}</span>
                 )}
               </div>
             </div>
@@ -147,7 +147,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                 />
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-base-content">Fournisseur Divers</span>
-                  <span className="text-[11px] text-base-content/60">Utilisé pour la gestion des achats divers.</span>
+                  <span className="text-label text-base-content/60">Utilisé pour la gestion des achats divers.</span>
                 </div>
               </label>
             </Section>
@@ -193,7 +193,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                     className="w-full h-10 rounded-lg border border-base-300 bg-base-100 px-3 text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-200 transition-all"
                     disabled={isSubmitting}
                   />
-                  <p className="text-[11px] text-orange-500 mt-1">Le relevé commence le 1er du mois.</p>
+                  <p className="text-label text-orange-500 mt-1">Le relevé commence le 1er du mois.</p>
                 </div>
               )}
             </Section>
@@ -213,7 +213,7 @@ export default function FournisseurFormModals({ hook }: Props) {
                   />
                 </Field>
               </div>
-              <p className="text-[11px] text-base-content/50 mt-1">Délai moyen de livraison (2 jours pour les fournisseurs locaux)</p>
+              <p className="text-label text-base-content/50 mt-1">Délai moyen de livraison (2 jours pour les fournisseurs locaux)</p>
             </Section>
 
             <Section title={t('providers:form.address_section')}>
@@ -247,7 +247,7 @@ export default function FournisseurFormModals({ hook }: Props) {
               className="inline-flex items-center px-6 py-2 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-focus disabled:opacity-60 transition-colors gap-2"
             >
               {isSubmitting ? (
-                <span className="inline-block size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               ) : (
                 isEdit ? <Save className="size-4" /> : <Plus className="size-4" />
               )}

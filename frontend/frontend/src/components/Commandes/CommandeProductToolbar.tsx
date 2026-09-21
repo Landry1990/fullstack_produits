@@ -57,7 +57,7 @@ export function CommandeProductToolbar({
                 )}
                 {commandeProduitsCount > 0 && onSortProduits && (
                     <Select
-                        className="h-7 text-[10px] py-1 px-2 pr-6"
+                        className="h-7 text-caption py-1 px-2 pr-6"
                         value={commandeSortBy || 'chrono'}
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onSortProduits(e.target.value as SortBy)}
                         aria-label={t('orders:list.sort_by')}
@@ -68,14 +68,14 @@ export function CommandeProductToolbar({
                         <option value="qty">{t('orders:product_table.sort_options.qty')}</option>
                     </Select>
                 )}
-                {saving && <span className="text-[10px] text-amber-600 animate-pulse font-bold">{t('orders:form.saving')}</span>}
+                {saving && <span className="text-caption text-amber-600 animate-pulse font-bold">{t('orders:form.saving')}</span>}
             </div>
 
             <div className="flex items-center gap-3">
                 {selectedRowsSize > 0 && (
                     <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3 ml-1">
-                        <span className="text-[10px] text-slate-500 font-bold">{selectedRowsSize} {t('orders:product_table.selected_short')}</span>
-                        <Button type="button" variant="destructive" size="sm" className="h-6 px-2 text-[10px]" onClick={onDeleteSelected}>
+                        <span className="text-caption text-slate-500 font-bold">{selectedRowsSize} {t('orders:product_table.selected_short')}</span>
+                        <Button type="button" variant="destructive" size="sm" className="h-6 px-2 text-caption" onClick={onDeleteSelected}>
                             {t('orders:product_table.delete_btn')}
                         </Button>
                         {viewMode === 'EDIT' && selectedCommandeStatus === 'PREP' && (
@@ -83,7 +83,7 @@ export function CommandeProductToolbar({
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                className="h-6 px-2 text-[10px] gap-1 border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                className="h-6 px-2 text-caption gap-1 border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                                 onClick={onTransferClick}
                                 aria-label={t('orders:actions.transfer_products')}
                             >

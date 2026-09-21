@@ -259,7 +259,7 @@ export default function FinanceFournisseurModal({
                   {t('providers:details.debt_balance')} (restant)
                 </span>
                 {totalPaye > 0 && totalDu > 0 && (
-                  <span className="text-[10px] text-base-content/40">
+                  <span className="text-caption text-base-content/40">
                     {formatCurrency(totalPaye)} payé sur {formatCurrency(totalDu)} dû
                   </span>
                 )}
@@ -413,7 +413,7 @@ export default function FinanceFournisseurModal({
                             <div className="font-medium text-xs truncate max-w-[140px]" title={ech.numero_facture}>
                               {ech.numero_facture}
                             </div>
-                            <div className="text-[10px] text-base-content/40">
+                            <div className="text-caption text-base-content/40">
                               {formatDate(ech.date_echeance)}
                             </div>
                           </TableCell>
@@ -496,7 +496,7 @@ export default function FinanceFournisseurModal({
                             </div>
                             {paiement.notes && (
                               <div
-                                className="text-[10px] text-base-content/40 truncate max-w-[160px]"
+                                className="text-caption text-base-content/40 truncate max-w-[160px]"
                                 title={paiement.notes}
                               >
                                 {paiement.notes}
@@ -510,7 +510,7 @@ export default function FinanceFournisseurModal({
                                       key={cmd}
                                       variant="ghost"
                                       size="sm"
-                                      className="font-mono text-[10px]"
+                                      className="font-mono text-caption"
                                     >
                                       #{cmd}
                                     </Badge>

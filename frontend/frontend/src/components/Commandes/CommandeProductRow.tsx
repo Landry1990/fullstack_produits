@@ -60,7 +60,7 @@ export function CommandeProductRow({
     onDeleteProduct,
     onEditProduct,
 }: CommandeProductRowProps) {
-    const { t } = useTranslation(['orders', 'common']);
+    const { t, i18n } = useTranslation(['orders', 'common']);
     const [isMargeFocused, setIsMargeFocused] = useState(false);
 
     const { produitName, isExclusive, supplierName, isDeleted, activePromisCount } = resolveProductInfo(p, produitsList, t);
@@ -253,7 +253,7 @@ export function CommandeProductRow({
                     {(() => {
                         const qty = Number(p.quantity || 0);
                         const price = Number(p.price || 0);
-                        return (qty * price).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                        return (qty * price).toLocaleString(i18n.language.startsWith('en') ? 'en-GB' : 'fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                     })()}
                 </TableCell>
 

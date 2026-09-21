@@ -20,6 +20,7 @@ import CommandeDetails, { type CommandeDetailsProps } from './Commandes/Commande
 
 import SudoValidationModal from './common/SudoValidationModal';
 import { LoadingScreen } from './common/LoadingScreen';
+import { ErrorState } from './ui/ErrorState';
 import { useProduit, useProduitLots, useProduitStats, useProduitAchats, useProduitHistory } from '../hooks/useProduits';
 
 const QuickCreateProductModal = lazy(() => import('./Commandes/QuickCreateProductModal'));
@@ -93,7 +94,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   }, [state.viewMode]);
   
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+    <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 max-w-[1600px] mx-auto w-full">
       {/* Header moderne */}
       <div className="px-6 py-4 border-b border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -138,11 +139,12 @@ export default function Commandes({ forcedType }: CommandesProps) {
           )}
       </div>
 
-      {state.error && (
-        <div role="alert" className="mx-4 mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm shrink-0">
-          {state.error}
-        </div>
-      )}
+      <ErrorState
+        error={state.error}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: ['commandes'] })}
+        retrying={listProps.loading}
+        className="mx-4 mt-4 shrink-0"
+      />
 
       {state.viewMode === 'LIST' && (
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">

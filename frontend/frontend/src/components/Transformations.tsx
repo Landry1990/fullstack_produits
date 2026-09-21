@@ -104,7 +104,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-slate-800 truncate">{selected.name}</div>
-            <div className="text-[11px] text-slate-400 flex gap-3">
+            <div className="text-label text-slate-400 flex gap-3">
               <span>{t('common:cip')}: {selected.cip1 || t('common:not_available')}</span>
               <span>{t('common:stock')}: <b className={selected.stock <= 0 ? 'text-red-500' : 'text-emerald-600'}>{formatNumber(selected.stock)}</b></span>
             </div>
@@ -190,7 +190,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate text-slate-700">{p.name}</div>
-                    <div className="text-[10px] flex gap-3 text-slate-400">
+                    <div className="text-caption flex gap-3 text-slate-400">
                       <span>{t('common:cip')}: {p.cip1 || t('common:not_available')}</span>
                       <span>{t('common:stock')}: <b>{formatNumber(p.stock)}</b></span>
                     </div>
@@ -488,7 +488,7 @@ const Transformations: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-800 tracking-tight">{t('transformations.title')}</h1>
-              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest mt-0.5">{t('transformations.subtitle')}</p>
+              <p className="text-label font-medium text-slate-400 uppercase tracking-widest mt-0.5">{t('transformations.subtitle')}</p>
             </div>
           </div>
           <button 
@@ -556,9 +556,9 @@ const Transformations: React.FC = () => {
                         {relation.produit_source_nom.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
+                        <div className="text-micro font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
                         <div className="font-bold text-sm text-slate-700 truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
-                        <div className="text-[10px] flex items-center gap-1.5 mt-0.5">
+                        <div className="text-caption flex items-center gap-1.5 mt-0.5">
                           <span className="text-slate-400">{t('common:stock', { defaultValue: 'Stock' })}:</span>
                           <b className={(relation.produit_source_stock ?? 0) <= 0 ? 'text-red-500' : 'text-emerald-600'}>
                             {formatNumber(relation.produit_source_stock ?? 0)}
@@ -570,13 +570,13 @@ const Transformations: React.FC = () => {
                     {/* Arrow + Ratio */}
                     <div className="flex flex-col items-center gap-1 shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-300 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                      <span className="bg-emerald-600 text-white font-mono font-black text-[10px] h-5 px-2 rounded-full inline-flex items-center">1:{formatNumber(relation.ratio)}</span>
+                      <span className="bg-emerald-600 text-white font-mono font-black text-caption h-5 px-2 rounded-full inline-flex items-center">1:{formatNumber(relation.ratio)}</span>
                     </div>
 
                     {/* Destination */}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="min-w-0">
-                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('stock:transformations.labels.dest')}</div>
+                        <div className="text-micro font-black text-slate-400 uppercase tracking-widest mb-0.5">{t('stock:transformations.labels.dest')}</div>
                         <div className="font-bold text-sm truncate text-emerald-600" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
                       </div>
                     </div>
@@ -629,12 +629,12 @@ const Transformations: React.FC = () => {
                         <tr key={hist.id} className={`hover:bg-slate-50 transition-colors group ${hist.reversed ? 'opacity-50 line-through' : ''} ${hist.reversed_by ? 'bg-amber-50/50' : ''}`}>
                           <td className="w-28 px-3 py-2">
                              <div className="font-bold text-xs text-slate-800">{formatDate(hist.date_transformation)}</div>
-                             <div className="text-[10px] text-slate-400 font-mono uppercase tracking-tighter">{formatDateTime(hist.date_transformation).split(' ').slice(1).join(' ')}</div>
+                             <div className="text-caption text-slate-400 font-mono uppercase tracking-tighter">{formatDateTime(hist.date_transformation).split(' ').slice(1).join(' ')}</div>
                              {hist.reversed && (
-                               <span className="inline-block mt-1 text-[9px] font-black uppercase tracking-wider text-red-500 bg-red-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversed', { defaultValue: 'Annulée' })}</span>
+                               <span className="inline-block mt-1 text-micro font-black uppercase tracking-wider text-red-500 bg-red-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversed', { defaultValue: 'Annulée' })}</span>
                              )}
                              {hist.reversed_by && (
-                               <span className="inline-block mt-1 text-[9px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversal', { defaultValue: 'Annulation' })}</span>
+                               <span className="inline-block mt-1 text-micro font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">{t('stock:transformations.labels.reversal', { defaultValue: 'Annulation' })}</span>
                              )}
                           </td>
                           <td className="w-28 px-3 py-2 font-black text-xs text-emerald-700">{hist.user_nom}</td>
@@ -647,12 +647,12 @@ const Transformations: React.FC = () => {
                           </td>
                           <td className="w-[20%] px-3 py-2">
                              <div className="flex items-center gap-3">
-                                <div className="bg-red-50 text-red-500 px-2 py-0.5 rounded text-[10px] font-black font-mono">-{formatNumber(hist.quantite_source)}</div>
+                                <div className="bg-red-50 text-red-500 px-2 py-0.5 rounded text-caption font-black font-mono">-{formatNumber(hist.quantite_source)}</div>
                                 <ChevronRight size={12} className="text-slate-200" />
-                                <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-black font-mono">+{formatNumber(hist.quantite_destination)}</div>
+                                <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-caption font-black font-mono">+{formatNumber(hist.quantite_destination)}</div>
                              </div>
                           </td>
-                          <td className="px-3 py-2 italic text-slate-400 text-[11px] max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
+                          <td className="px-3 py-2 italic text-slate-400 text-label max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
                              {hist.notes || '-'}
                           </td>
                           <td className="w-24 px-3 py-2 text-center">
@@ -749,7 +749,7 @@ const Transformations: React.FC = () => {
 
           {/* Ratio */}
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-2">
+            <label className="block text-caption font-black uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
               </svg>
@@ -765,7 +765,7 @@ const Transformations: React.FC = () => {
               onChange={e => setRatioValue(e.target.value)}
               required
             />
-            <p className="text-[11px] font-medium text-slate-400 mt-1.5 text-center px-4">
+            <p className="text-label font-medium text-slate-400 mt-1.5 text-center px-4">
               {t('transformations.modal_relation.ratio_help')}
             </p>
           </div>
@@ -776,17 +776,17 @@ const Transformations: React.FC = () => {
               <div className="flex items-center justify-between text-sm">
                   <div className="text-center flex-1">
                     <div className="font-bold text-slate-800 truncate text-xs">{selectedSource.name}</div>
-                    <div className="text-[10px] font-black text-slate-400 mt-0.5">× 1 {t('stock:transformations.labels.unit')}</div>
+                    <div className="text-caption font-black text-slate-400 mt-0.5">× 1 {t('stock:transformations.labels.unit')}</div>
                   </div>
                   <div className="px-4 text-emerald-400 flex flex-col items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
-                    <span className="text-[10px] font-black mt-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">× {ratioValue}</span>
+                    <span className="text-caption font-black mt-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">× {ratioValue}</span>
                   </div>
                   <div className="text-center flex-1">
                     <div className="font-bold text-emerald-600 truncate text-xs">{selectedDestination.name}</div>
-                    <div className="text-[10px] font-black text-emerald-400/60 mt-0.5">× {Math.floor(normalizeNumberInput(ratioValue))} {t('stock:transformations.labels.units')}</div>
+                    <div className="text-caption font-black text-emerald-400/60 mt-0.5">× {Math.floor(normalizeNumberInput(ratioValue))} {t('stock:transformations.labels.units')}</div>
                   </div>
               </div>
             </div>
@@ -832,7 +832,7 @@ const Transformations: React.FC = () => {
             <div className="flex items-stretch gap-3">
               {/* Source */}
               <div className="flex-1 bg-gradient-to-b from-red-50 to-transparent border border-red-200 rounded-2xl p-4 text-center">
-                <div className="text-[9px] font-black uppercase tracking-widest text-red-400 mb-3 flex items-center justify-center gap-1">
+                <div className="text-micro font-black uppercase tracking-widest text-red-400 mb-3 flex items-center justify-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M20 12H4" />
                   </svg>
@@ -849,7 +849,7 @@ const Transformations: React.FC = () => {
                   required
                   autoFocus
                 />
-                <div className="text-[10px] uppercase font-black text-slate-400 mt-3">{t('transformations.modal_transform.qty_to_transform')}</div>
+                <div className="text-caption uppercase font-black text-slate-400 mt-3">{t('transformations.modal_transform.qty_to_transform')}</div>
               </div>
 
               {/* Arrow */}
@@ -859,12 +859,12 @@ const Transformations: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </div>
-                <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">× {transformationData.relation.ratio}</span>
+                <span className="text-micro font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">× {transformationData.relation.ratio}</span>
               </div>
 
               {/* Destination */}
               <div className="flex-1 bg-gradient-to-b from-emerald-50 to-transparent border border-emerald-200 rounded-2xl p-4 text-center">
-                <div className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-3 flex items-center justify-center gap-1">
+                <div className="text-micro font-black uppercase tracking-widest text-emerald-400 mb-3 flex items-center justify-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
                   </svg>
@@ -874,14 +874,14 @@ const Transformations: React.FC = () => {
                 <div className="w-full h-14 rounded-xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center font-black text-2xl text-emerald-600 shadow-inner">
                   {formatNumber(quantiteDestinationCalculee)}
                 </div>
-                <div className="text-[10px] uppercase font-black text-emerald-400 mt-3">{t('transformations.modal_transform.qty_obtained')}</div>
+                <div className="text-caption uppercase font-black text-emerald-400 mt-3">{t('transformations.modal_transform.qty_obtained')}</div>
                 {preview && (
                   <div className="mt-3 pt-3 border-t border-emerald-100 space-y-1">
-                    <div className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center justify-between text-caption">
                       <span className="text-slate-400 font-bold uppercase tracking-wider">{t('stock:transformations.preview.current_stock')}</span>
                       <span className="font-bold text-slate-600">{formatNumber(preview.stock_destination)}</span>
                     </div>
-                    <div className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center justify-between text-caption">
                       <span className="text-emerald-400 font-bold uppercase tracking-wider">{t('stock:transformations.preview.stock_after')}</span>
                       <span className="font-bold text-emerald-600">{formatNumber(preview.stock_destination_after)}</span>
                     </div>
@@ -902,10 +902,10 @@ const Transformations: React.FC = () => {
                 {preview.use_lot_management && preview.lots.length > 0 && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <div className="text-caption font-black uppercase tracking-widest text-slate-400">
                         {t('stock:transformations.preview.lots_consumed')}
                       </div>
-                      <div className={`text-[10px] font-bold ${manualTotal === transformationData.quantite ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      <div className={`text-caption font-bold ${manualTotal === transformationData.quantite ? 'text-emerald-600' : 'text-amber-600'}`}>
                         {formatNumber(manualTotal)} / {formatNumber(transformationData.quantite)} {t('stock:transformations.preview.selected')}
                       </div>
                     </div>
@@ -923,10 +923,10 @@ const Transformations: React.FC = () => {
                               <div className="flex items-center gap-2">
                                 <span className="font-mono font-bold text-emerald-600 truncate">{lot.lot}</span>
                                 {lot.date_expiration && (
-                                  <span className="text-[10px] text-slate-400">{formatDate(lot.date_expiration)}</span>
+                                  <span className="text-caption text-slate-400">{formatDate(lot.date_expiration)}</span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-slate-400">
+                              <div className="text-caption text-slate-400">
                                 {formatNumber(lot.quantity_remaining)} {t('stock:transformations.preview.available')}{lot.quantity_remaining > 1 ? 's' : ''}
                               </div>
                             </div>
@@ -943,7 +943,7 @@ const Transformations: React.FC = () => {
                               }}
                               className="w-16 h-8 rounded-lg border border-slate-200 text-center text-xs font-bold focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400"
                             />
-                            <div className="text-right w-14 shrink-0 text-[10px] text-slate-400">
+                            <div className="text-right w-14 shrink-0 text-caption text-slate-400">
                               {formatNumber(lot.quantity_remaining - currentQty)} {t('stock:transformations.preview.remaining')}
                             </div>
                           </div>
@@ -951,7 +951,7 @@ const Transformations: React.FC = () => {
                       })}
                     </div>
                     {manualTotal !== transformationData.quantite && (
-                      <p className="text-[11px] text-amber-600 mt-2">
+                      <p className="text-label text-amber-600 mt-2">
                         {t('stock:transformations.preview.lot_qty_mismatch', {
                           selected: formatNumber(manualTotal),
                           total: formatNumber(transformationData.quantite)
@@ -965,7 +965,7 @@ const Transformations: React.FC = () => {
 
             {/* Notes */}
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-2">
+              <label className="block text-caption font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>

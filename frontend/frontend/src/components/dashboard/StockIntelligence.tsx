@@ -154,7 +154,7 @@ export default function StockIntelligence({
                 </div>
                 <div>
                   <h2 className="text-xs font-bold text-slate-800 tracking-tight uppercase">{t('alerts.expiry_title')}</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('alerts.expiry_subtitle')}</p>
+                  <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('alerts.expiry_subtitle')}</p>
                 </div>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function StockIntelligence({
               <div className="relative">
                 <select
                   aria-label={t('alerts.expiry_select_label')}
-                  className="w-full rounded-lg border border-slate-200 bg-white h-8 text-[10px] font-bold uppercase tracking-widest text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pr-8"
+                  className="w-full rounded-lg border border-slate-200 bg-white h-8 text-caption font-bold uppercase tracking-widest text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pr-8"
                   value={expirationMonths}
                   onChange={(e) => setExpirationMonths(Number(e.target.value))}
                 >
@@ -182,7 +182,7 @@ export default function StockIntelligence({
                 <EmptyState
                   compact
                   icon={<CalendarDays className="size-6" />}
-                  title={<span className="text-[10px] font-bold uppercase tracking-widest">{t('alerts.no_expiry_alerts')}</span>}
+                  title={<span className="text-caption font-bold uppercase tracking-widest">{t('alerts.no_expiry_alerts')}</span>}
                   className="border-2 border-dashed border-slate-200 rounded-xl h-full"
                 />
               ) : (
@@ -210,8 +210,8 @@ export default function StockIntelligence({
                         <div className="flex-1 min-w-0">
                           <span className="text-xs font-bold block truncate">{lot.produit_nom}</span>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('alerts.lot_label', { lot: lot.lot || t('alerts.na') })}</span>
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                            <span className="text-micro font-bold text-slate-400 uppercase tracking-widest">{t('alerts.lot_label', { lot: lot.lot || t('alerts.na') })}</span>
+                            <span className="text-micro font-bold text-slate-500 uppercase tracking-widest">
                               {lot.date_expiration
                                 ? t('alerts.exp_label', { date: formatDate(lot.date_expiration) })
                                 : t('alerts.exp_label', { date: t('alerts.na') })}
@@ -219,7 +219,7 @@ export default function StockIntelligence({
                           </div>
                         </div>
                       </div>
-                      <div className="bg-white/50 text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest ml-3 shrink-0 whitespace-nowrap border border-current text-slate-500">
+                      <div className="bg-white/50 text-micro font-black px-2 py-1 rounded-lg uppercase tracking-widest ml-3 shrink-0 whitespace-nowrap border border-current text-slate-500">
                         {daysUntilExpiry <= 0 ? t('alerts.expired') : formatExpiryDuration(daysUntilExpiry, t)}
                       </div>
                     </div>
@@ -228,7 +228,7 @@ export default function StockIntelligence({
               )}
             </div>
             <div className="mt-4 shrink-0">
-              <Link to="/app/perimes" className="inline-flex items-center justify-center w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-400 text-[9px] font-bold uppercase tracking-widest rounded-lg border border-slate-200 transition-colors">
+              <Link to="/app/perimes" className="inline-flex items-center justify-center w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-400 text-micro font-bold uppercase tracking-widest rounded-lg border border-slate-200 transition-colors">
                 {t('alerts.manage_perimes')}
               </Link>
             </div>
@@ -245,13 +245,13 @@ export default function StockIntelligence({
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-slate-800 tracking-tight uppercase">{t('charts.dormant_stock')}</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('charts.dormant_desc')}</p>
+                  <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('charts.dormant_desc')}</p>
                 </div>
               </div>
               {dormantTotal > 0 && (
                 <div className="text-right">
                   <span className="text-xs font-black text-slate-800 block">{formatCurrencyLocal(dormantTotal)}</span>
-                  <span className="text-[9px] font-bold text-slate-300 uppercase tracking-wider">{t('charts.immobilized')}</span>
+                  <span className="text-micro font-bold text-slate-300 uppercase tracking-wider">{t('charts.immobilized')}</span>
                 </div>
               )}
             </div>
@@ -264,15 +264,15 @@ export default function StockIntelligence({
                       <span className="text-xs font-bold text-slate-700 truncate">{p.name}</span>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
-                      <span className="text-[10px] font-bold text-slate-700">{t('alerts.units_suffix', { count: p.stock })}</span>
-                      <span className="text-[9px] font-bold text-slate-400">{formatCurrencyLocal(p.value)}</span>
+                      <span className="text-caption font-bold text-slate-700">{t('alerts.units_suffix', { count: p.stock })}</span>
+                      <span className="text-micro font-bold text-slate-400">{formatCurrencyLocal(p.value)}</span>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-300 text-center h-full">
                   <Archive className="size-12 mb-2" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">{t('charts.no_dormant')}</span>
+                  <span className="text-caption font-black uppercase tracking-widest">{t('charts.no_dormant')}</span>
                 </div>
               )}
             </div>
@@ -302,13 +302,13 @@ export default function StockIntelligence({
                 </div>
                 <div>
                   <h2 className="text-xs font-bold text-slate-700 tracking-tight uppercase">{t('overstock.title', 'Surstock')}</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('overstock.subtitle', 'Produits en excédent')}</p>
+                  <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('overstock.subtitle', 'Produits en excédent')}</p>
                 </div>
               </div>
               {overstockTotal > 0 && (
                 <div className="text-right">
                   <span className="text-xs font-black text-amber-500 block">{formatCurrencyLocal(overstockTotal)}</span>
-                  <span className="text-[9px] font-bold text-orange-400 uppercase tracking-wider">{t('overstock.capital_blocked', 'Capital bloqué')}</span>
+                  <span className="text-micro font-bold text-orange-400 uppercase tracking-wider">{t('overstock.capital_blocked', 'Capital bloqué')}</span>
                 </div>
               )}
             </div>
@@ -321,21 +321,21 @@ export default function StockIntelligence({
                       <span className="text-xs font-black text-orange-500 bg-amber-100 size-6 flex items-center justify-center rounded-lg border border-orange-200 shrink-0">{i + 1}</span>
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-slate-700 truncate block">{p.name}</span>
-                        <span className="text-[9px] font-bold text-orange-500/70 uppercase tracking-widest">
+                        <span className="text-micro font-bold text-orange-500/70 uppercase tracking-widest">
                           {p.excess_qty != null ? t('overstock.excess_qty', '+{{count}} unités en excès', { count: p.excess_qty }) : t('overstock.stock_label', 'Stock: {{count}}', { count: p.stock })}
                         </span>
                       </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0 ml-2">
-                      <span className="text-[10px] font-bold text-amber-500">{formatCurrencyLocal(p.excess_value ?? p.value ?? 0)}</span>
-                      <span className="text-[9px] font-bold text-slate-400">{t('overstock.excess_label', 'excédent')}</span>
+                      <span className="text-caption font-bold text-amber-500">{formatCurrencyLocal(p.excess_value ?? p.value ?? 0)}</span>
+                      <span className="text-micro font-bold text-slate-400">{t('overstock.excess_label', 'excédent')}</span>
                     </div>
                   </div>
                 ))
               ) : (
                 <EmptyState
                   icon={<TrendingUp className="size-8" />}
-                  title={<span className="text-[10px] font-bold uppercase tracking-widest">{t('overstock.none_detected', 'Aucun surstock détecté')}</span>}
+                  title={<span className="text-caption font-bold uppercase tracking-widest">{t('overstock.none_detected', 'Aucun surstock détecté')}</span>}
                   className="py-12 h-full"
                 />
               )}
@@ -368,7 +368,7 @@ export default function StockIntelligence({
                   <ShoppingBag className="size-5 text-emerald-600" />
                   <h2 className="text-sm font-bold text-emerald-800 tracking-tight uppercase">{t('alerts.promis_title')}</h2>
                 </div>
-                <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold">{promisDisponibles.length}</span>
+                <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-lg text-caption font-bold">{promisDisponibles.length}</span>
               </div>
               <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
                 {promisDisponibles.slice(0, 5).map((p) => (
@@ -376,19 +376,19 @@ export default function StockIntelligence({
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-bold text-slate-700 block truncate">{p.produit_nom}</span>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">{p.client.length > 15 ? p.client.substring(0, 15) + '...' : p.client}</span>
-                        <span className="text-[10px] text-slate-400">•</span>
-                        <span className="text-[10px] font-bold text-slate-500">{p.quantite} {t('alerts.units')}</span>
+                        <span className="text-caption font-bold text-emerald-600 uppercase tracking-widest">{p.client.length > 15 ? p.client.substring(0, 15) + '...' : p.client}</span>
+                        <span className="text-caption text-slate-400">•</span>
+                        <span className="text-caption font-bold text-slate-500">{p.quantite} {t('alerts.units')}</span>
                       </div>
                     </div>
-                    <div className="bg-emerald-100 text-emerald-600 font-bold text-[9px] px-2 py-1 rounded-lg uppercase tracking-widest">
+                    <div className="bg-emerald-100 text-emerald-600 font-bold text-micro px-2 py-1 rounded-lg uppercase tracking-widest">
                       {t('alerts.days_left', { count: p.jours_attente })}
                     </div>
                   </div>
                 ))}
               </div>
               <div className="mt-4 shrink-0">
-                <Link to="/app/promis" className="inline-flex items-center justify-center w-full px-3 py-2 text-emerald-600 bg-emerald-100 hover:bg-emerald-200 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-colors">
+                <Link to="/app/promis" className="inline-flex items-center justify-center w-full px-3 py-2 text-emerald-600 bg-emerald-100 hover:bg-emerald-200 rounded-lg font-bold text-caption uppercase tracking-widest transition-colors">
                   {t('alerts.deliver_promis')}
                 </Link>
               </div>
@@ -425,20 +425,20 @@ export default function StockIntelligence({
                 <p className="text-sm font-bold text-blue-900 leading-tight">
                   {t('reappro.products_waiting', '{{count}} produits en attente de transfert', { count: reapproStats.product_count })}
                 </p>
-                <p className="text-[10px] text-cyan-600 font-medium mt-1">
+                <p className="text-caption text-cyan-600 font-medium mt-1">
                   {t('reappro.threshold_warning', 'Le niveau en rayon est passé sous le seuil critique')}
                 </p>
 
                 {reapproStats.total_units_suggested > 0 && (
                   <div className="mt-4 px-4 py-2 bg-cyan-100/30 rounded-xl border border-blue-100/50">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 block">{t('reappro.suggestion_label', 'Suggestion totale')}</span>
+                    <span className="text-caption font-bold uppercase tracking-widest text-cyan-600 block">{t('reappro.suggestion_label', 'Suggestion totale')}</span>
                     <span className="text-lg font-bold text-blue-800">+{reapproStats.total_units_suggested} <small className="text-xs">{t('reappro.units_label', 'unités')}</small></span>
                   </div>
                 )}
               </div>
 
               <div className="mt-4 shrink-0">
-                <Link to="/app/reappro-rayon" className="inline-flex items-center justify-center w-full px-3 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-bold text-[10px] uppercase tracking-widest gap-2 transition-colors">
+                <Link to="/app/reappro-rayon" className="inline-flex items-center justify-center w-full px-3 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-bold text-caption uppercase tracking-widest gap-2 transition-colors">
                   {t('reappro.go_to_reappro', 'Aller au menu réappro')}
                   <ArrowRight className="size-3.5" />
                 </Link>
@@ -463,11 +463,11 @@ export default function StockIntelligence({
                 </div>
                 <div>
                   <h2 className="text-xs font-bold text-slate-800 tracking-tight uppercase">{t('alerts.stock_title')}</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('alerts.stock_subtitle')}</p>
+                  <p className="text-caption font-bold text-slate-400 uppercase tracking-widest">{t('alerts.stock_subtitle')}</p>
                 </div>
               </div>
               {stats && (stats.low_stock?.value || 0) > 0 && (
-                <span className="bg-amber-500 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold animate-pulse">{stats.low_stock?.value || 0}</span>
+                <span className="bg-amber-500 text-white px-2 py-0.5 rounded-lg text-caption font-bold animate-pulse">{stats.low_stock?.value || 0}</span>
               )}
             </div>
             <div className="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar h-[300px] 2xl:h-[350px]">
@@ -475,7 +475,7 @@ export default function StockIntelligence({
                 <EmptyState
                   compact
                   icon={<ShoppingBag className="size-6" />}
-                  title={<span className="text-[10px] font-bold uppercase tracking-widest">{t('alerts.no_stock_alerts')}</span>}
+                  title={<span className="text-caption font-bold uppercase tracking-widest">{t('alerts.no_stock_alerts')}</span>}
                   className="border-2 border-dashed border-slate-200 rounded-xl h-full"
                 />
               ) : (
@@ -483,11 +483,11 @@ export default function StockIntelligence({
                   <div key={item.id} className={`flex flex-col gap-1 p-3 rounded-xl border transition-all ${item.stock <= 0 ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-amber-50 border-amber-100'}`}>
                     <p className="text-xs font-bold text-slate-700 truncate">{item.name}</p>
                     <div className="flex items-center justify-between">
-                      <span className={`text-[10px] font-bold uppercase tracking-widest ${item.stock <= 0 ? 'text-red-500' : 'text-amber-500'}`}>
+                      <span className={`text-caption font-bold uppercase tracking-widest ${item.stock <= 0 ? 'text-red-500' : 'text-amber-500'}`}>
                         {item.stock <= 0 ? t('alerts.rupture') : t('alerts.remaining_stock', { count: item.stock })}
                       </span>
                       {(item.days_remaining ?? 0) > 0 && item.stock > 0 && (
-                        <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">
+                        <span className="text-micro font-bold text-slate-300 uppercase tracking-widest">
                           {Math.round(item.days_remaining ?? 0)} {t('alerts.remaining_days')}
                         </span>
                       )}
@@ -499,7 +499,7 @@ export default function StockIntelligence({
             <div className="flex gap-2 mt-4 shrink-0">
               {lowStockItems.length > 0 && (
                 <button
-                  className="inline-flex items-center justify-center flex-1 px-3 py-2 bg-blue-600 text-white text-[9px] font-bold uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center justify-center flex-1 px-3 py-2 bg-blue-600 text-white text-micro font-bold uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate('/app/commandes/locales', {
@@ -520,7 +520,7 @@ export default function StockIntelligence({
               )}
               <Link
                 to="/app/stock-analysis?tab=shortage"
-                className="inline-flex items-center justify-center flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-400 text-[9px] font-bold uppercase tracking-widest rounded-lg border border-slate-200 transition-colors"
+                className="inline-flex items-center justify-center flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-400 text-micro font-bold uppercase tracking-widest rounded-lg border border-slate-200 transition-colors"
               >
                 {t('alerts.view_all')}
               </Link>

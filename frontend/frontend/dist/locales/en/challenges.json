@@ -49,6 +49,11 @@
         "produits": "Related products",
         "produits_search_placeholder": "Search a product...",
         "create_btn": "Create challenge",
+        "sudo_title_create": "Confirmation — Create challenge",
+        "sudo_title_edit": "Confirmation — Edit challenge",
+        "sudo_title_delete": "Confirmation — Delete challenge",
+        "sudo_message": "Challenge management requires password validation.",
+        "sudo_message_delete": "Deleting a challenge requires password validation.",
         "errors": {
             "nom_required": "Name is required.",
             "date_order": "End date must be after start date.",
